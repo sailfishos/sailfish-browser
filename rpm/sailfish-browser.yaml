@@ -1,0 +1,31 @@
+Name:    sailfish-browser
+Summary: Sailfish Browser
+Version: 0.1
+Release: 1
+Group:   Qt/Qt
+License: Prop
+Sources:
+    - "%{name}-%{version}.tar.bz2"
+Description: |
+  Short description of my SailfishOS Application
+# Qt Applications generally don't use configure and do use qmake
+Configure: none
+Builder: qmake
+# pkgconfigs we depend on to build
+PkgConfigBR:
+  - ""
+# Packages we depend on to build
+PkgBR:
+  - ""
+# Packages we require to run
+Requires:
+  - ""
+Files:
+  - "/opt"
+
+
+
+# This is a spectacle file.
+# It is a yaml file that uses specify to manage the spec file used to package the application.
+# See https://wiki.merproject.org/wiki/Spectacle for more information
+
