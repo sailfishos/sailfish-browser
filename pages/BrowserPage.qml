@@ -49,7 +49,9 @@ Page {
             transformOrigin: Item.TopLeft
             preferredHeight: browserPage.height - tools.height
             preferredWidth: browserPage.width
-            opacity: status == WebView.Loading ? webContent.progress : 1.0
+            opacity: status == WebView.Loading ? maxProgress : 1.0
+
+            property double maxProgress: 0
 
             onLoadFinished: {
                 if(!ignoreStoreUrl) {
@@ -57,6 +59,15 @@ Page {
                     historyModel.append( {"url":url, "title":webContent.title, "icon:": "image://theme/icon-m-region"} )
                 }
                 ignoreStoreUrl = false
+                maxProgress = 0
+            }
+
+            onProgressChanged: {
+                if( status == WebView.Loading) {
+                    if (progress > maxProgress) {
+                        maxProgress = progress
+                    }
+                }
             }
         }
     }

@@ -76,6 +76,7 @@ Page {
     SilicaListView {
         id: historyList
         delegate: historyItem
+        clip : true
 
         anchors {
             top: parent.top
@@ -88,8 +89,10 @@ Page {
 
     TextField {
         id:urlField
-        anchors.bottom: parent.bottom
-        anchors.horizontalCenter: parent.horizontalCenter
+        anchors {
+            bottom: parent.bottom
+            horizontalCenter: parent.horizontalCenter
+        }
         width: parent.width - 2 * 30
         placeholderText: "url"
 
