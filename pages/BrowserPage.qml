@@ -80,6 +80,14 @@ Page {
                     }
                 }
             }
+
+            Behavior on opacity {
+                NumberAnimation {
+                    id: bouncebehavior
+                    easing.type: Easing.InOutQuad
+                    duration: 300
+                }
+            }
         }
     }
 
