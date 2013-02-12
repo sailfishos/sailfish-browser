@@ -13,6 +13,7 @@ Page {
     id: page
 
     property alias historyModel: historyList.model
+    property string url
 
     function urlEntered() {
         urlField.closeSoftwareInputPanel()
@@ -78,12 +79,35 @@ Page {
         delegate: historyItem
         clip : true
 
+        PullDownMenu {
+            MenuItem {
+                text: "Tabs"
+                onClicked:  {
+                    var component = Qt.createComponent("TabPage.qml");
+                    if (component.status === Component.Ready) {
+                        pageStack.push(component, {}, false);
+                    } else {
+                        console.log("Error loading component:", component.errorString());
+                    }
+                }
+            }
+            MenuItem {
+                text: "New tab"
+                onClicked: {
+                    browserPage.newTab()
+                }
+            }
+        }
+
+        header: PageHeader {
+            title: "History"
+        }
+
         anchors {
             top: parent.top
             bottom: urlField.top
             left: parent.left
             right: parent.right
-            topMargin: theme.pageHeaderHeight
         }
     }
 
@@ -93,6 +117,7 @@ Page {
             bottom: parent.bottom
             horizontalCenter: parent.horizontalCenter
         }
+        text: url
         width: parent.width - 2 * 30
         placeholderText: "url"
 
@@ -109,7 +134,7 @@ Page {
         if (status == PageStatus.Active) {
             urlField.forceActiveFocus()
         }
-    }
+    }  
 }
 
 
