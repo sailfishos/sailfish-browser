@@ -12,6 +12,7 @@ import Sailfish.Silica 1.0
 Page {
     id: page
 
+    property Item contextMenu
     property alias historyModel: historyList.model
     property string url
 
@@ -28,56 +29,34 @@ Page {
     }
 
     Component {
-        id: historyItem
-
-        BackgroundItem {
-            width: page.width
-
-            Image {
-                id: iconImage
-                source: icon
-                x: 30
-                anchors.top: parent.top
-            }
-
-            Label {
-                text: title
-                anchors{
-                    top: parent.top
-                    left: iconImage.right
-                    right: parent.right
+        id: historyContextMenuComponent
+        ContextMenu {
+            property string url: ""
+            MenuItem {
+                text: "Open in new tab"
+                onClicked: {
+                    browserPage.newTab()
+                    browserPage.url = url
+                    pageStack.pop(null, true)
                 }
-                height: parent.height / 2
-                horizontalAlignment: Text.AlignLeft
-                verticalAlignment: Text.AlignBottom
-                truncationMode: TruncationMode.Fade
-            }
-            Label {
-                text: url
-                anchors{
-                    bottom: parent.bottom
-                    left: iconImage.right
-                    right: parent.right
-                }
-                height: parent.height / 2
-                font.pixelSize: theme.fontSizeSmall
-                color: theme.secondaryColor
-                horizontalAlignment: Text.AlignCenter
-                verticalAlignment: Text.AlignTop
-                truncationMode: TruncationMode.Fade
-            }
-
-            onClicked: {
-                browserPage.url = url
-                pageStack.pop(null, true)
             }
         }
     }
 
     SilicaListView {
         id: historyList
-        delegate: historyItem
         clip : true
+
+        anchors {
+            top: parent.top
+            bottom: urlField.top
+            left: parent.left
+            right: parent.right
+        }
+
+        header: PageHeader {
+            title: "History"
+        }
 
         PullDownMenu {
             MenuItem {
@@ -99,15 +78,63 @@ Page {
             }
         }
 
-        header: PageHeader {
-            title: "History"
-        }
+        delegate: Item {
+            id: historyItem
+            property bool menuOpen: contextMenu && contextMenu.parent == historyItem
 
-        anchors {
-            top: parent.top
-            bottom: urlField.top
-            left: parent.left
-            right: parent.right
+            width: page.width
+            height: menuOpen ?  historyRow.height + contextMenu.height : historyRow.height
+
+            BackgroundItem {
+                id: historyRow
+                width: page.width
+                height: 80
+
+                Image {
+                    id: iconImage
+                    source: icon
+                    x: 30
+                    anchors.top: parent.top
+                }
+                Label {
+                    text: title
+                    anchors{
+                        top: parent.top
+                        left: iconImage.right
+                        right: parent.right
+                    }
+                    height: parent.height / 2
+                    horizontalAlignment: Text.AlignLeft
+                    verticalAlignment: Text.AlignBottom
+                    truncationMode: TruncationMode.Fade
+                }
+                Label {
+                    text: url
+                    anchors{
+                        bottom: parent.bottom
+                        left: iconImage.right
+                        right: parent.right
+                    }
+                    height: parent.height / 2
+                    font.pixelSize: theme.fontSizeSmall
+                    color: theme.secondaryColor
+                    horizontalAlignment: Text.AlignCenter
+                    verticalAlignment: Text.AlignTop
+                    truncationMode: TruncationMode.Fade
+                }
+
+                onClicked: {
+                    browserPage.url = url
+                    pageStack.pop(null, true)
+                }
+                onPressAndHold: {
+                    if (!contextMenu) {
+                        contextMenu = historyContextMenuComponent.createObject(historyList)
+                    }
+                    contextMenu.url = url
+                    contextMenu.show(historyItem)
+                }
+            }
         }
     }
 
@@ -130,11 +157,9 @@ Page {
         }
     }
 
-   onStatusChanged: {
+    onStatusChanged: {
         if (status == PageStatus.Active) {
             urlField.forceActiveFocus()
         }
-    }  
+    }
 }
-
-
