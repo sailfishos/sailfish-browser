@@ -49,7 +49,13 @@ QDeclarativeView *Sailfish::createView(const QString &file)
     }
     
     view->setSource(QUrl::fromLocalFile(path + file));
-    
+
+    return view;
+}
+
+void Sailfish::showView(QDeclarativeView * view) {
+    bool isDesktop = qApp->arguments().contains("-desktop");
+
     if (isDesktop) {
         view->setFixedSize(480, 854);
         view->rootObject()->setProperty("_desktop", true);
@@ -60,11 +66,10 @@ QDeclarativeView *Sailfish::createView(const QString &file)
         view->setAttribute(Qt::WA_NoSystemBackground);
         view->viewport()->setAttribute(Qt::WA_OpaquePaintEvent);
         view->viewport()->setAttribute(Qt::WA_NoSystemBackground);
-        
+        view->setResizeMode(QDeclarativeView::SizeRootObjectToView);
+
         view->showFullScreen();
     }
-    
-    return view;
 }
 
 

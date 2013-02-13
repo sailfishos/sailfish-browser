@@ -56,7 +56,7 @@ Page {
         // Placeholder while we don't yet have gecko in images
         WebView {
             id: webContent
-            url: "demo.html"
+            url: Parameters.initialPage()
             transformOrigin: Item.TopLeft
             preferredHeight: browserPage.height - tools.height
             preferredWidth: browserPage.width
@@ -65,9 +65,13 @@ Page {
             property double maxProgress: 0
 
             onLoadFinished: {
-                if (!ignoreStoreUrl) {
+                if (!ignoreStoreUrl
+                        && url !== historyModel.get(historyModel.count-1)
+                        && url !== Parameters.homePage) {
                     History.addRow(url,webContent.title, "image://theme/icon-m-region")
-                    historyModel.append({"url":url, "title":webContent.title, "icon:": "image://theme/icon-m-region"})
+                    historyModel.append({"url": url,
+                                         "title": webContent.title,
+                                         "icon:": "image://theme/icon-m-region"})
                 }
                 ignoreStoreUrl = false
                 maxProgress = 0

@@ -12,6 +12,7 @@
 
 #include "sailfishapplication.h"
 #include "src/declarativebrowsertab.h"
+#include "src/declarativeparameters.h"
 
 // Hack to open & close VKB with WebView
 // can be removed once we are with gecko
@@ -47,8 +48,9 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     app->setOrganizationName(QString("org.sailfishos"));
 
     DeclarativeBrowserTab * tab = new DeclarativeBrowserTab(view.data(), app.data());
+    DeclarativeParameters * parameters = new DeclarativeParameters(app->arguments(), view.data(), app.data());
 
-    // TODO handle incoming url
+    Sailfish::showView(view.data());
 
     EventFilter ef;
     view->installEventFilter(&ef);
