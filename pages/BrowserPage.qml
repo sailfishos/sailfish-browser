@@ -132,7 +132,8 @@ Page {
 
                     var component = Qt.createComponent("ControlPage.qml");
                     if (component.status === Component.Ready) {
-                        pageStack.push(component, {historyModel : historyModel, url : webContent.url}, true);
+                        var sendUrl = (webContent.url!=Parameters.homePage) ? webContent.url:""
+                        pageStack.push(component, {historyModel : historyModel, url : sendUrl}, true);
                     } else {
                         console.log("Error loading component:", component.errorString());
                     }

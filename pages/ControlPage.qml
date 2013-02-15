@@ -159,6 +159,10 @@ Page {
 
     onStatusChanged: {
         if (status == PageStatus.Active) {
+            if (url!="") {
+                urlField.selectAll()
+            }
+
             urlField.forceActiveFocus()
         }
     }
