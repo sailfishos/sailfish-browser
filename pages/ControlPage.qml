@@ -25,7 +25,7 @@ Page {
         }
 
         browserPage.url = url
-        pageStack.pop(null, true)
+        pageStack.pop(undefined, true)
     }
 
     Component {
@@ -37,7 +37,7 @@ Page {
                 onClicked: {
                     browserPage.newTab()
                     browserPage.url = url
-                    pageStack.pop(null, true)
+                    pageStack.pop(undefined, true)
                 }
             }
         }
@@ -80,7 +80,7 @@ Page {
 
         delegate: Item {
             id: historyItem
-            property bool menuOpen: contextMenu && contextMenu.parent == historyItem
+            property bool menuOpen: contextMenu!=null && contextMenu.parent == historyItem
 
             width: page.width
             height: menuOpen ?  historyRow.height + contextMenu.height : historyRow.height
@@ -125,7 +125,7 @@ Page {
 
                 onClicked: {
                     browserPage.url = url
-                    pageStack.pop(null, true)
+                    pageStack.pop(undefined, true)
                 }
                 onPressAndHold: {
                     if (!contextMenu) {
