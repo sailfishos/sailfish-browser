@@ -20,7 +20,7 @@ public:
     explicit DeclarativeBrowserTab(QDeclarativeView* view, QObject *parent = 0);
     ~DeclarativeBrowserTab();
 
-    Q_INVOKABLE QString screenCapture();
+    Q_INVOKABLE QString screenCapture(int x, int y, int width, int height);
     
 signals:
     

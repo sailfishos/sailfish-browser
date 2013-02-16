@@ -15,9 +15,9 @@ import "history.js" as History
 Page {
     id: browserPage
 
+    property alias tabs: tabModel
     property alias url: webContent.url
     property bool ignoreStoreUrl: true
-    property alias tabs: tabModel
     property int currentTab: 0
 
     function newTab() {
@@ -37,10 +37,11 @@ Page {
 
     ListModel {
         id:tabModel
-        ListElement { thumbPath: ""; url: ""}
+        ListElement {thumbPath: ""; url: ""}
     }
 
     SilicaFlickable {
+        id:flickable
         clip: true
         contentHeight: webContent.height
         contentWidth: webContent.width
@@ -56,13 +57,14 @@ Page {
         // Placeholder while we don't yet have gecko in images
         WebView {
             id: webContent
+
+            property double maxProgress: 0
+
             url: Parameters.initialPage()
             transformOrigin: Item.TopLeft
             preferredHeight: browserPage.height - tools.height
             preferredWidth: browserPage.width
-            opacity: status == WebView.Loading ? maxProgress : 1.0
-
-            property double maxProgress: 0
+            opacity: (status == WebView.Loading) ? maxProgress : 1.0
 
             onLoadFinished: {
                 if (!ignoreStoreUrl
@@ -70,8 +72,8 @@ Page {
                         && url !== Parameters.homePage) {
                     History.addRow(url,webContent.title, "image://theme/icon-m-region")
                     historyModel.append({"url": url,
-                                         "title": webContent.title,
-                                         "icon:": "image://theme/icon-m-region"})
+                                            "title": webContent.title,
+                                            "icon:": "image://theme/icon-m-region"})
                 }
                 ignoreStoreUrl = false
                 maxProgress = 0
@@ -126,14 +128,14 @@ Page {
             MouseArea {
                 anchors.fill: parent
                 onClicked:  {
-                    var screenPath = BrowserTab.screenCapture()
+                    var screenPath = (window.screenRotation == 0) ? BrowserTab.screenCapture(0,0,flickable.width, flickable.height) :
+                                                                    BrowserTab.screenCapture(0,0,flickable.height, flickable.width);
 
                     tabModel.set(currentTab, {"thumbPath" : screenPath, "url" : webContent.url})
-
                     var component = Qt.createComponent("ControlPage.qml");
                     if (component.status === Component.Ready) {
-                        var sendUrl = (webContent.url!=Parameters.homePage) ? webContent.url:""
-                        pageStack.push(component, {historyModel : historyModel, url : sendUrl}, true);
+                        var sendUrl = (webContent.url != Parameters.homePage) ? webContent.url : ""
+                        pageStack.push(component, {historyModel: historyModel, url: sendUrl}, true);
                     } else {
                         console.log("Error loading component:", component.errorString());
                     }
@@ -148,16 +150,12 @@ Page {
             }
             minimumValue: 0
             maximumValue: 1
-
             width: title.width
             height: 25
-
             enabled: false
             handleVisible: false
-
             visible: webContent.status == WebView.Loading
             value: visible ? webContent.progress : 0
-
         }
 
         IconButton {

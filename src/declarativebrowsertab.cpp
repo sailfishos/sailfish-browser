@@ -31,8 +31,8 @@ DeclarativeBrowserTab::~DeclarativeBrowserTab() {
     paths.clear();
 }
 
-QString DeclarativeBrowserTab::screenCapture() {
-    QPixmap pixmap = QPixmap::grabWidget(m_view);
+QString DeclarativeBrowserTab::screenCapture(int x, int y, int width, int height) {
+    QPixmap pixmap = QPixmap::grabWidget(m_view, x, y, width, height);
 
     int randomValue = abs(qrand());
     QString path = "/tmp/" + QString::number(randomValue);
