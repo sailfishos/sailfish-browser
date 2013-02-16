@@ -18,7 +18,7 @@ Page {
         anchors.fill: parent
         model: browserPage.tabs
         delegate: Image {
-            asynchronous: false
+            asynchronous: true
             source: thumbPath
             fillMode: Image.PreserveAspectCrop
 

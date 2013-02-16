@@ -2,9 +2,10 @@
 TARGET = sailfish-browser
 
 # C++ sources
-SOURCES += main.cpp \
+SOURCES += \
     src/declarativebrowsertab.cpp \
-    src/declarativeparameters.cpp
+    src/declarativeparameters.cpp \
+    sailfishbrowser.cpp
 
 # C++ headers
 HEADERS += \
@@ -12,7 +13,7 @@ HEADERS += \
     src/declarativeparameters.h
 
 # QML files and folders
-qml.files = *.qml pages cover main.qml
+qml.files = *.qml pages cover browser.qml
 
 # The .desktop file
 desktop.files = sailfish-browser.desktop

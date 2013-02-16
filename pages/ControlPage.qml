@@ -18,12 +18,10 @@ Page {
 
     function urlEntered() {
         urlField.closeSoftwareInputPanel()
-
         var url = urlField.text
         if (url.indexOf("http://") < 0) {
             url = "http://" + url
         }
-
         browserPage.url = url
         pageStack.pop(undefined, true)
     }
@@ -98,7 +96,7 @@ Page {
                 }
                 Label {
                     text: title
-                    anchors{
+                    anchors {
                         top: parent.top
                         left: iconImage.right
                         right: parent.right
@@ -110,7 +108,7 @@ Page {
                 }
                 Label {
                     text: url
-                    anchors{
+                    anchors {
                         bottom: parent.bottom
                         left: iconImage.right
                         right: parent.right
@@ -159,10 +157,9 @@ Page {
 
     onStatusChanged: {
         if (status == PageStatus.Active) {
-            if (url!="") {
+            if (url != "") {
                 urlField.selectAll()
             }
-
             urlField.forceActiveFocus()
         }
     }

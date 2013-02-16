@@ -12,8 +12,8 @@ import "pages"
 ApplicationWindow
 {
     id: window
-    initialPage: BrowserPage { }
-    cover: Qt.resolvedUrl("cover/CoverPage.qml")
+    initialPage: Component { BrowserPage { } }
+    cover: null
 }
 
 
