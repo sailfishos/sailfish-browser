@@ -8,7 +8,7 @@
 
 import QtQuick 1.1
 import Sailfish.Silica 1.0
-import QtWebKit 1.1
+import QtMozilla 1.0
 
 import "history.js" as History
 
@@ -16,9 +16,9 @@ Page {
     id: browserPage
 
     property alias tabs: tabModel
-    property alias url: webContent.url
     property bool ignoreStoreUrl: true
     property int currentTab: 0
+    property string url: ""
 
     function newTab() {
         tabModel.append({"thumbPath": "", "url": ""})
@@ -40,12 +40,10 @@ Page {
         ListElement {thumbPath: ""; url: ""}
     }
 
-    SilicaFlickable {
-        id:flickable
-        clip: true
-        contentHeight: webContent.height
-        contentWidth: webContent.width
-        interactive: true
+    QmlMozView {
+        id: webContent
+        visible: true
+        focus: true
 
         anchors {
             top: parent.top
@@ -54,118 +52,87 @@ Page {
             bottom: tools.top
         }
 
-        // Placeholder while we don't yet have gecko in images
-        WebView {
-            id: webContent
+        Connections {
+            target: webContent.child()
 
-            property double maxProgress: 0
-
-            url: Parameters.initialPage()
-            transformOrigin: Item.TopLeft
-            preferredHeight: browserPage.height - tools.height
-            preferredWidth: browserPage.width
-            opacity: (status == WebView.Loading) ? maxProgress : 1.0
-
-            onLoadFinished: {
-                if (!ignoreStoreUrl
-                        && url !== historyModel.get(historyModel.count-1)
-                        && url !== Parameters.homePage) {
-                    History.addRow(url,webContent.title, "image://theme/icon-m-region")
-                    historyModel.append({"url": url,
-                                            "title": webContent.title,
-                                            "icon:": "image://theme/icon-m-region"})
-                }
-                ignoreStoreUrl = false
-                maxProgress = 0
+            onViewInitialized: {
+                webContent.child().load(Parameters.initialPage())
             }
 
-            onProgressChanged: {
-                if (status == WebView.Loading) {
-                    if (progress > maxProgress) {
-                        maxProgress = progress
+            onTitleChanged: {
+                pageTitleChanged(webViewport.child().title)
+            }
+            onUrlChanged: {
+                browserPage.url = webContent.child().url
+            }
+        }
+    }
+
+    Rectangle {
+        id: tools
+        color:"black"
+        anchors {
+
+            left: parent.left
+            right: parent.right
+            bottom: parent.bottom
+        }
+        height: theme.itemSizeLarge
+
+        Row {
+            id: toolsrow
+            anchors.fill: parent
+            IconButton {
+                id:backIcon
+                icon.source: "image://theme/icon-l-left"
+                enabled: false // TODO webContent.back.enabled
+
+                onClicked: {
+                    ignoreStoreUrl = true
+                }
+            }
+
+            Label {
+                id: title
+                text: "URL" // TODO webContent.status == WebView.Loading ? webContent.statusText : webContent.title
+                width: browserPage.width - (backIcon.width + right.width)
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                anchors.verticalCenter: parent.verticalCenter
+                truncationMode: TruncationMode.Fade
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked:  {
+                        var screenPath = (window.screenRotation == 0) ? BrowserTab.screenCapture(0,0,webContent.width, webContent.height) :
+                                                                        BrowserTab.screenCapture(0,0,webContent.height, webContent.width);
+
+                        tabModel.set(currentTab, {"thumbPath" : screenPath, "url" : browserPage.url})
+                        var component = Qt.createComponent("ControlPage.qml");
+                        if (component.status === Component.Ready) {
+                            var sendUrl = (browserPage.url != Parameters.homePage) ? browserPage.url : ""
+                            pageStack.push(component, {historyModel: historyModel, url: sendUrl}, true);
+                        } else {
+                            console.log("Error loading component:", component.errorString());
+                        }
                     }
                 }
             }
 
-            Behavior on opacity {
-                NumberAnimation {
-                    id: bouncebehavior
-                    easing.type: Easing.InOutQuad
-                    duration: 300
+            IconButton {
+                id: right
+                icon.source: "image://theme/icon-l-right"
+                enabled: false // webContent.forward.enabled
+                onClicked: {
+                    ignoreStoreUrl = true
                 }
             }
         }
     }
 
-    Row {
-        id: tools
-        anchors {
-            bottom: browserPage.bottom
-            left: browserPage.left
-            right: browserPage.right
-        }
-
-        IconButton {
-            id:backIcon
-            icon.source: "image://theme/icon-l-left"
-            enabled: webContent.back.enabled
-
-            onClicked: {
-                ignoreStoreUrl = true
-                webContent.back.trigger()
-            }
-        }
-
-        Label {
-            id: title
-            text: webContent.status == WebView.Loading ? webContent.statusText : webContent.title
-            width: browserPage.width - (backIcon.width + right.width)
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-            anchors.verticalCenter: parent.verticalCenter
-            truncationMode: TruncationMode.Fade
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked:  {
-                    var screenPath = (window.screenRotation == 0) ? BrowserTab.screenCapture(0,0,flickable.width, flickable.height) :
-                                                                    BrowserTab.screenCapture(0,0,flickable.height, flickable.width);
-
-                    tabModel.set(currentTab, {"thumbPath" : screenPath, "url" : webContent.url})
-                    var component = Qt.createComponent("ControlPage.qml");
-                    if (component.status === Component.Ready) {
-                        var sendUrl = (webContent.url != Parameters.homePage) ? webContent.url : ""
-                        pageStack.push(component, {historyModel: historyModel, url: sendUrl}, true);
-                    } else {
-                        console.log("Error loading component:", component.errorString());
-                    }
-                }
-            }
-        }
-
-        Slider {
-            anchors {
-                bottom: tools.bottom
-                horizontalCenter: tools.horizontalCenter
-            }
-            minimumValue: 0
-            maximumValue: 1
-            width: title.width
-            height: 25
-            enabled: false
-            handleVisible: false
-            visible: webContent.status == WebView.Loading
-            value: visible ? webContent.progress : 0
-        }
-
-        IconButton {
-            id: right
-            icon.source: "image://theme/icon-l-right"
-            enabled: webContent.forward.enabled
-            onClicked: {
-                ignoreStoreUrl = true
-                webContent.forward.trigger()
-            }
+    onUrlChanged: {
+        if(webContent.child().url!==url) {
+            webContent.child().load(url)
         }
     }
 

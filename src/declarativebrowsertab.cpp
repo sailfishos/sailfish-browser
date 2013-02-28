@@ -21,7 +21,8 @@ DeclarativeBrowserTab::DeclarativeBrowserTab(QDeclarativeView* view, QObject *pa
     view->engine()->rootContext()->setContextProperty("BrowserTab",this);
 }
 
-DeclarativeBrowserTab::~DeclarativeBrowserTab() {
+DeclarativeBrowserTab::~DeclarativeBrowserTab()
+{
     for (int i = 0; i < paths.size(); ++i) {
         QFile f(paths.at(i));
         if (f.exists()) {
@@ -31,7 +32,8 @@ DeclarativeBrowserTab::~DeclarativeBrowserTab() {
     paths.clear();
 }
 
-QString DeclarativeBrowserTab::screenCapture(int x, int y, int width, int height) {
+QString DeclarativeBrowserTab::screenCapture(int x, int y, int width, int height)
+{
     QPixmap pixmap = QPixmap::grabWidget(m_view, x, y, width, height);
 
     int randomValue = abs(qrand());

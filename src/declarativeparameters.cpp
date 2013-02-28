@@ -11,8 +11,8 @@ DeclarativeParameters::DeclarativeParameters(QStringList arguments, QDeclarative
 }
 
 
-QString DeclarativeParameters::initialPage() {
-
+QString DeclarativeParameters::initialPage()
+{
     if (m_arguments.count()>1) {
         return m_arguments.last();
     } else {
@@ -20,6 +20,7 @@ QString DeclarativeParameters::initialPage() {
     }
 }
 
-QString DeclarativeParameters::homePage() {
+QString DeclarativeParameters::homePage()
+{
     return m_homePage;
 }
