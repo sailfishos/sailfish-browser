@@ -14,17 +14,9 @@ Page {
 
     property Item contextMenu
     property alias historyModel: historyList.model
-    property string url
+    property Item urlField
 
-    function urlEntered() {
-        urlField.closeSoftwareInputPanel()
-        var url = urlField.text
-        if (url.indexOf("http://") < 0) {
-            url = "http://" + url
-        }
-        browserPage.url = url
-        pageStack.pop(undefined, true)
-    }
+    property string url
 
     Component {
         id: historyContextMenuComponent
@@ -43,17 +35,80 @@ Page {
 
     SilicaListView {
         id: historyList
-        clip : true
 
-        anchors {
-            top: parent.top
-            bottom: urlField.top
-            left: parent.left
-            right: parent.right
-        }
+        anchors.fill: parent
 
-        header: PageHeader {
-            title: "History"
+        header: Column {
+            width: parent.width
+
+            PageHeader {
+                title: "New Tab"
+            }
+
+            Item {
+                height: urlField.height
+                width: parent.width
+                Image {
+                    source: "image://theme/icon-m-region"
+                    width: urlField.height/2
+                    height: width
+                    anchors {
+                        top: urlField.top; topMargin: theme.paddingSmall
+                        left: parent.left; leftMargin: theme.paddingMedium
+                    }
+                    smooth: true
+                }
+
+                TextField {
+                    id:urlField
+
+                    anchors {
+                        left: parent.left
+                        leftMargin: theme.paddingLarge + theme.paddingMedium
+                        right: parent.right
+                        rightMargin:theme.paddingLarge
+                    }
+                    text: url
+                    placeholderText: "Search"
+                    color: theme.primaryColor
+
+                    function urlEntered() {
+                        urlField.closeSoftwareInputPanel()
+                        var url = urlField.text
+                        if (url.indexOf("http://") < 0) {
+                            url = "http://" + url
+                        }
+                        browserPage.url = url
+                        pageStack.pop(undefined, true)
+                    }
+
+                    Keys.onEnterPressed: {
+                        urlEntered()
+                    }
+
+                    Keys.onReturnPressed: {
+                        urlEntered()
+                    }
+
+                    Component.onCompleted: {
+                        page.urlField=urlField
+                    }
+                }
+                Image {
+                    source: "image://theme/icon-m-reset"
+                    width: urlField.height/2
+                    height: width
+
+                    anchors {
+                        top: urlField.top; topMargin: theme.paddingSmall
+                        right: parent.right; rightMargin: theme.paddingMedium
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: urlField.text=""
+                    }
+                }
+            }
         }
 
         PullDownMenu {
@@ -86,12 +141,11 @@ Page {
             BackgroundItem {
                 id: historyRow
                 width: page.width
-                height: 80
+                height: theme.itemSizeMedium
 
                 Image {
                     id: iconImage
                     source: icon
-                    x: 30
                     anchors.top: parent.top
                 }
                 Label {
@@ -99,6 +153,7 @@ Page {
                     anchors {
                         top: parent.top
                         left: iconImage.right
+                        leftMargin: theme.paddingSmall
                         right: parent.right
                     }
                     height: parent.height / 2
@@ -111,12 +166,13 @@ Page {
                     anchors {
                         bottom: parent.bottom
                         left: iconImage.right
+                        leftMargin: theme.paddingSmall
                         right: parent.right
                     }
                     height: parent.height / 2
                     font.pixelSize: theme.fontSizeSmall
                     color: theme.secondaryColor
-                    horizontalAlignment: Text.AlignCenter
+                    horizontalAlignment: Text.AlignLeft
                     verticalAlignment: Text.AlignTop
                     truncationMode: TruncationMode.Fade
                 }
@@ -133,25 +189,6 @@ Page {
                     contextMenu.show(historyItem)
                 }
             }
-        }
-    }
-
-    TextField {
-        id:urlField
-        anchors {
-            bottom: parent.bottom
-            horizontalCenter: parent.horizontalCenter
-        }
-        text: url
-        width: parent.width - 2 * 30
-        placeholderText: "url"
-
-        Keys.onEnterPressed: {
-            urlEntered()
-        }
-
-        Keys.onReturnPressed: {
-            urlEntered()
         }
     }
 

@@ -27,12 +27,6 @@ Page {
 
     ListModel {
         id: historyModel
-        ListElement {title: "Jolla"; url: "http://www.jolla.com/"; icon: "image://theme/icon-m-region"}
-        ListElement {title: "Sailfish OS"; url: "http://www.sailfishos.org/"; icon: "image://theme/icon-m-region"}
-        ListElement {title: "Mer-project"; url: "http://www.merproject.org/"; icon: "image://theme/icon-m-region"}
-        ListElement {title: "Twitter"; url: "http://www.twitter.com/"; icon: "image://theme/icon-m-region"}
-        ListElement {title: "Google"; url: "http://www.google.com/"; icon: "image://theme/icon-m-region"}
-        ListElement {title: "Facebook"; url: "http://www.facebook.com/"; icon: "image://theme/icon-m-region"}
     }
 
     ListModel {
@@ -56,14 +50,28 @@ Page {
             target: webContent.child()
 
             onViewInitialized: {
-                webContent.child().load(Parameters.initialPage())
+                webContent.child().load("www.yle.fi") // Workaround for initial page loadign
             }
 
             onTitleChanged: {
-                pageTitleChanged(webViewport.child().title)
+                pageTitleChanged(webContent.child().title)
             }
             onUrlChanged: {
                 browserPage.url = webContent.child().url
+                if(webContent.child().url=="about:blank") { // Workaround for initial page loadign
+                    if(historyModel.count == 0 ) {
+                        webContent.child().load(Parameters.initialPage())
+                    } else {
+                        webContent.child().load(historyModel.get(0).url)
+                    }
+                }
+            }
+            onLoadingChanged: {
+                if (!webContent.child().loading && url !="about:blank" &&
+                    (historyModel.count == 0 || url !== historyModel.get(0).url)) {
+                    History.addRow(url,webContent.child().title, "image://theme/icon-m-region")
+                    historyModel.insert(0,{"title": webContent.child().title, "url": url, "icon": "image://theme/icon-m-region"} )
+                }
             }
         }
     }
@@ -77,54 +85,65 @@ Page {
             right: parent.right
             bottom: parent.bottom
         }
-        height: theme.itemSizeLarge
+        height: theme.itemSizeMedium
 
         Row {
             id: toolsrow
             anchors.fill: parent
+            spacing: (width - (backIcon.width*5))/4
+
             IconButton {
                 id:backIcon
-                icon.source: "image://theme/icon-l-left"
-                enabled: false // TODO webContent.back.enabled
+                icon.source: "image://theme/icon-m-back"
+                enabled: true // TODO webContent.back.enabled
 
+                onClicked: {
+                    webContent.child().goBack()
+                }
+            }
+
+            IconButton {
+                icon.source: "image://theme/icon-m-favorite"
+                enabled: false
                 onClicked: {
                     ignoreStoreUrl = true
                 }
             }
 
-            Label {
-                id: title
-                text: "URL" // TODO webContent.status == WebView.Loading ? webContent.statusText : webContent.title
-                width: browserPage.width - (backIcon.width + right.width)
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                anchors.verticalCenter: parent.verticalCenter
-                truncationMode: TruncationMode.Fade
+            IconButton {
+                icon.source: "image://theme/icon-m-other"
+                enabled: true // TODO webContent.back.enabled
 
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked:  {
-                        var screenPath = (window.screenRotation == 0) ? BrowserTab.screenCapture(0,0,webContent.width, webContent.height) :
-                                                                        BrowserTab.screenCapture(0,0,webContent.height, webContent.width);
-
-                        tabModel.set(currentTab, {"thumbPath" : screenPath, "url" : browserPage.url})
-                        var component = Qt.createComponent("ControlPage.qml");
-                        if (component.status === Component.Ready) {
-                            var sendUrl = (browserPage.url != Parameters.homePage) ? browserPage.url : ""
-                            pageStack.push(component, {historyModel: historyModel, url: sendUrl}, true);
-                        } else {
-                            console.log("Error loading component:", component.errorString());
-                        }
+                onClicked:  {
+                    console.log("Other clicked")
+                    // TODO grab widget
+                    /*var screenPath = (window.screenRotation == 0) ? BrowserTab.screenCapture(0,0,webContent.width, webContent.height) :
+                                                                    BrowserTab.screenCapture(0,0,webContent.height, webContent.width);  */
+                    var screenPath = ""
+                    tabModel.set(currentTab, {"thumbPath" : screenPath, "url" : browserPage.url})
+                    var component = Qt.createComponent("ControlPage.qml");
+                    if (component.status === Component.Ready) {
+                        var sendUrl = (browserPage.url != "about:blank" || browserPage.url != Parameters.initialPage()) ? browserPage.url : ""
+                        pageStack.push(component, {historyModel: historyModel, url: sendUrl}, true);
+                    } else {
+                        console.log("Error loading component:", component.errorString());
                     }
+                }
+            }
+            IconButton {
+                icon.source: "image://theme/icon-m-sync"
+
+                onClicked: {
+                    webContent.child().reload()
                 }
             }
 
             IconButton {
                 id: right
-                icon.source: "image://theme/icon-l-right"
-                enabled: false // webContent.forward.enabled
+                icon.source: "image://theme/icon-m-forward"
+                enabled: true // webContent.forward.enabled
                 onClicked: {
-                    ignoreStoreUrl = true
+                    webContent.child().goForward()
                 }
             }
         }
@@ -137,6 +156,7 @@ Page {
     }
 
     Component.onCompleted: {
+        console.log("Component completed")
         History.loadModel(historyModel)
     }
 }
