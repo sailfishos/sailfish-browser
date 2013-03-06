@@ -18,7 +18,7 @@ Page {
     property alias tabs: tabModel
     property bool ignoreStoreUrl: true
     property int currentTab: 0
-    property string url: ""
+    property string url
 
     function newTab() {
         tabModel.append({"thumbPath": "", "url": ""})
@@ -50,20 +50,20 @@ Page {
             target: webContent.child()
 
             onViewInitialized: {
-                webContent.child().load("www.yle.fi") // Workaround for initial page loadign
+                if(historyModel.count == 0 ) {
+                    browserPage.url = Parameters.initialPage()
+                } else {
+                    browserPage.url = historyModel.get(0).url
+                }
             }
 
             onTitleChanged: {
                 pageTitleChanged(webContent.child().title)
             }
             onUrlChanged: {
-                browserPage.url = webContent.child().url
-                if(webContent.child().url=="about:blank") { // Workaround for initial page loadign
-                    if(historyModel.count == 0 ) {
-                        webContent.child().load(Parameters.initialPage())
-                    } else {
-                        webContent.child().load(historyModel.get(0).url)
-                    }
+                var urlStr = webContent.child().url.toString()
+                if(urlStr !== "about:blank" ) {
+                    browserPage.url = webContent.child().url // To ignore initial "about:blank"
                 }
             }
             onLoadingChanged: {
@@ -111,7 +111,7 @@ Page {
             }
 
             IconButton {
-                icon.source: "image://theme/icon-m-other"
+                icon.source: "image://theme/icon-m-tab"
                 enabled: true // TODO webContent.back.enabled
 
                 onClicked:  {
@@ -131,7 +131,7 @@ Page {
                 }
             }
             IconButton {
-                icon.source: "image://theme/icon-m-sync"
+                icon.source: "image://theme/icon-m-refresh"
 
                 onClicked: {
                     webContent.child().reload()
@@ -150,7 +150,7 @@ Page {
     }
 
     onUrlChanged: {
-        if(webContent.child().url!==url) {
+        if(webContent.child().url !== url) {
             webContent.child().load(url)
         }
     }

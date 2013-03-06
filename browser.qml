@@ -13,7 +13,6 @@ ApplicationWindow
 {
     id: window
     initialPage: Component { BrowserPage { } }
-    cover: null
 }
 
 
