@@ -85,7 +85,8 @@ Page {
             right: parent.right
             bottom: parent.bottom
         }
-        height: theme.itemSizeMedium
+        height: visible? theme.itemSizeMedium: 0
+        visible: parent.height === screen.height
 
         Row {
             id: toolsrow
