@@ -5,17 +5,15 @@
 **
 ****************************************************************************/
 
-
 import QtQuick 1.1
 import Sailfish.Silica 1.0
 
 Page {
     id: page
 
-    property Item contextMenu
     property alias historyModel: historyList.model
+    property Item contextMenu
     property Item urlField
-
     property string url
 
     Component {
@@ -91,7 +89,7 @@ Page {
                     }
 
                     Component.onCompleted: {
-                        page.urlField=urlField
+                        page.urlField = urlField
                     }
                 }
                 Image {

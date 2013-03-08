@@ -19,6 +19,7 @@ Page {
     property bool ignoreStoreUrl: true
     property int currentTab: 0
     property string url
+    property variant webEngine: webContent.child()
 
     function newTab() {
         tabModel.append({"thumbPath": "", "url": ""})
@@ -36,18 +37,22 @@ Page {
 
     QmlMozView {
         id: webContent
-        visible: true
+
         focus: true
 
         anchors {
             top: parent.top
             left: parent.left
-            right: parent.right
-            bottom: tools.top
         }
 
+        width: browserPage.width
+
+        // No resizes while page is not active
+        // workaround for engine crashes on resizes while background
+        height: (browserPage.status == PageStatus.Active) ? browserPage.height - tools.height : screen.height - tools.height
+
         Connections {
-            target: webContent.child()
+            target: webEngine
 
             onViewInitialized: {
                 if(historyModel.count == 0 ) {
@@ -57,20 +62,17 @@ Page {
                 }
             }
 
-            onTitleChanged: {
-                pageTitleChanged(webContent.child().title)
-            }
             onUrlChanged: {
-                var urlStr = webContent.child().url.toString()
+                var urlStr = webEngine.url.toString()
                 if(urlStr !== "about:blank" ) {
-                    browserPage.url = webContent.child().url // To ignore initial "about:blank"
+                    browserPage.url = webEngine.url // To ignore initial "about:blank"
                 }
             }
             onLoadingChanged: {
-                if (!webContent.child().loading && url !="about:blank" &&
+                if (!webEngine.loading && url !="about:blank" &&
                     (historyModel.count == 0 || url !== historyModel.get(0).url)) {
-                    History.addRow(url,webContent.child().title, "image://theme/icon-m-region")
-                    historyModel.insert(0,{"title": webContent.child().title, "url": url, "icon": "image://theme/icon-m-region"} )
+                    History.addRow(url,webEngine.title, "image://theme/icon-m-region")
+                    historyModel.insert(0,{"title": webEngine.title, "url": url, "icon": "image://theme/icon-m-region"} )
                 }
             }
         }
@@ -80,51 +82,46 @@ Page {
         id: tools
         color:"black"
         anchors {
-
             left: parent.left
             right: parent.right
             bottom: parent.bottom
         }
-        height: visible? theme.itemSizeMedium: 0
+        height: visible ? theme.itemSizeMedium : 0
         visible: parent.height === screen.height
 
         Row {
             id: toolsrow
             anchors.fill: parent
-            spacing: (width - (backIcon.width*5))/4
+            spacing: (width - (backIcon.width * 5)) / 4
 
             IconButton {
                 id:backIcon
                 icon.source: "image://theme/icon-m-back"
-                enabled: true // TODO webContent.back.enabled
+                enabled: webEngine.canGoBack
 
                 onClicked: {
-                    webContent.child().goBack()
+                    webEngine.goBack()
                 }
             }
 
             IconButton {
                 icon.source: "image://theme/icon-m-favorite"
-                enabled: false
+                enabled: true
                 onClicked: {
-                    ignoreStoreUrl = true
+                    // ignoreStoreUrl = true
                 }
             }
 
             IconButton {
                 icon.source: "image://theme/icon-m-tab"
-                enabled: true // TODO webContent.back.enabled
 
                 onClicked:  {
-                    console.log("Other clicked")
-                    // TODO grab widget
-                    /*var screenPath = (window.screenRotation == 0) ? BrowserTab.screenCapture(0,0,webContent.width, webContent.height) :
-                                                                    BrowserTab.screenCapture(0,0,webContent.height, webContent.width);  */
-                    var screenPath = ""
+                    var screenPath = (window.screenRotation == 0) ? BrowserTab.screenCapture(0,0,webContent.width, webContent.height) :
+                                                                    BrowserTab.screenCapture(0,0,webContent.height, webContent.width)
                     tabModel.set(currentTab, {"thumbPath" : screenPath, "url" : browserPage.url})
                     var component = Qt.createComponent("ControlPage.qml");
                     if (component.status === Component.Ready) {
-                        var sendUrl = (browserPage.url != "about:blank" || browserPage.url != Parameters.initialPage()) ? browserPage.url : ""
+                        var sendUrl = (browserPage.url != "about:blank" || browserPage.url !== Parameters.initialPage()) ? browserPage.url : ""
                         pageStack.push(component, {historyModel: historyModel, url: sendUrl}, true);
                     } else {
                         console.log("Error loading component:", component.errorString());
@@ -135,31 +132,31 @@ Page {
                 icon.source: "image://theme/icon-m-refresh"
 
                 onClicked: {
-                    webContent.child().reload()
+                    webEngine.reload()
                 }
             }
 
             IconButton {
                 id: right
                 icon.source: "image://theme/icon-m-forward"
-                enabled: true // webContent.forward.enabled
+                enabled: webEngine.canGoForward
                 onClicked: {
-                    webContent.child().goForward()
+                    webEngine.goForward()
                 }
             }
         }
     }
 
     onUrlChanged: {
-        if(webContent.child().url !== url) {
-            webContent.child().load(url)
+        if(!webEngine || webEngine.url == null) {
+            console.log("No webengine")
+        }
+        else if(webEngine.url !== url) {
+            webEngine.load(url)
         }
     }
 
     Component.onCompleted: {
-        console.log("Component completed")
         History.loadModel(historyModel)
     }
 }
-
-

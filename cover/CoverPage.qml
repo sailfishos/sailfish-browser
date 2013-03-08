@@ -8,14 +8,19 @@
 import QtQuick 1.1
 import Sailfish.Silica 1.0
 
-Rectangle {
+CoverBackground {
     anchors.fill: parent
-    color: "black"
-    
+
+    CoverPlaceholder {
+        text: "Browser"
+        icon.source: 'image://theme/icon-launcher-browser'
+    }
+
     Label {
         id: label
         anchors.centerIn: parent
         text: "Browser"
+        color: theme.secondaryColor
     }
 }
 

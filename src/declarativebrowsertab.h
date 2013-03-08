@@ -5,7 +5,6 @@
 **
 ****************************************************************************/
 
-
 #ifndef DECLARATIVEBROWSERTAB_H
 #define DECLARATIVEBROWSERTAB_H
 
@@ -22,11 +21,6 @@ public:
 
     Q_INVOKABLE QString screenCapture(int x, int y, int width, int height);
     
-signals:
-    
-public slots:
-
-
 private:
     QDeclarativeView * m_view;
     QStringList paths;

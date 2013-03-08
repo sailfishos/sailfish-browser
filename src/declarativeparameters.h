@@ -1,3 +1,9 @@
+/****************************************************************************
+**
+** Copyright (C) 2013 Jolla Ltd.
+** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jollamobile.com>
+**
+****************************************************************************/
 #ifndef DECLARATIVEPARAMETERS_H
 #define DECLARATIVEPARAMETERS_H
 
@@ -21,12 +27,8 @@ public:
 signals:
     void homePageChanged();
     
-public slots:
-
 private:
     QString m_homePage;
-    QStringList m_arguments;
-    
+    QStringList m_arguments;  
 };
-
 #endif // DECLARATIVEPARAMETERS_H

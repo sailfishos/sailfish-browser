@@ -5,7 +5,6 @@
 **
 ****************************************************************************/
 
-
 import QtQuick 1.1
 import Sailfish.Silica 1.0
 
@@ -40,7 +39,7 @@ Page {
                 onClicked: {
                     browserPage.url = url
                     browserPage.currentTab = index
-                    window.pageStack.pop(browserPage)
+                    window.pageStack.pop(browserPage, true)
                 }
             }
         }
