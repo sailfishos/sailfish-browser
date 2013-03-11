@@ -8,13 +8,15 @@
 import QtQuick 1.1
 import Sailfish.Silica 1.0
 
-Page {
+Dialog {
     id: page
 
     property alias historyModel: historyList.model
     property Item contextMenu
     property Item urlField
     property string url
+
+    acceptDestination: TabPage {}
 
     Component {
         id: historyContextMenuComponent
@@ -39,8 +41,8 @@ Page {
         header: Column {
             width: parent.width
 
-            PageHeader {
-                title: "New Tab"
+            DialogHeader {
+                acceptText: "All Tabs"
             }
 
             Item {
@@ -48,7 +50,7 @@ Page {
                 width: parent.width
                 Image {
                     source: "image://theme/icon-m-region"
-                    width: urlField.height/2
+                    width: urlField.height / 2
                     height: width
                     anchors {
                         top: urlField.top; topMargin: theme.paddingSmall
@@ -94,7 +96,7 @@ Page {
                 }
                 Image {
                     source: "image://theme/icon-m-reset"
-                    width: urlField.height/2
+                    width: urlField.height / 2
                     height: width
 
                     anchors {
@@ -103,7 +105,7 @@ Page {
                     }
                     MouseArea {
                         anchors.fill: parent
-                        onClicked: urlField.text=""
+                        onClicked: urlField.text = ""
                     }
                 }
             }
@@ -111,27 +113,14 @@ Page {
 
         PullDownMenu {
             MenuItem {
-                text: "Tabs"
-                onClicked:  {
-                    var component = Qt.createComponent("TabPage.qml");
-                    if (component.status === Component.Ready) {
-                        pageStack.push(component, {}, false);
-                    } else {
-                        console.log("Error loading component:", component.errorString());
-                    }
-                }
-            }
-            MenuItem {
                 text: "New tab"
-                onClicked: {
-                    browserPage.newTab()
-                }
+                onClicked: browserPage.newTab()
             }
         }
 
         delegate: Item {
             id: historyItem
-            property bool menuOpen: contextMenu!=null && contextMenu.parent == historyItem
+            property bool menuOpen: contextMenu != null && contextMenu.parent == historyItem
 
             width: page.width
             height: menuOpen ?  historyRow.height + contextMenu.height : historyRow.height

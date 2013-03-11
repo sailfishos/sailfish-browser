@@ -11,35 +11,45 @@ import Sailfish.Silica 1.0
 Page {
     SilicaGridView {
         id: grid
-        header: PageHeader { title: "Tabs" }
-        cellWidth: page.width / 2
-        cellHeight: page.height / 2
         anchors.fill: parent
+        header: PageHeader {
+            title: "Tabs"
+        }
+        cellWidth: page.width / 2
+        cellHeight: cellWidth
         model: browserPage.tabs
-        delegate: Image {
-            asynchronous: true
-            source: thumbPath
-            fillMode: Image.PreserveAspectCrop
 
-            transform: [Rotation {
-                    origin.x: 0
-                    origin.y: 0
+        delegate: Item {
+            width: grid.cellWidth
+            height: width
+
+            Image {
+                anchors {
+                    margins: theme.paddingMedium
+                    fill: parent
+                }
+                asynchronous: true
+                source: thumbPath
+                fillMode: Image.PreserveAspectCrop
+
+                transform: Rotation {
+                    origin.x: width / 2
+                    origin.y: width / 2
                     angle: window.screenRotation
-                }, Translate {
-                    x: window.screenRotation!==0 ? grid.cellWidth : 0
-                }]
+                }
 
-            sourceSize {
-                width:  window.screenRotation!==0 ? grid.cellHeight : grid.cellWidth
-                height: window.screenRotation!==0 ? grid.cellWidth : grid.cellHeight
-            }
+                sourceSize {
+                    width: grid.cellWidth - 2 * theme.paddingMedium
+                    height: width
+                }
 
-            MouseArea {
-                anchors.fill: parent
-                onClicked: {
-                    browserPage.url = url
-                    browserPage.currentTab = index
-                    window.pageStack.pop(browserPage, true)
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {
+                        browserPage.url = url
+                        browserPage.currentTab = index
+                        window.pageStack.pop(browserPage, true)
+                    }
                 }
             }
         }

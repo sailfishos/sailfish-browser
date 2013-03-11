@@ -23,7 +23,7 @@ Page {
 
     function newTab() {
         tabModel.append({"thumbPath": "", "url": ""})
-        currentTab = tabModel.count -1
+        currentTab = tabModel.count - 1
     }
 
     ListModel {
@@ -37,14 +37,11 @@ Page {
 
     QmlMozView {
         id: webContent
-
-        focus: true
-
         anchors {
             top: parent.top
             left: parent.left
         }
-
+        focus: true
         width: browserPage.width
 
         // No resizes while page is not active
@@ -61,7 +58,6 @@ Page {
                     browserPage.url = historyModel.get(0).url
                 }
             }
-
             onUrlChanged: {
                 var urlStr = webEngine.url.toString()
                 if(urlStr !== "about:blank" ) {
@@ -92,32 +88,26 @@ Page {
         Row {
             id: toolsrow
             anchors.fill: parent
+            // 5 icons, 4 spaces between
             spacing: (width - (backIcon.width * 5)) / 4
 
             IconButton {
                 id:backIcon
                 icon.source: "image://theme/icon-m-back"
                 enabled: webEngine.canGoBack
-
-                onClicked: {
-                    webEngine.goBack()
-                }
+                onClicked: webEngine.goBack()
             }
 
             IconButton {
                 icon.source: "image://theme/icon-m-favorite"
                 enabled: true
-                onClicked: {
-                    // ignoreStoreUrl = true
-                }
             }
 
             IconButton {
                 icon.source: "image://theme/icon-m-tab"
 
                 onClicked:  {
-                    var screenPath = (window.screenRotation == 0) ? BrowserTab.screenCapture(0,0,webContent.width, webContent.height) :
-                                                                    BrowserTab.screenCapture(0,0,webContent.height, webContent.width)
+                    var screenPath = BrowserTab.screenCapture(0, 0, webContent.width, webContent.width)
                     tabModel.set(currentTab, {"thumbPath" : screenPath, "url" : browserPage.url})
                     var component = Qt.createComponent("ControlPage.qml");
                     if (component.status === Component.Ready) {
@@ -130,19 +120,14 @@ Page {
             }
             IconButton {
                 icon.source: "image://theme/icon-m-refresh"
-
-                onClicked: {
-                    webEngine.reload()
-                }
+                onClicked: webEngine.reload()
             }
 
             IconButton {
                 id: right
                 icon.source: "image://theme/icon-m-forward"
                 enabled: webEngine.canGoForward
-                onClicked: {
-                    webEngine.goForward()
-                }
+                onClicked: webEngine.goForward()
             }
         }
     }
