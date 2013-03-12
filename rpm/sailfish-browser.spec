@@ -6,6 +6,7 @@ Release:    1
 Group:      System/Applications
 License:    Prop
 Source0:    %{name}-%{version}.tar.bz2
+BuildRequires:  pkgconfig(qtembedwidget)
 
 %description
 Sailfish Web Browser
