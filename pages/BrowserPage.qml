@@ -17,13 +17,15 @@ Page {
 
     property alias tabs: tabModel
     property bool ignoreStoreUrl: true
-    property int currentTab: 0
+    property int currentTabIndex: 0
     property string url
     property variant webEngine: webContent.child()
 
+    property variant _controlPageComponent
+
     function newTab() {
         tabModel.append({"thumbPath": "", "url": ""})
-        currentTab = tabModel.count - 1
+        currentTabIndex = tabModel.count - 1
     }
 
     ListModel {
@@ -68,7 +70,7 @@ Page {
                 if (!webEngine.loading && url !="about:blank" &&
                     (historyModel.count == 0 || url !== historyModel.get(0).url)) {
                     History.addRow(url,webEngine.title, "image://theme/icon-m-region")
-                    historyModel.insert(0,{"title": webEngine.title, "url": url, "icon": "image://theme/icon-m-region"} )
+                    historyModel.insert(0, {"title": webEngine.title, "url": url, "icon": "image://theme/icon-m-region"} )
                 }
             }
         }
@@ -108,14 +110,18 @@ Page {
 
                 onClicked:  {
                     var screenPath = BrowserTab.screenCapture(0, 0, webContent.width, webContent.width)
-                    tabModel.set(currentTab, {"thumbPath" : screenPath, "url" : browserPage.url})
-                    var component = Qt.createComponent("ControlPage.qml");
-                    if (component.status === Component.Ready) {
-                        var sendUrl = (browserPage.url != "about:blank" || browserPage.url !== Parameters.initialPage()) ? browserPage.url : ""
-                        pageStack.push(component, {historyModel: historyModel, url: sendUrl}, true);
-                    } else {
-                        console.log("Error loading component:", component.errorString());
+                    tabModel.set(currentTabIndex, {"thumbPath" : screenPath, "url" : browserPage.url})
+
+                    if (!_controlPageComponent) {
+                        _controlPageComponent = Qt.createComponent("ControlPage.qml")
+                        if (_controlPageComponent.status !== Component.Ready) {
+                            console.log("Error loading component:", component.errorString());
+                            _controlPageComponent = undefined
+                            return
+                        }
                     }
+                    var sendUrl = (browserPage.url != "about:blank" || browserPage.url !== Parameters.initialPage()) ? browserPage.url : ""
+                    pageStack.push(_controlPageComponent, {historyModel: historyModel, url: sendUrl}, true);
                 }
             }
             IconButton {

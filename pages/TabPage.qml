@@ -47,7 +47,7 @@ Page {
                     anchors.fill: parent
                     onClicked: {
                         browserPage.url = url
-                        browserPage.currentTab = index
+                        browserPage.currentTabIndex = index
                         window.pageStack.pop(browserPage, true)
                     }
                 }

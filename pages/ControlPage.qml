@@ -43,6 +43,7 @@ Dialog {
 
             DialogHeader {
                 acceptText: "All Tabs"
+                dialog: page
             }
 
             Item {
