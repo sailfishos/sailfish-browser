@@ -53,6 +53,6 @@ Page {
                 }
             }
         }
-        ScrollDecorator {}
+        VerticalScrollDecorator {}
     }
 }

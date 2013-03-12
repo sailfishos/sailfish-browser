@@ -50,6 +50,7 @@ Dialog {
                 height: urlField.height
                 width: parent.width
                 Image {
+                    id: earthIcon
                     source: "image://theme/icon-m-region"
                     width: urlField.height / 2
                     height: width
@@ -64,10 +65,8 @@ Dialog {
                     id:urlField
 
                     anchors {
-                        left: parent.left
-                        leftMargin: theme.paddingLarge + theme.paddingMedium
-                        right: parent.right
-                        rightMargin:theme.paddingLarge
+                        left: earthIcon.right; leftMargin: theme.paddingSmall - theme.paddingLarge
+                        right: clearIcon.left; rightMargin: theme.paddingSmall - theme.paddingLarge
                     }
                     text: url
                     placeholderText: "Search"
@@ -96,6 +95,7 @@ Dialog {
                     }
                 }
                 Image {
+                    id: clearIcon
                     source: "image://theme/icon-m-reset"
                     width: urlField.height / 2
                     height: width
@@ -129,40 +129,34 @@ Dialog {
             BackgroundItem {
                 id: historyRow
                 width: page.width
-                height: theme.itemSizeMedium
 
                 Image {
                     id: iconImage
                     source: icon
                     anchors.top: parent.top
                 }
-                Label {
-                    text: title
+
+                Column {
+                    width: parent.width - iconImage.width - anchors.leftMargin
+
                     anchors {
-                        top: parent.top
-                        left: iconImage.right
-                        leftMargin: theme.paddingSmall
-                        right: parent.right
+                           left: iconImage.right
+                           leftMargin: theme.paddingMedium
+                           verticalCenter: iconImage.verticalCenter
                     }
-                    height: parent.height / 2
-                    horizontalAlignment: Text.AlignLeft
-                    verticalAlignment: Text.AlignBottom
-                    truncationMode: TruncationMode.Fade
-                }
-                Label {
-                    text: url
-                    anchors {
-                        bottom: parent.bottom
-                        left: iconImage.right
-                        leftMargin: theme.paddingSmall
-                        right: parent.right
+
+                    Label {
+                        text: title
+                        truncationMode: TruncationMode.Fade
+                        width: parent.width
                     }
-                    height: parent.height / 2
-                    font.pixelSize: theme.fontSizeSmall
-                    color: theme.secondaryColor
-                    horizontalAlignment: Text.AlignLeft
-                    verticalAlignment: Text.AlignTop
-                    truncationMode: TruncationMode.Fade
+                    Label {
+                        text: url
+                        width: parent.width
+                        font.pixelSize: theme.fontSizeSmall
+                        color: theme.secondaryColor
+                        truncationMode: TruncationMode.Fade
+                    }
                 }
 
                 onClicked: {

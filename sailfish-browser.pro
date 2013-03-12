@@ -2,7 +2,6 @@ QT += opengl declarative
 # The name of your app
 TARGET = sailfish-browser
 
-
 # Include qtmozembed
 CONFIG += link_pkgconfig
 isEmpty(QTEMBED_LIB) {
@@ -16,8 +15,6 @@ isEmpty(DEFAULT_COMPONENT_PATH) {
 } else {
   DEFINES += DEFAULT_COMPONENTS_PATH=\"\\\"$$DEFAULT_COMPONENT_PATH\\\"\"
 }
-
-
 
 # C++ sources
 SOURCES += \
@@ -42,4 +39,3 @@ include(sailfishapplication/sailfishapplication.pri)
 OTHER_FILES = rpm/sailfish-browser.yaml \
               pages/BrowserPage.qml \
               rpm/sailfish-browser.spec
-
