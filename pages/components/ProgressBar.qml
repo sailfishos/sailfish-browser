@@ -27,7 +27,6 @@ Item {
         height: parent.height
         width: progressBar.progress * parent.width
         color: theme.highlightBackgroundColor
-        opacity: 0.3
     }
 
     Rectangle {
@@ -37,7 +36,9 @@ Item {
             right: parent.right
         }
         height: parent.height
-        opacity: 0.15
+
+        // TODO there should be some transparency, should reveal background image
+        // not the toolbar underneath
         color: "black"
     }
 
@@ -54,11 +55,13 @@ Item {
             width: parent.width
             color: theme.highlightColor
             font.pixelSize: theme.fontSizeSmall
+            horizontalAlignment: Text.AlignHCenter
             truncationMode: TruncationMode.Fade
         }
         Label {
             //% "Tap to cancel"
             text: progressBar.cancelText
+            anchors.horizontalCenter: parent.horizontalCenter
             color: mouseArea.down ? theme.secondaryHighlightColor : theme.secondaryColor
             font.pixelSize: theme.fontSizeExtraSmall
         }

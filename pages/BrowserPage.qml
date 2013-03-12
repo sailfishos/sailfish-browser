@@ -9,6 +9,7 @@
 import QtQuick 1.1
 import Sailfish.Silica 1.0
 import QtMozilla 1.0
+import "components"
 
 import "history.js" as History
 
@@ -67,10 +68,19 @@ Page {
                 }
             }
             onLoadingChanged: {
+                progressBar.opacity = webEngine.loading ? 1.0 : 0.0
+                if(!webEngine.loading)
+                    progressBar.progress = 0
+
                 if (!webEngine.loading && url !="about:blank" &&
                     (historyModel.count == 0 || url !== historyModel.get(0).url)) {
                     History.addRow(url,webEngine.title, "image://theme/icon-m-region")
                     historyModel.insert(0, {"title": webEngine.title, "url": url, "icon": "image://theme/icon-m-region"} )
+                }
+            }
+            onLoadProgressChanged: {
+                if ((webEngine.loadProgress / 100.0) > progressBar.progress) {
+                    progressBar.progress = webEngine.loadProgress / 100.0
                 }
             }
         }
@@ -85,7 +95,7 @@ Page {
             bottom: parent.bottom
         }
         height: visible ? theme.itemSizeMedium : 0
-        visible: parent.height === screen.height
+        visible: (parent.height === screen.height)
 
         Row {
             id: toolsrow
@@ -135,6 +145,17 @@ Page {
                 enabled: webEngine.canGoForward
                 onClicked: webEngine.goForward()
             }
+        }
+    }
+
+    ProgressBar {
+        id:progressBar
+        anchors.fill: tools
+        opacity: 0.0
+        title: url
+
+        onStopped: {
+            webEngine.stop()
         }
     }
 
