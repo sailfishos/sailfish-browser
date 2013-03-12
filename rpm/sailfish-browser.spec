@@ -6,6 +6,8 @@ Release:    1
 Group:      System/Applications
 License:    Prop
 Source0:    %{name}-%{version}.tar.bz2
+BuildRequires:  pkgconfig(QtCore)
+BuildRequires:  pkgconfig(QtGui)
 BuildRequires:  pkgconfig(qtembedwidget)
 
 %description
