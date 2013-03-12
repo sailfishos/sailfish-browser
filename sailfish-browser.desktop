@@ -2,6 +2,6 @@
 Type=Application
 Name=Web Browser
 Icon=icon-launcher-browser
-Exec=invoker --type=j -s /usr/bin/sailfish-browser %U
+Exec=/usr/bin/sailfish-browser %U
 Comment=Sailfish UI application
 MimeType=text/html;x-maemo-urischeme/http;x-maemo-urischeme/https;

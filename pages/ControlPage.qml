@@ -5,26 +5,18 @@
 **
 ****************************************************************************/
 
-
 import QtQuick 1.1
 import Sailfish.Silica 1.0
 
-Page {
+Dialog {
     id: page
 
-    property Item contextMenu
     property alias historyModel: historyList.model
+    property Item contextMenu
+    property Item urlField
     property string url
 
-    function urlEntered() {
-        urlField.closeSoftwareInputPanel()
-        var url = urlField.text
-        if (url.indexOf("http://") < 0) {
-            url = "http://" + url
-        }
-        browserPage.url = url
-        pageStack.pop(undefined, true)
-    }
+    acceptDestination: TabPage {}
 
     Component {
         id: historyContextMenuComponent
@@ -43,42 +35,93 @@ Page {
 
     SilicaListView {
         id: historyList
-        clip : true
 
-        anchors {
-            top: parent.top
-            bottom: urlField.top
-            left: parent.left
-            right: parent.right
-        }
+        anchors.fill: parent
 
-        header: PageHeader {
-            title: "History"
+        header: Column {
+            width: parent.width
+
+            DialogHeader {
+                acceptText: "All Tabs"
+                dialog: page
+            }
+
+            Item {
+                height: urlField.height
+                width: parent.width
+                Image {
+                    id: earthIcon
+                    source: "image://theme/icon-m-region"
+                    width: urlField.height / 2
+                    height: width
+                    anchors {
+                        top: urlField.top; topMargin: theme.paddingSmall
+                        left: parent.left; leftMargin: theme.paddingMedium
+                    }
+                    smooth: true
+                }
+
+                TextField {
+                    id:urlField
+
+                    anchors {
+                        left: earthIcon.right; leftMargin: theme.paddingSmall - theme.paddingLarge
+                        right: clearIcon.left; rightMargin: theme.paddingSmall - theme.paddingLarge
+                    }
+                    text: url
+                    placeholderText: "Search"
+                    color: theme.primaryColor
+
+                    function urlEntered() {
+                        urlField.closeSoftwareInputPanel()
+                        var url = urlField.text
+                        if (url.indexOf("http://") < 0) {
+                            url = "http://" + url
+                        }
+                        browserPage.url = url
+                        pageStack.pop(undefined, true)
+                    }
+
+                    Keys.onEnterPressed: {
+                        urlEntered()
+                    }
+
+                    Keys.onReturnPressed: {
+                        urlEntered()
+                    }
+
+                    Component.onCompleted: {
+                        page.urlField = urlField
+                    }
+                }
+                Image {
+                    id: clearIcon
+                    source: "image://theme/icon-m-reset"
+                    width: urlField.height / 2
+                    height: width
+
+                    anchors {
+                        top: urlField.top; topMargin: theme.paddingSmall
+                        right: parent.right; rightMargin: theme.paddingMedium
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: urlField.text = ""
+                    }
+                }
+            }
         }
 
         PullDownMenu {
             MenuItem {
-                text: "Tabs"
-                onClicked:  {
-                    var component = Qt.createComponent("TabPage.qml");
-                    if (component.status === Component.Ready) {
-                        pageStack.push(component, {}, false);
-                    } else {
-                        console.log("Error loading component:", component.errorString());
-                    }
-                }
-            }
-            MenuItem {
                 text: "New tab"
-                onClicked: {
-                    browserPage.newTab()
-                }
+                onClicked: browserPage.newTab()
             }
         }
 
         delegate: Item {
             id: historyItem
-            property bool menuOpen: contextMenu!=null && contextMenu.parent == historyItem
+            property bool menuOpen: contextMenu != null && contextMenu.parent == historyItem
 
             width: page.width
             height: menuOpen ?  historyRow.height + contextMenu.height : historyRow.height
@@ -86,39 +129,34 @@ Page {
             BackgroundItem {
                 id: historyRow
                 width: page.width
-                height: 80
 
                 Image {
                     id: iconImage
                     source: icon
-                    x: 30
                     anchors.top: parent.top
                 }
-                Label {
-                    text: title
+
+                Column {
+                    width: parent.width - iconImage.width - anchors.leftMargin
+
                     anchors {
-                        top: parent.top
-                        left: iconImage.right
-                        right: parent.right
+                           left: iconImage.right
+                           leftMargin: theme.paddingMedium
+                           verticalCenter: iconImage.verticalCenter
                     }
-                    height: parent.height / 2
-                    horizontalAlignment: Text.AlignLeft
-                    verticalAlignment: Text.AlignBottom
-                    truncationMode: TruncationMode.Fade
-                }
-                Label {
-                    text: url
-                    anchors {
-                        bottom: parent.bottom
-                        left: iconImage.right
-                        right: parent.right
+
+                    Label {
+                        text: title
+                        truncationMode: TruncationMode.Fade
+                        width: parent.width
                     }
-                    height: parent.height / 2
-                    font.pixelSize: theme.fontSizeSmall
-                    color: theme.secondaryColor
-                    horizontalAlignment: Text.AlignCenter
-                    verticalAlignment: Text.AlignTop
-                    truncationMode: TruncationMode.Fade
+                    Label {
+                        text: url
+                        width: parent.width
+                        font.pixelSize: theme.fontSizeSmall
+                        color: theme.secondaryColor
+                        truncationMode: TruncationMode.Fade
+                    }
                 }
 
                 onClicked: {
@@ -133,25 +171,6 @@ Page {
                     contextMenu.show(historyItem)
                 }
             }
-        }
-    }
-
-    TextField {
-        id:urlField
-        anchors {
-            bottom: parent.bottom
-            horizontalCenter: parent.horizontalCenter
-        }
-        text: url
-        width: parent.width - 2 * 30
-        placeholderText: "url"
-
-        Keys.onEnterPressed: {
-            urlEntered()
-        }
-
-        Keys.onReturnPressed: {
-            urlEntered()
         }
     }
 

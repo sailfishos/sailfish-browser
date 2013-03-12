@@ -49,7 +49,6 @@ QDeclarativeView *Sailfish::createView(const QString &file)
     }
     
     view->setSource(QUrl::fromLocalFile(path + file));
-
     return view;
 }
 
@@ -71,5 +70,4 @@ void Sailfish::showView(QDeclarativeView * view) {
         view->showFullScreen();
     }
 }
-
 

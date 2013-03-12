@@ -1,3 +1,10 @@
+/****************************************************************************
+**
+** Copyright (C) 2013 Jolla Ltd.
+** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jollamobile.com>
+**
+****************************************************************************/
+
 #include "declarativeparameters.h"
 #include <QDeclarativeEngine>
 #include <QDeclarativeContext>
@@ -11,15 +18,16 @@ DeclarativeParameters::DeclarativeParameters(QStringList arguments, QDeclarative
 }
 
 
-QString DeclarativeParameters::initialPage() {
-
-    if (m_arguments.count()>1) {
+QString DeclarativeParameters::initialPage()
+{
+    if (m_arguments.count() > 1) {
         return m_arguments.last();
     } else {
         return homePage();
     }
 }
 
-QString DeclarativeParameters::homePage() {
+QString DeclarativeParameters::homePage()
+{
     return m_homePage;
 }

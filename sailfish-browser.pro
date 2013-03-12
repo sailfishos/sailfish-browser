@@ -1,5 +1,20 @@
+QT += opengl declarative
 # The name of your app
 TARGET = sailfish-browser
+
+# Include qtmozembed
+CONFIG += link_pkgconfig
+isEmpty(QTEMBED_LIB) {
+  PKGCONFIG += qtembedwidget x11
+} else {
+  LIBS+=$$QTEMBED_LIB
+}
+
+isEmpty(DEFAULT_COMPONENT_PATH) {
+  DEFINES += DEFAULT_COMPONENTS_PATH=\"\\\"/usr/lib/mozembedlite/\\\"\"
+} else {
+  DEFINES += DEFAULT_COMPONENTS_PATH=\"\\\"$$DEFAULT_COMPONENT_PATH\\\"\"
+}
 
 # C++ sources
 SOURCES += \
@@ -24,4 +39,3 @@ include(sailfishapplication/sailfishapplication.pri)
 OTHER_FILES = rpm/sailfish-browser.yaml \
               pages/BrowserPage.qml \
               rpm/sailfish-browser.spec
-

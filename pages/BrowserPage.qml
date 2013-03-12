@@ -8,7 +8,7 @@
 
 import QtQuick 1.1
 import Sailfish.Silica 1.0
-import QtWebKit 1.1
+import QtMozilla 1.0
 
 import "history.js" as History
 
@@ -16,23 +16,20 @@ Page {
     id: browserPage
 
     property alias tabs: tabModel
-    property alias url: webContent.url
     property bool ignoreStoreUrl: true
-    property int currentTab: 0
+    property int currentTabIndex: 0
+    property string url
+    property variant webEngine: webContent.child()
+
+    property variant _controlPageComponent
 
     function newTab() {
         tabModel.append({"thumbPath": "", "url": ""})
-        currentTab = tabModel.count -1
+        currentTabIndex = tabModel.count - 1
     }
 
     ListModel {
         id: historyModel
-        ListElement {title: "Jolla"; url: "http://www.jolla.com/"; icon: "image://theme/icon-m-region"}
-        ListElement {title: "Sailfish OS"; url: "http://www.sailfishos.org/"; icon: "image://theme/icon-m-region"}
-        ListElement {title: "Mer-project"; url: "http://www.merproject.org/"; icon: "image://theme/icon-m-region"}
-        ListElement {title: "Twitter"; url: "http://www.twitter.com/"; icon: "image://theme/icon-m-region"}
-        ListElement {title: "Google"; url: "http://www.google.com/"; icon: "image://theme/icon-m-region"}
-        ListElement {title: "Facebook"; url: "http://www.facebook.com/"; icon: "image://theme/icon-m-region"}
     }
 
     ListModel {
@@ -40,132 +37,113 @@ Page {
         ListElement {thumbPath: ""; url: ""}
     }
 
-    SilicaFlickable {
-        id:flickable
-        clip: true
-        contentHeight: webContent.height
-        contentWidth: webContent.width
-        interactive: true
-
+    QmlMozView {
+        id: webContent
         anchors {
             top: parent.top
             left: parent.left
-            right: parent.right
-            bottom: tools.top
         }
+        focus: true
+        width: browserPage.width
 
-        // Placeholder while we don't yet have gecko in images
-        WebView {
-            id: webContent
+        // No resizes while page is not active
+        // workaround for engine crashes on resizes while background
+        height: (browserPage.status == PageStatus.Active) ? browserPage.height - tools.height : screen.height - tools.height
 
-            property double maxProgress: 0
+        Connections {
+            target: webEngine
 
-            url: Parameters.initialPage()
-            transformOrigin: Item.TopLeft
-            preferredHeight: browserPage.height - tools.height
-            preferredWidth: browserPage.width
-            opacity: (status == WebView.Loading) ? maxProgress : 1.0
-
-            onLoadFinished: {
-                if (!ignoreStoreUrl
-                        && url !== historyModel.get(historyModel.count-1)
-                        && url !== Parameters.homePage) {
-                    History.addRow(url,webContent.title, "image://theme/icon-m-region")
-                    historyModel.append({"url": url,
-                                            "title": webContent.title,
-                                            "icon:": "image://theme/icon-m-region"})
-                }
-                ignoreStoreUrl = false
-                maxProgress = 0
-            }
-
-            onProgressChanged: {
-                if (status == WebView.Loading) {
-                    if (progress > maxProgress) {
-                        maxProgress = progress
-                    }
+            onViewInitialized: {
+                if(historyModel.count == 0 ) {
+                    browserPage.url = Parameters.initialPage()
+                } else {
+                    browserPage.url = historyModel.get(0).url
                 }
             }
-
-            Behavior on opacity {
-                NumberAnimation {
-                    id: bouncebehavior
-                    easing.type: Easing.InOutQuad
-                    duration: 300
+            onUrlChanged: {
+                var urlStr = webEngine.url.toString()
+                if(urlStr !== "about:blank" ) {
+                    browserPage.url = webEngine.url // To ignore initial "about:blank"
+                }
+            }
+            onLoadingChanged: {
+                if (!webEngine.loading && url !="about:blank" &&
+                    (historyModel.count == 0 || url !== historyModel.get(0).url)) {
+                    History.addRow(url,webEngine.title, "image://theme/icon-m-region")
+                    historyModel.insert(0, {"title": webEngine.title, "url": url, "icon": "image://theme/icon-m-region"} )
                 }
             }
         }
     }
 
-    Row {
+    Rectangle {
         id: tools
+        color:"black"
         anchors {
-            bottom: browserPage.bottom
-            left: browserPage.left
-            right: browserPage.right
+            left: parent.left
+            right: parent.right
+            bottom: parent.bottom
         }
+        height: visible ? theme.itemSizeMedium : 0
+        visible: parent.height === screen.height
 
-        IconButton {
-            id:backIcon
-            icon.source: "image://theme/icon-l-left"
-            enabled: webContent.back.enabled
+        Row {
+            id: toolsrow
+            anchors.fill: parent
+            // 5 icons, 4 spaces between
+            spacing: (width - (backIcon.width * 5)) / 4
 
-            onClicked: {
-                ignoreStoreUrl = true
-                webContent.back.trigger()
+            IconButton {
+                id:backIcon
+                icon.source: "image://theme/icon-m-back"
+                enabled: webEngine.canGoBack
+                onClicked: webEngine.goBack()
             }
-        }
 
-        Label {
-            id: title
-            text: webContent.status == WebView.Loading ? webContent.statusText : webContent.title
-            width: browserPage.width - (backIcon.width + right.width)
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-            anchors.verticalCenter: parent.verticalCenter
-            truncationMode: TruncationMode.Fade
+            IconButton {
+                icon.source: "image://theme/icon-m-favorite"
+                enabled: true
+            }
 
-            MouseArea {
-                anchors.fill: parent
+            IconButton {
+                icon.source: "image://theme/icon-m-tab"
+
                 onClicked:  {
-                    var screenPath = (window.screenRotation == 0) ? BrowserTab.screenCapture(0,0,flickable.width, flickable.height) :
-                                                                    BrowserTab.screenCapture(0,0,flickable.height, flickable.width);
+                    var screenPath = BrowserTab.screenCapture(0, 0, webContent.width, webContent.width)
+                    tabModel.set(currentTabIndex, {"thumbPath" : screenPath, "url" : browserPage.url})
 
-                    tabModel.set(currentTab, {"thumbPath" : screenPath, "url" : webContent.url})
-                    var component = Qt.createComponent("ControlPage.qml");
-                    if (component.status === Component.Ready) {
-                        var sendUrl = (webContent.url != Parameters.homePage) ? webContent.url : ""
-                        pageStack.push(component, {historyModel: historyModel, url: sendUrl}, true);
-                    } else {
-                        console.log("Error loading component:", component.errorString());
+                    if (!_controlPageComponent) {
+                        _controlPageComponent = Qt.createComponent("ControlPage.qml")
+                        if (_controlPageComponent.status !== Component.Ready) {
+                            console.log("Error loading component:", component.errorString());
+                            _controlPageComponent = undefined
+                            return
+                        }
                     }
+                    var sendUrl = (browserPage.url != "about:blank" || browserPage.url !== Parameters.initialPage()) ? browserPage.url : ""
+                    pageStack.push(_controlPageComponent, {historyModel: historyModel, url: sendUrl}, true);
                 }
             }
-        }
-
-        Slider {
-            anchors {
-                bottom: tools.bottom
-                horizontalCenter: tools.horizontalCenter
+            IconButton {
+                icon.source: "image://theme/icon-m-refresh"
+                onClicked: webEngine.reload()
             }
-            minimumValue: 0
-            maximumValue: 1
-            width: title.width
-            height: 25
-            enabled: false
-            handleVisible: false
-            visible: webContent.status == WebView.Loading
-            value: visible ? webContent.progress : 0
-        }
 
-        IconButton {
-            id: right
-            icon.source: "image://theme/icon-l-right"
-            enabled: webContent.forward.enabled
-            onClicked: {
-                ignoreStoreUrl = true
-                webContent.forward.trigger()
+            IconButton {
+                id: right
+                icon.source: "image://theme/icon-m-forward"
+                enabled: webEngine.canGoForward
+                onClicked: webEngine.goForward()
             }
+        }
+    }
+
+    onUrlChanged: {
+        if(!webEngine || webEngine.url == null) {
+            console.log("No webengine")
+        }
+        else if(webEngine.url !== url) {
+            webEngine.load(url)
         }
     }
 
@@ -173,5 +151,3 @@ Page {
         History.loadModel(historyModel)
     }
 }
-
-

@@ -7,55 +7,43 @@
 
 #include <QApplication>
 #include <QDeclarativeView>
+#include <QGLWidget>
+#include <QDeclarativeContext>
 #include <QInputContext>
 #include <QWidget>
+
+#include "qdeclarativemozview.h"
+#include "qgraphicsmozview.h"
+#include "qmozcontext.h"
 
 #include "sailfishapplication.h"
 #include "src/declarativebrowsertab.h"
 #include "src/declarativeparameters.h"
 
-// Hack to open & close VKB with WebView
-// can be removed once we are with gecko
-class EventFilter : public QObject
-{
-protected:
-    bool eventFilter(QObject *obj, QEvent *event) {
-        QInputContext *ic = qApp->inputContext();
-        if (ic) {
-            if (ic->focusWidget() == 0 && prevFocusWidget) {
-                QEvent closeSIPEvent(QEvent::CloseSoftwareInputPanel);
-                ic->filterEvent(&closeSIPEvent);
-            } else if (prevFocusWidget == 0 && ic->focusWidget()) {
-                QEvent openSIPEvent(QEvent::RequestSoftwareInputPanel);
-                ic->filterEvent(&openSIPEvent);
-            }
-            prevFocusWidget = ic->focusWidget();
-        }
-        return QObject::eventFilter(obj,event);
-    }
-
-private:
-    QWidget *prevFocusWidget;
-};
-
-
 Q_DECL_EXPORT int main(int argc, char *argv[])
 {
-    QScopedPointer<QApplication> app(Sailfish::createApplication(argc, argv));
-    QScopedPointer<QDeclarativeView> view(Sailfish::createView("browser.qml"));
+    QApplication::setAttribute(Qt::AA_X11InitThreads, true);
 
+    QScopedPointer<QApplication> app(Sailfish::createApplication(argc, argv));
+    app->setQuitOnLastWindowClosed(true);
+
+    qmlRegisterType<QmlMozContext>("QtMozilla", 1, 0, "QmlMozContext");
+    qmlRegisterType<QGraphicsMozView>("QtMozilla", 1, 0, "QGraphicsMozView");
+    qmlRegisterType<QDeclarativeMozView>("QtMozilla", 1, 0, "QmlMozView");
+
+    QString componentPath(DEFAULT_COMPONENTS_PATH);
+    QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/EmbedLiteBinComponents.manifest"));
+    QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/EmbedLiteJSComponents.manifest"));
+    QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/EmbedLiteJSScripts.manifest"));
+
+    QScopedPointer<QDeclarativeView> view(Sailfish::createView("browser.qml"));
     app->setApplicationName(QString("sailfish-browser"));
     app->setOrganizationName(QString("org.sailfishos"));
 
     DeclarativeBrowserTab * tab = new DeclarativeBrowserTab(view.data(), app.data());
     DeclarativeParameters * parameters = new DeclarativeParameters(app->arguments(), view.data(), app.data());
 
+    view->setViewport(new QGLWidget);
     Sailfish::showView(view.data());
-
-    EventFilter ef;
-    view->installEventFilter(&ef);
-    
     return app->exec();
 }
-
-
