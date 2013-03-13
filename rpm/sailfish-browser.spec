@@ -9,6 +9,8 @@ Source0:    %{name}-%{version}.tar.bz2
 BuildRequires:  pkgconfig(QtCore)
 BuildRequires:  pkgconfig(QtGui)
 BuildRequires:  pkgconfig(qtembedwidget)
+BuildRequires:  pkgconfig(x11)
+BuildRequires:  pkgconfig(QtOpenGL)
 
 %description
 Sailfish Web Browser
