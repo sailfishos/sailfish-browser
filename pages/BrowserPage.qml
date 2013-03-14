@@ -117,7 +117,7 @@ Page {
             }
 
             IconButton {
-                icon.source: favouriteModel !== undefined && favouriteModel.contains(url) ? "image://theme/icon-m-favorite-selected" : "image://theme/icon-m-favorite"
+                icon.source: favouriteModel.count > 0 && favouriteModel.contains(url) ? "image://theme/icon-m-favorite-selected" : "image://theme/icon-m-favorite"
                 enabled: true
                 onClicked: favouriteModel.addBookmark(url, "bookmark " + url)
             }

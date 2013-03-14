@@ -18,6 +18,8 @@ public:
 class DeclarativeBookmarkModel : public QAbstractListModel
 {
     Q_OBJECT
+
+    Q_PROPERTY(int count READ rowCount NOTIFY countChanged)
 public:
     DeclarativeBookmarkModel(QObject *parent = 0);
     
@@ -32,6 +34,9 @@ public:
 
     int rowCount(const QModelIndex & parent = QModelIndex()) const;
     QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;
+
+signals:
+    void countChanged();
 
 private:
     QMultiMap<QString, int> bookmarks;

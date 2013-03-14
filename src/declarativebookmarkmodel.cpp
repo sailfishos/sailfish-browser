@@ -15,8 +15,13 @@ DeclarativeBookmarkModel::DeclarativeBookmarkModel(QObject *parent) :
 // TODO cleanup
 
 void DeclarativeBookmarkModel::addBookmark(const QString& url, const QString& title) {
+    beginInsertRows(QModelIndex(), rowCount(), rowCount());
+
     titles.append(new Bookmark(url, title, ""));
     bookmarks.insert(url, titles.count()-1);
+    endInsertRows();
+
+    emit countChanged();
 }
 
 int DeclarativeBookmarkModel::rowCount(const QModelIndex & parent) const {
