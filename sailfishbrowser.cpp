@@ -19,6 +19,7 @@
 #include "sailfishapplication.h"
 #include "src/declarativebrowsertab.h"
 #include "src/declarativeparameters.h"
+#include "src/declarativebookmarkmodel.h"
 
 Q_DECL_EXPORT int main(int argc, char *argv[])
 {
@@ -30,6 +31,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     qmlRegisterType<QmlMozContext>("QtMozilla", 1, 0, "QmlMozContext");
     qmlRegisterType<QGraphicsMozView>("QtMozilla", 1, 0, "QGraphicsMozView");
     qmlRegisterType<QDeclarativeMozView>("QtMozilla", 1, 0, "QmlMozView");
+    qmlRegisterType<DeclarativeBookmarkModel>("Sailfish.Browser", 1, 0, "BookmarkModel");
 
     QString componentPath(DEFAULT_COMPONENTS_PATH);
     QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/EmbedLiteBinComponents.manifest"));

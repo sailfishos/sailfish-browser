@@ -9,50 +9,73 @@ import QtQuick 1.1
 import Sailfish.Silica 1.0
 
 Page {
-    SilicaGridView {
-        id: grid
+    id: page
+
+    SilicaListView {
+        id: list
         anchors.fill: parent
-        header: PageHeader {
-            title: "Tabs"
-        }
-        cellWidth: page.width / 2
-        cellHeight: cellWidth
-        model: browserPage.tabs
+        header: Column {
+            width: list.width
 
-        delegate: Item {
-            width: grid.cellWidth
-            height: width
+            PageHeader {
+                title: "Tabs"
+            }
 
-            Image {
-                anchors {
-                    margins: theme.paddingMedium
-                    fill: parent
-                }
-                asynchronous: true
-                source: thumbPath
-                fillMode: Image.PreserveAspectCrop
+            Grid {
+                columns: 2
+                rows: Math.ceil(browserPage.tabs.count / 2)
+                spacing: theme.paddingMedium
+                anchors.leftMargin: theme.paddingMedium
+                anchors.left: parent.left
 
-                transform: Rotation {
-                    origin.x: width / 2
-                    origin.y: width / 2
-                    angle: window.screenRotation
-                }
-
-                sourceSize {
-                    width: grid.cellWidth - 2 * theme.paddingMedium
-                    height: width
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: {
-                        browserPage.url = url
-                        browserPage.currentTabIndex = index
-                        window.pageStack.pop(browserPage, true)
+                Repeater {
+                    model: browserPage.tabs
+                    Image {
+                        source: thumbPath
+                        fillMode: Image.PreserveAspectCrop
+                        transform: Rotation {
+                            origin.x: width / 2
+                            origin.y: width / 2
+                            angle: window.screenRotation
+                        }
+                        sourceSize {
+                            width: list.width / 2 - 2 * theme.paddingMedium
+                            height: width
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                browserPage.url = url
+                                browserPage.currentTabIndex = index
+                                window.pageStack.pop(browserPage, true)
+                            }
+                        }
                     }
                 }
             }
         }
+
+        model: browserPage.favourites
+
+        delegate: BackgroundItem {
+            width: parent.width
+            anchors.topMargin: theme.paddingLarge
+            anchors.left: parent.left
+
+            Label {
+                anchors.margins: theme.paddingMedium
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                text: title
+            }
+
+            onClicked: {
+                browserPage.url = url
+                browserPage.currentTabIndex = index
+                window.pageStack.pop(browserPage, true)
+            }
+        }
+
         VerticalScrollDecorator {}
     }
 }

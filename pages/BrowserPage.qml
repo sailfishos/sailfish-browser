@@ -9,6 +9,7 @@
 import QtQuick 1.1
 import Sailfish.Silica 1.0
 import QtMozilla 1.0
+import Sailfish.Browser 1.0
 import "components"
 
 import "history.js" as History
@@ -17,6 +18,7 @@ Page {
     id: browserPage
 
     property alias tabs: tabModel
+    property alias favourites: favouriteModel
     property bool ignoreStoreUrl: true
     property int currentTabIndex: 0
     property string url
@@ -31,6 +33,10 @@ Page {
 
     ListModel {
         id: historyModel
+    }
+
+    BookmarkModel {
+        id: favouriteModel
     }
 
     ListModel {
@@ -111,8 +117,9 @@ Page {
             }
 
             IconButton {
-                icon.source: "image://theme/icon-m-favorite"
+                icon.source: favouriteModel !== undefined && favouriteModel.contains(url) ? "image://theme/icon-m-favorite-selected" : "image://theme/icon-m-favorite"
                 enabled: true
+                onClicked: favouriteModel.addBookmark(url, "bookmark " + url)
             }
 
             IconButton {

@@ -24,12 +24,14 @@ isEmpty(DEFAULT_COMPONENT_PATH) {
 SOURCES += \
     src/declarativebrowsertab.cpp \
     src/declarativeparameters.cpp \
-    sailfishbrowser.cpp
+    sailfishbrowser.cpp \
+    src/declarativebookmarkmodel.cpp
 
 # C++ headers
 HEADERS += \
     src/declarativebrowsertab.h \
-    src/declarativeparameters.h
+    src/declarativeparameters.h \
+    src/declarativebookmarkmodel.h
 
 # QML files and folders
 qml.files = *.qml pages cover browser.qml
@@ -40,6 +42,5 @@ desktop.files = sailfish-browser.desktop
 # Please do not modify the following line.
 include(sailfishapplication/sailfishapplication.pri)
 
-OTHER_FILES = rpm/sailfish-browser.yaml \
-              pages/BrowserPage.qml \
+OTHER_FILES = pages/BrowserPage.qml \
               rpm/sailfish-browser.spec
