@@ -11,6 +11,7 @@ BuildRequires:  pkgconfig(QtGui)
 BuildRequires:  pkgconfig(qtembedwidget)
 BuildRequires:  pkgconfig(x11)
 BuildRequires:  pkgconfig(QtOpenGL)
+BuildRequires:  pkgconfig(QJson)
 
 %description
 Sailfish Web Browser
