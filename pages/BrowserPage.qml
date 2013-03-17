@@ -20,7 +20,7 @@ Page {
     property bool ignoreStoreUrl: true
     property int currentTabIndex: 0
     property string url
-    property variant webEngine: webContent.child()
+    property variant webEngine: webContent.child
 
     property variant _controlPageComponent
 
