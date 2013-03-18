@@ -58,9 +58,8 @@ Page {
         model: browserPage.favourites
 
         delegate: BackgroundItem {
-            width: parent.width
+            width: list.width
             anchors.topMargin: theme.paddingLarge
-            anchors.left: parent.left
 
             Label {
                 anchors.margins: theme.paddingMedium

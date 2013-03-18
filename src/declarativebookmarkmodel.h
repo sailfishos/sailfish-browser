@@ -1,19 +1,16 @@
+/****************************************************************************
+**
+** Copyright (C) 2013 Jolla Ltd.
+** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jollamobile.com>
+**
+****************************************************************************/
+
 #ifndef DECLARATIVEBOOKMARKMODEL_H
 #define DECLARATIVEBOOKMARKMODEL_H
 
 #include <QAbstractListModel>
 #include <QMap>
-
-
-class Bookmark {
-
-public:
-    Bookmark(QString url, QString title, QString favicon);
-
-    QString title;
-    QString url;
-    QString favicon;
-};
+#include "bookmark.h"
 
 class DeclarativeBookmarkModel : public QAbstractListModel
 {
@@ -30,7 +27,10 @@ public:
     };
 
     Q_INVOKABLE void addBookmark(const QString& url, const QString& title);
+    Q_INVOKABLE void removeBookmark(const QString& url);
     Q_INVOKABLE bool contains(const QString& url) const;
+    Q_INVOKABLE void save();
+    Q_INVOKABLE void load();
 
     int rowCount(const QModelIndex & parent = QModelIndex()) const;
     QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;

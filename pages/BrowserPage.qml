@@ -60,6 +60,10 @@ Page {
         Connections {
             target: webEngine
 
+            onTitleChanged: {
+                console.log("Title: " + webEngine.title)
+            }
+
             onViewInitialized: {
                 if(historyModel.count == 0 ) {
                     browserPage.url = Parameters.initialPage()
@@ -119,7 +123,15 @@ Page {
             IconButton {
                 icon.source: favouriteModel.count > 0 && favouriteModel.contains(url) ? "image://theme/icon-m-favorite-selected" : "image://theme/icon-m-favorite"
                 enabled: true
-                onClicked: favouriteModel.addBookmark(url, "bookmark " + url)
+                onClicked: {
+                    if (favouriteModel.contains(url)) {
+                        favouriteModel.removeBookmark(url)
+                    } else {
+                        // Saving url both as url and title since title is not yet coming correctly from engine
+                        favouriteModel.addBookmark(url, url)
+                    }
+                    favouriteModel.save();
+                }
             }
 
             IconButton {
@@ -176,6 +188,7 @@ Page {
     }
 
     Component.onCompleted: {
+        favouriteModel.load()
         History.loadModel(historyModel)
     }
 }

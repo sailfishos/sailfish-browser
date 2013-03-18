@@ -37,10 +37,10 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/EmbedLiteBinComponents.manifest"));
     QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/EmbedLiteJSComponents.manifest"));
     QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/EmbedLiteJSScripts.manifest"));
-
-    QScopedPointer<QDeclarativeView> view(Sailfish::createView("browser.qml"));
     app->setApplicationName(QString("sailfish-browser"));
     app->setOrganizationName(QString("org.sailfishos"));
+    QScopedPointer<QDeclarativeView> view(Sailfish::createView("browser.qml"));
+
 
     DeclarativeBrowserTab * tab = new DeclarativeBrowserTab(view.data(), app.data());
     DeclarativeParameters * parameters = new DeclarativeParameters(app->arguments(), view.data(), app.data());

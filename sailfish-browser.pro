@@ -25,13 +25,15 @@ SOURCES += \
     src/declarativebrowsertab.cpp \
     src/declarativeparameters.cpp \
     sailfishbrowser.cpp \
-    src/declarativebookmarkmodel.cpp
+    src/declarativebookmarkmodel.cpp \
+    src/bookmark.cpp
 
 # C++ headers
 HEADERS += \
     src/declarativebrowsertab.h \
     src/declarativeparameters.h \
-    src/declarativebookmarkmodel.h
+    src/declarativebookmarkmodel.h \
+    src/bookmark.h
 
 # QML files and folders
 qml.files = *.qml pages cover browser.qml
