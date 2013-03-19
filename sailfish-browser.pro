@@ -2,13 +2,14 @@ QT += opengl declarative
 # The name of your app
 TARGET = sailfish-browser
 
-contains(QT_MAJOR_VERSION, 4) {
+lessThan(QT_MAJOR_VERSION, 5) {
+  CONFIG += link_pkgconfig
   PKGCONFIG += QJson
 }
 
 # Include qtmozembed
-CONFIG += link_pkgconfig
 isEmpty(QTEMBED_LIB) {
+  CONFIG += link_pkgconfig
   PKGCONFIG += qtembedwidget x11
 } else {
   LIBS+=$$QTEMBED_LIB

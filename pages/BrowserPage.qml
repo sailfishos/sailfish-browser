@@ -18,7 +18,7 @@ Page {
     id: browserPage
 
     property alias tabs: tabModel
-    property alias favourites: favouriteModel
+    property alias favorites: favoriteModel
     property bool ignoreStoreUrl: true
     property int currentTabIndex: 0
     property string url
@@ -36,7 +36,7 @@ Page {
     }
 
     BookmarkModel {
-        id: favouriteModel
+        id: favoriteModel
     }
 
     ListModel {
@@ -121,16 +121,16 @@ Page {
             }
 
             IconButton {
-                icon.source: favouriteModel.count > 0 && favouriteModel.contains(url) ? "image://theme/icon-m-favorite-selected" : "image://theme/icon-m-favorite"
+                icon.source: favoriteModel.count > 0 && favoriteModel.contains(url) ? "image://theme/icon-m-favorite-selected" : "image://theme/icon-m-favorite"
                 enabled: true
                 onClicked: {
-                    if (favouriteModel.contains(url)) {
-                        favouriteModel.removeBookmark(url)
+                    if (favoriteModel.contains(url)) {
+                        favoriteModel.removeBookmark(url)
                     } else {
                         // Saving url both as url and title since title is not yet coming correctly from engine
-                        favouriteModel.addBookmark(url, url)
+                        favoriteModel.addBookmark(url, url)
                     }
-                    favouriteModel.save();
+                    favoriteModel.save();
                 }
             }
 
@@ -188,7 +188,6 @@ Page {
     }
 
     Component.onCompleted: {
-        favouriteModel.load()
         History.loadModel(historyModel)
     }
 }

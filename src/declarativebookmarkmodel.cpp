@@ -35,6 +35,7 @@ void DeclarativeBookmarkModel::addBookmark(const QString& url, const QString& ti
     endInsertRows();
 
     emit countChanged();
+    save();
 }
 
 void DeclarativeBookmarkModel::removeBookmark(const QString& url) {
@@ -48,34 +49,42 @@ void DeclarativeBookmarkModel::removeBookmark(const QString& url) {
     bookmarks.remove(url, index);
 
     emit countChanged();
+    save();
 }
 
-
-void DeclarativeBookmarkModel::load() {
+void DeclarativeBookmarkModel::componentComplete() {
     QString settingsLocation = QDesktopServices::storageLocation(QDesktopServices::DataLocation) + "/bookmarks.json";
     QFile file(settingsLocation);
 
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qWarning() << "Unable to open bookmarks "+settingsLocation;
     } else {
+
+#if (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
         QJson::Parser parser;
         QVariant list = parser.parse(file.readAll());
         QVariantList bookmarkList = list.toList();
-
+#else
+        // TODO check on Qt5
+        QJsonDocument doc = fromJson(file.readAll());
+        QVariantList bookmarkList = doc.toVariantList();
+#endif
         for(int i=0; i< bookmarkList.count(); i++) {
             Bookmark* m = new Bookmark("","","");
             QJson::QObjectHelper::qvariant2qobject(bookmarkList[i].toMap(), m);
             titles.append(m);
             bookmarks.insert(m->url(), titles.count()-1);
         }
+
         emit countChanged();
+        file.close();
     }
 }
 
-void DeclarativeBookmarkModel::save() {
-    QJson::Serializer serializer;
-    QVariantList items;
+void DeclarativeBookmarkModel::classBegin() {}
 
+void DeclarativeBookmarkModel::save() {
+    QVariantList items;
     for(int i=0; i< titles.count(); i++) {
         items << QJson::QObjectHelper::qobject2qvariant(titles[i]);
     }
@@ -95,7 +104,16 @@ void DeclarativeBookmarkModel::save() {
         return;
     }
     QTextStream out(&file);
+#if (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
+    QJson::Serializer serializer;
     out << serializer.serialize(items);
+#else
+    // TODO check on Qt5
+    QJsonArray array = QJsonArray::fromVariantList(items);
+    QJsonDocument doc(array);
+    out << doc.toJson();
+#endif
+
     file.close();
 }
 

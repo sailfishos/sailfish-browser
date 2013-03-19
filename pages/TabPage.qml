@@ -25,37 +25,41 @@ Page {
                 columns: 2
                 rows: Math.ceil(browserPage.tabs.count / 2)
                 spacing: theme.paddingMedium
-                anchors.leftMargin: theme.paddingMedium
-                anchors.left: parent.left
+                anchors {
+                    leftMargin: theme.paddingMedium
+                    left: parent.left
+                }
 
                 Repeater {
                     model: browserPage.tabs
-                    Image {
-                        source: thumbPath
-                        fillMode: Image.PreserveAspectCrop
-                        transform: Rotation {
-                            origin.x: width / 2
-                            origin.y: width / 2
-                            angle: window.screenRotation
-                        }
-                        sourceSize {
-                            width: list.width / 2 - 2 * theme.paddingMedium
-                            height: width
-                        }
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: {
-                                browserPage.url = url
-                                browserPage.currentTabIndex = index
-                                window.pageStack.pop(browserPage, true)
+                    BackgroundItem {
+                        width: list.width / 2 - 2 * theme.paddingMedium
+                        height: width
+                        Image {
+                            asynchronous: true
+                            source: thumbPath
+                            fillMode: Image.PreserveAspectCrop
+                            transform: Rotation {
+                                origin.x: width / 2
+                                origin.y: width / 2
+                                angle: window.screenRotation
                             }
+                            sourceSize {
+                                width: parent.width
+                                height: width
+                            }
+                        }
+                        onClicked: {
+                            browserPage.url = url
+                            browserPage.currentTabIndex = model.index
+                            window.pageStack.pop(browserPage, true)
                         }
                     }
                 }
             }
         }
 
-        model: browserPage.favourites
+        model: browserPage.favorites
 
         delegate: BackgroundItem {
             width: list.width
@@ -70,7 +74,6 @@ Page {
 
             onClicked: {
                 browserPage.url = url
-                browserPage.currentTabIndex = index
                 window.pageStack.pop(browserPage, true)
             }
         }

@@ -10,11 +10,14 @@
 
 #include <QAbstractListModel>
 #include <QMap>
+#include <QDeclarativeParserStatus>
+
 #include "bookmark.h"
 
-class DeclarativeBookmarkModel : public QAbstractListModel
+class DeclarativeBookmarkModel : public QAbstractListModel, public QDeclarativeParserStatus
 {
     Q_OBJECT
+    Q_INTERFACES(QDeclarativeParserStatus)
 
     Q_PROPERTY(int count READ rowCount NOTIFY countChanged)
 public:
@@ -29,16 +32,21 @@ public:
     Q_INVOKABLE void addBookmark(const QString& url, const QString& title);
     Q_INVOKABLE void removeBookmark(const QString& url);
     Q_INVOKABLE bool contains(const QString& url) const;
-    Q_INVOKABLE void save();
-    Q_INVOKABLE void load();
 
+    // From QAbstractListModel
     int rowCount(const QModelIndex & parent = QModelIndex()) const;
     QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;
+
+    // From QDeclarativeParserStatus
+    void classBegin();
+    void componentComplete();
 
 signals:
     void countChanged();
 
 private:
+    void save();
+
     QMultiMap<QString, int> bookmarks;
     QList<Bookmark*> titles;
 };
