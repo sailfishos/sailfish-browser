@@ -45,7 +45,7 @@ QString DeclarativeBrowserTab::screenCapture(int x, int y, int width, int height
             return "";
         }
     }
-    QString path = QDesktopServices::storageLocation(QDesktopServices::CacheLocation) + QString::number(randomValue);
+    QString path = cacheLocation +"/" + QString::number(randomValue);
     path.append(QString("-thumb.png"));
     pixmap.save(path);
     paths << path;

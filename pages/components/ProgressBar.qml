@@ -25,8 +25,15 @@ Item {
             left: parent.left
         }
         height: parent.height
-        width: progressBar.progress * parent.width
-        color: theme.highlightBackgroundColor
+        width: opacity > 0.0 ? progressBar.progress * parent.width : 0
+        color: theme.highlightDimmerColor
+
+        Behavior on width {
+            enabled: progressBar.opacity == 1.0
+            SmoothedAnimation {
+                velocity: 480; duration: 200
+            }
+        }
     }
 
     Rectangle {
@@ -76,10 +83,5 @@ Item {
         }
     }
 
-    Behavior on opacity {
-        NumberAnimation {
-            duration: 200
-            easing.type: Easing.InOutQuad
-        }
-    }
+    Behavior on opacity { FadeAnimation {} }
 }
