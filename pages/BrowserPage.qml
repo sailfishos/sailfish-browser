@@ -61,7 +61,13 @@ Page {
             target: webEngine
 
             onTitleChanged: {
-                console.log("Title: " + webEngine.title)
+                // Update title in model, title can come after load finished
+                // and then we already have element in history
+                if (historyModel.count > 0
+                        && historyModel.get(0).url === url
+                        && webEngine.title !== historyModel.get(0).title ) {
+                    historyModel.get(0).title = webEngine.title
+                }
             }
 
             onViewInitialized: {
@@ -70,6 +76,7 @@ Page {
                 } else {
                     browserPage.url = historyModel.get(0).url
                 }
+                webContent.child.addMessageListener("chrome:title")
             }
             onUrlChanged: {
                 var urlStr = webEngine.url.toString()
@@ -84,7 +91,7 @@ Page {
 
                 if (!webEngine.loading && url !="about:blank" &&
                     (historyModel.count == 0 || url !== historyModel.get(0).url)) {
-                    History.addRow(url,webEngine.title, "image://theme/icon-m-region")
+                    History.addRow(url, webEngine.title, "image://theme/icon-m-region")
                     historyModel.insert(0, {"title": webEngine.title, "url": url, "icon": "image://theme/icon-m-region"} )
                 }
             }
@@ -127,10 +134,8 @@ Page {
                     if (favoriteModel.contains(url)) {
                         favoriteModel.removeBookmark(url)
                     } else {
-                        // Saving url both as url and title since title is not yet coming correctly from engine
-                        favoriteModel.addBookmark(url, url)
+                        favoriteModel.addBookmark(url, webEngine.title)
                     }
-                    favoriteModel.save();
                 }
             }
 
@@ -171,7 +176,7 @@ Page {
         id:progressBar
         anchors.fill: tools
         opacity: 0.0
-        title: url
+        title: webEngine.title !== "" ? webEngine.title : url
 
         onStopped: {
             webEngine.stop()

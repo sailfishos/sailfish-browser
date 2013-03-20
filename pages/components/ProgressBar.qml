@@ -19,6 +19,11 @@ Item {
     visible: opacity > 0.0
 
     Rectangle {
+        anchors.fill: parent
+        color: theme.highlightDimmerColor
+    }
+
+    Rectangle {
         id: progressRect
         anchors {
             top: parent.top
@@ -26,7 +31,8 @@ Item {
         }
         height: parent.height
         width: opacity > 0.0 ? progressBar.progress * parent.width : 0
-        color: theme.highlightDimmerColor
+        color: theme.highlightBackgroundColor
+        opacity: 0.35
 
         Behavior on width {
             enabled: progressBar.opacity == 1.0
@@ -34,19 +40,6 @@ Item {
                 velocity: 480; duration: 200
             }
         }
-    }
-
-    Rectangle {
-        anchors {
-            top: parent.top
-            left: progressRect.right
-            right: parent.right
-        }
-        height: parent.height
-
-        // TODO there should be some transparency, should reveal background image
-        // not the toolbar underneath
-        color: "black"
     }
 
     Column {

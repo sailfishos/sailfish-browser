@@ -65,9 +65,23 @@ Page {
             width: list.width
             anchors.topMargin: theme.paddingLarge
 
+            Image {
+                id: faviconImage
+                source: "image://theme/icon-m-region"
+                height: titleLabel.height
+                width: height
+                asynchronous: true
+                anchors {
+                    top: titleLabel.top
+                    left: parent.left; leftMargin: theme.paddingMedium
+                }
+                smooth: true
+            }
+
             Label {
+                id: titleLabel
                 anchors.margins: theme.paddingMedium
-                anchors.left: parent.left
+                anchors.left: faviconImage.right
                 anchors.verticalCenter: parent.verticalCenter
                 text: title
             }
