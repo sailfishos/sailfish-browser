@@ -16,7 +16,7 @@ Dialog {
     property Item urlField
     property string url
 
-    acceptDestination: TabPage {}
+    acceptDestination: Component { TabPage {} }
 
     Component {
         id: historyContextMenuComponent
@@ -54,6 +54,7 @@ Dialog {
                     source: "image://theme/icon-m-region"
                     width: urlField.height / 2
                     height: width
+                    asynchronous: true
                     anchors {
                         top: urlField.top; topMargin: theme.paddingSmall
                         left: parent.left; leftMargin: theme.paddingMedium
@@ -99,6 +100,7 @@ Dialog {
                     source: "image://theme/icon-m-reset"
                     width: urlField.height / 2
                     height: width
+                    asynchronous: true
 
                     anchors {
                         top: urlField.top; topMargin: theme.paddingSmall
@@ -133,6 +135,7 @@ Dialog {
                 Image {
                     id: iconImage
                     source: icon
+                    asynchronous: true
                     anchors.top: parent.top
                 }
 
@@ -155,7 +158,7 @@ Dialog {
                         width: parent.width
                         font.pixelSize: theme.fontSizeSmall
                         color: theme.secondaryColor
-                        truncationMode: TruncationMode.Fade
+                        truncationMode: TruncationMode.Elide
                     }
                 }
 

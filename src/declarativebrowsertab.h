@@ -11,6 +11,8 @@
 #include <QObject>
 #include <QDeclarativeView>
 #include <QStringList>
+#include <QPixmap>
+#include <QFuture>
 
 class DeclarativeBrowserTab : public QObject
 {
@@ -22,7 +24,10 @@ public:
     Q_INVOKABLE QString screenCapture(int x, int y, int width, int height);
     
 private:
+    bool saveToFile(QString path, QPixmap image);
+
     QDeclarativeView * m_view;
     QStringList paths;
+    QFuture<bool> future;
 };
 #endif // DECLARATIVEBROWSERTAB_H
