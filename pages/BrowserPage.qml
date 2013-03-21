@@ -66,7 +66,7 @@ Page {
                 if (historyModel.count > 0
                         && historyModel.get(0).url === url
                         && webEngine.title !== historyModel.get(0).title ) {
-                    historyModel.get(0).title = webEngine.title
+                    historyModel.setProperty(0,"title", webEngine.title)
                 }
             }
 

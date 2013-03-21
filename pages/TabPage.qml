@@ -80,10 +80,14 @@ Page {
 
             Label {
                 id: titleLabel
-                anchors.margins: theme.paddingMedium
-                anchors.left: faviconImage.right
-                anchors.verticalCenter: parent.verticalCenter
+                anchors {
+                    leftMargin: theme.paddingMedium
+                    left: faviconImage.right
+                    verticalCenter: parent.verticalCenter
+                }
+                width: parent.width - x
                 text: title
+                truncationMode: TruncationMode.Fade
             }
 
             onClicked: {

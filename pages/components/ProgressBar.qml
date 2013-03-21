@@ -32,7 +32,7 @@ Item {
         height: parent.height
         width: opacity > 0.0 ? progressBar.progress * parent.width : 0
         color: theme.highlightBackgroundColor
-        opacity: 0.35
+        opacity: theme.highlightBackgroundOpacity
 
         Behavior on width {
             enabled: progressBar.opacity == 1.0
