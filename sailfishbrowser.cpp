@@ -41,7 +41,6 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     app->setOrganizationName(QString("org.sailfishos"));
     QScopedPointer<QDeclarativeView> view(Sailfish::createView("browser.qml"));
 
-
     DeclarativeBrowserTab * tab = new DeclarativeBrowserTab(view.data(), app.data());
     DeclarativeParameters * parameters = new DeclarativeParameters(app->arguments(), view.data(), app.data());
 

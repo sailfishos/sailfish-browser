@@ -43,7 +43,7 @@ QString DeclarativeBrowserTab::screenCapture(int x, int y, int width, int height
     path.append(QString("-thumb.png"));
 
     // asynchronous save to avoid the slow I/O
-    future = QtConcurrent::run(this, &DeclarativeBrowserTab::saveToFile, path, pixmap);
+    QtConcurrent::run(this, &DeclarativeBrowserTab::saveToFile, path, pixmap);
     return path;
 }
 

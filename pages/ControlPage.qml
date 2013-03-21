@@ -54,7 +54,6 @@ Dialog {
                     source: "image://theme/icon-m-region"
                     width: urlField.height / 2
                     height: width
-                    asynchronous: true
                     anchors {
                         top: urlField.top; topMargin: theme.paddingSmall
                         left: parent.left; leftMargin: theme.paddingMedium
@@ -100,7 +99,6 @@ Dialog {
                     source: "image://theme/icon-m-reset"
                     width: urlField.height / 2
                     height: width
-                    asynchronous: true
 
                     anchors {
                         top: urlField.top; topMargin: theme.paddingSmall

@@ -28,6 +28,5 @@ private:
 
     QDeclarativeView * m_view;
     QStringList paths;
-    QFuture<bool> future;
 };
 #endif // DECLARATIVEBROWSERTAB_H
