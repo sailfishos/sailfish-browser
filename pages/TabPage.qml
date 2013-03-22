@@ -65,11 +65,29 @@ Page {
             width: list.width
             anchors.topMargin: theme.paddingLarge
 
+            Image {
+                id: faviconImage
+                source: "image://theme/icon-m-region"
+                height: titleLabel.height
+                width: height
+                asynchronous: true
+                anchors {
+                    top: titleLabel.top
+                    left: parent.left; leftMargin: theme.paddingMedium
+                }
+                smooth: true
+            }
+
             Label {
-                anchors.margins: theme.paddingMedium
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
+                id: titleLabel
+                anchors {
+                    leftMargin: theme.paddingMedium
+                    left: faviconImage.right
+                    verticalCenter: parent.verticalCenter
+                }
+                width: parent.width - x
                 text: title
+                truncationMode: TruncationMode.Fade
             }
 
             onClicked: {
