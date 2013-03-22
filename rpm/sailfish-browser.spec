@@ -1,7 +1,7 @@
 Name:       sailfish-browser
 
 Summary:    Sailfish Browser
-Version:    0.1.1
+Version:    0.1.2
 Release:    1
 Group:      Applications/Internet
 License:    Prop
@@ -13,6 +13,8 @@ BuildRequires:  pkgconfig(x11)
 BuildRequires:  pkgconfig(QtOpenGL)
 BuildRequires:  pkgconfig(QJson)
 Requires: sailfishsilica >= 0.7.37
+Requires: xulrunner
+Requires: embedlite-components
 
 %description
 Sailfish Web Browser
