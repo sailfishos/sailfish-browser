@@ -15,6 +15,8 @@
 #include <QDir>
 #include <QTransform>
 #include <QDesktopServices>
+#include <QFuture>
+#include <QtConcurrentRun>
 
 DeclarativeBrowserTab::DeclarativeBrowserTab(QDeclarativeView* view, QObject *parent) :
     QObject(parent), m_view(view)
@@ -37,17 +39,24 @@ QString DeclarativeBrowserTab::screenCapture(int x, int y, int width, int height
 {
     QPixmap pixmap = QPixmap::grabWindow(m_view->winId(), x, y, width, height);
     int randomValue = abs(qrand());
+    QString path = QDesktopServices::storageLocation(QDesktopServices::CacheLocation) + "/" + QString::number(randomValue);
+    path.append(QString("-thumb.png"));
+
+    // asynchronous save to avoid the slow I/O
+    QtConcurrent::run(this, &DeclarativeBrowserTab::saveToFile, path, pixmap);
+    return path;
+}
+
+bool DeclarativeBrowserTab::saveToFile(QString path, QPixmap image) {
     QString cacheLocation = QDesktopServices::storageLocation(QDesktopServices::CacheLocation);
     QDir dir(cacheLocation);
     if(!dir.exists()) {
         if(!dir.mkpath(cacheLocation)) {
             qWarning() << "Can't create directory "+ cacheLocation;
-            return "";
+            return false;
         }
     }
-    QString path = cacheLocation +"/" + QString::number(randomValue);
-    path.append(QString("-thumb.png"));
-    pixmap.save(path);
+    image.save(path);
     paths << path;
-    return path;
+    return true;
 }

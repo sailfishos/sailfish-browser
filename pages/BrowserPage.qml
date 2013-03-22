@@ -145,15 +145,6 @@ Page {
                 onClicked:  {
                     var screenPath = BrowserTab.screenCapture(0, 0, webContent.width, webContent.width)
                     tabModel.set(currentTabIndex, {"thumbPath" : screenPath, "url" : browserPage.url})
-
-                    if (!_controlPageComponent) {
-                        _controlPageComponent = Qt.createComponent("ControlPage.qml")
-                        if (_controlPageComponent.status !== Component.Ready) {
-                            console.log("Error loading component:", component.errorString());
-                            _controlPageComponent = undefined
-                            return
-                        }
-                    }
                     var sendUrl = (browserPage.url != "about:blank" || browserPage.url !== Parameters.initialPage()) ? browserPage.url : ""
                     pageStack.push(_controlPageComponent, {historyModel: historyModel, url: sendUrl}, true);
                 }
@@ -194,5 +185,16 @@ Page {
 
     Component.onCompleted: {
         History.loadModel(historyModel)
+
+        // Since we dont have booster with gecko yet (see JB#5910) lets compile the
+        // components needed by tab page here so that click on tab icon wont be too long
+        if (!_controlPageComponent) {
+            _controlPageComponent = Qt.createComponent("ControlPage.qml")
+            if (_controlPageComponent.status !== Component.Ready) {
+                console.log("Error loading component:", component.errorString());
+                _controlPageComponent = undefined
+                return
+            }
+        }
     }
 }

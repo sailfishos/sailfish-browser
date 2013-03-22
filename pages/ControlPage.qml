@@ -16,7 +16,7 @@ Dialog {
     property Item urlField
     property string url
 
-    acceptDestination: TabPage {}
+    acceptDestination: Component { TabPage {} }
 
     Component {
         id: historyContextMenuComponent
@@ -133,6 +133,7 @@ Dialog {
                 Image {
                     id: iconImage
                     source: icon
+                    asynchronous: true
                     anchors.top: parent.top
                 }
 
@@ -155,7 +156,7 @@ Dialog {
                         width: parent.width
                         font.pixelSize: theme.fontSizeSmall
                         color: theme.secondaryColor
-                        truncationMode: TruncationMode.Fade
+                        truncationMode: TruncationMode.Elide
                     }
                 }
 
