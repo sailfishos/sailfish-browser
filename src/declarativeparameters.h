@@ -15,7 +15,7 @@ class DeclarativeParameters : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(QString initialPage READ initialPage)
+    Q_PROPERTY(QString initialPage READ initialPage CONSTANT FINAL)
     Q_PROPERTY(QString homePage READ homePage NOTIFY homePageChanged FINAL)
 
 public:

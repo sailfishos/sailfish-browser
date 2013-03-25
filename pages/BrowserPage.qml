@@ -71,7 +71,7 @@ Page {
                 // Update title in model, title can come after load finished
                 // and then we already have element in history
                 if (historyModel.count > 0
-                        && historyModel.get(0).url === webEngine.url
+                        && historyModel.get(0).url == webEngine.url
                         && webEngine.title !== historyModel.get(0).title ) {
                     historyModel.setProperty(0, "title", webEngine.title)
                 }
@@ -92,8 +92,8 @@ Page {
                 if(!webEngine.loading)
                     progressBar.progress = 0
 
-                if (!webEngine.loading && webEngine.url !="about:blank" &&
-                    (historyModel.count == 0 || webEngine.url !== historyModel.get(0).url)) {
+                if (!webEngine.loading && webEngine.url != "about:blank" &&
+                    (historyModel.count == 0 || webEngine.url != historyModel.get(0).url)) {
                     History.addRow(webEngine.url, webEngine.title, "image://theme/icon-m-region")
                     historyModel.insert(0, {"title": webEngine.title, "url": webEngine.url, "icon": "image://theme/icon-m-region"} )
                 }
@@ -148,7 +148,7 @@ Page {
                 onClicked:  {
                     var screenPath = BrowserTab.screenCapture(0, 0, webContent.width, webContent.width)
                     tabModel.set(currentTabIndex, {"thumbPath" : screenPath, "url" : webEngine.url})
-                    var sendUrl = (webEngine.url !== Parameters.initialPage) ? webEngine.url : ""
+                    var sendUrl = (webEngine.url != Parameters.initialPage) ? webEngine.url : ""
                     pageStack.push(_controlPageComponent, {historyModel: historyModel, url: sendUrl}, true);
                 }
             }
