@@ -12,7 +12,6 @@
 #include <QDeclarativeView>
 #include <QStringList>
 #include <QPixmap>
-#include <QFuture>
 
 class DeclarativeBrowserTab : public QObject
 {

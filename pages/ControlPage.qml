@@ -26,7 +26,7 @@ Dialog {
                 text: "Open in new tab"
                 onClicked: {
                     browserPage.newTab()
-                    browserPage.url = url
+                    browserPage.load(url)
                     pageStack.pop(undefined, true)
                 }
             }
@@ -75,10 +75,13 @@ Dialog {
                     function urlEntered() {
                         urlField.closeSoftwareInputPanel()
                         var url = urlField.text
-                        if (url.indexOf("http://") < 0) {
+
+                        if (url.indexOf("http://") < 0
+                                && url.indexOf("https://") < 0
+                                && url.indexOf("file://") < 0) {
                             url = "http://" + url
                         }
-                        browserPage.url = url
+                        browserPage.load(url)
                         pageStack.pop(undefined, true)
                     }
 
@@ -161,7 +164,7 @@ Dialog {
                 }
 
                 onClicked: {
-                    browserPage.url = url
+                    browserPage.load(url)
                     pageStack.pop(undefined, true)
                 }
                 onPressAndHold: {

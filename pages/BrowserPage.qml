@@ -21,7 +21,6 @@ Page {
     property alias favorites: favoriteModel
     property bool ignoreStoreUrl: true
     property int currentTabIndex: 0
-    property string url
     property variant webEngine: webContent.child
 
     property variant _controlPageComponent
@@ -29,6 +28,14 @@ Page {
     function newTab() {
         tabModel.append({"thumbPath": "", "url": ""})
         currentTabIndex = tabModel.count - 1
+    }
+
+    function load(url) {
+        if (!webEngine || webEngine.url == null) {
+            console.log("No webengine")
+        } else if (webEngine.url !== url) {
+            webEngine.load(url)
+        }
     }
 
     ListModel {
@@ -64,24 +71,20 @@ Page {
                 // Update title in model, title can come after load finished
                 // and then we already have element in history
                 if (historyModel.count > 0
-                        && historyModel.get(0).url === url
+                        && historyModel.get(0).url === webEngine.url
                         && webEngine.title !== historyModel.get(0).title ) {
-                    historyModel.setProperty(0,"title", webEngine.title)
+                    historyModel.setProperty(0, "title", webEngine.title)
                 }
             }
 
             onViewInitialized: {
-                if(historyModel.count == 0 ) {
-                    browserPage.url = Parameters.initialPage()
-                } else {
-                    browserPage.url = historyModel.get(0).url
-                }
                 webContent.child.addMessageListener("chrome:title")
-            }
-            onUrlChanged: {
-                var urlStr = webEngine.url.toString()
-                if(urlStr !== "about:blank" ) {
-                    browserPage.url = webEngine.url // To ignore initial "about:blank"
+                if (Parameters.initialPage !== "") {
+                    browserPage.load(Parameters.initialPage)
+                } else if (historyModel.count == 0 ) {
+                    browserPage.load(Parameters.homePage)
+                } else {
+                    browserPage.load(historyModel.get(0).url)
                 }
             }
             onLoadingChanged: {
@@ -89,10 +92,10 @@ Page {
                 if(!webEngine.loading)
                     progressBar.progress = 0
 
-                if (!webEngine.loading && url !="about:blank" &&
-                    (historyModel.count == 0 || url !== historyModel.get(0).url)) {
-                    History.addRow(url, webEngine.title, "image://theme/icon-m-region")
-                    historyModel.insert(0, {"title": webEngine.title, "url": url, "icon": "image://theme/icon-m-region"} )
+                if (!webEngine.loading && webEngine.url !="about:blank" &&
+                    (historyModel.count == 0 || webEngine.url !== historyModel.get(0).url)) {
+                    History.addRow(webEngine.url, webEngine.title, "image://theme/icon-m-region")
+                    historyModel.insert(0, {"title": webEngine.title, "url": webEngine.url, "icon": "image://theme/icon-m-region"} )
                 }
             }
             onLoadProgressChanged: {
@@ -128,13 +131,13 @@ Page {
             }
 
             IconButton {
-                icon.source: favoriteModel.count > 0 && favoriteModel.contains(url) ? "image://theme/icon-m-favorite-selected" : "image://theme/icon-m-favorite"
+                icon.source: favoriteModel.count > 0 && favoriteModel.contains(webEngine.url) ? "image://theme/icon-m-favorite-selected" : "image://theme/icon-m-favorite"
                 enabled: true
                 onClicked: {
-                    if (favoriteModel.contains(url)) {
-                        favoriteModel.removeBookmark(url)
+                    if (favoriteModel.contains(webEngine.url)) {
+                        favoriteModel.removeBookmark(webEngine.url)
                     } else {
-                        favoriteModel.addBookmark(url, webEngine.title)
+                        favoriteModel.addBookmark(webEngine.url, webEngine.title)
                     }
                 }
             }
@@ -144,8 +147,8 @@ Page {
 
                 onClicked:  {
                     var screenPath = BrowserTab.screenCapture(0, 0, webContent.width, webContent.width)
-                    tabModel.set(currentTabIndex, {"thumbPath" : screenPath, "url" : browserPage.url})
-                    var sendUrl = (browserPage.url != "about:blank" || browserPage.url !== Parameters.initialPage()) ? browserPage.url : ""
+                    tabModel.set(currentTabIndex, {"thumbPath" : screenPath, "url" : webEngine.url})
+                    var sendUrl = (webEngine.url !== Parameters.initialPage) ? webEngine.url : ""
                     pageStack.push(_controlPageComponent, {historyModel: historyModel, url: sendUrl}, true);
                 }
             }
@@ -167,19 +170,10 @@ Page {
         id:progressBar
         anchors.fill: tools
         opacity: 0.0
-        title: webEngine.title !== "" ? webEngine.title : url
+        title: webEngine.title !== "" ? webEngine.title : webEngine.url
 
         onStopped: {
             webEngine.stop()
-        }
-    }
-
-    onUrlChanged: {
-        if(!webEngine || webEngine.url == null) {
-            console.log("No webengine")
-        }
-        else if(webEngine.url !== url) {
-            webEngine.load(url)
         }
     }
 

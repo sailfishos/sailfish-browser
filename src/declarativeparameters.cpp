@@ -23,7 +23,7 @@ QString DeclarativeParameters::initialPage()
     if (m_arguments.count() > 1) {
         return m_arguments.last();
     } else {
-        return homePage();
+        return "";
     }
 }
 

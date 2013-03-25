@@ -14,6 +14,6 @@ ApplicationWindow
 {
     id: window
     initialPage: Component {BrowserPage {}}
-    cover: CoverPage {}
+    cover: Component {CoverPage {}}
 }
 
