@@ -50,8 +50,10 @@ Page {
                             }
                         }
                         onClicked: {
-                            browserPage.url = url
-                            browserPage.currentTabIndex = model.index
+                            if (browserPage.currentTabIndex !== model.index) {
+                                browserPage.currentTabIndex = model.index
+                                browserPage.load(url)
+                            }
                             window.pageStack.pop(browserPage, true)
                         }
                     }
@@ -91,7 +93,7 @@ Page {
             }
 
             onClicked: {
-                browserPage.url = url
+                browserPage.load(url)
                 window.pageStack.pop(browserPage, true)
             }
         }

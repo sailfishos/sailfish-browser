@@ -15,14 +15,14 @@ class DeclarativeParameters : public QObject
 {
     Q_OBJECT
 
-     Q_PROPERTY(QString homePage READ homePage NOTIFY homePageChanged FINAL)
+    Q_PROPERTY(QString initialPage READ initialPage CONSTANT FINAL)
+    Q_PROPERTY(QString homePage READ homePage NOTIFY homePageChanged FINAL)
 
 public:
     explicit DeclarativeParameters(QStringList arguments, QDeclarativeView* view, QObject *parent = 0);
 
     QString homePage();
-
-    Q_INVOKABLE QString initialPage();
+    QString initialPage();
 
 signals:
     void homePageChanged();
