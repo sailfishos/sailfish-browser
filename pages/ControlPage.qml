@@ -42,7 +42,9 @@ Dialog {
             width: parent.width
 
             DialogHeader {
-                acceptText: "All Tabs"
+                // We use the internal property to avoid transition
+                // that is not appropriate for the case "Accept -> All tabs"
+                _defaultAcceptText: "All Tabs"
                 dialog: page
             }
 

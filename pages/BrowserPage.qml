@@ -19,7 +19,6 @@ Page {
 
     property alias tabs: tabModel
     property alias favorites: favoriteModel
-    property bool ignoreStoreUrl: true
     property int currentTabIndex: 0
     property variant webEngine: webContent.child
 

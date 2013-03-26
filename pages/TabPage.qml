@@ -100,4 +100,10 @@ Page {
 
         VerticalScrollDecorator {}
     }
+
+    onStatusChanged: {
+        if (status == PageStatus.Active) {
+            backNavigation = false
+        }
+    }
 }
