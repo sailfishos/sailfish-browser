@@ -132,12 +132,25 @@ Dialog {
             BackgroundItem {
                 id: historyRow
                 width: page.width
+                height: theme.itemSizeLarge
 
                 Image {
                     id: iconImage
                     source: icon
                     asynchronous: true
                     anchors.top: parent.top
+                    sourceSize {
+                        height: parent.height
+                        width: height
+                    }
+                    height: parent.height
+                    width: height
+
+                    onStatusChanged: {
+                        if (status == Image.Error) {
+                            source = "image://theme/icon-m-region"
+                        }
+                    }
                 }
 
                 Column {

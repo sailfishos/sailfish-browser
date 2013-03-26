@@ -35,15 +35,29 @@ Page {
                     BackgroundItem {
                         width: list.width / 2 - 2 * theme.paddingMedium
                         height: width
+
+                        Rectangle {
+                            anchors.fill: parent
+                            color: theme.highlightBackgroundColor
+                            opacity: theme.highlightBackgroundOpacity
+                            visible: thumb.status == Image.Error
+                        }
+
+                        Label {
+                            width: parent.width
+                            anchors.centerIn: parent.Center
+                            text: url
+                            visible: thumb.status == Image.Error
+                            font.pixelSize: theme.fontSizeSmall
+                            color: theme.secondaryColor
+                            truncationMode: TruncationMode.Elide
+                        }
+
                         Image {
+                            id: thumb
                             asynchronous: true
                             source: thumbPath
                             fillMode: Image.PreserveAspectCrop
-                            transform: Rotation {
-                                origin.x: width / 2
-                                origin.y: width / 2
-                                angle: window.screenRotation
-                            }
                             sourceSize {
                                 width: parent.width
                                 height: width

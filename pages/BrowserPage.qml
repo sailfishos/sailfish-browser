@@ -94,8 +94,9 @@ Page {
 
                 if (!webEngine.loading && webEngine.url != "about:blank" &&
                     (historyModel.count == 0 || webEngine.url != historyModel.get(0).url)) {
-                    History.addRow(webEngine.url, webEngine.title, "image://theme/icon-m-region")
-                    historyModel.insert(0, {"title": webEngine.title, "url": webEngine.url, "icon": "image://theme/icon-m-region"} )
+                    var screenPath = BrowserTab.screenCapture(0, 0, webContent.width, webContent.width, window.screenRotation)
+                    History.addRow(webEngine.url, webEngine.title, screenPath)
+                    historyModel.insert(0, {"title": webEngine.title, "url": webEngine.url, "icon": screenPath} )
                 }
             }
             onLoadProgressChanged: {
@@ -146,7 +147,7 @@ Page {
                 icon.source: "image://theme/icon-m-tab"
 
                 onClicked:  {
-                    var screenPath = BrowserTab.screenCapture(0, 0, webContent.width, webContent.width)
+                    var screenPath = BrowserTab.screenCapture(0, 0, webContent.width, webContent.width, window.screenRotation)
                     tabModel.set(currentTabIndex, {"thumbPath" : screenPath, "url" : webEngine.url})
                     var sendUrl = (webEngine.url != Parameters.initialPage) ? webEngine.url : ""
                     pageStack.push(_controlPageComponent, {historyModel: historyModel, url: sendUrl}, true);
