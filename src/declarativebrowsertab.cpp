@@ -35,7 +35,7 @@ DeclarativeBrowserTab::~DeclarativeBrowserTab()
     paths.clear();
 }
 
-QString DeclarativeBrowserTab::screenCapture(int x, int y, int width, int height)
+QString DeclarativeBrowserTab::screenCapture(int x, int y, int width, int height, qreal rotate)
 {
     QPixmap pixmap = QPixmap::grabWindow(m_view->winId(), x, y, width, height);
     int randomValue = abs(qrand());
@@ -43,11 +43,11 @@ QString DeclarativeBrowserTab::screenCapture(int x, int y, int width, int height
     path.append(QString("-thumb.png"));
 
     // asynchronous save to avoid the slow I/O
-    QtConcurrent::run(this, &DeclarativeBrowserTab::saveToFile, path, pixmap);
+    QtConcurrent::run(this, &DeclarativeBrowserTab::saveToFile, path, pixmap, rotate);
     return path;
 }
 
-bool DeclarativeBrowserTab::saveToFile(QString path, QPixmap image) {
+bool DeclarativeBrowserTab::saveToFile(QString path, QPixmap image, qreal rotate) {
     QString cacheLocation = QDesktopServices::storageLocation(QDesktopServices::CacheLocation);
     QDir dir(cacheLocation);
     if(!dir.exists()) {
@@ -56,6 +56,9 @@ bool DeclarativeBrowserTab::saveToFile(QString path, QPixmap image) {
             return false;
         }
     }
+    QTransform transform;
+    transform.rotate(rotate);
+    image = image.transformed(transform);
     image.save(path);
     paths << path;
     return true;
