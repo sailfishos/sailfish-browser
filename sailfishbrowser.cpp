@@ -11,6 +11,7 @@
 #include <QDeclarativeContext>
 #include <QInputContext>
 #include <QWidget>
+#include <QTimer>
 
 #include "qdeclarativemozview.h"
 #include "qgraphicsmozview.h"
@@ -46,6 +47,11 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 
     view->setViewport(new QGLWidget);
     view->rootContext()->setContextProperty("MozContext", QMozContext::GetInstance());
+
+    // Setup embedding
+    QObject::connect(app.data(), SIGNAL(lastWindowClosed()),
+                     QMozContext::GetInstance(), SLOT(stopEmbedding()));
+    QTimer::singleShot(0, QMozContext::GetInstance(), SLOT(runEmbedding()));
 
     Sailfish::showView(view.data());
     return app->exec();
