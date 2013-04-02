@@ -11,6 +11,7 @@
 #include <QDeclarativeContext>
 #include <QInputContext>
 #include <QWidget>
+#include <QTimer>
 
 #include "qdeclarativemozview.h"
 #include "qgraphicsmozview.h"
@@ -28,7 +29,6 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     QScopedPointer<QApplication> app(Sailfish::createApplication(argc, argv));
     app->setQuitOnLastWindowClosed(true);
 
-    qmlRegisterType<QmlMozContext>("QtMozilla", 1, 0, "QmlMozContext");
     qmlRegisterType<QGraphicsMozView>("QtMozilla", 1, 0, "QGraphicsMozView");
     qmlRegisterType<QDeclarativeMozView>("QtMozilla", 1, 0, "QmlMozView");
     qmlRegisterType<DeclarativeBookmarkModel>("Sailfish.Browser", 1, 0, "BookmarkModel");
@@ -46,6 +46,13 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     DeclarativeParameters * parameters = new DeclarativeParameters(app->arguments(), view.data(), app.data());
 
     view->setViewport(new QGLWidget);
+    view->rootContext()->setContextProperty("MozContext", QMozContext::GetInstance());
+
+    // Setup embedding
+    QObject::connect(app.data(), SIGNAL(lastWindowClosed()),
+                     QMozContext::GetInstance(), SLOT(stopEmbedding()));
+    QTimer::singleShot(0, QMozContext::GetInstance(), SLOT(runEmbedding()));
+
     Sailfish::showView(view.data());
     return app->exec();
 }
