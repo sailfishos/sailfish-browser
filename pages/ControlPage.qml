@@ -7,6 +7,7 @@
 
 import QtQuick 1.1
 import Sailfish.Silica 1.0
+import "components"
 
 Dialog {
     id: page
@@ -51,30 +52,30 @@ Dialog {
             Item {
                 height: urlField.height
                 width: parent.width
-                Image {
-                    id: earthIcon
-                    source: "image://theme/icon-m-region"
-                    width: urlField.height / 2
-                    height: width
+
+                FaviconImage {
+                    id: faviconIcon
                     anchors {
-                        top: urlField.top; topMargin: theme.paddingSmall
+                        bottom: urlField.verticalCenter
                         left: parent.left; leftMargin: theme.paddingMedium
                     }
-                    smooth: true
+
+                    favicon: browserPage.favicon
+                    link: url
                 }
 
                 TextField {
                     id:urlField
 
                     anchors {
-                        left: earthIcon.right; leftMargin: theme.paddingSmall - theme.paddingLarge
+                        left: faviconIcon.right; leftMargin: theme.paddingSmall - theme.paddingLarge
                         right: clearIcon.left; rightMargin: theme.paddingSmall - theme.paddingLarge
                     }
                     text: url
                     placeholderText: "Search"
                     color: theme.primaryColor
 
-                    function urlEntered() {
+                    EnterKey.onClicked: {
                         urlField.closeSoftwareInputPanel()
                         var url = urlField.text
 
@@ -87,16 +88,13 @@ Dialog {
                         pageStack.pop(undefined, true)
                     }
 
-                    Keys.onEnterPressed: {
-                        urlEntered()
-                    }
-
-                    Keys.onReturnPressed: {
-                        urlEntered()
-                    }
-
                     Component.onCompleted: {
                         page.urlField = urlField
+                    }
+                    onTextChanged: {
+                        if (text !== url) {
+                            faviconIcon.source = "image://theme/icon-m-region"
+                        }
                     }
                 }
                 Image {

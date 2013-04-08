@@ -27,10 +27,10 @@ DeclarativeBookmarkModel::DeclarativeBookmarkModel(QObject *parent) :
 
 // TODO cleanup
 
-void DeclarativeBookmarkModel::addBookmark(const QString& url, const QString& title) {
+void DeclarativeBookmarkModel::addBookmark(const QString& url, const QString& title, const QString& favicon) {
     beginInsertRows(QModelIndex(), rowCount(), rowCount());
 
-    titles.append(new Bookmark(title, url, ""));
+    titles.append(new Bookmark(title, url, favicon));
     bookmarks.insert(url, titles.count()-1);
     endInsertRows();
 

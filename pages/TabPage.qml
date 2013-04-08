@@ -7,6 +7,7 @@
 
 import QtQuick 1.1
 import Sailfish.Silica 1.0
+import "components"
 
 Page {
     id: page
@@ -14,19 +15,19 @@ Page {
     SilicaListView {
         id: list
         anchors.fill: parent
+
         header: Column {
             width: list.width
-
-            PageHeader {
-                title: "Tabs"
-            }
+            height: tabs.height + 2 * theme.paddingMedium
 
             Grid {
+                id: tabs
                 columns: 2
                 rows: Math.ceil(browserPage.tabs.count / 2)
                 spacing: theme.paddingMedium
                 anchors {
-                    leftMargin: theme.paddingMedium
+                    margins: theme.paddingMedium
+                    top: parent.top;
                     left: parent.left
                 }
 
@@ -81,17 +82,14 @@ Page {
             width: list.width
             anchors.topMargin: theme.paddingLarge
 
-            Image {
+            FaviconImage {
                 id: faviconImage
-                source: "image://theme/icon-m-region"
-                height: titleLabel.height
-                width: height
-                asynchronous: true
                 anchors {
-                    top: titleLabel.top
+                    verticalCenter: titleLabel.verticalCenter
                     left: parent.left; leftMargin: theme.paddingMedium
                 }
-                smooth: true
+                favicon: model.favicon
+                link: url
             }
 
             Label {

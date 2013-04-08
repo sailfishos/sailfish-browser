@@ -21,6 +21,7 @@ Page {
     property alias favorites: favoriteModel
     property int currentTabIndex: 0
     property variant webEngine: webContent.child
+    property string favicon: ""
 
     property variant _controlPageComponent
 
@@ -77,7 +78,7 @@ Page {
             }
 
             onViewInitialized: {
-                webContent.child.addMessageListener("chrome:title")
+                webContent.child.addMessageListener("chrome:linkadded")
                 if (Parameters.initialPage !== "") {
                     browserPage.load(Parameters.initialPage)
                 } else if (historyModel.count == 0 ) {
@@ -88,8 +89,11 @@ Page {
             }
             onLoadingChanged: {
                 progressBar.opacity = webEngine.loading ? 1.0 : 0.0
-                if(!webEngine.loading)
+                if(!webEngine.loading) {
                     progressBar.progress = 0
+                } else {
+                    favicon = ""
+                }
 
                 if (!webEngine.loading && webEngine.url != "about:blank" &&
                     (historyModel.count == 0 || webEngine.url != historyModel.get(0).url)) {
@@ -101,6 +105,11 @@ Page {
             onLoadProgressChanged: {
                 if ((webEngine.loadProgress / 100.0) > progressBar.progress) {
                     progressBar.progress = webEngine.loadProgress / 100.0
+                }
+            }
+            onRecvAsyncMessage: {
+                if (message == "chrome:linkadded" && data.rel == "shortcut icon") {
+                    favicon = data.href
                 }
             }
         }
@@ -137,7 +146,7 @@ Page {
                     if (favoriteModel.contains(webEngine.url)) {
                         favoriteModel.removeBookmark(webEngine.url)
                     } else {
-                        favoriteModel.addBookmark(webEngine.url, webEngine.title)
+                        favoriteModel.addBookmark(webEngine.url, webEngine.title, favicon)
                     }
                 }
             }

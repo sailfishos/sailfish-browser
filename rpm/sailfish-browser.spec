@@ -12,9 +12,9 @@ BuildRequires:  pkgconfig(qtembedwidget)
 BuildRequires:  pkgconfig(x11)
 BuildRequires:  pkgconfig(QtOpenGL)
 BuildRequires:  pkgconfig(QJson)
-Requires: sailfishsilica >= 0.7.37
-Requires: xulrunner
-Requires: embedlite-components
+Requires: sailfishsilica >= 0.8.6
+Requires: xulrunner >= 22.0.1.11
+Requires: embedlite-components >= 1.0.11
 
 %description
 Sailfish Web Browser

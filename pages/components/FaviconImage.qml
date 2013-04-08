@@ -1,0 +1,24 @@
+/****************************************************************************
+**
+** Copyright (C) 2013 Jolla Ltd.
+** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jollamobile.com>
+**
+****************************************************************************/
+import QtQuick 1.1
+import Sailfish.Silica 1.0
+
+Image {
+    property string favicon: ""
+    property string link: ""
+
+    source: favicon != "" ? favicon : WebUtils.getFaviconForUrl(link)
+    height: 32
+    width: 32
+    asynchronous: true
+    smooth: true
+    onStatusChanged: {
+        if (status == Image.Error) {
+            source = "image://theme/icon-m-region"
+        }
+    }
+}
