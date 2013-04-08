@@ -116,6 +116,46 @@ Page {
     }
 
     Rectangle {
+        anchors {
+            left: tools.left
+            right: tools.right
+            bottom: tools.top
+        }
+        height: tools.height * 2
+        opacity: progressBar.opacity
+
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: Qt.rgba(1.0, 1.0, 1.0, 0.0) }
+            GradientStop { position: 1.0; color: theme.highlightDimmerColor }
+        }
+
+        Column {
+            width: parent.width
+            anchors {
+                bottom: parent.bottom; bottomMargin: theme.paddingMedium
+                horizontalCenter: parent.horizontalCenter
+            }
+
+            Label {
+                text: webEngine.title
+                width: parent.width - theme.paddingMedium * 2
+                color: theme.highlightColor
+                font.pixelSize: theme.fontSizeSmall
+                horizontalAlignment: Text.AlignHCenter
+                truncationMode: TruncationMode.Fade
+            }
+            Label {
+                text: webEngine.url
+                width: parent.width - theme.paddingMedium * 2
+                color: theme.secondaryColor
+                font.pixelSize: theme.fontSizeExtraSmall
+                horizontalAlignment: Text.AlignHCenter
+                truncationMode: TruncationMode.Fade
+            }
+        }
+    }
+
+    Rectangle {
         id: tools
         color:"black"
         anchors {
@@ -125,6 +165,12 @@ Page {
         }
         height: visible ? theme.itemSizeMedium : 0
         visible: (parent.height === screen.height)
+
+        ProgressBar {
+            id: progressBar
+            anchors.fill: parent
+            opacity: 0.0
+        }
 
         Row {
             id: toolsrow
@@ -162,8 +208,8 @@ Page {
                 }
             }
             IconButton {
-                icon.source: "image://theme/icon-m-refresh"
-                onClicked: webEngine.reload()
+                icon.source: webEngine.loading? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
+                onClicked: webEngine.loading? webEngine.stop() : webEngine.reload()
             }
 
             IconButton {
@@ -172,17 +218,6 @@ Page {
                 enabled: webEngine.canGoForward
                 onClicked: webEngine.goForward()
             }
-        }
-    }
-
-    ProgressBar {
-        id:progressBar
-        anchors.fill: tools
-        opacity: 0.0
-        title: webEngine.title !== "" ? webEngine.title : webEngine.url
-
-        onStopped: {
-            webEngine.stop()
         }
     }
 
