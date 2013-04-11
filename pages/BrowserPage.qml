@@ -19,9 +19,9 @@ Page {
 
     property alias tabs: tabModel
     property alias favorites: favoriteModel
-    property int currentTabIndex: 0
+    property int currentTabIndex
     property variant webEngine: webContent.child
-    property string favicon: ""
+    property string favicon
 
     property variant _controlPageComponent
 

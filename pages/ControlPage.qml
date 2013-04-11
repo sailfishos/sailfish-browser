@@ -60,7 +60,7 @@ Dialog {
                         left: parent.left; leftMargin: theme.paddingMedium
                     }
 
-                    favicon: browserPage.favicon
+                    favicon: urlField.text === url ? browserPage.favicon : "image://theme/icon-m-region"
                     link: url
                 }
 
@@ -90,11 +90,6 @@ Dialog {
 
                     Component.onCompleted: {
                         page.urlField = urlField
-                    }
-                    onTextChanged: {
-                        if (text !== url) {
-                            faviconIcon.source = "image://theme/icon-m-region"
-                        }
                     }
                 }
                 Image {
