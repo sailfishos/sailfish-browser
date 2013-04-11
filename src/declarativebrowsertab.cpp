@@ -22,6 +22,8 @@ DeclarativeBrowserTab::DeclarativeBrowserTab(QDeclarativeView* view, QObject *pa
     QObject(parent), m_view(view)
 {
     view->engine()->rootContext()->setContextProperty("BrowserTab",this);
+    QTime now = QTime::currentTime();
+    qsrand(now.msec());
 }
 
 DeclarativeBrowserTab::~DeclarativeBrowserTab()

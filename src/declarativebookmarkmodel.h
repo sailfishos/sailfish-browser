@@ -29,7 +29,7 @@ public:
            FaviconRole
     };
 
-    Q_INVOKABLE void addBookmark(const QString& url, const QString& title);
+    Q_INVOKABLE void addBookmark(const QString& url, const QString& title, const QString& favicon);
     Q_INVOKABLE void removeBookmark(const QString& url);
     Q_INVOKABLE bool contains(const QString& url) const;
 

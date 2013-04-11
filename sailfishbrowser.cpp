@@ -9,6 +9,7 @@
 #include <QDeclarativeView>
 #include <QGLWidget>
 #include <QDeclarativeContext>
+#include <QDeclarativeEngine>
 #include <QInputContext>
 #include <QWidget>
 #include <QTimer>
@@ -21,6 +22,7 @@
 #include "src/declarativebrowsertab.h"
 #include "src/declarativeparameters.h"
 #include "src/declarativebookmarkmodel.h"
+#include "src/declarativewebutils.h"
 
 Q_DECL_EXPORT int main(int argc, char *argv[])
 {
@@ -44,6 +46,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 
     DeclarativeBrowserTab * tab = new DeclarativeBrowserTab(view.data(), app.data());
     DeclarativeParameters * parameters = new DeclarativeParameters(app->arguments(), view.data(), app.data());
+    DeclarativeWebUtils * utils = new DeclarativeWebUtils(app.data());
+    view->engine()->rootContext()->setContextProperty("WebUtils", utils);
 
     view->setViewport(new QGLWidget);
     view->rootContext()->setContextProperty("MozContext", QMozContext::GetInstance());
