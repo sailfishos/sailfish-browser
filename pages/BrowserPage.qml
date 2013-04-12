@@ -133,7 +133,6 @@ Page {
             width: parent.width
             anchors {
                 bottom: parent.bottom; bottomMargin: theme.paddingMedium
-                horizontalCenter: parent.horizontalCenter
             }
 
             Label {
@@ -209,7 +208,7 @@ Page {
             }
             IconButton {
                 icon.source: webEngine.loading? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
-                onClicked: webEngine.loading? webEngine.stop() : webEngine.reload()
+                onClicked: webEngine.loading ? webEngine.stop() : webEngine.reload()
             }
 
             IconButton {
