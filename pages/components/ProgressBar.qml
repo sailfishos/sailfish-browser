@@ -12,16 +12,8 @@ Item {
 
     // From 0 to 1.0
     property real progress: 0.0
-    property string title: ""
-    property string cancelText: qsTrId("components-la-tap-to-cancel")
 
-    signal stopped
     visible: opacity > 0.0
-
-    Rectangle {
-        anchors.fill: parent
-        color: theme.highlightDimmerColor
-    }
 
     Rectangle {
         id: progressRect
@@ -41,38 +33,9 @@ Item {
             }
         }
     }
-
-    Column {
-        id: column
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.margins: theme.paddingLarge
-        anchors.verticalCenter: parent.verticalCenter
-
-        Label {
-            id: titleLabel
-            text: progressBar.title
-            width: parent.width
-            color: theme.highlightColor
-            font.pixelSize: theme.fontSizeSmall
-            horizontalAlignment: Text.AlignHCenter
-            truncationMode: TruncationMode.Fade
-        }
-        Label {
-            //% "Tap to cancel"
-            text: progressBar.cancelText
-            anchors.horizontalCenter: parent.horizontalCenter
-            color: mouseArea.down ? theme.secondaryHighlightColor : theme.secondaryColor
-            font.pixelSize: theme.fontSizeExtraSmall
-        }
-    }
-
-    MouseArea {
-        id: mouseArea
-        anchors.fill: parent
-        onClicked: {
-            progressBar.opacity = 0.0
-            stopped()
+    onVisibleChanged: {
+        if (!visible) {
+            progress = 0
         }
     }
 
