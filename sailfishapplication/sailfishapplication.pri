@@ -9,14 +9,13 @@ target.path = $$TARGETPATH
 
 DEPLOYMENT_PATH = /usr/share/$$TARGET
 qml.path = $$DEPLOYMENT_PATH
-desktop.path = /usr/share/applications
 
 contains(CONFIG, desktop) {
     DEFINES *= DESKTOP
     QT += opengl
 }
 
-INSTALLS += target qml desktop
+INSTALLS += target qml
 
 DEFINES += DEPLOYMENT_PATH=\"\\\"\"$${DEPLOYMENT_PATH}/\"\\\"\"
 

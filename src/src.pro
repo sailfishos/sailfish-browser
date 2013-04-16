@@ -41,9 +41,6 @@ HEADERS += \
 # QML files and folders
 qml.files = *.qml pages cover browser.qml
 
-# The .desktop file
-desktop.files = sailfish-browser.desktop
-
 # Please do not modify the following line.
 include(../sailfishapplication/sailfishapplication.pri)
 
