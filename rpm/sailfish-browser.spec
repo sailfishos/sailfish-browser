@@ -20,6 +20,14 @@ Requires: embedlite-components >= 1.0.11
 %description
 Sailfish Web Browser
 
+%package ts-devel
+Summary: Translation source for Sailfish browser
+License:   Prop
+Group:     Development/Tools
+
+%description ts-devel
+Translation source for Sailfish Browser
+
 %package tests
 Summary: Tests for Sailfish browser
 Group: Development/Tools
@@ -60,7 +68,12 @@ rm -rf %{buildroot}
 %{_bindir}/%{name}
 %{_datadir}/applications/%{name}.desktop
 %{_datadir}/%{name}/*
+%{_datadir}/translations/*.qm
 # << files
+
+%files ts-devel
+%defattr(-,root,root,-)
+%{_datadir}/translations/source/sailfish-browser.ts
 
 %files tests
 %defattr(-,root,root,-)
