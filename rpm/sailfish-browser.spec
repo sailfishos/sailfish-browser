@@ -23,14 +23,15 @@ Sailfish Web Browser
 %package ts-devel
 Summary: Translation source for Sailfish browser
 License:   Prop
-Group:     Development/Tools
+Group:     Applications/Internet
 
 %description ts-devel
 Translation source for Sailfish Browser
 
 %package tests
 Summary: Tests for Sailfish browser
-Group: Development/Tools
+License:   Prop
+Group: Applications/Internet
 
 %description tests
 Unit tests and additional data needed for functional tests
