@@ -19,10 +19,10 @@
 #include "qmozcontext.h"
 
 #include "sailfishapplication.h"
-#include "src/declarativebrowsertab.h"
-#include "src/declarativeparameters.h"
-#include "src/declarativebookmarkmodel.h"
-#include "src/declarativewebutils.h"
+#include "declarativebrowsertab.h"
+#include "declarativeparameters.h"
+#include "declarativebookmarkmodel.h"
+#include "declarativewebutils.h"
 
 Q_DECL_EXPORT int main(int argc, char *argv[])
 {
