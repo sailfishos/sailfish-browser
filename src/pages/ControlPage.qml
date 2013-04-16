@@ -24,7 +24,8 @@ Dialog {
         ContextMenu {
             property string url: ""
             MenuItem {
-                text: "Open in new tab"
+                //% "Open in new tab"
+                text: qsTrId("sailfish_browser-me-open_new_tab")
                 onClicked: {
                     browserPage.newTab()
                     browserPage.load(url)
@@ -45,7 +46,8 @@ Dialog {
             DialogHeader {
                 // We use the internal property to avoid transition
                 // that is not appropriate for the case "Accept -> All tabs"
-                _defaultAcceptText: "All Tabs"
+                //% "All Tabs"
+                _defaultAcceptText: qsTrId("sailfish_browser-he-all_tabs")
                 dialog: page
             }
 
@@ -72,7 +74,9 @@ Dialog {
                         right: clearIcon.left; rightMargin: theme.paddingSmall - theme.paddingLarge
                     }
                     text: url
-                    placeholderText: "Search"
+                    //: Placeholder for the search field
+                    //% "Search"
+                    placeholderText: qsTrId("sailfish_browser-ph-search")
                     color: theme.primaryColor
 
                     EnterKey.onClicked: {
@@ -112,7 +116,8 @@ Dialog {
 
         PullDownMenu {
             MenuItem {
-                text: "New tab"
+                //% "New tab"
+                text: qsTrId("sailfish_browser-me-new_tab")
                 onClicked: browserPage.newTab()
             }
         }
