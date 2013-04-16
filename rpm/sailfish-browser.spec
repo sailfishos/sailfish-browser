@@ -5,6 +5,7 @@ Version:    0.1.7
 Release:    1
 Group:      Applications/Internet
 License:    Prop
+Url:        https://bitbucket.org/jolla/ui-sailfish-browser
 Source0:    %{name}-%{version}.tar.bz2
 BuildRequires:  pkgconfig(QtCore)
 BuildRequires:  pkgconfig(QtGui)
@@ -19,6 +20,12 @@ Requires: embedlite-components >= 1.0.11
 %description
 Sailfish Web Browser
 
+%package tests
+Summary: Tests for Sailfish browser
+Group: Development/Tools
+
+%description tests
+Unit tests and additional data needed for functional tests
 
 %prep
 %setup -q -n %{name}-%{version}
@@ -50,7 +57,11 @@ rm -rf %{buildroot}
 %files
 %defattr(-,root,root,-)
 # >> files
-/usr/share/applications/sailfish-browser.desktop
-/usr/bin/sailfish-browser
-/usr/share/sailfish-browser/*
+%{_bindir}/%{name}
+%{_datadir}/applications/%{name}.desktop
+%{_datadir}/%{name}/*
 # << files
+
+%files tests
+%defattr(-,root,root,-)
+/opt/*

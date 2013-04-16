@@ -44,8 +44,14 @@ qml.files = *.qml pages cover browser.qml
 # The .desktop file
 desktop.files = sailfish-browser.desktop
 
+# Data for functional tests
+testdata.files = tests/manual/*
+testdata.path = /opt/tests/$$TARGET/manual/
+
 # Please do not modify the following line.
 include(sailfishapplication/sailfishapplication.pri)
+
+INSTALLS += testdata
 
 OTHER_FILES = pages/BrowserPage.qml \
               rpm/sailfish-browser.spec
