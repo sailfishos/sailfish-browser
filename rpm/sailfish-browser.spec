@@ -78,4 +78,5 @@ rm -rf %{buildroot}
 
 %files tests
 %defattr(-,root,root,-)
+%{_datadir}/applications/test-sailfish-browser.desktop
 /opt/*
