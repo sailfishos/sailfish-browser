@@ -14,9 +14,13 @@
 class DeclarativeWebUtils : public QObject
 {
     Q_OBJECT
+
 public:
     explicit DeclarativeWebUtils(QObject *parent = 0);
 
     Q_INVOKABLE QUrl getFaviconForUrl(QUrl url);
+
+public slots:
+    void updateWebEngineSettings();
 };
 #endif // DECLARATIVEWEBUTILS_H
