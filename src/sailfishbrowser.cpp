@@ -13,16 +13,17 @@
 #include <QInputContext>
 #include <QWidget>
 #include <QTimer>
+#include <QTranslator>
 
 #include "qdeclarativemozview.h"
 #include "qgraphicsmozview.h"
 #include "qmozcontext.h"
 
 #include "sailfishapplication.h"
-#include "src/declarativebrowsertab.h"
-#include "src/declarativeparameters.h"
-#include "src/declarativebookmarkmodel.h"
-#include "src/declarativewebutils.h"
+#include "declarativebrowsertab.h"
+#include "declarativeparameters.h"
+#include "declarativebookmarkmodel.h"
+#include "declarativewebutils.h"
 
 Q_DECL_EXPORT int main(int argc, char *argv[])
 {
@@ -30,6 +31,15 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 
     QScopedPointer<QApplication> app(Sailfish::createApplication(argc, argv));
     app->setQuitOnLastWindowClosed(true);
+
+    QString translationPath("/usr/share/translations/");
+    QTranslator engineeringEnglish;
+    engineeringEnglish.load("sailfish-browser_eng_en", translationPath);
+    qApp->installTranslator(&engineeringEnglish);
+
+    QTranslator translator;
+    translator.load(QLocale(), "sailfish-browser", "-", translationPath);
+    qApp->installTranslator(&translator);
 
     qmlRegisterType<QGraphicsMozView>("QtMozilla", 1, 0, "QGraphicsMozView");
     qmlRegisterType<QDeclarativeMozView>("QtMozilla", 1, 0, "QmlMozView");

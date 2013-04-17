@@ -12,14 +12,16 @@ CoverBackground {
     anchors.fill: parent
 
     CoverPlaceholder {
-        text: "Browser"
+        //% "Browser"
+        text: qsTrId("sailfish_browser-ap-browser")
         icon.source: 'image://theme/icon-launcher-browser'
     }
 
     Label {
         id: label
         anchors.centerIn: parent
-        text: "Browser"
+        //% "Browser"
+        text: qsTrId("sailfish_browser-la-browser")
         color: theme.secondaryColor
     }
 }
