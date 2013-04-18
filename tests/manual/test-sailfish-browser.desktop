@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Test Web Browser
+Icon=/opt/tests/sailfish-browser/manual/icon-launcher-testbrowser.png
+Exec=/usr/bin/sailfish-browser file:///opt/tests/sailfish-browser/manual/testpage.html
+Comment=Test Sailfish UI application
