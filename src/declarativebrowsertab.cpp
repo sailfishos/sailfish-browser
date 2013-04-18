@@ -39,6 +39,9 @@ DeclarativeBrowserTab::~DeclarativeBrowserTab()
 
 QString DeclarativeBrowserTab::screenCapture(int x, int y, int width, int height, qreal rotate)
 {
+    if(!m_view->isActiveWindow()) {
+        return "";
+    }
     QPixmap pixmap = QPixmap::grabWindow(m_view->winId(), x, y, width, height);
     int randomValue = abs(qrand());
     QString path = QDesktopServices::storageLocation(QDesktopServices::CacheLocation) + "/" + QString::number(randomValue);

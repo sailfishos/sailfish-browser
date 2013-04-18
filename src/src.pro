@@ -1,4 +1,4 @@
-QT += opengl declarative
+QT += opengl declarative dbus
 # The name of your app
 TARGET = sailfish-browser
 
@@ -28,7 +28,9 @@ SOURCES += \
     sailfishbrowser.cpp \
     declarativebookmarkmodel.cpp \
     bookmark.cpp \
-    declarativewebutils.cpp
+    declarativewebutils.cpp \
+    browserservice.cpp \
+    dbusadaptor.cpp
 
 # C++ headers
 HEADERS += \
@@ -36,7 +38,9 @@ HEADERS += \
     declarativeparameters.h \
     declarativebookmarkmodel.h \
     bookmark.h \
-    declarativewebutils.h
+    declarativewebutils.h \
+    browserservice.h \
+    dbusadaptor.h
 
 # QML files and folders
 qml.files = *.qml pages cover browser.qml

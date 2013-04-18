@@ -9,14 +9,24 @@
 #include <QDeclarativeEngine>
 #include <QDeclarativeContext>
 
-DeclarativeParameters::DeclarativeParameters(QStringList arguments, QDeclarativeView* view, QObject *parent) :
+DeclarativeParameters::DeclarativeParameters(QStringList arguments, BrowserService *service, QDeclarativeView* view, QObject *parent) :
     QObject(parent),
     m_homePage("file:///usr/share/sailfish-browser/pages/demo.html"),
-    m_arguments(arguments)
+    m_arguments(arguments),
+    m_service(service)
+
 {
     view->engine()->rootContext()->setContextProperty("Parameters",this);
+    connect(service, SIGNAL(openUrlRequested(QString)), this, SLOT(openUrl(QString)));
 }
 
+
+void DeclarativeParameters::openUrl(QString url)
+{
+    m_arguments << url;
+
+    emit openUrlRequested(url);
+}
 
 QString DeclarativeParameters::initialPage()
 {

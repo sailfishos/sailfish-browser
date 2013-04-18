@@ -41,14 +41,14 @@ Page {
                             anchors.fill: parent
                             color: theme.highlightBackgroundColor
                             opacity: theme.highlightBackgroundOpacity
-                            visible: thumb.status == Image.Error
+                            visible: !thumb.visible
                         }
 
                         Label {
                             width: parent.width
                             anchors.centerIn: parent.Center
                             text: url
-                            visible: thumb.status == Image.Error
+                            visible: !thumb.visible
                             font.pixelSize: theme.fontSizeSmall
                             color: theme.secondaryColor
                             truncationMode: TruncationMode.Elide
@@ -63,6 +63,7 @@ Page {
                                 width: parent.width
                                 height: width
                             }
+                            visible: status !== Image.Error && thumbPath !== ""
                         }
                         onClicked: {
                             if (browserPage.currentTabIndex !== model.index) {

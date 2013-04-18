@@ -38,6 +38,14 @@ Page {
         }
     }
 
+    function storeTab() {
+        var screenPath = ""
+        if(status == PageStatus.Active) {
+            screenPath = BrowserTab.screenCapture(0, 0, webContent.width, webContent.width, window.screenRotation)
+        }
+        tabModel.set(currentTabIndex, {"thumbPath" : screenPath, "url" : webEngine.url})
+    }
+
     ListModel {
         id: historyModel
     }
@@ -97,7 +105,10 @@ Page {
 
                 if (!webEngine.loading && webEngine.url != "about:blank" &&
                     (historyModel.count == 0 || webEngine.url != historyModel.get(0).url)) {
-                    var screenPath = BrowserTab.screenCapture(0, 0, webContent.width, webContent.width, window.screenRotation)
+                    var screenPath = ""
+                    if(status == PageStatus.Active) {
+                        screenPath = BrowserTab.screenCapture(0, 0, webContent.width, webContent.width, window.screenRotation)
+                    }
                     History.addRow(webEngine.url, webEngine.title, screenPath)
                     historyModel.insert(0, {"title": webEngine.title, "url": webEngine.url, "icon": screenPath} )
                 }
@@ -200,10 +211,9 @@ Page {
                 icon.source: "image://theme/icon-m-tab"
 
                 onClicked:  {
-                    var screenPath = BrowserTab.screenCapture(0, 0, webContent.width, webContent.width, window.screenRotation)
-                    tabModel.set(currentTabIndex, {"thumbPath" : screenPath, "url" : webEngine.url})
+                    storeTab()
                     var sendUrl = (webEngine.url != Parameters.initialPage) ? webEngine.url : ""
-                    pageStack.push(_controlPageComponent, {historyModel: historyModel, url: sendUrl}, true);
+                    pageStack.push(_controlPageComponent, {historyModel: historyModel, url: sendUrl}, true)
                 }
             }
             IconButton {
@@ -216,6 +226,23 @@ Page {
                 icon.source: "image://theme/icon-m-forward"
                 enabled: webEngine.canGoForward
                 onClicked: webEngine.goForward()
+            }
+        }
+    }
+
+    Connections {
+        target: Parameters
+        onOpenUrlRequested: {
+            if(webEngine.url != "") {
+                storeTab()
+                newTab()
+            }
+            load(url)
+            if(status != PageStatus.Active) {
+                pageStack.pop(browserPage, PageStackAction.Immediate)
+            }
+            if(!window.applicationActive) {
+                window.activate()
             }
         }
     }

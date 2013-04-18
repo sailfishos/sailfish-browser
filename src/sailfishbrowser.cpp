@@ -24,6 +24,7 @@
 #include "declarativeparameters.h"
 #include "declarativebookmarkmodel.h"
 #include "declarativewebutils.h"
+#include "browserservice.h"
 
 Q_DECL_EXPORT int main(int argc, char *argv[])
 {
@@ -31,6 +32,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 
     QScopedPointer<QApplication> app(Sailfish::createApplication(argc, argv));
     app->setQuitOnLastWindowClosed(true);
+
+    BrowserService *service = new BrowserService(app.data());
 
     QString translationPath("/usr/share/translations/");
     QTranslator engineeringEnglish;
@@ -55,7 +58,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     QScopedPointer<QDeclarativeView> view(Sailfish::createView("browser.qml"));
 
     DeclarativeBrowserTab * tab = new DeclarativeBrowserTab(view.data(), app.data());
-    DeclarativeParameters * parameters = new DeclarativeParameters(app->arguments(), view.data(), app.data());
+    DeclarativeParameters * parameters = new DeclarativeParameters(app->arguments(), service, view.data(), app.data());
     DeclarativeWebUtils * utils = new DeclarativeWebUtils(app.data());
     view->engine()->rootContext()->setContextProperty("WebUtils", utils);
 
