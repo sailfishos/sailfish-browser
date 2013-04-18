@@ -9,7 +9,7 @@ fi
 mkdir -p $TARGET_DIR
 
 FILES_LIST="
-sailfish-browser
+src/sailfish-browser
 "
 for str in $FILES_LIST; do
     fname="${str##*/}"
