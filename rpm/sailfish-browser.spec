@@ -13,6 +13,7 @@ BuildRequires:  pkgconfig(qtembedwidget)
 BuildRequires:  pkgconfig(x11)
 BuildRequires:  pkgconfig(QtOpenGL)
 BuildRequires:  pkgconfig(QJson)
+BuildRequires:  pkgconfig(QtDBus)
 Requires: sailfishsilica >= 0.8.6
 Requires: xulrunner >= 22.0.1.11
 Requires: embedlite-components >= 1.0.11
@@ -70,6 +71,7 @@ rm -rf %{buildroot}
 %{_datadir}/applications/%{name}.desktop
 %{_datadir}/%{name}/*
 %{_datadir}/translations/*.qm
+%{_datadir}/dbus-1/services/*.service
 # << files
 
 %files ts-devel

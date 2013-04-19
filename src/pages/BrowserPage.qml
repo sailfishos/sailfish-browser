@@ -38,6 +38,14 @@ Page {
         }
     }
 
+    function storeTab() {
+        var screenPath = ""
+        if (status == PageStatus.Active) {
+            screenPath = BrowserTab.screenCapture(0, 0, webContent.width, webContent.width, window.screenRotation)
+        }
+        tabModel.set(currentTabIndex, {"thumbPath" : screenPath, "url" : webEngine.url})
+    }
+
     ListModel {
         id: historyModel
     }
@@ -79,17 +87,17 @@ Page {
 
             onViewInitialized: {
                 webContent.child.addMessageListener("chrome:linkadded")
-                if (Parameters.initialPage !== "") {
-                    browserPage.load(Parameters.initialPage)
+                if (WebUtils.initialPage !== "") {
+                    browserPage.load(WebUtils.initialPage)
                 } else if (historyModel.count == 0 ) {
-                    browserPage.load(Parameters.homePage)
+                    browserPage.load(WebUtils.homePage)
                 } else {
                     browserPage.load(historyModel.get(0).url)
                 }
             }
             onLoadingChanged: {
                 progressBar.opacity = webEngine.loading ? 1.0 : 0.0
-                if(!webEngine.loading) {
+                if (!webEngine.loading) {
                     progressBar.progress = 0
                 } else {
                     favicon = ""
@@ -97,7 +105,10 @@ Page {
 
                 if (!webEngine.loading && webEngine.url != "about:blank" &&
                     (historyModel.count == 0 || webEngine.url != historyModel.get(0).url)) {
-                    var screenPath = BrowserTab.screenCapture(0, 0, webContent.width, webContent.width, window.screenRotation)
+                    var screenPath = ""
+                    if (status == PageStatus.Active) {
+                        screenPath = BrowserTab.screenCapture(0, 0, webContent.width, webContent.width, window.screenRotation)
+                    }
                     History.addRow(webEngine.url, webEngine.title, screenPath)
                     historyModel.insert(0, {"title": webEngine.title, "url": webEngine.url, "icon": screenPath} )
                 }
@@ -200,10 +211,9 @@ Page {
                 icon.source: "image://theme/icon-m-tab"
 
                 onClicked:  {
-                    var screenPath = BrowserTab.screenCapture(0, 0, webContent.width, webContent.width, window.screenRotation)
-                    tabModel.set(currentTabIndex, {"thumbPath" : screenPath, "url" : webEngine.url})
-                    var sendUrl = (webEngine.url != Parameters.initialPage) ? webEngine.url : ""
-                    pageStack.push(_controlPageComponent, {historyModel: historyModel, url: sendUrl}, true);
+                    storeTab()
+                    var sendUrl = (webEngine.url != WebUtils.initialPage) ? webEngine.url : ""
+                    pageStack.push(_controlPageComponent, {historyModel: historyModel, url: sendUrl}, true)
                 }
             }
             IconButton {
@@ -216,6 +226,39 @@ Page {
                 icon.source: "image://theme/icon-m-forward"
                 enabled: webEngine.canGoForward
                 onClicked: webEngine.goForward()
+            }
+        }
+    }
+
+    Connections {
+        target: WebUtils
+        onOpenUrlRequested: {
+            if (webEngine.url != "") {
+                storeTab()
+                for (var i = 0; i < tabs.count; i++) {
+                    if (tabs.get(i).url == url) {
+                        // Found it in tabs, load if needed
+                        if (i != currentTabIndex) {
+                            currentTabIndex = i
+                            load(url)
+                        }
+                        break
+                    }
+                }
+                if (tabs.get(currentTabIndex).url != url) {
+                    // Not found in tabs list, create newtab and load
+                    newTab()
+                    load(url)
+                }
+            } else {
+                // New browser instance, just load the content
+                load(url)
+            }
+            if (status != PageStatus.Active) {
+                pageStack.pop(browserPage, PageStackAction.Immediate)
+            }
+            if (!window.applicationActive) {
+                window.activate()
             }
         }
     }

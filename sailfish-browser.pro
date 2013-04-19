@@ -5,4 +5,7 @@ SUBDIRS += src tests translations
 desktop.files = sailfish-browser.desktop
 desktop.path = /usr/share/applications
 
-INSTALLS += desktop
+dbus_service.files = org.sailfishos.browser.service
+dbus_service.path = /usr/share/dbus-1/services
+
+INSTALLS += desktop dbus_service

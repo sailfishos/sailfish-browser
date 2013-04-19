@@ -5,3 +5,5 @@ Icon=icon-launcher-browser
 Exec=/usr/bin/sailfish-browser %U
 Comment=Sailfish UI application
 MimeType=text/html;x-maemo-urischeme/http;x-maemo-urischeme/https;
+X-Maemo-Service=org.sailfishos.browser
+X-Maemo-Method=org.sailfishos.browser.openUrl
