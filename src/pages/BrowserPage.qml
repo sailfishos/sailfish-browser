@@ -112,6 +112,59 @@ Page {
                     favicon = data.href
                 }
             }
+            onViewAreaChanged: {
+                var contentRect = webEngine.contentRect
+                var offset = webEngine.scrollableOffset
+                var size = webEngine.scrollableSize
+                var resolution = webEngine.resolution
+
+                var ySizeRatio = contentRect.height / size.height
+                var xSizeRatio = contentRect.width / size.width
+
+                verticalScrollDecorator.height = height * ySizeRatio
+                verticalScrollDecorator.y = offset.y * resolution * ySizeRatio
+
+                horizontalScrollDecorator.width = width * xSizeRatio
+                horizontalScrollDecorator.x = offset.x * resolution * xSizeRatio
+
+                scrollTimer.restart()
+            }
+        }
+
+        Rectangle {
+            id: verticalScrollDecorator
+
+            width: 5
+            anchors.right: parent ? parent.right: undefined
+            color: theme.highlightDimmerColor
+            border.width: 1
+            border.color: "grey"
+            smooth: true
+            radius: 10
+            visible: parent.height > height
+            opacity: scrollTimer.running ? 1.0 : 0.0
+            Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
+        }
+
+        Rectangle {
+            id: horizontalScrollDecorator
+
+            height: 5
+            anchors.bottom: parent ? parent.bottom: undefined
+            color: theme.highlightDimmerColor
+            border.width: 1
+            border.color: "grey"
+            smooth: true
+            radius: 10
+            visible: parent.width > width
+            opacity: scrollTimer.running ? 1.0 : 0.0
+            Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
+        }
+
+        Timer {
+            id: scrollTimer
+
+            interval: 300
         }
     }
 
