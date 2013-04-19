@@ -24,7 +24,6 @@ isEmpty(DEFAULT_COMPONENT_PATH) {
 # C++ sources
 SOURCES += \
     declarativebrowsertab.cpp \
-    declarativeparameters.cpp \
     sailfishbrowser.cpp \
     declarativebookmarkmodel.cpp \
     bookmark.cpp \
@@ -35,7 +34,6 @@ SOURCES += \
 # C++ headers
 HEADERS += \
     declarativebrowsertab.h \
-    declarativeparameters.h \
     declarativebookmarkmodel.h \
     bookmark.h \
     declarativewebutils.h \

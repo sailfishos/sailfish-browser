@@ -21,7 +21,6 @@
 
 #include "sailfishapplication.h"
 #include "declarativebrowsertab.h"
-#include "declarativeparameters.h"
 #include "declarativebookmarkmodel.h"
 #include "declarativewebutils.h"
 #include "browserservice.h"
@@ -58,8 +57,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     QScopedPointer<QDeclarativeView> view(Sailfish::createView("browser.qml"));
 
     DeclarativeBrowserTab * tab = new DeclarativeBrowserTab(view.data(), app.data());
-    DeclarativeParameters * parameters = new DeclarativeParameters(app->arguments(), service, view.data(), app.data());
-    DeclarativeWebUtils * utils = new DeclarativeWebUtils(app.data());
+    DeclarativeWebUtils * utils = new DeclarativeWebUtils(app->arguments(), service, view.data(), app.data());
     view->engine()->rootContext()->setContextProperty("WebUtils", utils);
 
     view->setViewport(new QGLWidget);

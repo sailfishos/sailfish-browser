@@ -87,10 +87,10 @@ Page {
 
             onViewInitialized: {
                 webContent.child.addMessageListener("chrome:linkadded")
-                if (Parameters.initialPage !== "") {
-                    browserPage.load(Parameters.initialPage)
+                if (WebUtils.initialPage !== "") {
+                    browserPage.load(WebUtils.initialPage)
                 } else if (historyModel.count == 0 ) {
-                    browserPage.load(Parameters.homePage)
+                    browserPage.load(WebUtils.homePage)
                 } else {
                     browserPage.load(historyModel.get(0).url)
                 }
@@ -212,7 +212,7 @@ Page {
 
                 onClicked:  {
                     storeTab()
-                    var sendUrl = (webEngine.url != Parameters.initialPage) ? webEngine.url : ""
+                    var sendUrl = (webEngine.url != WebUtils.initialPage) ? webEngine.url : ""
                     pageStack.push(_controlPageComponent, {historyModel: historyModel, url: sendUrl}, true)
                 }
             }
@@ -231,13 +231,29 @@ Page {
     }
 
     Connections {
-        target: Parameters
+        target: WebUtils
         onOpenUrlRequested: {
             if(webEngine.url != "") {
                 storeTab()
-                newTab()
+                for(var i = 0; i < tabs.count; i++) {
+                    if(tabs.get(i).url == url) {
+                        // Found it in tabs, load if needed
+                        if(i != currentTabIndex) {
+                            currentTabIndex = i
+                            load(url)
+                        }
+                        break
+                    }
+                }
+                if(tabs.get(currentTabIndex).url != url) {
+                    // Not found in tabs list, create newtab and load
+                    newTab()
+                    load(url)
+                }
+            } else {
+                // New browser instance, just load the content
+                load(url)
             }
-            load(url)
             if(status != PageStatus.Active) {
                 pageStack.pop(browserPage, PageStackAction.Immediate)
             }
