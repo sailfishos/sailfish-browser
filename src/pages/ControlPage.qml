@@ -116,6 +116,14 @@ Dialog {
 
         PullDownMenu {
             MenuItem {
+                //% "Close tab"
+                text: qsTrId("sailfish_browser-me-close_tab")
+                onClicked: {
+                    browserPage.closeTab()
+                    page.accept()
+                }
+            }
+            MenuItem {
                 //% "New tab"
                 text: qsTrId("sailfish_browser-me-new_tab")
                 onClicked: browserPage.newTab()
@@ -189,6 +197,7 @@ Dialog {
                 }
             }
         }
+        VerticalScrollDecorator {}
     }
 
     onStatusChanged: {
