@@ -30,7 +30,20 @@ Page {
         currentTabIndex = tabModel.count - 1
     }
 
+    function closeTab() {
+        if (tabModel.count > 1) {
+            tabModel.remove(currentTabIndex)
+            currentTabIndex = tabModel.count - 1
+            load(tabModel.get(currentTabIndex).url)
+        } else if(tabModel.count == 1) {
+            tabModel.clear()
+        }
+    }
+
     function load(url) {
+        if (tabModel.count == 0) {
+            newTab()
+        }
         if (!webEngine || webEngine.url == null) {
             console.log("No webengine")
         } else if (webEngine.url !== url) {

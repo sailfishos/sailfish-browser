@@ -16,7 +16,7 @@ Page {
         id: list
         anchors.fill: parent
 
-        header: Column {
+        header: Item {
             width: list.width
             height: tabs.height + 2 * theme.paddingMedium
 
@@ -72,8 +72,31 @@ Page {
                             }
                             window.pageStack.pop(browserPage, true)
                         }
+
+                        Rectangle {
+                            anchors.fill: parent
+
+                            property bool active: pressed
+                            property real highlightOpacity: 0.5
+
+                            color: theme.highlightBackgroundColor
+                            opacity: active ? highlightOpacity : 0.0
+                            Behavior on opacity {
+                                FadeAnimation {
+                                    duration: 100
+                                }
+                            }
+                        }
                     }
                 }
+            }
+        }
+
+        PullDownMenu {
+            MenuItem {
+                //% "Close all tabs"
+                text: qsTrId("sailfish_browser-me-close_all")
+                onClicked: browserPage.tabs.clear()
             }
         }
 
