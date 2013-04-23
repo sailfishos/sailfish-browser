@@ -164,7 +164,7 @@ Page {
             border.width: 1
             border.color: "grey"
             smooth: true
-            radius: 10
+            radius: 2.5
             visible: parent.height > height
             opacity: scrollTimer.running ? 1.0 : 0.0
             Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
@@ -179,7 +179,7 @@ Page {
             border.width: 1
             border.color: "grey"
             smooth: true
-            radius: 10
+            radius: 2.5
             visible: parent.width > width
             opacity: scrollTimer.running ? 1.0 : 0.0
             Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
