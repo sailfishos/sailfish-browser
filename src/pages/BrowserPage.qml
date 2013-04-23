@@ -26,17 +26,23 @@ Page {
     property variant _controlPageComponent
 
     function newTab() {
-        tabModel.append({"thumbPath": "", "url": ""})
+        var id = History.addTab("","")
+        historyModel.clear()
+        tabModel.append({"thumbPath": "", "url": "", "tabId":id})
         currentTabIndex = tabModel.count - 1
     }
 
     function closeTab() {
-        if (tabModel.count > 1) {
-            tabModel.remove(currentTabIndex)
-            currentTabIndex = tabModel.count - 1
+        if (tabModel.count == 0) {
+            return
+        }
+        History.deleteTab(tabModel.get(currentTabIndex).tabId)
+        tabModel.remove(currentTabIndex)
+        currentTabIndex = tabModel.count - 1
+        historyModel.clear()
+        if (tabModel.count >= 1) {
+            History.loadTabHistory(tabModel.get(currentTabIndex).tabId, historyModel)
             load(tabModel.get(currentTabIndex).url)
-        } else if(tabModel.count == 1) {
-            tabModel.clear()
         }
     }
 
@@ -51,12 +57,28 @@ Page {
         }
     }
 
+    function loadTab(index) {
+        if (currentTabIndex !== index) {
+            currentTabIndex = index
+            historyModel.clear()
+            load(tabModel.get(currentTabIndex).url)
+            History.loadTabHistory(tabModel.get(currentTabIndex).tabId, historyModel)
+        }
+    }
+
     function storeTab() {
         var screenPath = ""
         if (status == PageStatus.Active) {
             screenPath = BrowserTab.screenCapture(0, 0, webContent.width, webContent.width, window.screenRotation)
         }
         tabModel.set(currentTabIndex, {"thumbPath" : screenPath, "url" : webEngine.url})
+        History.updateTab(tabModel.get(currentTabIndex).tabId, webEngine.url, screenPath)
+    }
+
+    function closeAllTabs() {
+        historyModel.clear()
+        History.deleteAllTabs()
+        tabModel.clear()
     }
 
     ListModel {
@@ -69,7 +91,6 @@ Page {
 
     ListModel {
         id:tabModel
-        ListElement {thumbPath: ""; url: ""}
     }
 
     QmlMozView {
@@ -122,7 +143,7 @@ Page {
                     if (status == PageStatus.Active) {
                         screenPath = BrowserTab.screenCapture(0, 0, webContent.width, webContent.width, window.screenRotation)
                     }
-                    History.addRow(webEngine.url, webEngine.title, screenPath)
+                    History.addUrl(webEngine.url, webEngine.title, screenPath, tabModel.get(currentTabIndex).tabId)
                     historyModel.insert(0, {"title": webEngine.title, "url": webEngine.url, "icon": screenPath} )
                 }
             }
@@ -164,7 +185,7 @@ Page {
             border.width: 1
             border.color: "grey"
             smooth: true
-            radius: 10
+            radius: 2.5
             visible: parent.height > height
             opacity: scrollTimer.running ? 1.0 : 0.0
             Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
@@ -179,7 +200,7 @@ Page {
             border.width: 1
             border.color: "grey"
             smooth: true
-            radius: 10
+            radius: 2.5
             visible: parent.width > width
             opacity: scrollTimer.running ? 1.0 : 0.0
             Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
@@ -330,7 +351,11 @@ Page {
     }
 
     Component.onCompleted: {
-        History.loadModel(historyModel)
+        History.loadTabs(tabModel)
+        if (tabModel.count == 0) {
+            newTab()
+        }
+        History.loadTabHistory(tabModel.get(currentTabIndex).tabId, historyModel)
 
         // Since we dont have booster with gecko yet (see JB#5910) lets compile the
         // components needed by tab page here so that click on tab icon wont be too long

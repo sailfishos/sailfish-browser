@@ -66,10 +66,7 @@ Page {
                             visible: status !== Image.Error && thumbPath !== ""
                         }
                         onClicked: {
-                            if (browserPage.currentTabIndex !== model.index) {
-                                browserPage.currentTabIndex = model.index
-                                browserPage.load(url)
-                            }
+                            browserPage.loadTab(model.index)
                             window.pageStack.pop(browserPage, true)
                         }
 
@@ -96,7 +93,7 @@ Page {
             MenuItem {
                 //% "Close all tabs"
                 text: qsTrId("sailfish_browser-me-close_all")
-                onClicked: browserPage.tabs.clear()
+                onClicked: browserPage.closeAllTabs()
             }
         }
 

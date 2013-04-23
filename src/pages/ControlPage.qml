@@ -126,7 +126,11 @@ Dialog {
             MenuItem {
                 //% "New tab"
                 text: qsTrId("sailfish_browser-me-new_tab")
-                onClicked: browserPage.newTab()
+                onClicked: {
+                    urlField.text = ""
+                    urlField.forceActiveFocus()
+                    browserPage.newTab()
+                }
             }
         }
 

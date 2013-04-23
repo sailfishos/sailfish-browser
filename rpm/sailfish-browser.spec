@@ -33,6 +33,8 @@ Translation source for Sailfish Browser
 Summary: Tests for Sailfish browser
 License:   Prop
 Group: Applications/Internet
+Requires:   %{name} = %{version}-%{release}
+Requires:   qtest-qml
 
 %description tests
 Unit tests and additional data needed for functional tests
