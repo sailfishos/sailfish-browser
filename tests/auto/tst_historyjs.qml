@@ -30,13 +30,14 @@ Item {
             var url = "http://test.com/sailfishos-browser-unit-test"
             var title = "test-1"
             var icon = "test-2"
-            History.addUrl(url, title, icon)
-            History.loadHistory(model)
+            var tabId = 13213
+            History.addUrl(url, title, icon, tabId)
+            History.loadTabHistory(tabId, model)
 
             var ok = false
-            for(var i=0; i< model.count; i++) {
+            for (var i=0; i< model.count; i++) {
                 var item = model.get(i)
-                if( item.url == url && item.title == title && item.icon == icon) {
+                if (item.url === url && item.title === title && item.icon === icon ) {
                     ok = true
                     break
                 }
@@ -47,41 +48,45 @@ Item {
             var db = openDatabaseSync("sailfish-browser","0.1","historydb", 100000)
             db.transaction(
                         function(tx) {
-                            var result = tx.executeSql('DELETE FROM history WHERE url=?;',[url])
+                            var result = tx.executeSql('DELETE FROM historytable WHERE url=?;',[url])
                             if (result.rowsAffected < 1) {
                                 console.log("History remove failed")
                             }
                         });
+            model.clear()
         }
 
         function test_deleteUrl() {
             var url = "http://test.com/sailfishos-browser-unit-test-2"
             var title = "test-1"
             var icon = "test-2"
+            var tabId = 13003
 
-            History.addUrl(url, title, icon)
+            History.addUrl(url, title, icon, tabId)
             History.deleteUrl(url)
             History.loadHistory(model)
             var ok = true
             for (var i=0; i< model.count; i++) {
                 var item = model.get(i)
-                if (item.url == url) {
+                if (item.url === url) {
                     ok = false
                     break
                 }
             }
             compare(ok, true)
+            model.clear()
         }
 
         function test_addTab() {
             var url = "http://test.com/sailfishos-browser-unit-test-4"
-            var tabId = History.addTab(url)
+            var thumb ="/test/path1"
+            var tabId = History.addTab(url, thumb)
             History.loadTabs(tabs)
 
             var ok = false
             for (var i=0; i< tabs.count; i++) {
                 var item = tabs.get(i)
-                if (item.url == url && item.tabId == tabId) {
+                if (item.url === url && item.tabId === tabId && item.thumbPath === thumb) {
                     ok = true
                     break
                 }
@@ -92,7 +97,7 @@ Item {
             var db = openDatabaseSync("sailfish-browser","0.1","historydb", 100000)
             db.transaction(
                         function(tx) {
-                            var result = tx.executeSql('DELETE FROM tabs WHERE tabId=?;',[tabId])
+                            var result = tx.executeSql('DELETE FROM tabs WHERE tab_id=?;',[tabId])
                             if (result.rowsAffected < 1) {
                                 console.log("tabs remove failed")
                             }
@@ -104,13 +109,13 @@ Item {
             var url = "http://test.com/sailfishos-browser-unit-test-21"
 
             var tabId = History.addTab(url)
-            History.deleteTab(tabId)
+            History.deleteTab(tabId,"/path/to/file")
             History.loadTabs(tabs)
 
             var ok = true
             for (var i=0; i< tabs.count; i++) {
                 var item = tabs.get(i)
-                if (item.tabId == tabId) {
+                if (item.tabId === tabId) {
                     ok = false
                     break
                 }
@@ -131,7 +136,7 @@ Item {
             var ok = false
             for (var i=0; i< tabs.count; i++) {
                 var item = tabs.get(i)
-                if (item.url == newUrl && item.tabId == tabId) {
+                if (item.url === newUrl && item.tabId === tabId) {
                     ok = true
                     break
                 }
@@ -142,7 +147,7 @@ Item {
             var db = openDatabaseSync("sailfish-browser","0.1","historydb", 100000)
             db.transaction(
                         function(tx) {
-                            var result = tx.executeSql('DELETE FROM tabs WHERE tabId=?;',[tabId])
+                            var result = tx.executeSql('DELETE FROM tabs WHERE tab_id=?;',[tabId])
                             if (result.rowsAffected < 1) {
                                 console.log("tabs remove failed")
                             }
@@ -150,13 +155,23 @@ Item {
             tabs.clear()
         }
 
+        function test_deleteAllTabs() {
+            var url = "http://test.com/sailfishos-browser-unit-test-21"
 
+            History.addTab(url, "thumbpath")
+            History.addTab("Http://www.second.url")
+            History.deleteAllTabs()
+            History.loadTabs(tabs)
+
+            compare(0, tabs.count)
+            tabs.clear()
+        }
 
         function cleanupTestCase() {
             var db = openDatabaseSync("sailfish-browser","0.1","historydb", 100000)
             db.transaction(
                         function(tx) {
-                            var result = tx.executeSql('DROP TABLE history')
+                            var result = tx.executeSql('DROP TABLE historytable')
                         });
             db.transaction(
                         function(tx) {
