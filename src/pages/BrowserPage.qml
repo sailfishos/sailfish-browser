@@ -126,6 +126,10 @@ Page {
 
             onViewInitialized: {
                 webContent.child.addMessageListener("chrome:linkadded")
+                webEngine.addMessageListener("embed:alert");
+                webEngine.addMessageListener("embed:confirm");
+                webEngine.addMessageListener("embed:prompt");
+
                 if (WebUtils.initialPage !== "") {
                     browserPage.load(WebUtils.initialPage)
                 } else if (historyModel.count == 0 ) {
@@ -158,8 +162,57 @@ Page {
                 }
             }
             onRecvAsyncMessage: {
-                if (message == "chrome:linkadded" && data.rel == "shortcut icon") {
-                    favicon = data.href
+                switch (message) {
+                    case "chrome:linkadded": {
+                        if (data.rel === "shortcut icon") {
+                            favicon = data.href
+                        }
+                        break
+                    }
+                    case "embed:alert": {
+                        var winid = data.winid
+                        var dialog = pageStack.push(Qt.resolvedUrl("components/AlertDialog.qml"),
+                                                    {"text": data.text})
+                        // TODO: also the Async message must be sent when window gets closed
+                        dialog.done.connect(function() {
+                            webEngine.sendAsyncMessage("alertresponse", {"winid": winid})
+                        })
+                        break
+                    }
+                    case "embed:confirm": {
+                        var winid = data.winid
+                        var dialog = pageStack.push(Qt.resolvedUrl("components/ConfirmDialog.qml"),
+                                                    {"text": data.text})
+                        // TODO: also the Async message must be sent when window gets closed
+                        dialog.accepted.connect(function() {
+                            webEngine.sendAsyncMessage("confirmresponse",
+                                                       {"winid": winid, "accepted": true})
+                        })
+                        dialog.rejected.connect(function() {
+                            webEngine.sendAsyncMessage("confirmresponse",
+                                                       {"winid": winid, "accepted": false})
+                        })
+                        break
+                    }
+                    case "embed:prompt": {
+                        var winid = data.winid
+                        var dialog = pageStack.push(Qt.resolvedUrl("components/PromptDialog.qml"),
+                                                    {"text": data.text, "value": data.defaultValue})
+                        // TODO: also the Async message must be sent when window gets closed
+                        dialog.accepted.connect(function() {
+                            webEngine.sendAsyncMessage("promptresponse",
+                                                       {
+                                                           "winid": winid,
+                                                           "accepted": true,
+                                                           "promptvalue": dialog.value
+                                                       })
+                        })
+                        dialog.rejected.connect(function() {
+                            webEngine.sendAsyncMessage("promptresponse",
+                                                       {"winid": winid, "accepted": false})
+                        })
+                        break
+                    }
                 }
             }
             onViewAreaChanged: {
