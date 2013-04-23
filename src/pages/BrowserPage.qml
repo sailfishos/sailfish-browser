@@ -66,6 +66,11 @@ Page {
         }
     }
 
+    function deleteTabHistory() {
+        historyModel.clear()
+        History.deleteTabHistory(tabModel.get(currentTabIndex).tabId)
+    }
+
     function storeTab() {
         var screenPath = ""
         if (status == PageStatus.Active) {

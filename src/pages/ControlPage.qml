@@ -116,6 +116,13 @@ Dialog {
 
         PullDownMenu {
             MenuItem {
+                //% "Clear tab history"
+                text: qsTrId("sailfish_browser-me-clear_tab")
+                onClicked: {
+                    browserPage.deleteTabHistory()
+                }
+            }
+            MenuItem {
                 //% "Close tab"
                 text: qsTrId("sailfish_browser-me-close_tab")
                 onClicked: {

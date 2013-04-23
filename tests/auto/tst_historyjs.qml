@@ -77,6 +77,21 @@ Item {
             model.clear()
         }
 
+        function test_deleteTabHistory() {
+            var tabId = 1001
+            var url = "http://test.com/sailfishos-browser-unit-test-2"
+            var title = "test-1"
+            var icon = "test-2"
+
+            History.addUrl(url, title, icon, tabId)
+            History.addUrl(url + "1", title, icon, tabId)
+            History.addUrl(url + "2", title, icon, tabId)
+            History.deleteTabHistory(tabId)
+            History.loadTabHistory(tabId, model)
+            compare(model.count, 0)
+            model.clear()
+        }
+
         function test_addTab() {
             var url = "http://test.com/sailfishos-browser-unit-test-4"
             var thumb ="/test/path1"
