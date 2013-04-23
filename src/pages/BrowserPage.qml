@@ -33,16 +33,16 @@ Page {
     }
 
     function closeTab() {
-        if (tabModel.count > 1) {
-            History.deleteTab(tabModel.get(currentTabIndex).tabId)
-            tabModel.remove(currentTabIndex)
-            currentTabIndex = tabModel.count - 1
-            historyModel.clear()
+        if (tabModel.count == 0) {
+            return
+        }
+        History.deleteTab(tabModel.get(currentTabIndex).tabId)
+        tabModel.remove(currentTabIndex)
+        currentTabIndex = tabModel.count - 1
+        historyModel.clear()
+        if (tabModel.count >= 1) {
             History.loadTabHistory(tabModel.get(currentTabIndex).tabId, historyModel)
             load(tabModel.get(currentTabIndex).url)
-        } else if(tabModel.count == 1) {
-            History.deleteTab(tabModel.get(currentTabIndex).tabId)
-            tabModel.clear()
         }
     }
 
