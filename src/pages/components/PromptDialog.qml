@@ -1,10 +1,18 @@
+/****************************************************************************
+**
+** Copyright (C) 2013 Jolla Ltd.
+** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jollamobile.com>
+**
+****************************************************************************/
+
+
 import QtQuick 1.1
 import Sailfish.Silica 1.0
 
 Dialog {
     id: dialog
 
-    property string text
+    property alias text: label.text
     property alias value: input.text
 
     DialogHeader {
@@ -20,8 +28,9 @@ Dialog {
         spacing: theme.paddingSmall
 
         Label {
-            text: dialog.text
+            id: label
         }
+
         TextField {
             id: input
 

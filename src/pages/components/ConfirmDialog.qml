@@ -1,10 +1,16 @@
+/****************************************************************************
+**
+** Copyright (C) 2013 Jolla Ltd.
+** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jollamobile.com>
+**
+****************************************************************************/
+
+
 import QtQuick 1.1
 import Sailfish.Silica 1.0
 
 Dialog {
-    id: dialog
-
-    property string text
+    property alias text: label.text
 
     DialogHeader {
         //: Text on the Accept dialog button that accepts browser's confirm() messages
@@ -13,10 +19,8 @@ Dialog {
     }
 
     Label {
-        anchors {
-            verticalCenter: parent.verticalCenter
-            horizontalCenter: parent.horizontalCenter
-        }
-        text: dialog.text
+        id: label
+
+        anchors.centerIn: parent
     }
 }
