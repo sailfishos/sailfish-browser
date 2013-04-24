@@ -78,6 +78,7 @@ Dialog {
                     //% "Search"
                     placeholderText: qsTrId("sailfish_browser-ph-search")
                     color: theme.primaryColor
+                    focusOutBehavior: FocusBehavior.KeepFocus
 
                     EnterKey.onClicked: {
                         urlField.closeSoftwareInputPanel()
@@ -116,9 +117,17 @@ Dialog {
 
         PullDownMenu {
             MenuItem {
+                //% "Clear tab history"
+                text: qsTrId("sailfish_browser-me-clear_tab")
+                onClicked: {
+                    browserPage.deleteTabHistory()
+                }
+            }
+            MenuItem {
                 //% "Close tab"
                 text: qsTrId("sailfish_browser-me-close_tab")
                 onClicked: {
+                    urlField.closeSoftwareInputPanel()
                     browserPage.closeTab()
                     page.accept()
                 }
@@ -189,6 +198,7 @@ Dialog {
                 }
 
                 onClicked: {
+                    urlField.closeSoftwareInputPanel()
                     browserPage.load(url)
                     pageStack.pop(undefined, true)
                 }

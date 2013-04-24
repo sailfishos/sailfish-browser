@@ -68,6 +68,14 @@ function deleteUrl(url) {
                 });
 }
 
+function deleteTabHistory(tabId) {
+    var db = getDb()
+    db.transaction(
+                function(tx) {
+                    var result = tx.executeSql('DELETE FROM historytable WHERE tab_id=?;',[tabId])
+                });
+}
+
 function loadTabs(model) {
     var db = getDb()
     db.transaction(
