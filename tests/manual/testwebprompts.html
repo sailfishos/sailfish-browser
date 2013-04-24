@@ -1,0 +1,41 @@
+<html>
+  <head>
+    <script>
+      function disp_prompt() {
+        var inputtxt=prompt("Please enter something:", "a word or two")
+        document.getElementById("msg").innerHTML=inputtxt
+      }
+
+      function disp_alert() {
+        alert("Alert")
+        document.getElementById("msg").innerHTML="Alert pressed"
+      }
+
+      function disp_confirm() {
+        var inputtxt = confirm("Ok or cancel?") ? "ok" : "cancel"
+        document.getElementById("msg").innerHTML=inputtxt
+      }
+    </script>
+    <style>
+      button {
+        font-size: 40pt
+      }
+      div, a {
+        font-size: 40pt;
+      }
+    </style>
+  </head>
+  <body>
+    <button onclick="disp_alert()">Alert</button> <br /><br />
+    <button onclick="disp_confirm()">Confirm</button> <br/><br />
+    <button onclick="disp_prompt()">Prompt</button>
+
+    <div id="msg" ></div>
+
+    <div>Lorem ipsum</div>
+    <div>Lorem ipsum</div>
+    <div>Lorem ipsum</div>
+    <a href="http://www.google.com">Don't go there!!!</a>
+    </p>
+  </body>
+</html>
