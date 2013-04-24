@@ -78,6 +78,7 @@ Dialog {
                     //% "Search"
                     placeholderText: qsTrId("sailfish_browser-ph-search")
                     color: theme.primaryColor
+                    focusOutBehavior: FocusBehavior.KeepFocus
 
                     EnterKey.onClicked: {
                         urlField.closeSoftwareInputPanel()
@@ -126,6 +127,7 @@ Dialog {
                 //% "Close tab"
                 text: qsTrId("sailfish_browser-me-close_tab")
                 onClicked: {
+                    urlField.closeSoftwareInputPanel()
                     browserPage.closeTab()
                     page.accept()
                 }
@@ -196,6 +198,7 @@ Dialog {
                 }
 
                 onClicked: {
+                    urlField.closeSoftwareInputPanel()
                     browserPage.load(url)
                     pageStack.pop(undefined, true)
                 }
