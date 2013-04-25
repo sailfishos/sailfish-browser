@@ -22,5 +22,8 @@ Dialog {
         id: label
 
         anchors.centerIn: parent
+        width: parent.width - (2 * theme.paddingMedium)
+        wrapMode: Text.Wrap
+        horizontalAlignment: Text.AlignHCenter
     }
 }

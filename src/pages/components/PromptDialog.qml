@@ -22,19 +22,22 @@ Dialog {
     }
 
     Column {
-        anchors.left: parent.left
-        anchors.leftMargin: theme.paddingMedium
-        y: dialog.height / 2
+        anchors.centerIn: parent
+        width: parent.width - (2 * theme.paddingMedium)
         spacing: theme.paddingSmall
 
         Label {
             id: label
+
+            width: parent.width
+            wrapMode: Text.Wrap
         }
 
         TextField {
             id: input
 
             focus: true
+            width: parent.width
         }
     }
 }
