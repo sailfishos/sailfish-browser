@@ -1,7 +1,7 @@
 /****************************************************************************
 **
 ** Copyright (C) 2013 Jolla Ltd.
-** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jollamobile.com>
+** Contact: Dmitry Rozhkov <dmitry.rozhkov@jollamobile.com>
 **
 ****************************************************************************/
 

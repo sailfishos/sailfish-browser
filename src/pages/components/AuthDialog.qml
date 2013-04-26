@@ -1,7 +1,7 @@
 /****************************************************************************
 **
 ** Copyright (C) 2013 Jolla Ltd.
-** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jollamobile.com>
+** Contact: Dmitry Rozhkov <dmitry.rozhkov@jollamobile.com>
 **
 ****************************************************************************/
 
@@ -18,14 +18,18 @@ Dialog {
     property alias username: username.text
     property alias password: password.text
 
+    canAccept: username.text.length > 0
+
     DialogHeader {
+        id: header
         //: Text on the Accept dialog button that accepts browser's auth request
         //% "Log In"
         acceptText: qsTrId("sailfish_browser-he-accept_login")
     }
 
     Column {
-        anchors.centerIn: parent
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.top: header.bottom
         anchors.verticalCenterOffset: theme.paddingMedium
         width: parent.width - (2 * theme.paddingMedium)
         spacing: theme.paddingSmall
@@ -53,6 +57,8 @@ Dialog {
             focus: !passwordOnly
             //% "Enter your user name"
             placeholderText: qsTrId("sailfish_browser-la-enter_username")
+            EnterKey.enabled: text.length > 0
+            EnterKey.onClicked: password.focus = true
         }
 
         Label {
@@ -69,6 +75,14 @@ Dialog {
             echoMode: TextInput.Password
             //% "Enter password"
             placeholderText: qsTrId("sailfish_browser-la-enter_password")
+            EnterKey.enabled: text.length > 0
+            EnterKey.onClicked: {
+                if (username.text.length > 0) {
+                    dialog.accept()
+                } else {
+                    username.focus = true
+                }
+            }
         }
     }
 }

@@ -1,7 +1,7 @@
 /****************************************************************************
 **
 ** Copyright (C) 2013 Jolla Ltd.
-** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jollamobile.com>
+** Contact: Dmitry Rozhkov <dmitry.rozhkov@jollamobile.com>
 **
 ****************************************************************************/
 
@@ -14,6 +14,8 @@ Dialog {
 
     property alias text: label.text
     property alias value: input.text
+
+    canAccept: input.text.length > 0
 
     DialogHeader {
         //: Text on the Accept dialog button that accepts browser's prompt() messages
@@ -38,6 +40,8 @@ Dialog {
 
             focus: true
             width: parent.width
+            EnterKey.enabled: text.length > 0
+            EnterKey.onClicked: dialog.accept()
         }
     }
 }
