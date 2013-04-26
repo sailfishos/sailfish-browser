@@ -1,7 +1,7 @@
 /****************************************************************************
 **
 ** Copyright (C) 2013 Jolla Ltd.
-** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jollamobile.com>
+** Contact: Dmitry Rozhkov <dmitry.rozhkov@jollamobile.com>
 **
 ****************************************************************************/
 
@@ -22,5 +22,8 @@ Dialog {
         id: label
 
         anchors.centerIn: parent
+        width: parent.width - (2 * theme.paddingMedium)
+        wrapMode: Text.Wrap
+        horizontalAlignment: Text.AlignHCenter
     }
 }

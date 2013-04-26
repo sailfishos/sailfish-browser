@@ -24,6 +24,11 @@ Page {
     property string favicon
 
     property variant _controlPageComponent
+    // As QML can't disconnect closure from a signal (but methods only)
+    // let's keep auth data in this auxilary attribute whose sole purpose is to
+    // pass arguments to openAuthDialog().
+    property variant _authData: null
+
 
     function newTab() {
         var id = History.addTab("","")
@@ -86,6 +91,37 @@ Page {
         tabModel.clear()
     }
 
+    function openAuthDialog(input) {
+        var data = input !== undefined ? input : browserPage._authData
+        var winid = data.winid
+
+        if (browserPage._authData !== null) {
+            auxTimer.triggered.disconnect(browserPage.openAuthDialog)
+            browserPage._authData = null
+        }
+
+        var dialog = pageStack.push(Qt.resolvedUrl("components/AuthDialog.qml"),
+                                    {
+                                        "hostname": data.text,
+                                        "realm": data.title,
+                                        "username": data.defaultValue,
+                                        "passwordOnly": data.passwordOnly
+                                    })
+        dialog.accepted.connect(function () {
+            webEngine.sendAsyncMessage("authresponse",
+                                       {
+                                           "winid": winid,
+                                           "accepted": true,
+                                           "username": dialog.username,
+                                           "password": dialog.password
+                                       })
+        })
+        dialog.rejected.connect(function() {
+            webEngine.sendAsyncMessage("authresponse",
+                                       {"winid": winid, "accepted": false})
+        })
+    }
+
     ListModel {
         id: historyModel
     }
@@ -125,10 +161,11 @@ Page {
             }
 
             onViewInitialized: {
-                webContent.child.addMessageListener("chrome:linkadded")
+                webEngine.addMessageListener("chrome:linkadded")
                 webEngine.addMessageListener("embed:alert");
                 webEngine.addMessageListener("embed:confirm");
                 webEngine.addMessageListener("embed:prompt");
+                webEngine.addMessageListener("embed:auth")
 
                 if (WebUtils.initialPage !== "") {
                     browserPage.load(WebUtils.initialPage)
@@ -211,6 +248,22 @@ Page {
                             webEngine.sendAsyncMessage("promptresponse",
                                                        {"winid": winid, "accepted": false})
                         })
+                        break
+                    }
+                    case "embed:auth": {
+                        if (pageStack.busy) {
+                            // User has just entered wrong credentials and webEngine wants
+                            // user's input again immediately even thogh the accepted
+                            // dialog is still deactivating.
+                            browserPage._authData = data
+                            // A better solution would be to connect to browserPage.statusChanged,
+                            // but QML Page transitions keep corrupting even
+                            // after browserPage.status === PageStatus.Active thus auxTimer.
+                            auxTimer.triggered.connect(browserPage.openAuthDialog)
+                            auxTimer.start()
+                        } else {
+                            browserPage.openAuthDialog(data)
+                        }
                         break
                     }
                 }
@@ -425,5 +478,11 @@ Page {
                 return
             }
         }
+    }
+
+    Timer {
+        id: auxTimer
+
+        interval: 1000
     }
 }
