@@ -24,6 +24,8 @@ public:
     explicit DeclarativeWebUtils(QStringList arguments, BrowserService *service, QDeclarativeView *view, QObject *parent = 0);
 
     Q_INVOKABLE QUrl getFaviconForUrl(QUrl url);
+    // TODO: get rid of this method: declarative QML code shouldn't touch Qt event loops.
+    Q_INVOKABLE void processEvents();
 
 public slots:
     void updateWebEngineSettings();   

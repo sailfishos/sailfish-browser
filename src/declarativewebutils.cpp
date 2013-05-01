@@ -8,6 +8,7 @@
 #include <QLocale>
 #include <QStringList>
 #include <QVariant>
+#include <QCoreApplication>
 #include "declarativewebutils.h"
 #include "qmozcontext.h"
 
@@ -32,6 +33,11 @@ QUrl DeclarativeWebUtils::getFaviconForUrl(QUrl url)
     QUrl faviconUrl(url);
     faviconUrl.setPath("/favicon.ico");
     return faviconUrl;
+}
+
+void DeclarativeWebUtils::processEvents()
+{
+    QCoreApplication::processEvents();
 }
 
 void DeclarativeWebUtils::updateWebEngineSettings()
