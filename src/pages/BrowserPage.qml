@@ -278,7 +278,11 @@ Page {
                         var dialog
 
                         dialog = pageStack.push(Qt.resolvedUrl("components/SelectDialog.qml"),
-                                                {"inputData": data})
+                                                {
+                                                    "allItems": data.listitems,
+                                                    "selectedItems": data.selected,
+                                                    "multiple": data.multiple
+                                                })
                         // HACK: block until dialog is closed
                         while (dialog.locked) {
                             WebUtils.processEvents()

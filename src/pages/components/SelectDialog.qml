@@ -12,16 +12,20 @@ import Sailfish.Silica 1.0
 Dialog {
     id: selectDialog
 
+    // input data
+    property variant allItems
+    property variant selectedItems
+    property bool multiple
+
     property bool locked: true
-    property variant inputData
     property variant selected: -1
 
     onOpened: {
         var item
         var currentGroup
 
-        for (var i=0; i < inputData.listitems.length; i++) {
-            item = inputData.listitems[i]
+        for (var i=0; i < allItems.length; i++) {
+            item = allItems[i]
             // TODO: fix SelectHelper.js to set 'group' prop so that the following lines are not needed
             if (item.isGroup) {
                 currentGroup = item.label
@@ -33,7 +37,7 @@ Dialog {
                 item.group = null
             }
             // TODO: fix SelectHelper.js to make 'selected' item's property so the next line wouldn't be needed
-            item.selected = inputData.selected[i]
+            item.selected = selectedItems[i]
             selectModel.append(item)
         }
     }
@@ -42,15 +46,15 @@ Dialog {
         var result
         var counter
 
-        if (inputData.multiple) {
+        if (multiple) {
             result = []
             // TODO: it would be simpler if response accepted list of selected options only (without optgroups)
             //       In this case the code would be:
             //  for (i=0; i<selectModel.count-1;i++) { result.push(selectModel.get(i).selected) }
             //  selectDialog.selected = result
             counter = 0
-            for (var i=0; i < inputData.listitems.length; i++) {
-                if (inputData.listitems[i].isGroup) {
+            for (var i=0; i < allItems.length; i++) {
+                if (allItems[i].isGroup) {
                     result.push(false)
                 } else {
                     result.push(selectModel.get(counter).selected)
@@ -92,7 +96,7 @@ Dialog {
 
             onClicked: {
                 selectModel.setProperty(index, "selected", !selected)
-                if (!selectDialog.inputData.multiple) {
+                if (!selectDialog.multiple) {
                     selectDialog.selected = model.id
                     selectDialog.accept()
                 }
