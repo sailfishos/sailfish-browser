@@ -167,6 +167,9 @@ Page {
                 webEngine.addMessageListener("embed:prompt");
                 webEngine.addMessageListener("embed:auth")
 
+                webEngine.addMessageListener("embed:select") // this is sync message!
+                webEngine.loadFrameScript("chrome://embedlite/content/SelectHelper.js");
+
                 if (WebUtils.initialPage !== "") {
                     browserPage.load(WebUtils.initialPage)
                 } else if (historyModel.count == 0 ) {
@@ -265,6 +268,29 @@ Page {
                             browserPage.openAuthDialog(data)
                         }
                         break
+                    }
+                }
+            }
+            onRecvSyncMessage: {
+                // sender expects that this handler will update `response` argument
+                switch (message) {
+                    case "embed:select": {
+                        var dialog
+
+                        dialog = pageStack.push(Qt.resolvedUrl("components/SelectDialog.qml"),
+                                                {
+                                                    "allItems": data.listitems,
+                                                    "selectedItems": data.selected,
+                                                    "multiple": data.multiple
+                                                })
+                        // HACK: block until dialog is closed
+                        while (dialog.locked) {
+                            WebUtils.processEvents()
+                        }
+                        response.message = {
+                            button: dialog.selected
+                        }
+                        break;
                     }
                 }
             }

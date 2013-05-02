@@ -1,0 +1,58 @@
+<html>
+  <head>
+    <style>
+      select {
+        font-size: 40pt
+      }
+      div, a {
+        font-size: 40pt;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <select>
+        <option>first</option>
+        <option selected>second</option>
+        <option>third</option>
+        <option>fourth</option>
+      </select>
+    </div>
+    <div>
+      <select>
+        <optgroup label="Swedish Cars">
+          <option value="volvo">Volvo</option>
+          <option value="saab" disabled>Saab</option>
+        </optgroup>
+        <option>bicycle</option>
+        <optgroup label="German Cars">
+          <option value="mercedes">Mercedes</option>
+          <option value="audi">Audi</option>
+        </optgroup>
+      </select> 
+    </div>
+    <div>
+      <select multiple>
+        <option>apple</option>
+        <option selected>orange</option>
+        <option disabled>pear</option>
+        <option selected>pineapple</option>
+        <option>kiwi</option>
+      </select>
+    </div>
+    <div>
+      <select multiple>
+        <optgroup label="stars" disabled>
+          <option>orion</option>
+          <option selected>sun</option>
+        </optgroup>
+        <option>moon</option>
+        <optgroup label="planets">
+          <option>mars</option>
+          <option selected>venus</option>
+          <option>mercury</option>
+        </optgroup>
+      </select>
+    </div>
+  </body>
+</html>
