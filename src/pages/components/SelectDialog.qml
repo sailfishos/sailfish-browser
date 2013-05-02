@@ -104,6 +104,7 @@ Dialog {
 
             Label {
                 x: theme.paddingLarge
+                anchors.verticalCenter: parent.verticalCenter
                 text: label
                 color: {
                     if (disabled) {
