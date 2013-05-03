@@ -389,9 +389,8 @@ Page {
         }
     }
 
-    Rectangle {
+    Item {
         id: tools
-        color:"black"
         anchors {
             left: parent.left
             right: parent.right
