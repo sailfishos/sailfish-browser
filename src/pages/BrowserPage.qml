@@ -24,6 +24,9 @@ Page {
     property string favicon
 
     property variant _controlPageComponent
+    property Item _contextMenu
+    property bool _ctxMenuActive: _contextMenu && _contextMenu.active
+    property bool _ctxMenuVisible: _contextMenu && _contextMenu.visible
     // As QML can't disconnect closure from a signal (but methods only)
     // let's keep auth data in this auxilary attribute whose sole purpose is to
     // pass arguments to openAuthDialog().
@@ -122,6 +125,28 @@ Page {
         })
     }
 
+    function openContextMenu(linkHref, imageSrc) {
+        var ctxMenuComp
+
+        if (_contextMenu) {
+            _contextMenu.linkHref = linkHref
+            _contextMenu.imageSrc = imageSrc
+            _contextMenu.show(browserPage)
+        } else {
+            ctxMenuComp = Qt.createComponent(Qt.resolvedUrl("components/BrowserContextMenu.qml"))
+            if (ctxMenuComp.status !== Component.Error) {
+                _contextMenu = ctxMenuComp.createObject(browserPage,
+                                                        {
+                                                            "linkHref": linkHref,
+                                                            "imageSrc": imageSrc
+                                                        })
+                _contextMenu.show(browserPage)
+            } else {
+                console.log("Can't load BrowserContentMenu.qml")
+            }
+        }
+    }
+
     ListModel {
         id: historyModel
     }
@@ -142,10 +167,17 @@ Page {
         }
         focus: true
         width: browserPage.width
+        enabled: !_ctxMenuActive
 
-        // No resizes while page is not active
-        // workaround for engine crashes on resizes while background
-        height: (browserPage.status == PageStatus.Active) ? browserPage.height - tools.height : screen.height - tools.height
+        height: {
+            // No resizes while page is not active
+            // workaround for engine crashes on resizes while background
+            if (browserPage.status == PageStatus.Active) {
+                return _contextMenu && (_contextMenu.height > tools.height) ? browserPage.height - _contextMenu.height : browserPage.height - tools.height
+            } else {
+                return screen.height - tools.height
+            }
+        }
 
         Connections {
             target: webEngine
@@ -166,9 +198,12 @@ Page {
                 webEngine.addMessageListener("embed:confirm");
                 webEngine.addMessageListener("embed:prompt");
                 webEngine.addMessageListener("embed:auth")
+                webEngine.addMessageListener("context:info")
 
                 webEngine.addMessageListener("embed:select") // this is sync message!
+
                 webEngine.loadFrameScript("chrome://embedlite/content/SelectHelper.js");
+                webEngine.loadFrameScript("chrome://embedlite/content/embedhelper.js");
 
                 if (WebUtils.initialPage !== "") {
                     browserPage.load(WebUtils.initialPage)
@@ -269,6 +304,10 @@ Page {
                         }
                         break
                     }
+                    case "context:info": {
+                        openContextMenu(data.LinkHref, data.ImageSrc)
+                        break
+                    }
                 }
             }
             onRecvSyncMessage: {
@@ -323,7 +362,7 @@ Page {
             border.color: "grey"
             smooth: true
             radius: 2.5
-            visible: parent.height > height
+            visible: parent.height > height && !_ctxMenuVisible
             opacity: scrollTimer.running ? 1.0 : 0.0
             Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
         }
@@ -338,7 +377,7 @@ Page {
             border.color: "grey"
             smooth: true
             radius: 2.5
-            visible: parent.width > width
+            visible: parent.width > width && !_ctxMenuVisible
             opacity: scrollTimer.running ? 1.0 : 0.0
             Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
         }
@@ -348,6 +387,14 @@ Page {
 
             interval: 300
         }
+    }
+
+    // Dimmer for web content
+    Rectangle {
+        anchors.fill: webContent
+        color: theme.highlightDimmerColor
+        opacity: 0.8
+        visible: _ctxMenuActive
     }
 
     Rectangle {
@@ -397,7 +444,7 @@ Page {
             bottom: parent.bottom
         }
         height: visible ? theme.itemSizeMedium : 0
-        visible: (parent.height === screen.height)
+        visible: (parent.height === screen.height) && !(_contextMenu && theme.itemSizeMedium < _contextMenu.height)
 
         ProgressBar {
             id: progressBar
