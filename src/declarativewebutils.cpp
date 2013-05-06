@@ -40,6 +40,11 @@ void DeclarativeWebUtils::processEvents()
     QCoreApplication::processEvents();
 }
 
+int DeclarativeWebUtils::getLightness(QColor color) const
+{
+    return color.lightness();
+}
+
 void DeclarativeWebUtils::updateWebEngineSettings()
 {
     // Infer and set Accept-Language header from the current system locale
