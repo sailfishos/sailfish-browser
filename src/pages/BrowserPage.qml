@@ -393,8 +393,8 @@ Page {
     Rectangle {
         anchors.fill: webContent
         color: theme.highlightDimmerColor
-        opacity: 0.8
-        visible: _ctxMenuActive
+        opacity: _ctxMenuActive? 0.8 : 0.0
+        Behavior on opacity { FadeAnimation {} }
     }
 
     Rectangle {
