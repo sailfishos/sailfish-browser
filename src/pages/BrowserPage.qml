@@ -444,7 +444,7 @@ Page {
             bottom: parent.bottom
         }
         height: visible ? theme.itemSizeMedium : 0
-        visible: (parent.height === screen.height) && !(_contextMenu && theme.itemSizeMedium < _contextMenu.height)
+        visible: (parent.height === screen.height) && !_ctxMenuActive
 
         ProgressBar {
             id: progressBar
