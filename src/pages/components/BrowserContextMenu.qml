@@ -18,6 +18,14 @@ ContextMenu {
     property string imageSrc
 
     MenuItem {
+        enabled: false
+        truncationMode: TruncationMode.Fade
+        text: linkHref ? linkHref : imageSrc
+        font.pixelSize: theme.fontSizeSmall
+        color: theme.primaryColor
+    }
+
+    MenuItem {
         visible: linkHref.length > 0
         //% "Open link in a new tab"
         text: qsTrId("sailfish_browser-me-open_link_in_new_tab")
