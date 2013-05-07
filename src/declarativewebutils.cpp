@@ -50,7 +50,13 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     } else {
         langs = locale.at(0);
     }
-    QMozContext::GetInstance()->setPref(QString("intl.accept_languages"), QVariant(langs));
+    QMozContext* mozContext = QMozContext::GetInstance();
+    mozContext->setPref(QString("intl.accept_languages"), QVariant(langs));
+    // these are magic numbers defining touch radius required to detect <image src=""> touch
+    mozContext->setPref(QString("browser.ui.touch.left"), QVariant(32));
+    mozContext->setPref(QString("browser.ui.touch.right"), QVariant(32));
+    mozContext->setPref(QString("browser.ui.touch.top"), QVariant(48));
+    mozContext->setPref(QString("browser.ui.touch.bottom"), QVariant(16));
 }
 
 void DeclarativeWebUtils::openUrl(QString url)
