@@ -10,6 +10,7 @@
 
 #include <QObject>
 #include <QUrl>
+#include <QColor>
 #include <QDeclarativeView>
 #include "browserservice.h"
 
@@ -26,6 +27,7 @@ public:
     Q_INVOKABLE QUrl getFaviconForUrl(QUrl url);
     // TODO: get rid of this method: declarative QML code shouldn't touch Qt event loops.
     Q_INVOKABLE void processEvents();
+    Q_INVOKABLE int getLightness(QColor color) const;
 
 public slots:
     void updateWebEngineSettings();   

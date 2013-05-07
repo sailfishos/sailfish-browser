@@ -192,6 +192,20 @@ Page {
                 }
             }
 
+            onBgcolorChanged: {
+                var bgLightness = WebUtils.getLightness(webEngine.bgcolor)
+                var dimmerLightness = WebUtils.getLightness(theme.highlightDimmerColor)
+                var highBgLightness = WebUtils.getLightness(theme.highlightBackgroundColor)
+
+                if (Math.abs(bgLightness - dimmerLightness) > Math.abs(bgLightness - highBgLightness)) {
+                    verticalScrollDecorator.color = theme.highlightDimmerColor
+                    horizontalScrollDecorator.color = theme.highlightDimmerColor
+                } else {
+                    verticalScrollDecorator.color = theme.highlightBackgroundColor
+                    horizontalScrollDecorator.color = theme.highlightBackgroundColor
+                }
+            }
+
             onViewInitialized: {
                 webEngine.addMessageListener("chrome:linkadded")
                 webEngine.addMessageListener("embed:alert");
@@ -358,8 +372,6 @@ Page {
             width: 5
             anchors.right: parent ? parent.right: undefined
             color: theme.highlightDimmerColor
-            border.width: 1
-            border.color: "grey"
             smooth: true
             radius: 2.5
             visible: parent.height > height && !_ctxMenuVisible
@@ -373,8 +385,6 @@ Page {
             height: 5
             anchors.bottom: parent ? parent.bottom: undefined
             color: theme.highlightDimmerColor
-            border.width: 1
-            border.color: "grey"
             smooth: true
             radius: 2.5
             visible: parent.width > width && !_ctxMenuVisible
