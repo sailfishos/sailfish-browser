@@ -12,7 +12,8 @@
 #include <QDeclarativeView>
 #include <QStringList>
 #include <QPixmap>
-#include "declarativewebthumbnail.h"
+
+class DeclarativeWebThumbnail;
 
 class DeclarativeBrowserTab : public QObject
 {

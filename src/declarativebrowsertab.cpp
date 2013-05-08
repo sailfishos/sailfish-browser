@@ -17,6 +17,7 @@
 #include <QDesktopServices>
 #include <QFuture>
 #include <QtConcurrentRun>
+#include "declarativewebthumbnail.h"
 
 DeclarativeBrowserTab::DeclarativeBrowserTab(QDeclarativeView* view, QObject *parent) :
     QObject(parent), m_view(view)
