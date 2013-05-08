@@ -25,8 +25,8 @@ Page {
 
     property variant _controlPageComponent
     property Item _contextMenu
-    property bool _ctxMenuActive: _contextMenu && _contextMenu.active
-    property bool _ctxMenuVisible: _contextMenu && _contextMenu.visible
+    property bool _ctxMenuActive: _contextMenu != null && _contextMenu.active
+    property bool _ctxMenuVisible: _contextMenu != null && _contextMenu.visible
     // As QML can't disconnect closure from a signal (but methods only)
     // let's keep auth data in this auxilary attribute whose sole purpose is to
     // pass arguments to openAuthDialog().

@@ -14,6 +14,7 @@
 #include <QWidget>
 #include <QTimer>
 #include <QTranslator>
+#include <QDir>
 
 #include "qdeclarativemozview.h"
 #include "qgraphicsmozview.h"
@@ -56,7 +57,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 
     app->setApplicationName(QString("sailfish-browser"));
     app->setOrganizationName(QString("org.sailfishos"));
-    QScopedPointer<QDeclarativeView> view(Sailfish::createView("browser.qml"));
+    QScopedPointer<QDeclarativeView> view(Sailfish::createView());
 
     DeclarativeBrowserTab * tab = new DeclarativeBrowserTab(view.data(), app.data());
     DeclarativeWebUtils * utils = new DeclarativeWebUtils(app->arguments(), service, view.data(), app.data());
@@ -64,6 +65,17 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 
     view->setViewport(new QGLWidget);
     view->rootContext()->setContextProperty("MozContext", QMozContext::GetInstance());
+
+
+    bool isDesktop = qApp->arguments().contains("-desktop");
+
+    QString path;
+    if (isDesktop) {
+        path = qApp->applicationDirPath() + QDir::separator();
+    } else {
+        path = QString(DEPLOYMENT_PATH);
+    }
+    view->setSource(QUrl::fromLocalFile(path+"browser.qml"));
 
     // Setup embedding
     QObject::connect(app.data(), SIGNAL(lastWindowClosed()),
