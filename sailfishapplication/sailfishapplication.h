@@ -9,7 +9,7 @@ class QDeclarativeView;
 namespace Sailfish {
 
 QApplication *createApplication(int &argc, char **argv);
-QDeclarativeView *createView(const QString &);
+QDeclarativeView *createView();
 void showView(QDeclarativeView * view);
 
 }

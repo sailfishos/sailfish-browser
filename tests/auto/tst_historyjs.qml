@@ -29,7 +29,7 @@ Item {
         function test_addUrl() {
             var url = "http://test.com/sailfishos-browser-unit-test"
             var title = "test-1"
-            var icon = "test-2"
+            var icon = {"source":"test-2"}
             var tabId = 13213
             History.addUrl(url, title, icon, tabId)
             History.loadTabHistory(tabId, model)
@@ -37,7 +37,7 @@ Item {
             var ok = false
             for (var i=0; i< model.count; i++) {
                 var item = model.get(i)
-                if (item.url === url && item.title === title && item.icon === icon ) {
+                if (item.url === url && item.title === title && item.icon.path === icon.source ) {
                     ok = true
                     break
                 }
@@ -59,7 +59,7 @@ Item {
         function test_deleteUrl() {
             var url = "http://test.com/sailfishos-browser-unit-test-2"
             var title = "test-1"
-            var icon = "test-2"
+            var icon = {"source":"test-2"}
             var tabId = 13003
 
             History.addUrl(url, title, icon, tabId)
@@ -81,7 +81,7 @@ Item {
             var tabId = 1001
             var url = "http://test.com/sailfishos-browser-unit-test-2"
             var title = "test-1"
-            var icon = "test-2"
+            var icon = {"source":"test-2"}
 
             History.addUrl(url, title, icon, tabId)
             History.addUrl(url + "1", title, icon, tabId)
@@ -94,14 +94,14 @@ Item {
 
         function test_addTab() {
             var url = "http://test.com/sailfishos-browser-unit-test-4"
-            var thumb ="/test/path1"
+            var thumb ={"source":"/test/path1"}
             var tabId = History.addTab(url, thumb)
             History.loadTabs(tabs)
 
             var ok = false
             for (var i=0; i< tabs.count; i++) {
                 var item = tabs.get(i)
-                if (item.url === url && item.tabId === tabId && item.thumbPath === thumb) {
+                if (item.url === url && item.tabId === tabId && item.thumbPath.path === thumb.source) {
                     ok = true
                     break
                 }
@@ -123,7 +123,7 @@ Item {
         function test_deleteTab() {
             var url = "http://test.com/sailfishos-browser-unit-test-21"
 
-            var tabId = History.addTab(url)
+            var tabId = History.addTab(url, {"source":""})
             History.deleteTab(tabId,"/path/to/file")
             History.loadTabs(tabs)
 
@@ -144,8 +144,8 @@ Item {
             var url = "http://test.com/sailfishos-browser-unit-test-10"
             var newUrl = "http://test.com/sailfishos-browser-unit-test-20"
 
-            var tabId = History.addTab(tabId, url)
-            History.updateTab(tabId, newUrl)
+            var tabId = History.addTab(url, {"source":""})
+            History.updateTab(tabId, newUrl,{"source":""})
             History.loadTabs(tabs)
 
             var ok = false
@@ -173,8 +173,8 @@ Item {
         function test_deleteAllTabs() {
             var url = "http://test.com/sailfishos-browser-unit-test-21"
 
-            History.addTab(url, "thumbpath")
-            History.addTab("Http://www.second.url")
+            History.addTab(url, {"source":""})
+            History.addTab("Http://www.second.url",{"source":""})
             History.deleteAllTabs()
             History.loadTabs(tabs)
 

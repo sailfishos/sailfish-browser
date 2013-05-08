@@ -25,8 +25,8 @@ Page {
 
     property variant _controlPageComponent
     property Item _contextMenu
-    property bool _ctxMenuActive: _contextMenu && _contextMenu.active
-    property bool _ctxMenuVisible: _contextMenu && _contextMenu.visible
+    property bool _ctxMenuActive: _contextMenu != null && _contextMenu.active
+    property bool _ctxMenuVisible: _contextMenu != null && _contextMenu.visible
     // As QML can't disconnect closure from a signal (but methods only)
     // let's keep auth data in this auxilary attribute whose sole purpose is to
     // pass arguments to openAuthDialog().
@@ -36,7 +36,7 @@ Page {
     function newTab() {
         var id = History.addTab("","")
         historyModel.clear()
-        tabModel.append({"thumbPath": "", "url": "", "tabId":id})
+        tabModel.append({"thumbPath": {"path":""}, "url": "", "tabId":id})
         currentTabIndex = tabModel.count - 1
     }
 
@@ -80,12 +80,15 @@ Page {
     }
 
     function storeTab() {
-        var screenPath = ""
+        var webThumb
         if (status == PageStatus.Active) {
-            screenPath = BrowserTab.screenCapture(0, 0, webContent.width, webContent.width, window.screenRotation)
+            webThumb = BrowserTab.screenCapture(0, 0, webContent.width, webContent.width, window.screenRotation)
+        } else {
+           webThumb = {"path":"", "source":""}
         }
-        tabModel.set(currentTabIndex, {"thumbPath" : screenPath, "url" : webEngine.url})
-        History.updateTab(tabModel.get(currentTabIndex).tabId, webEngine.url, screenPath)
+
+        tabModel.set(currentTabIndex, {"thumbPath" : webThumb, "url" : webEngine.url})
+        History.updateTab(tabModel.get(currentTabIndex).tabId, webEngine.url, webThumb)
     }
 
     function closeAllTabs() {
@@ -237,12 +240,14 @@ Page {
 
                 if (!webEngine.loading && webEngine.url != "about:blank" &&
                     (historyModel.count == 0 || webEngine.url != historyModel.get(0).url)) {
-                    var screenPath = ""
+                    var webThumb
                     if (status == PageStatus.Active) {
-                        screenPath = BrowserTab.screenCapture(0, 0, webContent.width, webContent.width, window.screenRotation)
+                        webThumb = BrowserTab.screenCapture(0, 0, webContent.width, webContent.width, window.screenRotation)
+                    } else {
+                       webThumb = {"path":"", "source":""}
                     }
-                    History.addUrl(webEngine.url, webEngine.title, screenPath, tabModel.get(currentTabIndex).tabId)
-                    historyModel.insert(0, {"title": webEngine.title, "url": webEngine.url, "icon": screenPath} )
+                    History.addUrl(webEngine.url, webEngine.title, webThumb, tabModel.get(currentTabIndex).tabId)
+                    historyModel.insert(0, {"title": webEngine.title, "url": webEngine.url, "icon": webThumb} )
                 }
             }
             onLoadProgressChanged: {
@@ -464,7 +469,12 @@ Page {
 
         Row {
             id: toolsrow
-            anchors.fill: parent
+            anchors {
+                left: parent.left
+                right: parent.right
+                verticalCenter: parent.verticalCenter
+            }
+
             // 5 icons, 4 spaces between
             spacing: (width - (backIcon.width * 5)) / 4
 
@@ -493,7 +503,7 @@ Page {
                 onClicked:  {
                     storeTab()
                     var sendUrl = (webEngine.url != WebUtils.initialPage) ? webEngine.url : ""
-                    pageStack.push(_controlPageComponent, {historyModel: historyModel, url: sendUrl}, true)
+                    pageStack.push(_controlPageComponent, {historyModel: historyModel, url: sendUrl}, PageStackAction.Animated)
                 }
             }
             IconButton {

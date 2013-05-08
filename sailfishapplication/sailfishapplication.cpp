@@ -27,7 +27,7 @@ QApplication *Sailfish::createApplication(int &argc, char **argv)
 #endif
 }
 
-QDeclarativeView *Sailfish::createView(const QString &file)
+QDeclarativeView *Sailfish::createView()
 {
     QDeclarativeView *view;
 #ifdef HAS_BOOSTER
@@ -36,19 +36,11 @@ QDeclarativeView *Sailfish::createView(const QString &file)
     view = new QDeclarativeView;
 #endif
     
-    bool isDesktop = qApp->arguments().contains("-desktop");
-    
-    QString path;
-    if (isDesktop) {
-        path = qApp->applicationDirPath() + QDir::separator();
+
 #ifdef DESKTOP
         view->setViewport(new QGLWidget);
 #endif
-    } else {
-        path = QString(DEPLOYMENT_PATH);
-    }
-    
-    view->setSource(QUrl::fromLocalFile(path + file));
+
     return view;
 }
 
