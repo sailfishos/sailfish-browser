@@ -11,6 +11,9 @@ import "components"
 
 Page {
     id: page
+    backNavigation: false
+
+    property BrowserPage browserPage
 
     SilicaListView {
         id: list
@@ -49,9 +52,9 @@ Page {
                             anchors.centerIn: parent.Center
                             text: url
                             visible: !thumb.visible
-                            font.pixelSize: theme.fontSizeSmall
+                            font.pixelSize: theme.fontSizeExtraSmall
                             color: theme.secondaryColor
-                            truncationMode: TruncationMode.Elide
+                            wrapMode:Text.WrapAnywhere
                         }
 
                         Image {
@@ -63,7 +66,7 @@ Page {
                                 width: parent.width
                                 height: width
                             }
-                            visible: status !== Image.Error && source !== ""
+                            visible: status !== Image.Error && thumbPath.path !== ""
                         }
                         onClicked: {
                             browserPage.loadTab(model.index)
@@ -132,11 +135,5 @@ Page {
         }
 
         VerticalScrollDecorator {}
-    }
-
-    onStatusChanged: {
-        if (status == PageStatus.Active) {
-            backNavigation = false
-        }
     }
 }

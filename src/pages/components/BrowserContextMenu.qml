@@ -61,8 +61,7 @@ ContextMenu {
         text: qsTrId("sailfish_browser-me-open_link_in_new_tab")
 
         onClicked: {
-            console.log("clicked 'open image in tab' (not fully implemeted yet)")
-            History.addTab(linkHref, "")
+            browserPage.newTab(linkHref, false)
         }
     }
 
@@ -72,8 +71,7 @@ ContextMenu {
         text: qsTrId("sailfish_browser-me-open_image_in_new_tab")
 
         onClicked: {
-            console.log("clicked 'open image in tab' (not fully implemeted yet)")
-            History.addTab(imageSrc, "")
+            browserPage.newTab(imageSrc, false)
         }
     }
 

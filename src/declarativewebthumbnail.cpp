@@ -19,7 +19,7 @@ QString DeclarativeWebThumbnail::path()
     if (m_ready) {
         return m_path;
     } else {
-        return "image://theme/icon-m-region";
+        return "";
     }
 }
 

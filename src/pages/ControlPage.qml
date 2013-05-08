@@ -7,9 +7,10 @@
 
 import QtQuick 1.1
 import Sailfish.Silica 1.0
+import Sailfish.Browser 1.0
 import "components"
 
-Dialog {
+Page {
     id: page
 
     property alias historyModel: historyList.model
@@ -17,7 +18,7 @@ Dialog {
     property Item urlField
     property string url
 
-    acceptDestination: Component { TabPage {} }
+
 
     Component {
         id: historyContextMenuComponent
@@ -27,8 +28,7 @@ Dialog {
                 //% "Open in new tab"
                 text: qsTrId("sailfish_browser-me-open_new_tab")
                 onClicked: {
-                    browserPage.newTab()
-                    browserPage.load(url)
+                    browserPage.newTab(url, true)
                     pageStack.pop(undefined, true)
                 }
             }
@@ -43,27 +43,51 @@ Dialog {
         header: Column {
             width: parent.width
 
-            DialogHeader {
+            PageHeader {
                 // We use the internal property to avoid transition
                 // that is not appropriate for the case "Accept -> All tabs"
-                //% "All Tabs"
-                _defaultAcceptText: qsTrId("sailfish_browser-he-all_tabs")
-                dialog: page
+                //% "Search"
+                title: qsTrId("sailfish_browser-he-search")
             }
 
             Item {
                 height: urlField.height
                 width: parent.width
 
-                FaviconImage {
+                Image {
                     id: faviconIcon
+
+                    width: urlField.height / 2
+                    height: width
+                    smooth: true
+
+                    property bool favourited: browserPage.favorites.count > 0 && browserPage.favorites.contains(webEngine.url)
+                    enabled: urlField.text === url
+
                     anchors {
-                        bottom: urlField.verticalCenter
+                        top: urlField.top; topMargin: theme.paddingSmall
                         left: parent.left; leftMargin: theme.paddingMedium
                     }
 
-                    favicon: urlField.text === url ? browserPage.favicon : "image://theme/icon-m-region"
-                    link: url
+                    source: {
+                        if (!enabled) {
+                            return "image://theme/icon-m-region"
+                        } else if (favourited) {
+                            "image://theme/icon-m-favorite-selected"
+                        } else {
+                            return "image://theme/icon-m-favorite"
+                        }
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            if (faviconIcon.favourited) {
+                                browserPage.favorites.removeBookmark(url)
+                            } else {
+                                browserPage.favorites.addBookmark(url, webEngine.title, browserPage.favicon)
+                            }
+                        }
+                    }
                 }
 
                 TextField {
@@ -129,7 +153,15 @@ Dialog {
                 onClicked: {
                     urlField.closeSoftwareInputPanel()
                     browserPage.closeTab()
-                    page.accept()
+
+                    if(browserPage.tabs.count === 0) {
+                        var component = Qt.createComponent("TabPage.qml")
+                        if (component.status !== Component.Ready) {
+                            console.log("Error loading TabPage:", component.errorString());
+                            return
+                        }
+                        pageStack.push(component.createObject(browserPage), {"browserPage": browserPage}, PageStackAction.Immediate)
+                    }
                 }
             }
             MenuItem {
@@ -138,7 +170,7 @@ Dialog {
                 onClicked: {
                     urlField.text = ""
                     urlField.forceActiveFocus()
-                    browserPage.newTab()
+                    browserPage.newTab("",true)
                 }
             }
         }
@@ -220,6 +252,8 @@ Dialog {
                 urlField.selectAll()
             }
             urlField.forceActiveFocus()
+        } else {
+            urlField.closeSoftwareInputPanel()
         }
     }
 }
