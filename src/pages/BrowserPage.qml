@@ -464,7 +464,12 @@ Page {
 
         Row {
             id: toolsrow
-            anchors.fill: parent
+            anchors {
+                left: parent.left
+                right: parent.right
+                verticalCenter: parent.verticalCenter
+            }
+
             // 5 icons, 4 spaces between
             spacing: (width - (backIcon.width * 5)) / 4
 
