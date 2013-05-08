@@ -12,6 +12,7 @@
 #include <QDeclarativeView>
 #include <QStringList>
 #include <QPixmap>
+#include "declarativewebthumbnail.h"
 
 class DeclarativeBrowserTab : public QObject
 {
@@ -20,10 +21,10 @@ public:
     explicit DeclarativeBrowserTab(QDeclarativeView* view, QObject *parent = 0);
     ~DeclarativeBrowserTab();
 
-    Q_INVOKABLE QString screenCapture(int x, int y, int width, int height, qreal rotate);
+    Q_INVOKABLE DeclarativeWebThumbnail* screenCapture(int x, int y, int width, int height, qreal rotate);
     
 private:
-    bool saveToFile(QString path, QPixmap image, qreal rotate);
+    void saveToFile(QString path, QPixmap image, qreal rotate, DeclarativeWebThumbnail* thumb);
 
     QDeclarativeView * m_view;
     QStringList paths;

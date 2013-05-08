@@ -29,7 +29,8 @@ SOURCES += \
     bookmark.cpp \
     declarativewebutils.cpp \
     browserservice.cpp \
-    dbusadaptor.cpp
+    dbusadaptor.cpp \
+    declarativewebthumbnail.cpp
 
 # C++ headers
 HEADERS += \
@@ -38,7 +39,8 @@ HEADERS += \
     bookmark.h \
     declarativewebutils.h \
     browserservice.h \
-    dbusadaptor.h
+    dbusadaptor.h \
+    declarativewebthumbnail.h
 
 # QML files and folders
 qml.files = *.qml pages cover browser.qml

@@ -18,7 +18,7 @@ function loadHistory(model) {
                     for (var i=0; i < result.rows.length; i++) {
                         model.insert(0, {"url": result.rows.item(i).url,
                                          "title": result.rows.item(i).title,
-                                         "icon": result.rows.item(i).icon,
+                                         "icon": { "path" : result.rows.item(i).icon },
                                          "tabId":result.rows.item(i).tab_id})
                     }
                 });
@@ -40,7 +40,7 @@ function loadTabHistory(tabId, model) {
                     for (var i=0; i < result.rows.length; i++) {
                         model.insert(0, {"url": result.rows.item(i).url,
                                          "title": result.rows.item(i).title,
-                                         "icon": result.rows.item(i).icon})
+                                         "icon": {"path":result.rows.item(i).icon}})
                     }
                 });
     return db
@@ -50,7 +50,7 @@ function addUrl(url, title, icon, tabId) {
     var db = getDb()
     db.transaction(
                 function(tx) {
-                    var result = tx.executeSql('INSERT INTO historytable VALUES (?,?,?,?);',[url,title,icon,tabId])
+                    var result = tx.executeSql('INSERT INTO historytable VALUES (?,?,?,?);',[url,title,icon.source,tabId])
                     if (result.rowsAffected < 1) {
                         console.log("historytable insert failed")
                     }
@@ -90,18 +90,18 @@ function loadTabs(model) {
                     for (var i=0; i < result.rows.length; i++) {
                         model.insert(0, {"tabId": result.rows.item(i).tab_id,
                                          "url": result.rows.item(i).url,
-                                         "thumbPath": result.rows.item(i).thumb_path })
+                                         "thumbPath": {"path":result.rows.item(i).thumb_path }})
                     }
                 });
     return db
 }
 
-function addTab(url, thumbPath) {
+function addTab(url, thumb) {
     var db = getDb()
     var id
     db.transaction(
                 function(tx) {
-                    var result = tx.executeSql('INSERT INTO tabs (url, thumb_path) VALUES (?, ?);',[url, thumbPath])
+                    var result = tx.executeSql('INSERT INTO tabs (url, thumb_path) VALUES (?, ?);',[url, thumb.source])
                     if (result.rowsAffected < 1) {
                         console.log("Tab insert failed")
                     } else {
@@ -111,11 +111,11 @@ function addTab(url, thumbPath) {
     return id
 }
 
-function updateTab(tabId, url, thumbPath) {
+function updateTab(tabId, url, thumb) {
     var db = getDb()
     db.transaction(
                 function(tx) {
-                    var result = tx.executeSql('UPDATE tabs SET url=?, thumb_path=? WHERE tab_id=?;',[url, thumbPath, tabId])
+                    var result = tx.executeSql('UPDATE tabs SET url=?, thumb_path=? WHERE tab_id=?;',[url, thumb.source, tabId])
                     if (result.rowsAffected < 1) {
                         console.log("Tab update failed")
                     }

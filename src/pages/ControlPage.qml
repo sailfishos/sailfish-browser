@@ -157,7 +157,7 @@ Dialog {
 
                 Image {
                     id: iconImage
-                    source: icon !== "" ? icon : "image://theme/icon-m-region"
+                    source: icon.path !== "" ? icon.path : "image://theme/icon-m-region"
                     asynchronous: true
                     anchors.top: parent.top
                     sourceSize {

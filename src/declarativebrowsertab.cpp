@@ -37,10 +37,10 @@ DeclarativeBrowserTab::~DeclarativeBrowserTab()
     paths.clear();
 }
 
-QString DeclarativeBrowserTab::screenCapture(int x, int y, int width, int height, qreal rotate)
+DeclarativeWebThumbnail* DeclarativeBrowserTab::screenCapture(int x, int y, int width, int height, qreal rotate)
 {
     if(!m_view->isActiveWindow()) {
-        return "";
+        return new DeclarativeWebThumbnail("");
     }
     QPixmap pixmap = QPixmap::grabWindow(m_view->winId(), x, y, width, height);
     int randomValue = abs(qrand());
@@ -48,23 +48,25 @@ QString DeclarativeBrowserTab::screenCapture(int x, int y, int width, int height
     path.append(QString("-thumb.png"));
 
     // asynchronous save to avoid the slow I/O
-    QtConcurrent::run(this, &DeclarativeBrowserTab::saveToFile, path, pixmap, rotate);
-    return path;
+    DeclarativeWebThumbnail* thumb = new DeclarativeWebThumbnail(path);
+    QtConcurrent::run(this, &DeclarativeBrowserTab::saveToFile, path, pixmap, rotate, thumb);
+    return thumb;
 }
 
-bool DeclarativeBrowserTab::saveToFile(QString path, QPixmap image, qreal rotate) {
+void DeclarativeBrowserTab::saveToFile(QString path, QPixmap image, qreal rotate, DeclarativeWebThumbnail* thumb) {
     QString cacheLocation = QDesktopServices::storageLocation(QDesktopServices::CacheLocation);
     QDir dir(cacheLocation);
     if(!dir.exists()) {
         if(!dir.mkpath(cacheLocation)) {
             qWarning() << "Can't create directory "+ cacheLocation;
-            return false;
+            return;
         }
     }
     QTransform transform;
     transform.rotate(rotate);
     image = image.transformed(transform);
-    image.save(path);
-    paths << path;
-    return true;
+    if(image.save(path)) {
+        paths << path;
+        thumb->setReady(true);
+    }
 }
