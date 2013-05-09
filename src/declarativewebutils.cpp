@@ -17,7 +17,7 @@ DeclarativeWebUtils::DeclarativeWebUtils(QStringList arguments,
                                          QDeclarativeView* view,
                                          QObject *parent) :
     QObject(parent),
-    m_homePage("file:///usr/share/sailfish-browser/pages/demo.html"),
+    m_homePage("http://www.jolla.com"),
     m_arguments(arguments),
     m_service(service)
 {
