@@ -14,7 +14,7 @@ BuildRequires:  pkgconfig(x11)
 BuildRequires:  pkgconfig(QtOpenGL)
 BuildRequires:  pkgconfig(QJson)
 BuildRequires:  pkgconfig(QtDBus)
-Requires: sailfishsilica >= 0.8.6
+Requires: sailfishsilica >= 0.8.33
 Requires: xulrunner >= 22.0.1.11
 Requires: embedlite-components >= 1.0.11
 

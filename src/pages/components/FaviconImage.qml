@@ -12,8 +12,8 @@ Image {
     property string link
 
     source: favicon != "" ? favicon : WebUtils.getFaviconForUrl(link)
-    height: 32
-    width: 32
+    height: theme.iconSizeSmall
+    width: theme.iconSizeSmall
     asynchronous: true
     smooth: true
     fillMode: Image.PreserveAspectCrop
