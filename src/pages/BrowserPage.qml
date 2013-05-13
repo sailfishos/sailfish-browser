@@ -469,6 +469,13 @@ Page {
 
         Row {
             id: toolsrow
+
+            function openNewTab() {
+                storeTab()
+                var sendUrl = (webEngine.url != WebUtils.initialPage) ? webEngine.url : ""
+                pageStack.push(_controlPageComponent, {historyModel: historyModel, url: sendUrl}, PageStackAction.Animated)
+            }
+
             anchors {
                 left: parent.left
                 right: parent.right
@@ -501,9 +508,7 @@ Page {
                 icon.source: "image://theme/icon-m-tab"
 
                 onClicked:  {
-                    storeTab()
-                    var sendUrl = (webEngine.url != WebUtils.initialPage) ? webEngine.url : ""
-                    pageStack.push(_controlPageComponent, {historyModel: historyModel, url: sendUrl}, PageStackAction.Animated)
+                    toolsrow.openNewTab()
                 }
             }
             IconButton {
@@ -516,6 +521,29 @@ Page {
                 icon.source: "image://theme/icon-m-forward"
                 enabled: webEngine.canGoForward
                 onClicked: webEngine.goForward()
+            }
+        }
+    }
+
+
+    CoverActionList {
+        iconBackground: true
+
+        CoverAction {
+            iconSource: "image://theme/icon-cover-new"
+            onTriggered: {
+                toolsrow.openNewTab()
+                activate()
+            }
+        }
+
+        CoverAction {
+            iconSource: "image://theme/icon-cover-refresh"
+            onTriggered: {
+                if (webEngine.loading) {
+                    webEngine.stop()
+                }
+                webEngine.reload()
             }
         }
     }
