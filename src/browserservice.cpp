@@ -25,3 +25,13 @@ void BrowserService::openUrl(QStringList args)
         emit openUrlRequested(args.first());
     }
 }
+
+void BrowserService::cancelTransfer(int transferId)
+{
+    emit cancelTransferRequested(transferId);
+}
+
+void BrowserService::restartTransfer(int transferId)
+{
+    emit restartTransferRequested(transferId);
+}

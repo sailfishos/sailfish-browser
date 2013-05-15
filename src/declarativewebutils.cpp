@@ -8,6 +8,7 @@
 #include <QLocale>
 #include <QStringList>
 #include <QVariant>
+#include <QFile>
 #include <QCoreApplication>
 #include "declarativewebutils.h"
 #include "qmozcontext.h"
@@ -26,6 +27,10 @@ DeclarativeWebUtils::DeclarativeWebUtils(QStringList arguments,
 
     connect(service, SIGNAL(openUrlRequested(QString)),
             this, SLOT(openUrl(QString)));
+    connect(service, SIGNAL(cancelTransferRequested(int)),
+            this, SIGNAL(cancelTransferRequested(int)));
+    connect(service, SIGNAL(restartTransferRequested(int)),
+            this, SIGNAL(restartTransferRequested(int)));
 }
 
 QUrl DeclarativeWebUtils::getFaviconForUrl(QUrl url)
@@ -45,6 +50,12 @@ int DeclarativeWebUtils::getLightness(QColor color) const
     return color.lightness();
 }
 
+bool DeclarativeWebUtils::fileExists(QString path) const
+{
+    QFile file(path);
+    return file.exists();
+}
+
 void DeclarativeWebUtils::updateWebEngineSettings()
 {
     // Infer and set Accept-Language header from the current system locale
@@ -62,6 +73,21 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     mozContext->setPref(QString("browser.ui.touch.right"), QVariant(32));
     mozContext->setPref(QString("browser.ui.touch.top"), QVariant(48));
     mozContext->setPref(QString("browser.ui.touch.bottom"), QVariant(16));
+
+    // Do not use autodownload, always ask
+    mozContext->setPref(QString("browser.download.useDownloadDir"), QVariant(false));
+    // see https://developer.mozilla.org/en-US/docs/Download_Manager_preferences
+    // Use custom folder provided by the file picker
+    mozContext->setPref(QString("browser.download.folderList"), QVariant(2));
+    // Downloads should never be removed automatically
+    mozContext->setPref(QString("browser.download.manager.retention"), QVariant(2));
+    // Downloads will be canceled on quit
+    // TODO: this doesn't really work. Instead the incomplete downloads get restarted
+    //       on browser launch.
+    mozContext->setPref(QString("browser.download.manager.quitBehavior"), QVariant(2));
+    // TODO: this doesn't really work too
+    mozContext->setPref(QString("browser.helperApps.deleteTempFileOnExit"), QVariant(true));
+    mozContext->addObserver(QString("embed:download"));
 }
 
 void DeclarativeWebUtils::openUrl(QString url)

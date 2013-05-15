@@ -20,6 +20,8 @@ public:
 
 public slots:
     void openUrl(QStringList args);
+    void cancelTransfer(int transferId);
+    void restartTransfer(int transferId);
 
 private:
     BrowserService *m_BrowserService;

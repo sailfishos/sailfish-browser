@@ -18,9 +18,13 @@ public:
 
 public slots:
     void openUrl(QStringList args);
+    void cancelTransfer(int transferId);
+    void restartTransfer(int transferId);
 
 signals:
     void openUrlRequested(QString url);
+    void cancelTransferRequested(int transferId);
+    void restartTransferRequested(int transferId);
 };
 
 #endif // BROWSERSERVICE_H
