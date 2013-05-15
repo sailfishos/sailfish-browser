@@ -211,16 +211,16 @@ Page {
 
             onViewInitialized: {
                 webEngine.addMessageListener("chrome:linkadded")
-                webEngine.addMessageListener("embed:alert");
-                webEngine.addMessageListener("embed:confirm");
-                webEngine.addMessageListener("embed:prompt");
+                webEngine.addMessageListener("embed:alert")
+                webEngine.addMessageListener("embed:confirm")
+                webEngine.addMessageListener("embed:prompt")
                 webEngine.addMessageListener("embed:auth")
                 webEngine.addMessageListener("context:info")
 
                 webEngine.addMessageListener("embed:select") // this is sync message!
 
-                webEngine.loadFrameScript("chrome://embedlite/content/SelectHelper.js");
-                webEngine.loadFrameScript("chrome://embedlite/content/embedhelper.js");
+                webEngine.loadFrameScript("chrome://embedlite/content/SelectHelper.js")
+                webEngine.loadFrameScript("chrome://embedlite/content/embedhelper.js")
 
                 if (WebUtils.initialPage !== "") {
                     browserPage.load(WebUtils.initialPage)
