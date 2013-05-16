@@ -10,6 +10,7 @@
 #include <QVariant>
 #include <QFile>
 #include <QCoreApplication>
+#include <QDesktopServices>
 #include "declarativewebutils.h"
 #include "qmozcontext.h"
 
@@ -74,11 +75,13 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     mozContext->setPref(QString("browser.ui.touch.top"), QVariant(48));
     mozContext->setPref(QString("browser.ui.touch.bottom"), QVariant(16));
 
-    // Do not use autodownload, always ask
-    mozContext->setPref(QString("browser.download.useDownloadDir"), QVariant(false));
+    // Use autodownload, never ask
+    mozContext->setPref(QString("browser.download.useDownloadDir"), QVariant(true));
     // see https://developer.mozilla.org/en-US/docs/Download_Manager_preferences
-    // Use custom folder provided by the file picker
+    // Use custom downloads location defined in browser.download.dir
     mozContext->setPref(QString("browser.download.folderList"), QVariant(2));
+    mozContext->setPref(QString("browser.download.dir"),
+                        QDesktopServices::storageLocation(QDesktopServices::HomeLocation) + QString("/Downloads"));
     // Downloads should never be removed automatically
     mozContext->setPref(QString("browser.download.manager.retention"), QVariant(2));
     // Downloads will be canceled on quit

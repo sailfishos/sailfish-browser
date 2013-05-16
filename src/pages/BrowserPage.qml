@@ -162,6 +162,8 @@ Page {
         id:tabModel
     }
 
+    DownloadRemorsePopup { id: downloadPopup }
+
     QmlMozView {
         id: webContent
         anchors {
@@ -170,7 +172,7 @@ Page {
         }
         focus: true
         width: browserPage.width
-        enabled: !_ctxMenuActive
+        enabled: !_ctxMenuActive && !downloadPopup.visible
 
         height: {
             // No resizes while page is not active
@@ -327,40 +329,6 @@ Page {
                     case "context:info": {
                         openContextMenu(data.LinkHref, data.ImageSrc)
                         break
-                    }
-                    case "embed:filepicker": {
-                        console.log("mode: " + data.mode + "\ntitle: " + data.title + "\nname: " + data.name + "\nwinid: " + data.winid)
-                        var winid = data.winid
-                        var fileName = data.name
-                        // TODO: should the folder be configurable?
-                        var filePath = "/home/nemo/Downloads/" + fileName
-
-                        var dialog = pageStack.push(Qt.resolvedUrl("components/SaveFileDialog.qml"),
-                                                    {
-                                                        "fileName": fileName,
-                                                        "alreadyExists": WebUtils.fileExists(filePath)
-                                                    })
-
-                        // TODO: it seems dynamicly created dialogs are not destroyed
-                        //       upon reject or accept, but get re-used with still connected
-                        //       closures - the closures get called several times if user
-                        //       does several downloads.
-                        dialog.rejected.connect(function() {
-                            webEngine.sendAsyncMessage("filepickerresponse",
-                                                       {
-                                                           "winid": winid,
-                                                           "accepted": false,
-                                                           "items": ["null"]
-                                                       })
-                        })
-                        dialog.accepted.connect(function() {
-                            webEngine.sendAsyncMessage("filepickerresponse",
-                                                       {
-                                                           "winid": winid,
-                                                           "accepted": true,
-                                                           "items": [filePath]
-                                                       })
-                        })
                     }
                 }
             }
