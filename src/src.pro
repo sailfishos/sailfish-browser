@@ -7,6 +7,8 @@ lessThan(QT_MAJOR_VERSION, 5) {
   PKGCONFIG += QJson
 }
 
+PKGCONFIG +=  nemotransferengine
+
 # Include qtmozembed
 isEmpty(QTEMBED_LIB) {
   CONFIG += link_pkgconfig
@@ -30,7 +32,8 @@ SOURCES += \
     declarativewebutils.cpp \
     browserservice.cpp \
     dbusadaptor.cpp \
-    declarativewebthumbnail.cpp
+    declarativewebthumbnail.cpp \
+    downloadmanager.cpp
 
 # C++ headers
 HEADERS += \
@@ -40,7 +43,8 @@ HEADERS += \
     declarativewebutils.h \
     browserservice.h \
     dbusadaptor.h \
-    declarativewebthumbnail.h
+    declarativewebthumbnail.h \
+    downloadmanager.h
 
 # QML files and folders
 qml.files = *.qml pages cover browser.qml

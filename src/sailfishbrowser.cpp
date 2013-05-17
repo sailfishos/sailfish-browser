@@ -26,6 +26,7 @@
 #include "declarativewebutils.h"
 #include "browserservice.h"
 #include "declarativewebthumbnail.h"
+#include "downloadmanager.h"
 
 Q_DECL_EXPORT int main(int argc, char *argv[])
 {
@@ -66,6 +67,9 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     view->setViewport(new QGLWidget);
     view->rootContext()->setContextProperty("MozContext", QMozContext::GetInstance());
 
+    DownloadManager dlMgr(service);
+    QObject::connect(app.data(), SIGNAL(lastWindowClosed()),
+                     &dlMgr, SLOT(cancelActiveTransfers()));
 
     bool isDesktop = qApp->arguments().contains("-desktop");
 

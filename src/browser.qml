@@ -9,9 +9,9 @@ import QtQuick 1.1
 import Sailfish.Silica 1.0
 import "pages"
 
-ApplicationWindow
-{
+ApplicationWindow {
     id: window
+
     initialPage: Component {BrowserPage {}}
     cover: undefined
 }

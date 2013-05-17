@@ -15,3 +15,11 @@ DBusAdaptor::DBusAdaptor(BrowserService *browserService):
 void DBusAdaptor::openUrl(QStringList args) {
     m_BrowserService->openUrl(args);
 }
+
+void DBusAdaptor::cancelTransfer(int transferId) {
+    m_BrowserService->cancelTransfer(transferId);
+}
+
+void DBusAdaptor::restartTransfer(int transferId) {
+    m_BrowserService->restartTransfer(transferId);
+}

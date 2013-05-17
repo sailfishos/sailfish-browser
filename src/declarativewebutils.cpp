@@ -9,6 +9,7 @@
 #include <QStringList>
 #include <QVariant>
 #include <QCoreApplication>
+#include <QDesktopServices>
 #include "declarativewebutils.h"
 #include "qmozcontext.h"
 
@@ -62,6 +63,23 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     mozContext->setPref(QString("browser.ui.touch.right"), QVariant(32));
     mozContext->setPref(QString("browser.ui.touch.top"), QVariant(48));
     mozContext->setPref(QString("browser.ui.touch.bottom"), QVariant(16));
+
+    // Use autodownload, never ask
+    mozContext->setPref(QString("browser.download.useDownloadDir"), QVariant(true));
+    // see https://developer.mozilla.org/en-US/docs/Download_Manager_preferences
+    // Use custom downloads location defined in browser.download.dir
+    mozContext->setPref(QString("browser.download.folderList"), QVariant(2));
+    mozContext->setPref(QString("browser.download.dir"),
+                        QDesktopServices::storageLocation(QDesktopServices::HomeLocation) + QString("/Downloads"));
+    // Downloads should never be removed automatically
+    mozContext->setPref(QString("browser.download.manager.retention"), QVariant(2));
+    // Downloads will be canceled on quit
+    // TODO: this doesn't really work. Instead the incomplete downloads get restarted
+    //       on browser launch.
+    mozContext->setPref(QString("browser.download.manager.quitBehavior"), QVariant(2));
+    // TODO: this doesn't really work too
+    mozContext->setPref(QString("browser.helperApps.deleteTempFileOnExit"), QVariant(true));
+    mozContext->addObserver(QString("embed:download"));
 }
 
 void DeclarativeWebUtils::openUrl(QString url)

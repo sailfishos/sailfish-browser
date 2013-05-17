@@ -162,6 +162,8 @@ Page {
         id:tabModel
     }
 
+    DownloadRemorsePopup { id: downloadPopup }
+
     QmlMozView {
         id: webContent
         anchors {
@@ -170,7 +172,7 @@ Page {
         }
         focus: true
         width: browserPage.width
-        enabled: !_ctxMenuActive
+        enabled: !_ctxMenuActive && !downloadPopup.visible
 
         height: {
             // No resizes while page is not active
@@ -211,16 +213,16 @@ Page {
 
             onViewInitialized: {
                 webEngine.addMessageListener("chrome:linkadded")
-                webEngine.addMessageListener("embed:alert");
-                webEngine.addMessageListener("embed:confirm");
-                webEngine.addMessageListener("embed:prompt");
+                webEngine.addMessageListener("embed:alert")
+                webEngine.addMessageListener("embed:confirm")
+                webEngine.addMessageListener("embed:prompt")
                 webEngine.addMessageListener("embed:auth")
                 webEngine.addMessageListener("context:info")
 
                 webEngine.addMessageListener("embed:select") // this is sync message!
 
-                webEngine.loadFrameScript("chrome://embedlite/content/SelectHelper.js");
-                webEngine.loadFrameScript("chrome://embedlite/content/embedhelper.js");
+                webEngine.loadFrameScript("chrome://embedlite/content/SelectHelper.js")
+                webEngine.loadFrameScript("chrome://embedlite/content/embedhelper.js")
 
                 if (WebUtils.initialPage !== "") {
                     browserPage.load(WebUtils.initialPage)
