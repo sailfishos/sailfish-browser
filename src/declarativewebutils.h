@@ -28,7 +28,6 @@ public:
     // TODO: get rid of this method: declarative QML code shouldn't touch Qt event loops.
     Q_INVOKABLE void processEvents();
     Q_INVOKABLE int getLightness(QColor color) const;
-    Q_INVOKABLE bool fileExists(QString path) const;
 
 public slots:
     void updateWebEngineSettings();   
@@ -39,8 +38,6 @@ public slots:
 signals:
     void homePageChanged();
     void openUrlRequested(QString url);
-    void cancelTransferRequested(int transferId);
-    void restartTransferRequested(int transferId);
 
 private:
     QString m_homePage;

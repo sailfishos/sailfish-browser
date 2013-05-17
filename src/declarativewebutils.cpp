@@ -8,7 +8,6 @@
 #include <QLocale>
 #include <QStringList>
 #include <QVariant>
-#include <QFile>
 #include <QCoreApplication>
 #include <QDesktopServices>
 #include "declarativewebutils.h"
@@ -28,10 +27,6 @@ DeclarativeWebUtils::DeclarativeWebUtils(QStringList arguments,
 
     connect(service, SIGNAL(openUrlRequested(QString)),
             this, SLOT(openUrl(QString)));
-    connect(service, SIGNAL(cancelTransferRequested(int)),
-            this, SIGNAL(cancelTransferRequested(int)));
-    connect(service, SIGNAL(restartTransferRequested(int)),
-            this, SIGNAL(restartTransferRequested(int)));
 }
 
 QUrl DeclarativeWebUtils::getFaviconForUrl(QUrl url)
@@ -49,12 +44,6 @@ void DeclarativeWebUtils::processEvents()
 int DeclarativeWebUtils::getLightness(QColor color) const
 {
     return color.lightness();
-}
-
-bool DeclarativeWebUtils::fileExists(QString path) const
-{
-    QFile file(path);
-    return file.exists();
 }
 
 void DeclarativeWebUtils::updateWebEngineSettings()
