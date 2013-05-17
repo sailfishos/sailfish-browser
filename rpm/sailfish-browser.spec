@@ -18,7 +18,7 @@ BuildRequires:  pkgconfig(nemotransferengine)
 Requires: sailfishsilica >= 0.8.34
 Requires: jolla-ambient >= 0.1.26
 Requires: xulrunner >= 22.0.1.11
-Requires: embedlite-components >= 1.0.11
+Requires: embedlite-components >= 1.1.6
 
 %description
 Sailfish Web Browser
