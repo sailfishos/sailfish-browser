@@ -9,6 +9,7 @@
 #include <QStringList>
 #include <QVariant>
 #include <QCoreApplication>
+#include <QFile>
 #include <QDesktopServices>
 #include "declarativewebutils.h"
 #include "qmozcontext.h"
@@ -46,6 +47,12 @@ int DeclarativeWebUtils::getLightness(QColor color) const
     return color.lightness();
 }
 
+bool DeclarativeWebUtils::fileExists(QString fileName) const
+{
+    QFile file(fileName);
+    return file.exists();
+}
+
 void DeclarativeWebUtils::updateWebEngineSettings()
 {
     // Infer and set Accept-Language header from the current system locale
@@ -56,21 +63,29 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     } else {
         langs = locale.at(0);
     }
+
     QMozContext* mozContext = QMozContext::GetInstance();
     mozContext->setPref(QString("intl.accept_languages"), QVariant(langs));
+
     // these are magic numbers defining touch radius required to detect <image src=""> touch
     mozContext->setPref(QString("browser.ui.touch.left"), QVariant(32));
     mozContext->setPref(QString("browser.ui.touch.right"), QVariant(32));
     mozContext->setPref(QString("browser.ui.touch.top"), QVariant(48));
     mozContext->setPref(QString("browser.ui.touch.bottom"), QVariant(16));
 
+    // Install embedlite handlers for guestures
+    mozContext->setPref(QString("embedlite.azpc.handle.singletap"), QVariant(false));
+    mozContext->setPref(QString("embedlite.azpc.json.singletap"), QVariant(true));
+    mozContext->setPref(QString("embedlite.azpc.handle.longtap"), QVariant(false));
+    mozContext->setPref(QString("embedlite.azpc.json.longtap"), QVariant(true));
+    mozContext->setPref(QString("embedlite.azpc.json.viewport"), QVariant(true));
+
     // Use autodownload, never ask
     mozContext->setPref(QString("browser.download.useDownloadDir"), QVariant(true));
     // see https://developer.mozilla.org/en-US/docs/Download_Manager_preferences
     // Use custom downloads location defined in browser.download.dir
     mozContext->setPref(QString("browser.download.folderList"), QVariant(2));
-    mozContext->setPref(QString("browser.download.dir"),
-                        QDesktopServices::storageLocation(QDesktopServices::HomeLocation) + QString("/Downloads"));
+    mozContext->setPref(QString("browser.download.dir"), downloadDir());
     // Downloads should never be removed automatically
     mozContext->setPref(QString("browser.download.manager.retention"), QVariant(2));
     // Downloads will be canceled on quit
@@ -101,4 +116,14 @@ QString DeclarativeWebUtils::initialPage()
 QString DeclarativeWebUtils::homePage()
 {
     return m_homePage;
+}
+
+QString DeclarativeWebUtils::downloadDir() const
+{
+    return QDesktopServices::storageLocation(QDesktopServices::HomeLocation) + QString("/Downloads");
+}
+
+QString DeclarativeWebUtils::picturesDir() const
+{
+    return QDesktopServices::storageLocation(QDesktopServices::PicturesLocation);
 }

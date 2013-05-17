@@ -17,6 +17,26 @@ ContextMenu {
     property string linkHref
     property string imageSrc
 
+    // NOTE: this code is identical to that in embedlite-components/jscomps/HelperAppDialog.js
+    //       We can't share the code here since that code is called in the context of web engine.
+    function getUniqueFileName(fileName) {
+        var collisionCount = 0
+        var picturesDir = WebUtils.picturesDir
+
+        while (WebUtils.fileExists(picturesDir + "/" + fileName)) {
+            collisionCount++
+            if (collisionCount == 1) {
+                // append "(2)" before the last dot in (or at the end of) the filename
+                fileName = fileName.replace(/(\.[^\.]*)?$/, "(2)$&")
+            } else {
+                // replace the last (n) in the filename with (n+1)
+                fileName = fileName.replace(/^(.*\()\d+\)/, "$1" + (collisionCount+1) + ")")
+            }
+        }
+
+        return picturesDir + "/" + fileName
+    }
+
     MenuItem {
         enabled: false
         truncationMode: TruncationMode.Fade
@@ -49,9 +69,24 @@ ContextMenu {
 
     MenuItem {
         visible: imageSrc.length > 0
-        //% "Save by image URL as..."
-        text: qsTrId("sailfish_browser-me-save_image_as")
+        //: This menu item saves image to Gallery application
+        //% "Save to Gallery"
+        text: qsTrId("sailfish_browser-me-save_image_to_gallery")
 
-        onClicked: console.log("clicked 'save image as' (not implemented yet)")
+        onClicked: {
+            var urlSections = imageSrc.split("/")
+            var leafName = urlSections[urlSections.length - 1]
+
+            if (leafName.length === 0) {
+                leafName = "unnamed_picture"
+            }
+
+            MozContext.sendObserve("embedui:download",
+                                   {
+                                       "msg": "addDownload",
+                                       "from": imageSrc,
+                                       "to": "file://" + getUniqueFileName(leafName)
+                                   })
+        }
     }
 }
