@@ -48,7 +48,6 @@ private:
     QHash<qulonglong, Status> m_statusCache;
 
     TransferEngineInterface *m_transferClient;
-    BrowserService *m_service;
 };
 
 #endif

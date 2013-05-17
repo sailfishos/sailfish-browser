@@ -9,8 +9,7 @@
 #include "qmozcontext.h"
 
 DownloadManager::DownloadManager(BrowserService *service, QObject *parent)
-    : QObject(parent),
-      m_service(service)
+    : QObject(parent)
 {
     m_transferClient = new TransferEngineInterface("org.nemo.transferengine",
                                                    "/org/nemo/transferengine",
@@ -62,9 +61,9 @@ void DownloadManager::recvObserve(const QString message, const QVariant data)
 
         m_download2transferMap.insert(downloadId, transferId);
         m_transfer2downloadMap.insert(transferId, downloadId);
-        m_statusCache.insert(downloadId, DownloadStarted);
 
         m_transferClient->startTransfer(transferId);
+        m_statusCache.insert(downloadId, DownloadStarted);
     } else if (msg == "dl-progress") {
         qreal progress(dataMap.value("percent").toULongLong() / 100.0);
 

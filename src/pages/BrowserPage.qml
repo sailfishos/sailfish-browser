@@ -217,7 +217,6 @@ Page {
                 webEngine.addMessageListener("embed:confirm")
                 webEngine.addMessageListener("embed:prompt")
                 webEngine.addMessageListener("embed:auth")
-                webEngine.addMessageListener("embed:filepicker")
                 webEngine.addMessageListener("context:info")
 
                 webEngine.addMessageListener("embed:select") // this is sync message!
