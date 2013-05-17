@@ -80,6 +80,8 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     mozContext->setPref(QString("embedlite.azpc.json.longtap"), QVariant(true));
     mozContext->setPref(QString("embedlite.azpc.json.viewport"), QVariant(true));
 
+    mozContext->setPref(QString("security.alternate_certificate_error_page"), QString("certerror"));
+
     // Use autodownload, never ask
     mozContext->setPref(QString("browser.download.useDownloadDir"), QVariant(true));
     // see https://developer.mozilla.org/en-US/docs/Download_Manager_preferences
