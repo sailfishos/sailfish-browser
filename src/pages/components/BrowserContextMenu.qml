@@ -17,20 +17,30 @@ ContextMenu {
     property string linkHref
     property string imageSrc
 
-    // NOTE: this code is identical to that in embedlite-components/jscomps/HelperAppDialog.js
-    //       We can't share the code here since that code is called in the context of web engine.
+    // NOTE: this code does the same thing as that in embedlite-components/jscomps/HelperAppDialog.js
+    //       We can't share the code here since that code is called in the context of web engine and we can't
+    //       re-use it as it is due to MPL license thus this regex-less rewrite.
     function getUniqueFileName(fileName) {
         var collisionCount = 0
         var picturesDir = WebUtils.picturesDir
+        var sectmp
 
         while (WebUtils.fileExists(picturesDir + "/" + fileName)) {
             collisionCount++
             if (collisionCount == 1) {
                 // append "(2)" before the last dot in (or at the end of) the filename
-                fileName = fileName.replace(/(\.[^\.]*)?$/, "(2)$&")
+                sectmp = fileName.split(".")
+                if (sectmp.length > 1) {
+                    sectmp[sectmp.length-2] = sectmp[sectmp.length-2] + "(2)"
+                } else {
+                    sectmp[0] = sectmp[0] + "(2)"
+                }
+                fileName = sectmp.join(".")
             } else {
                 // replace the last (n) in the filename with (n+1)
-                fileName = fileName.replace(/^(.*\()\d+\)/, "$1" + (collisionCount+1) + ")")
+                sectmp = fileName.split("(" + collisionCount + ")")
+                var tmp = sectmp.pop()
+                fileName = sectmp.join("(" + collisionCount + ")") + "(" + (collisionCount+1) + ")" + tmp
             }
         }
 
