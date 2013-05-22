@@ -217,6 +217,7 @@ Page {
                 webEngine.addMessageListener("embed:confirm")
                 webEngine.addMessageListener("embed:prompt")
                 webEngine.addMessageListener("embed:auth")
+                webEngine.addMessageListener("embed:login")
                 webEngine.addMessageListener("context:info")
 
                 webEngine.addMessageListener("embed:select") // this is sync message!
@@ -323,6 +324,16 @@ Page {
                         } else {
                             browserPage.openAuthDialog(data)
                         }
+                        break
+                    }
+                    case "embed:login": {
+                        pageStack.push(Qt.resolvedUrl("components/PasswordManagerDialog.qml"),
+                                       {
+                                           "webEngine": webEngine,
+                                           "requestId": data.id,
+                                           "notificationType": data.name,
+                                           "formData": data.formdata
+                                       })
                         break
                     }
                     case "context:info": {
