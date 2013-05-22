@@ -23,6 +23,15 @@ Requires: embedlite-components >= 1.1.7
 %description
 Sailfish Web Browser
 
+%package settings
+Summary:  Browser plugin for Jolla Settings
+License:  Prop
+Group:    Applications/Internet
+Requires: jolla-settings >= 0.11.29
+
+%description settings
+Browser plugin for Jolla Settings
+
 %package ts-devel
 Summary: Translation source for Sailfish browser
 License:   Prop
@@ -74,13 +83,20 @@ rm -rf %{buildroot}
 %{_bindir}/%{name}
 %{_datadir}/applications/%{name}.desktop
 %{_datadir}/%{name}/*
-%{_datadir}/translations/*.qm
+%{_datadir}/translations/sailfish-browser_eng_en.qm
 %{_datadir}/dbus-1/services/*.service
 # << files
+
+%files settings
+%defattr(-,root,root,-)
+%{_datadir}/jolla-settings/*
+%{_libdir}/qt4/imports/com/jolla/settings/browser/*
+%{_datadir}/translations/settings-sailfish-browser_eng_en.qm
 
 %files ts-devel
 %defattr(-,root,root,-)
 %{_datadir}/translations/source/sailfish-browser.ts
+%{_datadir}/translations/source/settings-sailfish-browser.ts
 
 %files tests
 %defattr(-,root,root,-)
