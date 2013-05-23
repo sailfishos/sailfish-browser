@@ -5,8 +5,7 @@ import org.sailfishos.browser.settings 1.0
 Page {
     Label {
         anchors.centerIn: parent
-        //% "Hello world!"
-        text: qsTrId("hello_world") + "<br>" + settings.testProp
+        text: settings.testProp
     }
 
     BrowserSettings {
