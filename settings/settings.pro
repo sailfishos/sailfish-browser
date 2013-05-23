@@ -2,7 +2,7 @@ TEMPLATE = lib
 TARGET = browsersettingsplugin
 TARGET = $$qtLibraryTarget($$TARGET)
 
-MODULENAME = com/jolla/settings/browser
+MODULENAME = org/sailfishos/browser/settings
 TARGETPATH = $$[QT_INSTALL_IMPORTS]/$$MODULENAME
 
 QT += declarative

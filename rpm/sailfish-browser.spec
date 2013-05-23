@@ -91,7 +91,7 @@ rm -rf %{buildroot}
 %files settings
 %defattr(-,root,root,-)
 %{_datadir}/jolla-settings/*
-%{_libdir}/qt4/imports/com/jolla/settings/browser/*
+%{_libdir}/qt4/imports/org/sailfishos/browser/settings/*
 %{_datadir}/translations/settings-sailfish-browser_eng_en.qm
 
 %files ts-devel

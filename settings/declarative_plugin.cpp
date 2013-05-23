@@ -41,8 +41,8 @@ public:
     void registerTypes(const char *uri)
     {
         Q_UNUSED(uri)
-        Q_ASSERT(QLatin1String(uri) == QLatin1String("com.jolla.settings.browser"));
-        qmlRegisterType<BrowserSettings>("com.jolla.settings.browser", 1, 0, "BrowserSettings");
+        Q_ASSERT(QLatin1String(uri) == QLatin1String("org.sailfishos.browser.settings"));
+        qmlRegisterType<BrowserSettings>("org.sailfishos.browser.settings", 1, 0, "BrowserSettings");
     }
 };
 
