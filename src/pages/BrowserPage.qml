@@ -33,11 +33,18 @@ Page {
     property variant _authData: null
 
 
-    function newTab() {
-        var id = History.addTab("","")
-        historyModel.clear()
-        tabModel.append({"thumbPath": {"path":""}, "url": "", "tabId":id})
-        currentTabIndex = tabModel.count - 1
+    function newTab(link, foreground) {
+        var id = History.addTab(link,"")
+        tabModel.append({"thumbPath": {"path":""}, "url": link, "tabId": id})
+
+        if(foreground) {
+            historyModel.clear()
+            currentTabIndex = tabModel.count - 1
+
+            if (link !== "" && webEngine.url != link) {
+                webEngine.load(url)
+            }
+        }
     }
 
     function closeTab() {
@@ -56,11 +63,8 @@ Page {
 
     function load(url) {
         if (tabModel.count == 0) {
-            newTab()
-        }
-        if (!webEngine || webEngine.url == null) {
-            console.log("No webengine")
-        } else if (webEngine.url !== url) {
+            newTab(url, true)
+        } else if (webEngine.url != url) {
             webEngine.load(url)
         }
     }
@@ -84,7 +88,7 @@ Page {
         if (status == PageStatus.Active) {
             webThumb = BrowserTab.screenCapture(0, 0, webContent.width, webContent.width, window.screenRotation)
         } else {
-           webThumb = {"path":"", "source":""}
+            webThumb = {"path":"", "source":""}
         }
 
         tabModel.set(currentTabIndex, {"thumbPath" : webThumb, "url" : webEngine.url})
@@ -152,10 +156,6 @@ Page {
 
     ListModel {
         id: historyModel
-    }
-
-    BookmarkModel {
-        id: favoriteModel
     }
 
     ListModel {
@@ -247,7 +247,7 @@ Page {
                     if (status == PageStatus.Active) {
                         webThumb = BrowserTab.screenCapture(0, 0, webContent.width, webContent.width, window.screenRotation)
                     } else {
-                       webThumb = {"path":"", "source":""}
+                        webThumb = {"path":"", "source":""}
                     }
                     History.addUrl(webEngine.url, webEngine.title, webThumb, tabModel.get(currentTabIndex).tabId)
                     historyModel.insert(0, {"title": webEngine.title, "url": webEngine.url, "icon": webThumb} )
@@ -483,7 +483,7 @@ Page {
         Row {
             id: toolsrow
 
-            function openNewTab() {
+            function openControlPage() {
                 storeTab()
                 var sendUrl = (webEngine.url != WebUtils.initialPage) ? webEngine.url : ""
                 pageStack.push(_controlPageComponent, {historyModel: historyModel, url: sendUrl}, PageStackAction.Animated)
@@ -506,22 +506,18 @@ Page {
             }
 
             IconButton {
-                icon.source: favoriteModel.count > 0 && favoriteModel.contains(webEngine.url) ? "image://theme/icon-m-favorite-selected" : "image://theme/icon-m-favorite"
+                icon.source: "image://theme/icon-m-search"
                 enabled: true
-                onClicked: {
-                    if (favoriteModel.contains(webEngine.url)) {
-                        favoriteModel.removeBookmark(webEngine.url)
-                    } else {
-                        favoriteModel.addBookmark(webEngine.url, webEngine.title, favicon)
-                    }
-                }
+                onClicked: toolsrow.openControlPage()
             }
 
             IconButton {
-                icon.source: "image://theme/icon-m-tab"
+                icon.source: "image://theme/icon-m-levels"
 
                 onClicked:  {
-                    toolsrow.openNewTab()
+                    storeTab()
+                    var sendUrl = (webEngine.url != WebUtils.initialPage) ? webEngine.url : ""
+                    pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage}, PageStackAction.Immediate)
                 }
             }
             IconButton {
@@ -545,7 +541,7 @@ Page {
         CoverAction {
             iconSource: "image://theme/icon-cover-new"
             onTriggered: {
-                toolsrow.openNewTab()
+                toolsrow.openControlPage()
                 activate()
             }
         }
@@ -578,8 +574,8 @@ Page {
                 }
                 if (tabs.get(currentTabIndex).url != url) {
                     // Not found in tabs list, create newtab and load
-                    newTab()
-                    load(url)
+                    newTab(url, true)
+
                 }
             } else {
                 // New browser instance, just load the content
@@ -597,7 +593,7 @@ Page {
     Component.onCompleted: {
         History.loadTabs(tabModel)
         if (tabModel.count == 0) {
-            newTab()
+            newTab("", true)
         }
         History.loadTabHistory(tabModel.get(currentTabIndex).tabId, historyModel)
 
@@ -611,6 +607,9 @@ Page {
                 return
             }
         }
+    }
+    BookmarkModel {
+        id: favoriteModel
     }
 
     Timer {
