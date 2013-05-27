@@ -35,13 +35,14 @@ Page {
 
     function newTab(link, foreground) {
         var id = History.addTab(link,"")
-        tabModel.append({"thumbPath": {"path":""}, "url": link, "tabId":id})
+        tabModel.append({"thumbPath": {"path":""}, "url": link, "tabId": id})
 
         if(foreground) {
             historyModel.clear()
             currentTabIndex = tabModel.count - 1
-            if (link != "") {
-                load(link)
+
+            if (link !== "" && webEngine.url != link) {
+                webEngine.load(url)
             }
         }
     }
@@ -62,11 +63,8 @@ Page {
 
     function load(url) {
         if (tabModel.count == 0) {
-            newTab("", true)
-        }
-        if (!webEngine || webEngine.url == null) {
-            console.log("No webengine")
-        } else if (webEngine.url !== url) {
+            newTab(url, true)
+        } else if (webEngine.url != url) {
             webEngine.load(url)
         }
     }
