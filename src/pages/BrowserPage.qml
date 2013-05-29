@@ -241,6 +241,10 @@ Page {
                 webEngine.loadFrameScript("chrome://embedlite/content/SelectHelper.js")
                 webEngine.loadFrameScript("chrome://embedlite/content/embedhelper.js")
 
+                // This flag instucts web engine to ignore mouse and single-touch
+                // events (multi-touch ones are not ignored). This means that we have to
+                // relay the events from QML to web engine through a special MouseArea
+                // that fully covers web view.
                 webEngine.useQmlMouse = true
 
                 if (WebUtils.initialPage !== "") {
@@ -443,7 +447,6 @@ Page {
             }
             onHandleSingleTap: {
                 if (startSelectionHandle.visible) {
-                    console.log("send Browser:SelectionCopy")
                     webEngine.sendAsyncMessage("Browser:SelectionCopy",
                                                {
                                                    "xPos": point.x,
@@ -453,6 +456,7 @@ Page {
             }
         }
 
+        // This is a relay of mouse and single-touch events to web view
         MouseArea {
             anchors.fill: parent
 
