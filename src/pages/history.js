@@ -69,11 +69,7 @@ function deleteUrl(url) {
 }
 
 function deleteTabHistory(tabId) {
-    var db = getDb()
-    db.transaction(
-                function(tx) {
-                    var result = tx.executeSql('DELETE FROM historytable WHERE tab_id=?;',[tabId])
-                });
+    dbWorker.sendMessage({"operation":"deleteTabHistory","tabId":tabId})
 }
 
 function loadTabs(model) {
@@ -112,26 +108,11 @@ function addTab(url, thumb) {
 }
 
 function updateTab(tabId, url, thumb) {
-    var db = getDb()
-    db.transaction(
-                function(tx) {
-                    var result = tx.executeSql('UPDATE tabs SET url=?, thumb_path=? WHERE tab_id=?;',[url, thumb.source, tabId])
-                    if (result.rowsAffected < 1) {
-                        console.log("Tab update failed")
-                    }
-                });
-
+    dbWorker.sendMessage({"operation":"updateTab", "tabId":tabId, "url": url, "thumb": thumb.source})
 }
 
 function deleteTab(tabId) {
-    var db = getDb()
-    db.transaction(
-                function(tx) {
-                    var result = tx.executeSql('DELETE FROM tabs WHERE tab_id=?;',[tabId])
-                    if (result.rowsAffected < 1) {
-                        console.log("Tabs remove failed")
-                    }
-                });
+    dbWorker.sendMessage({"operation":"deleteTab","tabId":tabId})
 }
 
 function deleteAllTabs() {
