@@ -85,8 +85,13 @@ Page {
 
     function storeTab() {
         var webThumb
+
+        // Try to capture fresh screen capture if still active
+        // if not, then try to use from history and if that does not exist, lets not store a thumb
         if (status == PageStatus.Active) {
             webThumb = BrowserTab.screenCapture(0, 0, webContent.width, webContent.width, window.screenRotation)
+        } else if (historyModel.count > 0 && historyModel.get(0).url == webEngine.url) {
+            webThumb = historyModel.get(0).icon
         } else {
             webThumb = {"path":"", "source":""}
         }
@@ -616,5 +621,10 @@ Page {
         id: auxTimer
 
         interval: 1000
+    }
+
+    WorkerScript {
+        id: dbWorker
+        source: "dbWorker.js"
     }
 }

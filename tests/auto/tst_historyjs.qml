@@ -10,6 +10,12 @@ import QtQuick 1.1
 import "/usr/share/sailfish-browser/pages/history.js" as History
 
 Item {
+    WorkerScript {
+        id: dbWorker
+        source: "/usr/share/sailfish-browser/pages/dbWorker.js"
+    }
+
+
     width: 100; height: 100
 
     resources: TestCase {
@@ -86,7 +92,11 @@ Item {
             History.addUrl(url, title, icon, tabId)
             History.addUrl(url + "1", title, icon, tabId)
             History.addUrl(url + "2", title, icon, tabId)
+
+            // asynch
             History.deleteTabHistory(tabId)
+            wait(1000)
+
             History.loadTabHistory(tabId, model)
             compare(model.count, 0)
             model.clear()
@@ -125,6 +135,10 @@ Item {
 
             var tabId = History.addTab(url, {"source":""})
             History.deleteTab(tabId,"/path/to/file")
+
+            // deleteTab is asynch
+            wait(1000)
+
             History.loadTabs(tabs)
 
             var ok = true
@@ -145,7 +159,11 @@ Item {
             var newUrl = "http://test.com/sailfishos-browser-unit-test-20"
 
             var tabId = History.addTab(url, {"source":""})
+
+            //updateTab is async
             History.updateTab(tabId, newUrl,{"source":""})
+
+            wait(1000)
             History.loadTabs(tabs)
 
             var ok = false
