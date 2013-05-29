@@ -729,32 +729,9 @@ Page {
     WorkerScript {
         id: dbWorker
         source: "dbWorker.js"
+    }
 
-    Rectangle {
+    BrowserNotification {
         id: notification
-
-        anchors.centerIn: parent
-        width: notificationLabel.width + (2 * theme.paddingMedium)
-        height: theme.itemSizeMedium
-        color: theme.highlightBackgroundColor
-        opacity: notificationTimer.running ? 1.0 : 0.0
-        Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
-
-        function show(text) {
-            notificationLabel.text = text
-            notificationTimer.restart()
-        }
-
-        Label {
-            id: notificationLabel
-
-            anchors.centerIn: parent
-            color: theme.primaryColor
-        }
-
-        Timer {
-            id: notificationTimer
-            interval: 2000
-        }
     }
 }
