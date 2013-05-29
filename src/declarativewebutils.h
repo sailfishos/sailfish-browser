@@ -11,6 +11,7 @@
 #include <QObject>
 #include <QUrl>
 #include <QColor>
+#include <QVariant>
 #include <QDeclarativeView>
 #include "browserservice.h"
 
@@ -36,7 +37,6 @@ public:
     Q_INVOKABLE bool fileExists(QString fileName) const;
 
 public slots:
-    void updateWebEngineSettings();   
     void openUrl(QString url);
     QString homePage();
     QString initialPage();
@@ -44,6 +44,10 @@ public slots:
 signals:
     void homePageChanged();
     void openUrlRequested(QString url);
+
+private slots:
+    void updateWebEngineSettings();
+    void handleObserve(const QString message, const QVariant data);
 
 private:
     QString m_homePage;

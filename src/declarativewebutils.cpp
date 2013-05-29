@@ -8,7 +8,9 @@
 #include <QLocale>
 #include <QStringList>
 #include <QVariant>
-#include <QCoreApplication>
+#include <QVariantMap>
+#include <QApplication>
+#include <QClipboard>
 #include <QFile>
 #include <QDesktopServices>
 #include "declarativewebutils.h"
@@ -25,6 +27,8 @@ DeclarativeWebUtils::DeclarativeWebUtils(QStringList arguments,
 {
     connect(QMozContext::GetInstance(), SIGNAL(onInitialized()),
             this, SLOT(updateWebEngineSettings()));
+    connect(QMozContext::GetInstance(), SIGNAL(recvObserve(QString, QVariant)),
+            this, SLOT(handleObserve(QString, QVariant)));
 
     connect(service, SIGNAL(openUrlRequested(QString)),
             this, SLOT(openUrl(QString)));
@@ -97,6 +101,8 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     // TODO: this doesn't really work too
     mozContext->setPref(QString("browser.helperApps.deleteTempFileOnExit"), QVariant(true));
     mozContext->addObserver(QString("embed:download"));
+
+    mozContext->addObserver(QString("clipboard:setdata"));
 }
 
 void DeclarativeWebUtils::openUrl(QString url)
@@ -128,4 +134,18 @@ QString DeclarativeWebUtils::downloadDir() const
 QString DeclarativeWebUtils::picturesDir() const
 {
     return QDesktopServices::storageLocation(QDesktopServices::PicturesLocation);
+}
+
+void DeclarativeWebUtils::handleObserve(const QString message, const QVariant data)
+{
+    const QVariantMap dataMap = data.toMap();
+
+    if (message == "clipboard:setdata") {
+        QClipboard *clipboard = QApplication::clipboard();
+
+        // check if we copied password
+        if (!dataMap.value("private").toBool()) {
+            clipboard->setText(data.toMap().value("data").toString());
+        }
+    }
 }

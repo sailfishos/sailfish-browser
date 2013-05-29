@@ -232,11 +232,16 @@ Page {
                 webEngine.addMessageListener("embed:auth")
                 webEngine.addMessageListener("embed:login")
                 webEngine.addMessageListener("context:info")
+                webEngine.addMessageListener("Content:ContextMenu")
+                webEngine.addMessageListener("Content:SelectionRange");
+                webEngine.addMessageListener("Content:SelectionCopied");
 
                 webEngine.addMessageListener("embed:select") // this is sync message!
 
                 webEngine.loadFrameScript("chrome://embedlite/content/SelectHelper.js")
                 webEngine.loadFrameScript("chrome://embedlite/content/embedhelper.js")
+
+                webEngine.useQmlMouse = true
 
                 if (WebUtils.initialPage !== "") {
                     browserPage.load(WebUtils.initialPage)
@@ -353,6 +358,24 @@ Page {
                         openContextMenu(data.LinkHref, data.ImageSrc)
                         break
                     }
+                    case "Content:ContextMenu": {
+                        if (data.types.indexOf("content-text") !== -1) {
+                            // we want to select some content text
+                            webEngine.sendAsyncMessage("Browser:SelectionStart", {"xPos": data.xPos, "yPos": data.yPos})
+                        }
+                        break
+                    }
+                    case "Content:SelectionRange": {
+                        if (data.updateStart) {
+                            var resolution = webEngine.resolution
+                            startSelectionHandle.x = (data.start.xPos * resolution) - startSelectionHandle.width
+                            startSelectionHandle.y = data.start.yPos * resolution
+                            endSelectionHandle.x = data.end.xPos * resolution
+                            endSelectionHandle.y = data.end.yPos * resolution
+                            startSelectionHandle.visible = true
+                        }
+                        break
+                    }
                 }
             }
             onRecvSyncMessage: {
@@ -376,6 +399,18 @@ Page {
                         }
                         break;
                     }
+                    case "Content:SelectionCopied": {
+                        startSelectionHandle.visible = false
+                        webEngine.sendAsyncMessage("Browser:SelectionClose",
+                                                   {
+                                                       "clearSelection": true
+                                                    })
+                        if (data.succeeded) {
+                            //% "Copied to clipboard"
+                            notification.show(qsTrId("sailfish_browser-la-selection_copied"))
+                        }
+                        break
+                    }
                 }
             }
             onViewAreaChanged: {
@@ -394,6 +429,56 @@ Page {
                 horizontalScrollDecorator.x = offset.x * resolution * xSizeRatio
 
                 scrollTimer.restart()
+
+                if (startSelectionHandle.visible) {
+                    webEngine.sendAsyncMessage("Browser:SelectionUpdate", {})
+                }
+            }
+            onHandleLongTap: {
+                webEngine.sendAsyncMessage("embed:ContextMenuCreate",
+                                           {
+                                               "x": point.x,
+                                               "y": point.y
+                                           })
+            }
+            onHandleSingleTap: {
+                if (startSelectionHandle.visible) {
+                    console.log("send Browser:SelectionCopy")
+                    webEngine.sendAsyncMessage("Browser:SelectionCopy",
+                                               {
+                                                   "xPos": point.x,
+                                                   "yPos": point.y
+                                               })
+                }
+            }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+
+            onPressed: {
+                webEngine.recvMousePress(mouseX, mouseY)
+            }
+            onReleased: {
+                webEngine.recvMouseRelease(mouseX, mouseY)
+            }
+            onPositionChanged: {
+                webEngine.recvMouseMove(mouseX, mouseY)
+            }
+
+            TextSelectionHandle {
+                id: startSelectionHandle
+
+                type: "start"
+                content: webContent
+            }
+
+            TextSelectionHandle {
+                id: endSelectionHandle
+
+                type: "end"
+                content: webContent
+                visible: startSelectionHandle.visible
             }
         }
 
@@ -640,5 +725,32 @@ Page {
     WorkerScript {
         id: dbWorker
         source: "dbWorker.js"
+
+    Rectangle {
+        id: notification
+
+        anchors.centerIn: parent
+        width: notificationLabel.width + (2 * theme.paddingMedium)
+        height: theme.itemSizeMedium
+        color: theme.highlightBackgroundColor
+        opacity: notificationTimer.running ? 1.0 : 0.0
+        Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
+
+        function show(text) {
+            notificationLabel.text = text
+            notificationTimer.restart()
+        }
+
+        Label {
+            id: notificationLabel
+
+            anchors.centerIn: parent
+            color: theme.primaryColor
+        }
+
+        Timer {
+            id: notificationTimer
+            interval: 2000
+        }
     }
 }
