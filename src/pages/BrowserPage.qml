@@ -40,9 +40,10 @@ Page {
         if(foreground) {
             historyModel.clear()
             currentTabIndex = tabModel.count - 1
+            History.saveSetting("ActiveTab", id.toString())
 
             if (link !== "" && webEngine.url != link) {
-                webEngine.load(url)
+                webEngine.load(link)
             }
         }
     }
@@ -57,7 +58,10 @@ Page {
         historyModel.clear()
         if (tabModel.count >= 1) {
             History.loadTabHistory(tabModel.get(currentTabIndex).tabId, historyModel)
-            load(tabModel.get(currentTabIndex).url)
+            // url from tabModel is only used for new tabs (without history)
+            var url = historyModel.count > 0 ? historyModel.get(0).url : tabModel.get(currentTabIndex).url
+            load(url)
+            History.saveSetting("ActiveTab", tabModel.get(currentTabIndex).tabId.toString())
         }
     }
 
@@ -73,8 +77,12 @@ Page {
         if (currentTabIndex !== index) {
             currentTabIndex = index
             historyModel.clear()
-            load(tabModel.get(currentTabIndex).url)
+
             History.loadTabHistory(tabModel.get(currentTabIndex).tabId, historyModel)
+            // url from tabModel is only used for new tabs (without history)
+            var url = historyModel.count > 0 ? historyModel.get(0).url : tabModel.get(currentTabIndex).url
+            load(url)
+            History.saveSetting("ActiveTab", tabModel.get(currentTabIndex).tabId.toString())
         }
     }
 
@@ -254,8 +262,8 @@ Page {
                     } else {
                         webThumb = {"path":"", "source":""}
                     }
-                    History.addUrl(webEngine.url, webEngine.title, webThumb, tabModel.get(currentTabIndex).tabId)
                     historyModel.insert(0, {"title": webEngine.title, "url": webEngine.url, "icon": webThumb} )
+                    History.addUrl(webEngine.url, webEngine.title, webThumb, tabModel.get(currentTabIndex).tabId)
                 }
             }
             onLoadProgressChanged: {
@@ -599,9 +607,15 @@ Page {
         History.loadTabs(tabModel)
         if (tabModel.count == 0) {
             newTab("", true)
+        } else {
+            var tabId = parseInt(History.loadSetting("ActiveTab"))
+            for(var i=0; i< tabModel.count; i++) {
+                if(tabModel.get(i).tabId == tabId) {
+                    currentTabIndex = i
+                }
+            }
+            History.loadTabHistory(tabId, historyModel)
         }
-        History.loadTabHistory(tabModel.get(currentTabIndex).tabId, historyModel)
-
         // Since we dont have booster with gecko yet (see JB#5910) lets compile the
         // components needed by tab page here so that click on tab icon wont be too long
         if (!_controlPageComponent) {

@@ -11,6 +11,10 @@ WorkerScript.onMessage = function(message) {
     case "deleteTabHistory":
         deleteTabHistory(message.tabId)
         break
+    case "saveSetting":
+        saveSetting(message.setting_name, message.value)
+        break
+
     default:
         console.log("Uknown message" + message)
     }
@@ -49,5 +53,16 @@ function deleteTabHistory(tabId) {
     db.transaction(
                 function(tx) {
                     var result = tx.executeSql('DELETE FROM historytable WHERE tab_id=?;',[tabId])
+                });
+}
+
+function saveSetting(setting_name, value) {
+    var db = getDb()
+    db.transaction(
+                function(tx) {
+                    var result = tx.executeSql('INSERT OR REPLACE INTO settingtable VALUES (?,?);',[setting_name,value])
+                    if (result.rowsAffected < 1) {
+                        console.log("parameters insert failed")
+                    }
                 });
 }

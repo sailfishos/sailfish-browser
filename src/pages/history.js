@@ -25,6 +25,32 @@ function loadHistory(model) {
     return db
 }
 
+function loadSetting(setting_name) {
+    var db = getDb()
+
+    var retval =""
+
+    db.transaction(
+                function(tx) {
+                    tx.executeSql('CREATE TABLE IF NOT EXISTS settingtable (setting_name TEXT UNIQUE, setting_value TEXT)')
+                });
+
+    db.transaction(
+                function(tx) {
+                    var result = tx.executeSql('SELECT setting_value, setting_name FROM settingtable WHERE setting_name=(?)',[setting_name])
+                    if(result.rows.length > 0) {
+                        retval = result.rows.item(0).setting_value;
+                    }
+                });
+    return retval
+}
+
+function saveSetting(setting_name, value) {
+    dbWorker.sendMessage({"operation":"saveSetting", "setting_name": setting_name, "value":value})
+}
+
+
+
 function loadTabHistory(tabId, model) {
     var db = getDb()
 

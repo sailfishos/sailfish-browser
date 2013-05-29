@@ -30,6 +30,7 @@ Item {
         function initTestCase() {
             History.loadHistory(model)
             History.loadTabs(tabs)
+            History.loadSetting("test")
         }
 
         function test_addUrl() {
@@ -200,6 +201,50 @@ Item {
             tabs.clear()
         }
 
+        function test_loadSetting() {
+            var sample = History.loadSetting("Should_not_exist")
+            compare("",sample)
+
+            var value = "http://www.sailfishos.org"
+            var key = "test_key_for_parameters"
+            // asynch
+            History.saveSetting(key,value)
+            wait(1000)
+
+            var loaded = History.loadSetting(key)
+            compare(value === loaded, true)
+
+            var db = openDatabaseSync("sailfish-browser","0.1","historydb", 100000)
+            db.transaction(
+                        function(tx) {
+                            var result = tx.executeSql('DELETE FROM settingtable WHERE setting_name=?',[key])
+                        });
+        }
+
+
+        function test_saveSetting() {
+            var value = "http://www.sailfishos.org_1"
+            var value2 = "http://www.sailfishos.org_2"
+
+            var key = "test_key_for_parameters_2"
+            History.saveSetting(key,value)
+            wait(1000)
+
+            History.saveSetting(key, value2)
+            wait(1000)
+
+            var loaded = History.loadSetting(key)
+            compare(value2, loaded)
+
+            var db = openDatabaseSync("sailfish-browser","0.1","historydb", 100000)
+            db.transaction(
+                        function(tx) {
+                            var result = tx.executeSql('DELETE FROM settingtable WHERE setting_name=?',[key])
+                        });
+
+        }
+
+
         function cleanupTestCase() {
             var db = openDatabaseSync("sailfish-browser","0.1","historydb", 100000)
             db.transaction(
@@ -209,6 +254,10 @@ Item {
             db.transaction(
                         function(tx) {
                             var result = tx.executeSql('DROP TABLE tabs')
+                        });
+            db.transaction(
+                        function(tx) {
+                            var result = tx.executeSql('DROP TABLE settingtable')
                         });
         }
     }
