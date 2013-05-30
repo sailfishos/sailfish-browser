@@ -17,6 +17,10 @@ MouseArea {
     property Item _webContent: parent
     property variant _engine: _webContent.child
     property variant _point
+    // keep track of browser offset and resolution to move the draggers with
+    // selection together when panning or zooming
+    property variant _browserOffset
+    property real _browserResolution
 
     anchors.fill: parent
 
@@ -33,7 +37,21 @@ MouseArea {
     }
 
     function onViewAreaChanged() {
-        _engine.sendAsyncMessage("Browser:SelectionUpdate", {})
+        var newOffset = _engine.scrollableOffset
+        var resolution = _engine.resolution
+
+        var diffX = newOffset.x - _browserOffset.x
+        var diffY = newOffset.y - _browserOffset.y
+
+        start.x = ((((start.x + start.width) / _browserResolution) - diffX) * resolution) - start.width
+        start.y = ((start.y / _browserResolution) - diffY) * resolution
+        end.x = ((end.x / _browserResolution) - diffX) * resolution
+        end.y = ((end.y / _browserResolution) - diffY) * resolution
+
+        _browserOffset = newOffset
+        _browserResolution = resolution
+
+        timer.restart()
     }
 
     function onSelectionRangeUpdated(data) {
@@ -42,10 +60,14 @@ MouseArea {
         }
 
         var resolution = _engine.resolution
-        startSelectionHandle.x = (data.start.xPos * resolution) - startSelectionHandle.width
-        startSelectionHandle.y = data.start.yPos * resolution
-        endSelectionHandle.x = data.end.xPos * resolution
-        endSelectionHandle.y = data.end.yPos * resolution
+        start.x = (data.start.xPos * resolution) - start.width
+        start.y = data.start.yPos * resolution
+        end.x = data.end.xPos * resolution
+        end.y = data.end.yPos * resolution
+
+        _browserOffset = _engine.scrollableOffset
+        _browserResolution = resolution
+
         selectionVisible = true
     }
 
@@ -83,7 +105,7 @@ MouseArea {
     }
 
     TextSelectionHandle {
-        id: startSelectionHandle
+        id: start
 
         type: "start"
         content: _webContent
@@ -91,7 +113,7 @@ MouseArea {
     }
 
     TextSelectionHandle {
-        id: endSelectionHandle
+        id: end
 
         type: "end"
         content: _webContent
@@ -103,5 +125,17 @@ MouseArea {
         _webContent.selectionRangeUpdated.connect(onSelectionRangeUpdated)
         _webContent.selectionCopied.connect(onSelectionCopied)
         _webContent.contextMenuRequested.connect(onContextMenuRequested)
+    }
+
+    Timer {
+        id: timer
+
+        interval: 100
+
+        onTriggered: {
+            if (selectionVisible) {
+                _engine.sendAsyncMessage("Browser:SelectionUpdate", {})
+            }
+        }
     }
 }
