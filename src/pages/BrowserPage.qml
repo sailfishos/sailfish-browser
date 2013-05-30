@@ -179,6 +179,11 @@ Page {
 
     QmlMozView {
         id: webContent
+
+        signal selectionRangeUpdated(variant data)
+        signal selectionCopied(variant data)
+        signal contextMenuRequested(variant data)
+
         anchors {
             top: parent.top
             left: parent.left
@@ -244,7 +249,7 @@ Page {
                 // This flag instucts web engine to ignore mouse and single-touch
                 // events (multi-touch ones are not ignored). This means that we have to
                 // relay the events from QML to web engine through a special MouseArea
-                // that fully covers web view.
+                // that fully covers web view (TextSelectionController).
                 webEngine.useQmlMouse = true
 
                 if (WebUtils.initialPage !== "") {
@@ -359,25 +364,17 @@ Page {
                         break
                     }
                     case "context:info": {
+                        // TODO: embed:ContextMenuCreate provides more flexible interface
+                        //       to context data than context:info -> reimplement it.
                         openContextMenu(data.LinkHref, data.ImageSrc)
                         break
                     }
                     case "Content:ContextMenu": {
-                        if (data.types.indexOf("content-text") !== -1) {
-                            // we want to select some content text
-                            webEngine.sendAsyncMessage("Browser:SelectionStart", {"xPos": data.xPos, "yPos": data.yPos})
-                        }
+                        webContent.contextMenuRequested(data)
                         break
                     }
                     case "Content:SelectionRange": {
-                        if (data.updateStart) {
-                            var resolution = webEngine.resolution
-                            startSelectionHandle.x = (data.start.xPos * resolution) - startSelectionHandle.width
-                            startSelectionHandle.y = data.start.yPos * resolution
-                            endSelectionHandle.x = data.end.xPos * resolution
-                            endSelectionHandle.y = data.end.yPos * resolution
-                            startSelectionHandle.visible = true
-                        }
+                        webContent.selectionRangeUpdated(data)
                         break
                     }
                 }
@@ -404,11 +401,8 @@ Page {
                         break;
                     }
                     case "Content:SelectionCopied": {
-                        startSelectionHandle.visible = false
-                        webEngine.sendAsyncMessage("Browser:SelectionClose",
-                                                   {
-                                                       "clearSelection": true
-                                                    })
+                        webContent.selectionCopied(data)
+
                         if (data.succeeded) {
                             //% "Copied to clipboard"
                             notification.show(qsTrId("sailfish_browser-la-selection_copied"))
@@ -433,10 +427,6 @@ Page {
                 horizontalScrollDecorator.x = offset.x * resolution * xSizeRatio
 
                 scrollTimer.restart()
-
-                if (startSelectionHandle.visible) {
-                    webEngine.sendAsyncMessage("Browser:SelectionUpdate", {})
-                }
             }
             onHandleLongTap: {
                 webEngine.sendAsyncMessage("embed:ContextMenuCreate",
@@ -445,46 +435,9 @@ Page {
                                                "y": point.y
                                            })
             }
-            onHandleSingleTap: {
-                if (startSelectionHandle.visible) {
-                    webEngine.sendAsyncMessage("Browser:SelectionCopy",
-                                               {
-                                                   "xPos": point.x,
-                                                   "yPos": point.y
-                                               })
-                }
-            }
         }
 
-        // This is a relay of mouse and single-touch events to web view
-        MouseArea {
-            anchors.fill: parent
-
-            onPressed: {
-                webEngine.recvMousePress(mouseX, mouseY)
-            }
-            onReleased: {
-                webEngine.recvMouseRelease(mouseX, mouseY)
-            }
-            onPositionChanged: {
-                webEngine.recvMouseMove(mouseX, mouseY)
-            }
-
-            TextSelectionHandle {
-                id: startSelectionHandle
-
-                type: "start"
-                content: webContent
-            }
-
-            TextSelectionHandle {
-                id: endSelectionHandle
-
-                type: "end"
-                content: webContent
-                visible: startSelectionHandle.visible
-            }
-        }
+        TextSelectionController {}
 
         Rectangle {
             id: verticalScrollDecorator
