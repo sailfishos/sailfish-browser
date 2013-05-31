@@ -11,9 +11,10 @@ import Sailfish.Silica 1.0
 Rectangle {
     id: notification
 
-    anchors.centerIn: parent
-    width: notificationLabel.width + (2 * theme.paddingMedium)
-    height: theme.itemSizeMedium
+    anchors.horizontalCenter: parent.horizontalCenter
+    anchors.top: parent.top
+    width: parent.width
+    height: theme.itemSizeSmall
     color: theme.highlightBackgroundColor
     opacity: notificationTimer.running ? 1.0 : 0.0
     Behavior on opacity { FadeAnimation {} }
