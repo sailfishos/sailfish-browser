@@ -86,6 +86,8 @@ rm -rf %{buildroot}
 %{_datadir}/%{name}/*
 %{_datadir}/translations/sailfish-browser_eng_en.qm
 %{_datadir}/dbus-1/services/*.service
+%{_datadir}/themes/*
+%{_libdir}/mozembedlite/chrome/embedlite/content/*.js
 # << files
 
 %files settings

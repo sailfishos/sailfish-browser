@@ -8,12 +8,11 @@
 import QtQuick 1.1
 import Sailfish.Silica 1.0
 
-Rectangle {
+Item {
     id: handle
 
-    width: 40
-    height: 40
-    color: "red"
+    width: theme.itemSizeSmall
+    height: width
     visible: false
 
     property string type
@@ -46,10 +45,28 @@ Rectangle {
         }
     }
 
+    Image {
+        anchors.top: parent.top
+        anchors.left: type === "end" ? parent.left : undefined
+        anchors.right: type === "start" ? parent.right : undefined
+        source: type === "start" ? "image://theme/icon-dragger-start?" + theme.highlightBackgroundColor :
+                                   "image://theme/icon-dragger-end?" + theme.highlightBackgroundColor
+    }
+
     MouseArea {
         id: mouseArea
 
-        anchors.fill: parent
+        width: parent.width
+        height: parent.height
+
+        anchors {
+            top: parent.top
+            left: type === "end" ? parent.left : undefined
+            right: type === "start" ? parent.right : undefined
+            leftMargin: type === "end" ? -1 * (theme.itemSizeSmall / 2) : 0
+            rightMargin: type === "start" ? -1 * (theme.itemSizeSmall / 2) : 0
+        }
+
         drag.target: parent
         drag.axis: Drag.XandYAxis
         drag.minimumX: 0

@@ -227,6 +227,11 @@ Page {
                     verticalScrollDecorator.color = theme.highlightBackgroundColor
                     horizontalScrollDecorator.color = theme.highlightBackgroundColor
                 }
+
+                webEngine.sendAsyncMessage("Browser:SelectionColorUpdate",
+                                           {
+                                               "color": theme.secondaryHighlightColor
+                                           })
             }
 
             onViewInitialized: {
@@ -245,6 +250,7 @@ Page {
 
                 webEngine.loadFrameScript("chrome://embedlite/content/SelectHelper.js")
                 webEngine.loadFrameScript("chrome://embedlite/content/embedhelper.js")
+                webEngine.loadFrameScript("chrome://embedlite/content/StyleSheetHandler.js")
 
                 // This flag instucts web engine to ignore mouse and single-touch
                 // events (multi-touch ones are not ignored). This means that we have to
