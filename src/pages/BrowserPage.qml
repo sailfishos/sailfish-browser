@@ -428,13 +428,6 @@ Page {
 
                 scrollTimer.restart()
             }
-            onHandleLongTap: {
-                webEngine.sendAsyncMessage("embed:ContextMenuCreate",
-                                           {
-                                               "x": point.x,
-                                               "y": point.y
-                                           })
-            }
         }
 
         TextSelectionController {}

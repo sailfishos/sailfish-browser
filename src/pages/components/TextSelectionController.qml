@@ -16,25 +16,12 @@ MouseArea {
 
     property Item _webContent: parent
     property variant _engine: _webContent.child
-    property variant _point
     // keep track of browser offset and resolution to move the draggers with
     // selection together when panning or zooming
     property variant _browserOffset
     property real _browserResolution
 
     anchors.fill: parent
-
-    function onBrowserSingleTap(point) {
-        if (selectionVisible) {
-            // This is a workaround for https://bugreports.qt-project.org/browse/QTBUG-25194
-            _point = point
-            _engine.sendAsyncMessage("Browser:SelectionCopy",
-                                     {
-                                         "xPos": _point.x,
-                                         "yPos": _point.y
-                                     })
-        }
-    }
 
     function onViewAreaChanged() {
         var newOffset = _engine.scrollableOffset
@@ -121,7 +108,6 @@ MouseArea {
     }
 
     Component.onCompleted: {
-        _engine.handleSingleTap.connect(onBrowserSingleTap)
         _webContent.selectionRangeUpdated.connect(onSelectionRangeUpdated)
         _webContent.selectionCopied.connect(onSelectionCopied)
         _webContent.contextMenuRequested.connect(onContextMenuRequested)
