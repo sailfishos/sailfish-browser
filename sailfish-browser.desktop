@@ -1,6 +1,7 @@
 [Desktop Entry]
 Type=Application
 Name=Web Browser
+Name[zh_CN]=浏览器
 Icon=icon-launcher-browser
 Exec=/usr/bin/sailfish-browser %U
 Comment=Sailfish UI application
