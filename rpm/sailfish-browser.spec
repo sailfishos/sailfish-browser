@@ -17,8 +17,8 @@ BuildRequires:  pkgconfig(QtDBus)
 BuildRequires:  pkgconfig(nemotransferengine)
 Requires: sailfishsilica >= 0.8.34
 Requires: jolla-ambient >= 0.1.26
-Requires: xulrunner >= 22.0.1.11
-Requires: embedlite-components >= 1.1.9
+Requires: xulrunner >= 24.0.1.5
+Requires: embedlite-components >= 1.2.0
 Requires: sailfish-browser-settings = %{version}
 
 %description
