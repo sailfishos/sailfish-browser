@@ -16,10 +16,9 @@ MouseArea {
 
     property Item _webContent: parent
     property variant _engine: _webContent.child
-    // keep track of browser offset and resolution to move the draggers with
+    // keep selection range we get from engine to move the draggers with
     // selection together when panning or zooming
-    property variant _browserOffset
-    property real _browserResolution
+    property variant _cssRange
 
     anchors.fill: parent
 
@@ -27,16 +26,13 @@ MouseArea {
         var newOffset = _engine.scrollableOffset
         var resolution = _engine.resolution
 
-        var diffX = newOffset.x - _browserOffset.x
-        var diffY = newOffset.y - _browserOffset.y
+        var diffX = newOffset.x - _cssRange.origOffsetX
+        var diffY = newOffset.y - _cssRange.origOffsetY
 
-        start.x = ((((start.x + start.width) / _browserResolution) - diffX) * resolution) - start.width
-        start.y = ((start.y / _browserResolution) - diffY) * resolution
-        end.x = ((end.x / _browserResolution) - diffX) * resolution
-        end.y = ((end.y / _browserResolution) - diffY) * resolution
-
-        _browserOffset = newOffset
-        _browserResolution = resolution
+        start.x = (_cssRange.startX - diffX) * resolution - start.width
+        start.y = (_cssRange.startY - diffY) * resolution
+        end.x = (_cssRange.endX - diffX) * resolution
+        end.y = (_cssRange.endY - diffY) * resolution
 
         timer.restart()
     }
@@ -47,19 +43,27 @@ MouseArea {
         }
 
         var resolution = _engine.resolution
+
         start.x = (data.start.xPos * resolution) - start.width
         start.y = data.start.yPos * resolution
         end.x = data.end.xPos * resolution
         end.y = data.end.yPos * resolution
 
-        _browserOffset = _engine.scrollableOffset
-        _browserResolution = resolution
+        _cssRange = {
+            "startX": data.start.xPos,
+            "startY": data.start.yPos,
+            "endX": data.end.xPos,
+            "endY": data.end.yPos,
+            "origOffsetX": _engine.scrollableOffset.x,
+            "origOffsetY": _engine.scrollableOffset.y,
+        }
 
         selectionVisible = true
     }
 
     function onSelectionCopied(data) {
         selectionVisible = false
+        _cssRange = null
         _engine.sendAsyncMessage("Browser:SelectionClose",
                                  {
                                      "clearSelection": true
