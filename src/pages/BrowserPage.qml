@@ -179,6 +179,11 @@ Page {
 
     QmlMozView {
         id: webContent
+
+        signal selectionRangeUpdated(variant data)
+        signal selectionCopied(variant data)
+        signal contextMenuRequested(variant data)
+
         anchors {
             top: parent.top
             left: parent.left
@@ -222,6 +227,11 @@ Page {
                     verticalScrollDecorator.color = theme.highlightBackgroundColor
                     horizontalScrollDecorator.color = theme.highlightBackgroundColor
                 }
+
+                webEngine.sendAsyncMessage("Browser:SelectionColorUpdate",
+                                           {
+                                               "color": theme.secondaryHighlightColor
+                                           })
             }
 
             onViewInitialized: {
@@ -232,11 +242,21 @@ Page {
                 webEngine.addMessageListener("embed:auth")
                 webEngine.addMessageListener("embed:login")
                 webEngine.addMessageListener("context:info")
+                webEngine.addMessageListener("Content:ContextMenu")
+                webEngine.addMessageListener("Content:SelectionRange");
+                webEngine.addMessageListener("Content:SelectionCopied");
 
                 webEngine.addMessageListener("embed:select") // this is sync message!
 
                 webEngine.loadFrameScript("chrome://embedlite/content/SelectHelper.js")
                 webEngine.loadFrameScript("chrome://embedlite/content/embedhelper.js")
+                webEngine.loadFrameScript("chrome://embedlite/content/StyleSheetHandler.js")
+
+                // This flag instucts web engine to ignore mouse and single-touch
+                // events (multi-touch ones are not ignored). This means that we have to
+                // relay the events from QML to web engine through a special MouseArea
+                // that fully covers web view (TextSelectionController).
+                webEngine.useQmlMouse = true
 
                 if (WebUtils.initialPage !== "") {
                     browserPage.load(WebUtils.initialPage)
@@ -350,7 +370,17 @@ Page {
                         break
                     }
                     case "context:info": {
+                        // TODO: embed:ContextMenuCreate provides more flexible interface
+                        //       to context data than context:info -> reimplement it.
                         openContextMenu(data.LinkHref, data.ImageSrc)
+                        break
+                    }
+                    case "Content:ContextMenu": {
+                        webContent.contextMenuRequested(data)
+                        break
+                    }
+                    case "Content:SelectionRange": {
+                        webContent.selectionRangeUpdated(data)
                         break
                     }
                 }
@@ -376,6 +406,15 @@ Page {
                         }
                         break;
                     }
+                    case "Content:SelectionCopied": {
+                        webContent.selectionCopied(data)
+
+                        if (data.succeeded) {
+                            //% "Copied to clipboard"
+                            notification.show(qsTrId("sailfish_browser-la-selection_copied"))
+                        }
+                        break
+                    }
                 }
             }
             onViewAreaChanged: {
@@ -396,6 +435,8 @@ Page {
                 scrollTimer.restart()
             }
         }
+
+        TextSelectionController {}
 
         Rectangle {
             id: verticalScrollDecorator
@@ -640,5 +681,9 @@ Page {
     WorkerScript {
         id: dbWorker
         source: "dbWorker.js"
+    }
+
+    BrowserNotification {
+        id: notification
     }
 }

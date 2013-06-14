@@ -17,8 +17,8 @@ BuildRequires:  pkgconfig(QtDBus)
 BuildRequires:  pkgconfig(nemotransferengine)
 Requires: sailfishsilica >= 0.8.34
 Requires: jolla-ambient >= 0.1.26
-Requires: xulrunner >= 22.0.1.11
-Requires: embedlite-components >= 1.1.7
+Requires: xulrunner >= 24.0.1.5
+Requires: embedlite-components >= 1.2.0
 Requires: sailfish-browser-settings = %{version}
 
 %description
@@ -86,6 +86,7 @@ rm -rf %{buildroot}
 %{_datadir}/%{name}/*
 %{_datadir}/translations/sailfish-browser_eng_en.qm
 %{_datadir}/dbus-1/services/*.service
+%{_libdir}/mozembedlite/chrome/embedlite/content/*.js
 # << files
 
 %files settings
