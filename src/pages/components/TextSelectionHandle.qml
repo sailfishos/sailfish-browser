@@ -49,8 +49,8 @@ Item {
         anchors.top: parent.top
         anchors.left: type === "end" ? parent.left : undefined
         anchors.right: type === "start" ? parent.right : undefined
-        source: type === "start" ? "image://theme/icon-dragger-start?" + theme.highlightBackgroundColor :
-                                   "image://theme/icon-dragger-end?" + theme.highlightBackgroundColor
+        source: type === "start" ? "image://theme/icon-browser-dragger-start?" + theme.highlightBackgroundColor :
+                                   "image://theme/icon-browser-dragger-end?" + theme.highlightBackgroundColor
     }
 
     MouseArea {
