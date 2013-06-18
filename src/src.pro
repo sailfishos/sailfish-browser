@@ -1,4 +1,4 @@
-QT += opengl declarative dbus
+QT += opengl declarative dbus concurrent quick
 # The name of your app
 TARGET = sailfish-browser
 
@@ -7,7 +7,7 @@ lessThan(QT_MAJOR_VERSION, 5) {
   PKGCONFIG += QJson
 }
 
-PKGCONFIG +=  nemotransferengine
+PKGCONFIG +=  nemotransferengine-qt5
 
 # Include qtmozembed
 isEmpty(QTEMBED_LIB) {

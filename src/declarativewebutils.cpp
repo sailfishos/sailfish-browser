@@ -12,7 +12,7 @@
 #include <QApplication>
 #include <QClipboard>
 #include <QFile>
-#include <QDesktopServices>
+#include <QStandardPaths>
 #include "declarativewebutils.h"
 #include "qmozcontext.h"
 
@@ -128,12 +128,12 @@ QString DeclarativeWebUtils::homePage()
 
 QString DeclarativeWebUtils::downloadDir() const
 {
-    return QDesktopServices::storageLocation(QDesktopServices::HomeLocation) + QString("/Downloads");
+    return QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
 }
 
 QString DeclarativeWebUtils::picturesDir() const
 {
-    return QDesktopServices::storageLocation(QDesktopServices::PicturesLocation);
+    return QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
 }
 
 void DeclarativeWebUtils::handleObserve(const QString message, const QVariant data)

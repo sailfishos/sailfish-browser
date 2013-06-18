@@ -6,9 +6,19 @@
 ****************************************************************************/
 
 #include "declarativebookmarkmodel.h"
+
+
+#if (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
+#include <qjson/qobjecthelper.h>
 #include <qjson/parser.h>
 #include <qjson/serializer.h>
-#include <qjson/qobjecthelper.h>
+
+#else
+#include <QJsonDocument>
+#include <QJsonArray>
+#include <QJsonObject>
+#endif
+
 #include <QDebug>
 #include <QDesktopServices>
 #include <QDir>
@@ -18,11 +28,15 @@
 DeclarativeBookmarkModel::DeclarativeBookmarkModel(QObject *parent) :
     QAbstractListModel(parent)
 {
+}
+
+QHash<int, QByteArray> DeclarativeBookmarkModel::roleNames() const
+{
     QHash<int, QByteArray> roles;
     roles[UrlRole] = "url";
     roles[TitleRole] = "title";
     roles[FaviconRole] = "favicon";
-    setRoleNames(roles);  
+    return roles;
 }
 
 // TODO cleanup
@@ -53,7 +67,7 @@ void DeclarativeBookmarkModel::removeBookmark(const QString& url) {
 }
 
 void DeclarativeBookmarkModel::componentComplete() {
-    QString settingsLocation = QDesktopServices::storageLocation(QDesktopServices::DataLocation) + "/bookmarks.json";
+    QString settingsLocation = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/bookmarks.json";
     QFile file(settingsLocation);
 
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -64,17 +78,37 @@ void DeclarativeBookmarkModel::componentComplete() {
         QJson::Parser parser;
         QVariant list = parser.parse(file.readAll());
         QVariantList bookmarkList = list.toList();
-#else
-        // TODO check on Qt5
-        QJsonDocument doc = fromJson(file.readAll());
-        QVariantList bookmarkList = doc.toVariantList();
-#endif
         for(int i=0; i< bookmarkList.count(); i++) {
             Bookmark* m = new Bookmark("","","");
             QJson::QObjectHelper::qvariant2qobject(bookmarkList[i].toMap(), m);
             titles.append(m);
             bookmarks.insert(m->url(), titles.count()-1);
         }
+
+
+#else
+        // TODO check on Qt5
+        QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
+
+
+        if( doc.isArray()) {
+            QJsonArray array = doc.array();
+            QJsonArray::iterator i;
+            for(i=array.begin(); i != array.end(); ++i ) {
+                if((*i).isObject()) {
+                    QJsonObject obj = (*i).toObject();
+                    Bookmark* m = new Bookmark(obj.value("title").toString(),
+                                               obj.value("url").toString(),
+                                               obj.value("favicon").toString());
+                    titles.append(m);
+                    bookmarks.insert(m->url(), titles.count()-1);
+
+                }
+            }
+        } else {
+            qWarning() << "Bookmarks.json should be an array of items";
+        }
+#endif
 
         emit countChanged();
         file.close();
@@ -84,12 +118,7 @@ void DeclarativeBookmarkModel::componentComplete() {
 void DeclarativeBookmarkModel::classBegin() {}
 
 void DeclarativeBookmarkModel::save() {
-    QVariantList items;
-    for(int i=0; i< titles.count(); i++) {
-        items << QJson::QObjectHelper::qobject2qvariant(titles[i]);
-    }
-
-    QString settingsLocation = QDesktopServices::storageLocation(QDesktopServices::DataLocation);
+    QString settingsLocation = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
     QDir dir(settingsLocation);
     if(!dir.exists()) {
         if(!dir.mkpath(settingsLocation)) {
@@ -105,12 +134,30 @@ void DeclarativeBookmarkModel::save() {
     }
     QTextStream out(&file);
 #if (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
+    QVariantList items;
+    for(int i=0; i< titles.count(); i++) {
+        items << QJson::QObjectHelper::qobject2qvariant(titles[i]);
+    }
+
     QJson::Serializer serializer;
     out << serializer.serialize(items);
 #else
-    // TODO check on Qt5
-    QJsonArray array = QJsonArray::fromVariantList(items);
-    QJsonDocument doc(array);
+
+
+    QJsonArray items;
+    for(int i=0; i< titles.count(); i++) {
+
+        QJsonObject title;
+        Bookmark* bookmark = titles[i];
+        title.insert("url", QJsonValue(bookmark->url()));
+        title.insert("title", QJsonValue(bookmark->title()));
+        title.insert("favicon", QJsonValue(bookmark->favicon()));
+
+
+        items.append(QJsonValue(title));
+    }
+
+    QJsonDocument doc(items);
     out << doc.toJson();
 #endif
 

@@ -14,7 +14,7 @@
 #include <QFile>
 #include <QDir>
 #include <QTransform>
-#include <QDesktopServices>
+#include <QStandardPaths>
 #include <QFuture>
 #include <QtConcurrentRun>
 #include "declarativewebthumbnail.h"
@@ -45,7 +45,7 @@ DeclarativeWebThumbnail* DeclarativeBrowserTab::screenCapture(int x, int y, int 
     }
     QPixmap pixmap = QPixmap::grabWindow(m_view->winId(), x, y, width, height);
     int randomValue = abs(qrand());
-    QString path = QDesktopServices::storageLocation(QDesktopServices::CacheLocation) + "/" + QString::number(randomValue);
+    QString path = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + "/" + QString::number(randomValue);
     path.append(QString("-thumb.png"));
 
     // asynchronous save to avoid the slow I/O
@@ -55,7 +55,7 @@ DeclarativeWebThumbnail* DeclarativeBrowserTab::screenCapture(int x, int y, int 
 }
 
 void DeclarativeBrowserTab::saveToFile(QString path, QPixmap image, qreal rotate, DeclarativeWebThumbnail* thumb) {
-    QString cacheLocation = QDesktopServices::storageLocation(QDesktopServices::CacheLocation);
+    QString cacheLocation = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
     QDir dir(cacheLocation);
     if(!dir.exists()) {
         if(!dir.mkpath(cacheLocation)) {

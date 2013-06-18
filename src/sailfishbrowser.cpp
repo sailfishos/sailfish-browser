@@ -10,7 +10,6 @@
 #include <QGLWidget>
 #include <QDeclarativeContext>
 #include <QDeclarativeEngine>
-#include <QInputContext>
 #include <QWidget>
 #include <QTimer>
 #include <QTranslator>

@@ -1,7 +1,7 @@
 #include <QtGlobal>
-#include <QtDeclarative>
-#include <QDeclarativeEngine>
-#include <QDeclarativeExtensionPlugin>
+#include <QtQml>
+#include <QQmlEngine>
+#include <QQmlExtensionPlugin>
 #include <QTranslator>
 
 #include "browsersettings.h"
@@ -24,10 +24,10 @@ public:
 };
 
 
-class BrowserSettingsPlugin : public QDeclarativeExtensionPlugin
+class BrowserSettingsPlugin : public QQmlExtensionPlugin
 {
 public:
-    void initializeEngine(QDeclarativeEngine *engine, const char *uri)
+    void initializeEngine(QQmlEngine *engine, const char *uri)
     {
         Q_UNUSED(uri)
 
@@ -47,6 +47,3 @@ public:
 };
 
 #include "declarative_plugin.moc"
-
-Q_EXPORT_PLUGIN2(browsersettingsplugin, BrowserSettingsPlugin)
-
