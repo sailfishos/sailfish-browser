@@ -9,7 +9,7 @@
 #define DECLARATIVEBROWSERTAB_H
 
 #include <QObject>
-#include <QDeclarativeView>
+#include <QQuickView>
 #include <QStringList>
 #include <QPixmap>
 
@@ -19,7 +19,7 @@ class DeclarativeBrowserTab : public QObject
 {
     Q_OBJECT
 public:
-    explicit DeclarativeBrowserTab(QDeclarativeView* view, QObject *parent = 0);
+    explicit DeclarativeBrowserTab(QQuickView* view, QObject *parent = 0);
     ~DeclarativeBrowserTab();
 
     Q_INVOKABLE DeclarativeWebThumbnail* screenCapture(int x, int y, int width, int height, qreal rotate);
@@ -27,7 +27,7 @@ public:
 private:
     void saveToFile(QString path, QPixmap image, qreal rotate, DeclarativeWebThumbnail* thumb);
 
-    QDeclarativeView * m_view;
+    QQuickView * m_view;
     QStringList paths;
 };
 #endif // DECLARATIVEBROWSERTAB_H

@@ -12,7 +12,6 @@
 #include <QUrl>
 #include <QColor>
 #include <QVariant>
-#include <QDeclarativeView>
 #include "browserservice.h"
 
 class DeclarativeWebUtils : public QObject
@@ -25,7 +24,7 @@ class DeclarativeWebUtils : public QObject
     Q_PROPERTY(QString picturesDir READ picturesDir CONSTANT FINAL)
 
 public:
-    explicit DeclarativeWebUtils(QStringList arguments, BrowserService *service, QDeclarativeView *view, QObject *parent = 0);
+    explicit DeclarativeWebUtils(QStringList arguments, BrowserService *service, QObject *parent = 0);
 
     QString downloadDir() const;
     QString picturesDir() const;

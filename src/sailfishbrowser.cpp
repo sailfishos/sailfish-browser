@@ -5,21 +5,20 @@
 **
 ****************************************************************************/
 
-#include <QApplication>
-#include <QDeclarativeView>
-#include <QGLWidget>
-#include <QDeclarativeContext>
-#include <QDeclarativeEngine>
-#include <QWidget>
+#include <QGuiApplication>
+#include <QQuickView>
+#include <QQmlContext>
+#include <QQmlEngine>
+#include <QtQml>
 #include <QTimer>
 #include <QTranslator>
 #include <QDir>
+#include <QScreen>
 
-#include "qdeclarativemozview.h"
-#include "qgraphicsmozview.h"
+//#include "qdeclarativemozview.h"
+#include "quickmozview.h"
 #include "qmozcontext.h"
 
-#include "sailfishapplication.h"
 #include "declarativebrowsertab.h"
 #include "declarativebookmarkmodel.h"
 #include "declarativewebutils.h"
@@ -29,9 +28,10 @@
 
 Q_DECL_EXPORT int main(int argc, char *argv[])
 {
-    QApplication::setAttribute(Qt::AA_X11InitThreads, true);
+    setenv("QML_BAD_GUI_RENDER_LOOP", "1", 1);
+    QScopedPointer<QGuiApplication> app(new QGuiApplication(argc, argv));
+    QScopedPointer<QQuickView> view(new QQuickView);
 
-    QScopedPointer<QApplication> app(Sailfish::createApplication(argc, argv));
     app->setQuitOnLastWindowClosed(true);
 
     BrowserService *service = new BrowserService(app.data());
@@ -45,8 +45,6 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     translator.load(QLocale(), "sailfish-browser", "-", translationPath);
     qApp->installTranslator(&translator);
 
-    qmlRegisterType<QGraphicsMozView>("QtMozilla", 1, 0, "QGraphicsMozView");
-    qmlRegisterType<QDeclarativeMozView>("QtMozilla", 1, 0, "QmlMozView");
     qmlRegisterType<DeclarativeBookmarkModel>("Sailfish.Browser", 1, 0, "BookmarkModel");
     qmlRegisterType<DeclarativeWebThumbnail>("Sailfish.Browser", 1, 0, "WebThumbnail");
 
@@ -58,13 +56,10 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 
     app->setApplicationName(QString("sailfish-browser"));
     app->setOrganizationName(QString("org.sailfishos"));
-    QScopedPointer<QDeclarativeView> view(Sailfish::createView());
 
     DeclarativeBrowserTab * tab = new DeclarativeBrowserTab(view.data(), app.data());
-    DeclarativeWebUtils * utils = new DeclarativeWebUtils(app->arguments(), service, view.data(), app.data());
-    view->engine()->rootContext()->setContextProperty("WebUtils", utils);
-
-    view->setViewport(new QGLWidget);
+    DeclarativeWebUtils * utils = new DeclarativeWebUtils(app->arguments(), service, app.data());
+    view->rootContext()->setContextProperty("WebUtils", utils);
     view->rootContext()->setContextProperty("MozContext", QMozContext::GetInstance());
 
     DownloadManager dlMgr(service);
@@ -80,12 +75,14 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
         path = QString(DEPLOYMENT_PATH);
     }
     view->setSource(QUrl::fromLocalFile(path+"browser.qml"));
+  // QRect r = QGuiApplication::primaryScreen()->geometry();
+  //         view->resize(r.width(), r.height());
+    view->showFullScreen();
 
     // Setup embedding
     QObject::connect(app.data(), SIGNAL(lastWindowClosed()),
                      QMozContext::GetInstance(), SLOT(stopEmbedding()));
     QTimer::singleShot(0, QMozContext::GetInstance(), SLOT(runEmbedding()));
 
-    Sailfish::showView(view.data());
     return app->exec();
 }

@@ -143,7 +143,6 @@ void DeclarativeBookmarkModel::save() {
     out << serializer.serialize(items);
 #else
 
-
     QJsonArray items;
     for(int i=0; i< titles.count(); i++) {
 
@@ -152,7 +151,6 @@ void DeclarativeBookmarkModel::save() {
         title.insert("url", QJsonValue(bookmark->url()));
         title.insert("title", QJsonValue(bookmark->title()));
         title.insert("favicon", QJsonValue(bookmark->favicon()));
-
 
         items.append(QJsonValue(title));
     }

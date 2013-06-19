@@ -6,8 +6,9 @@
 ****************************************************************************/
 
 
-import QtQuick 1.1
+import QtQuick 2.0
 import Sailfish.Silica 1.0
+import Sailfish.Silica.theme 1.0
 
 Dialog {
     id: selectDialog
@@ -103,14 +104,14 @@ Dialog {
             }
 
             Label {
-                x: theme.paddingLarge
+                x: Theme.paddingLarge
                 anchors.verticalCenter: parent.verticalCenter
                 text: label
                 color: {
                     if (disabled) {
-                        return selected ? theme.secondaryHighlightColor : theme.secondaryColor
+                        return selected ? Theme.secondaryHighlightColor : Theme.secondaryColor
                     } else {
-                        return highlighted || selected ? theme.highlightColor : theme.primaryColor
+                        return highlighted || selected ? Theme.highlightColor : Theme.primaryColor
                     }
                 }
             }

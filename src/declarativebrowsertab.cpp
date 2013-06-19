@@ -7,9 +7,12 @@
 
 
 #include "declarativebrowsertab.h"
+#include <QScreen>
 #include <QPixmap>
-#include <QDeclarativeEngine>
-#include <QDeclarativeContext>
+#include <QGuiApplication>
+#include <QQuickView>
+#include <QQmlContext>
+#include <QQmlEngine>
 #include <QDebug>
 #include <QFile>
 #include <QDir>
@@ -17,9 +20,10 @@
 #include <QStandardPaths>
 #include <QFuture>
 #include <QtConcurrentRun>
+#include <QTime>
 #include "declarativewebthumbnail.h"
 
-DeclarativeBrowserTab::DeclarativeBrowserTab(QDeclarativeView* view, QObject *parent) :
+DeclarativeBrowserTab::DeclarativeBrowserTab(QQuickView* view, QObject *parent) :
     QObject(parent), m_view(view)
 {
     view->engine()->rootContext()->setContextProperty("BrowserTab",this);
@@ -40,10 +44,10 @@ DeclarativeBrowserTab::~DeclarativeBrowserTab()
 
 DeclarativeWebThumbnail* DeclarativeBrowserTab::screenCapture(int x, int y, int width, int height, qreal rotate)
 {
-    if(!m_view->isActiveWindow()) {
+    if(!m_view->isActive()) {
         return new DeclarativeWebThumbnail("");
     }
-    QPixmap pixmap = QPixmap::grabWindow(m_view->winId(), x, y, width, height);
+    QPixmap pixmap =  QGuiApplication::primaryScreen()->grabWindow(m_view->winId(), x, y, width, height);
     int randomValue = abs(qrand());
     QString path = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + "/" + QString::number(randomValue);
     path.append(QString("-thumb.png"));

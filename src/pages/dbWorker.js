@@ -22,7 +22,7 @@ WorkerScript.onMessage = function(message) {
 }
 
 function getDb() {
-    return openDatabaseSync("sailfish-browser", "0.1", "historydb", 100000)
+    return LocalStorage.openDatabaseSync("sailfish-browser", "0.1", "historydb", 100000)
 }
 
 function updateTab(tabId, url, thumb) {

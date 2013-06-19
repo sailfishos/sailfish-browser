@@ -1,18 +1,13 @@
-QT += opengl declarative dbus concurrent quick
+QT += opengl qml quick dbus concurrent quick
 # The name of your app
 TARGET = sailfish-browser
-
-lessThan(QT_MAJOR_VERSION, 5) {
-  CONFIG += link_pkgconfig
-  PKGCONFIG += QJson
-}
 
 PKGCONFIG +=  nemotransferengine-qt5
 
 # Include qtmozembed
 isEmpty(QTEMBED_LIB) {
   CONFIG += link_pkgconfig
-  PKGCONFIG += qtembedwidget x11
+  PKGCONFIG += qtembedwidget
 } else {
   LIBS+=$$QTEMBED_LIB
 }

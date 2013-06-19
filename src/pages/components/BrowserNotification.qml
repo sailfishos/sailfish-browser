@@ -5,8 +5,9 @@
 **
 ****************************************************************************/
 
-import QtQuick 1.1
+import QtQuick 2.0
 import Sailfish.Silica 1.0
+import Sailfish.Silica.theme 1.0
 
 Rectangle {
     id: notification
@@ -14,8 +15,8 @@ Rectangle {
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.top: parent.top
     width: parent.width
-    height: theme.itemSizeSmall
-    color: theme.highlightBackgroundColor
+    height: Theme.itemSizeSmall
+    color: Theme.highlightBackgroundColor
     opacity: notificationTimer.running ? 1.0 : 0.0
     Behavior on opacity { FadeAnimation {} }
 
@@ -28,7 +29,7 @@ Rectangle {
         id: notificationLabel
 
         anchors.centerIn: parent
-        color: theme.primaryColor
+        color: Theme.primaryColor
     }
 
     Timer {

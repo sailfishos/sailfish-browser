@@ -6,9 +6,11 @@
 ****************************************************************************/
 
 
-import QtQuick 1.1
+import QtQuick 2.0
 import Sailfish.Silica 1.0
-import QtMozilla 1.0
+import Sailfish.Silica.theme 1.0
+import QtQuick.LocalStorage 2.0
+import Qt5Mozilla 1.0
 import Sailfish.Browser 1.0
 import "components"
 
@@ -20,7 +22,10 @@ Page {
     property alias tabs: tabModel
     property alias favorites: favoriteModel
     property int currentTabIndex
+
     property variant webEngine: webContent.child
+
+
     property string favicon
 
     property variant _controlPageComponent
@@ -98,7 +103,7 @@ Page {
         // if not, then try to use from history and if that does not exist, lets not store a thumb
         if (status == PageStatus.Active) {
             webThumb = BrowserTab.screenCapture(0, 0, webContent.width, webContent.width, window.screenRotation)
-        } else if (historyModel.count > 0 && historyModel.get(0).url == webEngine.url) {
+        } else if (historyModel.count > 0  && historyModel.get(0).url == webEngine.url) {
             webThumb = historyModel.get(0).icon
         } else {
             webThumb = {"path":"", "source":""}
@@ -183,6 +188,7 @@ Page {
         signal selectionRangeUpdated(variant data)
         signal selectionCopied(variant data)
         signal contextMenuRequested(variant data)
+        clip: true
 
         anchors {
             top: parent.top
@@ -192,15 +198,18 @@ Page {
         width: browserPage.width
         enabled: !_ctxMenuActive && !downloadPopup.visible
 
-        height: {
+        height: screen.height - Theme.itemSizeMedium
+            //{
             // No resizes while page is not active
             // workaround for engine crashes on resizes while background
-            if (browserPage.status == PageStatus.Active) {
-                return _contextMenu && (_contextMenu.height > tools.height) ? browserPage.height - _contextMenu.height : browserPage.height - tools.height
-            } else {
-                return screen.height - tools.height
-            }
-        }
+ //           if (browserPage.status == PageStatus.Active) {
+ //               return (_contextMenu != null && (_contextMenu.height > tools.height)) ? browserPage.height - _contextMenu.height : browserPage.height - tools.height
+ //               return (_contextMenu != null && (_contextMenu.height > tools.height)) ? 200 : 300
+
+   //         } else {
+
+            //}
+        //}
 
         Connections {
             target: webEngine
@@ -217,20 +226,20 @@ Page {
 
             onBgcolorChanged: {
                 var bgLightness = WebUtils.getLightness(webEngine.bgcolor)
-                var dimmerLightness = WebUtils.getLightness(theme.highlightDimmerColor)
-                var highBgLightness = WebUtils.getLightness(theme.highlightBackgroundColor)
+                var dimmerLightness = WebUtils.getLightness(Theme.highlightDimmerColor)
+                var highBgLightness = WebUtils.getLightness(Theme.highlightBackgroundColor)
 
                 if (Math.abs(bgLightness - dimmerLightness) > Math.abs(bgLightness - highBgLightness)) {
-                    verticalScrollDecorator.color = theme.highlightDimmerColor
-                    horizontalScrollDecorator.color = theme.highlightDimmerColor
+                    verticalScrollDecorator.color = Theme.highlightDimmerColor
+                    horizontalScrollDecorator.color = Theme.highlightDimmerColor
                 } else {
-                    verticalScrollDecorator.color = theme.highlightBackgroundColor
-                    horizontalScrollDecorator.color = theme.highlightBackgroundColor
+                    verticalScrollDecorator.color = Theme.highlightBackgroundColor
+                    horizontalScrollDecorator.color = Theme.highlightBackgroundColor
                 }
 
                 webEngine.sendAsyncMessage("Browser:SelectionColorUpdate",
                                            {
-                                               "color": theme.secondaryHighlightColor
+                                               "color": Theme.secondaryHighlightColor
                                            })
             }
 
@@ -443,7 +452,7 @@ Page {
 
             width: 5
             anchors.right: parent ? parent.right: undefined
-            color: theme.highlightDimmerColor
+            color: Theme.highlightDimmerColor
             smooth: true
             radius: 2.5
             visible: parent.height > height && !_ctxMenuVisible
@@ -456,7 +465,7 @@ Page {
 
             height: 5
             anchors.bottom: parent ? parent.bottom: undefined
-            color: theme.highlightDimmerColor
+            color: Theme.highlightDimmerColor
             smooth: true
             radius: 2.5
             visible: parent.width > width && !_ctxMenuVisible
@@ -474,7 +483,8 @@ Page {
     // Dimmer for web content
     Rectangle {
         anchors.fill: webContent
-        color: theme.highlightDimmerColor
+
+        color: Theme.highlightDimmerColor
         opacity: _ctxMenuActive? 0.8 : 0.0
         Behavior on opacity { FadeAnimation {} }
     }
@@ -490,28 +500,28 @@ Page {
 
         gradient: Gradient {
             GradientStop { position: 0.0; color: Qt.rgba(1.0, 1.0, 1.0, 0.0) }
-            GradientStop { position: 1.0; color: theme.highlightDimmerColor }
+            GradientStop { position: 1.0; color: Theme.highlightDimmerColor }
         }
 
         Column {
             width: parent.width
             anchors {
-                bottom: parent.bottom; bottomMargin: theme.paddingMedium
+                bottom: parent.bottom; bottomMargin: Theme.paddingMedium
             }
 
             Label {
                 text: webEngine.title
-                width: parent.width - theme.paddingMedium * 2
-                color: theme.highlightColor
-                font.pixelSize: theme.fontSizeSmall
+                width: parent.width - Theme.paddingMedium * 2
+                color: Theme.highlightColor
+                font.pixelSize: Theme.fontSizeSmall
                 horizontalAlignment: Text.AlignHCenter
                 truncationMode: TruncationMode.Fade
             }
             Label {
                 text: webEngine.url
-                width: parent.width - theme.paddingMedium * 2
-                color: theme.secondaryColor
-                font.pixelSize: theme.fontSizeExtraSmall
+                width: parent.width - Theme.paddingMedium * 2
+                color: Theme.secondaryColor
+                font.pixelSize: Theme.fontSizeExtraSmall
                 horizontalAlignment: Text.AlignHCenter
                 truncationMode: TruncationMode.Fade
             }
@@ -525,7 +535,7 @@ Page {
             right: parent.right
             bottom: parent.bottom
         }
-        height: visible ? theme.itemSizeMedium : 0
+        height: visible ? Theme.itemSizeMedium : 0
         visible: (parent.height === screen.height) && !_ctxMenuActive
 
         ProgressBar {

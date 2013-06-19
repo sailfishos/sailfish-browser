@@ -5,13 +5,14 @@
 **
 ****************************************************************************/
 
-import QtQuick 1.1
+import QtQuick 2.0
 import Sailfish.Silica 1.0
+import Sailfish.Silica.theme 1.0
 
 Item {
     id: handle
 
-    width: theme.itemSizeSmall
+    width: Theme.itemSizeSmall
     height: width
     visible: false
 
@@ -49,8 +50,8 @@ Item {
         anchors.top: parent.top
         anchors.left: type === "end" ? parent.left : undefined
         anchors.right: type === "start" ? parent.right : undefined
-        source: type === "start" ? "image://theme/icon-browser-dragger-start?" + theme.highlightBackgroundColor :
-                                   "image://theme/icon-browser-dragger-end?" + theme.highlightBackgroundColor
+        source: type === "start" ? "image://theme/icon-browser-dragger-start?" + Theme.highlightBackgroundColor :
+                                   "image://theme/icon-browser-dragger-end?" + Theme.highlightBackgroundColor
     }
 
     MouseArea {
@@ -63,8 +64,8 @@ Item {
             top: parent.top
             left: type === "end" ? parent.left : undefined
             right: type === "start" ? parent.right : undefined
-            leftMargin: type === "end" ? -1 * (theme.itemSizeSmall / 2) : 0
-            rightMargin: type === "start" ? -1 * (theme.itemSizeSmall / 2) : 0
+            leftMargin: type === "end" ? -1 * (Theme.itemSizeSmall / 2) : 0
+            rightMargin: type === "start" ? -1 * (Theme.itemSizeSmall / 2) : 0
         }
 
         drag.target: parent

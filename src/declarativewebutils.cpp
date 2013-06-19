@@ -18,7 +18,6 @@
 
 DeclarativeWebUtils::DeclarativeWebUtils(QStringList arguments,
                                          BrowserService *service,
-                                         QDeclarativeView* view,
                                          QObject *parent) :
     QObject(parent),
     m_homePage("http://www.jolla.com"),

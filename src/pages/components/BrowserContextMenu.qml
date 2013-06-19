@@ -6,8 +6,9 @@
 ****************************************************************************/
 
 
-import QtQuick 1.1
+import QtQuick 2.0
 import Sailfish.Silica 1.0
+import Sailfish.Silica.theme 1.0
 
 import "../history.js" as History
 
@@ -51,8 +52,8 @@ ContextMenu {
         enabled: false
         truncationMode: TruncationMode.Fade
         text: linkHref ? linkHref : imageSrc
-        font.pixelSize: theme.fontSizeSmall
-        color: theme.primaryColor
+        font.pixelSize: Theme.fontSizeSmall
+        color: Theme.primaryColor
     }
 
     MenuItem {

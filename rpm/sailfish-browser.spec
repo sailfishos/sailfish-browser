@@ -10,15 +10,16 @@ Source0:    %{name}-%{version}.tar.bz2
 BuildRequires:  pkgconfig(Qt5Core)
 BuildRequires:  pkgconfig(Qt5Qml)
 BuildRequires:  pkgconfig(Qt5Gui)
-BuildRequires:  pkgconfig(qtembedwidget) >= 1.0.1
+BuildRequires:  qtmozembed-qt5-devel >= 1.4.7
 BuildRequires:  pkgconfig(Qt5OpenGL)
 BuildRequires:  pkgconfig(Qt5DBus)
 BuildRequires:  pkgconfig(nemotransferengine-qt5)
 Requires: sailfishsilica-qt5 >= 0.8.34
 Requires: jolla-ambient >= 0.1.26
-Requires: xulrunner-qt5 >= 24.0.1.5
-Requires: embedlite-components >= 1.2.0
+Requires: xulrunner-qt5 >= 24.0.1.12
+Requires: embedlite-components-qt5 >= 1.2.6
 Requires: sailfish-browser-settings = %{version}
+Requires: qt5-qtdeclarative-import-localstorageplugin
 
 %description
 Sailfish Web Browser

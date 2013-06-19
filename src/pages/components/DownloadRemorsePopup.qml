@@ -6,7 +6,7 @@
 ****************************************************************************/
 
 
-import QtQuick 1.1
+import QtQuick 2.0
 import Sailfish.Silica 1.0
 
 RemorsePopup {
@@ -15,13 +15,13 @@ RemorsePopup {
     property int _currentDownloadId
 
     onCanceled: {
-        MozContext.sendObserve("embedui:download",
+      /*  MozContext.sendObserve("embedui:download",
                                {
                                    "msg": "cancelDownload",
                                    "id": _currentDownloadId
-                               })
+                               }) */
     }
-
+/*
     Connections {
         target: MozContext
 
@@ -44,6 +44,6 @@ RemorsePopup {
                 }
             }
         }
-    }
+    }*/
 }
 
