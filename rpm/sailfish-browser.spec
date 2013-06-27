@@ -10,10 +10,13 @@ Source0:    %{name}-%{version}.tar.bz2
 BuildRequires:  pkgconfig(Qt5Core)
 BuildRequires:  pkgconfig(Qt5Qml)
 BuildRequires:  pkgconfig(Qt5Gui)
-BuildRequires:  qtmozembed-qt5-devel >= 1.4.7
+BuildRequires:  pkgconfig(Qt5Quick)
+BuildRequires:  qtmozembed-qt5-devel
 BuildRequires:  pkgconfig(Qt5OpenGL)
 BuildRequires:  pkgconfig(Qt5DBus)
+BuildRequires:  pkgconfig(Qt5Concurrent)
 BuildRequires:  pkgconfig(nemotransferengine-qt5)
+BuildRequires:  qt5-qttools
 Requires: sailfishsilica-qt5 >= 0.8.34
 Requires: jolla-ambient >= 0.1.26
 Requires: xulrunner-qt5 >= 24.0.1.12
