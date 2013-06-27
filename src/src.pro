@@ -2,6 +2,16 @@ QT += opengl qml quick dbus concurrent quick
 # The name of your app
 TARGET = sailfish-browser
 
+TARGETPATH = /usr/bin
+target.path = $$TARGETPATH
+
+DEPLOYMENT_PATH = /usr/share/$$TARGET
+qml.path = $$DEPLOYMENT_PATH
+
+INSTALLS += target qml
+
+DEFINES += DEPLOYMENT_PATH=\"\\\"\"$${DEPLOYMENT_PATH}/\"\\\"\"
+
 PKGCONFIG +=  nemotransferengine-qt5
 
 # Include qtmozembed
@@ -43,9 +53,6 @@ HEADERS += \
 
 # QML files and folders
 qml.files = *.qml pages cover browser.qml
-
-# Please do not modify the following line.
-include(../sailfishapplication/sailfishapplication.pri)
 
 OTHER_FILES = pages/BrowserPage.qml \
               rpm/sailfish-browser.spec

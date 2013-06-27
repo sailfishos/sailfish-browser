@@ -1,24 +1,7 @@
 WorkerScript.onMessage = function(message) {
-
-    switch(message.operation)
-    {
-    case "updateTab":
-        updateTab(message.tabId, message.url, message.thumb)
-        break
-    case "deleteTab":
-        deleteTab(message.tabId)
-        break
-    case "deleteTabHistory":
-        deleteTabHistory(message.tabId)
-        break
-    case "saveSetting":
-        saveSetting(message.setting_name, message.value)
-        break
-
-    default:
-        console.log("Uknown message" + message)
-    }
-
+    // TODO get rid of this file and rewrite historydb handling in native
+    // so that we have asynch writes
+    console.log("dbWorker message" + message)
 }
 
 function getDb() {
