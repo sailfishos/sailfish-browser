@@ -17,6 +17,7 @@ BuildRequires:  pkgconfig(Qt5DBus)
 BuildRequires:  pkgconfig(Qt5Concurrent)
 BuildRequires:  pkgconfig(nemotransferengine-qt5)
 BuildRequires:  qt5-qttools
+BuildRequires:  qt5-qttools-linguist
 BuildRequires:  gdb
 Requires: sailfishsilica-qt5 >= 0.8.34
 Requires: jolla-ambient >= 0.1.26
