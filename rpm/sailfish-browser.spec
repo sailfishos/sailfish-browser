@@ -9,7 +9,7 @@ Url:        https://bitbucket.org/jolla/ui-sailfish-browser
 Source0:    %{name}-%{version}.tar.bz2
 BuildRequires:  pkgconfig(QtCore)
 BuildRequires:  pkgconfig(QtGui)
-BuildRequires:  pkgconfig(qtembedwidget) >= 1.0.1
+BuildRequires:  qtmozembed-devel >= 1.0.1
 BuildRequires:  pkgconfig(x11)
 BuildRequires:  pkgconfig(QtOpenGL)
 BuildRequires:  pkgconfig(QJson)
