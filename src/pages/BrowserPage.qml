@@ -109,7 +109,7 @@ Page {
             webThumb = {"path":"", "source":""}
         }
 
-        tabModel.set(currentTabIndex, {"thumbPath" : webThumb, "url" : webEngine.url})
+        tabModel.set(currentTabIndex, {"thumbPath" : webThumb, "url" : webEngine.url.toString()})
         History.updateTab(tabModel.get(currentTabIndex).tabId, webEngine.url, webThumb)
     }
 
@@ -291,7 +291,8 @@ Page {
                     } else {
                         webThumb = {"path":"", "source":""}
                     }
-                    historyModel.insert(0, {"title": webEngine.title, "url": webEngine.url, "icon": webThumb} )
+                    console.log("Logging:" + webContent.url)
+                    historyModel.insert(0, {"title": webEngine.title, "url": webContent.url.toString(), "icon": webThumb} )
                     History.addUrl(webEngine.url, webEngine.title, webThumb, tabModel.get(currentTabIndex).tabId)
                 }
             }

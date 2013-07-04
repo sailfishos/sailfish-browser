@@ -61,13 +61,13 @@ Page {
                         Image {
                             id: thumb
                             asynchronous: true
-                            source: thumbPath.path
+                            source: "" // thumbPath.path ? thumbPath.path : ""
                             fillMode: Image.PreserveAspectCrop
                             sourceSize {
                                 width: parent.width
                                 height: width
                             }
-                            visible: status !== Image.Error && thumbPath.path !== ""
+                            visible: false // TODO status !== Image.Error && thumbPath.path !== ""
                         }
                         onClicked: {
                             browserPage.loadTab(model.index)
