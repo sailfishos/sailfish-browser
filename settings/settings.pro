@@ -3,7 +3,7 @@ TARGET = browsersettingsplugin
 TARGET = $$qtLibraryTarget($$TARGET)
 
 MODULENAME = org/sailfishos/browser/settings
-TARGETPATH = $$[QT_INSTALL_IMPORTS]/$$MODULENAME
+TARGETPATH = $$[QT_INSTALL_QML]/$$MODULENAME
 
 QT += qml
 CONFIG += plugin

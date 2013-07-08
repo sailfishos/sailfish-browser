@@ -28,6 +28,9 @@
 
 Q_DECL_EXPORT int main(int argc, char *argv[])
 {
+    // Gecko embedding crashes with threaded render loop
+    // that's why this workaround.
+    // See JB#7358
     setenv("QML_BAD_GUI_RENDER_LOOP", "1", 1);
     QScopedPointer<QGuiApplication> app(new QGuiApplication(argc, argv));
     QScopedPointer<QQuickView> view(new QQuickView);
@@ -75,8 +78,6 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
         path = QString(DEPLOYMENT_PATH);
     }
     view->setSource(QUrl::fromLocalFile(path+"browser.qml"));
-  // QRect r = QGuiApplication::primaryScreen()->geometry();
-  //         view->resize(r.width(), r.height());
     view->showFullScreen();
 
     // Setup embedding

@@ -25,6 +25,9 @@ Requires: xulrunner-qt5 >= 24.0.1.12
 Requires: embedlite-components-qt5 >= 1.2.6
 Requires: sailfish-browser-settings = %{version}
 Requires: qt5-qtdeclarative-import-localstorageplugin
+Conflicts: xulrunner
+Conflicts: embedlite-components
+Conflicts: qtmozembed
 
 %description
 Sailfish Web Browser
@@ -97,7 +100,7 @@ rm -rf %{buildroot}
 %files settings
 %defattr(-,root,root,-)
 %{_datadir}/jolla-settings/*
-%{_libdir}/qt5/imports/org/sailfishos/browser/settings/*
+%{_libdir}/qt5/qml/org/sailfishos/browser/settings/*
 %{_datadir}/translations/settings-sailfish-browser_eng_en.qm
 
 %files ts-devel

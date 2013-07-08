@@ -1,4 +1,4 @@
-QT += opengl qml quick dbus concurrent quick
+QT += opengl qml quick dbus concurrent
 # The name of your app
 TARGET = sailfish-browser
 

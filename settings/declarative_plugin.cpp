@@ -24,8 +24,12 @@ public:
 };
 
 
-class BrowserSettingsPlugin : public QQmlExtensionPlugin
+class Q_DECL_EXPORT BrowserSettingsPlugin : public QQmlExtensionPlugin
 {
+    Q_OBJECT
+
+    Q_PLUGIN_METADATA(IID "org.sailfishos.browser.settings")
+
 public:
     void initializeEngine(QQmlEngine *engine, const char *uri)
     {
@@ -40,9 +44,8 @@ public:
 
     void registerTypes(const char *uri)
     {
-        Q_UNUSED(uri)
         Q_ASSERT(QLatin1String(uri) == QLatin1String("org.sailfishos.browser.settings"));
-        qmlRegisterType<BrowserSettings>("org.sailfishos.browser.settings", 1, 0, "BrowserSettings");
+        qmlRegisterType<BrowserSettings>(uri, 1, 0, "BrowserSettings");
     }
 };
 

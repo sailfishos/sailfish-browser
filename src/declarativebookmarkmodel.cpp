@@ -7,18 +7,9 @@
 
 #include "declarativebookmarkmodel.h"
 
-
-#if (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
-#include <qjson/qobjecthelper.h>
-#include <qjson/parser.h>
-#include <qjson/serializer.h>
-
-#else
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
-#endif
-
 #include <QDebug>
 #include <QDesktopServices>
 #include <QDir>
@@ -40,7 +31,6 @@ QHash<int, QByteArray> DeclarativeBookmarkModel::roleNames() const
 }
 
 // TODO cleanup
-
 void DeclarativeBookmarkModel::addBookmark(const QString& url, const QString& title, const QString& favicon) {
     beginInsertRows(QModelIndex(), rowCount(), rowCount());
 
@@ -73,28 +63,11 @@ void DeclarativeBookmarkModel::componentComplete() {
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qWarning() << "Unable to open bookmarks "+settingsLocation;
     } else {
-
-#if (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
-        QJson::Parser parser;
-        QVariant list = parser.parse(file.readAll());
-        QVariantList bookmarkList = list.toList();
-        for(int i=0; i< bookmarkList.count(); i++) {
-            Bookmark* m = new Bookmark("","","");
-            QJson::QObjectHelper::qvariant2qobject(bookmarkList[i].toMap(), m);
-            titles.append(m);
-            bookmarks.insert(m->url(), titles.count()-1);
-        }
-
-
-#else
-        // TODO check on Qt5
         QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
-
-
-        if( doc.isArray()) {
+        if (doc.isArray()) {
             QJsonArray array = doc.array();
             QJsonArray::iterator i;
-            for(i=array.begin(); i != array.end(); ++i ) {
+            for(i=array.begin(); i != array.end(); ++i) {
                 if((*i).isObject()) {
                     QJsonObject obj = (*i).toObject();
                     Bookmark* m = new Bookmark(obj.value("title").toString(),
@@ -102,14 +75,11 @@ void DeclarativeBookmarkModel::componentComplete() {
                                                obj.value("favicon").toString());
                     titles.append(m);
                     bookmarks.insert(m->url(), titles.count()-1);
-
                 }
             }
         } else {
             qWarning() << "Bookmarks.json should be an array of items";
         }
-#endif
-
         emit countChanged();
         file.close();
     }
@@ -133,32 +103,17 @@ void DeclarativeBookmarkModel::save() {
         return;
     }
     QTextStream out(&file);
-#if (QT_VERSION < QT_VERSION_CHECK(5, 0, 0))
-    QVariantList items;
-    for(int i=0; i< titles.count(); i++) {
-        items << QJson::QObjectHelper::qobject2qvariant(titles[i]);
-    }
-
-    QJson::Serializer serializer;
-    out << serializer.serialize(items);
-#else
-
     QJsonArray items;
     for(int i=0; i< titles.count(); i++) {
-
         QJsonObject title;
         Bookmark* bookmark = titles[i];
         title.insert("url", QJsonValue(bookmark->url()));
         title.insert("title", QJsonValue(bookmark->title()));
         title.insert("favicon", QJsonValue(bookmark->favicon()));
-
         items.append(QJsonValue(title));
     }
-
     QJsonDocument doc(items);
     out << doc.toJson();
-#endif
-
     file.close();
 }
 
