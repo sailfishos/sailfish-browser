@@ -1,25 +1,33 @@
 Name:       sailfish-browser
 
 Summary:    Sailfish Browser
-Version:    0.3.5
+Version:    0.3.9
 Release:    1
 Group:      Applications/Internet
 License:    Prop
 Url:        https://bitbucket.org/jolla/ui-sailfish-browser
 Source0:    %{name}-%{version}.tar.bz2
-BuildRequires:  pkgconfig(QtCore)
-BuildRequires:  pkgconfig(QtGui)
-BuildRequires:  qtmozembed-devel >= 1.0.1
-BuildRequires:  pkgconfig(x11)
-BuildRequires:  pkgconfig(QtOpenGL)
-BuildRequires:  pkgconfig(QJson)
-BuildRequires:  pkgconfig(QtDBus)
-BuildRequires:  pkgconfig(nemotransferengine)
-Requires: sailfishsilica >= 0.8.34
+BuildRequires:  pkgconfig(Qt5Core)
+BuildRequires:  pkgconfig(Qt5Qml)
+BuildRequires:  pkgconfig(Qt5Gui)
+BuildRequires:  pkgconfig(Qt5Quick)
+BuildRequires:  qtmozembed-qt5-devel
+BuildRequires:  pkgconfig(Qt5OpenGL)
+BuildRequires:  pkgconfig(Qt5DBus)
+BuildRequires:  pkgconfig(Qt5Concurrent)
+BuildRequires:  pkgconfig(nemotransferengine-qt5)
+BuildRequires:  qt5-qttools
+BuildRequires:  qt5-qttools-linguist
+BuildRequires:  gdb
+Requires: sailfishsilica-qt5 >= 0.8.34
 Requires: jolla-ambient >= 0.1.26
-Requires: xulrunner >= 24.0.1.5
-Requires: embedlite-components >= 1.2.0
+Requires: xulrunner-qt5 >= 24.0.1.12
+Requires: embedlite-components-qt5 >= 1.2.6
 Requires: sailfish-browser-settings = %{version}
+Requires: qt5-qtdeclarative-import-localstorageplugin
+Conflicts: xulrunner
+Conflicts: embedlite-components
+Conflicts: qtmozembed
 
 %description
 Sailfish Web Browser
@@ -61,7 +69,7 @@ Unit tests and additional data needed for functional tests
 # >> build pre
 # << build pre
 
-%qmake 
+%qmake5
 
 make %{?jobs:-j%jobs}
 
@@ -72,7 +80,7 @@ make %{?jobs:-j%jobs}
 rm -rf %{buildroot}
 # >> install pre
 # << install pre
-%qmake_install
+%qmake5_install
 
 # >> install post
 # << install post
@@ -92,7 +100,7 @@ rm -rf %{buildroot}
 %files settings
 %defattr(-,root,root,-)
 %{_datadir}/jolla-settings/*
-%{_libdir}/qt4/imports/org/sailfishos/browser/settings/*
+%{_libdir}/qt5/qml/org/sailfishos/browser/settings/*
 %{_datadir}/translations/settings-sailfish-browser_eng_en.qm
 
 %files ts-devel

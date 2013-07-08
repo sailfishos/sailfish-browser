@@ -5,8 +5,9 @@
 **
 ****************************************************************************/
 
-import QtQuick 1.1
+import QtQuick 2.0
 import Sailfish.Silica 1.0
+import Sailfish.Silica.theme 1.0
 import "components"
 
 Page {
@@ -21,15 +22,15 @@ Page {
 
         header: Item {
             width: list.width
-            height: tabs.height + 2 * theme.paddingMedium
+            height: tabs.height + 2 * Theme.paddingMedium
 
             Grid {
                 id: tabs
                 columns: 2
                 rows: Math.ceil(browserPage.tabs.count / 2)
-                spacing: theme.paddingMedium
+                spacing: Theme.paddingMedium
                 anchors {
-                    margins: theme.paddingMedium
+                    margins: Theme.paddingMedium
                     top: parent.top;
                     left: parent.left
                 }
@@ -37,13 +38,13 @@ Page {
                 Repeater {
                     model: browserPage.tabs
                     BackgroundItem {
-                        width: list.width / 2 - 2 * theme.paddingMedium
+                        width: list.width / 2 - 2 * Theme.paddingMedium
                         height: width
 
                         Rectangle {
                             anchors.fill: parent
-                            color: theme.highlightBackgroundColor
-                            opacity: theme.highlightBackgroundOpacity
+                            color: Theme.highlightBackgroundColor
+                            opacity: Theme.highlightBackgroundOpacity
                             visible: !thumb.visible
                         }
 
@@ -52,21 +53,21 @@ Page {
                             anchors.centerIn: parent.Center
                             text: url
                             visible: !thumb.visible
-                            font.pixelSize: theme.fontSizeExtraSmall
-                            color: theme.secondaryColor
+                            font.pixelSize: Theme.fontSizeExtraSmall
+                            color: Theme.secondaryColor
                             wrapMode:Text.WrapAnywhere
                         }
 
                         Image {
                             id: thumb
                             asynchronous: true
-                            source: thumbPath.path
+                            source: "" // thumbPath.path ? thumbPath.path : ""
                             fillMode: Image.PreserveAspectCrop
                             sourceSize {
                                 width: parent.width
                                 height: width
                             }
-                            visible: status !== Image.Error && thumbPath.path !== ""
+                            visible: false // TODO status !== Image.Error && thumbPath.path !== ""
                         }
                         onClicked: {
                             browserPage.loadTab(model.index)
@@ -79,7 +80,7 @@ Page {
                             property bool active: pressed
                             property real highlightOpacity: 0.5
 
-                            color: theme.highlightBackgroundColor
+                            color: Theme.highlightBackgroundColor
                             opacity: active ? highlightOpacity : 0.0
                             Behavior on opacity {
                                 FadeAnimation {
@@ -104,13 +105,13 @@ Page {
 
         delegate: BackgroundItem {
             width: list.width
-            anchors.topMargin: theme.paddingLarge
+            anchors.topMargin: Theme.paddingLarge
 
             FaviconImage {
                 id: faviconImage
                 anchors {
                     verticalCenter: titleLabel.verticalCenter
-                    left: parent.left; leftMargin: theme.paddingMedium
+                    left: parent.left; leftMargin: Theme.paddingMedium
                 }
                 favicon: model.favicon
                 link: url
@@ -119,7 +120,7 @@ Page {
             Label {
                 id: titleLabel
                 anchors {
-                    leftMargin: theme.paddingMedium
+                    leftMargin: Theme.paddingMedium
                     left: faviconImage.right
                     verticalCenter: parent.verticalCenter
                 }

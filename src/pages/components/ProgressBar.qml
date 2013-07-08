@@ -4,8 +4,9 @@
 ** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jollamobile.com>
 **
 ****************************************************************************/
-import QtQuick 1.1
+import QtQuick 2.0
 import Sailfish.Silica 1.0
+import Sailfish.Silica.theme 1.0
 
 Item {
     id: progressBar
@@ -23,8 +24,8 @@ Item {
         }
         height: parent.height
         width: opacity > 0.0 ? progressBar.progress * parent.width : 0
-        color: theme.highlightBackgroundColor
-        opacity: theme.highlightBackgroundOpacity
+        color: Theme.highlightBackgroundColor
+        opacity: Theme.highlightBackgroundOpacity
 
         Behavior on width {
             enabled: progressBar.opacity == 1.0

@@ -1,18 +1,23 @@
-QT += opengl declarative dbus
+QT += opengl qml quick dbus concurrent
 # The name of your app
 TARGET = sailfish-browser
 
-lessThan(QT_MAJOR_VERSION, 5) {
-  CONFIG += link_pkgconfig
-  PKGCONFIG += QJson
-}
+TARGETPATH = /usr/bin
+target.path = $$TARGETPATH
 
-PKGCONFIG +=  nemotransferengine
+DEPLOYMENT_PATH = /usr/share/$$TARGET
+qml.path = $$DEPLOYMENT_PATH
+
+INSTALLS += target qml
+
+DEFINES += DEPLOYMENT_PATH=\"\\\"\"$${DEPLOYMENT_PATH}/\"\\\"\"
+
+PKGCONFIG +=  nemotransferengine-qt5
 
 # Include qtmozembed
 isEmpty(QTEMBED_LIB) {
   CONFIG += link_pkgconfig
-  PKGCONFIG += qtembedwidget x11
+  PKGCONFIG += qtembedwidget
 } else {
   LIBS+=$$QTEMBED_LIB
 }
@@ -48,9 +53,6 @@ HEADERS += \
 
 # QML files and folders
 qml.files = *.qml pages cover browser.qml
-
-# Please do not modify the following line.
-include(../sailfishapplication/sailfishapplication.pri)
 
 OTHER_FILES = pages/BrowserPage.qml \
               rpm/sailfish-browser.spec

@@ -6,7 +6,7 @@
 ****************************************************************************/
 
 import QtQuickTest 1.0
-import QtQuick 1.1
+import QtQuick 2.0
 import "/usr/share/sailfish-browser/pages/history.js" as History
 
 Item {

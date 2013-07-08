@@ -5,8 +5,9 @@
 **
 ****************************************************************************/
 
-import QtQuick 1.1
+import QtQuick 2.0
 import Sailfish.Silica 1.0
+import Sailfish.Silica.theme 1.0
 import Sailfish.Browser 1.0
 import "components"
 
@@ -65,8 +66,8 @@ Page {
                     enabled: urlField.text === url
 
                     anchors {
-                        top: urlField.top; topMargin: theme.paddingSmall
-                        left: parent.left; leftMargin: theme.paddingMedium
+                        top: urlField.top; topMargin: Theme.paddingSmall
+                        left: parent.left; leftMargin: Theme.paddingMedium
                     }
 
                     source: {
@@ -94,18 +95,18 @@ Page {
                     id:urlField
 
                     anchors {
-                        left: faviconIcon.right; leftMargin: theme.paddingSmall - theme.paddingLarge
-                        right: clearIcon.left; rightMargin: theme.paddingSmall - theme.paddingLarge
+                        left: faviconIcon.right; leftMargin: Theme.paddingSmall - Theme.paddingLarge
+                        right: clearIcon.left; rightMargin: Theme.paddingSmall - Theme.paddingLarge
                     }
                     text: url
                     //: Placeholder for the search field
                     //% "Search"
                     placeholderText: qsTrId("sailfish_browser-ph-search")
-                    color: theme.primaryColor
+                    color: Theme.primaryColor
                     focusOutBehavior: FocusBehavior.KeepFocus
 
                     EnterKey.onClicked: {
-                        urlField.closeSoftwareInputPanel()
+                        Qt.inputMethod.hide()
                         var url = urlField.text
 
                         if (url.indexOf("http://") < 0
@@ -128,8 +129,8 @@ Page {
                     height: width
 
                     anchors {
-                        top: urlField.top; topMargin: theme.paddingSmall
-                        right: parent.right; rightMargin: theme.paddingMedium
+                        top: urlField.top; topMargin: Theme.paddingSmall
+                        right: parent.right; rightMargin: Theme.paddingMedium
                     }
                     MouseArea {
                         anchors.fill: parent
@@ -151,7 +152,7 @@ Page {
                 //% "Close tab"
                 text: qsTrId("sailfish_browser-me-close_tab")
                 onClicked: {
-                    urlField.closeSoftwareInputPanel()
+                    Qt.inputMethod.hide()
                     browserPage.closeTab()
 
                     if(browserPage.tabs.count === 0) {
@@ -185,7 +186,7 @@ Page {
             BackgroundItem {
                 id: historyRow
                 width: page.width
-                height: theme.itemSizeLarge
+                height: Theme.itemSizeLarge
 
                 Image {
                     id: iconImage
@@ -211,7 +212,7 @@ Page {
 
                     anchors {
                            left: iconImage.right
-                           leftMargin: theme.paddingMedium
+                           leftMargin: Theme.paddingMedium
                            verticalCenter: iconImage.verticalCenter
                     }
 
@@ -223,14 +224,14 @@ Page {
                     Label {
                         text: url
                         width: parent.width
-                        font.pixelSize: theme.fontSizeSmall
-                        color: theme.secondaryColor
+                        font.pixelSize: Theme.fontSizeSmall
+                        color: Theme.secondaryColor
                         truncationMode: TruncationMode.Elide
                     }
                 }
 
                 onClicked: {
-                    urlField.closeSoftwareInputPanel()
+                    Qt.inputMethod.hide()
                     browserPage.load(url)
                     pageStack.pop(undefined, true)
                 }
@@ -253,7 +254,7 @@ Page {
             }
             urlField.forceActiveFocus()
         } else {
-            urlField.closeSoftwareInputPanel()
+            Qt.inputMethod.hide()
         }
     }
 }

@@ -4,16 +4,17 @@
 ** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jollamobile.com>
 **
 ****************************************************************************/
-import QtQuick 1.1
+import QtQuick 2.0
 import Sailfish.Silica 1.0
+import Sailfish.Silica.theme 1.0
 
 Image {
     property string favicon
     property string link
 
     source: favicon != "" ? favicon : WebUtils.getFaviconForUrl(link)
-    height: theme.iconSizeSmall
-    width: theme.iconSizeSmall
+    height: Theme.iconSizeSmall
+    width: Theme.iconSizeSmall
     asynchronous: true
     smooth: true
     fillMode: Image.PreserveAspectCrop

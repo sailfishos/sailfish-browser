@@ -6,9 +6,11 @@
 ****************************************************************************/
 
 
-import QtQuick 1.1
+import QtQuick 2.0
 import Sailfish.Silica 1.0
-import QtMozilla 1.0
+import Sailfish.Silica.theme 1.0
+import QtQuick.LocalStorage 2.0
+import Qt5Mozilla 1.0
 import Sailfish.Browser 1.0
 import "components"
 
@@ -20,7 +22,10 @@ Page {
     property alias tabs: tabModel
     property alias favorites: favoriteModel
     property int currentTabIndex
+
     property variant webEngine: webContent.child
+
+
     property string favicon
 
     property variant _controlPageComponent
@@ -104,7 +109,7 @@ Page {
             webThumb = {"path":"", "source":""}
         }
 
-        tabModel.set(currentTabIndex, {"thumbPath" : webThumb, "url" : webEngine.url})
+        tabModel.set(currentTabIndex, {"thumbPath" : webThumb, "url" : webEngine.url.toString()})
         History.updateTab(tabModel.get(currentTabIndex).tabId, webEngine.url, webThumb)
     }
 
@@ -183,6 +188,7 @@ Page {
         signal selectionRangeUpdated(variant data)
         signal selectionCopied(variant data)
         signal contextMenuRequested(variant data)
+        clip: true
 
         anchors {
             top: parent.top
@@ -191,250 +197,243 @@ Page {
         focus: true
         width: browserPage.width
         enabled: !_ctxMenuActive && !downloadPopup.visible
+        // This flag instucts web engine to ignore mouse and single-touch
+        // events (multi-touch ones are not ignored). This means that we have to
+        // relay the events from QML to web engine through a special MouseArea
+        // that fully covers web view (TextSelectionController).
+        useQmlMouse: viewInitialized
 
-        height: {
-            // No resizes while page is not active
-            // workaround for engine crashes on resizes while background
-            if (browserPage.status == PageStatus.Active) {
-                return _contextMenu && (_contextMenu.height > tools.height) ? browserPage.height - _contextMenu.height : browserPage.height - tools.height
+        height: screen.height - Theme.itemSizeMedium
+        //{ // TODO
+        // No resizes while page is not active
+        // also contextmenu size
+        //           if (browserPage.status == PageStatus.Active) {
+        //               return (_contextMenu != null && (_contextMenu.height > tools.height)) ? browserPage.height - _contextMenu.height : browserPage.height - tools.height
+        //               return (_contextMenu != null && (_contextMenu.height > tools.height)) ? 200 : 300
+
+        onTitleChanged: {
+            // Update title in model, title can come after load finished
+            // and then we already have element in history
+            if (historyModel.count > 0
+                    && historyModel.get(0).url == url
+                    && title !== historyModel.get(0).title ) {
+                historyModel.setProperty(0, "title", title)
+            }
+        }
+
+        onBgcolorChanged: {
+            var bgLightness = WebUtils.getLightness(bgcolor)
+            var dimmerLightness = WebUtils.getLightness(Theme.highlightDimmerColor)
+            var highBgLightness = WebUtils.getLightness(Theme.highlightBackgroundColor)
+
+            if (Math.abs(bgLightness - dimmerLightness) > Math.abs(bgLightness - highBgLightness)) {
+                verticalScrollDecorator.color = Theme.highlightDimmerColor
+                horizontalScrollDecorator.color = Theme.highlightDimmerColor
             } else {
-                return screen.height - tools.height
+                verticalScrollDecorator.color = Theme.highlightBackgroundColor
+                horizontalScrollDecorator.color = Theme.highlightBackgroundColor
             }
+
+            sendAsyncMessage("Browser:SelectionColorUpdate",
+                             {
+                                 "color": Theme.secondaryHighlightColor
+                             })
         }
 
-        Connections {
-            target: webEngine
+        onViewInitialized: {
+            addMessageListener("chrome:linkadded")
+            addMessageListener("embed:alert")
+            addMessageListener("embed:confirm")
+            addMessageListener("embed:prompt")
+            addMessageListener("embed:auth")
+            addMessageListener("embed:login")
+            addMessageListener("context:info")
+            addMessageListener("Content:ContextMenu")
+            addMessageListener("Content:SelectionRange");
+            addMessageListener("Content:SelectionCopied");
+            addMessageListener("embed:select") // this is sync message!
 
-            onTitleChanged: {
-                // Update title in model, title can come after load finished
-                // and then we already have element in history
-                if (historyModel.count > 0
-                        && historyModel.get(0).url == webEngine.url
-                        && webEngine.title !== historyModel.get(0).title ) {
-                    historyModel.setProperty(0, "title", webEngine.title)
-                }
-            }
+            loadFrameScript("chrome://embedlite/content/SelectHelper.js")
+            loadFrameScript("chrome://embedlite/content/embedhelper.js")
+            loadFrameScript("chrome://embedlite/content/StyleSheetHandler.js")
 
-            onBgcolorChanged: {
-                var bgLightness = WebUtils.getLightness(webEngine.bgcolor)
-                var dimmerLightness = WebUtils.getLightness(theme.highlightDimmerColor)
-                var highBgLightness = WebUtils.getLightness(theme.highlightBackgroundColor)
-
-                if (Math.abs(bgLightness - dimmerLightness) > Math.abs(bgLightness - highBgLightness)) {
-                    verticalScrollDecorator.color = theme.highlightDimmerColor
-                    horizontalScrollDecorator.color = theme.highlightDimmerColor
-                } else {
-                    verticalScrollDecorator.color = theme.highlightBackgroundColor
-                    horizontalScrollDecorator.color = theme.highlightBackgroundColor
-                }
-
-                webEngine.sendAsyncMessage("Browser:SelectionColorUpdate",
-                                           {
-                                               "color": theme.secondaryHighlightColor
-                                           })
-            }
-
-            onViewInitialized: {
-                webEngine.addMessageListener("chrome:linkadded")
-                webEngine.addMessageListener("embed:alert")
-                webEngine.addMessageListener("embed:confirm")
-                webEngine.addMessageListener("embed:prompt")
-                webEngine.addMessageListener("embed:auth")
-                webEngine.addMessageListener("embed:login")
-                webEngine.addMessageListener("context:info")
-                webEngine.addMessageListener("Content:ContextMenu")
-                webEngine.addMessageListener("Content:SelectionRange");
-                webEngine.addMessageListener("Content:SelectionCopied");
-
-                webEngine.addMessageListener("embed:select") // this is sync message!
-
-                webEngine.loadFrameScript("chrome://embedlite/content/SelectHelper.js")
-                webEngine.loadFrameScript("chrome://embedlite/content/embedhelper.js")
-                webEngine.loadFrameScript("chrome://embedlite/content/StyleSheetHandler.js")
-
-                // This flag instucts web engine to ignore mouse and single-touch
-                // events (multi-touch ones are not ignored). This means that we have to
-                // relay the events from QML to web engine through a special MouseArea
-                // that fully covers web view (TextSelectionController).
-                webEngine.useQmlMouse = true
-
-                if (WebUtils.initialPage !== "") {
-                    browserPage.load(WebUtils.initialPage)
-                } else if (historyModel.count == 0 ) {
-                    browserPage.load(WebUtils.homePage)
-                } else {
-                    browserPage.load(historyModel.get(0).url)
-                }
-            }
-            onLoadingChanged: {
-                progressBar.opacity = webEngine.loading ? 1.0 : 0.0
-                if (!webEngine.loading) {
-                    progressBar.progress = 0
-                } else {
-                    favicon = ""
-                }
-
-                if (!webEngine.loading && webEngine.url != "about:blank" &&
-                    (historyModel.count == 0 || webEngine.url != historyModel.get(0).url)) {
-                    var webThumb
-                    if (status == PageStatus.Active) {
-                        webThumb = BrowserTab.screenCapture(0, 0, webContent.width, webContent.width, window.screenRotation)
-                    } else {
-                        webThumb = {"path":"", "source":""}
-                    }
-                    historyModel.insert(0, {"title": webEngine.title, "url": webEngine.url, "icon": webThumb} )
-                    History.addUrl(webEngine.url, webEngine.title, webThumb, tabModel.get(currentTabIndex).tabId)
-                }
-            }
-            onLoadProgressChanged: {
-                if ((webEngine.loadProgress / 100.0) > progressBar.progress) {
-                    progressBar.progress = webEngine.loadProgress / 100.0
-                }
-            }
-            onRecvAsyncMessage: {
-                switch (message) {
-                    case "chrome:linkadded": {
-                        if (data.rel === "shortcut icon") {
-                            favicon = data.href
-                        }
-                        break
-                    }
-                    case "embed:alert": {
-                        var winid = data.winid
-                        var dialog = pageStack.push(Qt.resolvedUrl("components/AlertDialog.qml"),
-                                                    {"text": data.text})
-                        // TODO: also the Async message must be sent when window gets closed
-                        dialog.done.connect(function() {
-                            webEngine.sendAsyncMessage("alertresponse", {"winid": winid})
-                        })
-                        break
-                    }
-                    case "embed:confirm": {
-                        var winid = data.winid
-                        var dialog = pageStack.push(Qt.resolvedUrl("components/ConfirmDialog.qml"),
-                                                    {"text": data.text})
-                        // TODO: also the Async message must be sent when window gets closed
-                        dialog.accepted.connect(function() {
-                            webEngine.sendAsyncMessage("confirmresponse",
-                                                       {"winid": winid, "accepted": true})
-                        })
-                        dialog.rejected.connect(function() {
-                            webEngine.sendAsyncMessage("confirmresponse",
-                                                       {"winid": winid, "accepted": false})
-                        })
-                        break
-                    }
-                    case "embed:prompt": {
-                        var winid = data.winid
-                        var dialog = pageStack.push(Qt.resolvedUrl("components/PromptDialog.qml"),
-                                                    {"text": data.text, "value": data.defaultValue})
-                        // TODO: also the Async message must be sent when window gets closed
-                        dialog.accepted.connect(function() {
-                            webEngine.sendAsyncMessage("promptresponse",
-                                                       {
-                                                           "winid": winid,
-                                                           "accepted": true,
-                                                           "promptvalue": dialog.value
-                                                       })
-                        })
-                        dialog.rejected.connect(function() {
-                            webEngine.sendAsyncMessage("promptresponse",
-                                                       {"winid": winid, "accepted": false})
-                        })
-                        break
-                    }
-                    case "embed:auth": {
-                        if (pageStack.busy) {
-                            // User has just entered wrong credentials and webEngine wants
-                            // user's input again immediately even thogh the accepted
-                            // dialog is still deactivating.
-                            browserPage._authData = data
-                            // A better solution would be to connect to browserPage.statusChanged,
-                            // but QML Page transitions keep corrupting even
-                            // after browserPage.status === PageStatus.Active thus auxTimer.
-                            auxTimer.triggered.connect(browserPage.openAuthDialog)
-                            auxTimer.start()
-                        } else {
-                            browserPage.openAuthDialog(data)
-                        }
-                        break
-                    }
-                    case "embed:login": {
-                        pageStack.push(Qt.resolvedUrl("components/PasswordManagerDialog.qml"),
-                                       {
-                                           "webEngine": webEngine,
-                                           "requestId": data.id,
-                                           "notificationType": data.name,
-                                           "formData": data.formdata
-                                       })
-                        break
-                    }
-                    case "context:info": {
-                        // TODO: embed:ContextMenuCreate provides more flexible interface
-                        //       to context data than context:info -> reimplement it.
-                        openContextMenu(data.LinkHref, data.ImageSrc)
-                        break
-                    }
-                    case "Content:ContextMenu": {
-                        webContent.contextMenuRequested(data)
-                        break
-                    }
-                    case "Content:SelectionRange": {
-                        webContent.selectionRangeUpdated(data)
-                        break
-                    }
-                }
-            }
-            onRecvSyncMessage: {
-                // sender expects that this handler will update `response` argument
-                switch (message) {
-                    case "embed:select": {
-                        var dialog
-
-                        dialog = pageStack.push(Qt.resolvedUrl("components/SelectDialog.qml"),
-                                                {
-                                                    "allItems": data.listitems,
-                                                    "selectedItems": data.selected,
-                                                    "multiple": data.multiple
-                                                })
-                        // HACK: block until dialog is closed
-                        while (dialog.locked) {
-                            WebUtils.processEvents()
-                        }
-                        response.message = {
-                            button: dialog.selected
-                        }
-                        break;
-                    }
-                    case "Content:SelectionCopied": {
-                        webContent.selectionCopied(data)
-
-                        if (data.succeeded) {
-                            //% "Copied to clipboard"
-                            notification.show(qsTrId("sailfish_browser-la-selection_copied"))
-                        }
-                        break
-                    }
-                }
-            }
-            onViewAreaChanged: {
-                var contentRect = webEngine.contentRect
-                var offset = webEngine.scrollableOffset
-                var size = webEngine.scrollableSize
-                var resolution = webEngine.resolution
-
-                var ySizeRatio = contentRect.height / size.height
-                var xSizeRatio = contentRect.width / size.width
-
-                verticalScrollDecorator.height = height * ySizeRatio
-                verticalScrollDecorator.y = offset.y * resolution * ySizeRatio
-
-                horizontalScrollDecorator.width = width * xSizeRatio
-                horizontalScrollDecorator.x = offset.x * resolution * xSizeRatio
-
-                scrollTimer.restart()
+            if (WebUtils.initialPage !== "") {
+                browserPage.load(WebUtils.initialPage)
+            } else if (historyModel.count == 0 ) {
+                browserPage.load(WebUtils.homePage)
+            } else {
+                browserPage.load(historyModel.get(0).url)
             }
         }
+        onLoadingChanged: {
+            progressBar.opacity = loading ? 1.0 : 0.0
+            if (!loading) {
+                progressBar.progress = 0
+            } else {
+                favicon = ""
+            }
+
+            if (!loading && url != "about:blank" &&
+                    (historyModel.count == 0 || url != historyModel.get(0).url)) {
+                var webThumb
+                if (status == PageStatus.Active) {
+                    webThumb = BrowserTab.screenCapture(0, 0, webContent.width, webContent.width, window.screenRotation)
+                } else {
+                    webThumb = {"path":"", "source":""}
+                }
+                historyModel.insert(0, {"title": title, "url": webContent.url.toString(), "icon": webThumb} )
+                History.addUrl(url, title, webThumb, tabModel.get(currentTabIndex).tabId)
+            }
+        }
+        onLoadProgressChanged: {
+            if ((loadProgress / 100.0) > progressBar.progress) {
+                progressBar.progress = loadProgress / 100.0
+            }
+        }
+        onRecvAsyncMessage: {
+            switch (message) {
+            case "chrome:linkadded": {
+                if (data.rel === "shortcut icon") {
+                    favicon = data.href
+                }
+                break
+            }
+            case "embed:alert": {
+                var winid = data.winid
+                var dialog = pageStack.push(Qt.resolvedUrl("components/AlertDialog.qml"),
+                                            {"text": data.text})
+                // TODO: also the Async message must be sent when window gets closed
+                dialog.done.connect(function() {
+                    sendAsyncMessage("alertresponse", {"winid": winid})
+                })
+                break
+            }
+            case "embed:confirm": {
+                var winid = data.winid
+                var dialog = pageStack.push(Qt.resolvedUrl("components/ConfirmDialog.qml"),
+                                            {"text": data.text})
+                // TODO: also the Async message must be sent when window gets closed
+                dialog.accepted.connect(function() {
+                    sendAsyncMessage("confirmresponse",
+                                     {"winid": winid, "accepted": true})
+                })
+                dialog.rejected.connect(function() {
+                    sendAsyncMessage("confirmresponse",
+                                     {"winid": winid, "accepted": false})
+                })
+                break
+            }
+            case "embed:prompt": {
+                var winid = data.winid
+                var dialog = pageStack.push(Qt.resolvedUrl("components/PromptDialog.qml"),
+                                            {"text": data.text, "value": data.defaultValue})
+                // TODO: also the Async message must be sent when window gets closed
+                dialog.accepted.connect(function() {
+                    sendAsyncMessage("promptresponse",
+                                     {
+                                         "winid": winid,
+                                         "accepted": true,
+                                         "promptvalue": dialog.value
+                                     })
+                })
+                dialog.rejected.connect(function() {
+                    sendAsyncMessage("promptresponse",
+                                     {"winid": winid, "accepted": false})
+                })
+                break
+            }
+            case "embed:auth": {
+                if (pageStack.busy) {
+                    // User has just entered wrong credentials and webEngine wants
+                    // user's input again immediately even thogh the accepted
+                    // dialog is still deactivating.
+                    browserPage._authData = data
+                    // A better solution would be to connect to browserPage.statusChanged,
+                    // but QML Page transitions keep corrupting even
+                    // after browserPage.status === PageStatus.Active thus auxTimer.
+                    auxTimer.triggered.connect(browserPage.openAuthDialog)
+                    auxTimer.start()
+                } else {
+                    browserPage.openAuthDialog(data)
+                }
+                break
+            }
+            case "embed:login": {
+                pageStack.push(Qt.resolvedUrl("components/PasswordManagerDialog.qml"),
+                               {
+                                   "webEngine": webEngine,
+                                   "requestId": data.id,
+                                   "notificationType": data.name,
+                                   "formData": data.formdata
+                               })
+                break
+            }
+            case "context:info": {
+                // TODO: embed:ContextMenuCreate provides more flexible interface
+                //       to context data than context:info -> reimplement it.
+                openContextMenu(data.LinkHref, data.ImageSrc)
+                break
+            }
+            case "Content:ContextMenu": {
+                webContent.contextMenuRequested(data)
+                break
+            }
+            case "Content:SelectionRange": {
+                webContent.selectionRangeUpdated(data)
+                break
+            }
+            }
+        }
+        onRecvSyncMessage: {
+            // sender expects that this handler will update `response` argument
+            switch (message) {
+            case "embed:select": {
+                var dialog
+
+                dialog = pageStack.push(Qt.resolvedUrl("components/SelectDialog.qml"),
+                                        {
+                                            "allItems": data.listitems,
+                                            "selectedItems": data.selected,
+                                            "multiple": data.multiple
+                                        })
+                // HACK: block until dialog is closed
+                while (dialog.locked) {
+                    WebUtils.processEvents()
+                }
+                response.message = {
+                    button: dialog.selected
+                }
+                break;
+            }
+            case "Content:SelectionCopied": {
+                webContent.selectionCopied(data)
+
+                if (data.succeeded) {
+                    //% "Copied to clipboard"
+                    notification.show(qsTrId("sailfish_browser-la-selection_copied"))
+                }
+                break
+            }
+            }
+        }
+        onViewAreaChanged: {
+            var contentRect = child.contentRect
+            var offset = scrollableOffset
+            var size = child.scrollableSize
+            var resolution = resolution
+
+            var ySizeRatio = contentRect.height / size.height
+            var xSizeRatio = contentRect.width / size.width
+
+            verticalScrollDecorator.height = height * ySizeRatio
+            verticalScrollDecorator.y = offset.y * resolution * ySizeRatio
+
+            horizontalScrollDecorator.width = width * xSizeRatio
+            horizontalScrollDecorator.x = offset.x * resolution * xSizeRatio
+
+            scrollTimer.restart()
+        }
+
 
         TextSelectionController {}
 
@@ -443,7 +442,7 @@ Page {
 
             width: 5
             anchors.right: parent ? parent.right: undefined
-            color: theme.highlightDimmerColor
+            color: Theme.highlightDimmerColor
             smooth: true
             radius: 2.5
             visible: parent.height > height && !_ctxMenuVisible
@@ -456,7 +455,7 @@ Page {
 
             height: 5
             anchors.bottom: parent ? parent.bottom: undefined
-            color: theme.highlightDimmerColor
+            color: Theme.highlightDimmerColor
             smooth: true
             radius: 2.5
             visible: parent.width > width && !_ctxMenuVisible
@@ -474,7 +473,8 @@ Page {
     // Dimmer for web content
     Rectangle {
         anchors.fill: webContent
-        color: theme.highlightDimmerColor
+
+        color: Theme.highlightDimmerColor
         opacity: _ctxMenuActive? 0.8 : 0.0
         Behavior on opacity { FadeAnimation {} }
     }
@@ -490,28 +490,28 @@ Page {
 
         gradient: Gradient {
             GradientStop { position: 0.0; color: Qt.rgba(1.0, 1.0, 1.0, 0.0) }
-            GradientStop { position: 1.0; color: theme.highlightDimmerColor }
+            GradientStop { position: 1.0; color: Theme.highlightDimmerColor }
         }
 
         Column {
             width: parent.width
             anchors {
-                bottom: parent.bottom; bottomMargin: theme.paddingMedium
+                bottom: parent.bottom; bottomMargin: Theme.paddingMedium
             }
 
             Label {
                 text: webEngine.title
-                width: parent.width - theme.paddingMedium * 2
-                color: theme.highlightColor
-                font.pixelSize: theme.fontSizeSmall
+                width: parent.width - Theme.paddingMedium * 2
+                color: Theme.highlightColor
+                font.pixelSize: Theme.fontSizeSmall
                 horizontalAlignment: Text.AlignHCenter
                 truncationMode: TruncationMode.Fade
             }
             Label {
                 text: webEngine.url
-                width: parent.width - theme.paddingMedium * 2
-                color: theme.secondaryColor
-                font.pixelSize: theme.fontSizeExtraSmall
+                width: parent.width - Theme.paddingMedium * 2
+                color: Theme.secondaryColor
+                font.pixelSize: Theme.fontSizeExtraSmall
                 horizontalAlignment: Text.AlignHCenter
                 truncationMode: TruncationMode.Fade
             }
@@ -525,7 +525,7 @@ Page {
             right: parent.right
             bottom: parent.bottom
         }
-        height: visible ? theme.itemSizeMedium : 0
+        height: visible ? Theme.itemSizeMedium : 0
         visible: (parent.height === screen.height) && !_ctxMenuActive
 
         ProgressBar {

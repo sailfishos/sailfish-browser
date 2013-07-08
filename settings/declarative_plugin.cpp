@@ -1,7 +1,7 @@
 #include <QtGlobal>
-#include <QtDeclarative>
-#include <QDeclarativeEngine>
-#include <QDeclarativeExtensionPlugin>
+#include <QtQml>
+#include <QQmlEngine>
+#include <QQmlExtensionPlugin>
 #include <QTranslator>
 
 #include "browsersettings.h"
@@ -24,10 +24,14 @@ public:
 };
 
 
-class BrowserSettingsPlugin : public QDeclarativeExtensionPlugin
+class Q_DECL_EXPORT BrowserSettingsPlugin : public QQmlExtensionPlugin
 {
+    Q_OBJECT
+
+    Q_PLUGIN_METADATA(IID "org.sailfishos.browser.settings")
+
 public:
-    void initializeEngine(QDeclarativeEngine *engine, const char *uri)
+    void initializeEngine(QQmlEngine *engine, const char *uri)
     {
         Q_UNUSED(uri)
 
@@ -40,13 +44,9 @@ public:
 
     void registerTypes(const char *uri)
     {
-        Q_UNUSED(uri)
         Q_ASSERT(QLatin1String(uri) == QLatin1String("org.sailfishos.browser.settings"));
-        qmlRegisterType<BrowserSettings>("org.sailfishos.browser.settings", 1, 0, "BrowserSettings");
+        qmlRegisterType<BrowserSettings>(uri, 1, 0, "BrowserSettings");
     }
 };
 
 #include "declarative_plugin.moc"
-
-Q_EXPORT_PLUGIN2(browsersettingsplugin, BrowserSettingsPlugin)
-

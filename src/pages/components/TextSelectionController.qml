@@ -5,7 +5,7 @@
 **
 ****************************************************************************/
 
-import QtQuick 1.1
+import QtQuick 2.0
 import Sailfish.Silica 1.0
 
 // TODO: also this text selection controller acts as a relay of touch events to
