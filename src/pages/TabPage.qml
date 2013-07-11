@@ -15,6 +15,24 @@ Page {
     backNavigation: false
 
     property BrowserPage browserPage
+    property Item contextMenu
+
+    Component {
+        id: favoriteContextMenuComponent
+
+        ContextMenu {
+            property string url: ""
+            MenuItem {
+                //% "Open in new tab"
+                text: qsTrId("sailfish_browser-me-open_new_tab")
+                onClicked: {
+                    browserPage.newTab(url, true)
+                    pageStack.pop(undefined, true)
+                    contextMenu.hide()
+                }
+            }
+        }
+    }
 
     SilicaListView {
         id: list
@@ -103,35 +121,53 @@ Page {
 
         model: browserPage.favorites
 
-        delegate: BackgroundItem {
+        delegate: Item {
+            id: favoriteItem
+
+            property bool menuOpen: contextMenu !== null && contextMenu.parent === favoriteItem
+
             width: list.width
-            anchors.topMargin: Theme.paddingLarge
+            height: menuOpen ? favoriteRow.height + contextMenu.height : favoriteRow.height
 
-            FaviconImage {
-                id: faviconImage
-                anchors {
-                    verticalCenter: titleLabel.verticalCenter
-                    left: parent.left; leftMargin: Theme.paddingMedium
+            BackgroundItem {
+                id: favoriteRow
+
+                width: list.width
+                anchors.topMargin: Theme.paddingLarge
+
+                FaviconImage {
+                    id: faviconImage
+                    anchors {
+                        verticalCenter: titleLabel.verticalCenter
+                        left: parent.left; leftMargin: Theme.paddingMedium
+                    }
+                    favicon: model.favicon
+                    link: url
                 }
-                favicon: model.favicon
-                link: url
-            }
 
-            Label {
-                id: titleLabel
-                anchors {
-                    leftMargin: Theme.paddingMedium
-                    left: faviconImage.right
-                    verticalCenter: parent.verticalCenter
+                Label {
+                    id: titleLabel
+                    anchors {
+                        leftMargin: Theme.paddingMedium
+                        left: faviconImage.right
+                        verticalCenter: parent.verticalCenter
+                    }
+                    width: parent.width - x
+                    text: title
+                    truncationMode: TruncationMode.Fade
                 }
-                width: parent.width - x
-                text: title
-                truncationMode: TruncationMode.Fade
-            }
 
-            onClicked: {
-                browserPage.load(url)
-                window.pageStack.pop(browserPage, true)
+                onClicked: {
+                    browserPage.load(url)
+                    window.pageStack.pop(browserPage, true)
+                }
+                onPressAndHold: {
+                    if (!contextMenu) {
+                        contextMenu = favoriteContextMenuComponent.createObject(list)
+                    }
+                    contextMenu.url = url
+                    contextMenu.show(favoriteItem)
+                }
             }
         }
 
