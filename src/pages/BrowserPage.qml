@@ -53,12 +53,14 @@ Page {
         }
     }
 
-    function closeTab() {
+    function closeTab(index) {
+        var tabIndex = index ? currentTabIndex : index
+
         if (tabModel.count == 0) {
             return
         }
-        History.deleteTab(tabModel.get(currentTabIndex).tabId)
-        tabModel.remove(currentTabIndex)
+        History.deleteTab(tabModel.get(tabIndex).tabId)
+        tabModel.remove(tabIndex)
         currentTabIndex = tabModel.count - 1
         historyModel.clear()
         if (tabModel.count >= 1) {

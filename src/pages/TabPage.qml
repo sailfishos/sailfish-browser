@@ -16,6 +16,7 @@ Page {
 
     property BrowserPage browserPage
     property Item contextMenu
+    property Item tabContextMenu
 
     Component {
         id: favoriteContextMenuComponent
@@ -34,11 +35,30 @@ Page {
         }
     }
 
-    SilicaListView {
-        id: list
-        anchors.fill: parent
+    Component {
+        id: tabContextMenuComponent
 
-        header: Item {
+        ContextMenu {
+            property int index: 0
+            MenuItem {
+                //% "Close tab"
+                text: qsTrId("sailfish_browser-me-close_tab")
+                onClicked: {
+                    tabContextMenu.hide()
+                    if (browserPage.tabs.count > 1) {
+                        browserPage.closeTab(index)
+                    } else {
+                        browserPage.closeAllTabs()
+                    }
+                }
+            }
+        }
+    }
+
+    Component {
+        id: listHeader
+
+        Item {
             width: list.width
             height: tabs.height + 2 * Theme.paddingMedium
 
@@ -55,54 +75,73 @@ Page {
 
                 Repeater {
                     model: browserPage.tabs
-                    BackgroundItem {
-                        width: list.width / 2 - 2 * Theme.paddingMedium
-                        height: width
 
-                        Rectangle {
-                            anchors.fill: parent
-                            color: Theme.highlightBackgroundColor
-                            opacity: Theme.highlightBackgroundOpacity
-                            visible: !thumb.visible
-                        }
+                    Item {
+                        id: tabItem
 
-                        Label {
-                            width: parent.width
-                            anchors.centerIn: parent.Center
-                            text: url
-                            visible: !thumb.visible
-                            font.pixelSize: Theme.fontSizeExtraSmall
-                            color: Theme.secondaryColor
-                            wrapMode:Text.WrapAnywhere
-                        }
+                        property bool menuOpen: tabContextMenu !== null && tabContextMenu.parent === tabItem
 
-                        Image {
-                            id: thumb
-                            asynchronous: true
-                            source: "" // thumbPath.path ? thumbPath.path : ""
-                            fillMode: Image.PreserveAspectCrop
-                            sourceSize {
-                                width: parent.width
-                                height: width
+                        width: tabDelegate.width
+                        height: menuOpen ? width + tabContextMenu.height: width
+
+                        BackgroundItem {
+                            id: tabDelegate
+
+                            width: list.width / 2 - 2 * Theme.paddingMedium
+                            height: width
+
+                            Rectangle {
+                                anchors.fill: parent
+                                color: Theme.highlightBackgroundColor
+                                opacity: Theme.highlightBackgroundOpacity
+                                visible: !thumb.visible
                             }
-                            visible: false // TODO status !== Image.Error && thumbPath.path !== ""
-                        }
-                        onClicked: {
-                            browserPage.loadTab(model.index)
-                            window.pageStack.pop(browserPage, true)
-                        }
 
-                        Rectangle {
-                            anchors.fill: parent
+                            Label {
+                                width: parent.width
+                                anchors.centerIn: parent.Center
+                                text: url
+                                visible: !thumb.visible
+                                font.pixelSize: Theme.fontSizeExtraSmall
+                                color: Theme.secondaryColor
+                                wrapMode:Text.WrapAnywhere
+                            }
 
-                            property bool active: pressed
-                            property real highlightOpacity: 0.5
+                            Image {
+                                id: thumb
+                                asynchronous: true
+                                source: "" // thumbPath.path ? thumbPath.path : ""
+                                fillMode: Image.PreserveAspectCrop
+                                sourceSize {
+                                    width: parent.width
+                                    height: width
+                                }
+                                visible: false // TODO status !== Image.Error && thumbPath.path !== ""
+                            }
+                            onClicked: {
+                                browserPage.loadTab(model.index)
+                                window.pageStack.pop(browserPage, true)
+                            }
+                            onPressAndHold: {
+                                if (!tabContextMenu) {
+                                    tabContextMenu = tabContextMenuComponent.createObject(tabs)
+                                }
+                                tabContextMenu.index = index
+                                tabContextMenu.show(tabItem)
+                            }
 
-                            color: Theme.highlightBackgroundColor
-                            opacity: active ? highlightOpacity : 0.0
-                            Behavior on opacity {
-                                FadeAnimation {
-                                    duration: 100
+                            Rectangle {
+                                anchors.fill: parent
+
+                                property bool active: pressed
+                                property real highlightOpacity: 0.5
+
+                                color: Theme.highlightBackgroundColor
+                                opacity: active ? highlightOpacity : 0.0
+                                Behavior on opacity {
+                                    FadeAnimation {
+                                        duration: 100
+                                    }
                                 }
                             }
                         }
@@ -110,6 +149,13 @@ Page {
                 }
             }
         }
+    }
+
+    SilicaListView {
+        id: list
+        anchors.fill: parent
+
+        header: browserPage.tabs.count === 0 ?  null : listHeader
 
         PullDownMenu {
             MenuItem {
