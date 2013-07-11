@@ -12,11 +12,12 @@ import "components"
 
 Page {
     id: page
-    backNavigation: false
 
     property BrowserPage browserPage
     property Item contextMenu
     property Item tabContextMenu
+
+    backNavigation: browserPage.tabs.count > 0
 
     Component {
         id: favoriteContextMenuComponent
@@ -56,91 +57,107 @@ Page {
     }
 
     Component {
+        id: simpleListHeader
+
+        PageHeader {
+            //% "Tabs and Favorites"
+            title: qsTrId("sailfish_browser-he-tabs_and_favorites")
+        }
+    }
+
+    Component {
         id: listHeader
 
-        Item {
-            width: list.width
-            height: tabs.height + 2 * Theme.paddingMedium
+        Column {
+            PageHeader {
+                //% "Tabs and Favorites"
+                title: qsTrId("sailfish_browser-he-tabs_and_favorites")
+            }
 
-            Grid {
-                id: tabs
-                columns: 2
-                rows: Math.ceil(browserPage.tabs.count / 2)
-                spacing: Theme.paddingMedium
-                anchors {
-                    margins: Theme.paddingMedium
-                    top: parent.top;
-                    left: parent.left
-                }
+            Item {
+                width: list.width
+                height: tabs.height + 2 * Theme.paddingMedium
 
-                Repeater {
-                    model: browserPage.tabs
+                Grid {
+                    id: tabs
+                    columns: 2
+                    rows: Math.ceil(browserPage.tabs.count / 2)
+                    spacing: Theme.paddingMedium
+                    anchors {
+                        margins: Theme.paddingMedium
+                        top: parent.top;
+                        left: parent.left
+                    }
 
-                    Item {
-                        id: tabItem
+                    Repeater {
+                        model: browserPage.tabs
 
-                        property bool menuOpen: tabContextMenu !== null && tabContextMenu.parent === tabItem
+                        Item {
+                            id: tabItem
 
-                        width: tabDelegate.width
-                        height: menuOpen ? width + tabContextMenu.height: width
+                            property bool menuOpen: tabContextMenu !== null && tabContextMenu.parent === tabItem
 
-                        BackgroundItem {
-                            id: tabDelegate
+                            width: tabDelegate.width
+                            height: menuOpen ? width + tabContextMenu.height: width
 
-                            width: list.width / 2 - 2 * Theme.paddingMedium
-                            height: width
+                            BackgroundItem {
+                                id: tabDelegate
 
-                            Rectangle {
-                                anchors.fill: parent
-                                color: Theme.highlightBackgroundColor
-                                opacity: Theme.highlightBackgroundOpacity
-                                visible: !thumb.visible
-                            }
+                                width: list.width / 2 - 2 * Theme.paddingMedium
+                                height: width
 
-                            Label {
-                                width: parent.width
-                                anchors.centerIn: parent.Center
-                                text: url
-                                visible: !thumb.visible
-                                font.pixelSize: Theme.fontSizeExtraSmall
-                                color: Theme.secondaryColor
-                                wrapMode:Text.WrapAnywhere
-                            }
+                                Rectangle {
+                                    anchors.fill: parent
+                                    color: Theme.highlightBackgroundColor
+                                    opacity: Theme.highlightBackgroundOpacity
+                                    visible: !thumb.visible
+                                }
 
-                            Image {
-                                id: thumb
-                                asynchronous: true
-                                source: "" // thumbPath.path ? thumbPath.path : ""
-                                fillMode: Image.PreserveAspectCrop
-                                sourceSize {
+                                Label {
                                     width: parent.width
-                                    height: width
+                                    anchors.centerIn: parent.Center
+                                    text: url
+                                    visible: !thumb.visible
+                                    font.pixelSize: Theme.fontSizeExtraSmall
+                                    color: Theme.secondaryColor
+                                    wrapMode:Text.WrapAnywhere
                                 }
-                                visible: false // TODO status !== Image.Error && thumbPath.path !== ""
-                            }
-                            onClicked: {
-                                browserPage.loadTab(model.index)
-                                window.pageStack.pop(browserPage, true)
-                            }
-                            onPressAndHold: {
-                                if (!tabContextMenu) {
-                                    tabContextMenu = tabContextMenuComponent.createObject(tabs)
+
+                                Image {
+                                    id: thumb
+                                    asynchronous: true
+                                    source: "" // thumbPath.path ? thumbPath.path : ""
+                                    fillMode: Image.PreserveAspectCrop
+                                    sourceSize {
+                                        width: parent.width
+                                        height: width
+                                    }
+                                    visible: false // TODO status !== Image.Error && thumbPath.path !== ""
                                 }
-                                tabContextMenu.index = index
-                                tabContextMenu.show(tabItem)
-                            }
+                                onClicked: {
+                                    browserPage.loadTab(model.index)
+                                    window.pageStack.pop(browserPage, true)
+                                }
+                                onPressAndHold: {
+                                    if (!tabContextMenu) {
+                                        tabContextMenu = tabContextMenuComponent.createObject(tabs)
+                                    }
+                                    tabContextMenu.index = index
+                                    tabContextMenu.show(tabItem)
+                                }
 
-                            Rectangle {
-                                anchors.fill: parent
+                                Rectangle {
+                                    anchors.fill: parent
 
-                                property bool active: pressed
-                                property real highlightOpacity: 0.5
+                                    property bool active: pressed
+                                    property real highlightOpacity: 0.5
 
-                                color: Theme.highlightBackgroundColor
-                                opacity: active ? highlightOpacity : 0.0
-                                Behavior on opacity {
-                                    FadeAnimation {
-                                        duration: 100
+                                    color: Theme.highlightBackgroundColor
+                                    opacity: active ? highlightOpacity : 0.0
+                                    Behavior on opacity {
+                                        FadeAnimation {
+                                            duration: 100
+                                        }
                                     }
                                 }
                             }
@@ -155,15 +172,21 @@ Page {
         id: list
         anchors.fill: parent
 
-        header: browserPage.tabs.count === 0 ?  null : listHeader
-
         PullDownMenu {
+            MenuItem {
+                //% "New tab"
+                text: qsTrId("sailfish_browser-me-new_tab")
+                onClicked: browserPage.newTab("", true)
+            }
             MenuItem {
                 //% "Close all tabs"
                 text: qsTrId("sailfish_browser-me-close_all")
                 onClicked: browserPage.closeAllTabs()
+                enabled: browserPage.tabs.count > 0
             }
         }
+
+        header: browserPage.tabs.count === 0 ?  simpleListHeader : listHeader
 
         model: browserPage.favorites
 
