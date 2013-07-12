@@ -12,79 +12,153 @@ import "components"
 
 Page {
     id: page
-    backNavigation: false
 
     property BrowserPage browserPage
+    property Item contextMenu
+    property Item tabContextMenu
 
-    SilicaListView {
-        id: list
-        anchors.fill: parent
+    backNavigation: browserPage.tabs.count > 0
 
-        header: Item {
-            width: list.width
-            height: tabs.height + 2 * Theme.paddingMedium
+    Component {
+        id: favoriteContextMenuComponent
 
-            Grid {
-                id: tabs
-                columns: 2
-                rows: Math.ceil(browserPage.tabs.count / 2)
-                spacing: Theme.paddingMedium
-                anchors {
-                    margins: Theme.paddingMedium
-                    top: parent.top;
-                    left: parent.left
+        ContextMenu {
+            property string url: ""
+            MenuItem {
+                //% "Open in new tab"
+                text: qsTrId("sailfish_browser-me-open_new_tab")
+                onClicked: {
+                    browserPage.newTab(url, true)
+                    pageStack.pop(undefined, true)
+                    contextMenu.hide()
                 }
+            }
+        }
+    }
 
-                Repeater {
-                    model: browserPage.tabs
-                    BackgroundItem {
-                        width: list.width / 2 - 2 * Theme.paddingMedium
-                        height: width
+    Component {
+        id: tabContextMenuComponent
 
-                        Rectangle {
-                            anchors.fill: parent
-                            color: Theme.highlightBackgroundColor
-                            opacity: Theme.highlightBackgroundOpacity
-                            visible: !thumb.visible
-                        }
+        ContextMenu {
+            property int index: 0
+            MenuItem {
+                //% "Close tab"
+                text: qsTrId("sailfish_browser-me-close_tab")
+                onClicked: {
+                    tabContextMenu.hide()
+                    if (browserPage.tabs.count > 1) {
+                        browserPage.closeTab(index)
+                    } else {
+                        browserPage.closeAllTabs()
+                    }
+                }
+            }
+        }
+    }
 
-                        Label {
-                            width: parent.width
-                            anchors.centerIn: parent.Center
-                            text: url
-                            visible: !thumb.visible
-                            font.pixelSize: Theme.fontSizeExtraSmall
-                            color: Theme.secondaryColor
-                            wrapMode:Text.WrapAnywhere
-                        }
+    Component {
+        id: simpleListHeader
 
-                        Image {
-                            id: thumb
-                            asynchronous: true
-                            source: "" // thumbPath.path ? thumbPath.path : ""
-                            fillMode: Image.PreserveAspectCrop
-                            sourceSize {
-                                width: parent.width
+        PageHeader {
+            //% "Tabs and Favorites"
+            title: qsTrId("sailfish_browser-he-tabs_and_favorites")
+        }
+    }
+
+    Component {
+        id: listHeader
+
+        Column {
+            PageHeader {
+                //% "Tabs and Favorites"
+                title: qsTrId("sailfish_browser-he-tabs_and_favorites")
+            }
+
+            Item {
+                width: list.width
+                height: tabs.height + 2 * Theme.paddingMedium
+
+                Grid {
+                    id: tabs
+                    columns: 2
+                    rows: Math.ceil(browserPage.tabs.count / 2)
+                    spacing: Theme.paddingMedium
+                    anchors {
+                        margins: Theme.paddingMedium
+                        top: parent.top;
+                        left: parent.left
+                    }
+
+                    Repeater {
+                        model: browserPage.tabs
+
+                        Item {
+                            id: tabItem
+
+                            property bool menuOpen: tabContextMenu !== null && tabContextMenu.parent === tabItem
+
+                            width: tabDelegate.width
+                            height: menuOpen ? width + tabContextMenu.height: width
+
+                            BackgroundItem {
+                                id: tabDelegate
+
+                                width: list.width / 2 - 2 * Theme.paddingMedium
                                 height: width
-                            }
-                            visible: false // TODO status !== Image.Error && thumbPath.path !== ""
-                        }
-                        onClicked: {
-                            browserPage.loadTab(model.index)
-                            window.pageStack.pop(browserPage, true)
-                        }
 
-                        Rectangle {
-                            anchors.fill: parent
+                                Rectangle {
+                                    anchors.fill: parent
+                                    color: Theme.highlightBackgroundColor
+                                    opacity: Theme.highlightBackgroundOpacity
+                                    visible: !thumb.visible
+                                }
 
-                            property bool active: pressed
-                            property real highlightOpacity: 0.5
+                                Label {
+                                    width: parent.width
+                                    anchors.centerIn: parent.Center
+                                    text: url
+                                    visible: !thumb.visible
+                                    font.pixelSize: Theme.fontSizeExtraSmall
+                                    color: Theme.secondaryColor
+                                    wrapMode:Text.WrapAnywhere
+                                }
 
-                            color: Theme.highlightBackgroundColor
-                            opacity: active ? highlightOpacity : 0.0
-                            Behavior on opacity {
-                                FadeAnimation {
-                                    duration: 100
+                                Image {
+                                    id: thumb
+                                    asynchronous: true
+                                    source: "" // thumbPath.path ? thumbPath.path : ""
+                                    fillMode: Image.PreserveAspectCrop
+                                    sourceSize {
+                                        width: parent.width
+                                        height: width
+                                    }
+                                    visible: false // TODO status !== Image.Error && thumbPath.path !== ""
+                                }
+                                onClicked: {
+                                    browserPage.loadTab(model.index)
+                                    window.pageStack.pop(browserPage, true)
+                                }
+                                onPressAndHold: {
+                                    if (!tabContextMenu) {
+                                        tabContextMenu = tabContextMenuComponent.createObject(tabs)
+                                    }
+                                    tabContextMenu.index = index
+                                    tabContextMenu.show(tabItem)
+                                }
+
+                                Rectangle {
+                                    anchors.fill: parent
+
+                                    property bool active: pressed
+                                    property real highlightOpacity: 0.5
+
+                                    color: Theme.highlightBackgroundColor
+                                    opacity: active ? highlightOpacity : 0.0
+                                    Behavior on opacity {
+                                        FadeAnimation {
+                                            duration: 100
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -92,46 +166,77 @@ Page {
                 }
             }
         }
+    }
+
+    SilicaListView {
+        id: list
+        anchors.fill: parent
 
         PullDownMenu {
+            MenuItem {
+                //% "New tab"
+                text: qsTrId("sailfish_browser-me-new_tab")
+                onClicked: browserPage.newTab("", true)
+            }
             MenuItem {
                 //% "Close all tabs"
                 text: qsTrId("sailfish_browser-me-close_all")
                 onClicked: browserPage.closeAllTabs()
+                enabled: browserPage.tabs.count > 0
             }
         }
 
+        header: browserPage.tabs.count === 0 ?  simpleListHeader : listHeader
+
         model: browserPage.favorites
 
-        delegate: BackgroundItem {
+        delegate: Item {
+            id: favoriteItem
+
+            property bool menuOpen: contextMenu !== null && contextMenu.parent === favoriteItem
+
             width: list.width
-            anchors.topMargin: Theme.paddingLarge
+            height: menuOpen ? favoriteRow.height + contextMenu.height : favoriteRow.height
 
-            FaviconImage {
-                id: faviconImage
-                anchors {
-                    verticalCenter: titleLabel.verticalCenter
-                    left: parent.left; leftMargin: Theme.paddingMedium
+            BackgroundItem {
+                id: favoriteRow
+
+                width: list.width
+                anchors.topMargin: Theme.paddingLarge
+
+                FaviconImage {
+                    id: faviconImage
+                    anchors {
+                        verticalCenter: titleLabel.verticalCenter
+                        left: parent.left; leftMargin: Theme.paddingMedium
+                    }
+                    favicon: model.favicon
+                    link: url
                 }
-                favicon: model.favicon
-                link: url
-            }
 
-            Label {
-                id: titleLabel
-                anchors {
-                    leftMargin: Theme.paddingMedium
-                    left: faviconImage.right
-                    verticalCenter: parent.verticalCenter
+                Label {
+                    id: titleLabel
+                    anchors {
+                        leftMargin: Theme.paddingMedium
+                        left: faviconImage.right
+                        verticalCenter: parent.verticalCenter
+                    }
+                    width: parent.width - x
+                    text: title
+                    truncationMode: TruncationMode.Fade
                 }
-                width: parent.width - x
-                text: title
-                truncationMode: TruncationMode.Fade
-            }
 
-            onClicked: {
-                browserPage.load(url)
-                window.pageStack.pop(browserPage, true)
+                onClicked: {
+                    browserPage.load(url)
+                    window.pageStack.pop(browserPage, true)
+                }
+                onPressAndHold: {
+                    if (!contextMenu) {
+                        contextMenu = favoriteContextMenuComponent.createObject(list)
+                    }
+                    contextMenu.url = url
+                    contextMenu.show(favoriteItem)
+                }
             }
         }
 

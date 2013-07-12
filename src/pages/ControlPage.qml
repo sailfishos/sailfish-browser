@@ -31,6 +31,7 @@ Page {
                 onClicked: {
                     browserPage.newTab(url, true)
                     pageStack.pop(undefined, true)
+                    contextMenu.hide()
                 }
             }
         }
