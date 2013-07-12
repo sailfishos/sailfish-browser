@@ -5,33 +5,24 @@
 **
 ****************************************************************************/
 
-
-#include "declarativebrowsertab.h"
-#include <QScreen>
-#include <QPixmap>
-#include <QGuiApplication>
+#include "screengrabber.h"
+#include <QImage>
 #include <QQuickView>
-#include <QQmlContext>
-#include <QQmlEngine>
-#include <QDebug>
 #include <QFile>
 #include <QDir>
 #include <QTransform>
 #include <QStandardPaths>
-#include <QFuture>
 #include <QtConcurrentRun>
 #include <QTime>
-#include "declarativewebthumbnail.h"
 
-DeclarativeBrowserTab::DeclarativeBrowserTab(QQuickView* view, QObject *parent) :
-    QObject(parent), m_view(view)
+ScreenGrabber::ScreenGrabber() :
+    QObject(), m_view(0)
 {
-    view->engine()->rootContext()->setContextProperty("BrowserTab",this);
     QTime now = QTime::currentTime();
     qsrand(now.msec());
 }
 
-DeclarativeBrowserTab::~DeclarativeBrowserTab()
+ScreenGrabber::~ScreenGrabber()
 {
     for (int i = 0; i < paths.size(); ++i) {
         QFile f(paths.at(i));
@@ -42,23 +33,26 @@ DeclarativeBrowserTab::~DeclarativeBrowserTab()
     paths.clear();
 }
 
-DeclarativeWebThumbnail* DeclarativeBrowserTab::screenCapture(int x, int y, int width, int height, qreal rotate)
+void ScreenGrabber::screenCapture(QString url, int x, int y, int width, int height, qreal rotate)
 {
-    if(!m_view->isActive()) {
-        return new DeclarativeWebThumbnail("");
+    if (!m_view) {
+        return;
     }
-    QPixmap pixmap =  QGuiApplication::primaryScreen()->grabWindow(m_view->winId(), x, y, width, height);
+    if(!m_view->isActive()) {
+        return;
+    }
+    QImage image = m_view->grabWindow();
+    QImage cropped = image.copy(x, y, width, height);
+
     int randomValue = abs(qrand());
     QString path = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + "/" + QString::number(randomValue);
     path.append(QString("-thumb.png"));
 
     // asynchronous save to avoid the slow I/O
-    DeclarativeWebThumbnail* thumb = new DeclarativeWebThumbnail(path);
-    QtConcurrent::run(this, &DeclarativeBrowserTab::saveToFile, path, pixmap, rotate, thumb);
-    return thumb;
+    QtConcurrent::run(this, &ScreenGrabber::saveToFile, url, path, cropped, rotate);
 }
 
-void DeclarativeBrowserTab::saveToFile(QString path, QPixmap image, qreal rotate, DeclarativeWebThumbnail* thumb) {
+void ScreenGrabber::saveToFile(QString url, QString path, QImage image, qreal rotate) {
     QString cacheLocation = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
     QDir dir(cacheLocation);
     if(!dir.exists()) {
@@ -69,9 +63,26 @@ void DeclarativeBrowserTab::saveToFile(QString path, QPixmap image, qreal rotate
     }
     QTransform transform;
     transform.rotate(rotate);
+
     image = image.transformed(transform);
     if(image.save(path)) {
+        emit screenCaptured(url, path);
         paths << path;
-        thumb->setReady(true);
+    } else {
+        qWarning() << Q_FUNC_INFO << "failed to save image" << path;
     }
+}
+
+void ScreenGrabber::setView(QQuickView *view)
+{
+    m_view = view;
+}
+
+ScreenGrabber *ScreenGrabber::instance()
+{
+    static ScreenGrabber *browserTab;
+    if (!browserTab) {
+        browserTab = new ScreenGrabber();
+    }
+    return browserTab;
 }

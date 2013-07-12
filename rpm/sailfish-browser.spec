@@ -15,6 +15,7 @@ BuildRequires:  pkgconfig(qt5embedwidget)
 BuildRequires:  pkgconfig(Qt5OpenGL)
 BuildRequires:  pkgconfig(Qt5DBus)
 BuildRequires:  pkgconfig(Qt5Concurrent)
+BuildRequires:  pkgconfig(Qt5Sql)
 BuildRequires:  pkgconfig(nemotransferengine-qt5)
 BuildRequires:  pkgconfig(mlite5)
 BuildRequires:  pkgconfig(qdeclarative5-boostable)
@@ -26,7 +27,6 @@ Requires: jolla-ambient >= 0.1.26
 Requires: xulrunner-qt5 >= 24.0.1.12
 Requires: embedlite-components-qt5 >= 1.3.4
 Requires: sailfish-browser-settings = %{version}
-Requires: qt5-qtdeclarative-import-localstorageplugin
 Requires: qt5-plugin-imageformat-ico
 Requires: mapplauncherd-booster-silica-qt5
 Requires: desktop-file-utils
