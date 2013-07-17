@@ -17,7 +17,7 @@ PKGCONFIG +=  nemotransferengine-qt5
 # Include qtmozembed
 isEmpty(QTEMBED_LIB) {
   CONFIG += link_pkgconfig
-  PKGCONFIG += qtembedwidget
+  PKGCONFIG += qt5embedwidget
 } else {
   LIBS+=$$QTEMBED_LIB
 }
