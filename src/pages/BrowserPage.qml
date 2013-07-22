@@ -203,7 +203,7 @@ Page {
         // events (multi-touch ones are not ignored). This means that we have to
         // relay the events from QML to web engine through a special MouseArea
         // that fully covers web view (TextSelectionController).
-        useQmlMouse: viewInitialized
+        useQmlMouse: true
 
         height: screen.height - Theme.itemSizeMedium
         //{ // TODO
