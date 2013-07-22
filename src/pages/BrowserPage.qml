@@ -249,7 +249,6 @@ Page {
             addMessageListener("embed:prompt")
             addMessageListener("embed:auth")
             addMessageListener("embed:login")
-            addMessageListener("context:info")
             addMessageListener("Content:ContextMenu")
             addMessageListener("Content:SelectionRange");
             addMessageListener("Content:SelectionCopied");
@@ -370,14 +369,11 @@ Page {
                                })
                 break
             }
-            case "context:info": {
-                // TODO: embed:ContextMenuCreate provides more flexible interface
-                //       to context data than context:info -> reimplement it.
-                openContextMenu(data.LinkHref, data.ImageSrc)
-                break
-            }
             case "Content:ContextMenu": {
                 webContent.contextMenuRequested(data)
+                if (data.types.indexOf("image") !== -1 || data.types.indexOf("link") !== -1) {
+                    openContextMenu(data.linkURL, data.mediaURL)
+                }
                 break
             }
             case "Content:SelectionRange": {
