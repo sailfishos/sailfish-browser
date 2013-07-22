@@ -422,7 +422,6 @@ Page {
             var contentRect = child.contentRect
             var offset = scrollableOffset
             var size = child.scrollableSize
-            var resolution = resolution
 
             var ySizeRatio = contentRect.height / size.height
             var xSizeRatio = contentRect.width / size.width
