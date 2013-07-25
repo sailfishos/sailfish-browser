@@ -205,7 +205,7 @@ Page {
         // that fully covers web view (TextSelectionController).
         useQmlMouse: viewInitialized
 
-        height: screen.height - Theme.itemSizeMedium
+        height: browserPage.height - Theme.itemSizeMedium
         //{ // TODO
         // No resizes while page is not active
         // also contextmenu size
@@ -528,7 +528,7 @@ Page {
             bottom: parent.bottom
         }
         height: visible ? Theme.itemSizeMedium : 0
-        visible: (parent.height === screen.height) && !_ctxMenuActive
+        visible: !_ctxMenuActive
 
         ProgressBar {
             id: progressBar
