@@ -30,8 +30,6 @@ public:
     QString picturesDir() const;
 
     Q_INVOKABLE QUrl getFaviconForUrl(QUrl url);
-    // TODO: get rid of this method: declarative QML code shouldn't touch Qt event loops.
-    Q_INVOKABLE void processEvents();
     Q_INVOKABLE int getLightness(QColor color) const;
     Q_INVOKABLE bool fileExists(QString fileName) const;
 

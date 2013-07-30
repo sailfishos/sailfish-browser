@@ -253,9 +253,9 @@ Page {
             addMessageListener("Content:ContextMenu")
             addMessageListener("Content:SelectionRange");
             addMessageListener("Content:SelectionCopied");
-            addMessageListener("embed:select") // this is sync message!
+            addMessageListener("embed:selectasync")
 
-            loadFrameScript("chrome://embedlite/content/SelectHelper.js")
+            loadFrameScript("chrome://embedlite/content/SelectAsyncHelper.js")
             loadFrameScript("chrome://embedlite/content/embedhelper.js")
             loadFrameScript("chrome://embedlite/content/StyleSheetHandler.js")
 
@@ -299,6 +299,17 @@ Page {
                     favicon = data.href
                 }
                 break
+            }
+            case "embed:selectasync": {
+                var dialog
+
+                dialog = pageStack.push(Qt.resolvedUrl("components/SelectDialog.qml"),
+                                        {
+                                            "options": data.options,
+                                            "multiple": data.multiple,
+                                            "webview": webContent
+                                        })
+                break;
             }
             case "embed:alert": {
                 var winid = data.winid
@@ -389,24 +400,6 @@ Page {
         onRecvSyncMessage: {
             // sender expects that this handler will update `response` argument
             switch (message) {
-            case "embed:select": {
-                var dialog
-
-                dialog = pageStack.push(Qt.resolvedUrl("components/SelectDialog.qml"),
-                                        {
-                                            "allItems": data.listitems,
-                                            "selectedItems": data.selected,
-                                            "multiple": data.multiple
-                                        })
-                // HACK: block until dialog is closed
-                while (dialog.locked) {
-                    WebUtils.processEvents()
-                }
-                response.message = {
-                    button: dialog.selected
-                }
-                break;
-            }
             case "Content:SelectionCopied": {
                 webContent.selectionCopied(data)
 

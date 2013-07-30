@@ -14,60 +14,32 @@ Dialog {
     id: selectDialog
 
     // input data
-    property variant allItems
-    property variant selectedItems
+    property variant options
     property bool multiple
-
-    property bool locked: true
-    property variant selected: -1
+    property QtObject webview
 
     onOpened: {
-        var item
-        var currentGroup
-
-        for (var i=0; i < allItems.length; i++) {
-            item = allItems[i]
-            // TODO: fix SelectHelper.js to set 'group' prop so that the following lines are not needed
-            if (item.isGroup) {
-                currentGroup = item.label
-                continue
-            }
-            if (currentGroup !== undefined && item.inGroup) {
-                item.group = currentGroup
-            } else {
-                item.group = null
-            }
-            // TODO: fix SelectHelper.js to make 'selected' item's property so the next line wouldn't be needed
-            item.selected = selectedItems[i]
-            selectModel.append(item)
+        for (var i=0; i < options.length; i++) {
+            selectModel.append(options[i])
         }
     }
 
     onAccepted: {
-        var result
-        var counter
+        var result = []
+        var item
 
-        if (multiple) {
-            result = []
-            // TODO: it would be simpler if response accepted list of selected options only (without optgroups)
-            //       In this case the code would be:
-            //  for (i=0; i<selectModel.count-1;i++) { result.push(selectModel.get(i).selected) }
-            //  selectDialog.selected = result
-            counter = 0
-            for (var i=0; i < allItems.length; i++) {
-                if (allItems[i].isGroup) {
-                    result.push(false)
-                } else {
-                    result.push(selectModel.get(counter).selected)
-                    counter++
-                }
-            }
-            selectDialog.selected = result
+        for (var i = 0; i < selectModel.count; i++) {
+            item = selectModel.get(i)
+            result.push({
+                "selected": item.selected,
+                "index": item.index
+            })
         }
+        webview.sendAsyncMessage("embedui:selectresponse", {"result": result})
     }
 
-    onDone: {
-        selectDialog.locked = false
+    onRejected: {
+        webview.sendAsyncMessage("embedui:selectresponse", {"result": -1})
     }
 
     ListModel {
@@ -98,7 +70,11 @@ Dialog {
             onClicked: {
                 selectModel.setProperty(index, "selected", !selected)
                 if (!selectDialog.multiple) {
-                    selectDialog.selected = model.id
+                    for (var i = 0; i < selectModel.count; i++) {
+                        if (i !== index) {
+                            selectModel.setProperty(i, "selected", false)
+                        }
+                    }
                     selectDialog.accept()
                 }
             }

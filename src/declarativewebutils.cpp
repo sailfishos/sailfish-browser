@@ -40,11 +40,6 @@ QUrl DeclarativeWebUtils::getFaviconForUrl(QUrl url)
     return faviconUrl;
 }
 
-void DeclarativeWebUtils::processEvents()
-{
-    QCoreApplication::processEvents();
-}
-
 int DeclarativeWebUtils::getLightness(QColor color) const
 {
     return color.lightness();
