@@ -25,6 +25,7 @@ Requires: xulrunner-qt5 >= 24.0.1.12
 Requires: embedlite-components-qt5 >= 1.2.6
 Requires: sailfish-browser-settings = %{version}
 Requires: qt5-qtdeclarative-import-localstorageplugin
+Requires: qt5-plugin-imageformat-ico
 
 %description
 Sailfish Web Browser
