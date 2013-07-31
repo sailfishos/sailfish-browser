@@ -68,8 +68,10 @@ Dialog {
             enabled: !disabled
 
             onClicked: {
-                selectModel.setProperty(index, "selected", !selected)
-                if (!selectDialog.multiple) {
+                if (selectDialog.multiple) {
+                    selectModel.setProperty(index, "selected", !selected)
+                } else {
+                    selectModel.setProperty(index, "selected", true)
                     for (var i = 0; i < selectModel.count; i++) {
                         if (i !== index) {
                             selectModel.setProperty(i, "selected", false)
