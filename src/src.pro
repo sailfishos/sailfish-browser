@@ -2,6 +2,8 @@ QT += opengl qml quick dbus concurrent
 # The name of your app
 TARGET = sailfish-browser
 
+CONFIG += link_pkgconfig
+
 TARGETPATH = /usr/bin
 target.path = $$TARGETPATH
 
@@ -12,11 +14,10 @@ INSTALLS += target qml
 
 DEFINES += DEPLOYMENT_PATH=\"\\\"\"$${DEPLOYMENT_PATH}/\"\\\"\"
 
-PKGCONFIG +=  nemotransferengine-qt5
+PKGCONFIG +=  nemotransferengine-qt5 mlite5
 
 # Include qtmozembed
 isEmpty(QTEMBED_LIB) {
-  CONFIG += link_pkgconfig
   PKGCONFIG += qt5embedwidget
 } else {
   LIBS+=$$QTEMBED_LIB
@@ -38,7 +39,8 @@ SOURCES += \
     browserservice.cpp \
     dbusadaptor.cpp \
     declarativewebthumbnail.cpp \
-    downloadmanager.cpp
+    downloadmanager.cpp \
+    settingmanager.cpp
 
 # C++ headers
 HEADERS += \
@@ -49,7 +51,8 @@ HEADERS += \
     browserservice.h \
     dbusadaptor.h \
     declarativewebthumbnail.h \
-    downloadmanager.h
+    downloadmanager.h \
+    settingmanager.h
 
 # QML files and folders
 qml.files = *.qml pages cover browser.qml

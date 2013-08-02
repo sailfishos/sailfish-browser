@@ -16,13 +16,14 @@ BuildRequires:  pkgconfig(Qt5OpenGL)
 BuildRequires:  pkgconfig(Qt5DBus)
 BuildRequires:  pkgconfig(Qt5Concurrent)
 BuildRequires:  pkgconfig(nemotransferengine-qt5)
+BuildRequires:  pkgconfig(mlite5)
 BuildRequires:  qt5-qttools
 BuildRequires:  qt5-qttools-linguist
 BuildRequires:  gdb
 Requires: sailfishsilica-qt5 >= 0.8.34
 Requires: jolla-ambient >= 0.1.26
 Requires: xulrunner-qt5 >= 24.0.1.12
-Requires: embedlite-components-qt5 >= 1.2.6
+Requires: embedlite-components-qt5 >= 1.3.4
 Requires: sailfish-browser-settings = %{version}
 Requires: qt5-qtdeclarative-import-localstorageplugin
 
