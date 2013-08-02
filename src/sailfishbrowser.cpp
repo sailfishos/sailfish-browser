@@ -25,6 +25,7 @@
 #include "browserservice.h"
 #include "declarativewebthumbnail.h"
 #include "downloadmanager.h"
+#include "settingmanager.h"
 
 Q_DECL_EXPORT int main(int argc, char *argv[])
 {
@@ -68,6 +69,10 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     DownloadManager dlMgr(service);
     QObject::connect(app.data(), SIGNAL(lastWindowClosed()),
                      &dlMgr, SLOT(cancelActiveTransfers()));
+
+    SettingManager * settingMgr = new SettingManager(app.data());
+    QObject::connect(QMozContext::GetInstance(), SIGNAL(onInitialized()),
+                     settingMgr, SLOT(initialize()));
 
     bool isDesktop = qApp->arguments().contains("-desktop");
 
