@@ -21,6 +21,9 @@ Dialog {
     onOpened: {
         for (var i=0; i < options.length; i++) {
             selectModel.append(options[i])
+            if (!selectDialog.multiple && options[i]["selected"]) {
+                selectModel.selectedIndex = options[i]["index"]
+            }
         }
     }
 
@@ -44,6 +47,8 @@ Dialog {
 
     ListModel {
         id: selectModel
+
+        property int selectedIndex: -1
     }
 
     SilicaListView {
@@ -71,11 +76,10 @@ Dialog {
                 if (selectDialog.multiple) {
                     selectModel.setProperty(index, "selected", !selected)
                 } else {
-                    selectModel.setProperty(index, "selected", true)
-                    for (var i = 0; i < selectModel.count; i++) {
-                        if (i !== index) {
-                            selectModel.setProperty(i, "selected", false)
-                        }
+                    if (selectModel.selectedIndex !== index) {
+                        selectModel.setProperty(index, "selected", true)
+                        selectModel.setProperty(selectModel.selectedIndex, "selected", false)
+                        selectModel.selectedIndex = index
                     }
                     selectDialog.accept()
                 }
