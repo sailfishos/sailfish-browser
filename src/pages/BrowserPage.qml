@@ -203,7 +203,7 @@ Page {
         // events (multi-touch ones are not ignored). This means that we have to
         // relay the events from QML to web engine through a special MouseArea
         // that fully covers web view (TextSelectionController).
-        useQmlMouse: viewInitialized
+        useQmlMouse: true
 
         height: screen.height - Theme.itemSizeMedium
         //{ // TODO
@@ -249,7 +249,6 @@ Page {
             addMessageListener("embed:prompt")
             addMessageListener("embed:auth")
             addMessageListener("embed:login")
-            addMessageListener("context:info")
             addMessageListener("Content:ContextMenu")
             addMessageListener("Content:SelectionRange");
             addMessageListener("Content:SelectionCopied");
@@ -370,14 +369,11 @@ Page {
                                })
                 break
             }
-            case "context:info": {
-                // TODO: embed:ContextMenuCreate provides more flexible interface
-                //       to context data than context:info -> reimplement it.
-                openContextMenu(data.LinkHref, data.ImageSrc)
-                break
-            }
             case "Content:ContextMenu": {
                 webContent.contextMenuRequested(data)
+                if (data.types.indexOf("image") !== -1 || data.types.indexOf("link") !== -1) {
+                    openContextMenu(data.linkURL, data.mediaURL)
+                }
                 break
             }
             case "Content:SelectionRange": {
@@ -422,7 +418,6 @@ Page {
             var contentRect = child.contentRect
             var offset = scrollableOffset
             var size = child.scrollableSize
-            var resolution = resolution
 
             var ySizeRatio = contentRect.height / size.height
             var xSizeRatio = contentRect.width / size.width
