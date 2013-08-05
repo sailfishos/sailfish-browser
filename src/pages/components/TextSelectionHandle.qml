@@ -14,7 +14,6 @@ Item {
 
     width: Theme.itemSizeSmall
     height: width
-    visible: false
 
     property string type
     property Item content
@@ -34,6 +33,14 @@ Item {
                 "yPos": y / resolution
         }
         return json
+    }
+
+    // Property binding doesn't work for content.width and content.height in qt5 -> resort to assignment
+    onVisibleChanged: {
+        if (visible) {
+            mouseArea.drag.maximumX = content.width - handle.width
+            mouseArea.drag.maximumY = content.height - handle.height
+        }
     }
 
     onDragActiveChanged: {
