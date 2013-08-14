@@ -16,6 +16,14 @@ DEFINES += DEPLOYMENT_PATH=\"\\\"\"$${DEPLOYMENT_PATH}/\"\\\"\"
 
 PKGCONFIG +=  nemotransferengine-qt5 mlite5
 
+packagesExist(qdeclarative5-boostable) {
+    message("Building with qdeclarative-boostable support")
+    DEFINES += HAS_BOOSTER
+    PKGCONFIG += qdeclarative5-boostable
+} else {
+    warning("qdeclarative5-boostable not available; startup times will be slower")
+}
+
 # Include qtmozembed
 isEmpty(QTEMBED_LIB) {
   PKGCONFIG += qt5embedwidget
