@@ -8,9 +8,7 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
 
-// TODO: also this text selection controller acts as a relay of touch events to
-//       the web view -> refactor to separate these two logical entities.
-MouseArea {
+Item {
 
     property bool selectionVisible: false
 
@@ -75,16 +73,6 @@ MouseArea {
             // we want to select some content text
             _engine.sendAsyncMessage("Browser:SelectionStart", {"xPos": data.xPos, "yPos": data.yPos})
         }
-    }
-
-    onPressed: {
-        _engine.recvMousePress(mouseX, mouseY)
-    }
-    onReleased: {
-        _engine.recvMouseRelease(mouseX, mouseY)
-    }
-    onPositionChanged: {
-        _engine.recvMouseMove(mouseX, mouseY)
     }
 
     onSelectionVisibleChanged: {
