@@ -15,6 +15,8 @@ class BrowserService : public QObject
     Q_OBJECT
 public:
     BrowserService(QObject * parent);
+    bool registered() const;
+    QString serviceName() const;
 
 public slots:
     void openUrl(QStringList args);
@@ -25,6 +27,9 @@ signals:
     void openUrlRequested(QString url);
     void cancelTransferRequested(int transferId);
     void restartTransferRequested(int transferId);
+
+private:
+    bool m_registered;
 };
 
 #endif // BROWSERSERVICE_H
