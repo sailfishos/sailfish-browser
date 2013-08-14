@@ -418,8 +418,9 @@ Page {
             scrollTimer.restart()
         }
 
-
-        TextSelectionController {}
+        // We decided to disable "text selection" until we understand how it
+        // should look like in Sailfish.
+        // TextSelectionController {}
 
         Rectangle {
             id: verticalScrollDecorator
