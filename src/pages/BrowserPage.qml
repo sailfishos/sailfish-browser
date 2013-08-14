@@ -198,12 +198,6 @@ Page {
         }
         focus: true
         width: browserPage.width
-        enabled: !_ctxMenuActive && !downloadPopup.visible
-        // This flag instucts web engine to ignore mouse and single-touch
-        // events (multi-touch ones are not ignored). This means that we have to
-        // relay the events from QML to web engine through a special MouseArea
-        // that fully covers web view (TextSelectionController).
-        useQmlMouse: true
 
         height: browserPage.height - Theme.itemSizeMedium
         //{ // TODO
@@ -424,8 +418,9 @@ Page {
             scrollTimer.restart()
         }
 
-
-        TextSelectionController {}
+        // We decided to disable "text selection" until we understand how it
+        // should look like in Sailfish.
+        // TextSelectionController {}
 
         Rectangle {
             id: verticalScrollDecorator
