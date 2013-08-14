@@ -23,6 +23,8 @@ void BrowserService::openUrl(QStringList args)
 {
     if(args.count() > 0) {
         emit openUrlRequested(args.first());
+    } else {
+        emit openUrlRequested(QString());
     }
 }
 
