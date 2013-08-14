@@ -17,6 +17,7 @@ BuildRequires:  pkgconfig(Qt5DBus)
 BuildRequires:  pkgconfig(Qt5Concurrent)
 BuildRequires:  pkgconfig(nemotransferengine-qt5)
 BuildRequires:  pkgconfig(mlite5)
+BuildRequires:  pkgconfig(qdeclarative5-boostable)
 BuildRequires:  qt5-qttools
 BuildRequires:  qt5-qttools-linguist
 BuildRequires:  gdb
@@ -27,6 +28,7 @@ Requires: embedlite-components-qt5 >= 1.3.4
 Requires: sailfish-browser-settings = %{version}
 Requires: qt5-qtdeclarative-import-localstorageplugin
 Requires: qt5-plugin-imageformat-ico
+Requires: mapplauncherd-booster-silica-qt5
 
 %description
 Sailfish Web Browser

@@ -27,15 +27,23 @@
 #include "downloadmanager.h"
 #include "settingmanager.h"
 
+#ifdef HAS_BOOSTER
+#include <MDeclarativeCache>
+#endif
+
 Q_DECL_EXPORT int main(int argc, char *argv[])
 {
     // Gecko embedding crashes with threaded render loop
     // that's why this workaround.
     // See JB#7358
     setenv("QML_BAD_GUI_RENDER_LOOP", "1", 1);
-    QScopedPointer<QGuiApplication> app(new QGuiApplication(argc, argv));
+#ifdef HAS_BOOSTER
+    QScopedPointer<QGuiApplication> app(MDeclarativeCache::qApplication(argc, argv));
+    QScopedPointer<QQuickView> view(MDeclarativeCache::qQuickView());
+#else
+    QScopedPointer<QGuiApplication> app(new QApplication(argc, argv));
     QScopedPointer<QQuickView> view(new QQuickView);
-
+#endif
     app->setQuitOnLastWindowClosed(true);
 
     BrowserService *service = new BrowserService(app.data());
