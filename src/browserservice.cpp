@@ -7,16 +7,29 @@
 #include "browserservice.h"
 #include "dbusadaptor.h"
 #include <QDBusConnection>
-#include <QDebug>
 
-BrowserService::BrowserService(QObject * parent): QObject(parent)
+#define SAILFISH_BROWSER_SERVICE QLatin1String("org.sailfishos.browser")
+
+BrowserService::BrowserService(QObject * parent)
+    : QObject(parent)
+    , m_registered(true)
 {
     new DBusAdaptor(this);
     QDBusConnection connection = QDBusConnection::sessionBus();
-    connection.registerService("org.sailfishos.browser");
-    if(!connection.registerObject("/", this)) {
-        qWarning() << "Cannot register to DBus, other instance likely running";
+    if(!connection.registerService(SAILFISH_BROWSER_SERVICE) ||
+            !connection.registerObject("/", this)) {
+        m_registered = false;
     }
+}
+
+bool BrowserService::registered() const
+{
+    return m_registered;
+}
+
+QString BrowserService::serviceName() const
+{
+    return SAILFISH_BROWSER_SERVICE;
 }
 
 void BrowserService::openUrl(QStringList args)

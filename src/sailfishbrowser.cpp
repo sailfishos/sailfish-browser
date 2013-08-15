@@ -14,6 +14,7 @@
 #include <QTranslator>
 #include <QDir>
 #include <QScreen>
+#include <QDBusConnection>
 
 //#include "qdeclarativemozview.h"
 #include "quickmozview.h"
@@ -47,6 +48,24 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     app->setQuitOnLastWindowClosed(true);
 
     BrowserService *service = new BrowserService(app.data());
+    // Handle command line launch
+    if (!service->registered()) {
+        QDBusMessage message = QDBusMessage::createMethodCall(service->serviceName(), "/",
+                                                              service->serviceName(), "openUrl");
+        QStringList args;
+        // Pass url argument if given
+        if (app->arguments().count() > 1) {
+            args << app->arguments().at(1);
+        }
+        message.setArguments(QVariantList() << args);
+
+        QDBusConnection::sessionBus().asyncCall(message);
+        if (QCoreApplication::hasPendingEvents()) {
+            QCoreApplication::processEvents();
+        }
+
+        return 0;
+    }
 
     QString translationPath("/usr/share/translations/");
     QTranslator engineeringEnglish;
