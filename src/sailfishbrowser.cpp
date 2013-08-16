@@ -101,6 +101,9 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     QObject::connect(QMozContext::GetInstance(), SIGNAL(onInitialized()),
                      settingMgr, SLOT(initialize()));
 
+    QObject::connect(QMozContext::GetInstance(), SIGNAL(newWindowRequested(QString,uint,QNewWindowResponse*)),
+                     utils, SLOT(openUrl(QString)));
+
     bool isDesktop = qApp->arguments().contains("-desktop");
 
     QString path;
