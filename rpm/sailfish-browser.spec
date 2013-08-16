@@ -55,7 +55,8 @@ Summary: Tests for Sailfish browser
 License:   Prop
 Group: Applications/Internet
 Requires:   %{name} = %{version}-%{release}
-Requires:   qtest-qml
+Requires:   qt5-qtdeclarative-devel-tools
+Requires:   qt5-qtdeclarative-import-qttest
 
 %description tests
 Unit tests and additional data needed for functional tests
