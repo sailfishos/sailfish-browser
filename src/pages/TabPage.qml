@@ -69,95 +69,94 @@ Page {
         id: listHeader
 
         Column {
+            width: parent.width
+            height: childrenRect.height + Theme.paddingMedium
+
             PageHeader {
                 //% "Tabs and Favorites"
                 title: qsTrId("sailfish_browser-he-tabs_and_favorites")
             }
 
-            Item {
-                width: list.width
-                height: tabs.height + 2 * Theme.paddingMedium
+            Grid {
+                id: tabs
+                columns: 2
+                rows: Math.ceil(browserPage.tabs.count / 2)
+                spacing: Theme.paddingMedium
+                anchors {
+                    leftMargin: Theme.paddingLarge
+                    rightMargin: Theme.paddingLarge
+                    left: parent.left
+                    right: parent.right
+                }
 
-                Grid {
-                    id: tabs
-                    columns: 2
-                    rows: Math.ceil(browserPage.tabs.count / 2)
-                    spacing: Theme.paddingMedium
-                    anchors {
-                        margins: Theme.paddingMedium
-                        top: parent.top;
-                        left: parent.left
-                    }
+                Repeater {
+                    model: browserPage.tabs
 
-                    Repeater {
-                        model: browserPage.tabs
+                    Item {
+                        id: tabItem
 
-                        Item {
-                            id: tabItem
+                        property bool menuOpen: tabContextMenu !== null && tabContextMenu.parent === tabItem
 
-                            property bool menuOpen: tabContextMenu !== null && tabContextMenu.parent === tabItem
+                        width: tabDelegate.width
+                        height: menuOpen ? width + tabContextMenu.height: width
 
-                            width: tabDelegate.width
-                            height: menuOpen ? width + tabContextMenu.height: width
+                        BackgroundItem {
+                            id: tabDelegate
 
-                            BackgroundItem {
-                                id: tabDelegate
+                            width: (tabs.width - (tabs.columns - 1) * tabs.spacing) / tabs.columns
+                            height: width
 
-                                width: list.width / 2 - 2 * Theme.paddingMedium
-                                height: width
+                            Rectangle {
+                                anchors.fill: parent
+                                color: Theme.highlightBackgroundColor
+                                opacity: Theme.highlightBackgroundOpacity
+                                visible: !thumb.visible
+                            }
 
-                                Rectangle {
-                                    anchors.fill: parent
-                                    color: Theme.highlightBackgroundColor
-                                    opacity: Theme.highlightBackgroundOpacity
-                                    visible: !thumb.visible
-                                }
+                            Label {
+                                width: parent.width
+                                anchors.centerIn: parent.Center
+                                text: url
+                                visible: !thumb.visible
+                                font.pixelSize: Theme.fontSizeExtraSmall
+                                color: Theme.secondaryColor
+                                wrapMode:Text.WrapAnywhere
+                            }
 
-                                Label {
+                            Image {
+                                id: thumb
+                                asynchronous: true
+                                source: "" // thumbPath.path ? thumbPath.path : ""
+                                fillMode: Image.PreserveAspectCrop
+                                sourceSize {
                                     width: parent.width
-                                    anchors.centerIn: parent.Center
-                                    text: url
-                                    visible: !thumb.visible
-                                    font.pixelSize: Theme.fontSizeExtraSmall
-                                    color: Theme.secondaryColor
-                                    wrapMode:Text.WrapAnywhere
+                                    height: width
                                 }
-
-                                Image {
-                                    id: thumb
-                                    asynchronous: true
-                                    source: "" // thumbPath.path ? thumbPath.path : ""
-                                    fillMode: Image.PreserveAspectCrop
-                                    sourceSize {
-                                        width: parent.width
-                                        height: width
-                                    }
-                                    visible: false // TODO status !== Image.Error && thumbPath.path !== ""
+                                visible: false // TODO status !== Image.Error && thumbPath.path !== ""
+                            }
+                            onClicked: {
+                                browserPage.loadTab(model.index)
+                                window.pageStack.pop(browserPage, true)
+                            }
+                            onPressAndHold: {
+                                if (!tabContextMenu) {
+                                    tabContextMenu = tabContextMenuComponent.createObject(tabs)
                                 }
-                                onClicked: {
-                                    browserPage.loadTab(model.index)
-                                    window.pageStack.pop(browserPage, true)
-                                }
-                                onPressAndHold: {
-                                    if (!tabContextMenu) {
-                                        tabContextMenu = tabContextMenuComponent.createObject(tabs)
-                                    }
-                                    tabContextMenu.index = index
-                                    tabContextMenu.show(tabItem)
-                                }
+                                tabContextMenu.index = index
+                                tabContextMenu.show(tabItem)
+                            }
 
-                                Rectangle {
-                                    anchors.fill: parent
+                            Rectangle {
+                                anchors.fill: parent
 
-                                    property bool active: pressed
-                                    property real highlightOpacity: 0.5
+                                property bool active: pressed
+                                property real highlightOpacity: 0.5
 
-                                    color: Theme.highlightBackgroundColor
-                                    opacity: active ? highlightOpacity : 0.0
-                                    Behavior on opacity {
-                                        FadeAnimation {
-                                            duration: 100
-                                        }
+                                color: Theme.highlightBackgroundColor
+                                opacity: active ? highlightOpacity : 0.0
+                                Behavior on opacity {
+                                    FadeAnimation {
+                                        duration: 100
                                     }
                                 }
                             }
