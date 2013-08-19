@@ -48,9 +48,11 @@ void DeclarativeBookmarkModel::removeBookmark(const QString& url) {
     }
 
     int index = bookmarks.take(url);
+    beginRemoveRows(QModelIndex(), index, index);
     delete titles[index];
     titles.removeAt(index);
     bookmarks.remove(url, index);
+    endRemoveRows();
 
     emit countChanged();
     save();

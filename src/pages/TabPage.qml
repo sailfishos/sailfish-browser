@@ -33,6 +33,13 @@ Page {
                     favoriteContextMenu.hide()
                 }
             }
+
+            MenuItem {
+                //: "Remove favorited / bookmarked web page"
+                //% "Remove favorite"
+                text: qsTrId("sailfish_browser-me-remove_favorite")
+                onClicked: browserPage.favorites.removeBookmark(url)
+            }
         }
     }
 
@@ -43,6 +50,7 @@ Page {
             id: tabContextMenu
 
             property int index: 0
+
             MenuItem {
                 //% "Close tab"
                 text: qsTrId("sailfish_browser-me-close_tab")
@@ -55,6 +63,8 @@ Page {
                     }
                 }
             }
+
+            // Here we could also have bookmark this tab but tab model doesn't contain title or favIcon
         }
     }
 
