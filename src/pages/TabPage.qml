@@ -14,7 +14,6 @@ Page {
     id: page
 
     property BrowserPage browserPage
-    property Item contextMenu
 
     backNavigation: browserPage.tabs.count > 0
 
@@ -22,6 +21,8 @@ Page {
         id: favoriteContextMenuComponent
 
         ContextMenu {
+            id: favoriteContextMenu
+
             property string url: ""
             MenuItem {
                 //% "Open in new tab"
@@ -29,7 +30,7 @@ Page {
                 onClicked: {
                     browserPage.newTab(url, true)
                     pageStack.pop(undefined, true)
-                    contextMenu.hide()
+                    favoriteContextMenu.hide()
                 }
             }
         }
@@ -84,10 +85,8 @@ Page {
                 rows: Math.ceil(browserPage.tabs.count / 2)
                 spacing: Theme.paddingMedium
                 anchors {
-                    leftMargin: Theme.paddingLarge
-                    rightMargin: Theme.paddingLarge
-                    left: parent.left
-                    right: parent.right
+                    left: parent.left; leftMargin: Theme.paddingLarge
+                    right: parent.right; rightMargin: Theme.paddingLarge
                 }
 
                 Repeater {
@@ -162,54 +161,43 @@ Page {
 
         model: browserPage.favorites
 
-        delegate: Item {
-            id: favoriteItem
-
-            property bool menuOpen: contextMenu !== null && contextMenu.parent === favoriteItem
-
+        delegate: ListItem {
             width: list.width
-            height: menuOpen ? favoriteRow.height + contextMenu.height : favoriteRow.height
+            menu: favoriteContextMenuComponent
+            showMenuOnPressAndHold: false
 
-            BackgroundItem {
-                id: favoriteRow
-
-                width: list.width
-                anchors.topMargin: Theme.paddingLarge
+            Row {
+                height: parent.height
+                spacing: Theme.paddingMedium
+                anchors {
+                    left: parent.left
+                    right: parent.right
+                    leftMargin: Theme.paddingLarge
+                    rightMargin: Theme.paddingLarge
+                }
 
                 FaviconImage {
                     id: faviconImage
-                    anchors {
-                        verticalCenter: titleLabel.verticalCenter
-                        left: parent.left; leftMargin: Theme.paddingMedium
-                    }
+                    anchors.verticalCenter: titleLabel.verticalCenter
                     favicon: model.favicon
                     link: url
                 }
 
                 Label {
                     id: titleLabel
-                    anchors {
-                        leftMargin: Theme.paddingMedium
-                        left: faviconImage.right
-                        verticalCenter: parent.verticalCenter
-                    }
-                    width: parent.width - x
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: parent.width - faviconImage.width
                     text: title
+                    color: highlighted ? Theme.highlightColor : Theme.primaryColor
                     truncationMode: TruncationMode.Fade
                 }
-
-                onClicked: {
-                    browserPage.load(url)
-                    window.pageStack.pop(browserPage, true)
-                }
-                onPressAndHold: {
-                    if (!contextMenu) {
-                        contextMenu = favoriteContextMenuComponent.createObject(list)
-                    }
-                    contextMenu.url = url
-                    contextMenu.show(favoriteItem)
-                }
             }
+
+            onClicked: {
+                browserPage.load(url)
+                window.pageStack.pop(browserPage, true)
+            }
+            onPressAndHold: showMenu({"url": url})
         }
 
         VerticalScrollDecorator {}
