@@ -15,7 +15,6 @@ Page {
 
     property BrowserPage browserPage
     property Item contextMenu
-    property Item tabContextMenu
 
     backNavigation: browserPage.tabs.count > 0
 
@@ -40,6 +39,8 @@ Page {
         id: tabContextMenuComponent
 
         ContextMenu {
+            id: tabContextMenu
+
             property int index: 0
             MenuItem {
                 //% "Close tab"
@@ -92,75 +93,47 @@ Page {
                 Repeater {
                     model: browserPage.tabs
 
-                    Item {
-                        id: tabItem
+                    ListItem {
+                        id: tabDelegate
 
-                        property bool menuOpen: tabContextMenu !== null && tabContextMenu.parent === tabItem
+                        width: (tabs.width - (tabs.columns - 1) * tabs.spacing) / tabs.columns
+                        contentHeight: width
+                        showMenuOnPressAndHold: false
+                        menu: tabContextMenuComponent
 
-                        width: tabDelegate.width
-                        height: menuOpen ? width + tabContextMenu.height: width
-
-                        BackgroundItem {
-                            id: tabDelegate
-
-                            width: (tabs.width - (tabs.columns - 1) * tabs.spacing) / tabs.columns
-                            height: width
-
-                            Rectangle {
-                                anchors.fill: parent
-                                color: Theme.highlightBackgroundColor
-                                opacity: Theme.highlightBackgroundOpacity
-                                visible: !thumb.visible
-                            }
-
-                            Label {
-                                width: parent.width
-                                anchors.centerIn: parent.Center
-                                text: url
-                                visible: !thumb.visible
-                                font.pixelSize: Theme.fontSizeExtraSmall
-                                color: Theme.secondaryColor
-                                wrapMode:Text.WrapAnywhere
-                            }
-
-                            Image {
-                                id: thumb
-                                asynchronous: true
-                                source: "" // thumbPath.path ? thumbPath.path : ""
-                                fillMode: Image.PreserveAspectCrop
-                                sourceSize {
-                                    width: parent.width
-                                    height: width
-                                }
-                                visible: false // TODO status !== Image.Error && thumbPath.path !== ""
-                            }
-                            onClicked: {
-                                browserPage.loadTab(model.index)
-                                window.pageStack.pop(browserPage, true)
-                            }
-                            onPressAndHold: {
-                                if (!tabContextMenu) {
-                                    tabContextMenu = tabContextMenuComponent.createObject(tabs)
-                                }
-                                tabContextMenu.index = index
-                                tabContextMenu.show(tabItem)
-                            }
-
-                            Rectangle {
-                                anchors.fill: parent
-
-                                property bool active: pressed
-                                property real highlightOpacity: 0.5
-
-                                color: Theme.highlightBackgroundColor
-                                opacity: active ? highlightOpacity : 0.0
-                                Behavior on opacity {
-                                    FadeAnimation {
-                                        duration: 100
-                                    }
-                                }
-                            }
+                        Rectangle {
+                            anchors.fill: parent
+                            color: Theme.highlightBackgroundColor
+                            opacity: Theme.highlightBackgroundOpacity
+                            visible: !thumb.visible
                         }
+
+                        Label {
+                            width: parent.width
+                            anchors.centerIn: parent.Center
+                            text: url
+                            visible: !thumb.visible
+                            font.pixelSize: Theme.fontSizeExtraSmall
+                            color: Theme.secondaryColor
+                            wrapMode:Text.WrapAnywhere
+                        }
+
+                        Image {
+                            id: thumb
+                            asynchronous: true
+                            source: "" // thumbPath.path ? thumbPath.path : ""
+                            fillMode: Image.PreserveAspectCrop
+                            sourceSize {
+                                width: parent.width
+                                height: width
+                            }
+                            visible: false // TODO status !== Image.Error && thumbPath.path !== ""
+                        }
+                        onClicked: {
+                            browserPage.loadTab(model.index)
+                            window.pageStack.pop(browserPage, true)
+                        }
+                        onPressAndHold: showMenu({"index": index})
                     }
                 }
             }
