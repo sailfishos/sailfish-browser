@@ -8,23 +8,21 @@
 
 import QtQuick 2.0
 import Sailfish.Silica 1.0
-import Sailfish.Silica.theme 1.0
 
-Dialog {
+UserPrompt {
     property alias text: label.text
 
-    DialogHeader {
-        //: Text on the Accept dialog button that accepts browser alert messages
-        //% "Ok"
-        acceptText: qsTrId("sailfish_browser-he-accept_alert")
-    }
+    //: Text on the Accept dialog button that accepts browser alert messages
+    //% "Ok"
+    acceptText: qsTrId("sailfish_browser-he-accept_alert")
 
     Label {
         id: label
 
         anchors.centerIn: parent
-        width: parent.width - (2 * Theme.paddingMedium)
+        width: parent.width - (2 * Theme.paddingLarge)
         wrapMode: Text.Wrap
         horizontalAlignment: Text.AlignHCenter
+        color: Theme.highlightColor
     }
 }
