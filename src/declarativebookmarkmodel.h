@@ -9,6 +9,7 @@
 #define DECLARATIVEBOOKMARKMODEL_H
 
 #include <QAbstractListModel>
+#include <QStringList>
 #include <QMap>
 #include <QQmlParserStatus>
 
@@ -48,7 +49,7 @@ signals:
 private:
     void save();
 
-    QMultiMap<QString, int> bookmarks;
-    QList<Bookmark*> titles;
+    QMap<QString, Bookmark*> bookmarks;
+    QStringList bookmarkUrls;
 };
 #endif // DECLARATIVEBOOKMARKMODEL_H
