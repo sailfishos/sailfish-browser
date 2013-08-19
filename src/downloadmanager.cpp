@@ -74,16 +74,19 @@ void DownloadManager::recvObserve(const QString message, const QVariant data)
                                          TransferEngineData::TransferFinished,
                                          QString("success"));
         m_statusCache.insert(downloadId, DownloadDone);
+        checkAllTransfers();
     } else if (msg == "dl-fail") {
         m_transferClient->finishTransfer(m_download2transferMap.value(downloadId),
                                          TransferEngineData::TransferInterrupted,
                                          QString("browser failure"));
         m_statusCache.insert(downloadId, DownloadFailed);
+        checkAllTransfers();
     } else if (msg == "dl-cancel") {
         m_transferClient->finishTransfer(m_download2transferMap.value(downloadId),
                                          TransferEngineData::TransferCanceled,
                                          QString("download canceled"));
         m_statusCache.insert(downloadId, DownloadCanceled);
+        checkAllTransfers();
     }
 }
 
@@ -121,5 +124,25 @@ void DownloadManager::restartTransfer(int transferId)
         m_transferClient->finishTransfer(transferId,
                                          TransferEngineData::TransferInterrupted,
                                          QString("Transfer got unavailable"));
+    }
+}
+
+bool DownloadManager::existActiveTransfers()
+{
+    bool exists(false);
+
+    foreach (Status st, m_statusCache) {
+        if (st == DownloadStarted) {
+            exists = true;
+            break;
+        }
+    }
+    return exists;
+}
+
+void DownloadManager::checkAllTransfers()
+{
+    if (!existActiveTransfers()) {
+        emit allTransfersCompleted();
     }
 }

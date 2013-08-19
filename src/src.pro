@@ -48,7 +48,8 @@ SOURCES += \
     dbusadaptor.cpp \
     declarativewebthumbnail.cpp \
     downloadmanager.cpp \
-    settingmanager.cpp
+    settingmanager.cpp \
+    closeeventfilter.cpp
 
 # C++ headers
 HEADERS += \
@@ -60,7 +61,8 @@ HEADERS += \
     dbusadaptor.h \
     declarativewebthumbnail.h \
     downloadmanager.h \
-    settingmanager.h
+    settingmanager.h \
+    closeeventfilter.h
 
 # QML files and folders
 qml.files = *.qml pages cover browser.qml

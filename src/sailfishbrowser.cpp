@@ -27,6 +27,7 @@
 #include "declarativewebthumbnail.h"
 #include "downloadmanager.h"
 #include "settingmanager.h"
+#include "closeeventfilter.h"
 
 #ifdef HAS_BOOSTER
 #include <MDeclarativeCache>
@@ -42,10 +43,10 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     QScopedPointer<QGuiApplication> app(MDeclarativeCache::qApplication(argc, argv));
     QScopedPointer<QQuickView> view(MDeclarativeCache::qQuickView());
 #else
-    QScopedPointer<QGuiApplication> app(new QApplication(argc, argv));
+    QScopedPointer<QGuiApplication> app(new QGuiApplication(argc, argv));
     QScopedPointer<QQuickView> view(new QQuickView);
 #endif
-    app->setQuitOnLastWindowClosed(true);
+    app->setQuitOnLastWindowClosed(false);
 
     BrowserService *service = new BrowserService(app.data());
     // Handle command line launch
@@ -93,9 +94,11 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     view->rootContext()->setContextProperty("WebUtils", utils);
     view->rootContext()->setContextProperty("MozContext", QMozContext::GetInstance());
 
-    DownloadManager dlMgr(service);
-    QObject::connect(app.data(), SIGNAL(lastWindowClosed()),
-                     &dlMgr, SLOT(cancelActiveTransfers()));
+    DownloadManager  * dlMgr = new DownloadManager(service, app.data());
+    CloseEventFilter * clsEventFilter = new CloseEventFilter(dlMgr, app.data());
+    view->installEventFilter(clsEventFilter);
+    QObject::connect(service, SIGNAL(openUrlRequested(QString)),
+                     clsEventFilter, SLOT(cancelStopApplication()));
 
     SettingManager * settingMgr = new SettingManager(app.data());
     QObject::connect(QMozContext::GetInstance(), SIGNAL(onInitialized()),
@@ -116,8 +119,6 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     view->showFullScreen();
 
     // Setup embedding
-    QObject::connect(app.data(), SIGNAL(lastWindowClosed()),
-                     QMozContext::GetInstance(), SLOT(stopEmbedding()));
     QTimer::singleShot(0, QMozContext::GetInstance(), SLOT(runEmbedding()));
 
     return app->exec();

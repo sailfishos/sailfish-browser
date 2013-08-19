@@ -24,6 +24,11 @@ class DownloadManager : public QObject
 public:
     explicit DownloadManager(BrowserService *service, QObject *parent = 0);
 
+    bool existActiveTransfers();
+
+signals:
+    void allTransfersCompleted();
+
 public slots:
     void cancelActiveTransfers();
 
@@ -39,6 +44,8 @@ private:
         DownloadFailed,
         DownloadCanceled
     };
+
+    void checkAllTransfers();
 
     // TODO: unlike Gecko downloads and Sailfish transfers these mappings
     //       are not persistent -> after user has browser closed transfers can't be
