@@ -105,6 +105,7 @@ Page {
                     placeholderText: qsTrId("sailfish_browser-ph-search")
                     color: Theme.primaryColor
                     focusOutBehavior: FocusBehavior.KeepFocus
+                    inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase
 
                     EnterKey.onClicked: {
                         Qt.inputMethod.hide()
