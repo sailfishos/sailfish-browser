@@ -14,8 +14,6 @@ Page {
     id: page
 
     property BrowserPage browserPage
-    property Item contextMenu
-    property Item tabContextMenu
 
     backNavigation: browserPage.tabs.count > 0
 
@@ -23,6 +21,8 @@ Page {
         id: favoriteContextMenuComponent
 
         ContextMenu {
+            id: favoriteContextMenu
+
             property string url: ""
             MenuItem {
                 //% "Open in new tab"
@@ -30,8 +30,15 @@ Page {
                 onClicked: {
                     browserPage.newTab(url, true)
                     pageStack.pop(undefined, true)
-                    contextMenu.hide()
+                    favoriteContextMenu.hide()
                 }
+            }
+
+            MenuItem {
+                //: "Remove favorited / bookmarked web page"
+                //% "Remove favorite"
+                text: qsTrId("sailfish_browser-me-remove_favorite")
+                onClicked: browserPage.favorites.removeBookmark(url)
             }
         }
     }
@@ -40,7 +47,10 @@ Page {
         id: tabContextMenuComponent
 
         ContextMenu {
+            id: tabContextMenu
+
             property int index: 0
+
             MenuItem {
                 //% "Close tab"
                 text: qsTrId("sailfish_browser-me-close_tab")
@@ -53,6 +63,8 @@ Page {
                     }
                 }
             }
+
+            // Here we could also have bookmark this tab but tab model doesn't contain title or favIcon
         }
     }
 
@@ -69,99 +81,68 @@ Page {
         id: listHeader
 
         Column {
+            width: parent.width
+            height: childrenRect.height + Theme.paddingMedium
+
             PageHeader {
                 //% "Tabs and Favorites"
                 title: qsTrId("sailfish_browser-he-tabs_and_favorites")
             }
 
-            Item {
-                width: list.width
-                height: tabs.height + 2 * Theme.paddingMedium
+            Grid {
+                id: tabs
+                columns: 2
+                rows: Math.ceil(browserPage.tabs.count / 2)
+                spacing: Theme.paddingMedium
+                anchors {
+                    left: parent.left; leftMargin: Theme.paddingLarge
+                    right: parent.right; rightMargin: Theme.paddingLarge
+                }
 
-                Grid {
-                    id: tabs
-                    columns: 2
-                    rows: Math.ceil(browserPage.tabs.count / 2)
-                    spacing: Theme.paddingMedium
-                    anchors {
-                        margins: Theme.paddingMedium
-                        top: parent.top;
-                        left: parent.left
-                    }
+                Repeater {
+                    model: browserPage.tabs
 
-                    Repeater {
-                        model: browserPage.tabs
+                    ListItem {
+                        id: tabDelegate
 
-                        Item {
-                            id: tabItem
+                        width: (tabs.width - (tabs.columns - 1) * tabs.spacing) / tabs.columns
+                        contentHeight: width
+                        showMenuOnPressAndHold: false
+                        menu: tabContextMenuComponent
 
-                            property bool menuOpen: tabContextMenu !== null && tabContextMenu.parent === tabItem
-
-                            width: tabDelegate.width
-                            height: menuOpen ? width + tabContextMenu.height: width
-
-                            BackgroundItem {
-                                id: tabDelegate
-
-                                width: list.width / 2 - 2 * Theme.paddingMedium
-                                height: width
-
-                                Rectangle {
-                                    anchors.fill: parent
-                                    color: Theme.highlightBackgroundColor
-                                    opacity: Theme.highlightBackgroundOpacity
-                                    visible: !thumb.visible
-                                }
-
-                                Label {
-                                    width: parent.width
-                                    anchors.centerIn: parent.Center
-                                    text: url
-                                    visible: !thumb.visible
-                                    font.pixelSize: Theme.fontSizeExtraSmall
-                                    color: Theme.secondaryColor
-                                    wrapMode:Text.WrapAnywhere
-                                }
-
-                                Image {
-                                    id: thumb
-                                    asynchronous: true
-                                    source: "" // thumbPath.path ? thumbPath.path : ""
-                                    fillMode: Image.PreserveAspectCrop
-                                    sourceSize {
-                                        width: parent.width
-                                        height: width
-                                    }
-                                    visible: false // TODO status !== Image.Error && thumbPath.path !== ""
-                                }
-                                onClicked: {
-                                    browserPage.loadTab(model.index)
-                                    window.pageStack.pop(browserPage, true)
-                                }
-                                onPressAndHold: {
-                                    if (!tabContextMenu) {
-                                        tabContextMenu = tabContextMenuComponent.createObject(tabs)
-                                    }
-                                    tabContextMenu.index = index
-                                    tabContextMenu.show(tabItem)
-                                }
-
-                                Rectangle {
-                                    anchors.fill: parent
-
-                                    property bool active: pressed
-                                    property real highlightOpacity: 0.5
-
-                                    color: Theme.highlightBackgroundColor
-                                    opacity: active ? highlightOpacity : 0.0
-                                    Behavior on opacity {
-                                        FadeAnimation {
-                                            duration: 100
-                                        }
-                                    }
-                                }
-                            }
+                        Rectangle {
+                            anchors.fill: parent
+                            color: Theme.highlightBackgroundColor
+                            opacity: Theme.highlightBackgroundOpacity
+                            visible: !thumb.visible
                         }
+
+                        Label {
+                            width: parent.width
+                            anchors.centerIn: parent.Center
+                            text: url
+                            visible: !thumb.visible
+                            font.pixelSize: Theme.fontSizeExtraSmall
+                            color: Theme.secondaryColor
+                            wrapMode:Text.WrapAnywhere
+                        }
+
+                        Image {
+                            id: thumb
+                            asynchronous: true
+                            source: "" // thumbPath.path ? thumbPath.path : ""
+                            fillMode: Image.PreserveAspectCrop
+                            sourceSize {
+                                width: parent.width
+                                height: width
+                            }
+                            visible: false // TODO status !== Image.Error && thumbPath.path !== ""
+                        }
+                        onClicked: {
+                            browserPage.loadTab(model.index)
+                            window.pageStack.pop(browserPage, true)
+                        }
+                        onPressAndHold: showMenu({"index": index})
                     }
                 }
             }
@@ -190,54 +171,43 @@ Page {
 
         model: browserPage.favorites
 
-        delegate: Item {
-            id: favoriteItem
-
-            property bool menuOpen: contextMenu !== null && contextMenu.parent === favoriteItem
-
+        delegate: ListItem {
             width: list.width
-            height: menuOpen ? favoriteRow.height + contextMenu.height : favoriteRow.height
+            menu: favoriteContextMenuComponent
+            showMenuOnPressAndHold: false
 
-            BackgroundItem {
-                id: favoriteRow
-
-                width: list.width
-                anchors.topMargin: Theme.paddingLarge
+            Row {
+                height: parent.height
+                spacing: Theme.paddingMedium
+                anchors {
+                    left: parent.left
+                    right: parent.right
+                    leftMargin: Theme.paddingLarge
+                    rightMargin: Theme.paddingLarge
+                }
 
                 FaviconImage {
                     id: faviconImage
-                    anchors {
-                        verticalCenter: titleLabel.verticalCenter
-                        left: parent.left; leftMargin: Theme.paddingMedium
-                    }
+                    anchors.verticalCenter: titleLabel.verticalCenter
                     favicon: model.favicon
                     link: url
                 }
 
                 Label {
                     id: titleLabel
-                    anchors {
-                        leftMargin: Theme.paddingMedium
-                        left: faviconImage.right
-                        verticalCenter: parent.verticalCenter
-                    }
-                    width: parent.width - x
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: parent.width - faviconImage.width
                     text: title
+                    color: highlighted ? Theme.highlightColor : Theme.primaryColor
                     truncationMode: TruncationMode.Fade
                 }
-
-                onClicked: {
-                    browserPage.load(url)
-                    window.pageStack.pop(browserPage, true)
-                }
-                onPressAndHold: {
-                    if (!contextMenu) {
-                        contextMenu = favoriteContextMenuComponent.createObject(list)
-                    }
-                    contextMenu.url = url
-                    contextMenu.show(favoriteItem)
-                }
             }
+
+            onClicked: {
+                browserPage.load(url)
+                window.pageStack.pop(browserPage, true)
+            }
+            onPressAndHold: showMenu({"url": url})
         }
 
         VerticalScrollDecorator {}
