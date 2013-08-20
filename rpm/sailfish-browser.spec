@@ -29,6 +29,7 @@ Requires: sailfish-browser-settings = %{version}
 Requires: qt5-qtdeclarative-import-localstorageplugin
 Requires: qt5-plugin-imageformat-ico
 Requires: mapplauncherd-booster-silica-qt5
+Requires: desktop-file-utils
 
 %description
 Sailfish Web Browser
@@ -87,6 +88,10 @@ rm -rf %{buildroot}
 # >> install post
 # << install post
 
+%post
+# >> post
+/usr/bin/update-desktop-database -q
+# << post
 
 %files
 %defattr(-,root,root,-)
