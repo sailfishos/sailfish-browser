@@ -16,13 +16,7 @@ UserPrompt {
     //% "Ok"
     acceptText: qsTrId("sailfish_browser-he-accept_confirm")
 
-    Label {
+    PromptLabel {
         id: label
-
-        anchors.centerIn: parent
-        width: parent.width - (2 * Theme.paddingLarge)
-        wrapMode: Text.Wrap
-        horizontalAlignment: Text.AlignHCenter
-        color: Theme.highlightColor
     }
 }

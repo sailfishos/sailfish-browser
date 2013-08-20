@@ -6,20 +6,46 @@
         document.getElementById("msg").innerHTML=inputtxt
       }
 
-      function disp_alert() {
+      function disp_short_alert() {
+        alert("Lorem ipsum.")
+        document.getElementById("msg").innerHTML="Short Alert pressed"
+      }
+
+      function disp_medium_alert() {
+        alert("Lorem ipsum dolor sit amet.")
+        document.getElementById("msg").innerHTML="Medium Alert pressed"
+      }
+
+      function disp_long_alert() {
         alert("Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor" +
                 "incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis " +
                 "nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. " +
                 "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu " +
                 "fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in " +
                 "culpa qui officia deserunt mollit anim id est laborum.")
-        document.getElementById("msg").innerHTML="Alert pressed"
+        document.getElementById("msg").innerHTML="Long Alert pressed"
       }
 
-      function disp_confirm() {
+      function disp_short_confirm() {
         var inputtxt = confirm("Ok or cancel?") ? "ok" : "cancel"
         document.getElementById("msg").innerHTML=inputtxt
       }
+
+      function disp_medium_confirm() {
+        var inputtxt = confirm("Lorem ipsum ok or cancel?") ? "ok" : "cancel"
+        document.getElementById("msg").innerHTML=inputtxt
+      }
+
+      function disp_long_confirm() {
+        var inputtxt = confirm("Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor" +
+        "incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis " +
+        "nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. " +
+        "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu " +
+        "fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in " +
+        "culpa qui officia deserunt mollit anim id est laborum. Ok or cancel?") ? "ok" : "cancel"
+        document.getElementById("msg").innerHTML=inputtxt
+      }
+
     </script>
     <style>
       button {
@@ -31,8 +57,12 @@
     </style>
   </head>
   <body>
-    <button onclick="disp_alert()">Alert</button> <br /><br />
-    <button onclick="disp_confirm()">Confirm</button> <br/><br />
+    <button onclick="disp_short_alert()">Short Alert</button> <br /><br />
+    <button onclick="disp_medium_alert()">Medium Alert</button> <br /><br />
+    <button onclick="disp_long_alert()">Long Alert</button> <br /><br />
+    <button onclick="disp_short_confirm()">Short Confirm</button> <br/><br />
+    <button onclick="disp_medium_confirm()">Medium Confirm</button> <br/><br />
+    <button onclick="disp_long_confirm()">Long Confirm</button> <br/><br />
     <button onclick="disp_prompt()">Prompt</button>
 
     <div id="msg" ></div>
