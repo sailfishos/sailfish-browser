@@ -5,44 +5,29 @@
 **
 ****************************************************************************/
 
-
 import QtQuick 2.0
 import Sailfish.Silica 1.0
-import Sailfish.Silica.theme 1.0
 
-Dialog {
+UserPrompt {
     id: dialog
 
-    property alias text: label.text
+    property alias text: input.placeholderText
     property alias value: input.text
 
     canAccept: input.text.length > 0
+    //: Text on the Accept dialog button that accepts browser's prompt() messages
+    //% "Ok"
+    acceptText: qsTrId("sailfish_browser-he-accept_prompt")
 
-    DialogHeader {
-        //: Text on the Accept dialog button that accepts browser's prompt() messages
-        //% "Ok"
-        acceptText: qsTrId("sailfish_browser-he-accept_prompt")
-    }
+    TextField {
+        id: input
 
-    Column {
         anchors.centerIn: parent
-        width: parent.width - (2 * Theme.paddingMedium)
-        spacing: Theme.paddingSmall
-
-        Label {
-            id: label
-
-            width: parent.width
-            wrapMode: Text.Wrap
-        }
-
-        TextField {
-            id: input
-
-            focus: true
-            width: parent.width
-            EnterKey.enabled: text.length > 0
-            EnterKey.onClicked: dialog.accept()
-        }
+        width: parent.width
+        focus: true
+        label: text.length > 0 ? dialog.text : ""
+        inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase
+        EnterKey.enabled: text.length > 0
+        EnterKey.onClicked: dialog.accept()
     }
 }
