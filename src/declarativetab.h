@@ -8,12 +8,15 @@
 #ifndef DECLARATIVETAB_H
 #define DECLARATIVETAB_H
 
+#include <QImage>
 #include <QObject>
+#include <QQuickItem>
+#include <QStringList>
 
 #include "tab.h"
 #include "link.h"
 
-class DeclarativeTab : public QObject {
+class DeclarativeTab : public QQuickItem {
     Q_OBJECT
 
     Q_PROPERTY(int tabId READ tabId WRITE setTabId NOTIFY tabIdChanged)
@@ -24,7 +27,8 @@ class DeclarativeTab : public QObject {
     Q_PROPERTY(bool canGoBack READ canGoBack NOTIFY canGoBackChanged)
 
 public:
-    DeclarativeTab(QObject *parent = 0);
+    DeclarativeTab(QQuickItem *parent = 0);
+    ~DeclarativeTab();
 
     QString thumbnailPath() const;
     void setThumbnailPath(QString thumbnailPath);
@@ -50,7 +54,6 @@ public slots:
     void tabChanged(Tab tab);
     void updateThumbPath(QString url, QString path);
     void updateTitle(QString url, QString title);
-    void screenCaptured(QString url, QString path);
 
 signals:
     void thumbPathChanged();
@@ -62,10 +65,12 @@ signals:
 
 private:
     void init();
+    void saveToFile(QString url, QString path, QImage image, qreal rotate);
 
     int m_tabId;
     Link m_link;
     int m_nextLinkId, m_previousLinkId;
+    QStringList paths;
 };
 
 #endif // DECLARATIVETAB_H

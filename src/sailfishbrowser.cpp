@@ -20,7 +20,6 @@
 #include "quickmozview.h"
 #include "qmozcontext.h"
 
-#include "screengrabber.h"
 #include "declarativebookmarkmodel.h"
 #include "declarativewebutils.h"
 #include "browserservice.h"
@@ -92,8 +91,6 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 
     app->setApplicationName(QString("sailfish-browser"));
     app->setOrganizationName(QString("org.sailfishos"));
-
-    ScreenGrabber::instance()->setView(view.data());
 
     DeclarativeWebUtils * utils = new DeclarativeWebUtils(app->arguments(), service, app.data());
     view->rootContext()->setContextProperty("WebUtils", utils);

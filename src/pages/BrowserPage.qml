@@ -81,7 +81,8 @@ Page {
 
     function captureScreen() {
         if (status == PageStatus.Active) {
-            tab.captureScreen(webContent.url, 0, 0, webContent.width, webContent.width, window.screenRotation)
+            tab.captureScreen(webContent.url, 0, 0, webContent.width,
+                              webContent.width, window.screenRotation)
         }
     }
 

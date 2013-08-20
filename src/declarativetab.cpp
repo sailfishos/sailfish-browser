@@ -7,13 +7,32 @@
 
 #include "declarativetab.h"
 
-#include "dbmanager.h"
-#include "screengrabber.h"
+#include <QQuickWindow>
+#include <QQuickView>
+#include <QFile>
+#include <QDir>
+#include <QTransform>
+#include <QStandardPaths>
+#include <QtConcurrentRun>
+#include <QTime>
 
-DeclarativeTab::DeclarativeTab(QObject *parent) :
-    QObject(parent), m_tabId(0), m_nextLinkId(0), m_previousLinkId(0)
+#include "dbmanager.h"
+
+DeclarativeTab::DeclarativeTab(QQuickItem *parent) :
+    QQuickItem(parent), m_tabId(0), m_nextLinkId(0), m_previousLinkId(0)
 {
     init();
+}
+
+DeclarativeTab::~DeclarativeTab()
+{
+    for (int i = 0; i < paths.size(); ++i) {
+        QFile f(paths.at(i));
+        if (f.exists()) {
+            f.remove();
+        }
+    }
+    paths.clear();
 }
 
 void DeclarativeTab::init()
@@ -26,8 +45,6 @@ void DeclarativeTab::init()
             this, SLOT(updateThumbPath(QString,QString)));
     connect(DBManager::instance(), SIGNAL(titleChanged(QString,QString)),
             this, SLOT(updateTitle(QString,QString)));
-    connect(ScreenGrabber::instance(), SIGNAL(screenCaptured(QString,QString)),
-            this, SLOT(screenCaptured(QString,QString)));
 }
 
 QString DeclarativeTab::thumbnailPath() const {
@@ -97,13 +114,6 @@ void DeclarativeTab::navigateTo(QString url, QString title, QString path)
     }
 }
 
-void DeclarativeTab::captureScreen(QString url, int x, int y, int width, int height, qreal rotate)
-{
-    if (m_link.isValid()) {
-        ScreenGrabber::instance()->screenCapture(url, x, y, width, height, rotate);
-    }
-}
-
 void DeclarativeTab::updateTab(QString url, QString title, QString path)
 {
     if (url != m_link.url() || title != m_link.title() || path != m_link.title()) {
@@ -114,33 +124,36 @@ void DeclarativeTab::updateTab(QString url, QString title, QString path)
 // Data changed in DB
 void DeclarativeTab::tabChanged(Tab tab)
 {
-    if (tab.tabId() == m_tabId) {
-        bool thumbChanged = m_link.thumbPath() != tab.currentLink().thumbPath();
-        bool titleStringChanged = m_link.title() != tab.currentLink().title();
-        bool urlStringChanged = m_link.url() != tab.currentLink().url();
-
-        m_link = tab.currentLink();
-
-        if (urlStringChanged) {
-            emit urlChanged();
-        }
-        if (thumbChanged) {
-            emit thumbPathChanged();
-        }
-        if (titleStringChanged) {
-            emit titleChanged();
-        }
-
-        if (m_nextLinkId != tab.nextLink()) {
-            m_nextLinkId = tab.nextLink();
-            emit canGoFowardChanged();
-        }
-
-        if (m_previousLinkId != tab.previousLink()) {
-            m_previousLinkId = tab.previousLink();
-            emit canGoBackChanged();
-        }
+    if (tab.tabId() != m_tabId) {
+        return;
     }
+
+    bool thumbChanged = m_link.thumbPath() != tab.currentLink().thumbPath();
+    bool titleStringChanged = m_link.title() != tab.currentLink().title();
+    bool urlStringChanged = m_link.url() != tab.currentLink().url();
+
+    m_link = tab.currentLink();
+
+    if (urlStringChanged) {
+        emit urlChanged();
+    }
+    if (thumbChanged) {
+        emit thumbPathChanged();
+    }
+    if (titleStringChanged) {
+        emit titleChanged();
+    }
+
+    if (m_nextLinkId != tab.nextLink()) {
+        m_nextLinkId = tab.nextLink();
+        emit canGoFowardChanged();
+    }
+
+    if (m_previousLinkId != tab.previousLink()) {
+        m_previousLinkId = tab.previousLink();
+        emit canGoBackChanged();
+    }
+
 }
 
 // Data changed in DB
@@ -165,7 +178,43 @@ void DeclarativeTab::updateTitle(QString url, QString title)
     }
 }
 
-void DeclarativeTab::screenCaptured(QString url, QString path)
+void DeclarativeTab::captureScreen(QString url, int x, int y, int width, int height, qreal rotate)
 {
-    DBManager::instance()->updateThumbPath(url, path);
+    if(!window()) {
+        return;
+    }
+    if (!window()->isActive()) {
+        return;
+    }
+
+    QImage image = window()->grabWindow();
+    QImage cropped = image.copy(x, y, width, height);
+    int randomValue = abs(qrand());
+    QString path = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + "/" + QString::number(randomValue);
+    path.append(QString("-thumb.png"));
+
+    // asynchronous save to avoid the slow I/O
+    QtConcurrent::run(this, &DeclarativeTab::saveToFile, url, path, cropped, rotate);
+
+}
+
+void DeclarativeTab::saveToFile(QString url, QString path, QImage image, qreal rotate) {
+    QString cacheLocation = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+    QDir dir(cacheLocation);
+    if(!dir.exists()) {
+        if(!dir.mkpath(cacheLocation)) {
+            qWarning() << "Can't create directory "+ cacheLocation;
+            return;
+        }
+    }
+    QTransform transform;
+    transform.rotate(rotate);
+
+    image = image.transformed(transform);
+    if(image.save(path)) {
+        DBManager::instance()->updateThumbPath(url, path);
+        paths << path;
+    } else {
+        qWarning() << Q_FUNC_INFO << "failed to save image" << path;
+    }
 }

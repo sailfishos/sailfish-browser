@@ -39,7 +39,6 @@ isEmpty(DEFAULT_COMPONENT_PATH) {
 
 # C++ sources
 SOURCES += \
-    screengrabber.cpp \
     sailfishbrowser.cpp \
     declarativebookmarkmodel.cpp \
     bookmark.cpp \
@@ -59,7 +58,6 @@ SOURCES += \
 
 # C++ headers
 HEADERS += \
-    screengrabber.h \
     declarativebookmarkmodel.h \
     bookmark.h \
     declarativewebutils.h \
