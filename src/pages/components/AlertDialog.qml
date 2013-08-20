@@ -5,7 +5,6 @@
 **
 ****************************************************************************/
 
-
 import QtQuick 2.0
 import Sailfish.Silica 1.0
 
@@ -16,13 +15,7 @@ UserPrompt {
     //% "Ok"
     acceptText: qsTrId("sailfish_browser-he-accept_alert")
 
-    Label {
+    PromptLabel {
         id: label
-
-        anchors.centerIn: parent
-        width: parent.width - (2 * Theme.paddingLarge)
-        wrapMode: Text.Wrap
-        horizontalAlignment: Text.AlignHCenter
-        color: Theme.highlightColor
     }
 }
