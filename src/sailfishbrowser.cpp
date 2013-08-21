@@ -20,14 +20,15 @@
 #include "quickmozview.h"
 #include "qmozcontext.h"
 
-#include "declarativebrowsertab.h"
 #include "declarativebookmarkmodel.h"
 #include "declarativewebutils.h"
 #include "browserservice.h"
-#include "declarativewebthumbnail.h"
 #include "downloadmanager.h"
 #include "settingmanager.h"
 #include "closeeventfilter.h"
+#include "declarativetab.h"
+#include "declarativetabmodel.h"
+#include "declarativehistorymodel.h"
 
 #ifdef HAS_BOOSTER
 #include <MDeclarativeCache>
@@ -78,7 +79,9 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     qApp->installTranslator(&translator);
 
     qmlRegisterType<DeclarativeBookmarkModel>("Sailfish.Browser", 1, 0, "BookmarkModel");
-    qmlRegisterType<DeclarativeWebThumbnail>("Sailfish.Browser", 1, 0, "WebThumbnail");
+    qmlRegisterType<DeclarativeTabModel>("Sailfish.Browser", 1, 0, "TabModel");
+    qmlRegisterType<DeclarativeHistoryModel>("Sailfish.Browser", 1, 0, "HistoryModel");
+    qmlRegisterType<DeclarativeTab>("Sailfish.Browser", 1, 0, "Tab");
 
     QString componentPath(DEFAULT_COMPONENTS_PATH);
     QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/components/EmbedLiteBinComponents.manifest"));
@@ -89,7 +92,6 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     app->setApplicationName(QString("sailfish-browser"));
     app->setOrganizationName(QString("org.sailfishos"));
 
-    DeclarativeBrowserTab * tab = new DeclarativeBrowserTab(view.data(), app.data());
     DeclarativeWebUtils * utils = new DeclarativeWebUtils(app->arguments(), service, app.data());
     view->rootContext()->setContextProperty("WebUtils", utils);
     view->rootContext()->setContextProperty("MozContext", QMozContext::GetInstance());

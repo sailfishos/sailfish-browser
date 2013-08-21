@@ -8,22 +8,18 @@
 
 import QtQuick 2.0
 import Sailfish.Silica 1.0
-import QtQuick.LocalStorage 2.0
 import Qt5Mozilla 1.0
 import Sailfish.Browser 1.0
 import "components"
 
-import "history.js" as History
 
 Page {
     id: browserPage
 
     property alias tabs: tabModel
     property alias favorites: favoriteModel
-    property int currentTabIndex
-
+    property alias currentTabIndex: tabModel.currentTabIndex
     property variant webEngine: webContent.child
-
 
     property string favicon
 
@@ -36,87 +32,61 @@ Page {
     // pass arguments to openAuthDialog().
     property variant _authData: null
 
+    // Indicates that the url being loaded was entered from the current tab,
+    // used to catch redirects so that the url can be updated in db.
+    property bool loadingInitiatedByTab: false
 
     function newTab(link, foreground) {
-        var id = History.addTab(link,"")
-        tabModel.append({"thumbPath": {"path":""}, "url": link, "tabId": id})
-
-        if(foreground) {
-            historyModel.clear()
-            currentTabIndex = tabModel.count - 1
-            History.saveSetting("ActiveTab", id.toString())
-
-            if (link !== "" && webEngine.url != link) {
-                webEngine.load(link)
+        if (foreground) {
+            if (webContent.loading) {
+                webContent.stop()
             }
+            tab.loadWhenTabChanges = true
         }
+        tabModel.addTab(link, foreground)
     }
 
     function closeTab(index) {
-        var tabIndex = index ? currentTabIndex : index
-
         if (tabModel.count == 0) {
             return
         }
-        History.deleteTab(tabModel.get(tabIndex).tabId)
-        tabModel.remove(tabIndex)
-        currentTabIndex = tabModel.count - 1
-        historyModel.clear()
-        if (tabModel.count >= 1) {
-            History.loadTabHistory(tabModel.get(currentTabIndex).tabId, historyModel)
-            // url from tabModel is only used for new tabs (without history)
-            var url = historyModel.count > 0 ? historyModel.get(0).url : tabModel.get(currentTabIndex).url
-            load(url)
-            History.saveSetting("ActiveTab", tabModel.get(currentTabIndex).tabId.toString())
+        if (tabModel.count > 0) {
+            tab.loadWhenTabChanges = true
         }
+
+        var tabIndex = index ? currentTabIndex : index
+        tabModel.remove(tabIndex)
     }
 
     function load(url) {
         if (tabModel.count == 0) {
             newTab(url, true)
-        } else if (webEngine.url != url) {
+        }
+        if (url !== "" && webEngine.url != url) {
             webEngine.load(url)
         }
     }
 
     function loadTab(index) {
-        if (currentTabIndex !== index) {
-            currentTabIndex = index
-            historyModel.clear()
-
-            History.loadTabHistory(tabModel.get(currentTabIndex).tabId, historyModel)
-            // url from tabModel is only used for new tabs (without history)
-            var url = historyModel.count > 0 ? historyModel.get(0).url : tabModel.get(currentTabIndex).url
-            load(url)
-            History.saveSetting("ActiveTab", tabModel.get(currentTabIndex).tabId.toString())
+        if (webContent.loading) {
+            webContent.stop()
         }
+        tab.loadWhenTabChanges = true;
+        currentTabIndex = index
     }
 
     function deleteTabHistory() {
         historyModel.clear()
-        History.deleteTabHistory(tabModel.get(currentTabIndex).tabId)
     }
 
-    function storeTab() {
-        var webThumb
-
-        // Try to capture fresh screen capture if still active
-        // if not, then try to use from history and if that does not exist, lets not store a thumb
+    function captureScreen() {
         if (status == PageStatus.Active) {
-            webThumb = BrowserTab.screenCapture(0, 0, webContent.width, webContent.width, window.screenRotation)
-        } else if (historyModel.count > 0 && historyModel.get(0).url == webEngine.url) {
-            webThumb = historyModel.get(0).icon
-        } else {
-            webThumb = {"path":"", "source":""}
+            tab.captureScreen(webContent.url, 0, 0, webContent.width,
+                              webContent.width, window.screenRotation)
         }
-
-        tabModel.set(currentTabIndex, {"thumbPath" : webThumb, "url" : webEngine.url.toString()})
-        History.updateTab(tabModel.get(currentTabIndex).tabId, webEngine.url, webThumb)
     }
 
     function closeAllTabs() {
-        historyModel.clear()
-        History.deleteAllTabs()
         tabModel.clear()
     }
 
@@ -173,12 +143,43 @@ Page {
         }
     }
 
-    ListModel {
-        id: historyModel
+    function saveTab(url, title) {
+        if (browserPage.loadingInitiatedByTab) {
+            browserPage.loadingInitiatedByTab = false
+            tab.updateTab(url, title, "")
+        } else {
+            tab.navigateTo(url, title, "")
+        }
     }
 
-    ListModel {
-        id:tabModel
+    TabModel {
+        id: tabModel
+    }
+
+    HistoryModel {
+        id: historyModel
+
+        tabId: tabModel.currentTabId
+    }
+
+    Tab {
+        id: tab
+
+        // Indicates whether the next url that is set to this Tab element will be loaded.
+        // Used when new tabs are created, tabs are loaded, and with back and forward,
+        // All of these actions load data asynchronously from the DB, and the changes
+        // are reflected in the Tab element.
+        property bool loadWhenTabChanges: false
+
+        tabId: tabModel.currentTabId
+
+        onUrlChanged: {
+            if (loadWhenTabChanges) {
+                loadWhenTabChanges = false
+                browserPage.loadingInitiatedByTab = true
+                load(url)
+            }
+        }
     }
 
     DownloadRemorsePopup { id: downloadPopup }
@@ -206,15 +207,9 @@ Page {
         //               return (_contextMenu != null && (_contextMenu.height > tools.height)) ? browserPage.height - _contextMenu.height : browserPage.height - tools.height
         //               return (_contextMenu != null && (_contextMenu.height > tools.height)) ? 200 : 300
 
-        onTitleChanged: {
-            // Update title in model, title can come after load finished
-            // and then we already have element in history
-            if (historyModel.count > 0
-                    && historyModel.get(0).url == url
-                    && title !== historyModel.get(0).title ) {
-                historyModel.setProperty(0, "title", title)
-            }
-        }
+        onTitleChanged: saveTab(url, title)
+
+        onUrlChanged: saveTab(url, "")
 
         onBgcolorChanged: {
             var bgLightness = WebUtils.getLightness(bgcolor)
@@ -256,9 +251,10 @@ Page {
             } else if (historyModel.count == 0 ) {
                 browserPage.load(WebUtils.homePage)
             } else {
-                browserPage.load(historyModel.get(0).url)
+                browserPage.load(tab.url)
             }
         }
+
         onLoadingChanged: {
             progressBar.opacity = loading ? 1.0 : 0.0
             if (!loading) {
@@ -267,16 +263,10 @@ Page {
                 favicon = ""
             }
 
-            if (!loading && url != "about:blank" &&
-                    (historyModel.count == 0 || url != historyModel.get(0).url)) {
-                var webThumb
-                if (status == PageStatus.Active) {
-                    webThumb = BrowserTab.screenCapture(0, 0, webContent.width, webContent.width, window.screenRotation)
-                } else {
-                    webThumb = {"path":"", "source":""}
-                }
-                historyModel.insert(0, {"title": title, "url": webContent.url.toString(), "icon": webThumb} )
-                History.addUrl(url, title, webThumb, tabModel.get(currentTabIndex).tabId)
+            // store tab data
+            if (!loading && url != "about:blank" && url) {
+                saveTab(url, title)
+                captureScreen()
             }
         }
         onLoadProgressChanged: {
@@ -504,6 +494,7 @@ Page {
 
     Item {
         id: tools
+
         anchors {
             left: parent.left
             right: parent.right
@@ -522,7 +513,7 @@ Page {
             id: toolsrow
 
             function openControlPage() {
-                storeTab()
+                captureScreen()
                 var sendUrl = (webEngine.url != WebUtils.initialPage) ? webEngine.url : ""
                 pageStack.push(_controlPageComponent, {historyModel: historyModel, url: sendUrl}, PageStackAction.Animated)
             }
@@ -539,8 +530,11 @@ Page {
             IconButton {
                 id:backIcon
                 icon.source: "image://theme/icon-m-back"
-                enabled: webEngine.canGoBack
-                onClicked: webEngine.goBack()
+                enabled: tab.canGoBack
+                onClicked: {
+                    tab.loadWhenTabChanges = true
+                    tab.goBack()
+                }
             }
 
             IconButton {
@@ -553,8 +547,7 @@ Page {
                 icon.source: "image://theme/icon-m-levels"
 
                 onClicked:  {
-                    storeTab()
-                    var sendUrl = (webEngine.url != WebUtils.initialPage) ? webEngine.url : ""
+                    captureScreen()
                     pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage}, PageStackAction.Immediate)
                 }
             }
@@ -566,8 +559,11 @@ Page {
             IconButton {
                 id: right
                 icon.source: "image://theme/icon-m-forward"
-                enabled: webEngine.canGoForward
-                onClicked: webEngine.goForward()
+                enabled: tab.canGoForward
+                onClicked: {
+                    tab.loadWhenTabChanges = true
+                    tab.goForward()
+                }
             }
         }
     }
@@ -599,7 +595,7 @@ Page {
         target: WebUtils
         onOpenUrlRequested: {
             if (webEngine.url != "") {
-                storeTab()
+                captureScreen()
                 for (var i = 0; i < tabs.count; i++) {
                     if (tabs.get(i).url == url) {
                         // Found it in tabs, load if needed
@@ -610,7 +606,7 @@ Page {
                         break
                     }
                 }
-                if (tabs.get(currentTabIndex).url != url) {
+                if (tab.url != url) {
                     // Not found in tabs list, create newtab and load
                     newTab(url, true)
 
@@ -629,18 +625,6 @@ Page {
     }
 
     Component.onCompleted: {
-        History.loadTabs(tabModel)
-        if (tabModel.count == 0) {
-            newTab("", true)
-        } else {
-            var tabId = parseInt(History.loadSetting("ActiveTab"))
-            for(var i=0; i< tabModel.count; i++) {
-                if(tabModel.get(i).tabId == tabId) {
-                    currentTabIndex = i
-                }
-            }
-            History.loadTabHistory(tabId, historyModel)
-        }
         // Since we dont have booster with gecko yet (see JB#5910) lets compile the
         // components needed by tab page here so that click on tab icon wont be too long
         if (!_controlPageComponent) {
@@ -660,11 +644,6 @@ Page {
         id: auxTimer
 
         interval: 1000
-    }
-
-    WorkerScript {
-        id: dbWorker
-        source: "dbWorker.js"
     }
 
     BrowserNotification {

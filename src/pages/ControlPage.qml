@@ -191,7 +191,7 @@ Page {
 
                 Image {
                     id: iconImage
-                    source: icon.path !== "" ? icon.path : "image://theme/icon-m-region"
+                    source: thumbnailPath !== "" ? thumbnailPath : "image://theme/icon-m-region"
                     asynchronous: true
                     anchors.top: parent.top
                     sourceSize {
