@@ -34,7 +34,7 @@ QHash<int, QByteArray> DeclarativeBookmarkModel::roleNames() const
 void DeclarativeBookmarkModel::addBookmark(const QString& url, const QString& title, const QString& favicon) {
     beginInsertRows(QModelIndex(), rowCount(), rowCount());
     bookmarks.insert(url, new Bookmark(title, url, favicon));
-    bookmarkUrls = bookmarks.keys();
+    bookmarkUrls.append(url);
     endInsertRows();
 
     emit countChanged();
@@ -51,7 +51,7 @@ void DeclarativeBookmarkModel::removeBookmark(const QString& url) {
         beginRemoveRows(QModelIndex(), index, index);
         Bookmark* bookmark = bookmarks.take(url);
         delete bookmark;
-        bookmarkUrls = bookmarks.keys();
+        bookmarkUrls.removeAt(index);
         endRemoveRows();
 
         emit countChanged();
@@ -73,16 +73,17 @@ void DeclarativeBookmarkModel::componentComplete() {
             for(i=array.begin(); i != array.end(); ++i) {
                 if((*i).isObject()) {
                     QJsonObject obj = (*i).toObject();
+                    QString url = obj.value("url").toString();
                     Bookmark* m = new Bookmark(obj.value("title").toString(),
-                                               obj.value("url").toString(),
+                                               url,
                                                obj.value("favicon").toString());
-                    bookmarks.insert(m->url(), m);
+                    bookmarks.insert(url, m);
+                    bookmarkUrls.append(url);
                 }
             }
         } else {
             qWarning() << "Bookmarks.json should be an array of items";
         }
-        bookmarkUrls = bookmarks.keys();
         emit countChanged();
         file.close();
     }
