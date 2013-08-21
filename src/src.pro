@@ -77,5 +77,7 @@ HEADERS += \
 # QML files and folders
 qml.files = *.qml pages cover browser.qml
 
-OTHER_FILES = pages/BrowserPage.qml \
+OTHER_FILES = *.qml \
+              pages/*.qml \
+              pages/components/*.qml \
               rpm/sailfish-browser.spec
