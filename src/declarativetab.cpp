@@ -109,14 +109,16 @@ void DeclarativeTab::navigateTo(QString url, QString title, QString path)
 {
     if (url != m_link.url()) {
         DBManager::instance()->navigateTo(m_tabId, url, title, path);
-    } else if (title != m_link.title() || path != m_link.title()) {
+    } else {
         updateTab(url, title, path);
     }
 }
 
 void DeclarativeTab::updateTab(QString url, QString title, QString path)
 {
-    if (url != m_link.url() || title != m_link.title() || path != m_link.title()) {
+    if ((!url.isEmpty() && url != m_link.url())
+            || (!title.isEmpty() && title != m_link.title())
+            || (!path.isEmpty() && path != m_link.title())) {
         DBManager::instance()->updateTab(m_tabId, url, title, path);
     }
 }

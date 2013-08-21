@@ -143,6 +143,15 @@ Page {
         }
     }
 
+    function saveTab(url, title) {
+        if (browserPage.loadingInitiatedByTab) {
+            browserPage.loadingInitiatedByTab = false
+            tab.updateTab(url, title, "")
+        } else {
+            tab.navigateTo(url, title, "")
+        }
+    }
+
     TabModel {
         id: tabModel
     }
@@ -198,12 +207,9 @@ Page {
         //               return (_contextMenu != null && (_contextMenu.height > tools.height)) ? browserPage.height - _contextMenu.height : browserPage.height - tools.height
         //               return (_contextMenu != null && (_contextMenu.height > tools.height)) ? 200 : 300
 
-        onTitleChanged: {
-            // Update title in model, title can come after load finished
-            if (!loading && tab.url == webContent.url) {
-                tab.title = title
-            }
-        }
+        onTitleChanged: saveTab(url, title)
+
+        onUrlChanged: saveTab(url, "")
 
         onBgcolorChanged: {
             var bgLightness = WebUtils.getLightness(bgcolor)
@@ -259,12 +265,7 @@ Page {
 
             // store tab data
             if (!loading && url != "about:blank" && url) {
-                if (browserPage.loadingInitiatedByTab) {
-                    browserPage.loadingInitiatedByTab = false
-                    tab.updateTab(url, title, "");
-                } else {
-                    tab.navigateTo(url, title, "");
-                }
+                saveTab(url, title)
                 captureScreen()
             }
         }
