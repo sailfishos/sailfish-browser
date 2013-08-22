@@ -94,9 +94,15 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     mozContext->setPref(QString("browser.download.manager.quitBehavior"), QVariant(2));
     // TODO: this doesn't really work too
     mozContext->setPref(QString("browser.helperApps.deleteTempFileOnExit"), QVariant(true));
-    mozContext->addObserver(QString("embed:download"));
 
-    mozContext->addObserver(QString("clipboard:setdata"));
+    // subscribe to gecko messages
+    mozContext->addObservers(QStringList()
+                             << "clipboard:setdata"
+                             << "embed:download"
+                             << "embed:search");
+
+    // Enable internet search
+    mozContext->setPref(QString("keyword.enabled"), QVariant(true));
 }
 
 void DeclarativeWebUtils::openUrl(QString url)
@@ -139,7 +145,25 @@ void DeclarativeWebUtils::handleObserve(const QString message, const QVariant da
 
         // check if we copied password
         if (!dataMap.value("private").toBool()) {
-            clipboard->setText(data.toMap().value("data").toString());
+            clipboard->setText(dataMap.value("data").toString());
+        }
+    } else if (message == "embed:search") {
+        QString msg = dataMap.value("msg").toString();
+        if (msg == "init") {
+            if (!dataMap.value("defaultEngine").isValid()) {
+                QMozContext *mozContext = QMozContext::GetInstance();
+                QVariantMap loadsearch;
+
+                // load opensearch descriptions
+                loadsearch.insert(QString("msg"), QVariant(QString("loadxml")));
+                loadsearch.insert(QString("uri"), QVariant(QString("chrome://embedlite/content/google.xml")));
+                loadsearch.insert(QString("confirm"), QVariant(false));
+                mozContext->sendObserve("embedui:search", QVariant(loadsearch));
+                loadsearch.insert(QString("uri"), QVariant(QString("chrome://embedlite/content/bing.xml")));
+                mozContext->sendObserve("embedui:search", QVariant(loadsearch));
+                loadsearch.insert(QString("uri"), QVariant(QString("chrome://embedlite/content/yahoo.xml")));
+                mozContext->sendObserve("embedui:search", QVariant(loadsearch));
+            }
         }
     }
 }

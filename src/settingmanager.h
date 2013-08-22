@@ -22,9 +22,11 @@ public slots:
 
 private slots:
     void clearPrivateData();
+    void setSearchEngine();
 
 private:
     MGConfItem *m_clearPrivateDataConfItem;
+    MGConfItem *m_searchEngineConfItem;
 };
 
 #endif
