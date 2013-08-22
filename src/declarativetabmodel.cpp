@@ -91,6 +91,21 @@ void DeclarativeTabModel::clear()
     DBManager::instance()->saveSetting("currentTab", QString("%1").arg(m_currentTabIndex));
 }
 
+
+bool DeclarativeTabModel::activateTab(const QString& url)
+{
+    if (m_tabs[m_currentTabIndex].currentLink().url() == url) {
+        return true;
+    }
+    for (int i = 0; i < m_tabs.size(); i++) {
+        if (m_tabs.at(i).currentLink().url() == url) {
+            setCurrentTabIndex(i);
+            return true;
+        }
+    }
+    return false;
+}
+
 int DeclarativeTabModel::rowCount(const QModelIndex & parent) const {
     Q_UNUSED(parent);
     return m_tabs.count();
