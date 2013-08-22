@@ -17,10 +17,6 @@ Item {
 
     Rectangle {
         id: progressRect
-        anchors {
-            top: parent.top
-            left: parent.left
-        }
         height: parent.height
         width: opacity > 0.0 ? progressBar.progress * parent.width : 0
         color: Theme.highlightBackgroundColor
