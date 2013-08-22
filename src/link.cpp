@@ -17,6 +17,11 @@ Link::Link() :
 {
 }
 
+Link::Link(const Link& l) :
+    m_linkId(l.m_linkId), m_url(l.m_url), m_thumbPath(l.m_thumbPath), m_title(l.m_title)
+{
+}
+
 int Link::linkId() const
 {
     return m_linkId;
@@ -64,5 +69,5 @@ bool Link::operator==(const Link &other) const
 
 bool Link::operator!=(const Link &other) const
 {
-    return !(m_url == other.url());
+    return !(*this == other);
 }

@@ -63,6 +63,15 @@ void DeclarativeHistoryModel::setTabId(int tabId)
     }
 }
 
+void DeclarativeHistoryModel::search(const QString &filter)
+{
+    if (filter != "") {
+        DBManager::instance()->getHistory(filter);
+    } else {
+        load();
+    }
+}
+
 int DeclarativeHistoryModel::rowCount(const QModelIndex & parent) const {
     Q_UNUSED(parent);
     return m_links.count();
@@ -104,19 +113,47 @@ void DeclarativeHistoryModel::load()
 void DeclarativeHistoryModel::tabHistoryAvailable(int tabId, QList<Link> linkList)
 {
     if (tabId == m_tabId) {
-        beginResetModel();
-        m_links = linkList;
-        endResetModel();
-        emit countChanged();
+        updateModel(linkList);
     }
 }
 
 void DeclarativeHistoryModel::historyAvailable(QList<Link> linkList)
 {
-    if (m_tabId <= 0) {
-        beginResetModel();
-        m_links = linkList;
-        endResetModel();
+    updateModel(linkList);
+}
+
+void DeclarativeHistoryModel::updateModel(QList<Link> linkList)
+{
+    int i = 0;
+    int startIndex = -1;
+    for (i = 0; i < linkList.count() && i < m_links.count(); i++) {
+        if (m_links.at(i) != linkList.at(i)) {
+            m_links[i] = linkList.at(i);
+            if (startIndex < 0) {
+                startIndex = i;
+            }
+        } else if (startIndex >= 0) {
+            emit dataChanged(index(startIndex), index(i-1));
+            startIndex = -1;
+        }
+    }
+
+    if (startIndex >= 0) {
+        emit dataChanged(index(startIndex), index(m_links.count()-1));
+    }
+
+    int difference = linkList.count() - m_links.count();
+    if (difference != 0) {
+        if (difference < 0) {
+            beginRemoveRows(QModelIndex(), linkList.count(), m_links.count()-1);
+            m_links.erase(m_links.begin()+linkList.count(), m_links.end());
+            endRemoveRows();
+        } else {
+            beginInsertRows(QModelIndex(), m_links.count(), linkList.count()-1);
+            m_links.append(linkList.mid(m_links.count()));
+            endInsertRows();
+        }
+
         emit countChanged();
     }
 }

@@ -40,6 +40,9 @@ Page {
         id: historyList
 
         anchors.fill: parent
+        // Following is to prevent editor from losing focus when model count
+        // becomes non-zero
+        currentIndex: -1
 
         header: Column {
             width: parent.width
@@ -212,12 +215,12 @@ Page {
                     }
 
                     Label {
-                        text: title
+                        text: Theme.highlightText(title, urlField.text, Theme.highlightColor)
                         truncationMode: TruncationMode.Fade
                         width: parent.width
                     }
                     Label {
-                        text: url
+                        text: Theme.highlightText(url, urlField.text, Theme.highlightColor)
                         width: parent.width
                         font.pixelSize: Theme.fontSizeSmall
                         color: Theme.secondaryColor
@@ -240,6 +243,11 @@ Page {
             }
         }
         VerticalScrollDecorator {}
+    }
+
+    Connections {
+        target: page.status === PageStatus.Active ? urlField : null
+        onTextChanged: historyModel.search(urlField.text)
     }
 
     onStatusChanged: {

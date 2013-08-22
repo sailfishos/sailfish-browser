@@ -8,6 +8,7 @@ class Link
 public:
     explicit Link(int linkId, QString url, QString thumbPath, QString title);
     explicit Link();
+    Link(const Link& l);
 
     int linkId() const;
 

@@ -37,7 +37,7 @@ public:
     void updateTitle(QString url, QString title);
 
     void clearHistory();
-    void getHistory();
+    void getHistory(const QString &filter = "");
     void clearTabHistory(int tabId);
     void getTabHistory(int tabId);
 

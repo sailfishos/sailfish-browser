@@ -117,9 +117,9 @@ void DBManager::clearHistory()
     QMetaObject::invokeMethod(worker, "clearHistory", Qt::QueuedConnection);
 }
 
-void DBManager::getHistory()
+void DBManager::getHistory(const QString &filter)
 {
-    QMetaObject::invokeMethod(worker, "getHistory", Qt::QueuedConnection);
+    QMetaObject::invokeMethod(worker, "getHistory", Qt::QueuedConnection, Q_ARG(QString, filter));
 }
 
 void DBManager::clearTabHistory(int tabId)

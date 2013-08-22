@@ -41,7 +41,7 @@ public slots:
 
     void goForward(int tabId);
     void goBack(int tabId);
-    void getHistory();
+    void getHistory(const QString &filter);
     void getTabHistory(int tabId);
     void clearHistory();
     void clearTabHistory(int tabId);
