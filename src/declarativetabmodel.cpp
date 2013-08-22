@@ -94,7 +94,7 @@ void DeclarativeTabModel::clear()
 
 bool DeclarativeTabModel::activateTab(const QString& url)
 {
-    if (m_tabs[m_currentTabIndex].currentLink().url() == url) {
+    if (m_currentTabIndex >= 0 && m_tabs.at(m_currentTabIndex).currentLink().url() == url) {
         return true;
     }
     for (int i = 0; i < m_tabs.size(); i++) {
