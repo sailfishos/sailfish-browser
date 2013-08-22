@@ -596,20 +596,9 @@ Page {
         onOpenUrlRequested: {
             if (webEngine.url != "") {
                 captureScreen()
-                for (var i = 0; i < tabs.count; i++) {
-                    if (tabs.get(i).url == url) {
-                        // Found it in tabs, load if needed
-                        if (i != currentTabIndex) {
-                            currentTabIndex = i
-                            load(url)
-                        }
-                        break
-                    }
-                }
-                if (tab.url != url) {
+                if (!tabs.activateTab(url)) {
                     // Not found in tabs list, create newtab and load
                     newTab(url, true)
-
                 }
             } else {
                 // New browser instance, just load the content
