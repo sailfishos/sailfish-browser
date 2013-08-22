@@ -108,14 +108,8 @@ Page {
 
                     EnterKey.onClicked: {
                         Qt.inputMethod.hide()
-                        var url = urlField.text
-
-                        if (url.indexOf("http://") < 0
-                                && url.indexOf("https://") < 0
-                                && url.indexOf("file://") < 0) {
-                            url = "http://" + url
-                        }
-                        browserPage.load(url)
+                        // let gecko figure out how to handle malformed URLs
+                        browserPage.load(urlField.text)
                         pageStack.pop(undefined, true)
                     }
 
