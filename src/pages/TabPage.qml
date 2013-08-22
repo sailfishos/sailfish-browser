@@ -48,7 +48,9 @@ Page {
         ContextMenu {
             id: tabContextMenu
 
-            property int index: 0
+            property int index
+            property string url
+            property string title
 
             MenuItem {
                 //% "Close tab"
@@ -59,6 +61,25 @@ Page {
                         browserPage.closeTab(index)
                     } else {
                         browserPage.closeAllTabs()
+                    }
+                }
+            }
+
+            MenuItem {
+                property bool isFavorite: browserPage.favorites.contains(url)
+
+                text: isFavorite ?
+                          //: "Remove page of tab from favorites"
+                          //% "Remove page from favorites"
+                          qsTrId("sailfish_browser-me-remove_page_from_favorites") :
+                          //: "Add page of tab to favorites"
+                          //% "Add page to favorites"
+                          qsTrId("sailfish_browser-me-add_page_to_favorites")
+                onClicked: {
+                    if (isFavorite) {
+                        browserPage.favorites.removeBookmark(url)
+                    } else {
+                        browserPage.favorites.addBookmark(url, title, "")
                     }
                 }
             }
@@ -141,7 +162,12 @@ Page {
                             browserPage.loadTab(model.index)
                             window.pageStack.pop(browserPage, true)
                         }
-                        onPressAndHold: showMenu({"index": index})
+                        onPressAndHold: showMenu(
+                                            {
+                                                "index": index,
+                                                "url": url,
+                                                "title": title
+                                            })
                     }
                 }
             }
