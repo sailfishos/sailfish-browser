@@ -509,7 +509,7 @@ Page {
                 }
 
                 IconButton {
-                    icon.source: "image://theme/icon-m-levels"
+                    icon.source: "image://theme/icon-m-tabs"
                     onClicked: {
                         captureScreen()
                         pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage})
