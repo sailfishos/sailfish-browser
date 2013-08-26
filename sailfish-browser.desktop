@@ -1,7 +1,8 @@
 [Desktop Entry]
 Type=Application
 Name=Web Browser
-Name[zh_CN]=浏览器
+X-MeeGo-Logical-Id=sailfish-browser-ap-name
+X-MeeGo-Translation-Catalog=sailfish-browser
 Icon=icon-launcher-browser
 Exec=invoker --type=silica-qt5 -s /usr/bin/sailfish-browser %U
 Comment=Sailfish UI application
