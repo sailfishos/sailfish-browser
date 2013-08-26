@@ -466,12 +466,20 @@ int DBWorker::createLink(QString url, QString title, QString thumbPath)
     return lastId.toInt();
 }
 
-void DBWorker::getHistory()
+void DBWorker::getHistory(const QString &filter)
 {
-    QSqlQuery query = prepare("SELECT history.link_id, link.url, link.thumb_path, link.title "
-                              "FROM history INNER JOIN link "
-                              "ON history.link_id = link.link_id "
-                              "ORDER BY history.date DESC;");
+    QString filterQuery;
+    if (filter != "") {
+        filterQuery = QString("WHERE (link.url LIKE '%%1%' OR link.title LIKE '%%1%') ").arg(filter);
+    }
+
+    QString queryString = QString("SELECT history.link_id, link.url, link.thumb_path, link.title "
+                                  "FROM history INNER JOIN link "
+                                  "ON history.link_id = link.link_id "
+                                  "%1"
+                                  "ORDER BY history.date DESC;").arg(filterQuery);
+    QSqlQuery query = prepare(queryString.toLatin1().constData());
+
     if (!execute(query)) {
         return;
     }
@@ -486,7 +494,6 @@ void DBWorker::getHistory()
     }
 
     emit historyAvailable(linkList);
-
 }
 
 void DBWorker::getTabHistory(int tabId)

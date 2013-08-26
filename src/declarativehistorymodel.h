@@ -31,6 +31,7 @@ public:
     };
 
     Q_INVOKABLE void clear();
+    Q_INVOKABLE void search(const QString &filter);
 
     int tabId() const;
     void setTabId(int tabId);
@@ -57,6 +58,7 @@ private slots:
 
 private:
     void load();
+    void updateModel(QList<Link> linkList);
 
     int m_tabId;
     QList<Link> m_links;
