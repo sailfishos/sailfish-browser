@@ -20,6 +20,7 @@ Page {
     property alias favorites: favoriteModel
     property alias currentTabIndex: tabModel.currentTabIndex
     property variant webEngine: webContent.child
+    property bool fullscreenMode
 
     property string favicon
     property Component _controlPageComponent
@@ -151,6 +152,8 @@ Page {
         }
     }
 
+    onStatusChanged: fullscreenMode = status < PageStatus.Active
+
     TabModel {
         id: tabModel
     }
@@ -186,9 +189,41 @@ Page {
     QmlMozView {
         id: webContent
 
+        property real startY
+        property point lastPos: Qt.point(0.0, 0.0)
+        property int verticalFlickDirection
+
         signal selectionRangeUpdated(variant data)
         signal selectionCopied(variant data)
         signal contextMenuRequested(variant data)
+
+        function updateFullscreenMode() {
+            if (controlArea.y < window.height - controlArea.height) return
+
+            var currentDirection = scrollableOffset.y - lastPos.y
+            if (currentDirection > 0) {
+                // Direction changed. Reset startY position
+                if (verticalFlickDirection < 0) {
+                    startY = scrollableOffset.y
+                }
+
+                if (scrollableOffset.y - startY > toolBarContainer.height) {
+                    fullscreenMode = true
+                }
+            } else if (currentDirection < 0) {
+                // Direction changed. Reset startY position
+                if (verticalFlickDirection > 0) {
+                    startY = scrollableOffset.y
+                }
+
+                if (scrollableOffset.y - startY < toolBarContainer.height) {
+                    fullscreenMode = false
+                }
+            }
+            lastPos.y = scrollableOffset.y
+            verticalFlickDirection = currentDirection
+        }
+
         clip: true
 
         anchors {
@@ -256,6 +291,7 @@ Page {
         onLoadingChanged: {
             if (loading) {
                 favicon = ""
+                fullscreenMode = false
             }
 
             // store tab data
@@ -381,6 +417,9 @@ Page {
             }
         }
         onViewAreaChanged: {
+            // TabPage and ControlPage cannot trigger updates to viewport
+            if (browserPage.status != PageStatus.Active) return
+
             var contentRect = child.contentRect
             var offset = scrollableOffset
             var size = child.scrollableSize
@@ -395,6 +434,14 @@ Page {
             horizontalScrollDecorator.x = offset.x * resolution * xSizeRatio
 
             scrollTimer.restart()
+            updateFullscreenMode()
+        }
+
+        onDraggingChanged: {
+            if (dragging) {
+                lastPos = scrollableOffset
+                startY = lastPos.y
+            }
         }
 
         // We decided to disable "text selection" until we understand how it
@@ -416,9 +463,8 @@ Page {
 
         Rectangle {
             id: horizontalScrollDecorator
-
             height: 5
-            anchors.bottom: parent ? parent.bottom: undefined
+            y: parent.height - (fullscreenMode ? 0 : toolBarContainer.height) - height
             color: Theme.highlightDimmerColor
             smooth: true
             radius: 2.5
@@ -452,6 +498,9 @@ Page {
         y: parent.height - height
         width: parent.width
         visible: !_ctxMenuActive
+        opacity: fullscreenMode ? 0.0 : 1.0
+        Behavior on opacity { FadeAnimation { duration: 300 } }
+
         onLoadProgressChanged: {
             // Loading block won't be needed after https://github.com/nemomobile-packages/qtmozembed/pull/2
             if (!webContent.loading) {
