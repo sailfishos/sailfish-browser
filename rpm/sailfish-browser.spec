@@ -23,7 +23,7 @@ BuildRequires:  qt5-qttools
 BuildRequires:  qt5-qttools-linguist
 BuildRequires:  gdb
 Requires: sailfishsilica-qt5 >= 0.8.34
-Requires: jolla-ambient >= 0.1.26
+Requires: jolla-ambient >= 0.1.37
 Requires: xulrunner-qt5 >= 24.0.1.12
 Requires: embedlite-components-qt5 >= 1.3.4
 Requires: sailfish-browser-settings = %{version}

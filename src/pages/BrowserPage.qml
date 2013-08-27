@@ -10,7 +10,7 @@ import QtQuick 2.0
 import Sailfish.Silica 1.0
 import Qt5Mozilla 1.0
 import Sailfish.Browser 1.0
-import "components"
+import "components" as Browser
 
 
 Page {
@@ -22,8 +22,7 @@ Page {
     property variant webEngine: webContent.child
 
     property string favicon
-
-    property variant _controlPageComponent
+    property Component _controlPageComponent
     property Item _contextMenu
     property bool _ctxMenuActive: _contextMenu != null && _contextMenu.active
     property bool _ctxMenuVisible: _contextMenu != null && _contextMenu.visible
@@ -182,7 +181,7 @@ Page {
         }
     }
 
-    DownloadRemorsePopup { id: downloadPopup }
+    Browser.DownloadRemorsePopup { id: downloadPopup }
 
     QmlMozView {
         id: webContent
@@ -198,8 +197,7 @@ Page {
         }
         focus: true
         width: browserPage.width
-
-        height: browserPage.height - Theme.itemSizeMedium
+        height: browserPage.height
         //{ // TODO
         // No resizes while page is not active
         // also contextmenu size
@@ -256,10 +254,7 @@ Page {
         }
 
         onLoadingChanged: {
-            progressBar.opacity = loading ? 1.0 : 0.0
-            if (!loading) {
-                progressBar.progress = 0
-            } else {
+            if (loading) {
                 favicon = ""
             }
 
@@ -267,11 +262,6 @@ Page {
             if (!loading && url != "about:blank" && url) {
                 saveTab(url, title)
                 captureScreen()
-            }
-        }
-        onLoadProgressChanged: {
-            if ((loadProgress / 100.0) > progressBar.progress) {
-                progressBar.progress = loadProgress / 100.0
             }
         }
         onRecvAsyncMessage: {
@@ -453,121 +443,94 @@ Page {
         Behavior on opacity { FadeAnimation {} }
     }
 
-    Rectangle {
-        anchors {
-            left: tools.left
-            right: tools.right
-            bottom: tools.top
-        }
-        height: tools.height * 2
-        opacity: progressBar.opacity
+    Column {
+        id: controlArea
 
-        gradient: Gradient {
-            GradientStop { position: 0.0; color: Qt.rgba(1.0, 1.0, 1.0, 0.0) }
-            GradientStop { position: 1.0; color: Theme.highlightDimmerColor }
-        }
+        // This should be just a binding for progressBar.progress but currently progress is going up and down
+        property real loadProgress: webContent.loadProgress / 100.0
 
-        Column {
-            width: parent.width
-            anchors {
-                bottom: parent.bottom; bottomMargin: Theme.paddingMedium
-            }
-
-            Label {
-                text: webEngine.title
-                width: parent.width - Theme.paddingMedium * 2
-                color: Theme.highlightColor
-                font.pixelSize: Theme.fontSizeSmall
-                horizontalAlignment: Text.AlignHCenter
-                truncationMode: TruncationMode.Fade
-            }
-            Label {
-                text: webEngine.url
-                width: parent.width - Theme.paddingMedium * 2
-                color: Theme.secondaryColor
-                font.pixelSize: Theme.fontSizeExtraSmall
-                horizontalAlignment: Text.AlignHCenter
-                truncationMode: TruncationMode.Fade
-            }
-        }
-    }
-
-    Item {
-        id: tools
-
-        anchors {
-            left: parent.left
-            right: parent.right
-            bottom: parent.bottom
-        }
-        height: visible ? Theme.itemSizeMedium : 0
+        y: parent.height - height
+        width: parent.width
         visible: !_ctxMenuActive
-
-        ProgressBar {
-            id: progressBar
-            anchors.fill: parent
-            opacity: 0.0
+        onLoadProgressChanged: {
+            // Loading block won't be needed after https://github.com/nemomobile-packages/qtmozembed/pull/2
+            if (!webContent.loading) {
+                progressBar.progress = 0.0
+            } else if (loadProgress > progressBar.progress) {
+                progressBar.progress = loadProgress
+            }
         }
 
-        Row {
-            id: toolsrow
+        function openControlPage() {
+            captureScreen()
+            var sendUrl = (webEngine.url != WebUtils.initialPage) ? webEngine.url : ""
+            pageStack.push(_controlPageComponent, {historyModel: historyModel, url: sendUrl})
+        }
 
-            function openControlPage() {
-                captureScreen()
-                var sendUrl = (webEngine.url != WebUtils.initialPage) ? webEngine.url : ""
-                pageStack.push(_controlPageComponent, {historyModel: historyModel, url: sendUrl}, PageStackAction.Animated)
+        Browser.StatusBar {
+            width: parent.width
+            height: visible ? toolBarContainer.height * 2 : 0
+            opacity: progressBar.opacity
+            title: webEngine.title
+            url: webEngine.url
+        }
+
+        Browser.ToolBarContainer {
+            id: toolBarContainer
+            width: parent.width
+
+            Browser.ProgressBar {
+                id: progressBar
+                anchors.fill: parent
+                opacity: webContent.loading ? 1.0 : 0.0
             }
 
-            anchors {
-                left: parent.left
-                right: parent.right
-                verticalCenter: parent.verticalCenter
-            }
+            // ToolBar
+            Row {
+                width: parent.width
+                anchors.verticalCenter: parent.verticalCenter
+                // 5 icons, 4 spaces between
+                spacing: (width - (backIcon.width * 5)) / 4
 
-            // 5 icons, 4 spaces between
-            spacing: (width - (backIcon.width * 5)) / 4
-
-            IconButton {
-                id:backIcon
-                icon.source: "image://theme/icon-m-back"
-                enabled: tab.canGoBack
-                onClicked: {
-                    tab.loadWhenTabChanges = true
-                    tab.goBack()
+                IconButton {
+                    id:backIcon
+                    icon.source: "image://theme/icon-m-back"
+                    enabled: tab.canGoBack
+                    onClicked: {
+                        tab.loadWhenTabChanges = true
+                        tab.goBack()
+                    }
                 }
-            }
 
-            IconButton {
-                icon.source: "image://theme/icon-m-search"
-                enabled: true
-                onClicked: toolsrow.openControlPage()
-            }
-
-            IconButton {
-                icon.source: "image://theme/icon-m-levels"
-
-                onClicked:  {
-                    captureScreen()
-                    pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage}, PageStackAction.Immediate)
+                IconButton {
+                    icon.source: "image://theme/icon-m-search"
+                    enabled: true
+                    onClicked: controlArea.openControlPage()
                 }
-            }
-            IconButton {
-                icon.source: webEngine.loading? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
-                onClicked: webEngine.loading ? webEngine.stop() : webEngine.reload()
-            }
 
-            IconButton {
-                id: right
-                icon.source: "image://theme/icon-m-forward"
-                enabled: tab.canGoForward
-                onClicked: {
-                    tab.loadWhenTabChanges = true
-                    tab.goForward()
+                IconButton {
+                    icon.source: "image://theme/icon-m-tabs"
+                    onClicked: {
+                        captureScreen()
+                        pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage})
+                    }
+                }
+                IconButton {
+                    icon.source: webEngine.loading ? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
+                    onClicked: webEngine.loading ? webEngine.stop() : webEngine.reload()
+                }
+
+                IconButton {
+                    icon.source: "image://theme/icon-m-forward"
+                    enabled: tab.canGoForward
+                    onClicked: {
+                        tab.loadWhenTabChanges = true
+                        tab.goForward()
+                    }
                 }
             }
         }
     }
-
 
     CoverActionList {
         iconBackground: true
@@ -575,7 +538,7 @@ Page {
         CoverAction {
             iconSource: "image://theme/icon-cover-new"
             onTriggered: {
-                toolsrow.openControlPage()
+                controlArea.openControlPage()
                 activate()
             }
         }
@@ -625,6 +588,7 @@ Page {
             }
         }
     }
+
     BookmarkModel {
         id: favoriteModel
     }
@@ -635,7 +599,7 @@ Page {
         interval: 1000
     }
 
-    BrowserNotification {
+    Browser.BrowserNotification {
         id: notification
     }
 }
