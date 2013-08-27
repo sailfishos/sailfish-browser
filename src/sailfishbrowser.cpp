@@ -69,6 +69,9 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
         return 0;
     }
 
+    //% "Browser"
+    QT_TRID_NOOP("sailfish-browser-ap-name");
+
     QString translationPath("/usr/share/translations/");
     QTranslator engineeringEnglish;
     engineeringEnglish.load("sailfish-browser_eng_en", translationPath);
