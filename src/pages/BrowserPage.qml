@@ -502,10 +502,7 @@ Page {
         Behavior on opacity { FadeAnimation { duration: 300 } }
 
         onLoadProgressChanged: {
-            // Loading block won't be needed after https://github.com/nemomobile-packages/qtmozembed/pull/2
-            if (!webContent.loading) {
-                progressBar.progress = 0.0
-            } else if (loadProgress > progressBar.progress) {
+            if (loadProgress > progressBar.progress) {
                 progressBar.progress = loadProgress
             }
         }
