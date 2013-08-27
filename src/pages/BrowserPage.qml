@@ -533,8 +533,11 @@ Page {
 
             // ToolBar
             Row {
-                width: parent.width
-                anchors.verticalCenter: parent.verticalCenter
+                anchors {
+                    left: parent.left; leftMargin: Theme.paddingMedium
+                    right: parent.right; rightMargin: Theme.paddingMedium
+                    verticalCenter: parent.verticalCenter
+                }
                 // 5 icons, 4 spaces between
                 spacing: (width - (backIcon.width * 5)) / 4
 
