@@ -36,10 +36,11 @@
 
 Q_DECL_EXPORT int main(int argc, char *argv[])
 {
-    // Gecko embedding crashes with threaded render loop
+    // EGL FPS are lower with threaded render loop
     // that's why this workaround.
     // See JB#7358
     setenv("QML_BAD_GUI_RENDER_LOOP", "1", 1);
+    setenv("USE_ASYNC", "1", 1);
 #ifdef HAS_BOOSTER
     QScopedPointer<QGuiApplication> app(MDeclarativeCache::qApplication(argc, argv));
     QScopedPointer<QQuickView> view(MDeclarativeCache::qQuickView());
