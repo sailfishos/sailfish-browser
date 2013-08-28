@@ -544,7 +544,7 @@ Page {
                 IconButton {
                     id:backIcon
                     icon.source: "image://theme/icon-m-back"
-                    enabled: tab.canGoBack
+                    enabled: tab.canGoBack && !fullscreenMode
                     onClicked: {
                         tab.loadWhenTabChanges = true
                         tab.goBack()
@@ -553,25 +553,27 @@ Page {
 
                 IconButton {
                     icon.source: "image://theme/icon-m-search"
-                    enabled: true
+                    enabled: !fullscreenMode
                     onClicked: controlArea.openControlPage()
                 }
 
                 IconButton {
                     icon.source: "image://theme/icon-m-tabs"
+                    enabled: !fullscreenMode
                     onClicked: {
                         captureScreen()
                         pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage})
                     }
                 }
                 IconButton {
+                    enabled: !fullscreenMode
                     icon.source: webEngine.loading ? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
                     onClicked: webEngine.loading ? webEngine.stop() : webEngine.reload()
                 }
 
                 IconButton {
                     icon.source: "image://theme/icon-m-forward"
-                    enabled: tab.canGoForward
+                    enabled: tab.canGoForward && !fullscreenMode
                     onClicked: {
                         tab.loadWhenTabChanges = true
                         tab.goForward()
