@@ -190,8 +190,8 @@ Page {
         id: webContent
 
         property real startY
-        property point lastPos: Qt.point(0.0, 0.0)
-        property int verticalFlickDirection
+        property real moveDelta
+        readonly property real moveLimit: toolBarContainer.height
 
         signal selectionRangeUpdated(variant data)
         signal selectionCopied(variant data)
@@ -200,28 +200,18 @@ Page {
         function updateFullscreenMode() {
             if (controlArea.y < window.height - controlArea.height) return
 
-            var currentDirection = scrollableOffset.y - lastPos.y
-            if (currentDirection > 0) {
-                // Direction changed. Reset startY position
-                if (verticalFlickDirection < 0) {
-                    startY = scrollableOffset.y
-                }
-
-                if (scrollableOffset.y - startY > toolBarContainer.height) {
-                    fullscreenMode = true
-                }
-            } else if (currentDirection < 0) {
-                // Direction changed. Reset startY position
-                if (verticalFlickDirection > 0) {
-                    startY = scrollableOffset.y
-                }
-
-                if (scrollableOffset.y - startY < toolBarContainer.height) {
-                    fullscreenMode = false
-                }
+            var offset = scrollableOffset.y
+            var currentDelta = offset - startY
+            if (Math.abs(currentDelta) < moveDelta) {
+                startY = offset
             }
-            lastPos.y = scrollableOffset.y
-            verticalFlickDirection = currentDirection
+
+            if (currentDelta > moveLimit) {
+                fullscreenMode = true
+            } else if (currentDelta < -moveLimit) {
+                fullscreenMode = false
+            }
+            moveDelta = Math.abs(currentDelta)
         }
 
         clip: true
@@ -439,8 +429,8 @@ Page {
 
         onDraggingChanged: {
             if (dragging) {
-                lastPos = scrollableOffset
-                startY = lastPos.y
+                startY = scrollableOffset.y
+                moveDelta = 0
             }
         }
 
