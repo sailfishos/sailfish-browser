@@ -13,7 +13,7 @@ Dialog {
     id: selectDialog
 
     // input data
-    property variant options
+    property var options
     property bool multiple
     property QtObject webview
 
@@ -67,7 +67,7 @@ Dialog {
             }
         }
 
-        delegate: ListItem {
+        delegate: BackgroundItem {
 
             enabled: !disabled
 
