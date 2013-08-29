@@ -17,8 +17,7 @@ Page {
     property Item contextMenu
     property Item urlField
     property string url
-
-
+    property string title
 
     Component {
         id: historyContextMenuComponent
@@ -65,7 +64,7 @@ Page {
                     height: width
                     smooth: true
 
-                    property bool favourited: browserPage.favorites.count > 0 && browserPage.favorites.contains(webEngine.url)
+                    property bool favourited: browserPage.favorites.count > 0 && browserPage.favorites.contains(url)
                     enabled: urlField.text === url
 
                     anchors {
@@ -88,14 +87,14 @@ Page {
                             if (faviconIcon.favourited) {
                                 browserPage.favorites.removeBookmark(url)
                             } else {
-                                browserPage.favorites.addBookmark(url, webEngine.title, browserPage.favicon)
+                                browserPage.favorites.addBookmark(url, title, browserPage.favicon)
                             }
                         }
                     }
                 }
 
                 TextField {
-                    id:urlField
+                    id: urlField
 
                     anchors {
                         left: faviconIcon.right; leftMargin: Theme.paddingSmall - Theme.paddingLarge

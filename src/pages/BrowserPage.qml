@@ -19,7 +19,6 @@ Page {
     property alias tabs: tabModel
     property alias favorites: favoriteModel
     property alias currentTabIndex: tabModel.currentTabIndex
-    property variant webEngine: webContent.child
     property bool fullscreenMode
 
     property string favicon
@@ -38,8 +37,8 @@ Page {
 
     function newTab(link, foreground) {
         if (foreground) {
-            if (webContent.loading) {
-                webContent.stop()
+            if (webView.loading) {
+                webView.stop()
             }
             tab.loadWhenTabChanges = true
         }
@@ -62,14 +61,14 @@ Page {
         if (tabModel.count == 0) {
             newTab(url, true)
         }
-        if (url !== "" && webEngine.url != url) {
-            webEngine.load(url)
+        if (url !== "" && webView.url != url) {
+            webView.load(url)
         }
     }
 
     function loadTab(index) {
-        if (webContent.loading) {
-            webContent.stop()
+        if (webView.loading) {
+            webView.stop()
         }
         tab.loadWhenTabChanges = true;
         currentTabIndex = index
@@ -81,8 +80,8 @@ Page {
 
     function captureScreen() {
         if (status == PageStatus.Active) {
-            tab.captureScreen(webContent.url, 0, 0, webContent.width,
-                              webContent.width, window.screenRotation)
+            tab.captureScreen(webView.url, 0, 0, webView.width,
+                              webView.width, window.screenRotation)
         }
     }
 
@@ -107,7 +106,7 @@ Page {
                                         "passwordOnly": data.passwordOnly
                                     })
         dialog.accepted.connect(function () {
-            webEngine.sendAsyncMessage("authresponse",
+            webView.sendAsyncMessage("authresponse",
                                        {
                                            "winid": winid,
                                            "accepted": true,
@@ -116,7 +115,7 @@ Page {
                                        })
         })
         dialog.rejected.connect(function() {
-            webEngine.sendAsyncMessage("authresponse",
+            webView.sendAsyncMessage("authresponse",
                                        {"winid": winid, "accepted": false})
         })
     }
@@ -187,7 +186,7 @@ Page {
     Browser.DownloadRemorsePopup { id: downloadPopup }
 
     QmlMozView {
-        id: webContent
+        id: webView
 
         property real startY
         property real moveDelta
@@ -305,7 +304,7 @@ Page {
                                         {
                                             "options": data.options,
                                             "multiple": data.multiple,
-                                            "webview": webContent
+                                            "webview": webView
                                         })
                 break;
             }
@@ -355,7 +354,7 @@ Page {
             }
             case "embed:auth": {
                 if (pageStack.busy) {
-                    // User has just entered wrong credentials and webEngine wants
+                    // User has just entered wrong credentials and webView wants
                     // user's input again immediately even thogh the accepted
                     // dialog is still deactivating.
                     browserPage._authData = data
@@ -372,7 +371,7 @@ Page {
             case "embed:login": {
                 pageStack.push(Qt.resolvedUrl("components/PasswordManagerDialog.qml"),
                                {
-                                   "webEngine": webEngine,
+                                   "webView": webView,
                                    "requestId": data.id,
                                    "notificationType": data.name,
                                    "formData": data.formdata
@@ -380,14 +379,14 @@ Page {
                 break
             }
             case "Content:ContextMenu": {
-                webContent.contextMenuRequested(data)
+                webView.contextMenuRequested(data)
                 if (data.types.indexOf("image") !== -1 || data.types.indexOf("link") !== -1) {
                     openContextMenu(data.linkURL, data.mediaURL)
                 }
                 break
             }
             case "Content:SelectionRange": {
-                webContent.selectionRangeUpdated(data)
+                webView.selectionRangeUpdated(data)
                 break
             }
             }
@@ -396,7 +395,7 @@ Page {
             // sender expects that this handler will update `response` argument
             switch (message) {
             case "Content:SelectionCopied": {
-                webContent.selectionCopied(data)
+                webView.selectionCopied(data)
 
                 if (data.succeeded) {
                     //% "Copied to clipboard"
@@ -472,7 +471,7 @@ Page {
 
     // Dimmer for web content
     Rectangle {
-        anchors.fill: webContent
+        anchors.fill: webView
 
         color: Theme.highlightDimmerColor
         opacity: _ctxMenuActive? 0.8 : 0.0
@@ -483,7 +482,7 @@ Page {
         id: controlArea
 
         // This should be just a binding for progressBar.progress but currently progress is going up and down
-        property real loadProgress: webContent.loadProgress / 100.0
+        property real loadProgress: webView.loadProgress / 100.0
 
         y: parent.height - height
         width: parent.width
@@ -499,16 +498,20 @@ Page {
 
         function openControlPage() {
             captureScreen()
-            var sendUrl = (webEngine.url != WebUtils.initialPage) ? webEngine.url : ""
-            pageStack.push(_controlPageComponent, {historyModel: historyModel, url: sendUrl})
+            var sendUrl = (webView.url != WebUtils.initialPage) ? webView.url : ""
+            pageStack.push(_controlPageComponent, {
+                               historyModel: historyModel,
+                               url: sendUrl,
+                               title: webView.title
+                           })
         }
 
         Browser.StatusBar {
             width: parent.width
             height: visible ? toolBarContainer.height * 2 : 0
             opacity: progressBar.opacity
-            title: webEngine.title
-            url: webEngine.url
+            title: webView.title
+            url: webView.url
         }
 
         Browser.ToolBarContainer {
@@ -518,7 +521,7 @@ Page {
             Browser.ProgressBar {
                 id: progressBar
                 anchors.fill: parent
-                opacity: webContent.loading ? 1.0 : 0.0
+                opacity: webView.loading ? 1.0 : 0.0
             }
 
             // ToolBar
@@ -557,8 +560,8 @@ Page {
                 }
                 IconButton {
                     enabled: !fullscreenMode
-                    icon.source: webEngine.loading ? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
-                    onClicked: webEngine.loading ? webEngine.stop() : webEngine.reload()
+                    icon.source: webView.loading ? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
+                    onClicked: webView.loading ? webView.stop() : webView.reload()
                 }
 
                 IconButton {
@@ -587,10 +590,10 @@ Page {
         CoverAction {
             iconSource: "image://theme/icon-cover-refresh"
             onTriggered: {
-                if (webEngine.loading) {
-                    webEngine.stop()
+                if (webView.loading) {
+                    webView.stop()
                 }
-                webEngine.reload()
+                webView.reload()
             }
         }
     }
@@ -598,7 +601,7 @@ Page {
     Connections {
         target: WebUtils
         onOpenUrlRequested: {
-            if (webEngine.url != "") {
+            if (webView.url != "") {
                 captureScreen()
                 if (!tabs.activateTab(url)) {
                     // Not found in tabs list, create newtab and load

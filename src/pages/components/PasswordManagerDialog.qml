@@ -10,14 +10,14 @@ import Sailfish.Silica 1.0
 
 Dialog {
 
-    // As QML is not very closure friendly we'd better keep webEngine and requestId as properties of the dialog
-    property QtObject webEngine
+    // As QML is not very closure friendly we'd better keep webView and requestId as properties of the dialog
+    property QtObject webView
     property string requestId
     property string notificationType
     property variant formData
 
     onAccepted: {
-        webEngine.sendAsyncMessage("embedui:login",
+        webView.sendAsyncMessage("embedui:login",
                                    {
                                        "buttonidx": 0, // "Yes" button
                                        "id": requestId
@@ -25,7 +25,7 @@ Dialog {
     }
 
     onRejected: {
-        webEngine.sendAsyncMessage("embedui:login",
+        webView.sendAsyncMessage("embedui:login",
                                    {
                                        "buttonidx": 1, // "No" button
                                        "id": requestId
