@@ -190,6 +190,7 @@ Page {
 
         property real startY
         property real moveDelta
+        property bool moving
         readonly property real moveLimit: toolBarContainer.height
         readonly property bool active: browserPage.status == PageStatus.Active
 
@@ -410,20 +411,21 @@ Page {
             // TabPage and ControlPage cannot trigger updates to viewport
             if (!active) return
 
-            var contentRect = child.contentRect
+            var contentRect = webView.contentRect
             var offset = scrollableOffset
-            var size = child.scrollableSize
+            var size = webView.scrollableSize
+            var resolution = webView.resolution
 
             var ySizeRatio = contentRect.height / size.height
             var xSizeRatio = contentRect.width / size.width
 
-            verticalScrollDecorator.height = height * ySizeRatio
-            verticalScrollDecorator.y = offset.y * resolution * ySizeRatio
+            var vDecorator = verticalScrollDecorator
+            vDecorator.height = height * ySizeRatio
+            vDecorator.y = offset.y * resolution * ySizeRatio
 
-            horizontalScrollDecorator.width = width * xSizeRatio
-            horizontalScrollDecorator.x = offset.x * resolution * xSizeRatio
-
-            scrollTimer.restart()
+            var hDecorator = horizontalScrollDecorator
+            hDecorator.width = width * xSizeRatio
+            hDecorator.x = offset.x * resolution * xSizeRatio
         }
 
         onViewAreaChanged: {
@@ -435,6 +437,10 @@ Page {
             if (dragging) {
                 startY = scrollableOffset.y
                 moveDelta = 0
+                moving = true
+                flickTimer.stop()
+            } else {
+                flickTimer.restart()
             }
         }
 
@@ -451,7 +457,7 @@ Page {
             smooth: true
             radius: 2.5
             visible: parent.height > height && !_ctxMenuVisible
-            opacity: scrollTimer.running ? 1.0 : 0.0
+            opacity: webView.moving ? 1.0 : 0.0
             Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
         }
 
@@ -463,14 +469,41 @@ Page {
             smooth: true
             radius: 2.5
             visible: parent.width > width && !_ctxMenuVisible
-            opacity: scrollTimer.running ? 1.0 : 0.0
+            opacity: webView.moving ? 1.0 : 0.0
             Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
         }
 
         Timer {
-            id: scrollTimer
+            id: flickTimer
 
-            interval: 300
+            property real y: -1
+            property real x: -1
+
+            interval: 100
+            repeat: true
+
+            onRunningChanged: {
+                if (!running) {
+                    x = -1
+                    y = -1
+                }
+            }
+
+            onTriggered: {
+                var content = webView
+                var offset = content.scrollableOffset
+                var offsetY = offset.y
+                var offsetX = offset.x
+
+                if (offsetY == y && offsetX == x) {
+                    content.moving = false
+                    running = false
+                    return
+                }
+
+                y = offsetY
+                x = offsetX
+            }
         }
     }
 
