@@ -191,6 +191,7 @@ Page {
         property real startY
         property real moveDelta
         readonly property real moveLimit: toolBarContainer.height
+        readonly property bool active: browserPage.status == PageStatus.Active
 
         signal selectionRangeUpdated(variant data)
         signal selectionCopied(variant data)
@@ -405,9 +406,9 @@ Page {
             }
             }
         }
-        onViewAreaChanged: {
+        onScrollableOffsetChanged: {
             // TabPage and ControlPage cannot trigger updates to viewport
-            if (browserPage.status != PageStatus.Active) return
+            if (!active) return
 
             var contentRect = child.contentRect
             var offset = scrollableOffset
@@ -423,6 +424,10 @@ Page {
             horizontalScrollDecorator.x = offset.x * resolution * xSizeRatio
 
             scrollTimer.restart()
+        }
+
+        onViewAreaChanged: {
+            if (!active) return
             updateFullscreenMode()
         }
 
