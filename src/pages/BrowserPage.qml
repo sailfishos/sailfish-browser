@@ -18,7 +18,9 @@ Page {
 
     property alias tabs: tabModel
     property alias favorites: favoriteModel
+    property alias history: historyModel
     property alias currentTabIndex: tabModel.currentTabIndex
+    property alias currentTab: tab
     readonly property bool fullscreenMode: (!webView.forceChromeMode && _fullscreenMode) || Qt.inputMethod.visible || !Qt.application.active
     property bool _fullscreenMode
 
@@ -528,14 +530,9 @@ Page {
             }
         }
 
-        function openControlPage() {
+        function openTabPage(focus) {
             captureScreen()
-            var sendUrl = (webView.url != WebUtils.initialPage) ? webView.url : ""
-            pageStack.push(_controlPageComponent, {
-                               historyModel: historyModel,
-                               url: sendUrl,
-                               title: webView.title
-                           })
+            pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage, "initialFocus": focus })
         }
 
         Browser.StatusBar {
@@ -545,7 +542,7 @@ Page {
             title: webView.title
             url: webView.url
 
-            onSearchClicked: controlArea.openControlPage()
+            onSearchClicked: controlArea.openTabPage(true)
             onCloseClicked: closeTab(currentTabIndex)
         }
 
@@ -580,19 +577,23 @@ Page {
                 }
 
                 Browser.IconButton {
-                    source: "image://theme/icon-m-search"
+                    property bool favourited: favorites.count > 0 && favorites.contains(tab.url)
+                    source: favourited? "image://theme/icon-m-favorite-selected" : "image://theme/icon-m-favorite"
                     enabled: !fullscreenMode
-                    onClicked: controlArea.openControlPage()
+                    onClicked: {
+                        if (favourited) {
+                            favorites.removeBookmark(tab.url)
+                        } else {
+                            favorites.addBookmark(tab.url, tab.title, favicon)
+                        }
+                    }
                 }
 
                 Browser.IconButton {
                     id: tabPageButton
                     source: "image://theme/icon-m-tabs"
                     enabled: !fullscreenMode
-                    onClicked: {
-                        captureScreen()
-                        pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage})
-                    }
+                    onClicked: controlArea.openTabPage(false)
 
                     Label {
                         text: tabs.count
@@ -629,7 +630,7 @@ Page {
         CoverAction {
             iconSource: "image://theme/icon-cover-new"
             onTriggered: {
-                controlArea.openControlPage()
+                controlArea.openTabPage(false)
                 activate()
             }
         }
