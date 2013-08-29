@@ -123,22 +123,24 @@ Page {
         })
     }
 
-    function openContextMenu(linkHref, imageSrc) {
+    function openContextMenu(linkHref, imageSrc, linkTitle) {
         var ctxMenuComp
 
         if (_contextMenu) {
             _contextMenu.linkHref = linkHref
+            _contextMenu.linkTitle = linkTitle.trim()
             _contextMenu.imageSrc = imageSrc
-            _contextMenu.show(browserPage)
+            _contextMenu.show()
         } else {
             ctxMenuComp = Qt.createComponent(Qt.resolvedUrl("components/BrowserContextMenu.qml"))
             if (ctxMenuComp.status !== Component.Error) {
                 _contextMenu = ctxMenuComp.createObject(browserPage,
                                                         {
                                                             "linkHref": linkHref,
-                                                            "imageSrc": imageSrc
+                                                            "imageSrc": imageSrc,
+                                                            "linkTitle": linkTitle.trim()
                                                         })
-                _contextMenu.show(browserPage)
+                _contextMenu.show()
             } else {
                 console.log("Can't load BrowserContentMenu.qml")
             }
@@ -385,7 +387,7 @@ Page {
             case "Content:ContextMenu": {
                 webView.contextMenuRequested(data)
                 if (data.types.indexOf("image") !== -1 || data.types.indexOf("link") !== -1) {
-                    openContextMenu(data.linkURL, data.mediaURL)
+                    openContextMenu(data.linkURL, data.mediaURL, data.linkTitle)
                 }
                 break
             }
@@ -508,15 +510,6 @@ Page {
                 x = offsetX
             }
         }
-    }
-
-    // Dimmer for web content
-    Rectangle {
-        anchors.fill: webView
-
-        color: Theme.highlightDimmerColor
-        opacity: _ctxMenuActive? 0.8 : 0.0
-        Behavior on opacity { FadeAnimation {} }
     }
 
     Column {
