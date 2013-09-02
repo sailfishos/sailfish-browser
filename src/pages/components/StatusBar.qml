@@ -41,7 +41,7 @@ Rectangle {
 
         MouseArea {
             id: mouseArea
-            width: parent.width - (searchButton.width * 2) - (Theme.paddingSmall * 2)
+            width: parent.width - searchButton.width * 2
             height: texts.height
 
             onClicked: statusBar.searchClicked()
