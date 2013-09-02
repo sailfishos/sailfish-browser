@@ -604,9 +604,11 @@ Page {
 
                     Label {
                         text: tabs.count
-                        x: parent.width/2 - implicitWidth / 2 - 5
-                        y: parent.height/2 - implicitHeight / 2 -5
-                        font.pixelSize: Theme.fontSizeSmall
+                        x: (parent.width - contentWidth) / 2 - 5
+                        y: (parent.height - contentHeight) / 2 - 5
+                        font.pixelSize: Theme.fontSizeExtraSmall
+                        font.bold: true
+                        color: Theme.highlightDimmerColor
                         horizontalAlignment: Text.AlignHCenter
                     }
                 }
