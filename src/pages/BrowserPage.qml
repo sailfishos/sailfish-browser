@@ -52,6 +52,9 @@ Page {
         if (tabModel.count > 0) {
             tab.loadWhenTabChanges = true
         }
+        if (index == currentTabIndex && webView.loading) {
+            webView.stop()
+        }
 
         var tabIndex = index ? currentTabIndex : index
         tabModel.remove(tabIndex)
@@ -550,6 +553,9 @@ Page {
             opacity: progressBar.opacity
             title: webView.title
             url: webView.url
+
+            onSearchClicked: controlArea.openControlPage()
+            onCloseClicked: closeTab(currentTabIndex)
         }
 
         Browser.ToolBarContainer {
@@ -594,6 +600,14 @@ Page {
                     onClicked: {
                         captureScreen()
                         pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage})
+                    }
+
+                    Label {
+                        text: tabs.count
+                        x: parent.width/2 - implicitWidth / 2 - 5
+                        y: parent.height/2 - implicitHeight / 2 -5
+                        font.pixelSize: Theme.fontSizeSmall
+                        horizontalAlignment: Text.AlignHCenter
                     }
                 }
 
