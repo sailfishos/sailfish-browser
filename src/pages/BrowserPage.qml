@@ -572,9 +572,9 @@ Page {
                 // 5 icons, 4 spaces between
                 spacing: (width - (backIcon.width * 5)) / 4
 
-                IconButton {
+                Browser.IconButton {
                     id:backIcon
-                    icon.source: "image://theme/icon-m-back"
+                    source: "image://theme/icon-m-back"
                     enabled: tab.canGoBack && !fullscreenMode
                     onClicked: {
                         tab.loadWhenTabChanges = true
@@ -582,28 +582,29 @@ Page {
                     }
                 }
 
-                IconButton {
-                    icon.source: "image://theme/icon-m-search"
+                Browser.IconButton {
+                    source: "image://theme/icon-m-search"
                     enabled: !fullscreenMode
                     onClicked: controlArea.openControlPage()
                 }
 
-                IconButton {
-                    icon.source: "image://theme/icon-m-tabs"
+                Browser.IconButton {
+                    source: "image://theme/icon-m-tabs"
                     enabled: !fullscreenMode
                     onClicked: {
                         captureScreen()
                         pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage})
                     }
                 }
-                IconButton {
+
+                Browser.IconButton {
+                    source: webView.loading ? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
                     enabled: !fullscreenMode
-                    icon.source: webView.loading ? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
                     onClicked: webView.loading ? webView.stop() : webView.reload()
                 }
 
-                IconButton {
-                    icon.source: "image://theme/icon-m-forward"
+                Browser.IconButton {
+                    source: "image://theme/icon-m-forward"
                     enabled: tab.canGoForward && !fullscreenMode
                     onClicked: {
                         tab.loadWhenTabChanges = true
