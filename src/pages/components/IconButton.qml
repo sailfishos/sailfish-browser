@@ -15,7 +15,7 @@ MouseArea {
     }
     onCanceled: pressTimer.stop()
     onSourceChanged: {
-        image.source = source + "?" + Theme.highlightDimmerColor
+        image.source = Qt.binding(function() { return source + "?" + Theme.highlightDimmerColor })
     }
 
     width: Theme.itemSizeSmall; height: Theme.itemSizeSmall
@@ -31,7 +31,7 @@ MouseArea {
         function updateHighlightSource() {
             if (state === "") {
                 if (source != "") {
-                    _highlightSource = root.source + "?" + Theme.highlightColor
+                    _highlightSource = Qt.binding(function() { return root.source + "?" + Theme.highlightColor })
                 } else {
                     _highlightSource = ""
                 }
