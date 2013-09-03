@@ -549,7 +549,7 @@ Page {
 
         Browser.StatusBar {
             width: parent.width
-            height: visible ? toolBarContainer.height * 2 : 0
+            height: visible ? toolBarContainer.height * 3 : 0
             opacity: progressBar.opacity
             title: webView.title
             url: webView.url
@@ -595,6 +595,7 @@ Page {
                 }
 
                 Browser.IconButton {
+                    id: tabPageButton
                     source: "image://theme/icon-m-tabs"
                     enabled: !fullscreenMode
                     onClicked: {
@@ -608,7 +609,7 @@ Page {
                         y: (parent.height - contentHeight) / 2 - 5
                         font.pixelSize: Theme.fontSizeExtraSmall
                         font.bold: true
-                        color: Theme.highlightDimmerColor
+                        color: tabPageButton.pressed && tabPageButton.containsMouse ? Theme.highlightColor : Theme.highlightDimmerColor
                         horizontalAlignment: Text.AlignHCenter
                     }
                 }

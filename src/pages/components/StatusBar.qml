@@ -19,8 +19,8 @@ Rectangle {
     signal closeClicked
 
     gradient: Gradient {
-        GradientStop { position: 0.1; color: "transparent" }
-        GradientStop { position: 0.75; color: Theme.highlightColor }
+        GradientStop { position: 0.0; color: "transparent" }
+        GradientStop { position: 0.95; color: Theme.highlightColor}
     }
     enabled: opacity > 0.0
 
@@ -57,6 +57,7 @@ Rectangle {
                     width: parent.width
                     color: mouseArea.pressed && mouseArea.containsMouse ? Theme.highlightColor : Theme.highlightDimmerColor
                     font.pixelSize: Theme.fontSizeExtraSmall
+                    font.weight: Font.Normal
                     horizontalAlignment: Text.AlignLeft
                     truncationMode: TruncationMode.Elide
                 }
@@ -65,6 +66,7 @@ Rectangle {
                     width: parent.width
                     color: mouseArea.pressed && mouseArea.containsMouse ? Theme.highlightColor : Theme.highlightDimmerColor
                     font.pixelSize: Theme.fontSizeTiny
+                    font.weight: Font.Normal
                     horizontalAlignment: Text.AlignLeft
                     truncationMode: TruncationMode.Elide
                 }
@@ -72,7 +74,7 @@ Rectangle {
         }
         Browser.IconButton {
             anchors.verticalCenter: parent.verticalCenter
-            source: "image://theme/icon-m-dismiss"
+            source: "image://theme/icon-m-close"
             onClicked: statusBar.closeClicked()
         }
     }
