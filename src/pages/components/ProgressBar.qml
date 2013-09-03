@@ -18,9 +18,10 @@ Item {
     Rectangle {
         id: progressRect
         height: parent.height
-        width: opacity > 0.0 ? progressBar.progress * parent.width : 0
+        anchors.right: parent.right
+        width: parent.width - (progressBar.progress * parent.width)
         color: Theme.highlightDimmerColor
-        opacity: 0.1
+        opacity: 0.2
 
         Behavior on width {
             enabled: progressBar.opacity == 1.0
