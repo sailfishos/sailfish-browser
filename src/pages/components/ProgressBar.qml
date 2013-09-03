@@ -19,8 +19,8 @@ Item {
         id: progressRect
         height: parent.height
         width: opacity > 0.0 ? progressBar.progress * parent.width : 0
-        color: Theme.highlightBackgroundColor
-        opacity: Theme.highlightBackgroundOpacity
+        color: Theme.highlightDimmerColor
+        opacity: 0.1
 
         Behavior on width {
             enabled: progressBar.opacity == 1.0
