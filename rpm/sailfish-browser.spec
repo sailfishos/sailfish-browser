@@ -31,6 +31,7 @@ Requires: qt5-plugin-imageformat-ico
 Requires: qt5-plugin-imageformat-gif
 Requires: mapplauncherd-booster-silica-qt5
 Requires: desktop-file-utils
+Requires: qt5-qtgraphicaleffects
 
 %description
 Sailfish Web Browser

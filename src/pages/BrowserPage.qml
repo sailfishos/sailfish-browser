@@ -52,6 +52,9 @@ Page {
         if (tabModel.count > 0) {
             tab.loadWhenTabChanges = true
         }
+        if (index == currentTabIndex && webView.loading) {
+            webView.stop()
+        }
 
         var tabIndex = index ? currentTabIndex : index
         tabModel.remove(tabIndex)
@@ -546,10 +549,13 @@ Page {
 
         Browser.StatusBar {
             width: parent.width
-            height: visible ? toolBarContainer.height * 2 : 0
+            height: visible ? toolBarContainer.height * 3 : 0
             opacity: progressBar.opacity
             title: webView.title
             url: webView.url
+
+            onSearchClicked: controlArea.openControlPage()
+            onCloseClicked: closeTab(currentTabIndex)
         }
 
         Browser.ToolBarContainer {
@@ -589,11 +595,22 @@ Page {
                 }
 
                 Browser.IconButton {
+                    id: tabPageButton
                     source: "image://theme/icon-m-tabs"
                     enabled: !fullscreenMode
                     onClicked: {
                         captureScreen()
                         pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage})
+                    }
+
+                    Label {
+                        text: tabs.count
+                        x: (parent.width - contentWidth) / 2 - 5
+                        y: (parent.height - contentHeight) / 2 - 5
+                        font.pixelSize: Theme.fontSizeExtraSmall
+                        font.bold: true
+                        color: tabPageButton.pressed && tabPageButton.containsMouse ? Theme.highlightColor : Theme.highlightDimmerColor
+                        horizontalAlignment: Text.AlignHCenter
                     }
                 }
 

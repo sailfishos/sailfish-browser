@@ -7,37 +7,75 @@
 
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import "." as Browser
 
 Rectangle {
+    id: statusBar
+
     property string title
     property string url
 
+    signal searchClicked
+    signal closeClicked
+
     gradient: Gradient {
-        GradientStop { position: 0.0; color: Qt.rgba(1.0, 1.0, 1.0, 0.0) }
-        GradientStop { position: 1.0; color: Theme.highlightDimmerColor }
+        GradientStop { position: 0.0; color: "transparent" }
+        GradientStop { position: 0.95; color: Theme.highlightColor}
     }
+    enabled: opacity > 0.0
 
-    Column {
-        width: parent.width
-        anchors {
-            bottom: parent.bottom; bottomMargin: Theme.paddingMedium
+    Row {
+        anchors{
+            left: parent.left; leftMargin: Theme.paddingMedium
+            right: parent.right; rightMargin: Theme.paddingMedium
+            bottom: parent.bottom; bottomMargin: Theme.paddingLarge
+        }
+        height: texts.height
+
+        Browser.IconButton {
+            id: searchButton
+            anchors.verticalCenter: parent.verticalCenter
+            source: "image://theme/icon-m-search"
+            onClicked: statusBar.searchClicked()
         }
 
-        Label {
-            text: title
-            width: parent.width - Theme.paddingMedium * 2
-            color: Theme.highlightColor
-            font.pixelSize: Theme.fontSizeSmall
-            horizontalAlignment: Text.AlignHCenter
-            truncationMode: TruncationMode.Fade
+        MouseArea {
+            id: mouseArea
+            width: parent.width - searchButton.width * 2
+            height: texts.height
+
+            onClicked: statusBar.searchClicked()
+
+            Column {
+                id: texts
+                x: Theme.paddingSmall
+                anchors.bottom: parent.bottom
+                width: parent.width - Theme.paddingSmall * 2
+
+                Label {
+                    text: title
+                    width: parent.width
+                    color: mouseArea.pressed && mouseArea.containsMouse ? Theme.highlightColor : Theme.highlightDimmerColor
+                    font.pixelSize: Theme.fontSizeExtraSmall
+                    font.weight: Font.Normal
+                    horizontalAlignment: Text.AlignLeft
+                    truncationMode: TruncationMode.Elide
+                }
+                Label {
+                    text: url
+                    width: parent.width
+                    color: mouseArea.pressed && mouseArea.containsMouse ? Theme.highlightColor : Theme.highlightDimmerColor
+                    font.pixelSize: Theme.fontSizeTiny
+                    font.weight: Font.Normal
+                    horizontalAlignment: Text.AlignLeft
+                    truncationMode: TruncationMode.Elide
+                }
+            }
         }
-        Label {
-            text: url
-            width: parent.width - Theme.paddingMedium * 2
-            color: Theme.secondaryColor
-            font.pixelSize: Theme.fontSizeExtraSmall
-            horizontalAlignment: Text.AlignHCenter
-            truncationMode: TruncationMode.Fade
+        Browser.IconButton {
+            anchors.verticalCenter: parent.verticalCenter
+            source: "image://theme/icon-m-close"
+            onClicked: statusBar.closeClicked()
         }
     }
 }
