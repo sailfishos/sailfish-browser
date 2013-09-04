@@ -238,10 +238,10 @@ Page {
 
             onClicked: {
                 Qt.inputMethod.hide()
-                browserPage.load(url)
+                browserPage.load(model.url)
                 pageStack.pop(undefined, true)
             }
-            onPressAndHold: showMenu({"url": url})
+            onPressAndHold: showMenu({"url": model.url})
         }
 
     }
