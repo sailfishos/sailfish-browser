@@ -43,6 +43,8 @@ Page {
         // Following is to prevent editor from losing focus when model count
         // becomes non-zero
         currentIndex: -1
+        // Small cache buffer for creating delegate asynchronously
+        cacheBuffer: Theme.itemSizeLarge * 2
 
         header: Column {
             width: parent.width
@@ -174,17 +176,29 @@ Page {
             }
         }
 
-        delegate: ListItem {
-            id: historyItem
+        delegate: RecyclingDelegate {
+            pool: historyItemPool
+            width: page.width
+            height: item.height
+        }
 
+        VerticalScrollDecorator {}
+    }
+
+    ItemPool {
+        id: historyItemPool
+
+        ListItem {
             width: page.width
             contentHeight: Theme.itemSizeLarge
             showMenuOnPressAndHold: false
             menu: historyContextMenuComponent
 
+            readonly property string thumbnail: model ? model.thumbnailPath : ""
+
             Image {
                 id: iconImage
-                source: thumbnailPath !== "" ? thumbnailPath : "image://theme/icon-m-region"
+                source: thumbnail !== "" ? thumbnail : "image://theme/icon-m-region"
                 asynchronous: true
                 anchors.top: parent.top
                 sourceSize {
@@ -209,12 +223,12 @@ Page {
                 }
 
                 Label {
-                    text: Theme.highlightText(title, urlField.text, Theme.highlightColor)
+                    text: Theme.highlightText(model ? model.title : "", urlField.text, Theme.highlightColor)
                     truncationMode: TruncationMode.Fade
                     width: parent.width
                 }
                 Label {
-                    text: Theme.highlightText(url, urlField.text, Theme.highlightColor)
+                    text: Theme.highlightText(model ? model.url : "", urlField.text, Theme.highlightColor)
                     width: parent.width
                     font.pixelSize: Theme.fontSizeSmall
                     color: Theme.secondaryColor
@@ -229,7 +243,7 @@ Page {
             }
             onPressAndHold: showMenu({"url": url})
         }
-        VerticalScrollDecorator {}
+
     }
 
     Connections {
