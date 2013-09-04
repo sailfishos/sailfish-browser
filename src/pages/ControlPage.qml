@@ -202,11 +202,9 @@ Page {
             }
 
             Column {
-                width: parent.width - iconImage.width - anchors.leftMargin
-
                 anchors {
-                    left: iconImage.right
-                    leftMargin: Theme.paddingMedium
+                    left: iconImage.right; leftMargin: Theme.paddingMedium
+                    right: parent.right; rightMargin: Theme.paddingMedium
                     verticalCenter: iconImage.verticalCenter
                 }
 
