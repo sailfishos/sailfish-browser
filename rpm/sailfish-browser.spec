@@ -11,7 +11,7 @@ BuildRequires:  pkgconfig(Qt5Core)
 BuildRequires:  pkgconfig(Qt5Qml)
 BuildRequires:  pkgconfig(Qt5Gui)
 BuildRequires:  pkgconfig(Qt5Quick)
-BuildRequires:  pkgconfig(qt5embedwidget) >= 1.5.10
+BuildRequires:  pkgconfig(qt5embedwidget) >= 1.5.11
 BuildRequires:  pkgconfig(Qt5OpenGL)
 BuildRequires:  pkgconfig(Qt5DBus)
 BuildRequires:  pkgconfig(Qt5Concurrent)

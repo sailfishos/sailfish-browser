@@ -196,13 +196,15 @@ Page {
         property bool moving
         readonly property real moveLimit: toolBarContainer.height
         readonly property bool active: browserPage.status == PageStatus.Active
+        // There needs to be enough content for enabling fullscreen mode
+        readonly property bool forceChromeMode: contentHeight <= browserPage.height +  toolBarContainer.height
 
         signal selectionRangeUpdated(variant data)
         signal selectionCopied(variant data)
         signal contextMenuRequested(variant data)
 
         function updateFullscreenMode() {
-            if (controlArea.y < window.height - controlArea.height) return
+            if (forceChromeMode || controlArea.y < window.height - controlArea.height) return
 
             var offset = scrollableOffset.y
             var currentDelta = offset - startY
@@ -219,14 +221,11 @@ Page {
         }
 
         clip: true
-
-        anchors {
-            top: parent.top
-            left: parent.left
-        }
         focus: true
         width: browserPage.width
-        height: browserPage.height
+        // This causes ugly binding loops as due to geometry change also scroll area updates.
+        height: forceChromeMode ? (browserPage.height - toolBarContainer.height) : browserPage.height
+
         //{ // TODO
         // No resizes while page is not active
         // also contextmenu size
@@ -417,24 +416,25 @@ Page {
             var contentRect = webView.contentRect
             var offset = scrollableOffset
             var size = webView.scrollableSize
-            var resolution = webView.resolution
 
             var ySizeRatio = contentRect.height / size.height
             var xSizeRatio = contentRect.width / size.width
 
             var vDecorator = verticalScrollDecorator
             vDecorator.height = height * ySizeRatio
-            vDecorator.y = offset.y * resolution * ySizeRatio
+            vDecorator.y = offset.y * ySizeRatio
 
             var hDecorator = horizontalScrollDecorator
             hDecorator.width = width * xSizeRatio
-            hDecorator.x = offset.x * resolution * xSizeRatio
+            hDecorator.x = offset.x * xSizeRatio
         }
 
         onViewAreaChanged: {
             if (!active) return
             updateFullscreenMode()
         }
+
+        onForceChromeModeChanged: if (forceChromeMode) fullscreenMode = false
 
         onDraggingChanged: {
             if (dragging) {
@@ -467,7 +467,7 @@ Page {
         Rectangle {
             id: horizontalScrollDecorator
             height: 5
-            y: parent.height - (fullscreenMode ? 0 : toolBarContainer.height) - height
+            y: browserPage.height - (fullscreenMode ? 0 : toolBarContainer.height) - height
             color: Theme.highlightDimmerColor
             smooth: true
             radius: 2.5
@@ -525,7 +525,7 @@ Page {
         // This should be just a binding for progressBar.progress but currently progress is going up and down
         property real loadProgress: webView.loadProgress / 100.0
 
-        y: parent.height - height
+        anchors.bottom: parent.bottom
         width: parent.width
         visible: !_ctxMenuActive
         opacity: fullscreenMode ? 0.0 : 1.0

@@ -105,7 +105,7 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     mozContext->setPref(QString("keyword.enabled"), QVariant(true));
 
     // Scale up content size
-    mozContext->setPref(QString("layout.css.devPixelsPerPx"), QVariant("1.5"));
+    mozContext->setPixelRatio(1.5);
 }
 
 void DeclarativeWebUtils::openUrl(QString url)
