@@ -14,7 +14,6 @@ Page {
     id: page
 
     property alias historyModel: historyList.model
-    property Item contextMenu
     property Item urlField
     property string url
     property string title
@@ -22,6 +21,8 @@ Page {
     Component {
         id: historyContextMenuComponent
         ContextMenu {
+            id: historyContextMenu
+
             property string url: ""
             MenuItem {
                 //% "Open in new tab"
@@ -29,7 +30,7 @@ Page {
                 onClicked: {
                     browserPage.newTab(url, true)
                     pageStack.pop(undefined, true)
-                    contextMenu.hide()
+                    historyContextMenu.hide()
                 }
             }
         }
@@ -173,73 +174,62 @@ Page {
             }
         }
 
-        delegate: Item {
+        delegate: ListItem {
             id: historyItem
-            property bool menuOpen: contextMenu != null && contextMenu.parent == historyItem
 
             width: page.width
-            height: menuOpen ?  historyRow.height + contextMenu.height : historyRow.height
+            contentHeight: Theme.itemSizeLarge
+            showMenuOnPressAndHold: false
+            menu: historyContextMenuComponent
 
-            BackgroundItem {
-                id: historyRow
-                width: page.width
-                height: Theme.itemSizeLarge
-
-                Image {
-                    id: iconImage
-                    source: thumbnailPath !== "" ? thumbnailPath : "image://theme/icon-m-region"
-                    asynchronous: true
-                    anchors.top: parent.top
-                    sourceSize {
-                        height: parent.height
-                        width: height
-                    }
+            Image {
+                id: iconImage
+                source: thumbnailPath !== "" ? thumbnailPath : "image://theme/icon-m-region"
+                asynchronous: true
+                anchors.top: parent.top
+                sourceSize {
                     height: parent.height
                     width: height
-
-                    onStatusChanged: {
-                        if (status == Image.Error) {
-                            source = "image://theme/icon-m-region"
-                        }
-                    }
                 }
+                height: parent.height
+                width: height
 
-                Column {
-                    width: parent.width - iconImage.width - anchors.leftMargin
-
-                    anchors {
-                           left: iconImage.right
-                           leftMargin: Theme.paddingMedium
-                           verticalCenter: iconImage.verticalCenter
+                onStatusChanged: {
+                    if (status == Image.Error) {
+                        source = "image://theme/icon-m-region"
                     }
-
-                    Label {
-                        text: Theme.highlightText(title, urlField.text, Theme.highlightColor)
-                        truncationMode: TruncationMode.Fade
-                        width: parent.width
-                    }
-                    Label {
-                        text: Theme.highlightText(url, urlField.text, Theme.highlightColor)
-                        width: parent.width
-                        font.pixelSize: Theme.fontSizeSmall
-                        color: Theme.secondaryColor
-                        truncationMode: TruncationMode.Elide
-                    }
-                }
-
-                onClicked: {
-                    Qt.inputMethod.hide()
-                    browserPage.load(url)
-                    pageStack.pop(undefined, true)
-                }
-                onPressAndHold: {
-                    if (!contextMenu) {
-                        contextMenu = historyContextMenuComponent.createObject(historyList)
-                    }
-                    contextMenu.url = url
-                    contextMenu.show(historyItem)
                 }
             }
+
+            Column {
+                width: parent.width - iconImage.width - anchors.leftMargin
+
+                anchors {
+                    left: iconImage.right
+                    leftMargin: Theme.paddingMedium
+                    verticalCenter: iconImage.verticalCenter
+                }
+
+                Label {
+                    text: Theme.highlightText(title, urlField.text, Theme.highlightColor)
+                    truncationMode: TruncationMode.Fade
+                    width: parent.width
+                }
+                Label {
+                    text: Theme.highlightText(url, urlField.text, Theme.highlightColor)
+                    width: parent.width
+                    font.pixelSize: Theme.fontSizeSmall
+                    color: Theme.secondaryColor
+                    truncationMode: TruncationMode.Elide
+                }
+            }
+
+            onClicked: {
+                Qt.inputMethod.hide()
+                browserPage.load(url)
+                pageStack.pop(undefined, true)
+            }
+            onPressAndHold: showMenu({"url": url})
         }
         VerticalScrollDecorator {}
     }
