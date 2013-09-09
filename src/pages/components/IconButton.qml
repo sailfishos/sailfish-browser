@@ -6,7 +6,7 @@ MouseArea {
     id: root
 
     property string source
-    property bool _showPress: (pressed && containsMouse) || pressTimer.running
+    readonly property bool down: (pressed && containsMouse) || pressTimer.running
 
     onPressedChanged: {
         if (pressed) {
@@ -42,7 +42,7 @@ MouseArea {
         Component.onCompleted: updateHighlightSource()
 
         states: State {
-            when: root._showPress && image._highlightSource != ""
+            when: root.down && image._highlightSource != ""
             PropertyChanges {
                 target: image
                 source: image._highlightSource

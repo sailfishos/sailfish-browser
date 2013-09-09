@@ -609,7 +609,7 @@ Page {
                         y: (parent.height - contentHeight) / 2 - 5
                         font.pixelSize: Theme.fontSizeExtraSmall
                         font.bold: true
-                        color: tabPageButton.pressed && tabPageButton.containsMouse ? Theme.highlightColor : Theme.highlightDimmerColor
+                        color: tabPageButton.down ? Theme.highlightColor : Theme.highlightDimmerColor
                         horizontalAlignment: Text.AlignHCenter
                     }
                 }
