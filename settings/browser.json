@@ -2,7 +2,7 @@
     "translation_catalog": "settings-sailfish-browser",
     "entries": [
     {
-        "path": "applications/Web Browser",
+        "path": "applications/sailfish-browser.desktop",
         "title": "Browser",
         "translation_id": "settings_applications-browser",
         "type": "page",
