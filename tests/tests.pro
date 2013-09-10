@@ -1,9 +1,7 @@
 TEMPLATE = aux
 
 # Data for functional tests
-testdata.files = manual/testpage.html \
-                 manual/testwebprompts.html \
-                 manual/testselect.html \
+testdata.files = manual/*.html \
                  manual/icon-launcher-testbrowser.png
 testdata.path = /opt/tests/sailfish-browser/manual/
 
