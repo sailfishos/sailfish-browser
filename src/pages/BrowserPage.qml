@@ -25,7 +25,6 @@ Page {
     property Component _controlPageComponent
     property Item _contextMenu
     property bool _ctxMenuActive: _contextMenu != null && _contextMenu.active
-    property bool _ctxMenuVisible: _contextMenu != null && _contextMenu.visible
     // As QML can't disconnect closure from a signal (but methods only)
     // let's keep auth data in this auxilary attribute whose sole purpose is to
     // pass arguments to openAuthDialog().
@@ -123,22 +122,24 @@ Page {
         })
     }
 
-    function openContextMenu(linkHref, imageSrc) {
+    function openContextMenu(linkHref, imageSrc, linkTitle) {
         var ctxMenuComp
 
         if (_contextMenu) {
             _contextMenu.linkHref = linkHref
+            _contextMenu.linkTitle = linkTitle.trim()
             _contextMenu.imageSrc = imageSrc
-            _contextMenu.show(browserPage)
+            _contextMenu.show()
         } else {
             ctxMenuComp = Qt.createComponent(Qt.resolvedUrl("components/BrowserContextMenu.qml"))
             if (ctxMenuComp.status !== Component.Error) {
                 _contextMenu = ctxMenuComp.createObject(browserPage,
                                                         {
                                                             "linkHref": linkHref,
-                                                            "imageSrc": imageSrc
+                                                            "imageSrc": imageSrc,
+                                                            "linkTitle": linkTitle.trim()
                                                         })
-                _contextMenu.show(browserPage)
+                _contextMenu.show()
             } else {
                 console.log("Can't load BrowserContentMenu.qml")
             }
@@ -385,7 +386,7 @@ Page {
             case "Content:ContextMenu": {
                 webView.contextMenuRequested(data)
                 if (data.types.indexOf("image") !== -1 || data.types.indexOf("link") !== -1) {
-                    openContextMenu(data.linkURL, data.mediaURL)
+                    openContextMenu(data.linkURL, data.mediaURL, data.linkTitle)
                 }
                 break
             }
@@ -459,7 +460,7 @@ Page {
             color: Theme.highlightDimmerColor
             smooth: true
             radius: 2.5
-            visible: parent.height > height && !_ctxMenuVisible
+            visible: parent.height > height && !_ctxMenuActive
             opacity: webView.moving ? 1.0 : 0.0
             Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
         }
@@ -471,7 +472,7 @@ Page {
             color: Theme.highlightDimmerColor
             smooth: true
             radius: 2.5
-            visible: parent.width > width && !_ctxMenuVisible
+            visible: parent.width > width && !_ctxMenuActive
             opacity: webView.moving ? 1.0 : 0.0
             Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
         }
@@ -508,15 +509,6 @@ Page {
                 x = offsetX
             }
         }
-    }
-
-    // Dimmer for web content
-    Rectangle {
-        anchors.fill: webView
-
-        color: Theme.highlightDimmerColor
-        opacity: _ctxMenuActive? 0.8 : 0.0
-        Behavior on opacity { FadeAnimation {} }
     }
 
     Column {

@@ -7,16 +7,192 @@
 
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import Sailfish.Browser 1.0
 
-ContextMenu {
-    id: menu
+Rectangle {
+    id: root
 
     property string linkHref
+    property string linkTitle
     property string imageSrc
+    readonly property bool active: visible
 
-    // NOTE: this code does the same thing as that in embedlite-components/jscomps/HelperAppDialog.js
-    //       We can't share the code here since that code is called in the context of web engine and we can't
-    //       re-use it as it is due to MPL license thus this regex-less rewrite.
+    visible: false
+    opacity: visible ? 1.0 : 0.0
+
+    width: parent.width
+    height: parent.height
+    gradient: Gradient {
+        GradientStop { position: 0.0; color: Theme.highlightDimmerColor }
+        GradientStop { position: 1.0; color: Theme.rgba(Theme.highlightDimmerColor, .91) }
+    }
+
+    Behavior on opacity { FadeAnimation { duration: 300 } }
+
+    Column {
+        width: parent.width
+        spacing: Theme.paddingMedium
+        anchors.top: parent.top
+        anchors.topMargin: Theme.paddingLarge*2
+
+        Label {
+            id: title
+            anchors.horizontalCenter: parent.horizontalCenter
+            visible: root.linkTitle.length > 0
+            text: root.linkTitle
+            width: root.width - Theme.paddingLarge*2
+            elide: Text.ElideRight
+            wrapMode: Text.Wrap
+            maximumLineCount: 2
+            color: Theme.highlightColor
+            font.pixelSize: Theme.fontSizeExtraLarge
+            horizontalAlignment: Text.AlignHCenter
+            opacity: .6
+        }
+
+        Label {
+            anchors.horizontalCenter: parent.horizontalCenter
+            color: Theme.highlightColor
+            text: root.imageSrc.length > 0 ? root.imageSrc : root.linkHref
+            width: root.width - Theme.paddingLarge*2
+            wrapMode: Text.Wrap
+            elide: Text.ElideRight
+            maximumLineCount: 4
+            font.pixelSize: title.visible ? Theme.fontSizeMedium : Theme.fontSizeExtraLarge
+            horizontalAlignment: Text.AlignHCenter
+            opacity: .6
+        }
+    }
+
+    Column {
+        id: menu
+
+        property Item highlightedItem
+
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: Theme.itemSizeSmall
+        width: parent.width
+
+        MenuItem {
+            visible: root.linkHref.length > 0 && root.imageSrc.length === 0
+            //: Open link in a new tab from browser context menu
+            //% "Open link in a new tab"
+            text: qsTrId("sailfish_browser-me-open_link_in_new_tab")
+
+            onClicked: {
+                root.visible = false
+                browserPage.newTab(root.linkHref, false)
+            }
+        }
+
+        MenuItem {
+            visible: root.linkHref.length > 0 && root.imageSrc.length === 0
+            //: Share link from browser context menu
+            //% "Share"
+            text: qsTrId("sailfish_browser-me-share_link")
+
+            onClicked: {
+                root.visible = false
+                pageStack.push(Qt.resolvedUrl("../ShareLinkPage.qml"), {"link" : root.linkHref, "linkTitle": root.linkTitle})
+            }
+        }
+
+        MenuItem {
+            visible: root.linkHref.length > 0 && root.imageSrc.length === 0
+            //: Copy link to clipboard from browser context menu
+            //% "Copy to clipboard"
+            text: qsTrId("sailfish_browser-me-copy_to_clipboard")
+
+            onClicked: {
+                root.visible = false
+                Clipboard.text = root.linkHref
+            }
+        }
+
+        MenuItem {
+            visible: imageSrc.length > 0
+            //: Open image in a new tab from browser context menu
+            //% "Open image in a new tab"
+            text: qsTrId("sailfish_browser-me-open_image_in_new_tab")
+
+            onClicked: {
+                root.visible = false
+                browserPage.newTab(root.imageSrc, false)
+            }
+        }
+
+        MenuItem {
+            visible: root.imageSrc.length > 0
+            //: This menu item saves image to Gallery application
+            //% "Save to Gallery"
+            text: qsTrId("sailfish_browser-me-save_image_to_gallery")
+
+            onClicked: {
+                root.visible = false
+                var urlSections = imageSrc.split("/")
+                var leafName = urlSections[urlSections.length - 1]
+
+                if (leafName.length === 0) {
+                    leafName = "unnamed_picture"
+                }
+
+                MozContext.sendObserve("embedui:download",
+                                       {
+                                           "msg": "addDownload",
+                                           "from": root.imageSrc,
+                                           "to": "file://" + root.getUniqueFileName(leafName)
+                                       })
+            }
+        }
+
+        function highlightItem(yPos) {
+            var xPos = width/2
+            var child = childAt(xPos, yPos)
+            if (!child) {
+                setHighlightedItem(null)
+                return
+            }
+            var parentItem
+            while (child) {
+                if (child && child.hasOwnProperty("__silica_menuitem") && child.enabled) {
+                    setHighlightedItem(child)
+                    break
+                }
+                parentItem = child
+                yPos = parentItem.mapToItem(child, xPos, yPos).y
+                child = parentItem.childAt(xPos, yPos)
+            }
+        }
+
+        function setHighlightedItem(item) {
+            if (item === highlightedItem) {
+                return
+            }
+            if (highlightedItem) {
+                highlightedItem.down = false
+            }
+            highlightedItem = item
+            if (highlightedItem) {
+                highlightedItem.down = true
+            }
+        }
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        onPressed: menu.highlightItem(mouse.y - menu.y)
+        onPositionChanged: menu.highlightItem(mouse.y - menu.y)
+        onCanceled:  menu.setHighlightedItem(null)
+        onReleased: {
+            if (menu.highlightedItem !== null) {
+                menu.highlightedItem.down = false
+                menu.highlightedItem.clicked()
+            } else {
+                onClicked: root.visible = false
+            }
+        }
+    }
+
     function getUniqueFileName(fileName) {
         var collisionCount = 0
         var picturesDir = WebUtils.picturesDir
@@ -44,54 +220,7 @@ ContextMenu {
         return picturesDir + "/" + fileName
     }
 
-    MenuItem {
-        enabled: false
-        truncationMode: TruncationMode.Fade
-        text: linkHref ? linkHref : imageSrc
-        font.pixelSize: Theme.fontSizeSmall
-        color: Theme.primaryColor
-    }
-
-    MenuItem {
-        visible: linkHref.length > 0
-        //% "Open link in a new tab"
-        text: qsTrId("sailfish_browser-me-open_link_in_new_tab")
-
-        onClicked: {
-            browserPage.newTab(linkHref, false)
-        }
-    }
-
-    MenuItem {
-        visible: imageSrc.length > 0
-        //% "Open image in a new tab"
-        text: qsTrId("sailfish_browser-me-open_image_in_new_tab")
-
-        onClicked: {
-            browserPage.newTab(imageSrc, false)
-        }
-    }
-
-    MenuItem {
-        visible: imageSrc.length > 0
-        //: This menu item saves image to Gallery application
-        //% "Save to Gallery"
-        text: qsTrId("sailfish_browser-me-save_image_to_gallery")
-
-        onClicked: {
-            var urlSections = imageSrc.split("/")
-            var leafName = urlSections[urlSections.length - 1]
-
-            if (leafName.length === 0) {
-                leafName = "unnamed_picture"
-            }
-
-            MozContext.sendObserve("embedui:download",
-                                   {
-                                       "msg": "addDownload",
-                                       "from": imageSrc,
-                                       "to": "file://" + getUniqueFileName(leafName)
-                                   })
-        }
+    function show() {
+        visible = true
     }
 }

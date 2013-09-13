@@ -14,7 +14,7 @@ INSTALLS += target qml
 
 DEFINES += DEPLOYMENT_PATH=\"\\\"\"$${DEPLOYMENT_PATH}/\"\\\"\"
 
-PKGCONFIG +=  nemotransferengine-qt5 mlite5
+PKGCONFIG +=  nemotransferengine-qt5 mlite5 libjollasignonuiservice-qt5
 
 packagesExist(qdeclarative5-boostable) {
     message("Building with qdeclarative-boostable support")
