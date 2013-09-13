@@ -25,7 +25,6 @@ Page {
     property Component _controlPageComponent
     property Item _contextMenu
     property bool _ctxMenuActive: _contextMenu != null && _contextMenu.active
-    property bool _ctxMenuVisible: _contextMenu != null && _contextMenu.visible
     // As QML can't disconnect closure from a signal (but methods only)
     // let's keep auth data in this auxilary attribute whose sole purpose is to
     // pass arguments to openAuthDialog().
@@ -461,7 +460,7 @@ Page {
             color: Theme.highlightDimmerColor
             smooth: true
             radius: 2.5
-            visible: parent.height > height && !_ctxMenuVisible
+            visible: parent.height > height && !_ctxMenuActive
             opacity: webView.moving ? 1.0 : 0.0
             Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
         }
@@ -473,7 +472,7 @@ Page {
             color: Theme.highlightDimmerColor
             smooth: true
             radius: 2.5
-            visible: parent.width > width && !_ctxMenuVisible
+            visible: parent.width > width && !_ctxMenuActive
             opacity: webView.moving ? 1.0 : 0.0
             Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
         }
