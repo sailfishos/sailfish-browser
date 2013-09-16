@@ -19,7 +19,8 @@ Page {
     property alias tabs: tabModel
     property alias favorites: favoriteModel
     property alias currentTabIndex: tabModel.currentTabIndex
-    property bool fullscreenMode
+    readonly property bool fullscreenMode: (!webView.forceChromeMode && _fullscreenMode) || Qt.inputMethod.visible || !Qt.application.active
+    property bool _fullscreenMode
 
     property string favicon
     property Component _controlPageComponent
@@ -155,12 +156,7 @@ Page {
         }
     }
 
-    onStatusChanged: fullscreenMode = status < PageStatus.Active
-
-    Connections {
-        target: Qt.application
-        onActiveChanged: fullscreenMode = !Qt.application.active
-    }
+    onStatusChanged: _fullscreenMode = status < PageStatus.Active
 
     TabModel {
         id: tabModel
@@ -203,7 +199,7 @@ Page {
         readonly property real moveLimit: toolBarContainer.height
         readonly property bool active: browserPage.status == PageStatus.Active
         // There needs to be enough content for enabling fullscreen mode
-        readonly property bool forceChromeMode: Qt.application.active && contentHeight <= browserPage.height +  toolBarContainer.height
+        readonly property bool forceChromeMode: contentHeight <= browserPage.height +  toolBarContainer.height
 
         signal selectionRangeUpdated(variant data)
         signal selectionCopied(variant data)
@@ -219,9 +215,9 @@ Page {
             }
 
             if (currentDelta > moveLimit) {
-                fullscreenMode = true
+                _fullscreenMode = true
             } else if (currentDelta < -moveLimit) {
-                fullscreenMode = false
+                _fullscreenMode = false
             }
             moveDelta = Math.abs(currentDelta)
         }
@@ -230,7 +226,7 @@ Page {
         focus: true
         width: browserPage.width
         // This causes ugly binding loops as due to geometry change also scroll area updates.
-        height: forceChromeMode ? (browserPage.height - toolBarContainer.height) : browserPage.height
+        height: !browserPage.fullscreenMode ? (browserPage.height - toolBarContainer.height) : browserPage.height
 
         //{ // TODO
         // No resizes while page is not active
@@ -290,7 +286,7 @@ Page {
         onLoadingChanged: {
             if (loading) {
                 favicon = ""
-                fullscreenMode = false
+                _fullscreenMode = false
             }
 
             // store tab data
@@ -439,8 +435,6 @@ Page {
             if (!active) return
             updateFullscreenMode()
         }
-
-        onForceChromeModeChanged: if (forceChromeMode) fullscreenMode = false
 
         onDraggingChanged: {
             if (dragging) {
