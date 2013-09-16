@@ -44,7 +44,7 @@ void DownloadManager::recvObserve(const QString message, const QVariant data)
         QDBusPendingReply<int> reply = m_transferClient->createDownload(dataMap.value("displayName").toString(),
                                                                         QString("image://theme/icon-launcher-browser"),
                                                                         QString("image://theme/icon-launcher-browser"),
-                                                                        dataMap.value("sourceUrl").toString(),
+                                                                        dataMap.value("targetPath").toString(),
                                                                         dataMap.value("mimeType").toString(),
                                                                         dataMap.value("size").toULongLong(),
                                                                         callback,
