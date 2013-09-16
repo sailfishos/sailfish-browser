@@ -157,6 +157,11 @@ Page {
 
     onStatusChanged: fullscreenMode = status < PageStatus.Active
 
+    Connections {
+        target: Qt.application
+        onActiveChanged: fullscreenMode = !Qt.application.active
+    }
+
     TabModel {
         id: tabModel
     }
@@ -198,7 +203,7 @@ Page {
         readonly property real moveLimit: toolBarContainer.height
         readonly property bool active: browserPage.status == PageStatus.Active
         // There needs to be enough content for enabling fullscreen mode
-        readonly property bool forceChromeMode: contentHeight <= browserPage.height +  toolBarContainer.height
+        readonly property bool forceChromeMode: Qt.application.active && contentHeight <= browserPage.height +  toolBarContainer.height
 
         signal selectionRangeUpdated(variant data)
         signal selectionCopied(variant data)
@@ -521,7 +526,7 @@ Page {
         width: parent.width
         visible: !_ctxMenuActive
         opacity: fullscreenMode ? 0.0 : 1.0
-        Behavior on opacity { FadeAnimation { duration: 300 } }
+        Behavior on opacity { FadeAnimation { duration: Qt.application.active ? 300 : 0 } }
 
         onLoadProgressChanged: {
             if (loadProgress > progressBar.progress) {
