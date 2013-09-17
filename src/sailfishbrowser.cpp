@@ -55,7 +55,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     // TODO : Remove this and set custom user agent always
     // Don't set custom user agent string when arguments contains -developerMode, give url as last argument
     if (!app->arguments().contains("-developerMode")) {
-        setenv("CUSTOM_UA", "Mozilla/5.0 (Linux; U; Jolla; Sailfish; Mobile; rv:20.0) Gecko/20.0 Firefox/20.0 Sailfish Browser/1.0 Mobile", 1);
+        setenv("CUSTOM_UA", "Mozilla/5.0 (Linux; U; Jolla; Sailfish; Mobile; rv:20.0) Gecko/20.0 Firefox/20.0 Sailfish Browser/1.0 like Safari/535.19", 1);
     }
 
     BrowserService *service = new BrowserService(app.data());
