@@ -8,8 +8,16 @@
                 font-size: 40pt;
             }
         </style>
+        <script>
+        function load()
+        {
+            pxRatio = document.getElementById("pixelRatio")
+            pxRatio.innerHTML = "My devicePixelRatio: " + window.devicePixelRatio
+        }
+        </script>
     </head>
-    <body>
+    <body onload="load()">
+        <div id="pixelRatio">HelloWorld</div>
         <table>
             <tr>
                 <td>Text</td>
@@ -32,6 +40,9 @@
     </div>
     <div>
       <a href="testinputfocus.html">test input focus</a>
+    </div>
+    <div>
+      <a href="http://www.quirksmode.org/css/tests/mediaqueries/devicepixelratio.html">QuirksMode's DevicePixelRatio test page</a>
     </div>
     </body>
 </html>
