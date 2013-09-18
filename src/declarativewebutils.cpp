@@ -106,6 +106,9 @@ void DeclarativeWebUtils::updateWebEngineSettings()
 
     // Scale up content size
     mozContext->setPixelRatio(1.5);
+
+    mozContext->setPref(QString("embedlite.inputItemSize"), QVariant(38));
+    mozContext->setPref(QString("embedlite.zoomMargin"), QVariant(14));
 }
 
 void DeclarativeWebUtils::openUrl(QString url)
