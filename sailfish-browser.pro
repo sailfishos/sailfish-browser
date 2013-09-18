@@ -14,6 +14,4 @@ chrome_scripts.path = /usr/lib/mozembedlite/chrome/embedlite/content
 INSTALLS += desktop dbus_service chrome_scripts
 
 OTHER_FILES += \
-    tests/test-definition/*.xml \
-    tests/auto/*.qml \
     rpm/*.spec
