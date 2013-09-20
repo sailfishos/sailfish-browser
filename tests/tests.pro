@@ -14,3 +14,8 @@ testdesktop.files = manual/test-sailfish-browser.desktop
 testdesktop.path = /usr/share/applications
 
 INSTALLS += testdata testdesktop testauto
+
+OTHER_FILES += \
+    auto/*.qml \
+    manual/*.html \
+    test-definition/*.xml
