@@ -253,9 +253,10 @@ Page {
 
     onStatusChanged: {
         if (status == PageStatus.Active) {
-            if (url != "") {
+            // Workaround for jb9522, waiting for maliit to be fixed
+            /* if (url != "") {
                 urlField.selectAll()
-            }
+            } */
             urlField.forceActiveFocus()
         } else {
             Qt.inputMethod.hide()
