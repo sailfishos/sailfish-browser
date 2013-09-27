@@ -199,7 +199,7 @@ Page {
         property real moveDelta
         property bool moving
         readonly property real moveLimit: toolBarContainer.height
-        readonly property bool active: browserPage.status == PageStatus.Active
+        enabled: browserPage.status == PageStatus.Active
         // There needs to be enough content for enabling fullscreen mode
         readonly property bool forceChromeMode: contentHeight <= browserPage.height +  toolBarContainer.height
 
@@ -413,28 +413,9 @@ Page {
             }
             }
         }
-        onScrollableOffsetChanged: {
-            // TabPage and ControlPage cannot trigger updates to viewport
-            if (!active) return
-
-            var contentRect = webView.contentRect
-            var offset = scrollableOffset
-            var size = webView.scrollableSize
-
-            var ySizeRatio = contentRect.height / size.height
-            var xSizeRatio = contentRect.width / size.width
-
-            var vDecorator = verticalScrollDecorator
-            vDecorator.height = height * ySizeRatio
-            vDecorator.y = offset.y * ySizeRatio
-
-            var hDecorator = horizontalScrollDecorator
-            hDecorator.width = width * xSizeRatio
-            hDecorator.x = offset.x * xSizeRatio
-        }
 
         onViewAreaChanged: {
-            if (!active) return
+            if (!enabled) return
             updateFullscreenMode()
         }
 
@@ -457,6 +438,8 @@ Page {
             id: verticalScrollDecorator
 
             width: 5
+            height: webView.verticalScrollDecorator.height
+            y: webView.verticalScrollDecorator.y
             anchors.right: parent ? parent.right: undefined
             color: Theme.highlightDimmerColor
             smooth: true
@@ -468,7 +451,9 @@ Page {
 
         Rectangle {
             id: horizontalScrollDecorator
+            width: webView.horizontalScrollDecorator.width
             height: 5
+            x: webView.horizontalScrollDecorator.x
             y: browserPage.height - (fullscreenMode ? 0 : toolBarContainer.height) - height
             color: Theme.highlightDimmerColor
             smooth: true
