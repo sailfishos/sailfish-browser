@@ -8,6 +8,7 @@
 #include <QVariant>
 #include "qmozcontext.h"
 #include "settingmanager.h"
+#include "dbmanager.h"
 
 SettingManager::SettingManager(QObject *parent)
     : QObject(parent)
@@ -35,6 +36,7 @@ void SettingManager::clearPrivateData()
         QMozContext::GetInstance()->sendObserve(QString("clear-private-data"), QString("passwords"));
         QMozContext::GetInstance()->sendObserve(QString("clear-private-data"), QString("cookies"));
         QMozContext::GetInstance()->sendObserve(QString("clear-private-data"), QString("cache"));
+        DBManager::instance()->clearHistory();
         m_clearPrivateDataConfItem->set(QVariant(false));
     }
 }
