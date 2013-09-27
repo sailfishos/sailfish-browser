@@ -16,7 +16,7 @@ Page {
 
     property BrowserPage browserPage
     // focus to input field on opening
-    property bool initialFocus
+    property bool initialSearchFocus
 
     property bool _editing
     property string _search
@@ -50,37 +50,34 @@ Page {
 
     Loader {
         anchors.fill: parent
-        sourceComponent: _editing || initialFocus ? historyList : favoriteList
+        sourceComponent: _editing || initialSearchFocus ? historyList : favoriteList
     }
 
     Item {
         id: commonHeader
         width: page.width
-        height: _editing? headerContent.height : headerContent.height + tabsGrid.height
+        height: _editing ? headerContent.height : headerContent.height + tabsGrid.height
 
         function newTab() {
             searchField.forceActiveFocus()
             browserPage.newTab("", true)
         }
 
-        Item {
+        Rectangle {
             id: headerContent
             width: parent.width
             height: width / 2
-
-            Rectangle {
-                anchors.fill: parent
-                color: Theme.highlightColor
-                opacity: 0.1
-            }
+            color: Theme.rgba(Theme.highlightColor,0.1)
 
             Row {
-                x: searchField.x + Theme.paddingLarge
+                //x: searchField.x + Theme.paddingLarge
                 spacing: Theme.paddingSmall
 
                 anchors {
                     bottom: searchField.top
                     bottomMargin: Theme.paddingLarge
+                    left: parent.left
+                    leftMargin: Theme.paddingLarge
                 }
 
                 Rectangle {
@@ -92,18 +89,18 @@ Page {
                 }
 
                 Label {
-                    text: browserPage.currentTab.title
+                    text: (browserPage.tabs.count == 0 || browserPage.currentTab.url == "") ? "New Tab" : (browserPage.currentTab.url == _search ? browserPage.currentTab.title : "")
                     color: Theme.highlightColor
                     font.pixelSize: Theme.fontSizeSmall
-                    width: page.width - x
+                    width: page.width * 3.0 / 4.0
                     truncationMode: TruncationMode.Fade
                 }
             }
 
             TextField {
                 id: searchField
-                width: page.width - 2 * Theme.paddingMedium
-                x: Theme.paddingMedium
+                width: page.width
+
                 anchors.bottom: parent.bottom
                 anchors.bottomMargin: Theme.paddingMedium
                 text: browserPage.currentTab.url
@@ -129,9 +126,9 @@ Page {
                 Binding { target: page; property: "_editing"; value: searchField.focus }
 
                 Component.onCompleted: {
-                    if (initialFocus) {
+                    if (initialSearchFocus) {
                         searchField.forceActiveFocus()
-                        initialFocus = false
+                        initialSearchFocus = false
                     }
                 }
             }
@@ -143,34 +140,49 @@ Page {
             columns: 2
             rows: Math.ceil(browserPage.tabs.count / 2) + 1
             anchors {
-                left: parent.left
                 top: headerContent.bottom
+            }
+            move: Transition {
+                NumberAnimation { properties: "x,y"; easing.type: Easing.InOutQuad; duration: 200 }
             }
 
             Repeater {
                 model: browserPage.tabs
-                ListItem {
+                BackgroundItem {
                     id: tabDelegate
                     width: page.width/tabsGrid.columns
-                    contentHeight: width
-                    showMenuOnPressAndHold: false
-                    menu: tabContextMenuComponent
+                    height: width
 
                     Rectangle {
                         id: placeHolder
                         anchors.fill: parent
                         visible: !thumb.visible
-                        color: Theme.highlightColor
-                        opacity: 0.1
+                        color: Theme.rgba(Theme.highlightColor, 0.1)
 
-                        Label {
+                        Column {
+                            anchors {
+                                topMargin: Theme.paddingMedium
+                                top: parent.top
+                            }
                             width: parent.width
-                            anchors.centerIn: parent.Center
-                            text: title && title != "" ? title : url
-                            visible: !thumb.visible
-                            font.pixelSize: Theme.fontSizeExtraSmall
-                            color: Theme.secondaryColor
-                            wrapMode:Text.WrapAnywhere
+                            spacing: Theme.paddingSmall
+                            Label {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                width: parent.width - Theme.paddingMedium * 2
+                                text: title
+                                font.pixelSize: Theme.fontSizeExtraSmall
+                                color: Theme.primaryColor
+                                truncationMode: TruncationMode.Fade
+                            }
+                            Label {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                width: parent.width - Theme.paddingMedium * 2
+                                text: url
+                                font.pixelSize: Theme.fontSizeExtraSmall
+                                color: Theme.rgba(Theme.secondaryColor, 0.6)
+                                wrapMode: Text.WrapAnywhere
+                                maximumLineCount: 3
+                            }
                         }
                     }
 
@@ -217,7 +229,6 @@ Page {
                         browserPage.loadTab(model.index)
                         window.pageStack.pop(browserPage, true)
                     }
-                    onPressAndHold: showMenu({"index" : index, "url" : url, "title" : title})
                 }
             }
         }
@@ -318,17 +329,20 @@ Page {
                 Column {
                     width: page.width - Theme.paddingLarge * 2
                     x: Theme.paddingLarge
+                    anchors.verticalCenter: parent.verticalCenter
 
                     Label {
                         text: Theme.highlightText(title, _search, Theme.highlightColor)
                         truncationMode: TruncationMode.Fade
                         width: parent.width
+                        color: highlighted ? Theme.highlightColor : Theme.primaryColor
                     }
                     Label {
                         text: Theme.highlightText(url, _search, Theme.highlightColor)
                         width: parent.width
                         font.pixelSize: Theme.fontSizeSmall
-                        color: Theme.secondaryColor
+                        opacity: 0.6
+                        color: highlighted ? Theme.highlightColor : Theme.primaryColor
                         truncationMode: TruncationMode.Elide
                     }
                 }

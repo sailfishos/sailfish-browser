@@ -577,11 +577,11 @@ Page {
                 }
 
                 Browser.IconButton {
-                    property bool favourited: favorites.count > 0 && favorites.contains(tab.url)
-                    source: favourited? "image://theme/icon-m-favorite-selected" : "image://theme/icon-m-favorite"
+                    property bool favorited: favorites.count > 0 && favorites.contains(tab.url)
+                    source: favorited ? "image://theme/icon-m-favorite-selected" : "image://theme/icon-m-favorite"
                     enabled: !fullscreenMode
                     onClicked: {
-                        if (favourited) {
+                        if (favorited) {
                             favorites.removeBookmark(tab.url)
                         } else {
                             favorites.addBookmark(tab.url, tab.title, favicon)
