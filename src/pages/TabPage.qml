@@ -70,7 +70,6 @@ Page {
             color: Theme.rgba(Theme.highlightColor,0.1)
 
             Row {
-                //x: searchField.x + Theme.paddingLarge
                 spacing: Theme.paddingSmall
 
                 anchors {
@@ -89,7 +88,9 @@ Page {
                 }
 
                 Label {
-                    text: (browserPage.tabs.count == 0 || browserPage.currentTab.url == "") ? "New Tab" : (browserPage.currentTab.url == _search ? browserPage.currentTab.title : "")
+                    id: titleLabel
+                    //% "New tab"
+                    text: (browserPage.tabs.count == 0 || browserPage.currentTab.url == "") ? qsTrId("sailfish_browser-la-new_tab") : (browserPage.currentTab.url == _search ? browserPage.currentTab.title : "")
                     color: Theme.highlightColor
                     font.pixelSize: Theme.fontSizeSmall
                     width: page.width * 3.0 / 4.0
