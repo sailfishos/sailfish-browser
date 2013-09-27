@@ -139,6 +139,9 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     QObject::connect(QMozContext::GetInstance(), SIGNAL(newWindowRequested(QString,uint,QNewWindowResponse*)),
                      utils, SLOT(openUrl(QString)));
 
+#ifdef USE_RESOURCES
+    view->setSource(QUrl("qrc:///browser.qml"));
+#else
     bool isDesktop = qApp->arguments().contains("-desktop");
 
     QString path;
@@ -148,6 +151,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
         path = QString(DEPLOYMENT_PATH);
     }
     view->setSource(QUrl::fromLocalFile(path+"browser.qml"));
+#endif
+
     view->showFullScreen();
 
     // Setup embedding

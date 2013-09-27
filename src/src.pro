@@ -7,12 +7,22 @@ CONFIG += link_pkgconfig
 TARGETPATH = /usr/bin
 target.path = $$TARGETPATH
 
-DEPLOYMENT_PATH = /usr/share/$$TARGET
-qml.path = $$DEPLOYMENT_PATH
+INSTALLS += target
 
-INSTALLS += target qml
+isEmpty(USE_RESOURCES) {
+  DEPLOYMENT_PATH = /usr/share/$$TARGET
+  # QML files and folders
+  qml.path = $$DEPLOYMENT_PATH
+  qml.files = *.qml pages
 
-DEFINES += DEPLOYMENT_PATH=\"\\\"\"$${DEPLOYMENT_PATH}/\"\\\"\"
+
+  DEFINES += DEPLOYMENT_PATH=\"\\\"\"$${DEPLOYMENT_PATH}/\"\\\"\"
+
+  INSTALLS += qml
+} else {
+  DEFINES += USE_RESOURCES
+  RESOURCES = sailfish-browser.qrc
+}
 
 PKGCONFIG +=  nemotransferengine-qt5 mlite5 libjollasignonuiservice-qt5
 
@@ -73,9 +83,6 @@ HEADERS += \
     link.h \
     declarativehistorymodel.h \
     tab.h
-
-# QML files and folders
-qml.files = *.qml pages cover browser.qml
 
 OTHER_FILES = *.qml \
               pages/*.qml \
