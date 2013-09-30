@@ -2,7 +2,6 @@
 <qresource>
     <file>browser.qml</file>
     <file>pages/BrowserPage.qml</file>
-    <file>pages/ControlPage.qml</file>
     <file>pages/ShareLinkPage.qml</file>
     <file>pages/TabPage.qml</file>
     <file>pages/components/AlertDialog.qml</file>
