@@ -120,6 +120,7 @@ void DeclarativeBookmarkModel::save() {
         items.append(QJsonValue(title));
     }
     QJsonDocument doc(items);
+    out.setCodec("UTF-8");
     out << doc.toJson();
     file.close();
 }
