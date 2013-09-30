@@ -192,6 +192,11 @@ Page {
 
     Browser.DownloadRemorsePopup { id: downloadPopup }
 
+    Rectangle {
+        anchors.fill: parent
+        color: webView.bgcolor ? webView.bgcolor : "white"
+    }
+
     QmlMozView {
         id: webView
 
@@ -201,7 +206,7 @@ Page {
         readonly property real moveLimit: toolBarContainer.height
         readonly property bool active: browserPage.status == PageStatus.Active
         // There needs to be enough content for enabling fullscreen mode
-        readonly property bool forceChromeMode: contentHeight <= browserPage.height +  toolBarContainer.height
+        readonly property bool forceChromeMode: contentHeight <= browserPage.height + toolBarContainer.height && !Qt.inputMethod.visible && Qt.application.active
 
         signal selectionRangeUpdated(variant data)
         signal selectionCopied(variant data)
@@ -228,7 +233,7 @@ Page {
         focus: true
         width: browserPage.width
         // This causes ugly binding loops as due to geometry change also scroll area updates.
-        height: !browserPage.fullscreenMode ? (browserPage.height - toolBarContainer.height) : browserPage.height
+        height: forceChromeMode ? (browserPage.height - toolBarContainer.height) : browserPage.height
 
         //{ // TODO
         // No resizes while page is not active
