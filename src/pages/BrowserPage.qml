@@ -192,6 +192,11 @@ Page {
 
     Browser.DownloadRemorsePopup { id: downloadPopup }
 
+    Rectangle {
+        anchors.fill: parent
+        color: webView.bgcolor ? webView.bgcolor : "white"
+    }
+
     QmlMozView {
         id: webView
 
