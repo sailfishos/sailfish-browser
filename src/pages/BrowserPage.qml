@@ -21,9 +21,7 @@ Page {
     property alias history: historyModel
     property alias currentTabIndex: tabModel.currentTabIndex
     property alias currentTab: tab
-    readonly property bool fullscreenMode: (!webView.forceChromeMode && _fullscreenMode) || Qt.inputMethod.visible || !Qt.application.active
-    property bool _fullscreenMode
-
+    readonly property bool fullscreenMode: (webView.chromeGestureEnabled && !webView.chrome) || Qt.inputMethod.visible || !Qt.application.active
     property string favicon
     property Component _controlPageComponent
     property Item _contextMenu
@@ -158,7 +156,7 @@ Page {
         }
     }
 
-    onStatusChanged: _fullscreenMode = status < PageStatus.Active
+    onStatusChanged: webView.chrome = status >= PageStatus.Active
 
     TabModel {
         id: tabModel
@@ -200,40 +198,19 @@ Page {
     QmlMozView {
         id: webView
 
-        property real startY
-        property real moveDelta
-        property bool moving
-        readonly property real moveLimit: toolBarContainer.height
         enabled: browserPage.status == PageStatus.Active
-        // There needs to be enough content for enabling fullscreen mode
-        readonly property bool forceChromeMode: contentHeight <= browserPage.height + toolBarContainer.height && !Qt.inputMethod.visible && Qt.application.active
-
+        // There needs to be enough content for enabling chrome gesture
+        chromeGestureThreshold: toolBarContainer.height
+        chromeGestureEnabled: contentHeight > browserPage.height + chromeGestureThreshold
         signal selectionRangeUpdated(variant data)
         signal selectionCopied(variant data)
         signal contextMenuRequested(variant data)
-
-        function updateFullscreenMode() {
-            if (forceChromeMode || controlArea.y < window.height - controlArea.height) return
-
-            var offset = scrollableOffset.y
-            var currentDelta = offset - startY
-            if (Math.abs(currentDelta) < moveDelta) {
-                startY = offset
-            }
-
-            if (currentDelta > moveLimit) {
-                _fullscreenMode = true
-            } else if (currentDelta < -moveLimit) {
-                _fullscreenMode = false
-            }
-            moveDelta = Math.abs(currentDelta)
-        }
 
         clip: true
         focus: true
         width: browserPage.width
         // This causes ugly binding loops as due to geometry change also scroll area updates.
-        height: forceChromeMode ? (browserPage.height - toolBarContainer.height) : browserPage.height
+        height: !chromeGestureEnabled ? (browserPage.height - toolBarContainer.height) : browserPage.height
 
         //{ // TODO
         // No resizes while page is not active
@@ -293,7 +270,7 @@ Page {
         onLoadingChanged: {
             if (loading) {
                 favicon = ""
-                _fullscreenMode = false
+                webView.chrome = true
             }
 
             // store tab data
@@ -419,22 +396,6 @@ Page {
             }
         }
 
-        onViewAreaChanged: {
-            if (!enabled) return
-            updateFullscreenMode()
-        }
-
-        onDraggingChanged: {
-            if (dragging) {
-                startY = scrollableOffset.y
-                moveDelta = 0
-                moving = true
-                flickTimer.stop()
-            } else {
-                flickTimer.restart()
-            }
-        }
-
         // We decided to disable "text selection" until we understand how it
         // should look like in Sailfish.
         // TextSelectionController {}
@@ -466,39 +427,6 @@ Page {
             visible: parent.width > width && !_ctxMenuActive
             opacity: webView.moving ? 1.0 : 0.0
             Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
-        }
-
-        Timer {
-            id: flickTimer
-
-            property real y: -1
-            property real x: -1
-
-            interval: 100
-            repeat: true
-
-            onRunningChanged: {
-                if (!running) {
-                    x = -1
-                    y = -1
-                }
-            }
-
-            onTriggered: {
-                var content = webView
-                var offset = content.scrollableOffset
-                var offsetY = offset.y
-                var offsetX = offset.x
-
-                if (offsetY == y && offsetX == x) {
-                    content.moving = false
-                    running = false
-                    return
-                }
-
-                y = offsetY
-                x = offsetX
-            }
         }
     }
 
