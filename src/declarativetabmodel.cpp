@@ -41,7 +41,6 @@ void DeclarativeTabModel::addTab(const QString& url, bool foreground) {
     m_tabs.append(tab);
     endInsertRows();
     emit countChanged();
-    DBManager::instance()->navigateTo(tabId, url);
     if (foreground) {
         setCurrentTabIndex(m_tabs.count() - 1);
     }
