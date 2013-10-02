@@ -1,0 +1,17 @@
+a
+{
+  font-size: 40pt;
+}
+
+h1
+{
+  font-size: 50pt;
+}
+
+div
+{
+  margin-left:auto;
+  margin-right:auto;
+  width:50%;
+  height: 200px;
+}
