@@ -28,6 +28,7 @@ UserPrompt {
         label: text.length > 0 ? dialog.text : ""
         inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase
         EnterKey.enabled: text.length > 0
+        EnterKey.iconSource: "image://theme/icon-m-enter-accept"
         EnterKey.onClicked: dialog.accept()
     }
 }

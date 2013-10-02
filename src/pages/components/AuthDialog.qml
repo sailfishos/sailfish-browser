@@ -48,7 +48,6 @@ UserPrompt {
             //% "User name"
             label: qsTrId("sailfish_browser-la-user_name")
             inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase
-            EnterKey.enabled: text.length > 0
             EnterKey.iconSource: "image://theme/icon-m-enter-next"
             EnterKey.onClicked: password.focus = true
         }
@@ -63,7 +62,8 @@ UserPrompt {
             placeholderText: qsTrId("sailfish_browser-la-enter_password")
             //% "Password"
             label: qsTrId("sailfish_browser-la-password")
-            EnterKey.enabled: text.length > 0
+            EnterKey.iconSource: (username.text.length > 0 && text.length > 0) ? "image://theme/icon-m-enter-accept"
+                                                                               : "image://theme/icon-m-enter-next"
             EnterKey.onClicked: {
                 if (username.text.length > 0) {
                     dialog.accept()

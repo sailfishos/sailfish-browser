@@ -113,6 +113,7 @@ Page {
                 focusOutBehavior: FocusBehavior.KeepFocus
                 inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase
 
+                EnterKey.iconSource: "image://theme/icon-m-enter-accept"
                 EnterKey.onClicked: {
                     Qt.inputMethod.hide()
                     // let gecko figure out how to handle malformed URLs
