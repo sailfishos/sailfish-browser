@@ -20,6 +20,7 @@ Page {
     property alias favorites: favoriteModel
     property alias history: historyModel
     property alias currentTabIndex: tabModel.currentTabIndex
+    property alias viewLoading: webView.loading
     property alias currentTab: tab
     readonly property bool fullscreenMode: (webView.chromeGestureEnabled && !webView.chrome) || Qt.inputMethod.visible || !Qt.application.active
     property string favicon

@@ -132,6 +132,12 @@ Page {
                         initialSearchFocus = false
                     }
                 }
+                label: text.length == 0 ? "" : (text == browserPage.currentTab.url
+                                                //: Current browser page loaded
+                                                //% Done
+                                                && !browserPage.viewLoading ? qsTrId("sailfish_browser-la-done")
+                                                                              //% Search
+                                                                            : qsTrId("sailfish_browser-la-search"))
             }
         }
 
