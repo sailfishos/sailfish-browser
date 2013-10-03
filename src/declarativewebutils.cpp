@@ -78,6 +78,10 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     mozContext->setPref(QString("embedlite.azpc.json.longtap"), QVariant(true));
     mozContext->setPref(QString("embedlite.azpc.json.viewport"), QVariant(true));
 
+    // Without this pref placeholders get cleaned as soon as a character gets committed
+    // by VKB and that happens only when Enter is pressed or comma/space/dot is entered.
+    mozContext->setPref(QString("dom.placeholder.show_on_focus"), QVariant(false));
+
     mozContext->setPref(QString("security.alternate_certificate_error_page"), QString("certerror"));
 
     // Use autodownload, never ask
