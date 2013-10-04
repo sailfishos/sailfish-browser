@@ -9,7 +9,7 @@
 #include <QStringList>
 #include <QVariant>
 #include <QVariantMap>
-#include <QApplication>
+#include <QGuiApplication>
 #include <QClipboard>
 #include <QFile>
 #include <QStandardPaths>
@@ -151,7 +151,7 @@ void DeclarativeWebUtils::handleObserve(const QString message, const QVariant da
     const QVariantMap dataMap = data.toMap();
 
     if (message == "clipboard:setdata") {
-        QClipboard *clipboard = QApplication::clipboard();
+        QClipboard *clipboard = QGuiApplication::clipboard();
 
         // check if we copied password
         if (!dataMap.value("private").toBool()) {
