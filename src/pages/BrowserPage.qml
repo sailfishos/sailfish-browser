@@ -24,7 +24,6 @@ Page {
     property alias currentTab: tab
     readonly property bool fullscreenMode: (webView.chromeGestureEnabled && !webView.chrome) || Qt.inputMethod.visible || !Qt.application.active
     property string favicon
-    property Component _controlPageComponent
     property Item _contextMenu
     property bool _ctxMenuActive: _contextMenu != null && _contextMenu.active
     // As QML can't disconnect closure from a signal (but methods only)
@@ -601,19 +600,6 @@ Page {
             }
             if (!window.applicationActive) {
                 window.activate()
-            }
-        }
-    }
-
-    Component.onCompleted: {
-        // Since we dont have booster with gecko yet (see JB#5910) lets compile the
-        // components needed by tab page here so that click on tab icon wont be too long
-        if (!_controlPageComponent) {
-            _controlPageComponent = Qt.createComponent("ControlPage.qml")
-            if (_controlPageComponent.status !== Component.Ready) {
-                console.log("Error loading component:", component.errorString());
-                _controlPageComponent = undefined
-                return
             }
         }
     }
