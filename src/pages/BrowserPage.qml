@@ -485,6 +485,7 @@ Page {
         Browser.ToolBarContainer {
             id: toolBarContainer
             width: parent.width
+            enabled: controlArea.opacity > 0.0
 
             Browser.ProgressBar {
                 id: progressBar
@@ -505,7 +506,7 @@ Page {
                 Browser.IconButton {
                     id:backIcon
                     source: "image://theme/icon-m-back"
-                    enabled: tab.canGoBack && !fullscreenMode
+                    enabled: tab.canGoBack
                     onClicked: {
                         tab.backForwardNavigation = true
                         tab.goBack()
@@ -515,7 +516,6 @@ Page {
                 Browser.IconButton {
                     property bool favorited: favorites.count > 0 && favorites.contains(tab.url)
                     source: favorited ? "image://theme/icon-m-favorite-selected" : "image://theme/icon-m-favorite"
-                    enabled: !fullscreenMode
                     onClicked: {
                         if (favorited) {
                             favorites.removeBookmark(tab.url)
@@ -528,7 +528,6 @@ Page {
                 Browser.IconButton {
                     id: tabPageButton
                     source: "image://theme/icon-m-tabs"
-                    enabled: !fullscreenMode
                     onClicked: controlArea.openTabPage(false)
 
                     Label {
@@ -544,13 +543,12 @@ Page {
 
                 Browser.IconButton {
                     source: webView.loading ? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
-                    enabled: !fullscreenMode
                     onClicked: webView.loading ? webView.stop() : webView.reload()
                 }
 
                 Browser.IconButton {
                     source: "image://theme/icon-m-forward"
-                    enabled: tab.canGoForward && !fullscreenMode
+                    enabled: tab.canGoForward
                     onClicked: {
                         tab.backForwardNavigation = true
                         tab.goForward()
