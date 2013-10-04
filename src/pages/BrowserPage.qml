@@ -210,8 +210,7 @@ Page {
         clip: true
         focus: true
         width: browserPage.width
-        // This causes ugly binding loops as due to geometry change also scroll area updates.
-        height: !chromeGestureEnabled ? (browserPage.height - toolBarContainer.height) : browserPage.height
+        height: browserPage.height
 
         //{ // TODO
         // No resizes while page is not active
@@ -428,6 +427,16 @@ Page {
             visible: parent.width > width && !_ctxMenuActive
             opacity: webView.moving ? 1.0 : 0.0
             Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
+        }
+
+        states: State {
+            when: !chromeGestureEnabled
+            PropertyChanges {
+                target:  {
+                    target: webView
+                    height: browserPage.height - toolBarContainer.height
+                }
+            }
         }
     }
 
