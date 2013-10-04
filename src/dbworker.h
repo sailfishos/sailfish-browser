@@ -70,6 +70,7 @@ private:
     Link getCurrentLink(int tabId);
     int getNextLinkIdFromTabHistory(int tabHistoryId);
     int getPreviousLinkIdFromTabHistory(int tabHistoryId);
+    void clearDeprecatedTabHistory(int tabId, int currentLinkId);
     int createLink(QString url, QString title = "", QString thumbPath = "");
     bool updateTab(int tabId, int tabHistoryId);
     Tab getTabData(int tabId, int historyId = 0);

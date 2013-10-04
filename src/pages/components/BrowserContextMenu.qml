@@ -81,7 +81,7 @@ Rectangle {
 
             onClicked: {
                 root.visible = false
-                browserPage.newTab(root.linkHref, false)
+                browserPage.newTab(root.linkHref, true)
             }
         }
 

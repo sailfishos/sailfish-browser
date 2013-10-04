@@ -32,9 +32,8 @@ Page {
     // pass arguments to openAuthDialog().
     property variant _authData: null
 
-    // Indicates that the url being loaded was entered from the current tab,
-    // used to catch redirects so that the url can be updated in db.
-    property bool loadingInitiatedByTab: false
+    // Used by newTab function
+    property bool newTabRequested
 
     function newTab(link, foreground) {
         if (foreground) {
@@ -43,16 +42,23 @@ Page {
             }
             tab.loadWhenTabChanges = true
         }
+        // tabMovel.addTab does not trigger anymore navigateTo call. Always done via
+        // QmlMozView onUrlChanged handler.
+        // Loading newTabs seems to be broken. When an url that was already loaded is loaded again and still
+        // active in one of the tabs, the tab containing the url is not brought to foreground.
+        // This was broken already before this change. We need to add mapping between intented
+        // load url and actual result url to TabModel::activateTab so that finding can be done.
         tabModel.addTab(link, foreground)
+        load(link)
     }
 
     function closeTab(index) {
         if (tabModel.count == 0) {
             return
         }
-        if (tabModel.count > 0) {
-            tab.loadWhenTabChanges = true
-        }
+
+        tab.loadWhenTabChanges = true
+
         if (index == currentTabIndex && webView.loading) {
             webView.stop()
         }
@@ -148,15 +154,6 @@ Page {
         }
     }
 
-    function saveTab(url, title) {
-        if (browserPage.loadingInitiatedByTab) {
-            browserPage.loadingInitiatedByTab = false
-            tab.updateTab(url, title, "")
-        } else {
-            tab.navigateTo(url, title, "")
-        }
-    }
-
     onStatusChanged: webView.chrome = status >= PageStatus.Active
 
     TabModel {
@@ -177,14 +174,15 @@ Page {
         // All of these actions load data asynchronously from the DB, and the changes
         // are reflected in the Tab element.
         property bool loadWhenTabChanges: false
+        property bool backForwardNavigation: false
 
         tabId: tabModel.currentTabId
 
         onUrlChanged: {
-            if (loadWhenTabChanges) {
-                loadWhenTabChanges = false
-                browserPage.loadingInitiatedByTab = true
+            if (loadWhenTabChanges || backForwardNavigation) {
                 load(url)
+                // loadWhenTabChanges will be set to false when mozview says that url has changed
+                // loadWhenTabChanges = false
             }
         }
     }
@@ -219,9 +217,18 @@ Page {
         //               return (_contextMenu != null && (_contextMenu.height > tools.height)) ? browserPage.height - _contextMenu.height : browserPage.height - tools.height
         //               return (_contextMenu != null && (_contextMenu.height > tools.height)) ? 200 : 300
 
-        onTitleChanged: saveTab(url, title)
+        onTitleChanged: tab.updateTab(url, title, "")
 
-        onUrlChanged: saveTab(url, "")
+        onUrlChanged: {
+            if (tab.backForwardNavigation) {
+                tab.updateTab(url, title, "")
+                tab.backForwardNavigation = false
+            } else if (!browserPage.newTabRequested) {
+                tab.navigateTo(url, title, "")
+            }
+            tab.loadWhenTabChanges = false
+            browserPage.newTabRequested = false
+        }
 
         onBgcolorChanged: {
             var bgLightness = WebUtils.getLightness(bgcolor)
@@ -275,8 +282,9 @@ Page {
 
             // store tab data
             if (!loading && url != "about:blank" && url) {
-                saveTab(url, title)
                 captureScreen()
+                // This always up-to-date in both link clicked and back/forward navigation
+                tab.updateTab(url, title, "")
             }
         }
         onRecvAsyncMessage: {
@@ -467,6 +475,7 @@ Page {
             width: parent.width
             height: visible ? toolBarContainer.height * 3 : 0
             opacity: progressBar.opacity
+            // TODO fix these
             title: webView.title
             url: webView.url
 
@@ -499,7 +508,7 @@ Page {
                     source: "image://theme/icon-m-back"
                     enabled: tab.canGoBack && !fullscreenMode
                     onClicked: {
-                        tab.loadWhenTabChanges = true
+                        tab.backForwardNavigation = true
                         tab.goBack()
                     }
                 }
@@ -544,7 +553,7 @@ Page {
                     source: "image://theme/icon-m-forward"
                     enabled: tab.canGoForward && !fullscreenMode
                     onClicked: {
-                        tab.loadWhenTabChanges = true
+                        tab.backForwardNavigation = true
                         tab.goForward()
                     }
                 }

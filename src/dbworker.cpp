@@ -234,13 +234,15 @@ void DBWorker::navigateTo(int tabId, QString url, QString title, QString path) {
     Link tmp = getLink(url);
     if (tmp.isValid()) {
         linkId = tmp.linkId();
-
-        // Return if the current url of the tab is the same as the parameter url
-        Link currentLink = getCurrentLink(tabId);
-        if (currentLink.isValid() && currentLink.url() == url) {
-            return;
-        }
     }
+
+    // Return if the current url of the tab is the same as the parameter url
+    Link currentLink = getCurrentLink(tabId);
+    if (currentLink.isValid() && currentLink.url() == url) {
+        return;
+    }
+
+    clearDeprecatedTabHistory(tabId, currentLink.linkId());
 
     if (linkId == 0) {
         linkId = createLink(url, title, path);
@@ -258,6 +260,7 @@ void DBWorker::navigateTo(int tabId, QString url, QString title, QString path) {
     } else {
         qWarning() << Q_FUNC_INFO << "failed to add url to tab history" << url;
     }
+
     emit tabChanged(getTabData(tabId, historyId));
 }
 
@@ -350,6 +353,13 @@ int DBWorker::getPreviousLinkIdFromTabHistory(int tabHistoryId)
         }
     }
     return 0;
+}
+
+void DBWorker::clearDeprecatedTabHistory(int tabId, int currentLinkId) {
+    QSqlQuery query = prepare("DELETE FROM tab_history WHERE tab_id = ? AND link_id > ?;");
+    query.bindValue(0, tabId);
+    query.bindValue(1, currentLinkId);
+    execute(query);
 }
 
 int DBWorker::getNextLinkIdFromTabHistory(int tabHistoryId)

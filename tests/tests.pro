@@ -2,6 +2,8 @@ TEMPLATE = aux
 
 # Data for functional tests
 testdata.files = manual/*.html \
+                 manual/*.css \
+                 manual/navigation/*.html \
                  manual/icon-launcher-testbrowser.png
 testdata.path = /opt/tests/sailfish-browser/manual/
 
@@ -18,4 +20,6 @@ INSTALLS += testdata testdesktop testauto
 OTHER_FILES += \
     auto/*.qml \
     manual/*.html \
+    manual/*.css \
+    manual/navigation/*.html \
     test-definition/*.xml
