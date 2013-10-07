@@ -485,7 +485,7 @@ Page {
         Browser.ToolBarContainer {
             id: toolBarContainer
             width: parent.width
-            enabled: controlArea.opacity > 0.0
+            enabled: !fullscreenMode
 
             Browser.ProgressBar {
                 id: progressBar
