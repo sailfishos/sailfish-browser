@@ -253,7 +253,7 @@ Page {
                     enabled: browserPage.tabs.count > 0
                 }
                 MenuItem {
-                    enabled: browserPage.currentTab.url == _search
+                    enabled: browserPage.currentTab.url == _search && browserPage.tabs.count > 0
                     //: Share link from browser pulley menu
                     //% "Share"
                     text: qsTrId("sailfish_browser-me-share_link")
