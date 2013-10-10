@@ -62,8 +62,7 @@ Page {
             webView.stop()
         }
 
-        var tabIndex = index ? currentTabIndex : index
-        tabModel.remove(tabIndex)
+        tabModel.remove(index)
     }
 
     function load(url) {
