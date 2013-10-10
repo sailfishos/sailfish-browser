@@ -435,14 +435,11 @@ Page {
             Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
         }
 
-        states: State {
-            when: !chromeGestureEnabled
-            PropertyChanges {
-                target:  {
-                    target: webView
-                    height: browserPage.height - toolBarContainer.height
-                }
-            }
+        Binding {
+            target: webView
+            property: "height"
+            value: browserPage.height - toolBarContainer.height
+            when: !webView.chromeGestureEnabled
         }
     }
 
