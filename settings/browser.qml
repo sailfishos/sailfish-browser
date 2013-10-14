@@ -15,7 +15,7 @@ Page {
     }
 
 
-    Flickable {
+    SilicaFlickable {
         id: flickable
         anchors.fill: parent
         contentHeight: contentColumn.height
