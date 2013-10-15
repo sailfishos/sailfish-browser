@@ -18,11 +18,12 @@ Page {
 
     ShareMethodList {
         id: shareMethodList
-        anchors.fill: parent
-        anchors.topMargin: Theme.itemSizeSmall
+        anchors.fill: parent  
+        header: PageHeader {
         //: List header for link sharing method list
         //% "Share link"
-        listHeader: qsTrId("sailfish_browser-he-share_link")
+            title: qsTrId("sailfish_browser-he-share_link")
+        }
         filter: "text/x-url"
         content: {
             "type": "text/x-url",
