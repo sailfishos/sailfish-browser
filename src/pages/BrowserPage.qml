@@ -274,7 +274,6 @@ Page {
 
         onViewInitialized: {
             addMessageListener("chrome:linkadded")
-            addMessageListener("chrome:linkadded")
             addMessageListener("embed:alert")
             addMessageListener("embed:confirm")
             addMessageListener("embed:prompt")
