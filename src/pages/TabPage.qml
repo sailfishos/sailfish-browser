@@ -135,9 +135,9 @@ Page {
                 }
                 label: text.length == 0 ? "" : (text == browserPage.currentTab.url
                                                 //: Current browser page loaded
-                                                //% Done
+                                                //% "Done"
                                                 && !browserPage.viewLoading ? qsTrId("sailfish_browser-la-done")
-                                                                              //% Search
+                                                                              //% "Search"
                                                                             : qsTrId("sailfish_browser-la-search"))
             }
         }
