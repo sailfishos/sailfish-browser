@@ -234,7 +234,7 @@ Page {
                     }
 
                     onClicked: {
-                        browserPage.loadTab(model.index)
+                        browserPage.loadTab(model.index, model.url, model.title)
                         window.pageStack.pop(browserPage, true)
                     }
                 }
@@ -316,7 +316,7 @@ Page {
                 }
 
                 onClicked: {
-                    browserPage.load(url)
+                    browserPage.load(model.url, model.title)
                     window.pageStack.pop(browserPage, true)
                 }
                 onPressAndHold: showMenu({"url": url})
@@ -367,7 +367,7 @@ Page {
 
                 onClicked: {
                     Qt.inputMethod.hide()
-                    browserPage.load(url)
+                    browserPage.load(model.url, model.title)
                     pageStack.pop(undefined, true)
                 }
 
