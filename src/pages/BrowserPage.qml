@@ -22,6 +22,9 @@ Page {
     property alias currentTabIndex: tabModel.currentTabIndex
     property alias viewLoading: webView.loading
     property alias currentTab: tab
+    property string title
+    property string url
+
     readonly property bool fullscreenMode: (webView.chromeGestureEnabled && !webView.chrome) || Qt.inputMethod.visible || !Qt.application.active
     property string favicon
     property Item _contextMenu
@@ -65,18 +68,34 @@ Page {
         tabModel.remove(index)
     }
 
-    function load(url) {
+    function load(url, title) {
         if (tabModel.count == 0) {
             newTab(url, true)
         }
+
+        if (title) {
+            browserPage.title = title
+        } else {
+            browserPage.title = ""
+        }
+
         if (url !== "" && webView.url != url) {
+            browserPage.url = url
             webView.load(url)
         }
     }
 
-    function loadTab(index) {
+    function loadTab(index, url, title) {
         if (webView.loading) {
             webView.stop()
+        }
+
+        if (url) {
+            browserPage.url = url
+        }
+
+        if (title) {
+            browserPage.title = title
         }
         tab.loadWhenTabChanges = true;
         currentTabIndex = index
@@ -178,7 +197,8 @@ Page {
 
         onUrlChanged: {
             if (loadWhenTabChanges || backForwardNavigation) {
-                load(url)
+                // Both url and title are updated before url changed is emitted.
+                load(url, title)
                 // loadWhenTabChanges will be set to false when mozview says that url has changed
                 // loadWhenTabChanges = false
             }
@@ -215,7 +235,10 @@ Page {
         //               return (_contextMenu != null && (_contextMenu.height > tools.height)) ? browserPage.height - _contextMenu.height : browserPage.height - tools.height
         //               return (_contextMenu != null && (_contextMenu.height > tools.height)) ? 200 : 300
 
-        onTitleChanged: tab.updateTab(url, title, "")
+        onTitleChanged: {
+            tab.updateTab(url, title, "")
+            browserPage.title = title
+        }
 
         onUrlChanged: {
             if (tab.backForwardNavigation) {
@@ -226,6 +249,7 @@ Page {
             }
             tab.loadWhenTabChanges = false
             browserPage.newTabRequested = false
+            browserPage.url = url
         }
 
         onBgcolorChanged: {
@@ -470,9 +494,8 @@ Page {
             width: parent.width
             height: visible ? toolBarContainer.height * 3 : 0
             opacity: progressBar.opacity
-            // TODO fix these
-            title: webView.title
-            url: webView.url
+            title: browserPage.title
+            url: browserPage.url
 
             onSearchClicked: controlArea.openTabPage(true)
             onCloseClicked: closeTab(currentTabIndex)
