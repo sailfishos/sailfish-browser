@@ -20,8 +20,8 @@ Page {
         id: shareMethodList
         anchors.fill: parent  
         header: PageHeader {
-        //: List header for link sharing method list
-        //% "Share link"
+            //: List header for link sharing method list
+            //% "Share link"
             title: qsTrId("sailfish_browser-he-share_link")
         }
         filter: "text/x-url"
