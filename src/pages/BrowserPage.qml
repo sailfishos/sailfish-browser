@@ -128,7 +128,7 @@ Page {
         })
     }
 
-    function openContextMenu(linkHref, imageSrc, linkTitle) {
+    function openContextMenu(linkHref, imageSrc, linkTitle, contentType) {
         var ctxMenuComp
 
         if (_contextMenu) {
@@ -143,7 +143,8 @@ Page {
                                                         {
                                                             "linkHref": linkHref,
                                                             "imageSrc": imageSrc,
-                                                            "linkTitle": linkTitle.trim()
+                                                            "linkTitle": linkTitle.trim(),
+                                                            "contentType": contentType
                                                         })
                 _contextMenu.show()
             } else {
@@ -377,7 +378,7 @@ Page {
             case "Content:ContextMenu": {
                 webView.contextMenuRequested(data)
                 if (data.types.indexOf("image") !== -1 || data.types.indexOf("link") !== -1) {
-                    openContextMenu(data.linkURL, data.mediaURL, data.linkTitle)
+                    openContextMenu(data.linkURL, data.mediaURL, data.linkTitle, data.contentType)
                 }
                 break
             }

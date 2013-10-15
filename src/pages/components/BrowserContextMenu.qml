@@ -15,6 +15,7 @@ Rectangle {
     property string linkHref
     property string linkTitle
     property string imageSrc
+    property string contentType
     readonly property bool active: visible
 
     visible: false
@@ -140,7 +141,8 @@ Rectangle {
                                        {
                                            "msg": "addDownload",
                                            "from": root.imageSrc,
-                                           "to": "file://" + root.getUniqueFileName(leafName)
+                                           "to": "file://" + root.getUniqueFileName(leafName),
+                                           "contentType": root.contentType
                                        })
             }
         }
