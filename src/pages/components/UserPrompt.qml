@@ -13,7 +13,7 @@ Dialog {
     property alias acceptText: header.acceptText
     default property alias defaultContent: promptContent.children
 
-    Flickable {
+    SilicaFlickable {
         id: flickable
         anchors.fill: parent
         contentHeight: contentColumn.height
