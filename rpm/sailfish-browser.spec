@@ -29,6 +29,7 @@ Requires: embedlite-components-qt5 >= 1.3.4
 Requires: sailfish-browser-settings = %{version}
 Requires: qt5-plugin-imageformat-ico
 Requires: qt5-plugin-imageformat-gif
+Requires: qt5-plugin-position-geoclue
 Requires: mapplauncherd-booster-silica-qt5
 Requires: desktop-file-utils
 Requires: qt5-qtgraphicaleffects

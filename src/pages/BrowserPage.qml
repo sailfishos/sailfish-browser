@@ -279,6 +279,7 @@ Page {
             addMessageListener("embed:prompt")
             addMessageListener("embed:auth")
             addMessageListener("embed:login")
+            addMessageListener("embed:permissions")
             addMessageListener("Content:ContextMenu")
             addMessageListener("Content:SelectionRange");
             addMessageListener("Content:SelectionCopied");
@@ -387,6 +388,14 @@ Page {
                 } else {
                     browserPage.openAuthDialog(data)
                 }
+                break
+            }
+            case "embed:permissions": {
+                // Grant permssions by default, TODO: need UI
+                webViewport.child.sendAsyncMessage("embedui:premissions", {
+                                                   allow: true,
+                                                   checkedDontAsk: true,
+                                                   id: data.id })
                 break
             }
             case "embed:login": {
