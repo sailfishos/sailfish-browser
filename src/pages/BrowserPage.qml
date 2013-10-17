@@ -495,9 +495,9 @@ Page {
             }
         }
 
-        function openTabPage(focus) {
+        function openTabPage(focus, operationType) {
             captureScreen()
-            pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage, "initialFocus": focus })
+            pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage, "initialFocus": focus }, operationType)
         }
 
         Browser.StatusBar {
@@ -506,8 +506,7 @@ Page {
             opacity: progressBar.opacity
             title: browserPage.title
             url: browserPage.url
-
-            onSearchClicked: controlArea.openTabPage(true)
+            onSearchClicked: controlArea.openTabPage(true, PageStackAction.Animated)
             onCloseClicked: closeTab(currentTabIndex)
         }
 
@@ -557,7 +556,7 @@ Page {
                 Browser.IconButton {
                     id: tabPageButton
                     source: "image://theme/icon-m-tabs"
-                    onClicked: controlArea.openTabPage(false)
+                    onClicked: controlArea.openTabPage(false, PageStackAction.Animated)
 
                     Label {
                         text: tabs.count
@@ -593,7 +592,7 @@ Page {
         CoverAction {
             iconSource: "image://theme/icon-cover-new"
             onTriggered: {
-                controlArea.openTabPage(false)
+                controlArea.openTabPage(false, PageStackAction.Immediate)
                 activate()
             }
         }
