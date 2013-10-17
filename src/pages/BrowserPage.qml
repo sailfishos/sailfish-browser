@@ -197,7 +197,7 @@ Page {
         tabId: tabModel.currentTabId
 
         onUrlChanged: {
-            if (loadWhenTabChanges || backForwardNavigation) {
+            if (tab.valid && (loadWhenTabChanges || backForwardNavigation)) {
                 // Both url and title are updated before url changed is emitted.
                 load(url, title)
                 // loadWhenTabChanges will be set to false when mozview says that url has changed
@@ -497,7 +497,7 @@ Page {
 
         function openTabPage(focus, operationType) {
             captureScreen()
-            pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage, "initialFocus": focus }, operationType)
+            pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage, "initialSearchFocus": focus }, operationType)
         }
 
         Browser.StatusBar {
@@ -507,7 +507,14 @@ Page {
             title: browserPage.title
             url: browserPage.url
             onSearchClicked: controlArea.openTabPage(true, PageStackAction.Animated)
-            onCloseClicked: closeTab(currentTabIndex)
+            onCloseClicked: {
+                closeTab(currentTabIndex)
+                if (!tabModel.count) {
+                    browserPage.title = ""
+                    browserPage.url = ""
+                    pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage, "initialSearchFocus": true })
+                }
+            }
         }
 
         Browser.ToolBarContainer {

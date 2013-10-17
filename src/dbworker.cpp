@@ -168,6 +168,11 @@ void DBWorker::removeTab(int tabId)
     query = prepare("DELETE FROM tab_history WHERE tab_id = ?;");
     query.bindValue(0, tabId);
     execute(query);
+
+    // Check last tab closed
+    if (!count()) {
+        emit tabAvailable(Tab(-1, Link(), -1, -1));
+    }
 }
 
 void DBWorker::removeAllTabs()
@@ -184,6 +189,8 @@ void DBWorker::removeAllTabs()
     // Remove history
     query = prepare("DELETE FROM tab_history;");
     execute(query);
+
+    emit tabAvailable(Tab(-1, Link(), -1, -1));
 }
 
 void DBWorker::getTab(int tabId)
@@ -216,6 +223,17 @@ void DBWorker::getAllTabs()
 int DBWorker::getMaxTabId()
 {
     QSqlQuery query = prepare("SELECT MAX(tab_id) FROM tab");
+    if (execute(query)) {
+        if (query.first()) {
+            return query.value(0).toInt();
+        }
+    }
+    return 0;
+}
+
+int DBWorker::count()
+{
+    QSqlQuery query = prepare("SELECT COUNT(*) FROM tab;");
     if (execute(query)) {
         if (query.first()) {
             return query.value(0).toInt();

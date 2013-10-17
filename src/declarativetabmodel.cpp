@@ -81,9 +81,10 @@ void DeclarativeTabModel::clear()
     if (m_tabs.count() == 0)
         return;
 
-    beginRemoveRows(QModelIndex(), 0, m_tabs.count() - 1);
+    beginResetModel();
     m_tabs.clear();
-    endRemoveRows();
+    endResetModel();
+
     DBManager::instance()->removeAllTabs();
     emit countChanged();
     m_currentTabIndex = -1;

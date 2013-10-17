@@ -38,6 +38,11 @@ void Tab::setNextLink(int nextLinkId)
     m_nextLinkId = nextLinkId;
 }
 
+bool Tab::isValid() const
+{
+    return m_tabId > 0;
+}
+
 int Tab::previousLink() const
 {
     return m_previousLinkId;

@@ -74,6 +74,7 @@ private:
     int createLink(QString url, QString title = "", QString thumbPath = "");
     bool updateTab(int tabId, int tabHistoryId);
     Tab getTabData(int tabId, int historyId = 0);
+    int count();
 
     QSqlQuery prepare(const char* statement);
     bool execute(QSqlQuery &query);
