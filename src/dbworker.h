@@ -37,7 +37,7 @@ public slots:
     int getMaxTabId();
 
     void updateTitle(QString url, QString title);
-    void updateThumbPath(QString url, QString path);
+    void updateThumbPath(QString url, QString path, int tabId);
 
     void goForward(int tabId);
     void goBack(int tabId);
@@ -54,7 +54,7 @@ signals:
     void tabAvailable(Tab tab);
     void tabChanged(Tab tab);
     void tabsAvailable(QList<Tab> tabs);
-    void thumbPathChanged(QString url, QString path);
+    void thumbPathChanged(QString url, QString path, int tabId);
     void titleChanged(QString url, QString title);
     void tabHistoryAvailable(int tabId, QList<Link>);
     void historyAvailable(QList<Link>);
@@ -74,7 +74,7 @@ private:
     int createLink(QString url, QString title = "", QString thumbPath = "");
     bool updateTab(int tabId, int tabHistoryId);
     Tab getTabData(int tabId, int historyId = 0);
-    int count();
+    int tabCount();
 
     QSqlQuery prepare(const char* statement);
     bool execute(QSqlQuery &query);

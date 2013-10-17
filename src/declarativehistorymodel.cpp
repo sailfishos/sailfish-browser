@@ -18,8 +18,6 @@ DeclarativeHistoryModel::DeclarativeHistoryModel(QObject *parent) :
             this, SLOT(historyAvailable(QList<Link>)));
     connect(DBManager::instance(), SIGNAL(tabHistoryAvailable(int,QList<Link>)),
             this, SLOT(tabHistoryAvailable(int, QList<Link>)));
-    connect(DBManager::instance(), SIGNAL(thumbPathChanged(QString,QString)),
-            this, SLOT(updateThumbPath(QString,QString)));
     connect(DBManager::instance(), SIGNAL(titleChanged(QString,QString)),
             this, SLOT(updateTitle(QString,QString)));
 }
@@ -27,7 +25,6 @@ DeclarativeHistoryModel::DeclarativeHistoryModel(QObject *parent) :
 QHash<int, QByteArray> DeclarativeHistoryModel::roleNames() const
 {
     QHash<int, QByteArray> roles;
-    roles[ThumbPathRole] = "thumbnailPath";
     roles[UrlRole] = "url";
     roles[TitleRole] = "title";
     return roles;
@@ -82,9 +79,7 @@ QVariant DeclarativeHistoryModel::data(const QModelIndex & index, int role) cons
         return QVariant();
 
     const Link url = m_links[index.row()];
-    if (role == ThumbPathRole) {
-        return url.thumbPath();
-    } else if (role == UrlRole) {
+    if (role == UrlRole) {
         return url.url();
     } else if (role == TitleRole) {
         return url.title();
@@ -162,20 +157,6 @@ void DeclarativeHistoryModel::tabChanged(Tab tab)
 {
     if (m_tabId == tab.tabId()) {
         load();
-    }
-}
-
-void DeclarativeHistoryModel::updateThumbPath(QString url, QString path)
-{
-    QVector<int> roles;
-    roles << ThumbPathRole;
-    for (int i = 0; i < m_links.count(); i++) {
-        if (m_links.at(i).url() == url && m_links.at(i).thumbPath() != path) {
-            m_links[i].setThumbPath(path);
-            QModelIndex start = index(i, 0);
-            QModelIndex end = index(i, 0);
-            emit dataChanged(start, end, roles);
-        }
     }
 }
 

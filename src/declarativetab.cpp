@@ -30,13 +30,7 @@ DeclarativeTab::DeclarativeTab(QQuickItem *parent)
 
 DeclarativeTab::~DeclarativeTab()
 {
-    for (int i = 0; i < paths.size(); ++i) {
-        QFile f(paths.at(i));
-        if (f.exists()) {
-            f.remove();
-        }
-    }
-    paths.clear();
+
 }
 
 void DeclarativeTab::init()
@@ -45,10 +39,19 @@ void DeclarativeTab::init()
             this, SLOT(tabChanged(Tab)));
     connect(DBManager::instance(), SIGNAL(tabAvailable(Tab)),
             this, SLOT(tabChanged(Tab)));
-    connect(DBManager::instance(), SIGNAL(thumbPathChanged(QString,QString)),
-            this, SLOT(updateThumbPath(QString,QString)));
+    connect(DBManager::instance(), SIGNAL(thumbPathChanged(QString,QString,int)),
+            this, SLOT(updateThumbPath(QString,QString,int)));
     connect(DBManager::instance(), SIGNAL(titleChanged(QString,QString)),
             this, SLOT(updateTitle(QString,QString)));
+
+    QString cacheLocation = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+    QDir dir(cacheLocation);
+    if(!dir.exists()) {
+        if(!dir.mkpath(cacheLocation)) {
+            qWarning() << "Can't create directory "+ cacheLocation;
+            return;
+        }
+    }
 }
 
 QString DeclarativeTab::thumbnailPath() const {
@@ -57,7 +60,7 @@ QString DeclarativeTab::thumbnailPath() const {
 
 void DeclarativeTab::setThumbnailPath(QString thumbPath) {
     if(thumbPath != m_link.thumbPath() && m_link.isValid()) {
-        DBManager::instance()->updateThumbPath(m_link.url(), thumbPath);
+        DBManager::instance()->updateThumbPath(m_link.url(), thumbPath, m_tabId);
     }
 }
 
@@ -86,7 +89,7 @@ void DeclarativeTab::setTabId(int tabId) {
         emit tabIdChanged();
     }
 
-    if (tabId > 0 != m_valid) {
+    if ((tabId > 0) != m_valid) {
         m_valid = tabId > 0;
         emit validChanged();
     }
@@ -175,8 +178,9 @@ void DeclarativeTab::tabChanged(Tab tab)
 }
 
 // Data changed in DB
-void DeclarativeTab::updateThumbPath(QString url, QString path)
+void DeclarativeTab::updateThumbPath(QString url, QString path, int tabId)
 {
+    Q_UNUSED(tabId)
     if (m_link.url() == url) {
         if (path != m_link.thumbPath()) {
             m_link.setThumbPath(path);
@@ -198,40 +202,25 @@ void DeclarativeTab::updateTitle(QString url, QString title)
 
 void DeclarativeTab::captureScreen(QString url, int x, int y, int width, int height, qreal rotate)
 {
-    if(!window()) {
-        return;
-    }
-    if (!window()->isActive()) {
+    if(!window() || !window()->isActive() || !valid()) {
         return;
     }
 
     QImage image = window()->grabWindow();
     QImage cropped = image.copy(x, y, width, height);
-    int randomValue = abs(qrand());
-    QString path = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + "/" + QString::number(randomValue);
-    path.append(QString("-thumb.png"));
-
+    QString path = QString("%1/tab-%2-thumb.jpg").arg(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)).arg(m_tabId);
     // asynchronous save to avoid the slow I/O
-    QtConcurrent::run(this, &DeclarativeTab::saveToFile, url, path, cropped, rotate);
+    QtConcurrent::run(this, &DeclarativeTab::saveToFile, url, path, cropped, m_tabId, rotate);
 
 }
 
-void DeclarativeTab::saveToFile(QString url, QString path, QImage image, qreal rotate) {
-    QString cacheLocation = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
-    QDir dir(cacheLocation);
-    if(!dir.exists()) {
-        if(!dir.mkpath(cacheLocation)) {
-            qWarning() << "Can't create directory "+ cacheLocation;
-            return;
-        }
-    }
+void DeclarativeTab::saveToFile(QString url, QString path, QImage image, int tabId, qreal rotate) {
     QTransform transform;
     transform.rotate(rotate);
 
     image = image.transformed(transform);
     if(image.save(path)) {
-        DBManager::instance()->updateThumbPath(url, path);
-        paths << path;
+        DBManager::instance()->updateThumbPath(url, path, tabId);
     } else {
         qWarning() << Q_FUNC_INFO << "failed to save image" << path;
     }

@@ -170,7 +170,7 @@ void DBWorker::removeTab(int tabId)
     execute(query);
 
     // Check last tab closed
-    if (!count()) {
+    if (!tabCount()) {
         emit tabAvailable(Tab(-1, Link(), -1, -1));
     }
 }
@@ -231,7 +231,7 @@ int DBWorker::getMaxTabId()
     return 0;
 }
 
-int DBWorker::count()
+int DBWorker::tabCount()
 {
     QSqlQuery query = prepare("SELECT COUNT(*) FROM tab;");
     if (execute(query)) {
@@ -549,13 +549,13 @@ void DBWorker::getTabHistory(int tabId)
     emit tabHistoryAvailable(tabId, linkList);
 }
 
-void DBWorker::updateThumbPath(QString url, QString path)
+void DBWorker::updateThumbPath(QString url, QString path, int tabId)
 {
     QSqlQuery query = prepare("UPDATE link SET thumb_path = ? WHERE url = ?;");
     query.bindValue(0, path);
     query.bindValue(1, url);
     if (execute(query)) {
-        emit thumbPathChanged(url, path);
+        emit thumbPathChanged(url, path, tabId);
     }
 }
 

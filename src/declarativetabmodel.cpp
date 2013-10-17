@@ -8,6 +8,7 @@
 #include "declarativetabmodel.h"
 
 #include "dbmanager.h"
+#include <QFile>
 
 DeclarativeTabModel::DeclarativeTabModel(QObject *parent) :
     QAbstractListModel(parent), m_currentTabIndex(-1)
@@ -18,8 +19,8 @@ DeclarativeTabModel::DeclarativeTabModel(QObject *parent) :
     connect(DBManager::instance(), SIGNAL(tabChanged(Tab)),
             this, SLOT(tabChanged(Tab)));
 
-    connect(DBManager::instance(), SIGNAL(thumbPathChanged(QString,QString)),
-            this, SLOT(updateThumbPath(QString,QString)));
+    connect(DBManager::instance(), SIGNAL(thumbPathChanged(QString,QString,int)),
+            this, SLOT(updateThumbPath(QString,QString,int)));
     connect(DBManager::instance(), SIGNAL(titleChanged(QString,QString)),
             this, SLOT(updateTitle(QString,QString)));
 }
@@ -58,7 +59,7 @@ void DeclarativeTabModel::remove(const int index) {
     if (!m_tabs.isEmpty() && index >= 0 && index < m_tabs.count()) {
         beginRemoveRows(QModelIndex(), index, index);
         int tabId = m_tabs.at(index).tabId();
-        m_tabs.removeAt(index);
+        removeTab(index);
         endRemoveRows();
         DBManager::instance()->removeTab(tabId);
         emit countChanged();
@@ -82,7 +83,9 @@ void DeclarativeTabModel::clear()
         return;
 
     beginResetModel();
-    m_tabs.clear();
+    for (int i = m_tabs.count() - 1; i >= 0; --i) {
+        removeTab(i);
+    }
     endResetModel();
 
     DBManager::instance()->removeAllTabs();
@@ -197,20 +200,30 @@ void DeclarativeTabModel::tabChanged(Tab tab)
     }
 }
 
-void DeclarativeTabModel::updateThumbPath(QString url, QString path)
+void DeclarativeTabModel::removeTab(int index)
+{
+    // Both clear and remove(index) handles bounds checking.
+    QString thumbPath = m_tabs.at(index).currentLink().thumbPath();
+    m_tabs.removeAt(index);
+
+    QFile f(thumbPath);
+    if (f.exists()) {
+        f.remove();
+    }
+}
+
+void DeclarativeTabModel::updateThumbPath(QString url, QString path, int tabId)
 {
     QVector<int> roles;
     roles << ThumbPathRole;
     for (int i = 0; i < m_tabs.count(); i++) {
-        if (m_tabs.at(i).currentLink().url() == url) {
-            if (m_tabs.at(i).currentLink().thumbPath() != path) {
-                Link tmp = m_tabs[i].currentLink();
-                tmp.setThumbPath(path);
-                m_tabs[i].setCurrentLink(tmp);
-                QModelIndex start = index(i, 0);
-                QModelIndex end = index(i, 0);
-                emit dataChanged(start, end, roles);
-            }
+        if (m_tabs.at(i).tabId() == tabId) {
+            Link link = m_tabs.at(i).currentLink();
+            link.setThumbPath(path);
+            m_tabs[i].setCurrentLink(link);
+            QModelIndex start = index(i, 0);
+            QModelIndex end = index(i, 0);
+            emit dataChanged(start, end, roles);
         }
     }
 }
