@@ -20,6 +20,7 @@ class DeclarativeTab : public QQuickItem {
     Q_OBJECT
 
     Q_PROPERTY(int tabId READ tabId WRITE setTabId NOTIFY tabIdChanged)
+    Q_PROPERTY(bool valid READ valid NOTIFY validChanged FINAL)
     Q_PROPERTY(QString thumbnailPath READ thumbnailPath WRITE setThumbnailPath NOTIFY thumbPathChanged)
     Q_PROPERTY(QString url READ url NOTIFY urlChanged)
     Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY titleChanged)
@@ -41,6 +42,8 @@ public:
     int tabId() const;
     void setTabId(int tabId);
 
+    bool valid() const;
+
     bool canGoForward() const;
     bool canGoBack() const;
 
@@ -59,6 +62,7 @@ signals:
     void thumbPathChanged();
     void urlChanged();
     void tabIdChanged();
+    void validChanged();
     void titleChanged();
     void canGoFowardChanged();
     void canGoBackChanged();
@@ -68,6 +72,7 @@ private:
     void saveToFile(QString url, QString path, QImage image, qreal rotate);
 
     int m_tabId;
+    bool m_valid;
     Link m_link;
     int m_nextLinkId, m_previousLinkId;
     QStringList paths;

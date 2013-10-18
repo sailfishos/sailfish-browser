@@ -18,8 +18,12 @@
 
 #include "dbmanager.h"
 
-DeclarativeTab::DeclarativeTab(QQuickItem *parent) :
-    QQuickItem(parent), m_tabId(0), m_nextLinkId(0), m_previousLinkId(0)
+DeclarativeTab::DeclarativeTab(QQuickItem *parent)
+    : QQuickItem(parent)
+    , m_tabId(0)
+    , m_valid(false)
+    , m_nextLinkId(0)
+    , m_previousLinkId(0)
 {
     init();
 }
@@ -81,6 +85,16 @@ void DeclarativeTab::setTabId(int tabId) {
         DBManager::instance()->getTab(m_tabId);
         emit tabIdChanged();
     }
+
+    if (tabId > 0 != m_valid) {
+        m_valid = tabId > 0;
+        emit validChanged();
+    }
+}
+
+bool DeclarativeTab::valid() const
+{
+    return m_valid;
 }
 
 bool DeclarativeTab::canGoForward() const {
@@ -126,7 +140,9 @@ void DeclarativeTab::updateTab(QString url, QString title, QString path)
 // Data changed in DB
 void DeclarativeTab::tabChanged(Tab tab)
 {
-    if (tab.tabId() != m_tabId) {
+    // For valid tab "tab.tabId() != m_tabId" is ok as request is set by
+    // setTabId. For invalid tab we can reset all properties.
+    if (tab.tabId() != m_tabId && tab.isValid()) {
         return;
     }
 

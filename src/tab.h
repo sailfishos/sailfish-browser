@@ -30,6 +30,8 @@ public:
     int nextLink() const;
     void setNextLink(int nextLinkId);
 
+    bool isValid() const;
+
     bool operator==(const Tab &other) const;
     bool operator!=(const Tab &other) const;
 
