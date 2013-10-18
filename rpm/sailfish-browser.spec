@@ -1,7 +1,7 @@
 Name:       sailfish-browser
 
 Summary:    Sailfish Browser
-Version:    0.6.11
+Version:    0.6.12
 Release:    1
 Group:      Applications/Internet
 License:    Prop
@@ -25,7 +25,7 @@ BuildRequires:  gdb
 Requires: sailfishsilica-qt5 >= 0.8.34
 Requires: jolla-ambient >= 0.1.37
 Requires: xulrunner-qt5 >= 24.0.1.12
-Requires: embedlite-components-qt5 >= 1.3.4
+Requires: embedlite-components-qt5 >= 1.3.11
 Requires: sailfish-browser-settings = %{version}
 Requires: qt5-plugin-imageformat-ico
 Requires: qt5-plugin-imageformat-gif
