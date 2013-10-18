@@ -18,7 +18,7 @@ Page {
 
     ShareMethodList {
         id: shareMethodList
-        anchors.fill: parent  
+        anchors.fill: parent
         header: PageHeader {
             //: List header for link sharing method list
             //% "Share link"
