@@ -246,14 +246,14 @@ Page {
         id: favoriteList
         SilicaListView {
             PullDownMenu {
+                enabled: browserPage.tabs.count > 0
                 MenuItem {
                     //% "Close all tabs"
                     text: qsTrId("sailfish_browser-me-close_all")
                     onClicked: browserPage.closeAllTabs()
-                    enabled: browserPage.tabs.count > 0
                 }
                 MenuItem {
-                    enabled: browserPage.currentTab.url == _search && browserPage.tabs.count > 0
+                    enabled: browserPage.currentTab.url == _search
                     //: Share link from browser pulley menu
                     //% "Share"
                     text: qsTrId("sailfish_browser-me-share_link")
