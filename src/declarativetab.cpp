@@ -125,6 +125,9 @@ void DeclarativeTab::goBack()
 void DeclarativeTab::navigateTo(QString url, QString title, QString path)
 {
     if (url != m_link.url()) {
+#ifdef DEBUG_LOGS
+        qDebug() << "DeclarativeTab::navigateTo:" << title << url;
+#endif
         DBManager::instance()->navigateTo(m_tabId, url, title, path);
     } else {
         updateTab(url, title, path);
@@ -149,11 +152,17 @@ void DeclarativeTab::tabChanged(Tab tab)
         return;
     }
 
+#ifdef DEBUG_LOGS
+    qDebug() << "DeclarativeTab::tabChanged old values:" << m_link.title() << m_link.url() << "current tab:" <<  m_tabId << " changed tab:" << tab.tabId();
+#endif
     bool thumbChanged = m_link.thumbPath() != tab.currentLink().thumbPath();
     bool titleStringChanged = m_link.title() != tab.currentLink().title();
     bool urlStringChanged = m_link.url() != tab.currentLink().url();
 
     m_link = tab.currentLink();
+#ifdef DEBUG_LOGS
+    qDebug() << "DeclarativeTab::tabChanged new values:" << m_link.title() << m_link.url() << "current tab:" <<  m_tabId << " changed tab:" << tab.tabId();
+#endif
 
     if (urlStringChanged) {
         emit urlChanged();
@@ -181,6 +190,9 @@ void DeclarativeTab::tabChanged(Tab tab)
 void DeclarativeTab::updateThumbPath(QString url, QString path, int tabId)
 {
     Q_UNUSED(tabId)
+#ifdef DEBUG_LOGS
+    qDebug() << "DeclarativeTab::updateThumbPath:" << url << path << tabId;
+#endif
     if (m_link.url() == url) {
         if (path != m_link.thumbPath()) {
             m_link.setThumbPath(path);
@@ -192,6 +204,9 @@ void DeclarativeTab::updateThumbPath(QString url, QString path, int tabId)
 // Data changed in DB
 void DeclarativeTab::updateTitle(QString url, QString title)
 {
+#ifdef DEBUG_LOGS
+    qDebug() << "DeclarativeTab::updateTitle:" << url << title << m_tabId;
+#endif
     if (m_link.url() == url) {
         if (title != m_link.title()) {
             m_link.setTitle(title);

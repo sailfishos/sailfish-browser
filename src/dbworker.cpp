@@ -202,6 +202,10 @@ void DBWorker::getTab(int tabId)
     }
 
     if (query.first()) {
+#ifdef DEBUG_LOGS
+        Tab tab = getTabData(query.value(0).toInt(), query.value(1).toInt());
+        qDebug() << "DBWorker::getTab:" << tab.currentLink().title() << tab.currentLink().url();
+#endif
         emit tabAvailable(getTabData(query.value(0).toInt(), query.value(1).toInt()));
     }
 }
@@ -279,6 +283,9 @@ void DBWorker::navigateTo(int tabId, QString url, QString title, QString path) {
         qWarning() << Q_FUNC_INFO << "failed to add url to tab history" << url;
     }
 
+#ifdef DEBUG_LOGS
+    qDebug() << "DBWorker::navigateTo:" << title << url;
+#endif
     emit tabChanged(getTabData(tabId, historyId));
 }
 
@@ -289,6 +296,9 @@ void DBWorker::updateTab(int tabId, QString url, QString title, QString path)
         qWarning() << Q_FUNC_INFO << "attempt to update url that is not stored in db.";
         return;
     }
+#ifdef DEBUG_LOGS
+    qDebug() << "DBWorker::updateTab:" << title << url;
+#endif
     updateLink(currentLink.linkId(), url, title, path);
     emit tabChanged(getTabData(tabId));
 }
