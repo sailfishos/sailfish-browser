@@ -155,6 +155,7 @@ Page {
             _contextMenu.linkHref = linkHref
             _contextMenu.linkTitle = linkTitle.trim()
             _contextMenu.imageSrc = imageSrc
+            hideVirtualKeyboard()
             _contextMenu.show()
         } else {
             ctxMenuComp = Qt.createComponent(Qt.resolvedUrl("components/BrowserContextMenu.qml"))
@@ -166,10 +167,17 @@ Page {
                                                             "linkTitle": linkTitle.trim(),
                                                             "contentType": contentType
                                                         })
+                hideVirtualKeyboard()
                 _contextMenu.show()
             } else {
-                console.log("Can't load BrowserContentMenu.qml")
+                console.log("Can't load BrowserContextMenu.qml")
             }
+        }
+    }
+
+    function hideVirtualKeyboard() {
+        if (Qt.inputMethod.visible) {
+            browserPage.focus = true
         }
     }
 
