@@ -237,6 +237,7 @@ Page {
         //               return (_contextMenu != null && (_contextMenu.height > tools.height)) ? 200 : 300
 
         onTitleChanged: {
+            // This is always after url has changed
             tab.updateTab(url, title, "")
             browserPage.title = title
         }
@@ -246,7 +247,10 @@ Page {
                 tab.updateTab(url, title, "")
                 tab.backForwardNavigation = false
             } else if (!browserPage.newTabRequested) {
-                tab.navigateTo(url, title, "")
+                // Use browserPage.title here to avoid wrong title to blink.
+                // browserPage.load() updates browserPage's title before load starts.
+                // QmlMozView's title is not correct over here.
+                tab.navigateTo(url, browserPage.title, "")
             }
             tab.loadWhenTabChanges = false
             browserPage.newTabRequested = false
