@@ -214,6 +214,7 @@ void DeclarativeTabModel::removeTab(int index)
 
 void DeclarativeTabModel::updateThumbPath(QString url, QString path, int tabId)
 {
+    Q_UNUSED(url)
     QVector<int> roles;
     roles << ThumbPathRole;
     for (int i = 0; i < m_tabs.count(); i++) {

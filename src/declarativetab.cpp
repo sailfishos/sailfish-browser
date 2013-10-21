@@ -189,15 +189,13 @@ void DeclarativeTab::tabChanged(Tab tab)
 // Data changed in DB
 void DeclarativeTab::updateThumbPath(QString url, QString path, int tabId)
 {
-    Q_UNUSED(tabId)
+    Q_UNUSED(url)
 #ifdef DEBUG_LOGS
     qDebug() << "DeclarativeTab::updateThumbPath:" << url << path << tabId;
 #endif
-    if (m_link.url() == url) {
-        if (path != m_link.thumbPath()) {
-            m_link.setThumbPath(path);
-            emit thumbPathChanged();
-        }
+    if (valid() && tabId == m_tabId) {
+        m_link.setThumbPath(path);
+        emit thumbPathChanged();
     }
 }
 
@@ -217,7 +215,7 @@ void DeclarativeTab::updateTitle(QString url, QString title)
 
 void DeclarativeTab::captureScreen(QString url, int x, int y, int width, int height, qreal rotate)
 {
-    if(!window() || !window()->isActive() || !valid()) {
+    if (!window() || !window()->isActive() || !valid()) {
         return;
     }
 
