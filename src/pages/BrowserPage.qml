@@ -287,7 +287,6 @@ Page {
 
             loadFrameScript("chrome://embedlite/content/SelectAsyncHelper.js")
             loadFrameScript("chrome://embedlite/content/embedhelper.js")
-            loadFrameScript("chrome://embedlite/content/StyleSheetHandler.js")
 
             if (WebUtils.initialPage !== "") {
                 browserPage.load(WebUtils.initialPage)
