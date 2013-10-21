@@ -123,6 +123,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     app->setOrganizationName(QString("org.sailfishos"));
 
     DeclarativeWebUtils * utils = new DeclarativeWebUtils(app->arguments(), service, app.data());
+    utils->clearStartupCacheIfNeeded();
     view->rootContext()->setContextProperty("WebUtils", utils);
     view->rootContext()->setContextProperty("MozContext", QMozContext::GetInstance());
 
