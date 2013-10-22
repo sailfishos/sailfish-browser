@@ -64,12 +64,10 @@ void DeclarativeWebUtils::clearStartupCacheIfNeeded()
         QString mostProfilePath = QDir::homePath() + profilePath;
         QString localStampString(mostProfilePath + QString("/_CACHE_CLEAN_"));
         QFileInfo localStamp(localStampString);
-        if (localStamp.exists()) {
-            if (systemStamp.lastModified() > localStamp.lastModified()) {
-                QDir cacheDir(mostProfilePath + "/startupCache");
-                cacheDir.removeRecursively();
-                QFile(localStampString).remove();
-            }
+        if (localStamp.exists() && systemStamp.lastModified() > localStamp.lastModified()) {
+            QDir cacheDir(mostProfilePath + "/startupCache");
+            cacheDir.removeRecursively();
+            QFile(localStampString).remove();
         }
     }
 }
