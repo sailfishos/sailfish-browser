@@ -58,12 +58,13 @@ signals:
     void currentTabChanged();
 
 private slots:
-    void updateThumbPath(QString url, QString path);
+    void updateThumbPath(QString url, QString path, int tabId);
     void updateTitle(QString url, QString title);
     void tabChanged(Tab tab);
 
 private:
     void load();
+    void removeTab(int index);
 
     QList<Tab> m_tabs;
     int m_currentTabIndex;

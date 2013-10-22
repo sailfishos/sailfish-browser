@@ -25,8 +25,7 @@ public:
     DeclarativeHistoryModel(QObject *parent = 0);
     
     enum UrlRoles {
-        ThumbPathRole = Qt::UserRole + 1,
-        UrlRole,
+        UrlRole = Qt::UserRole + 1,
         TitleRole
     };
 
@@ -53,7 +52,6 @@ private slots:
     void tabHistoryAvailable(int tabId, QList<Link> linkList);
     void historyAvailable(QList<Link> linkList);
     void tabChanged(Tab tab);
-    void updateThumbPath(QString url, QString path);
     void updateTitle(QString url, QString title);
 
 private:

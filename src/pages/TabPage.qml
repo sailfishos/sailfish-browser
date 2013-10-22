@@ -198,6 +198,7 @@ Page {
                         id: thumb
                         asynchronous: true
                         source: thumbnailPath
+                        cache: false
                         fillMode: Image.PreserveAspectCrop
                         sourceSize {
                             width: parent.width

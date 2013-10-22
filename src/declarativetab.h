@@ -55,8 +55,10 @@ public:
 
 public slots:
     void tabChanged(Tab tab);
-    void updateThumbPath(QString url, QString path);
     void updateTitle(QString url, QString title);
+
+private slots:
+    void updateThumbPath(QString url, QString path, int tabId);
 
 signals:
     void thumbPathChanged();
@@ -69,13 +71,12 @@ signals:
 
 private:
     void init();
-    void saveToFile(QString url, QString path, QImage image, qreal rotate);
+    void saveToFile(QString url, QString path, QImage image, int tabId, qreal rotate);
 
     int m_tabId;
     bool m_valid;
     Link m_link;
     int m_nextLinkId, m_previousLinkId;
-    QStringList paths;
 };
 
 #endif // DECLARATIVETAB_H
