@@ -37,6 +37,7 @@ public slots:
     void openUrl(QString url);
     QString homePage();
     QString initialPage();
+    void clearStartupCacheIfNeeded();
 
 signals:
     void homePageChanged();

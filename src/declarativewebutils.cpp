@@ -12,9 +12,15 @@
 #include <QGuiApplication>
 #include <QClipboard>
 #include <QFile>
+#include <QFileInfo>
+#include <QDir>
+#include <QDateTime>
 #include <QStandardPaths>
 #include "declarativewebutils.h"
 #include "qmozcontext.h"
+
+static const QString system_components_time_stamp("/var/lib/_MOZEMBED_CACHE_CLEAN_");
+static const QString profilePath("/.mozilla/mozembed");
 
 DeclarativeWebUtils::DeclarativeWebUtils(QStringList arguments,
                                          BrowserService *service,
@@ -49,6 +55,21 @@ bool DeclarativeWebUtils::fileExists(QString fileName) const
 {
     QFile file(fileName);
     return file.exists();
+}
+
+void DeclarativeWebUtils::clearStartupCacheIfNeeded()
+{
+    QFileInfo systemStamp(system_components_time_stamp);
+    if (systemStamp.exists()) {
+        QString mostProfilePath = QDir::homePath() + profilePath;
+        QString localStampString(mostProfilePath + QString("/_CACHE_CLEAN_"));
+        QFileInfo localStamp(localStampString);
+        if (localStamp.exists() && systemStamp.lastModified() > localStamp.lastModified()) {
+            QDir cacheDir(mostProfilePath + "/startupCache");
+            cacheDir.removeRecursively();
+            QFile(localStampString).remove();
+        }
+    }
 }
 
 void DeclarativeWebUtils::updateWebEngineSettings()
