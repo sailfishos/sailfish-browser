@@ -130,7 +130,8 @@ Rectangle {
 
             onClicked: {
                 root.visible = false
-                var urlSections = imageSrc.split("/")
+                // drop query string from URL and split to sections
+                var urlSections = imageSrc.split("?")[0].split("/")
                 var leafName = urlSections[urlSections.length - 1]
 
                 if (leafName.length === 0) {
