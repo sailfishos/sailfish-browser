@@ -227,7 +227,21 @@ Page {
         clip: true
         focus: true
         width: browserPage.width
-        height: browserPage.height
+
+        onContentHeightChanged: {
+            if (!Qt.application.active || Qt.inputMethod.visible) {
+                height = browserPage.height
+            } else {
+                // Handle MozView height over here and loadProgress == 1 (start)
+                // We need to reset height always back to short height when loading starts
+                // so that after tab change there is always initial short composed height.
+                if (contentHeight > browserPage.height + chromeGestureThreshold) {
+                    height = browserPage.height
+                } else {
+                    height = browserPage.height - toolBarContainer.height
+                }
+            }
+        }
 
         //{ // TODO
         // No resizes while page is not active
@@ -304,6 +318,7 @@ Page {
         onLoadingChanged: {
             if (loading) {
                 favicon = ""
+                height = browserPage.height - (Qt.application.active ? toolBarContainer.height : 0)
                 webView.chrome = true
             }
 
@@ -472,11 +487,12 @@ Page {
             Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
         }
 
-        Binding {
-            target: webView
-            property: "height"
-            value: browserPage.height - toolBarContainer.height
-            when: !webView.chromeGestureEnabled
+        states: State {
+            when: Qt.inputMethod.visible || !Qt.application.active
+            PropertyChanges {
+                target: webView
+                height: browserPage.height
+            }
         }
     }
 
