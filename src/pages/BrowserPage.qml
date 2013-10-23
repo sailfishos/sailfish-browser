@@ -515,8 +515,10 @@ Page {
         }
 
         function openTabPage(focus, operationType) {
-            captureScreen()
-            pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage, "initialSearchFocus": focus }, operationType)
+            if (browserPage.status === PageStatus.Active) {
+                captureScreen()
+                pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage, "initialSearchFocus": focus }, operationType)
+            }
         }
 
         Browser.StatusBar {
