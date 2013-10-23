@@ -43,6 +43,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     // See JB#7358
     setenv("QML_BAD_GUI_RENDER_LOOP", "1", 1);
     setenv("USE_ASYNC", "1", 1);
+
+    // Workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=929879
     setenv("LC_NUMERIC", "C", 1);
     setlocale(LC_NUMERIC, "C");
 #ifdef HAS_BOOSTER
