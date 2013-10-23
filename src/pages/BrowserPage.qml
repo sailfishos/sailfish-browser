@@ -181,6 +181,10 @@ Page {
         }
     }
 
+    // Safety clipping. There is clipping in ApplicationWindow that should react upon focus changes.
+    // This clipping can handle also clipping of QmlMozView. When this page is active we do not need to clip
+    // if input method is not visible.
+    clip: status != PageStatus.Active || Qt.inputMethod.visible
     onStatusChanged: webView.chrome = status >= PageStatus.Active
 
     TabModel {
@@ -233,12 +237,15 @@ Page {
         signal selectionCopied(variant data)
         signal contextMenuRequested(variant data)
 
-        clip: true
         focus: true
         width: browserPage.width
 
         onContentHeightChanged: {
-            if (!Qt.application.active || Qt.inputMethod.visible) {
+            if (Qt.inputMethod.visible) {
+                return
+            }
+
+            if (!Qt.application.active) {
                 height = browserPage.height
             } else {
                 // Handle MozView height over here and loadProgress == 1 (start)
@@ -497,7 +504,7 @@ Page {
         }
 
         states: State {
-            when: Qt.inputMethod.visible || !Qt.application.active
+            when: (Qt.application.active && Qt.inputMethod.visible) || !Qt.application.active
             PropertyChanges {
                 target: webView
                 height: browserPage.height
