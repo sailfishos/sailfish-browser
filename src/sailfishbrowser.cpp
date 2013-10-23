@@ -43,6 +43,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     // See JB#7358
     setenv("QML_BAD_GUI_RENDER_LOOP", "1", 1);
     setenv("USE_ASYNC", "1", 1);
+    setenv("LC_NUMERIC", "C", 1);
+    setlocale(LC_NUMERIC, "C");
 #ifdef HAS_BOOSTER
     QScopedPointer<QGuiApplication> app(MDeclarativeCache::qApplication(argc, argv));
     QScopedPointer<QQuickView> view(MDeclarativeCache::qQuickView());
