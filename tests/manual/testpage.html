@@ -15,6 +15,19 @@
             pxRatio = document.getElementById("pixelRatio")
             pxRatio.innerHTML = "My devicePixelRatio: " + window.devicePixelRatio
         }
+
+        function handleEnter(event, element)
+        {
+            var code = (event.keyCode ? event.keyCode : event.which);
+            if(code == 13) { //Enter keycode
+                var targetElement = document.getElementById(element.id + "_output")
+                var strValue = element.value
+                var fValue = parseFloat(strValue)
+                if (fValue) {
+                    targetElement.innerHTML = fValue
+                }
+            }
+        }
         </script>
     </head>
     <body onload="load()">
@@ -22,15 +35,21 @@
         <table>
             <tr>
                 <td>Text</td>
-                <td><input type="text" name="text_field" /></td>
+                <td><input id="text" type="text" name="text_field" onKeyPress="handleEnter(event, this)"/></td>
+                <td><input value="Parse" type="button" onclick="handleEnter({keyCode: 13}, document.getElementById('text'))"/></td>
+                <td id="text_output"></td>
             </tr>
             <tr>
                 <td>Number</td>
-                <td><input type="number" name="number_field" /></td>
+                <td><input id="number" type="number" name="number_field" onKeyPress="handleEnter(event, this)"/></td>
+                <td><input value="Parse" type="button" onclick="handleEnter({keyCode: 13}, document.getElementById('number'))"/></td>
+                <td id="number_output"></td>
             </tr>
             <tr>
                 <td>URL</td>
                 <td><input type="url" name="url_field" /></td>
+                <td></td>
+                <td></td>
             </tr>
         </table>
     <div>
