@@ -615,6 +615,7 @@ Page {
     }
 
     CoverActionList {
+        enabled: browserPage.status === PageStatus.Active
         iconBackground: true
 
         CoverAction {
@@ -626,12 +627,13 @@ Page {
         }
 
         CoverAction {
-            iconSource: "image://theme/icon-cover-refresh"
+            iconSource: webView.loading ? "image://theme/icon-cover-cancel" : "image://theme/icon-cover-refresh"
             onTriggered: {
                 if (webView.loading) {
                     webView.stop()
+                } else {
+                    webView.reload()
                 }
-                webView.reload()
             }
         }
     }
