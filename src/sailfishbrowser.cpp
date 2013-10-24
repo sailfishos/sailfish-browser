@@ -29,6 +29,7 @@
 #include "declarativetab.h"
 #include "declarativetabmodel.h"
 #include "declarativehistorymodel.h"
+#include "declarativewebcontainer.h"
 
 #include <signonuiservice.h>
 
@@ -116,6 +117,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     qmlRegisterType<DeclarativeTabModel>("Sailfish.Browser", 1, 0, "TabModel");
     qmlRegisterType<DeclarativeHistoryModel>("Sailfish.Browser", 1, 0, "HistoryModel");
     qmlRegisterType<DeclarativeTab>("Sailfish.Browser", 1, 0, "Tab");
+    qmlRegisterType<DeclarativeWebContainer>("Sailfish.Browser", 1, 0, "WebContainer");
 
     QString componentPath(DEFAULT_COMPONENTS_PATH);
     QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/components/EmbedLiteBinComponents.manifest"));
