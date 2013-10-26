@@ -448,11 +448,21 @@ Page {
                 break
             }
             case "embed:permissions": {
-                // Grant permssions by default, TODO: need UI
-                webViewport.child.sendAsyncMessage("embedui:premissions", {
-                                                   allow: true,
-                                                   checkedDontAsk: true,
-                                                   id: data.id })
+                // Ask for location permission
+                var dialog = pageStack.push(Qt.resolvedUrl("components/LocationDialog.qml"),
+                                            {})
+                dialog.accepted.connect(function() {
+                    sendAsyncMessage("embedui:premissions", {
+                                         allow: true,
+                                         checkedDontAsk: false,
+                                         id: data.id })
+                })
+                dialog.rejected.connect(function() {
+                    sendAsyncMessage("embedui:premissions", {
+                                         allow: false,
+                                         checkedDontAsk: false,
+                                         id: data.id })
+                })
                 break
             }
             case "embed:login": {
