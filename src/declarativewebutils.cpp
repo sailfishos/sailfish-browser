@@ -127,7 +127,8 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     mozContext->addObservers(QStringList()
                              << "clipboard:setdata"
                              << "embed:download"
-                             << "embed:search");
+                             << "embed:search"
+                             << "embedlite-before-first-paint");
 
     // Enable internet search
     mozContext->setPref(QString("keyword.enabled"), QVariant(true));
