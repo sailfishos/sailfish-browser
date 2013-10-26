@@ -61,32 +61,38 @@ void DeclarativeBookmarkModel::removeBookmark(const QString& url) {
 
 void DeclarativeBookmarkModel::componentComplete() {
     QString settingsLocation = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/bookmarks.json";
-    QFile file(settingsLocation);
+    QScopedPointer<QFile> file(new QFile(settingsLocation));
 
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+    if (!file->open(QIODevice::ReadOnly | QIODevice::Text)) {
         qWarning() << "Unable to open bookmarks "+settingsLocation;
-    } else {
-        QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
-        if (doc.isArray()) {
-            QJsonArray array = doc.array();
-            QJsonArray::iterator i;
-            for(i=array.begin(); i != array.end(); ++i) {
-                if((*i).isObject()) {
-                    QJsonObject obj = (*i).toObject();
-                    QString url = obj.value("url").toString();
-                    Bookmark* m = new Bookmark(obj.value("title").toString(),
-                                               url,
-                                               obj.value("favicon").toString());
-                    bookmarks.insert(url, m);
-                    bookmarkUrls.append(url);
-                }
-            }
-        } else {
-            qWarning() << "Bookmarks.json should be an array of items";
+
+        file.reset(new QFile(QLatin1Literal("/usr/share/sailfish-browser/content/bookmarks.json")));
+        if (!file->open(QIODevice::ReadOnly | QIODevice::Text)) {
+            qWarning() << "Unable to open bookmarks defaults";
+            return;
         }
-        emit countChanged();
-        file.close();
     }
+
+    QJsonDocument doc = QJsonDocument::fromJson(file->readAll());
+    if (doc.isArray()) {
+        QJsonArray array = doc.array();
+        QJsonArray::iterator i;
+        for(i=array.begin(); i != array.end(); ++i) {
+            if((*i).isObject()) {
+                QJsonObject obj = (*i).toObject();
+                QString url = obj.value("url").toString();
+                Bookmark* m = new Bookmark(obj.value("title").toString(),
+                                           url,
+                                           obj.value("favicon").toString());
+                bookmarks.insert(url, m);
+                bookmarkUrls.append(url);
+            }
+        }
+    } else {
+        qWarning() << "Bookmarks.json should be an array of items";
+    }
+    emit countChanged();
+    file->close();
 }
 
 void DeclarativeBookmarkModel::classBegin() {}
