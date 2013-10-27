@@ -221,8 +221,17 @@ Page {
 
     Browser.DownloadRemorsePopup { id: downloadPopup }
 
+    // TODO: Merge background and QmlMozView into Sailfish Browser WebView.
+    // It should contain all function defined at BrowserPage. BrowserPage
+    // should only have call through function when needed e.g. by TabPage.
+    // It should also handle title, url, forwardNavigation, backwardNavigation.
+    // In addition, it should be fixed to fullscreen size and internally
+    // it changes height for QmlMozView.
     Rectangle {
-        anchors.fill: parent
+        id: background
+
+        width: parent.width
+        height: browserPage.orientation === Orientation.Portrait ? Screen.height : Screen.width
         color: webView.bgcolor ? webView.bgcolor : "white"
     }
 
@@ -518,7 +527,7 @@ Page {
         // This should be just a binding for progressBar.progress but currently progress is going up and down
         property real loadProgress: webView.loadProgress / 100.0
 
-        anchors.bottom: parent.bottom
+        anchors.bottom: background.bottom
         width: parent.width
         visible: !_ctxMenuActive
         opacity: fullscreenMode ? 0.0 : 1.0
