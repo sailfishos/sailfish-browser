@@ -17,11 +17,21 @@ Page {
     property BrowserPage browserPage
     // focus to input field on opening
     property bool initialSearchFocus
+    property bool newTab
 
     property bool _editing
     property string _search
 
-    backNavigation: browserPage.tabs.count > 0
+    backNavigation: browserPage.tabs.count > 0 && !newTab
+
+    function load(url, title) {
+        if (page.newTab) {
+            browserPage.newTab(url, true, title)
+        } else {
+            browserPage.load(url, title)
+        }
+        pageStack.pop(undefined, true)
+    }
 
     Component {
         id: favoriteContextMenuComponent
@@ -29,12 +39,14 @@ Page {
             id: favoriteContextMenu
 
             property string url: ""
+            property string title: ""
+
             MenuItem {
                 //% "Open in new tab"
                 text: qsTrId("sailfish_browser-me-open_new_tab")
                 onClicked: {
-                    browserPage.newTab(url, true)
-                    pageStack.pop(undefined, true)
+                    page.newTab = true
+                    page.load(url, title)
                     favoriteContextMenu.hide()
                 }
             }
@@ -59,8 +71,8 @@ Page {
         height: _editing ? headerContent.height : headerContent.height + tabsGrid.height
 
         function newTab() {
+            page.newTab = true
             searchField.forceActiveFocus()
-            browserPage.newTab("", true)
         }
 
         Rectangle {
@@ -117,8 +129,7 @@ Page {
                 EnterKey.onClicked: {
                     Qt.inputMethod.hide()
                     // let gecko figure out how to handle malformed URLs
-                    browserPage.load(searchField.text)
-                    pageStack.pop(undefined, true)
+                    page.load(searchField.text)
                 }
 
                 onTextChanged: if (text != browserPage.currentTab.url) browserPage.history.search(text)
@@ -143,7 +154,7 @@ Page {
         }
 
         Grid {
-            visible: !page._editing
+            visible: !page._editing && !page.newTab
             id: tabsGrid
             columns: 2
             rows: Math.ceil(browserPage.tabs.count / 2) + 1
@@ -155,7 +166,7 @@ Page {
             }
 
             Repeater {
-                model: browserPage.tabs
+                model: page.newTab ? null : browserPage.tabs
                 BackgroundItem {
                     id: tabDelegate
                     width: page.width/tabsGrid.columns
@@ -247,7 +258,7 @@ Page {
         id: favoriteList
         SilicaListView {
             PullDownMenu {
-                enabled: browserPage.tabs.count > 0
+                enabled: browserPage.tabs.count > 0 && !page.newTab
                 MenuItem {
                     //% "Close all tabs"
                     text: qsTrId("sailfish_browser-me-close_all")
@@ -286,7 +297,7 @@ Page {
             model: browserPage.favorites
             delegate: ListItem {
                 width: page.width
-                menu: favoriteContextMenuComponent
+                menu: !page.newTab ? favoriteContextMenuComponent : null
                 showMenuOnPressAndHold: false
 
                 Row {
@@ -316,11 +327,8 @@ Page {
                     }
                 }
 
-                onClicked: {
-                    browserPage.load(model.url, model.title)
-                    window.pageStack.pop(browserPage, true)
-                }
-                onPressAndHold: showMenu({"url": url})
+                onClicked: page.load(model.url, model.title)
+                onPressAndHold: showMenu({"url": url, "title": title})
             }
             VerticalScrollDecorator {}
         }
@@ -368,10 +376,8 @@ Page {
 
                 onClicked: {
                     Qt.inputMethod.hide()
-                    browserPage.load(model.url, model.title)
-                    pageStack.pop(undefined, true)
+                    page.load(model.url, model.title)
                 }
-
             }
             VerticalScrollDecorator {}
         }

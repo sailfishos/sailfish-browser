@@ -39,7 +39,7 @@ Page {
     // Used by newTab function
     property bool newTabRequested
 
-    function newTab(link, foreground) {
+    function newTab(link, foreground, title) {
         if (foreground) {
             if (webView.loading) {
                 webView.stop()
@@ -53,7 +53,7 @@ Page {
         // This was broken already before this change. We need to add mapping between intented
         // load url and actual result url to TabModel::activateTab so that finding can be done.
         tabModel.addTab(link, foreground)
-        load(link)
+        load(link, title)
     }
 
     function closeTab(index) {
