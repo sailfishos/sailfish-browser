@@ -26,7 +26,7 @@ Page {
 
     function load(url, title) {
         if (page.newTab) {
-            browserPage.newTab(url, title)
+            browserPage.newTab(url, true, title)
         } else {
             browserPage.load(url, title)
         }
