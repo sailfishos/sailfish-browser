@@ -73,6 +73,9 @@ QString DeclarativeTab::title() const {
 }
 
 void DeclarativeTab::setTitle(QString title) {
+#ifdef DEBUG_LOGS
+    qDebug() << "DeclarativeTab::setTitle:" << title;
+#endif
     if(title != m_link.title() && m_link.isValid()) {
         DBManager::instance()->updateTitle(m_link.url(), title);
     }
@@ -83,6 +86,10 @@ int DeclarativeTab::tabId() const {
 }
 
 void DeclarativeTab::setTabId(int tabId) {
+#ifdef DEBUG_LOGS
+    qDebug() << "DeclarativeTab::setTabId:" << m_tabId << " old values: " << m_link.title() << m_link.url();
+#endif
+
     if (tabId > 0 && tabId != m_tabId) {
         m_tabId = tabId;
         DBManager::instance()->getTab(m_tabId);
@@ -136,6 +143,9 @@ void DeclarativeTab::navigateTo(QString url, QString title, QString path)
 
 void DeclarativeTab::updateTab(QString url, QString title, QString path)
 {
+#ifdef DEBUG_LOGS
+    qDebug() << "DeclarativeTab::updateTab:" << title << url << m_tabId << path;
+#endif
     if ((!url.isEmpty() && url != m_link.url())
             || (!title.isEmpty() && title != m_link.title())
             || (!path.isEmpty() && path != m_link.title())) {
@@ -191,7 +201,7 @@ void DeclarativeTab::updateThumbPath(QString url, QString path, int tabId)
 {
     Q_UNUSED(url)
 #ifdef DEBUG_LOGS
-    qDebug() << "DeclarativeTab::updateThumbPath:" << url << path << tabId;
+    qDebug() << "DeclarativeTab::updateThumbPath:" << url << m_link.url() << path << tabId;
 #endif
     if (valid() && tabId == m_tabId) {
         m_link.setThumbPath(path);
@@ -220,11 +230,11 @@ void DeclarativeTab::captureScreen(QString url, int x, int y, int width, int hei
     }
 
     QImage image = window()->grabWindow();
+    // TODO: Cropping should be done in QtConcurrent / thread
     QImage cropped = image.copy(x, y, width, height);
     QString path = QString("%1/tab-%2-thumb.jpg").arg(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)).arg(m_tabId);
     // asynchronous save to avoid the slow I/O
     QtConcurrent::run(this, &DeclarativeTab::saveToFile, url, path, cropped, m_tabId, rotate);
-
 }
 
 void DeclarativeTab::saveToFile(QString url, QString path, QImage image, int tabId, qreal rotate) {

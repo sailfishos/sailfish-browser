@@ -82,6 +82,7 @@ Page {
 
         if (url !== "" && webView.url != url) {
             browserPage.url = url
+            webContext.firstFrameRendered = false
             webView.load(url)
         }
     }
@@ -107,7 +108,7 @@ Page {
     }
 
     function captureScreen() {
-        if (status == PageStatus.Active) {
+        if (status == PageStatus.Active && webContext.firstFrameRendered) {
             tab.captureScreen(webView.url, 0, 0, webView.width,
                               webView.width, window.screenRotation)
         }
@@ -235,8 +236,15 @@ Page {
         color: webView.bgcolor ? webView.bgcolor : "white"
     }
 
+    Browser.WebContext {
+        id: webContext
+        webView: webView
+    }
+
     QmlMozView {
         id: webView
+
+        readonly property bool loaded: loadProgress === 100
 
         enabled: browserPage.status == PageStatus.Active
         // There needs to be enough content for enabling chrome gesture
@@ -275,25 +283,27 @@ Page {
         //               return (_contextMenu != null && (_contextMenu.height > tools.height)) ? browserPage.height - _contextMenu.height : browserPage.height - tools.height
         //               return (_contextMenu != null && (_contextMenu.height > tools.height)) ? 200 : 300
 
+        // Order of onTitleChanged and onUrlChanged is unknown. Hence, use always browserPage.title and browserPage.url
+        // as they are set in the load function of BrowserPage.
         onTitleChanged: {
             // This is always after url has changed
-            tab.updateTab(url, title, "")
             browserPage.title = title
+            tab.updateTab(browserPage.url, browserPage.title, "")
         }
 
         onUrlChanged: {
+            browserPage.url = url
             if (tab.backForwardNavigation) {
-                tab.updateTab(url, title, "")
+                tab.updateTab(browserPage.url, browserPage.title, "")
                 tab.backForwardNavigation = false
             } else if (!browserPage.newTabRequested) {
                 // Use browserPage.title here to avoid wrong title to blink.
                 // browserPage.load() updates browserPage's title before load starts.
                 // QmlMozView's title is not correct over here.
-                tab.navigateTo(url, browserPage.title, "")
+                tab.navigateTo(browserPage.url, browserPage.title, "")
             }
             tab.loadWhenTabChanges = false
             browserPage.newTabRequested = false
-            browserPage.url = url
         }
 
         onBgcolorChanged: {
@@ -340,18 +350,20 @@ Page {
             }
         }
 
+        onLoadedChanged: {
+            if (loaded && url != "about:blank" && url) {
+                // This is always up-to-date in both link clicked and back/forward navigation
+                // captureScreen does not work here as we might have changed to TabPage.
+                // Tab icon clicked takes care of the rest.
+                tab.updateTab(browserPage.url, browserPage.title, "")
+            }
+        }
+
         onLoadingChanged: {
             if (loading) {
                 favicon = ""
                 height = browserPage.height - (Qt.application.active ? toolBarContainer.height : 0)
                 webView.chrome = true
-            }
-
-            // store tab data
-            if (!loading && url != "about:blank" && url) {
-                captureScreen()
-                // This always up-to-date in both link clicked and back/forward navigation
-                tab.updateTab(url, title, "")
             }
         }
         onRecvAsyncMessage: {
