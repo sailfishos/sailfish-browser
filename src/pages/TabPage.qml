@@ -17,11 +17,12 @@ Page {
     property BrowserPage browserPage
     // focus to input field on opening
     property bool initialSearchFocus
+    property bool newTab
 
     property bool _editing
     property string _search
 
-    backNavigation: browserPage.tabs.count > 0
+    backNavigation: browserPage.tabs.count > 0 && !newTab
 
     Component {
         id: favoriteContextMenuComponent
@@ -59,6 +60,7 @@ Page {
         height: _editing ? headerContent.height : headerContent.height + tabsGrid.height
 
         function newTab() {
+            page.newTab = true
             searchField.forceActiveFocus()
             browserPage.newTab("", true)
         }
@@ -143,7 +145,7 @@ Page {
         }
 
         Grid {
-            visible: !page._editing
+            visible: !page._editing && !page.newTab
             id: tabsGrid
             columns: 2
             rows: Math.ceil(browserPage.tabs.count / 2) + 1
@@ -155,7 +157,7 @@ Page {
             }
 
             Repeater {
-                model: browserPage.tabs
+                model: page.newTab? null : browserPage.tabs
                 BackgroundItem {
                     id: tabDelegate
                     width: page.width/tabsGrid.columns
@@ -247,7 +249,7 @@ Page {
         id: favoriteList
         SilicaListView {
             PullDownMenu {
-                enabled: browserPage.tabs.count > 0
+                enabled: browserPage.tabs.count > 0 && !page.newTab
                 MenuItem {
                     //% "Close all tabs"
                     text: qsTrId("sailfish_browser-me-close_all")
