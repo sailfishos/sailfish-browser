@@ -9,11 +9,16 @@
 
 #include <QPointer>
 #include <QMetaObject>
+#include <QTimerEvent>
+#include <QQuickWindow>
 
 DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     : QQuickItem(parent)
     , m_webView(0)
     , m_foreground(false)
+    , m_background(false)
+    , m_windowVisible(false)
+    , m_backgroundTimer(0)
     , m_pageActive(false)
     , m_inputPanelVisible(false)
     , m_inputPanelHeight(0.0)
@@ -21,6 +26,11 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     , m_toolbarHeight(0.0)
 {
     setFlag(QQuickItem::ItemHasContents, true);
+    if (!window()) {
+        connect(this, SIGNAL(windowChanged(QQuickWindow*)), this, SLOT(handleWindowChanged(QQuickWindow*)));
+    } else {
+        connect(window(), SIGNAL(visibleChanged(bool)), this, SLOT(windowVisibleChanged(bool)));
+    }
 }
 
 DeclarativeWebContainer::~DeclarativeWebContainer()
@@ -65,6 +75,11 @@ void DeclarativeWebContainer::setForeground(bool active)
         }
         emit foregroundChanged();
     }
+}
+
+bool DeclarativeWebContainer::background() const
+{
+    return m_background;
 }
 
 bool DeclarativeWebContainer::pageActive() const
@@ -203,5 +218,37 @@ qreal DeclarativeWebContainer::contentHeight() const
         return height;
     } else {
         return 0.0;
+    }
+}
+
+void DeclarativeWebContainer::timerEvent(QTimerEvent *event)
+{
+    if (m_backgroundTimer == event->timerId()) {
+        if (window()) {
+            // Guard window visibility change was not cancelled after timer triggered.
+            bool tmpVisible = window()->isVisible();
+            // m_windowVisible == m_background visibility changed
+            if (tmpVisible == m_windowVisible && m_windowVisible == m_background) {
+                m_background = !m_windowVisible;
+                emit backgroundChanged();
+            }
+        }
+        killTimer(m_backgroundTimer);
+    }
+}
+
+
+void DeclarativeWebContainer::windowVisibleChanged(bool visible)
+{
+    if (window()) {
+        m_windowVisible = window()->isVisible();
+        m_backgroundTimer = startTimer(1000);
+    }
+}
+
+void DeclarativeWebContainer::handleWindowChanged(QQuickWindow *window)
+{
+    if (window) {
+        connect(window, SIGNAL(visibleChanged(bool)), this, SLOT(windowVisibleChanged(bool)));
     }
 }

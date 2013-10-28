@@ -11,6 +11,8 @@
 #include <QQuickItem>
 #include <QPointer>
 
+class QTimerEvent;
+
 class DeclarativeWebContainer : public QQuickItem {
     Q_OBJECT
 
@@ -21,6 +23,7 @@ class DeclarativeWebContainer : public QQuickItem {
     Q_PROPERTY(qreal inputPanelHeight READ inputPanelHeight WRITE setInputPanelHeight NOTIFY inputPanelHeightChanged FINAL)
     Q_PROPERTY(qreal inputPanelOpenHeight READ inputPanelOpenHeight WRITE setInputPanelOpenHeight NOTIFY inputPanelOpenHeightChanged FINAL)
     Q_PROPERTY(qreal toolbarHeight READ toolbarHeight WRITE setToolbarHeight NOTIFY toolbarHeightChanged FINAL)
+    Q_PROPERTY(bool background READ background NOTIFY backgroundChanged FINAL)
 
 public:
     DeclarativeWebContainer(QQuickItem *parent = 0);
@@ -31,6 +34,8 @@ public:
 
     bool foreground() const;
     void setForeground(bool active);
+
+    bool background() const;
 
     bool pageActive() const;
     void setPageActive(bool active);
@@ -50,6 +55,7 @@ signals:
     void webViewChanged();
     void pageStackChanged();
     void foregroundChanged();
+    void backgroundChanged();
     void pageActiveChanged();
     void inputPanelVisibleChanged();
     void inputPanelHeightChanged();
@@ -61,6 +67,11 @@ public slots:
 
 private slots:
     void imeNotificationChanged(int state, bool open, int cause, int focusChange, const QString& type);
+    void windowVisibleChanged(bool visible);
+    void handleWindowChanged(QQuickWindow *window);
+
+protected:
+    void timerEvent(QTimerEvent *event);
 
 private:
     qreal contentHeight() const;
@@ -68,6 +79,9 @@ private:
 private:
     QPointer<QQuickItem> m_webView;
     bool m_foreground;
+    bool m_background;
+    bool m_windowVisible;
+    int m_backgroundTimer;
     bool m_pageActive;
     bool m_inputPanelVisible;
     qreal m_inputPanelHeight;
