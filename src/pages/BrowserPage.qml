@@ -493,7 +493,7 @@ Page {
             color: Theme.highlightDimmerColor
             smooth: true
             radius: 2.5
-            visible: webView.contentHeight > webView.height && !_ctxMenuActive
+            visible: webView.contentHeight > webView.height && !webView.pinching && !_ctxMenuActive
             opacity: webView.moving ? 1.0 : 0.0
             Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
         }
@@ -507,7 +507,7 @@ Page {
             color: Theme.highlightDimmerColor
             smooth: true
             radius: 2.5
-            visible: webView.contentWidth > webView.width && !_ctxMenuActive
+            visible: webView.contentWidth > webView.width && !webView.pinching && !_ctxMenuActive
             opacity: webView.moving ? 1.0 : 0.0
             Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
         }
