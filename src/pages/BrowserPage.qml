@@ -27,7 +27,9 @@ Page {
     property string url
     property Item mediaStatus: Browser.MediaStatus {}
 
-    readonly property bool fullscreenMode: (webView.chromeGestureEnabled && !webView.chrome) || Qt.inputMethod.visible || !Qt.application.active
+    // Move this inside WebContainer
+    readonly property bool fullscreenMode: (webView.chromeGestureEnabled && !webView.chrome) || webContainer.inputPanelVisible || !webContainer.foreground
+
     property string favicon
     property Item _contextMenu
     property bool _ctxMenuActive: _contextMenu != null && _contextMenu.active
@@ -186,7 +188,7 @@ Page {
     // Safety clipping. There is clipping in ApplicationWindow that should react upon focus changes.
     // This clipping can handle also clipping of QmlMozView. When this page is active we do not need to clip
     // if input method is not visible.
-    clip: status != PageStatus.Active || Qt.inputMethod.visible
+    clip: status != PageStatus.Active || webContainer.inputPanelVisible
     onStatusChanged: webView.chrome = status >= PageStatus.Active
 
     TabModel {
@@ -223,18 +225,31 @@ Page {
 
     Browser.DownloadRemorsePopup { id: downloadPopup }
 
-    // TODO: Merge background and QmlMozView into Sailfish Browser WebView.
+    // TODO: Merge webContainer and QmlMozView into Sailfish Browser WebView.
     // It should contain all function defined at BrowserPage. BrowserPage
     // should only have call through function when needed e.g. by TabPage.
     // It should also handle title, url, forwardNavigation, backwardNavigation.
     // In addition, it should be fixed to fullscreen size and internally
     // it changes height for QmlMozView.
-    Rectangle {
-        id: background
+    WebContainer {
+        id: webContainer
 
         width: parent.width
+        // We have currently orientation locked. Need to be tested when landscape enabled.
         height: browserPage.orientation === Orientation.Portrait ? Screen.height : Screen.width
-        color: webView.bgcolor ? webView.bgcolor : "white"
+        pageActive: browserPage.status == PageStatus.Active
+        webView: webView
+
+        foreground: Qt.application.active
+        inputPanelHeight: window.pageStack.panelSize
+        inputPanelOpenHeight: window.pageStack.imSize
+        toolbarHeight: toolBarContainer.height
+
+        Rectangle {
+            id: background
+            anchors.fill: parent
+            color: webView.bgcolor ? webView.bgcolor : "white"
+        }
     }
 
     Browser.WebContext {
@@ -257,25 +272,7 @@ Page {
 
         focus: true
         width: browserPage.width
-
-        onContentHeightChanged: {
-            if (Qt.inputMethod.visible) {
-                return
-            }
-
-            if (!Qt.application.active) {
-                height = browserPage.height
-            } else {
-                // Handle MozView height over here and loadProgress == 1 (start)
-                // We need to reset height always back to short height when loading starts
-                // so that after tab change there is always initial short composed height.
-                if (contentHeight > browserPage.height + chromeGestureThreshold) {
-                    height = browserPage.height
-                } else {
-                    height = browserPage.height - toolBarContainer.height
-                }
-            }
-        }
+        state: ""
 
         //{ // TODO
         // No resizes while page is not active
@@ -352,18 +349,22 @@ Page {
         }
 
         onLoadedChanged: {
-            if (loaded && url != "about:blank" && url) {
-                // This is always up-to-date in both link clicked and back/forward navigation
-                // captureScreen does not work here as we might have changed to TabPage.
-                // Tab icon clicked takes care of the rest.
-                tab.updateTab(browserPage.url, browserPage.title, "")
+            if (loaded) {
+                if (url != "about:blank" && url) {
+                    // This is always up-to-date in both link clicked and back/forward navigation
+                    // captureScreen does not work here as we might have changed to TabPage.
+                    // Tab icon clicked takes care of the rest.
+                    tab.updateTab(browserPage.url, browserPage.title, "")
+                }
+
+                webContainer.resetHeight(false)
             }
         }
 
         onLoadingChanged: {
             if (loading) {
                 favicon = ""
-                height = browserPage.height - (Qt.application.active ? toolBarContainer.height : 0)
+                webContainer.resetHeight(false)
                 webView.chrome = true
             }
         }
@@ -526,7 +527,8 @@ Page {
         }
 
         states: State {
-            when: (Qt.application.active && Qt.inputMethod.visible) || !Qt.application.active
+            name: "boundHeightControl"
+            when: webContainer.inputPanelVisible || !webContainer.foreground
             PropertyChanges {
                 target: webView
                 height: browserPage.height
@@ -540,11 +542,11 @@ Page {
         // This should be just a binding for progressBar.progress but currently progress is going up and down
         property real loadProgress: webView.loadProgress / 100.0
 
-        anchors.bottom: background.bottom
+        anchors.bottom: webContainer.bottom
         width: parent.width
         visible: !_ctxMenuActive
         opacity: fullscreenMode ? 0.0 : 1.0
-        Behavior on opacity { FadeAnimation { duration: Qt.application.active ? 300 : 0 } }
+        Behavior on opacity { FadeAnimation { duration: webContainer.foreground ? 300 : 0 } }
 
         onLoadProgressChanged: {
             if (loadProgress > progressBar.progress) {

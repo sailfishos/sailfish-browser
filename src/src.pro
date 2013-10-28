@@ -60,6 +60,7 @@ SOURCES += \
     closeeventfilter.cpp \
     declarativetabmodel.cpp \
     declarativetab.cpp \
+    declarativewebcontainer.cpp \
     dbmanager.cpp \
     dbworker.cpp \
     link.cpp \
@@ -78,6 +79,7 @@ HEADERS += \
     closeeventfilter.h \
     declarativetabmodel.h \
     declarativetab.h \
+    declarativewebcontainer.h \
     dbmanager.h \
     dbworker.h \
     link.h \
