@@ -126,6 +126,7 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     // subscribe to gecko messages
     mozContext->addObservers(QStringList()
                              << "clipboard:setdata"
+                             << "media-decoder-info"
                              << "embed:download"
                              << "embed:search");
 
