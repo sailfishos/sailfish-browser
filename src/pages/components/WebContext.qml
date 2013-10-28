@@ -25,6 +25,7 @@ Item {
     property string _lastMetaOwner
     property bool _isAudioStream
     property bool _isVideoStream
+    property bool _suspendIntention
 
     function calculateStatus() {
         var video = false
@@ -49,10 +50,11 @@ Item {
 
     onAudioActiveChanged: {
         if (!audioActive && screenBlanked.value) {
-            _suspendable = true
+            _suspendIntention = true
         }
     }
 
+    // This is behind 1000ms timer
     onBackgroundChanged: {
         if (!audioActive && !videoActive && background) {
             _suspendable = true
@@ -67,6 +69,10 @@ Item {
         } else {
             webView.resumeView()
         }
+    }
+
+    on_SuspendIntentionChanged: {
+        delayedSuspend.startSuspendTimer();
     }
 
     Connections {
@@ -96,14 +102,37 @@ Item {
 
         onValueChanged: {
             if (value && !audioActive) {
-                _suspendable = true
+                _suspendIntention = true
             } else {
+                // Return immediately from suspend.
                 _suspendable = false
+                // We want also reset _suspendIntention to false.
+                _suspendIntention = false
             }
         }
     }
 
     ScreenBlank {
+        // This is stopping ScreenBlank timer.
         suspend: videoActive
+    }
+
+    Timer {
+        id: delayedSuspend
+
+        function startSuspendTimer() {
+            if (!delayedSuspend.running && _suspendIntention) {
+                delayedSuspend.running = true
+            }
+        }
+
+        interval: 1000
+        onTriggered: {
+            if (!videoActive && !audioActive && _suspendIntention) {
+                _suspendable = true
+            } else {
+                _suspendable = false
+            }
+        }
     }
 }
