@@ -25,6 +25,7 @@ Page {
     property alias currentTab: tab
     property string title
     property string url
+    property Item mediaStatus: Browser.MediaStatus {}
 
     readonly property bool fullscreenMode: (webView.chromeGestureEnabled && !webView.chrome) || Qt.inputMethod.visible || !Qt.application.active
     property string favicon
@@ -698,10 +699,10 @@ Page {
     }
 
     Connections {
-        target: window.mediaStatus
+        target: mediaStatus
 
         onSuspendableChanged: {
-            if (window.mediaStatus.suspendable) {
+            if (mediaStatus.suspendable) {
                 webView.suspendView()
             } else {
                 webView.resumeView()
@@ -724,6 +725,6 @@ Page {
     }
 
     ScreenBlank {
-        suspend: window.mediaStatus.videoActive
+        suspend: mediaStatus.videoActive
     }
 }
