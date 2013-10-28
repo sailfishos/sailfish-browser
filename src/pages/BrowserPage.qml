@@ -10,7 +10,7 @@ import QtQuick 2.0
 import Sailfish.Silica 1.0
 import Qt5Mozilla 1.0
 import Sailfish.Browser 1.0
-import org.freedesktop.contextkit 1.0
+import Sailfish.Media 1.0
 import "components" as Browser
 
 
@@ -676,6 +676,18 @@ Page {
         }
     }
 
+    Connections {
+        target: window.mediaStatus
+
+        onSuspendableChanged: {
+            if (window.mediaStatus.suspendable) {
+                webView.suspendView()
+            } else {
+                webView.resumeView()
+            }
+        }
+    }
+
     BookmarkModel {
         id: favoriteModel
     }
@@ -690,16 +702,7 @@ Page {
         id: notification
     }
 
-    ContextProperty {
-        key: "Screen.Blanked"
-        value: 0
-
-        onValueChanged: {
-            if (value) {
-                webView.suspendView()
-            } else {
-                webView.resumeView()
-            }
-        }
+    ScreenBlank {
+        suspend: window.mediaStatus.videoActive
     }
 }

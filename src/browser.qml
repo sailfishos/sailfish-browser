@@ -14,5 +14,7 @@ ApplicationWindow {
 
     initialPage: Component {BrowserPage {}}
     cover: undefined
+
+    property Item mediaStatus: MediaStatus {}
 }
 
