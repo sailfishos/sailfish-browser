@@ -122,6 +122,7 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     // TODO: Enable readpixels based transfer of webgl context image between thread
     // Remove me when 10364 fixed and drivers issue solved
     mozContext->setPref(QString("webgl.force-layers-readback"), QVariant(true));
+    mozContext->setPref(QString("geo.wifi.scan"), QVariant(false));
 
     // subscribe to gecko messages
     mozContext->addObservers(QStringList()

@@ -22,5 +22,6 @@
     <file>pages/components/TextSelectionHandle.qml</file>
     <file>pages/components/ToolBarContainer.qml</file>
     <file>pages/components/UserPrompt.qml</file>
+    <file>pages/components/ResourceController.qml</file>
 </qresource>
 </RCC>
