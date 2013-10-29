@@ -72,6 +72,7 @@ Page {
 
         function newTab() {
             page.newTab = true
+            searchField.text = ""
             searchField.forceActiveFocus()
         }
 
@@ -102,7 +103,7 @@ Page {
                 Label {
                     id: titleLabel
                     //% "New tab"
-                    text: (browserPage.tabs.count == 0 || browserPage.currentTab.url == "") ? qsTrId("sailfish_browser-la-new_tab") : (browserPage.currentTab.url == _search ? browserPage.currentTab.title : "")
+                    text: (browserPage.tabs.count == 0 || newTab) ? qsTrId("sailfish_browser-la-new_tab") : (browserPage.currentTab.url == _search ? browserPage.currentTab.title : "")
                     color: Theme.highlightColor
                     font.pixelSize: Theme.fontSizeSmall
                     width: page.width * 3.0 / 4.0
