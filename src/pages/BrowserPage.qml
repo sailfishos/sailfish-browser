@@ -10,7 +10,6 @@ import QtQuick 2.0
 import Sailfish.Silica 1.0
 import Qt5Mozilla 1.0
 import Sailfish.Browser 1.0
-import Sailfish.Media 1.0
 import "components" as Browser
 
 
@@ -25,7 +24,6 @@ Page {
     property alias currentTab: tab
     property string title
     property string url
-    property Item mediaStatus: Browser.MediaStatus {}
 
     // Move this inside WebContainer
     readonly property bool fullscreenMode: (webView.chromeGestureEnabled && !webView.chrome) || webContainer.inputPanelVisible || !webContainer.foreground
@@ -85,7 +83,7 @@ Page {
 
         if (url !== "" && webView.url != url) {
             browserPage.url = url
-            webContext.firstFrameRendered = false
+            resourceController.firstFrameRendered = false
             webView.load(url)
         }
     }
@@ -111,7 +109,7 @@ Page {
     }
 
     function captureScreen() {
-        if (status == PageStatus.Active && webContext.firstFrameRendered) {
+        if (status == PageStatus.Active && resourceController.firstFrameRendered) {
             tab.captureScreen(webView.url, 0, 0, webView.width,
                               webView.width, window.screenRotation)
         }
@@ -252,9 +250,10 @@ Page {
         }
     }
 
-    Browser.WebContext {
-        id: webContext
+    Browser.ResourceController {
+        id: resourceController
         webView: webView
+        background: webContainer.background
     }
 
     QmlMozView {
@@ -700,18 +699,6 @@ Page {
         }
     }
 
-    Connections {
-        target: mediaStatus
-
-        onSuspendableChanged: {
-            if (mediaStatus.suspendable) {
-                webView.suspendView()
-            } else {
-                webView.resumeView()
-            }
-        }
-    }
-
     BookmarkModel {
         id: favoriteModel
     }
@@ -724,9 +711,5 @@ Page {
 
     Browser.BrowserNotification {
         id: notification
-    }
-
-    ScreenBlank {
-        suspend: mediaStatus.videoActive
     }
 }
