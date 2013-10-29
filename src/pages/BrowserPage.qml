@@ -81,6 +81,8 @@ Page {
             browserPage.title = ""
         }
 
+        // Always enable chrome when load is called.
+        webView.chrome = true
         if (url !== "" && webView.url != url) {
             browserPage.url = url
             resourceController.firstFrameRendered = false
@@ -187,7 +189,6 @@ Page {
     // This clipping can handle also clipping of QmlMozView. When this page is active we do not need to clip
     // if input method is not visible.
     clip: status != PageStatus.Active || webContainer.inputPanelVisible
-    onStatusChanged: webView.chrome = status >= PageStatus.Active
 
     TabModel {
         id: tabModel
@@ -264,7 +265,8 @@ Page {
         enabled: browserPage.status == PageStatus.Active
         // There needs to be enough content for enabling chrome gesture
         chromeGestureThreshold: toolBarContainer.height
-        chromeGestureEnabled: contentHeight > browserPage.height + chromeGestureThreshold
+        chromeGestureEnabled: contentHeight > webContainer.height + chromeGestureThreshold
+
         signal selectionRangeUpdated(variant data)
         signal selectionCopied(variant data)
         signal contextMenuRequested(variant data)
@@ -364,7 +366,6 @@ Page {
             if (loading) {
                 favicon = ""
                 webContainer.resetHeight(false)
-                webView.chrome = true
             }
         }
         onRecvAsyncMessage: {
