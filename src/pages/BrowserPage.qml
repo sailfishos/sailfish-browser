@@ -83,7 +83,7 @@ Page {
 
         if (url !== "" && webView.url != url) {
             browserPage.url = url
-            webContext.firstFrameRendered = false
+            resourceController.firstFrameRendered = false
             webView.load(url)
         }
     }
@@ -109,7 +109,7 @@ Page {
     }
 
     function captureScreen() {
-        if (status == PageStatus.Active && webContext.firstFrameRendered) {
+        if (status == PageStatus.Active && resourceController.firstFrameRendered) {
             tab.captureScreen(webView.url, 0, 0, webView.width,
                               webView.width, window.screenRotation)
         }
@@ -250,8 +250,8 @@ Page {
         }
     }
 
-    Browser.WebContext {
-        id: webContext
+    Browser.ResourceController {
+        id: resourceController
         webView: webView
         background: webContainer.background
     }
