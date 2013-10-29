@@ -58,8 +58,7 @@ Rectangle {
                     color: mouseArea.pressed && mouseArea.containsMouse ? Theme.highlightColor : Theme.highlightDimmerColor
                     font.pixelSize: Theme.fontSizeExtraSmall
                     font.weight: Font.Normal
-                    horizontalAlignment: Text.AlignLeft
-                    truncationMode: TruncationMode.Elide
+                    truncationMode: TruncationMode.Fade
                 }
                 Label {
                     text: url
@@ -67,8 +66,7 @@ Rectangle {
                     color: mouseArea.pressed && mouseArea.containsMouse ? Theme.highlightColor : Theme.highlightDimmerColor
                     font.pixelSize: Theme.fontSizeTiny
                     font.weight: Font.Normal
-                    horizontalAlignment: Text.AlignLeft
-                    truncationMode: TruncationMode.Elide
+                    truncationMode: TruncationMode.Fade
                 }
             }
         }
