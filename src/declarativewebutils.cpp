@@ -123,6 +123,7 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     // Remove me when 10364 fixed and drivers issue solved
     mozContext->setPref(QString("webgl.force-layers-readback"), QVariant(true));
     mozContext->setPref(QString("geo.wifi.scan"), QVariant(false));
+    mozContext->setPref(QString("browser.enable_automatic_image_resizing"), QVariant(true));
 
     // subscribe to gecko messages
     mozContext->addObservers(QStringList()
