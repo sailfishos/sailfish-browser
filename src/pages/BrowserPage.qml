@@ -261,6 +261,7 @@ Page {
         id: webView
 
         readonly property bool loaded: loadProgress === 100
+        property bool userHasDraggedWhileLoading
 
         enabled: browserPage.status == PageStatus.Active
         // There needs to be enough content for enabling chrome gesture
@@ -349,6 +350,12 @@ Page {
             }
         }
 
+        onDraggingChanged: {
+            if (dragging && loading) {
+                userHasDraggedWhileLoading = true
+            }
+        }
+
         onLoadedChanged: {
             if (loaded) {
                 if (url != "about:blank" && url) {
@@ -358,13 +365,17 @@ Page {
                     tab.updateTab(browserPage.url, browserPage.title, "")
                 }
 
-                webContainer.resetHeight(false)
+                if (!userHasDraggedWhileLoading) {
+                    webContainer.resetHeight(false)
+                }
             }
         }
 
         onLoadingChanged: {
             if (loading) {
+                userHasDraggedWhileLoading = false
                 favicon = ""
+                webView.chrome = true
                 webContainer.resetHeight(false)
             }
         }
