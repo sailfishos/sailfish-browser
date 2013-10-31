@@ -177,6 +177,14 @@ QString DeclarativeWebUtils::picturesDir() const
     return QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
 }
 
+void DeclarativeWebUtils::deleteThumbnail(QString path) const
+{
+    QFile f(path);
+    if (f.exists()) {
+        f.remove();
+    }
+}
+
 void DeclarativeWebUtils::handleObserve(const QString message, const QVariant data)
 {
     const QVariantMap dataMap = data.toMap();
