@@ -32,6 +32,7 @@ public:
     Q_INVOKABLE QUrl getFaviconForUrl(QUrl url);
     Q_INVOKABLE int getLightness(QColor color) const;
     Q_INVOKABLE bool fileExists(QString fileName) const;
+    Q_INVOKABLE void deleteThumbnail(QString path) const;
 
 public slots:
     void openUrl(QString url);

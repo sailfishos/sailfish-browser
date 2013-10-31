@@ -84,6 +84,11 @@ Page {
         // Always enable chrome when load is called.
         webView.chrome = true
         if (url !== "" && webView.url != url) {
+            // We clear the old thumbnail when on foreground
+            // so that incase user tabs thumbs page before firstPaint we are not showing wrong thumb
+            if (webContainer.pageActive && tab.thumbnailPath!="") {
+                WebUtils.deleteThumbnail(tab.thumbnailPath)
+            }
             browserPage.url = url
             resourceController.firstFrameRendered = false
             webView.load(url)
