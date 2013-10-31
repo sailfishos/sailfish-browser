@@ -39,7 +39,7 @@ DeclarativeWebUtils::DeclarativeWebUtils(QStringList arguments,
             this, SLOT(openUrl(QString)));
 
     QString path = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + QStringLiteral("/.firstUseDone");
-    m_firstUse = !fileExists(path);
+    m_firstUseDone = fileExists(path);
 }
 
 QUrl DeclarativeWebUtils::getFaviconForUrl(QUrl url)
@@ -166,23 +166,23 @@ QString DeclarativeWebUtils::initialPage()
 }
 
 
-void DeclarativeWebUtils::setFirstUse(bool first) {
+void DeclarativeWebUtils::setFirstUseDone(bool firstUseDone) {
     QString path = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + QStringLiteral("/.firstUseDone");
-    if (m_firstUse != first) {
-        m_firstUse = first;
-        if (first) {
+    if (m_firstUseDone != firstUseDone) {
+        m_firstUseDone = firstUseDone;
+        if (!firstUseDone) {
             QFile f(path);
             f.remove();
         } else {
             QProcess process;
             process.startDetached("touch", QStringList() << path);
         }
-        emit firstUseChanged();
+        emit firstUseDoneChanged();
     }
 }
 
-bool DeclarativeWebUtils::firstUse() const {
-    return m_firstUse;
+bool DeclarativeWebUtils::firstUseDone() const {
+    return m_firstUseDone;
 }
 
 QString DeclarativeWebUtils::homePage()

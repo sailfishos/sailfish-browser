@@ -8,7 +8,7 @@ import QtQuick 2.0
 import Sailfish.Silica 1.0
 
 Rectangle {
-    color:white
+    color: "white"
 
     Image {
         anchors.horizontalCenter: parent.horizontalCenter

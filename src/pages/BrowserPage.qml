@@ -73,7 +73,7 @@ Page {
     }
 
     function load(url, title) {
-        WebUtils.firstUse = false
+        WebUtils.firstUseDone = true
         if (tabModel.count == 0) {
             newTab(url, true)
         }
@@ -275,7 +275,7 @@ Page {
 
         readonly property bool loaded: loadProgress === 100
         property bool userHasDraggedWhileLoading
-        visible: !WebUtils.firstUse
+        visible: WebUtils.firstUseDone
 
         enabled: browserPage.status == PageStatus.Active
         // There needs to be enough content for enabling chrome gesture
@@ -355,8 +355,9 @@ Page {
             loadFrameScript("chrome://embedlite/content/SelectAsyncHelper.js")
             loadFrameScript("chrome://embedlite/content/embedhelper.js")
 
-            if(WebUtils.firstUse)
+            if (!WebUtils.firstUseDone) {
                 return
+            }
 
             if (WebUtils.initialPage !== "") {
                 browserPage.load(WebUtils.initialPage)
@@ -648,6 +649,7 @@ Page {
                 }
 
                 Browser.IconButton {
+                    enabled: WebUtils.firstUseDone
                     property bool favorited: favorites.count > 0 && favorites.contains(tab.url)
                     source: favorited ? "image://theme/icon-m-favorite-selected" : "image://theme/icon-m-favorite"
                     onClicked: {
@@ -676,6 +678,7 @@ Page {
                 }
 
                 Browser.IconButton {
+                    enabled: WebUtils.firstUseDone
                     source: webView.loading ? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
                     onClicked: webView.loading ? webView.stop() : webView.reload()
                 }
@@ -727,7 +730,7 @@ Page {
                 }
             } else {
                 // New browser instance, just load the content
-                if (!WebUtils.firstUse) {
+                if (WebUtils.firstUseDone) {
                     load(url)
                 }
             }
@@ -738,20 +741,20 @@ Page {
                 window.activate()
             }
         }
-        onFirstUseChanged: {
-            if (!WebUtils.firstUse && firstUseOverlay) {
+        onFirstUseDoneChanged: {
+            if (WebUtils.firstUseDone && firstUseOverlay) {
                 firstUseOverlay.destroy()
             }
         }
     }
 
     Component.onCompleted: {
-        if (WebUtils.firstUse) {
+        if (!WebUtils.firstUseDone) {
             var component = Qt.createComponent(Qt.resolvedUrl("components/FirstUseOverlay.qml"))
             if (component.status == Component.Ready) {
                 firstUseOverlay = component.createObject(browserPage, {"width": browserPage.width, "height": browserPage.height - toolBarContainer.height });
             } else {
-                console.log("component create failed " + component.status)
+                console.log("FirstUseOverlay create failed " + component.status)
             }
         }
     }

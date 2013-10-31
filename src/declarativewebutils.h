@@ -23,15 +23,15 @@ class DeclarativeWebUtils : public QObject
     Q_PROPERTY(QString homePage READ homePage NOTIFY homePageChanged FINAL)
     Q_PROPERTY(QString downloadDir READ downloadDir CONSTANT FINAL)
     Q_PROPERTY(QString picturesDir READ picturesDir CONSTANT FINAL)
-    Q_PROPERTY(bool firstUse READ firstUse WRITE setFirstUse NOTIFY firstUseChanged)
+    Q_PROPERTY(bool firstUseDone READ firstUseDone WRITE setFirstUseDone NOTIFY firstUseDoneChanged)
 
 public:
     explicit DeclarativeWebUtils(QStringList arguments, BrowserService *service, QObject *parent = 0);
 
     QString downloadDir() const;
     QString picturesDir() const;
-    bool firstUse() const;
-    void setFirstUse(bool first);
+    bool firstUseDone() const;
+    void setFirstUseDone(bool firstUseDone);
 
     Q_INVOKABLE QUrl getFaviconForUrl(QUrl url);
     Q_INVOKABLE int getLightness(QColor color) const;
@@ -47,7 +47,7 @@ public slots:
 signals:
     void homePageChanged();
     void openUrlRequested(QString url);
-    void firstUseChanged();
+    void firstUseDoneChanged();
 
 private slots:
     void updateWebEngineSettings();
@@ -57,6 +57,6 @@ private:
     QString m_homePage;
     QStringList m_arguments;
     BrowserService *m_service;
-    bool m_firstUse;
+    bool m_firstUseDone;
 };
 #endif // DECLARATIVEWEBUTILS_H
