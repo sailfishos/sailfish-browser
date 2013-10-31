@@ -17,6 +17,7 @@ import "components" as Browser
 Page {
     id: browserPage
 
+    property Item firstUseOverlay
     property alias tabs: tabModel
     property alias favorites: favoriteModel
     property alias history: historyModel
@@ -72,6 +73,7 @@ Page {
     }
 
     function load(url, title) {
+        WebUtils.firstUseDone = true
         if (tabModel.count == 0) {
             newTab(url, true)
         }
@@ -148,16 +150,16 @@ Page {
                                     })
         dialog.accepted.connect(function () {
             webView.sendAsyncMessage("authresponse",
-                                       {
-                                           "winid": winid,
-                                           "accepted": true,
-                                           "username": dialog.username,
-                                           "password": dialog.password
-                                       })
+                                     {
+                                         "winid": winid,
+                                         "accepted": true,
+                                         "username": dialog.username,
+                                         "password": dialog.password
+                                     })
         })
         dialog.rejected.connect(function() {
             webView.sendAsyncMessage("authresponse",
-                                       {"winid": winid, "accepted": false})
+                                     {"winid": winid, "accepted": false})
         })
     }
 
@@ -266,11 +268,14 @@ Page {
         background: webContainer.background
     }
 
+
+
     QmlMozView {
         id: webView
 
         readonly property bool loaded: loadProgress === 100
         property bool userHasDraggedWhileLoading
+        visible: WebUtils.firstUseDone
 
         enabled: browserPage.status == PageStatus.Active
         // There needs to be enough content for enabling chrome gesture
@@ -350,9 +355,13 @@ Page {
             loadFrameScript("chrome://embedlite/content/SelectAsyncHelper.js")
             loadFrameScript("chrome://embedlite/content/embedhelper.js")
 
+            if (!WebUtils.firstUseDone) {
+                return
+            }
+
             if (WebUtils.initialPage !== "") {
                 browserPage.load(WebUtils.initialPage)
-            } else if (historyModel.count == 0 ) {
+            } else if (historyModel.count == 0) {
                 browserPage.load(WebUtils.homePage)
             } else {
                 browserPage.load(tab.url)
@@ -640,6 +649,7 @@ Page {
                 }
 
                 Browser.IconButton {
+                    enabled: WebUtils.firstUseDone
                     property bool favorited: favorites.count > 0 && favorites.contains(tab.url)
                     source: favorited ? "image://theme/icon-m-favorite-selected" : "image://theme/icon-m-favorite"
                     onClicked: {
@@ -668,6 +678,7 @@ Page {
                 }
 
                 Browser.IconButton {
+                    enabled: WebUtils.firstUseDone
                     source: webView.loading ? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
                     onClicked: webView.loading ? webView.stop() : webView.reload()
                 }
@@ -719,13 +730,31 @@ Page {
                 }
             } else {
                 // New browser instance, just load the content
-                load(url)
+                if (WebUtils.firstUseDone) {
+                    load(url)
+                }
             }
             if (status != PageStatus.Active) {
                 pageStack.pop(browserPage, PageStackAction.Immediate)
             }
             if (!window.applicationActive) {
                 window.activate()
+            }
+        }
+        onFirstUseDoneChanged: {
+            if (WebUtils.firstUseDone && firstUseOverlay) {
+                firstUseOverlay.destroy()
+            }
+        }
+    }
+
+    Component.onCompleted: {
+        if (!WebUtils.firstUseDone) {
+            var component = Qt.createComponent(Qt.resolvedUrl("components/FirstUseOverlay.qml"))
+            if (component.status == Component.Ready) {
+                firstUseOverlay = component.createObject(browserPage, {"width": browserPage.width, "height": browserPage.height - toolBarContainer.height });
+            } else {
+                console.log("FirstUseOverlay create failed " + component.status)
             }
         }
     }
