@@ -10,6 +10,7 @@ import QtQuick 2.0
 import Sailfish.Silica 1.0
 import Qt5Mozilla 1.0
 import Sailfish.Browser 1.0
+import MeeGo.Connman 0.2
 import "components" as Browser
 
 
@@ -86,6 +87,9 @@ Page {
         if (url !== "" && webView.url != url) {
             browserPage.url = url
             resourceController.firstFrameRendered = false
+            if (networkManager.state !== "online" && networkManager.state !== "ready") {
+                networkManager.reloadNeeded = true
+            }
             webView.load(url)
         }
     }
@@ -733,5 +737,18 @@ Page {
 
     Browser.BrowserNotification {
         id: notification
+    }
+
+    NetworkManager {
+        id: networkManager
+
+        property bool reloadNeeded
+
+        onStateChanged: {
+            if (reloadNeeded && (networkManager.state === "online" || networkManager.state === "ready")) {
+                webView.reload()
+                reloadNeeded = false
+            }
+        }
     }
 }
