@@ -125,6 +125,9 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     mozContext->setPref(QString("geo.wifi.scan"), QVariant(false));
     mozContext->setPref(QString("browser.enable_automatic_image_resizing"), QVariant(true));
 
+    // Default value for embedlite is 0.55f which is a bit slower than needed.
+    mozContext->setPref(QString("gfx.axis.velocity_multiplier"), QString("1.0f"));
+
     // subscribe to gecko messages
     mozContext->addObservers(QStringList()
                              << "clipboard:setdata"
