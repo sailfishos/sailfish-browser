@@ -19,10 +19,10 @@ Page {
     property bool initialSearchFocus
     property bool newTab
 
+    property bool _tabClosed
+    property bool _loadRequested
     property bool _editing
     property string _search
-
-    backNavigation: browserPage.tabs.count > 0 && !newTab
 
     function load(url, title) {
         if (page.newTab) {
@@ -30,7 +30,22 @@ Page {
         } else {
             browserPage.load(url, title)
         }
+        _loadRequested = true
         pageStack.pop(undefined, true)
+    }
+
+    backNavigation: browserPage.tabs.count > 0 && !newTab
+    onStatusChanged: {
+        // If tabs have been closed and user swipes
+        // away from TabPage, then load current tab. backNavigation is disabled when
+        // all tabs have been closed. In addition, if user tabs on favorite,
+        // opens favorite in new tab via context menu, selects history item,
+        // enters url on search field, or actives loading by tapping on an open tab
+        // then loadRequested is set true and this code
+        // path does not trigger loading again.
+        if (_tabClosed && !_loadRequested && status == PageStatus.Deactivating) {
+            browserPage.load(browserPage.currentTab.url, browserPage.currentTab.title)
+        }
     }
 
     Component {
@@ -243,10 +258,14 @@ Page {
                             right: parent.right; rightMargin: Theme.paddingMedium
                         }
                         icon.source: "image://theme/icon-m-close"
-                        onClicked: browserPage.closeTab(index)
+                        onClicked: {
+                            _tabClosed = true
+                            browserPage.closeTab(index, false)
+                        }
                     }
 
                     onClicked: {
+                        _loadRequested = true
                         browserPage.loadTab(model.index, model.url, model.title)
                         window.pageStack.pop(browserPage, true)
                     }

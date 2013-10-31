@@ -9,6 +9,9 @@
 
 #include "dbmanager.h"
 #include <QFile>
+#ifdef DEBUG_LOGS
+#include <QDebug>
+#endif
 
 DeclarativeTabModel::DeclarativeTabModel(QObject *parent) :
     QAbstractListModel(parent), m_currentTabIndex(-1)
@@ -64,16 +67,27 @@ void DeclarativeTabModel::remove(const int index) {
         DBManager::instance()->removeTab(tabId);
         emit countChanged();
         int newIndex = -1;
-        if (!m_tabs.isEmpty() && index >= 0 && index < m_tabs.count()) {
+        if (!m_tabs.empty() && index != m_currentTabIndex && index < m_currentTabIndex) {
+            // Keep current tab as active
+            newIndex = --m_currentTabIndex;
+            if (newIndex < 0) {
+                newIndex = 0;
+            }
+        } else if (!m_tabs.isEmpty() && index >= 0 && index < m_tabs.count()) {
             newIndex = index;
         } else if (!m_tabs.isEmpty()) {
             newIndex = m_tabs.count() - 1;
         }
-        if (newIndex != m_currentTabIndex) {
+
+        // If bigger than current tab index gets closed, ignore it.
+        if (newIndex >= 0 && newIndex <= m_currentTabIndex) {
+#ifdef DEBUG_LOGS
+            qDebug() << "DeclarativeTabModel::remove index: " << index << "new index: " << newIndex << "currentTabIndex: " << m_currentTabIndex;
+#endif
             m_currentTabIndex = newIndex;
             DBManager::instance()->saveSetting("currentTab", QString("%1").arg(m_currentTabIndex));
+            emit currentTabChanged();
         }
-        emit currentTabChanged();
     }
 }
 
