@@ -14,6 +14,9 @@ Page {
         }
     }
 
+    RemorsePopup {
+        id: clearDataRemorse
+    }
 
     SilicaFlickable {
         id: flickable
@@ -37,7 +40,7 @@ Page {
                 text: qsTrId("settings_browser-bt-clear_private_data")
 
                 onClicked: {
-                    clearPrivateDataConfig.value = true
+                    clearDataRemorse.execute("Clearing private data", function() { clearPrivateDataConfig.value = true});
                 }
             }
 
