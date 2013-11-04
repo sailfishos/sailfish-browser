@@ -42,7 +42,7 @@ Page {
 
     function newTab(link, foreground, title) {
         if (foreground) {
-            // This is might be something that we don't want to have.
+            // This might be something that we don't want to have.
             if (webView.loading) {
                 webView.stop()
             }

@@ -66,16 +66,25 @@ void DeclarativeTabModel::remove(const int index) {
         endRemoveRows();
         DBManager::instance()->removeTab(tabId);
         emit countChanged();
+
+        if (m_tabs.empty()) {
+            return;
+        }
+
         int newIndex = -1;
-        if (!m_tabs.empty() && index != m_currentTabIndex && index < m_currentTabIndex) {
+        // handle removing indexes: 0 .. currentTabIndex - 1
+        if (index < m_currentTabIndex) {
             // Keep current tab as active
             newIndex = --m_currentTabIndex;
-            if (newIndex < 0) {
-                newIndex = 0;
-            }
-        } else if (!m_tabs.isEmpty() && index >= 0 && index < m_tabs.count()) {
+        }
+
+        // handle removing indexes: m_currentTabIndex .. new count
+        else if (index < m_tabs.count()) {
             newIndex = index;
-        } else if (!m_tabs.isEmpty()) {
+        }
+
+        // handle removing indexes: close last index
+        else {
             newIndex = m_tabs.count() - 1;
         }
 
