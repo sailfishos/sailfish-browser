@@ -43,6 +43,7 @@ Page {
 
     function newTab(link, foreground, title) {
         if (foreground) {
+            // This might be something that we don't want to have.
             if (webView.loading) {
                 webView.stop()
             }
@@ -58,17 +59,16 @@ Page {
         load(link, title)
     }
 
-    function closeTab(index) {
+    function closeTab(index, loadActive) {
         if (tabModel.count == 0) {
             return
         }
-
-        tab.loadWhenTabChanges = true
 
         if (index == currentTabIndex && webView.loading) {
             webView.stop()
         }
 
+        tab.loadWhenTabChanges = loadActive
         tabModel.remove(index)
     }
 
@@ -113,8 +113,17 @@ Page {
         if (title) {
             browserPage.title = title
         }
-        tab.loadWhenTabChanges = true;
-        currentTabIndex = index
+
+        if (currentTabIndex !== index) {
+            tab.loadWhenTabChanges = true;
+            currentTabIndex = index
+        } else {
+            // In case of close currentTabIndex might have already been updated correctly.
+            // Case would be: two tabs open, close second (index 1) in TabPage, currentTabIndex will
+            // be 1. When last remaining tab is activated currentTabIndex change won't trigger
+            // reload.
+            load(url, title)
+        }
     }
 
     function deleteTabHistory() {
@@ -608,7 +617,7 @@ Page {
             url: browserPage.url
             onSearchClicked: controlArea.openTabPage(true, PageStackAction.Animated)
             onCloseClicked: {
-                closeTab(currentTabIndex)
+                closeTab(currentTabIndex, true)
                 if (!tabModel.count) {
                     browserPage.title = ""
                     browserPage.url = ""

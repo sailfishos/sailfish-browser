@@ -87,7 +87,7 @@ int DeclarativeTab::tabId() const {
 
 void DeclarativeTab::setTabId(int tabId) {
 #ifdef DEBUG_LOGS
-    qDebug() << "DeclarativeTab::setTabId:" << m_tabId << " old values: " << m_link.title() << m_link.url();
+    qDebug() << "DeclarativeTab::setTabId:" << m_tabId << " old values: " << m_link.title() << m_link.url() << " arg tab: " << tabId;
 #endif
 
     if (tabId > 0 && tabId != m_tabId) {
@@ -95,6 +95,10 @@ void DeclarativeTab::setTabId(int tabId) {
         DBManager::instance()->getTab(m_tabId);
         emit tabIdChanged();
     }
+
+#ifdef DEBUG_LOGS
+    qDebug() << "DeclarativeTab::setTabId second condition:" << (tabId > 0) << m_valid;
+#endif
 
     if ((tabId > 0) != m_valid) {
         m_valid = tabId > 0;
