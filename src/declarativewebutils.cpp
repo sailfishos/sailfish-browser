@@ -208,6 +208,17 @@ void DeclarativeWebUtils::deleteThumbnail(QString path) const
     }
 }
 
+QString DeclarativeWebUtils::displayableUrl(QString fullUrl) const
+{
+    QUrl url(fullUrl);
+    // Leaving only the scheme, host address, and port (if present).
+    return url.toDisplayString(QUrl::RemoveUserInfo |
+                               QUrl::RemovePath |
+                               QUrl::RemoveQuery |
+                               QUrl::RemoveFragment |
+                               QUrl::StripTrailingSlash);
+}
+
 void DeclarativeWebUtils::handleObserve(const QString message, const QVariant data)
 {
     const QVariantMap dataMap = data.toMap();

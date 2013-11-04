@@ -316,6 +316,15 @@ Page {
 
         onUrlChanged: {
             browserPage.url = url
+
+            if (!resourceController.isRejectedGeolocationUrl(url)) {
+                resourceController.rejectedGeolocationUrl = ""
+            }
+
+            if (!resourceController.isAcceptedGeolocationUrl(url)) {
+                resourceController.acceptedGeolocationUrl = ""
+            }
+
             if (tab.backForwardNavigation) {
                 tab.updateTab(browserPage.url, browserPage.title, "")
                 tab.backForwardNavigation = false
@@ -487,20 +496,35 @@ Page {
             }
             case "embed:permissions": {
                 // Ask for location permission
-                var dialog = pageStack.push(Qt.resolvedUrl("components/LocationDialog.qml"),
-                                            {})
-                dialog.accepted.connect(function() {
+                if (resourceController.isAcceptedGeolocationUrl(webView.url)) {
                     sendAsyncMessage("embedui:premissions", {
                                          allow: true,
                                          checkedDontAsk: false,
                                          id: data.id })
-                })
-                dialog.rejected.connect(function() {
+                } else if (resourceController.isRejectedGeolocationUrl(webView.url)) {
                     sendAsyncMessage("embedui:premissions", {
                                          allow: false,
                                          checkedDontAsk: false,
                                          id: data.id })
-                })
+                } else {
+                    var dialog = pageStack.push(Qt.resolvedUrl("components/LocationDialog.qml"), {})
+                    dialog.accepted.connect(function() {
+                        sendAsyncMessage("embedui:premissions", {
+                                             allow: true,
+                                             checkedDontAsk: false,
+                                             id: data.id })
+                        resourceController.acceptedGeolocationUrl = WebUtils.displayableUrl(webView.url)
+                        resourceController.rejectedGeolocationUrl = ""
+                    })
+                    dialog.rejected.connect(function() {
+                        sendAsyncMessage("embedui:premissions", {
+                                             allow: false,
+                                             checkedDontAsk: false,
+                                             id: data.id })
+                        resourceController.rejectedGeolocationUrl = WebUtils.displayableUrl(webView.url)
+                        resourceController.acceptedGeolocationUrl = ""
+                    })
+                }
                 break
             }
             case "embed:login": {
