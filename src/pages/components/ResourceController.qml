@@ -19,6 +19,9 @@ Item {
     property bool audioActive
     property bool background
 
+    property string acceptedGeolocationUrl
+    property string rejectedGeolocationUrl
+
     property bool _suspendable
     property string _mediaState: "pause"
     property string _lastStateOwner
@@ -26,6 +29,16 @@ Item {
     property bool _isAudioStream
     property bool _isVideoStream
     property bool _suspendIntention
+
+    function isAcceptedGeolocationUrl(url) {
+        var tmpUrl = WebUtils.displayableUrl(url)
+        return acceptedGeolocationUrl && acceptedGeolocationUrl === tmpUrl
+    }
+
+    function isRejectedGeolocationUrl(url) {
+        var tmpUrl = WebUtils.displayableUrl(url)
+        return rejectedGeolocationUrl && rejectedGeolocationUrl === tmpUrl
+    }
 
     function calculateStatus() {
         var video = false
