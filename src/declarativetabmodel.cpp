@@ -67,29 +67,30 @@ void DeclarativeTabModel::remove(const int index) {
         DBManager::instance()->removeTab(tabId);
         emit countChanged();
 
-        if (m_tabs.empty()) {
-            return;
-        }
-
         int newIndex = -1;
-        // handle removing indexes: 0 .. currentTabIndex - 1
-        if (index < m_currentTabIndex) {
+        // handle removing indexes: 0 .. currentTabIndex - 1. At least one tab left after
+        // removing a tab from internal tabs list.
+        if (!m_tabs.empty() && index < m_currentTabIndex) {
             // Keep current tab as active
             newIndex = --m_currentTabIndex;
         }
 
-        // handle removing indexes: m_currentTabIndex .. new count
-        else if (index < m_tabs.count()) {
+        // handle removing indexes: m_currentTabIndex .. new count. At least one tab left after
+        // removing a tab from internal tabs list
+        else if (!m_tabs.empty() && index < m_tabs.count()) {
             newIndex = index;
         }
 
-        // handle removing indexes: close last index
+        // handle removing indexes: close last index.
+        // This also handles closing of the last tab by setting new currentTabIndex
+        // to -1.
         else {
             newIndex = m_tabs.count() - 1;
         }
 
         // If bigger than current tab index gets closed, ignore it.
-        if (newIndex >= 0 && newIndex <= m_currentTabIndex) {
+        // Closing last open tab resets currentTabIndex (-1).
+        if (newIndex <= m_currentTabIndex) {
 #ifdef DEBUG_LOGS
             qDebug() << "DeclarativeTabModel::remove index: " << index << "new index: " << newIndex << "currentTabIndex: " << m_currentTabIndex;
 #endif
