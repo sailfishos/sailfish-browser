@@ -92,6 +92,17 @@ void DeclarativeWebContainer::setPageActive(bool active)
     if (m_pageActive != active) {
         m_pageActive = active;
         emit pageActiveChanged();
+
+        // If dialog has been opened, we need to verify that input panel is not visible.
+        // This might happen when the user fills in login details to a form and
+        // presses enter to accept the form after which PasswordManagerDialog is pushed to pagestack
+        // on top the BrowserPage. Once PassowordManagerDialog is accepted/rejected
+        // this condition can be met. If pageActive changes to true before keyboard is fully closed,
+        // then the inputPanelVisibleChanged() signal is emitted by setInputPanelHeight.
+        if (m_pageActive && m_inputPanelHeight == 0 && m_inputPanelVisible) {
+            m_inputPanelVisible = false;
+            emit inputPanelVisibleChanged();
+        }
     }
 }
 
