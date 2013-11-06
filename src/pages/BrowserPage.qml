@@ -369,10 +369,10 @@ Page {
 
             if (WebUtils.initialPage !== "") {
                 browserPage.load(WebUtils.initialPage)
-            } else if (historyModel.count == 0) {
-                browserPage.load(WebUtils.homePage)
-            } else {
+            } else if (historyModel.count != 0 && tab.url != "") {
                 browserPage.load(tab.url)
+            } else {
+                browserPage.load(WebUtils.homePage)
             }
         }
 
@@ -752,7 +752,12 @@ Page {
                 }
             } else {
                 // New browser instance, just load the content
-                load(url)
+                if (WebUtils.firstUseDone) {
+                    load(url)
+                } else {
+                    tabModel.addTab(url, false)
+                    currentTabIndex = tabModel.count - 1
+                }
             }
             if (browserPage.status !== PageStatus.Active) {
                 pageStack.pop(browserPage, PageStackAction.Immediate)
