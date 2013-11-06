@@ -46,6 +46,18 @@
         document.getElementById("msg").innerHTML=inputtxt
       }
 
+      function handleEnter(event, element)
+      {
+        var code = (event.keyCode ? event.keyCode : event.which);
+        if(code == 13) { //Enter keycode
+          switch (element.id) {
+            case "promptTriggerer":
+              disp_prompt()
+              break
+          }
+        }
+      }
+
     </script>
     <style>
       button {
@@ -53,6 +65,15 @@
       }
       div, a {
         font-size: 40pt;
+      }
+      p {
+        font-size: 40pt;
+      }
+
+      input {
+        width:100%;
+        height:80px;
+        font-size: 60px;
       }
     </style>
   </head>
@@ -72,6 +93,19 @@
     <div>Lorem ipsum</div>
     <div><a href="http://browserspy.dk/password.php">Http basic authentication test page</a></div>
     <a href="http://www.google.com">Don't go there!!!</a>
+
+    <br/><br/><br/>
+    <input id="promptTriggerer" placeholder="Focus and press enter to trigger prompt" type="text" onKeyPress="handleEnter(event, this)"/>
+    <br/><br/><br/>
+
+    <p>Some text to expand content length</p>
+    <p>
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam nec tristique orci, sit amet faucibus urna. In semper facilisis sapien eget cursus. Aliquam mattis sagittis tellus quis hendrerit. Donec orci libero, rhoncus at tortor at, rutrum volutpat neque. Pellentesque lobortis nec quam id tincidunt. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Aliquam feugiat quam in lectus egestas, et suscipit est malesuada. Mauris eget lacus et purus dignissim malesuada. Aenean volutpat placerat magna vel pretium.
     </p>
+
+    <p>
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam nec tristique orci, sit amet faucibus urna. In semper facilisis sapien eget cursus. Aliquam mattis sagittis tellus quis hendrerit. Donec orci libero, rhoncus at tortor at, rutrum volutpat neque. Pellentesque lobortis nec quam id tincidunt. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Aliquam feugiat quam in lectus egestas, et suscipit est malesuada. Mauris eget lacus et purus dignissim malesuada. Aenean volutpat placerat magna vel pretium.
+    </p>
+
   </body>
 </html>
