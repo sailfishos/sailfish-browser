@@ -34,7 +34,7 @@ Page {
         pageStack.pop(undefined, true)
     }
 
-    backNavigation: browserPage.tabs.count > 0 && !newTab
+    backNavigation: browserPage.tabs.count > 0 && !newTab && browserPage.url != ""
     onStatusChanged: {
         // If tabs have been closed and user swipes
         // away from TabPage, then load current tab. backNavigation is disabled when

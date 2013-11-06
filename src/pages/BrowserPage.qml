@@ -73,7 +73,6 @@ Page {
     }
 
     function load(url, title) {
-        WebUtils.firstUseDone = true
         if (tabModel.count == 0) {
             newTab(url, true)
         }
@@ -379,10 +378,10 @@ Page {
 
             if (WebUtils.initialPage !== "") {
                 browserPage.load(WebUtils.initialPage)
-            } else if (historyModel.count == 0) {
-                browserPage.load(WebUtils.homePage)
-            } else {
+            } else if (historyModel.count != 0 && tab.url != "") {
                 browserPage.load(tab.url)
+            } else {
+                browserPage.load(WebUtils.homePage)
             }
         }
 
@@ -752,9 +751,23 @@ Page {
         }
     }
 
+    onStatusChanged: {
+        if (status === PageStatus.Inactive && !WebUtils.firstUseDone) {
+            WebUtils.firstUseDone = true
+        }
+    }
+
     Connections {
         target: WebUtils
         onOpenUrlRequested: {
+            if (url == "") {
+                // User tapped on icon when browser was already open.
+                // let's just bring the browser to front
+                if (!window.applicationActive) {
+                    window.activate()
+                }
+                return
+            }
             if (webView.url != "") {
                 captureScreen()
                 if (!tabs.activateTab(url)) {
@@ -765,9 +778,12 @@ Page {
                 // New browser instance, just load the content
                 if (WebUtils.firstUseDone) {
                     load(url)
+                } else {
+                    tabModel.addTab(url, false)
+                    currentTabIndex = tabModel.count - 1
                 }
             }
-            if (status != PageStatus.Active) {
+            if (browserPage.status !== PageStatus.Active) {
                 pageStack.pop(browserPage, PageStackAction.Immediate)
             }
             if (!window.applicationActive) {
