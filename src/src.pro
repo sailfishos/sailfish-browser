@@ -24,7 +24,7 @@ isEmpty(USE_RESOURCES) {
   RESOURCES = sailfish-browser.qrc
 }
 
-PKGCONFIG +=  nemotransferengine-qt5 mlite5 libjollasignonuiservice-qt5
+PKGCONFIG +=  nemotransferengine-qt5 mlite5
 
 packagesExist(qdeclarative5-boostable) {
     message("Building with qdeclarative-boostable support")

@@ -31,8 +31,6 @@
 #include "declarativehistorymodel.h"
 #include "declarativewebcontainer.h"
 
-#include <signonuiservice.h>
-
 #ifdef HAS_BOOSTER
 #include <MDeclarativeCache>
 #endif
@@ -94,24 +92,6 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     QTranslator translator;
     translator.load(QLocale(), "sailfish-browser", "-", translationPath);
     qApp->installTranslator(&translator);
-
-    // We want to have SignonUI in process, if user wants to create account from Browser
-    SignonUiService ssoui(0, true); // in process
-    ssoui.setInProcessServiceName(QLatin1String("org.sailfishos.browser"));
-    ssoui.setInProcessObjectPath(QLatin1String("/JollaBrowserSignonUi"));
-
-    QDBusConnection sessionBus = QDBusConnection::sessionBus();
-    bool registeredService = sessionBus.registerService(QLatin1String("org.sailfishos.browser"));
-    bool registeredObject = sessionBus.registerObject(QLatin1String("/JollaBrowserSignonUi"), &ssoui,
-            QDBusConnection::ExportAllContents);
-
-    if (!registeredService || !registeredObject) {
-        qWarning() << Q_FUNC_INFO << "CRITICAL: unable to register signon ui service:"
-                   << QLatin1String("org.sailfishos.browser") << "at object path:"
-                   << QLatin1String("/JollaBrowserSignonUi");
-    }
-
-    view->rootContext()->setContextProperty("jolla_signon_ui_service", &ssoui);
 
     qmlRegisterType<DeclarativeBookmarkModel>("Sailfish.Browser", 1, 0, "BookmarkModel");
     qmlRegisterType<DeclarativeTabModel>("Sailfish.Browser", 1, 0, "TabModel");
