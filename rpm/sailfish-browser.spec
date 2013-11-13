@@ -33,6 +33,7 @@ Requires: mapplauncherd-booster-silica-qt5
 Requires: desktop-file-utils
 Requires: qt5-qtgraphicaleffects
 Requires: nemo-qml-plugin-contextkit-qt5
+Requires: nemo-qml-plugin-connectivity
 Requires: sailfish-components-media-qt5
 
 %description
