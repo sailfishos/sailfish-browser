@@ -15,7 +15,7 @@
 DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     : QQuickItem(parent)
     , m_webView(0)
-    , m_foreground(false)
+    , m_foreground(true)
     , m_background(false)
     , m_windowVisible(false)
     , m_backgroundTimer(0)
@@ -203,7 +203,8 @@ void DeclarativeWebContainer::imeNotificationChanged(int state, bool open, int c
     Q_UNUSED(type)
 
     // QmlMozView's input context open is actually intention (0 closed, 1 opened).
-    if (state == 1) {
+    // cause 3 equals InputContextAction::CAUSE_MOUSE nsIWidget.h
+    if (state == 1 && cause == 3) {
         // For safety reset height based on contentHeight before going to "boundHeightControl" state
         // so that when vkb is closed we get correctly reset height back.
         resetHeight(true);
