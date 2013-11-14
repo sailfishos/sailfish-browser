@@ -10,7 +10,7 @@ import QtQuick 2.0
 import Sailfish.Silica 1.0
 import Qt5Mozilla 1.0
 import Sailfish.Browser 1.0
-import MeeGo.Connman 0.2
+import org.nemomobile.connectivity 1.0
 import "components" as Browser
 
 
@@ -36,7 +36,9 @@ Page {
     // As QML can't disconnect closure from a signal (but methods only)
     // let's keep auth data in this auxilary attribute whose sole purpose is to
     // pass arguments to openAuthDialog().
-    property variant _authData: null
+    property var _authData: null
+    property var _deferredLoad: null
+    property bool _deferredReload
 
     // Used by newTab function
     property bool newTabRequested
@@ -72,7 +74,37 @@ Page {
         tabModel.remove(index)
     }
 
-    function load(url, title) {
+    function reload() {
+        var url = browserPage.url
+
+        if (url.substring(0, 6) !== "about:" && url.substring(0, 5) !== "file:"
+            && !browserPage._deferredReload
+            && !connectionHelper.haveNetworkConnectivity()) {
+
+            browserPage._deferredReload = true
+            browserPage._deferredLoad = null
+            connectionHelper.attemptToConnectNetwork()
+            return
+        }
+
+        webView.reload()
+    }
+
+    function load(url, title, force) {
+
+        if (url.substring(0, 6) !== "about:" && url.substring(0, 5) !== "file:"
+            && !connectionHelper.haveNetworkConnectivity()
+            && !browserPage._deferredLoad) {
+
+            browserPage._deferredReload = false
+            browserPage._deferredLoad = {
+                "url": url,
+                "title": title
+            }
+            connectionHelper.attemptToConnectNetwork()
+            return
+        }
+
         if (tabModel.count == 0) {
             newTab(url, true)
         }
@@ -85,7 +117,8 @@ Page {
 
         // Always enable chrome when load is called.
         webView.chrome = true
-        if (url !== "" && webView.url != url) {
+
+        if ((url !== "" && webView.url != url) || force) {
             // We clear the old thumbnail when on foreground
             // so that incase user tabs thumbs page before firstPaint we are not showing wrong thumb
             if (webContainer.pageActive && tab.thumbnailPath!="") {
@@ -93,9 +126,6 @@ Page {
             }
             browserPage.url = url
             resourceController.firstFrameRendered = false
-            if (networkManager.state !== "online" && networkManager.state !== "ready") {
-                networkManager.reloadNeeded = true
-            }
             webView.load(url)
         }
     }
@@ -274,6 +304,10 @@ Page {
         id: resourceController
         webView: webView
         background: webContainer.background
+
+        onWebViewSuspended: {
+            connectionHelper.closeNetworkSession()
+        }
     }
 
 
@@ -712,7 +746,7 @@ Page {
                 Browser.IconButton {
                     enabled: WebUtils.firstUseDone
                     source: webView.loading ? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
-                    onClicked: webView.loading ? webView.stop() : webView.reload()
+                    onClicked: webView.loading ? webView.stop() : browserPage.reload()
                 }
 
                 Browser.IconButton {
@@ -745,7 +779,7 @@ Page {
                 if (webView.loading) {
                     webView.stop()
                 } else {
-                    webView.reload()
+                    browserPage.reload()
                 }
             }
         }
@@ -808,6 +842,10 @@ Page {
         }
     }
 
+    Component.onDestruction: {
+        connectionHelper.closeNetworkSession()
+    }
+
     BookmarkModel {
         id: favoriteModel
     }
@@ -822,16 +860,28 @@ Page {
         id: notification
     }
 
-    NetworkManager {
-        id: networkManager
+    ConnectionHelper {
+        id: connectionHelper
 
-        property bool reloadNeeded
+        onNetworkConnectivityEstablished: {
+            var url
+            var title
 
-        onStateChanged: {
-            if (reloadNeeded && (networkManager.state === "online" || networkManager.state === "ready")) {
+            if (browserPage._deferredLoad) {
+                url = browserPage._deferredLoad["url"]
+                title = browserPage._deferredLoad["title"]
+                browserPage._deferredLoad = null
+
+                browserPage.load(url, title, true)
+            } else if (browserPage._deferredReload) {
+                browserPage._deferredReload = false
                 webView.reload()
-                reloadNeeded = false
             }
+        }
+
+        onNetworkConnectivityUnavailable: {
+            browserPage._deferredLoad = null
+            browserPage._deferredReload = false
         }
     }
 }

@@ -30,6 +30,8 @@ Item {
     property bool _isVideoStream
     property bool _suspendIntention
 
+    signal webViewSuspended
+
     function isAcceptedGeolocationUrl(url) {
         var tmpUrl = WebUtils.displayableUrl(url)
         return acceptedGeolocationUrl && acceptedGeolocationUrl === tmpUrl
@@ -79,6 +81,7 @@ Item {
     on_SuspendableChanged: {
         if (_suspendable) {
             webView.suspendView()
+            webViewSuspended()
         } else {
             webView.resumeView()
         }
