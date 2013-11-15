@@ -132,7 +132,9 @@ Page {
 
                 anchors.bottom: parent.bottom
                 anchors.bottomMargin: Theme.paddingMedium
-                text: browserPage.currentTab.url
+                // Handle initially newTab state. Currently newTab initially
+                // true when triggering new tab cover action.
+                text: newTab ? "" : browserPage.currentTab.url
 
                 //: Placeholder for the search field
                 //% "Search"
