@@ -134,9 +134,9 @@ Page {
                 anchors.bottomMargin: Theme.paddingMedium
                 text: browserPage.currentTab.url
 
-                //: Placeholder for the search field
-                //% "Search"
-                placeholderText: qsTrId("sailfish_browser-ph-search")
+                //: Placeholder for the search/address field
+                //% "Search or Address"
+                placeholderText: qsTrId("sailfish_browser-ph-search_or_url")
                 color: searchField.focus? Theme.highlightColor : Theme.primaryColor
                 focusOutBehavior: FocusBehavior.KeepFocus
                 inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase
