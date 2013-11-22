@@ -29,20 +29,13 @@ Page {
             "status": page.link,
             "linkTitle": page.linkTitle
         }
-    }
 
-    Label {
-        visible: shareMethodList.model.count === 0
-        anchors.centerIn: parent
-        width: page.width - Theme.paddingLarge * 2
-        wrapMode: Text.WordWrap
-        horizontalAlignment: Text.AlignHCenter
+        ViewPlaceholder {
+            enabled: shareMethodList.model.count === 0
 
-        font.pixelSize: Theme.fontSizeLarge
-        color: Theme.highlightColor
-
-        //: Empty state for share link page
-        //% "No sharing accounts available. You can add accounts in settings"
-        text: qsTrId("sailfish_browser-la-no_accounts")
+            //: Empty state for share link page
+            //% "No sharing accounts available. You can add accounts in settings"
+            text: qsTrId("sailfish_browser-la-no_accounts")
+        }
     }
 }
