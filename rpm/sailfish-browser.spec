@@ -35,9 +35,6 @@ Requires: qt5-qtgraphicaleffects
 Requires: nemo-qml-plugin-contextkit-qt5
 Requires: nemo-qml-plugin-connectivity
 Requires: sailfish-components-media-qt5
-%ifarch armv7hl
-Requires: gstreamer0.10-colorconv
-%endif
 
 %description
 Sailfish Web Browser
