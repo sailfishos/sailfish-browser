@@ -123,7 +123,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     QObject::connect(QMozContext::GetInstance(), SIGNAL(onInitialized()),
                      settingMgr, SLOT(initialize()));
 
-    QObject::connect(QMozContext::GetInstance(), SIGNAL(newWindowRequested(QString,uint,QNewWindowResponse*)),
+    QObject::connect(QMozContext::GetInstance(), SIGNAL(newWindowRequested(QString)),
                      utils, SLOT(openUrl(QString)));
 
 #ifdef USE_RESOURCES
