@@ -47,6 +47,12 @@ isEmpty(DEFAULT_COMPONENT_PATH) {
   DEFINES += DEFAULT_COMPONENTS_PATH=\"\\\"$$DEFAULT_COMPONENT_PATH\\\"\"
 }
 
+# Translations
+TS_PATH = $$PWD
+TS_FILE = $$OUT_PWD/sailfish-browser.ts
+EE_QM = $$OUT_PWD/sailfish-browser_eng_en.qm
+include(../translations/translations.pri)
+
 # C++ sources
 SOURCES += \
     sailfishbrowser.cpp \

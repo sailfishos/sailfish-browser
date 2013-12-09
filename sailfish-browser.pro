@@ -1,5 +1,5 @@
 TEMPLATE = subdirs
-SUBDIRS += src tests translations settings
+SUBDIRS += src tests settings
 
 # The .desktop file
 desktop.files = sailfish-browser.desktop
