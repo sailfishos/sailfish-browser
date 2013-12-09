@@ -1,12 +1,7 @@
-TEMPLATE = aux
-
-TS_FILE = $$OUT_PWD/sailfish-browser.ts
-EE_QM = $$OUT_PWD/sailfish-browser_eng_en.qm
-
-ts.commands += lupdate $$PWD/.. -ts $$TS_FILE
+ts.commands += lupdate $$TS_PATH -ts $$TS_FILE
 ts.CONFIG += no_check_exist no_link
 ts.output = $$TS_FILE
-ts.input = ..
+ts.input = $$TS_PATH
 
 ts_install.files = $$TS_FILE
 ts_install.path = /usr/share/translations/source
