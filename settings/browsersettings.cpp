@@ -1,10 +1,15 @@
-#include <QDebug>
+/****************************************************************************
+**
+** Copyright (C) 2013 Jolla Ltd.
+** Contact: Dmitry Rozhkov <dmitry.rozhkov@jolla.com>
+**
+****************************************************************************/
+
 #include "browsersettings.h"
 
 BrowserSettings::BrowserSettings(QObject *parent)
     : QObject(parent)
 {
-    qDebug() << "BrowserSettings created";
 }
 
 BrowserSettings::~BrowserSettings()

@@ -1,3 +1,10 @@
+/****************************************************************************
+**
+** Copyright (C) 2013 Jolla Ltd.
+** Contact: Dmitry Rozhkov <dmitry.rozhkov@jolla.com>
+**
+****************************************************************************/
+
 #ifndef BROWSERSETTINGS_H
 #define BROWSERSETTINGS_H
 
