@@ -29,5 +29,13 @@ Page {
             "status": page.link,
             "linkTitle": page.linkTitle
         }
+
+        ViewPlaceholder {
+            enabled: shareMethodList.model.count === 0
+
+            //: Empty state for share link page
+            //% "No sharing accounts available. You can add accounts in settings"
+            text: qsTrId("sailfish_browser-la-no_accounts")
+        }
     }
 }
