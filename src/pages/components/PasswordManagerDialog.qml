@@ -42,9 +42,16 @@ Dialog {
         id: label
 
         anchors.centerIn: parent
-        width: parent.width - (2 * Theme.paddingMedium)
+        width: parent.width - 2 * Theme.paddingLarge
         wrapMode: Text.Wrap
         horizontalAlignment: Text.AlignHCenter
+        font {
+            family: Theme.fontFamilyHeading
+            pixelSize: Theme.fontSizeExtraLarge
+        }
+        color: Theme.highlightColor
+        opacity: 0.6
+
         text: {
             switch (notificationType) {
                 case "password-save": {
