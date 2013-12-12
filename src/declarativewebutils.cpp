@@ -122,9 +122,6 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     mozContext->setPref(QString("browser.download.manager.quitBehavior"), QVariant(2));
     // TODO: this doesn't really work too
     mozContext->setPref(QString("browser.helperApps.deleteTempFileOnExit"), QVariant(true));
-    // TODO: Enable readpixels based transfer of webgl context image between thread
-    // Remove me when 10364 fixed and drivers issue solved
-    mozContext->setPref(QString("webgl.force-layers-readback"), QVariant(true));
     mozContext->setPref(QString("geo.wifi.scan"), QVariant(false));
     mozContext->setPref(QString("browser.enable_automatic_image_resizing"), QVariant(true));
 
