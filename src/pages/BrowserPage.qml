@@ -161,8 +161,8 @@ Page {
 
     function captureScreen() {
         if (status == PageStatus.Active && resourceController.firstFrameRendered) {
-            tab.captureScreen(webView.url, 0, 0, webView.width,
-                              webView.width, window.screenRotation)
+            var size = browserPage.isPortrait ? webView.width : webContainer.height - toolBarContainer.height
+            tab.captureScreen(webView.url, 0, 0, size, size, browserPage.rotation)
         }
     }
 

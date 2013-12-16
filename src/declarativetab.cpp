@@ -227,6 +227,16 @@ void DeclarativeTab::updateTitle(QString url, QString title)
     }
 }
 
+/**
+ * @brief DeclarativeTab::captureScreen
+ * Rotation transformation is applied first, then geometry values on top of it.
+ * @param url
+ * @param x
+ * @param y
+ * @param width
+ * @param height
+ * @param rotate clockwise rotation of the image in degrees
+ */
 void DeclarativeTab::captureScreen(QString url, int x, int y, int width, int height, qreal rotate)
 {
     if (!window() || !window()->isActive() || !valid()) {
@@ -234,18 +244,19 @@ void DeclarativeTab::captureScreen(QString url, int x, int y, int width, int hei
     }
 
     QImage image = window()->grabWindow();
-    // TODO: Cropping should be done in QtConcurrent / thread
-    QImage cropped = image.copy(x, y, width, height);
-    QString path = QString("%1/tab-%2-thumb.jpg").arg(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)).arg(m_tabId);
+    QRect cropBounds(x, y, width, height);
+
     // asynchronous save to avoid the slow I/O
-    QtConcurrent::run(this, &DeclarativeTab::saveToFile, url, path, cropped, m_tabId, rotate);
+    QtConcurrent::run(this, &DeclarativeTab::saveToFile, url, image, cropBounds, m_tabId, rotate);
 }
 
-void DeclarativeTab::saveToFile(QString url, QString path, QImage image, int tabId, qreal rotate) {
+void DeclarativeTab::saveToFile(QString url, QImage image, QRect cropBounds, int tabId, qreal rotate) {
+    QString path = QString("%1/tab-%2-thumb.jpg").arg(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)).arg(tabId);
     QTransform transform;
-    transform.rotate(rotate);
-
+    transform.rotate(360 - rotate);
     image = image.transformed(transform);
+    image = image.copy(cropBounds);
+
     if(image.save(path)) {
         DBManager::instance()->updateThumbPath(url, path, tabId);
     } else {
