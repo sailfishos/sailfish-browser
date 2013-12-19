@@ -55,6 +55,7 @@ Page {
 
             property string url: ""
             property string title: ""
+            property Item favoriteDelegate
 
             MenuItem {
                 //% "Open in new tab"
@@ -70,7 +71,7 @@ Page {
                 //: "Remove favorited / bookmarked web page"
                 //% "Remove favorite"
                 text: qsTrId("sailfish_browser-me-remove_favorite")
-                onClicked: browserPage.favorites.removeBookmark(url)
+                onClicked: favoriteDelegate.remove()
             }
         }
     }
@@ -318,9 +319,11 @@ Page {
             anchors.fill: parent
             model: browserPage.favorites
             delegate: ListItem {
+                id: favoriteDelegate
                 width: page.width
                 menu: !page.newTab ? favoriteContextMenuComponent : null
                 showMenuOnPressAndHold: false
+                ListView.onRemove: animateRemoval()
 
                 Row {
                     height: parent.height
@@ -349,8 +352,17 @@ Page {
                     }
                 }
 
+                function remove() {
+                    //: Remorse timer for removing bookmark
+                    //% "Removing favorite"
+                    remorse.execute(favoriteDelegate, qsTrId("sailfish_browser-la-removing_favorite"),
+                                    function() { browserPage.favorites.removeBookmark(url) } )
+                }
+
+                RemorseItem { id: remorse }
+
                 onClicked: page.load(model.url, model.title)
-                onPressAndHold: showMenu({"url": url, "title": title})
+                onPressAndHold: showMenu({"url": url, "title": title, "favoriteDelegate": favoriteDelegate})
             }
             VerticalScrollDecorator {}
         }
