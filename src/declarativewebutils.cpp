@@ -125,12 +125,9 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     mozContext->setPref(QString("geo.wifi.scan"), QVariant(false));
     mozContext->setPref(QString("browser.enable_automatic_image_resizing"), QVariant(true));
 
-    // Default value for embedlite is 0.55f which is a bit slower than needed.
-    mozContext->setPref(QString("gfx.axis.velocity_multiplier"), QString("1.0f"));
-
     // Make long press timeout equal to the one in Qt
     mozContext->setPref(QString("ui.click_hold_context_menus.delay"), QVariant(800));
-    mozContext->setPref(QString("gfx.axis.fling_stopped_threshold"), QString("0.13f"));
+    mozContext->setPref(QString("apz.fling_stopped_threshold"), QString("0.13f"));
 
     // subscribe to gecko messages
     mozContext->addObservers(QStringList()
