@@ -48,34 +48,6 @@ Page {
         }
     }
 
-    Component {
-        id: favoriteContextMenuComponent
-        ContextMenu {
-            id: favoriteContextMenu
-
-            property string url: ""
-            property string title: ""
-            property Item favoriteDelegate
-
-            MenuItem {
-                //% "Open in new tab"
-                text: qsTrId("sailfish_browser-me-open_new_tab")
-                onClicked: {
-                    page.newTab = true
-                    page.load(url, title)
-                    favoriteContextMenu.hide()
-                }
-            }
-
-            MenuItem {
-                //: "Remove favorited / bookmarked web page"
-                //% "Remove favorite"
-                text: qsTrId("sailfish_browser-me-remove_favorite")
-                onClicked: favoriteDelegate.remove()
-            }
-        }
-    }
-
     Loader {
         anchors.fill: parent
         sourceComponent: _editing || initialSearchFocus ? historyList : favoriteList
@@ -320,10 +292,19 @@ Page {
             model: browserPage.favorites
             delegate: ListItem {
                 id: favoriteDelegate
+
+                function remove() {
+                    //: Remorse timer for removing bookmark
+                    //% "Removing favorite"
+                    remorse.execute(favoriteDelegate, qsTrId("sailfish_browser-la-removing_favorite"),
+                                    function() { browserPage.favorites.removeBookmark(url) } )
+                }
+
                 width: page.width
                 menu: !page.newTab ? favoriteContextMenuComponent : null
-                showMenuOnPressAndHold: false
+                showMenuOnPressAndHold: menu !== null
                 ListView.onRemove: animateRemoval()
+                onClicked: page.load(model.url, model.title)
 
                 Row {
                     height: parent.height
@@ -352,17 +333,28 @@ Page {
                     }
                 }
 
-                function remove() {
-                    //: Remorse timer for removing bookmark
-                    //% "Removing favorite"
-                    remorse.execute(favoriteDelegate, qsTrId("sailfish_browser-la-removing_favorite"),
-                                    function() { browserPage.favorites.removeBookmark(url) } )
-                }
-
                 RemorseItem { id: remorse }
 
-                onClicked: page.load(model.url, model.title)
-                onPressAndHold: showMenu({"url": url, "title": title, "favoriteDelegate": favoriteDelegate})
+                Component {
+                    id: favoriteContextMenuComponent
+                    ContextMenu {
+                        MenuItem {
+                            //% "Open in new tab"
+                            text: qsTrId("sailfish_browser-me-open_new_tab")
+                            onClicked: {
+                                page.newTab = true
+                                page.load(url, title)
+                            }
+                        }
+
+                        MenuItem {
+                            //: "Remove favorited / bookmarked web page"
+                            //% "Remove favorite"
+                            text: qsTrId("sailfish_browser-me-remove_favorite")
+                            onClicked: favoriteDelegate.remove()
+                        }
+                    }
+                }
             }
             VerticalScrollDecorator {}
         }
