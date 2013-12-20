@@ -1,3 +1,10 @@
+/****************************************************************************
+**
+** Copyright (C) 2013 Jolla Ltd.
+** Contact: Dmitry Rozhkov <dmitry.rozhkov@jolla.com>
+**
+****************************************************************************/
+
 import QtQuick 2.0
 import Sailfish.Silica 1.0
 import org.nemomobile.configuration 1.0
@@ -75,13 +82,6 @@ Page {
             }
         }
     }
-
-    // TODO: enable it when browser daemon is implemented
-    /*
-    BrowserSettings {
-        id: settings
-    }
-    */
 
     ConfigurationValue {
         id: clearPrivateDataConfig

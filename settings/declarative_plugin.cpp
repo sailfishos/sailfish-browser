@@ -1,3 +1,10 @@
+/****************************************************************************
+**
+** Copyright (C) 2013 Jolla Ltd.
+** Contact: Dmitry Rozhkov <dmitry.rozhkov@jolla.com>
+**
+****************************************************************************/
+
 #include <QtGlobal>
 #include <QtQml>
 #include <QQmlEngine>
@@ -45,6 +52,7 @@ public:
     void registerTypes(const char *uri)
     {
         Q_ASSERT(QLatin1String(uri) == QLatin1String("org.sailfishos.browser.settings"));
+        // Register fake type to make the plugin loadable (needed to load translations).
         qmlRegisterType<BrowserSettings>(uri, 1, 0, "BrowserSettings");
     }
 };
