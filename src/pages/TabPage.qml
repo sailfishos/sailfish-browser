@@ -31,10 +31,10 @@ Page {
             browserPage.load(url, title)
         }
         _loadRequested = true
-        pageStack.pop(undefined, true)
+        pageStack.pop(browserPage)
     }
 
-    backNavigation: browserPage.tabs.count > 0 && !newTab && browserPage.url != ""
+    backNavigation: browserPage.tabs.count > 0 && browserPage.url != ""
     onStatusChanged: {
         // If tabs have been closed and user swipes
         // away from TabPage, then load current tab. backNavigation is disabled when
@@ -53,16 +53,63 @@ Page {
         sourceComponent: _editing || initialSearchFocus ? historyList : favoriteList
     }
 
+    Component {
+        id: historyList
+        Browser.HistoryList {
+            header: Item {
+                id: historyHeader
+                width: commonHeader.width
+                height: commonHeader.height
+
+                Component.onCompleted: commonHeader.parent = historyHeader
+            }
+            model: browserPage.history
+            search: _search
+
+            onLoad: page.load(url, title)
+
+            Browser.TabPageMenu {
+                id: tabPageMenu
+                visible: browserPage.tabs.count > 0 && !page.newTab
+                shareEnabled: browserPage.currentTab.url == _search
+                browserPage: page.browserPage
+            }
+        }
+    }
+
+    Component {
+        id: favoriteList
+        Browser.FavoriteList {
+            header: Item {
+                id: favoriteHeader
+                width: commonHeader.width
+                height: commonHeader.height
+
+                Component.onCompleted: commonHeader.parent = favoriteHeader
+            }
+            model: browserPage.favorites
+            hasContextMenu: !page.newTab
+
+            onLoad: {
+                if (newTab) page.newTab = true
+                page.load(url, title)
+            }
+
+            onRemoveBookmark: browserPage.favorites.removeBookmark(url)
+
+            Browser.TabPageMenu {
+                id: tabPageMenu
+                visible: browserPage.tabs.count > 0 && !page.newTab
+                shareEnabled: browserPage.currentTab.url == _search
+                browserPage: page.browserPage
+            }
+        }
+    }
+
     Item {
         id: commonHeader
         width: page.width
         height: _editing ? headerContent.height : headerContent.height + tabsGrid.height
-
-        function newTab() {
-            page.newTab = true
-            searchField.text = ""
-            searchField.forceActiveFocus()
-        }
 
         Rectangle {
             id: headerContent
@@ -242,172 +289,16 @@ Page {
                     onClicked: {
                         _loadRequested = true
                         browserPage.loadTab(model.index, model.url, model.title)
-                        window.pageStack.pop(browserPage, true)
+                        window.pageStack.pop(browserPage)
                     }
                 }
             }
         }
     }
 
-    Component {
-        id: favoriteList
-        SilicaListView {
-            PullDownMenu {
-                enabled: browserPage.tabs.count > 0 && !page.newTab
-                MenuItem {
-                    //% "Close all tabs"
-                    text: qsTrId("sailfish_browser-me-close_all")
-                    onClicked: browserPage.closeAllTabs()
-                }
-                MenuItem {
-                    enabled: browserPage.currentTab.url == _search
-                    //: Share link from browser pulley menu
-                    //% "Share"
-                    text: qsTrId("sailfish_browser-me-share_link")
 
-                    onClicked: {
-                        pageStack.push(Qt.resolvedUrl("ShareLinkPage.qml"), {"link" : browserPage.currentTab.url, "linkTitle": browserPage.currentTab.title})
-                    }
-                }
-                MenuItem {
-                    //% "New tab"
-                    text: qsTrId("sailfish_browser-me-new_tab")
-                    onClicked: {
-                        // browserPage.newTab("", true)
-                        // Open URL editor
-                        commonHeader.newTab()
-                    }
-                }
-            }
 
-            header: Item {
-                id: listHeader
-                width: commonHeader.width
-                height: commonHeader.height
 
-                Component.onCompleted: commonHeader.parent = listHeader
-            }
-
-            anchors.fill: parent
-            model: browserPage.favorites
-            delegate: ListItem {
-                id: favoriteDelegate
-
-                function remove() {
-                    //: Remorse timer for removing bookmark
-                    //% "Removing favorite"
-                    remorse.execute(favoriteDelegate, qsTrId("sailfish_browser-la-removing_favorite"),
-                                    function() { browserPage.favorites.removeBookmark(url) } )
-                }
-
-                width: page.width
-                menu: !page.newTab ? favoriteContextMenuComponent : null
-                showMenuOnPressAndHold: menu !== null
-                ListView.onRemove: animateRemoval()
-                onClicked: page.load(model.url, model.title)
-
-                Row {
-                    height: parent.height
-                    spacing: Theme.paddingMedium
-                    anchors {
-                        left: parent.left
-                        right: parent.right
-                        leftMargin: Theme.paddingLarge
-                        rightMargin: Theme.paddingLarge
-                    }
-
-                    Browser.FaviconImage {
-                        id: faviconImage
-                        anchors.verticalCenter: titleLabel.verticalCenter
-                        favicon: model.favicon
-                        link: url
-                    }
-
-                    Label {
-                        id: titleLabel
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: parent.width - faviconImage.width
-                        text: title
-                        color: highlighted ? Theme.highlightColor : Theme.primaryColor
-                        truncationMode: TruncationMode.Fade
-                    }
-                }
-
-                RemorseItem { id: remorse }
-
-                Component {
-                    id: favoriteContextMenuComponent
-                    ContextMenu {
-                        MenuItem {
-                            //% "Open in new tab"
-                            text: qsTrId("sailfish_browser-me-open_new_tab")
-                            onClicked: {
-                                page.newTab = true
-                                page.load(url, title)
-                            }
-                        }
-
-                        MenuItem {
-                            //: "Remove favorited / bookmarked web page"
-                            //% "Remove favorite"
-                            text: qsTrId("sailfish_browser-me-remove_favorite")
-                            onClicked: favoriteDelegate.remove()
-                        }
-                    }
-                }
-            }
-            VerticalScrollDecorator {}
-        }
-    }
-
-    Component {
-        id: historyList
-        SilicaListView {
-            header: Item {
-                id: listHeader
-                width: commonHeader.width
-                height: commonHeader.height
-
-                Component.onCompleted: commonHeader.parent = listHeader
-            }
-
-            model: browserPage.history
-            // To prevent model to steal focus
-            currentIndex: -1
-
-            delegate: BackgroundItem {
-                width: page.width
-                height: Theme.itemSizeLarge
-
-                Column {
-                    width: page.width - Theme.paddingLarge * 2
-                    x: Theme.paddingLarge
-                    anchors.verticalCenter: parent.verticalCenter
-
-                    Label {
-                        text: Theme.highlightText(title, _search, Theme.highlightColor)
-                        truncationMode: TruncationMode.Fade
-                        width: parent.width
-                        color: highlighted ? Theme.highlightColor : Theme.primaryColor
-                    }
-                    Label {
-                        text: Theme.highlightText(url, _search, Theme.highlightColor)
-                        width: parent.width
-                        font.pixelSize: Theme.fontSizeSmall
-                        opacity: 0.6
-                        color: highlighted ? Theme.highlightColor : Theme.primaryColor
-                        truncationMode: TruncationMode.Elide
-                    }
-                }
-
-                onClicked: {
-                    Qt.inputMethod.hide()
-                    page.load(model.url, model.title)
-                }
-            }
-            VerticalScrollDecorator {}
-        }
-    }
 
     /*
        TODO
