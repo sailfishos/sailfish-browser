@@ -240,9 +240,56 @@ Page {
     clip: status != PageStatus.Active || webContainer.inputPanelVisible
     allowedOrientations: Orientation.Landscape | Orientation.Portrait | Orientation.LandscapeInverted
 
-    onOrientationTransitionRunningChanged: {
-        if (!orientationTransitionRunning) {
-            webContainer.resetHeight(true)
+    orientationTransitions: Transition {
+        to: 'Portrait,Landscape,LandscapeInverted'
+        from: 'Portrait,Landscape,LandscapeInverted'
+        SequentialAnimation {
+            PropertyAction {
+                target: browserPage
+                property: 'orientationTransitionRunning'
+                value: true
+            }
+            ParallelAnimation {
+                FadeAnimation {
+                    target: webView
+                    to: 0
+                    duration: 150
+                }
+                FadeAnimation {
+                    target: controlArea
+                    to: 0
+                    duration: 150
+                }
+            }
+            PropertyAction {
+                target: browserPage
+                properties: 'width,height,rotation,orientation'
+            }
+            ScriptAction {
+                script: {
+                    // Restores the Bindings to width, height and rotation
+                    _defaultTransition = false
+                    webContainer.resetHeight(true)
+                    _defaultTransition = true
+                }
+            }
+            FadeAnimation {
+                target: controlArea
+                to: 1
+                duration: 150
+            }
+            // End-2-end implementation for OnUpdateDisplayPort should
+            // give better solution and reduce visible relayoutting.
+            FadeAnimation {
+                target: webView
+                to: 1
+                duration: 850
+            }
+            PropertyAction {
+                target: browserPage
+                property: 'orientationTransitionRunning'
+                value: false
+            }
         }
     }
 
