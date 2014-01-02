@@ -238,6 +238,13 @@ Page {
     // This clipping can handle also clipping of QmlMozView. When this page is active we do not need to clip
     // if input method is not visible.
     clip: status != PageStatus.Active || webContainer.inputPanelVisible
+    allowedOrientations: Orientation.Landscape | Orientation.Portrait | Orientation.LandscapeInverted
+
+    onOrientationTransitionRunningChanged: {
+        if (!orientationTransitionRunning) {
+            webContainer.resetHeight(true)
+        }
+    }
 
     TabModel {
         id: tabModel
@@ -283,8 +290,8 @@ Page {
         id: webContainer
 
         width: parent.width
-        // We have currently orientation locked. Need to be tested when landscape enabled.
         height: browserPage.orientation === Orientation.Portrait ? Screen.height : Screen.width
+
         pageActive: browserPage.status == PageStatus.Active
         webView: webView
 
@@ -309,8 +316,6 @@ Page {
             connectionHelper.closeNetworkSession()
         }
     }
-
-
 
     QmlMozView {
         id: webView
@@ -649,6 +654,7 @@ Page {
 
         anchors.bottom: webContainer.bottom
         width: parent.width
+
         visible: !_ctxMenuActive
         opacity: fullscreenMode ? 0.0 : 1.0
         Behavior on opacity { FadeAnimation { duration: webContainer.foreground ? 300 : 0 } }
@@ -674,6 +680,7 @@ Page {
         Browser.StatusBar {
             width: parent.width
             height: visible ? toolBarContainer.height * 3 : 0
+            visible: isPortrait
             opacity: progressBar.opacity
             title: browserPage.title
             url: browserPage.url
@@ -701,13 +708,16 @@ Page {
 
             // ToolBar
             Row {
+                id: toolbarRow
+
                 anchors {
                     left: parent.left; leftMargin: Theme.paddingMedium
                     right: parent.right; rightMargin: Theme.paddingMedium
                     verticalCenter: parent.verticalCenter
                 }
+
                 // 5 icons, 4 spaces between
-                spacing: (width - (backIcon.width * 5)) / 4
+                spacing: isPortrait ? (width - (backIcon.width * 5)) / 4 : 9
 
                 Browser.IconButton {
                     id:backIcon
@@ -717,6 +727,17 @@ Page {
                         tab.backForwardNavigation = true
                         tab.goBack()
                     }
+                }
+
+                // Spacer
+                Item {
+                    visible: isLandscape
+                    height: Theme.itemSizeSmall
+                    width: browserPage.width
+                           - toolbarRow.spacing * (toolbarRow.children.length - 1)
+                           - backIcon.width * (toolbarRow.children.length - 1)
+                           - parent.anchors.leftMargin
+                           - parent.anchors.rightMargin
                 }
 
                 Browser.IconButton {

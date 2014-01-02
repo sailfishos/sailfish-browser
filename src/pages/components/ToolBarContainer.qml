@@ -16,7 +16,7 @@ Rectangle {
     // error in chrome mode as viewport height would be 850px. This would
     // result in CSS pixels viewport height of 566.66..px -> rounded to 566px.
     // So, check that (device height - toolbar height) / pixel ratio is even number.
-    height: Theme.itemSizeMedium * 1.2
+    height: isPortrait ? Theme.itemSizeMedium * 1.2 : Theme.itemSizeSmall
 
     MouseArea {
         anchors.fill: parent
