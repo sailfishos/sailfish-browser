@@ -313,6 +313,15 @@ Page {
         property bool loadWhenTabChanges: false
         property bool backForwardNavigation: false
 
+        function closeCurrentTab() {
+            closeTab(currentTabIndex, true)
+            if (!tabModel.count) {
+                browserPage.title = ""
+                browserPage.url = ""
+                pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage, "initialSearchFocus": true })
+            }
+        }
+
         tabId: tabModel.currentTabId
 
         onUrlChanged: {
@@ -732,14 +741,7 @@ Page {
             title: browserPage.title
             url: browserPage.url
             onSearchClicked: controlArea.openTabPage(true, false, PageStackAction.Animated)
-            onCloseClicked: {
-                closeTab(currentTabIndex, true)
-                if (!tabModel.count) {
-                    browserPage.title = ""
-                    browserPage.url = ""
-                    pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage, "initialSearchFocus": true })
-                }
-            }
+            onCloseClicked: tab.closeCurrentTab()
         }
 
         Browser.ToolBarContainer {
@@ -785,6 +787,19 @@ Page {
                            - backIcon.width * (toolbarRow.children.length - 1)
                            - parent.anchors.leftMargin
                            - parent.anchors.rightMargin
+
+                    Browser.TitleBar {
+                        url: browserPage.url
+                        title: browserPage.title
+                        height: parent.height
+                        onClicked: controlArea.openTabPage(true, false, PageStackAction.Animated)
+                    }
+                }
+
+                Browser.IconButton {
+                    visible: isLandscape
+                    source: "image://theme/icon-m-close"
+                    onClicked: tab.closeCurrentTab()
                 }
 
                 Browser.IconButton {
