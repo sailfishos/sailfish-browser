@@ -49,68 +49,209 @@ Page {
         }
     }
 
-    Loader {
-        anchors.fill: parent
-        sourceComponent: _editing || initialSearchFocus ? historyList : favoriteList
-    }
+    property bool historyVisible: _editing || initialSearchFocus
+    property Item historyHeader
+    property Item favoriteHeader
 
-    Component {
+    states: [
+        State {
+            name: "historylist"
+            when: historyVisible
+        },
+        State {
+            name: "favoritelist"
+            when: !historyVisible
+        }
+    ]
+
+    transitions: [
+        Transition {
+            to: "favoritelist"
+            ParallelAnimation {
+                SequentialAnimation {
+                    PropertyAction { target: commonHeader; property: "parent"; value: page }
+                    FadeAnimation { target: favoriteList; from: 0.0; to: 1.0}
+                    PropertyAction { target: commonHeader; property: "parent"; value: page.favoriteHeader }
+                }
+                FadeAnimation { target: historyList; from: 1.0; to: 0.0 }
+            }
+        },
+        Transition {
+            to: "historylist"
+            ParallelAnimation {
+                SequentialAnimation {
+                    PropertyAction { target: commonHeader; property: "parent"; value: page }
+                    FadeAnimation { target: historyList; from: 0.0; to: 1.0}
+                    PropertyAction { target: commonHeader; property: "parent"; value: page.historyHeader }
+                    ScriptAction { script: { focusTimer.running = true; page.initialSearchFocus = false } }
+                }
+                FadeAnimation { target: favoriteList; from: 1.0; to: 0.0 }
+            }
+        }
+    ]
+
+    Browser.HistoryList {
         id: historyList
-        Browser.HistoryList {
-            header: Item {
-                id: historyHeader
-                width: commonHeader.width
-                height: commonHeader.height
 
-                Component.onCompleted: commonHeader.parent = historyHeader
-            }
-            model: browserPage.history
-            search: _search
+        visible: opacity > 0.0
 
-            onLoad: page.load(url, title)
+        header: Item {
+            id: historyHeader
+            width: commonHeader.width
+            height: commonHeader.height
 
-            Browser.TabPageMenu {
-                id: tabPageMenu
-                visible: browserPage.tabs.count > 0 && !page.newTab
-                shareEnabled: browserPage.currentTab.url == _search
-                browserPage: page.browserPage
-            }
+            Component.onCompleted: page.historyHeader = historyHeader
+
+        }
+        model: browserPage.history
+        search: _search
+
+        onLoad: page.load(url, title)
+
+        Browser.TabPageMenu {
+            visible: browserPage.tabs.count > 0 && !page.newTab
+            shareEnabled: browserPage.currentTab.url == _search
+            browserPage: page.browserPage
         }
     }
 
-    Component {
+    Browser.FavoriteList {
         id: favoriteList
-        Browser.FavoriteList {
-            header: Item {
-                id: favoriteHeader
-                width: commonHeader.width
-                height: commonHeader.height
 
-                Component.onCompleted: commonHeader.parent = favoriteHeader
-            }
-            model: browserPage.favorites
-            hasContextMenu: !page.newTab
+        visible: opacity > 0.0
 
-            onLoad: {
-                if (newTab) page.newTab = true
-                page.load(url, title)
-            }
+        header: Item {
+            id: favoriteHeader
+            width: commonHeader.width
+            height: page.newTab ? commonHeader.height : commonHeader.height + tabsGrid.height
 
-            onRemoveBookmark: browserPage.favorites.removeBookmark(url)
+            Component.onCompleted: page.favoriteHeader = favoriteHeader
 
-            Browser.TabPageMenu {
-                id: tabPageMenu
-                visible: browserPage.tabs.count > 0 && !page.newTab
-                shareEnabled: browserPage.currentTab.url == _search
-                browserPage: page.browserPage
+            Grid {
+                id: tabsGrid
+                visible: !page.newTab
+                columns: page.isPortrait ? 2 : 3
+                rows: Math.ceil(browserPage.tabs.count / columns)
+                anchors.bottom: favoriteHeader.bottom
+                move: Transition {
+                    NumberAnimation { properties: "x,y"; easing.type: Easing.InOutQuad; duration: 200 }
+                }
+
+                Repeater {
+                    model: browserPage.tabs
+                    BackgroundItem {
+                        id: tabDelegate
+                        width: page.width/tabsGrid.columns
+                        height: width
+
+                        Rectangle {
+                            id: placeHolder
+                            anchors.fill: parent
+                            visible: !thumb.visible
+                            color: Theme.rgba(Theme.highlightColor, 0.1)
+
+                            Column {
+                                anchors {
+                                    topMargin: Theme.paddingMedium
+                                    top: parent.top
+                                }
+                                width: parent.width
+                                spacing: Theme.paddingSmall
+                                Label {
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    width: parent.width - Theme.paddingMedium * 2
+                                    text: title
+                                    font.pixelSize: Theme.fontSizeExtraSmall
+                                    color: Theme.primaryColor
+                                    truncationMode: TruncationMode.Fade
+                                }
+                                Label {
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    width: parent.width - Theme.paddingMedium * 2
+                                    text: url
+                                    font.pixelSize: Theme.fontSizeExtraSmall
+                                    color: Theme.rgba(Theme.secondaryColor, 0.6)
+                                    wrapMode: Text.WrapAnywhere
+                                    maximumLineCount: 3
+                                }
+                            }
+                        }
+
+                        Image {
+                            id: thumb
+                            anchors.fill: parent
+                            asynchronous: true
+                            source: thumbnailPath
+                            cache: false
+                            fillMode: Image.PreserveAspectCrop
+                            sourceSize {
+                                width: parent.width
+                                height: width
+                            }
+                            visible: status !== Image.Error && thumbnailPath !== ""
+
+                            RadialGradient {
+                                id: gradient
+                                source: thumb.visible? thumb : placeHolder
+                                width: thumb.width
+                                height: thumb.height
+                                anchors.centerIn: parent
+                                horizontalOffset: - width/2
+                                verticalOffset: - width/2
+                                verticalRadius: Theme.itemSizeExtraLarge * 3
+                                horizontalRadius: Theme.itemSizeExtraLarge * 3
+                                clip: true
+
+                                gradient: Gradient {
+                                    GradientStop { position: 0.0; color: "transparent"}
+                                    GradientStop { position: 1.0; color: Theme.highlightDimmerColor}
+                                }
+                            }
+                        }
+
+                        IconButton {
+                            anchors {
+                                bottom: parent.bottom; bottomMargin: Theme.paddingMedium
+                                right: parent.right; rightMargin: Theme.paddingMedium
+                            }
+                            icon.source: "image://theme/icon-m-close"
+                            onClicked: {
+                                _tabClosed = true
+                                browserPage.closeTab(index, false)
+                            }
+                        }
+
+                        onClicked: {
+                            _loadRequested = true
+                            browserPage.loadTab(model.index, model.url, model.title)
+                            window.pageStack.pop(browserPage)
+                        }
+                    }
+                }
             }
         }
+        model: browserPage.favorites
+        hasContextMenu: !page.newTab
+
+        onLoad: {
+            if (newTab) page.newTab = true
+            page.load(url, title)
+        }
+
+        onRemoveBookmark: browserPage.favorites.removeBookmark(url)
+
+        Browser.TabPageMenu {
+            visible: browserPage.tabs.count > 0 && !page.newTab
+            shareEnabled: browserPage.currentTab.url == _search
+            browserPage: page.browserPage
+        }
     }
+
 
     Item {
         id: commonHeader
         width: page.width
-        height: _editing ? headerContent.height : headerContent.height + tabsGrid.height
+        height: headerContent.height
 
         Rectangle {
             id: headerContent
@@ -150,10 +291,10 @@ Page {
 
             TextField {
                 id: searchField
-                width: page.width
 
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: Theme.paddingMedium
+                anchors { bottom: parent.bottom; bottomMargin: Theme.paddingMedium }
+
+                width: page.width
                 // Handle initially newTab state. Currently newTab initially
                 // true when triggering new tab cover action.
                 text: newTab ? "" : browserPage.currentTab.url
@@ -165,6 +306,13 @@ Page {
                 focusOutBehavior: FocusBehavior.KeepFocus
                 inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase | Qt.ImhUrlCharactersOnly
 
+                label: text.length == 0 ? "" : (text == browserPage.currentTab.url
+                                                //: Current browser page loaded
+                                                //% "Done"
+                                                && !browserPage.viewLoading ? qsTrId("sailfish_browser-la-done")
+                                                                              //% "Search"
+                                                                            : qsTrId("sailfish_browser-la-search"))
+
                 EnterKey.iconSource: "image://theme/icon-m-enter-accept"
                 EnterKey.onClicked: {
                     Qt.inputMethod.hide()
@@ -173,146 +321,20 @@ Page {
                 }
 
                 onTextChanged: if (text != browserPage.currentTab.url) browserPage.history.search(text)
-                onActiveFocusChanged: if (activeFocus) selectAll()
 
                 Binding { target: page; property: "_search"; value: searchField.text }
                 Binding { target: page; property: "_editing"; value: searchField.focus }
 
-                Component.onCompleted: {
-                    if (initialSearchFocus) {
+                Timer {
+                    id: focusTimer
+                    interval: 1
+                    onTriggered: {
                         searchField.forceActiveFocus()
-                        initialSearchFocus = false
+                        searchField.selectAll()
                     }
                 }
-                label: text.length == 0 ? "" : (text == browserPage.currentTab.url
-                                                //: Current browser page loaded
-                                                //% "Done"
-                                                && !browserPage.viewLoading ? qsTrId("sailfish_browser-la-done")
-                                                                              //% "Search"
-                                                                            : qsTrId("sailfish_browser-la-search"))
-            }
-        }
 
-        Grid {
-            id: tabsGrid
-            visible: !page._editing && !page.newTab
-            columns: page.isPortrait ? 2 : 3
-            rows: Math.ceil(browserPage.tabs.count / columns)
-            anchors {
-                top: headerContent.bottom
-            }
-            move: Transition {
-                NumberAnimation { properties: "x,y"; easing.type: Easing.InOutQuad; duration: 200 }
-            }
-
-            Repeater {
-                model: page.newTab ? null : browserPage.tabs
-                BackgroundItem {
-                    id: tabDelegate
-                    width: page.width/tabsGrid.columns
-                    height: width
-
-                    Rectangle {
-                        id: placeHolder
-                        anchors.fill: parent
-                        visible: !thumb.visible
-                        color: Theme.rgba(Theme.highlightColor, 0.1)
-
-                        Column {
-                            anchors {
-                                topMargin: Theme.paddingMedium
-                                top: parent.top
-                            }
-                            width: parent.width
-                            spacing: Theme.paddingSmall
-                            Label {
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                width: parent.width - Theme.paddingMedium * 2
-                                text: title
-                                font.pixelSize: Theme.fontSizeExtraSmall
-                                color: Theme.primaryColor
-                                truncationMode: TruncationMode.Fade
-                            }
-                            Label {
-                                anchors.horizontalCenter: parent.horizontalCenter
-                                width: parent.width - Theme.paddingMedium * 2
-                                text: url
-                                font.pixelSize: Theme.fontSizeExtraSmall
-                                color: Theme.rgba(Theme.secondaryColor, 0.6)
-                                wrapMode: Text.WrapAnywhere
-                                maximumLineCount: 3
-                            }
-                        }
-                    }
-
-                    Image {
-                        id: thumb
-                        anchors.fill: parent
-                        asynchronous: true
-                        source: thumbnailPath
-                        cache: false
-                        fillMode: Image.PreserveAspectCrop
-                        sourceSize {
-                            width: parent.width
-                            height: width
-                        }
-                        visible: status !== Image.Error && thumbnailPath !== ""
-
-                        RadialGradient {
-                            id: gradient
-                            source: thumb.visible? thumb : placeHolder
-                            width: thumb.width
-                            height: thumb.height
-                            anchors.centerIn: parent
-                            horizontalOffset: - width/2
-                            verticalOffset: - width/2
-                            verticalRadius: Theme.itemSizeExtraLarge * 3
-                            horizontalRadius: Theme.itemSizeExtraLarge * 3
-                            clip: true
-
-                            gradient: Gradient {
-                                GradientStop { position: 0.0; color: "transparent"}
-                                GradientStop { position: 1.0; color: Theme.highlightDimmerColor}
-                            }
-                        }
-                    }
-
-                    IconButton {
-                        anchors {
-                            bottom: parent.bottom; bottomMargin: Theme.paddingMedium
-                            right: parent.right; rightMargin: Theme.paddingMedium
-                        }
-                        icon.source: "image://theme/icon-m-close"
-                        onClicked: {
-                            _tabClosed = true
-                            browserPage.closeTab(index, false)
-                        }
-                    }
-
-                    onClicked: {
-                        _loadRequested = true
-                        browserPage.loadTab(model.index, model.url, model.title)
-                        window.pageStack.pop(browserPage)
-                    }
-                }
             }
         }
     }
-
-
-
-
-
-    /*
-       TODO
-       For the first one, after the model code has been changed to filter out current tab
-                            OpacityRampEffect {
-                                enabled: !gradient.visible
-                                visible: enabled
-                                sourceItem: thumb.visible? thumb : placeHolder
-                                slope: 1.3
-                                offset: 0.20
-                                direction: OpacityRamp.RightToLeft
-                            }
-    */
 }
