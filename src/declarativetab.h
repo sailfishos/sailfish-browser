@@ -71,7 +71,7 @@ signals:
 
 private:
     void init();
-    void saveToFile(QString url, QString path, QImage image, int tabId, qreal rotate);
+    void saveToFile(QString url, QImage image, QRect cropBounds, int tabId, qreal rotate);
 
     int m_tabId;
     bool m_valid;

@@ -28,9 +28,8 @@ Rectangle {
         anchors{
             left: parent.left; leftMargin: Theme.paddingMedium
             right: parent.right; rightMargin: Theme.paddingMedium
-            bottom: parent.bottom; bottomMargin: Theme.paddingLarge
+            bottom: parent.bottom; bottomMargin: Theme.paddingMedium
         }
-        height: texts.height
 
         Browser.IconButton {
             id: searchButton
@@ -39,37 +38,15 @@ Rectangle {
             onClicked: statusBar.searchClicked()
         }
 
-        MouseArea {
-            id: mouseArea
+        Browser.TitleBar {
+            id: titleBar
+            title: statusBar.title
+            url: statusBar.url
             width: parent.width - searchButton.width * 2
-            height: texts.height
-
+            height: searchButton.height
             onClicked: statusBar.searchClicked()
-
-            Column {
-                id: texts
-                x: Theme.paddingSmall
-                anchors.bottom: parent.bottom
-                width: parent.width - Theme.paddingSmall * 2
-
-                Label {
-                    text: title
-                    width: parent.width
-                    color: mouseArea.pressed && mouseArea.containsMouse ? Theme.highlightColor : Theme.highlightDimmerColor
-                    font.pixelSize: Theme.fontSizeExtraSmall
-                    font.weight: Font.Normal
-                    truncationMode: TruncationMode.Fade
-                }
-                Label {
-                    text: url
-                    width: parent.width
-                    color: mouseArea.pressed && mouseArea.containsMouse ? Theme.highlightColor : Theme.highlightDimmerColor
-                    font.pixelSize: Theme.fontSizeTiny
-                    font.weight: Font.Normal
-                    truncationMode: TruncationMode.Fade
-                }
-            }
         }
+
         Browser.IconButton {
             anchors.verticalCenter: parent.verticalCenter
             source: "image://theme/icon-m-close"

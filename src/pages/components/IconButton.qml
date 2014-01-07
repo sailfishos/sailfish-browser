@@ -25,6 +25,7 @@ MouseArea {
     }
 
     width: Theme.itemSizeSmall; height: Theme.itemSizeSmall
+    anchors.verticalCenter: parent.verticalCenter
 
     Image {
         id: image

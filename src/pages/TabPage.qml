@@ -34,6 +34,7 @@ Page {
         pageStack.pop(browserPage)
     }
 
+    allowedOrientations: Orientation.Landscape | Orientation.Portrait | Orientation.LandscapeInverted
     backNavigation: browserPage.tabs.count > 0 && browserPage.url != ""
     onStatusChanged: {
         // If tabs have been closed and user swipes
@@ -114,15 +115,16 @@ Page {
         Rectangle {
             id: headerContent
             width: parent.width
-            height: width / 2
+            height: Theme.itemSizeLarge + titleRow.height + searchField.height + Theme.paddingLarge
             color: Theme.rgba(Theme.highlightColor,0.1)
 
             Row {
+                id: titleRow
                 spacing: Theme.paddingSmall
 
                 anchors {
                     bottom: searchField.top
-                    bottomMargin: Theme.paddingLarge
+                    bottomMargin: Theme.paddingMediun
                     left: parent.left
                     leftMargin: Theme.paddingLarge
                 }
@@ -192,10 +194,10 @@ Page {
         }
 
         Grid {
-            visible: !page._editing && !page.newTab
             id: tabsGrid
-            columns: 2
-            rows: Math.ceil(browserPage.tabs.count / 2) + 1
+            visible: !page._editing && !page.newTab
+            columns: page.isPortrait ? 2 : 3
+            rows: Math.ceil(browserPage.tabs.count / columns)
             anchors {
                 top: headerContent.bottom
             }
@@ -245,6 +247,7 @@ Page {
 
                     Image {
                         id: thumb
+                        anchors.fill: parent
                         asynchronous: true
                         source: thumbnailPath
                         cache: false

@@ -161,8 +161,8 @@ Page {
 
     function captureScreen() {
         if (status == PageStatus.Active && resourceController.firstFrameRendered) {
-            tab.captureScreen(webView.url, 0, 0, webView.width,
-                              webView.width, window.screenRotation)
+            var size = browserPage.isPortrait ? webView.width : webContainer.height - toolBarContainer.height
+            tab.captureScreen(webView.url, 0, 0, size, size, browserPage.rotation)
         }
     }
 
@@ -238,6 +238,60 @@ Page {
     // This clipping can handle also clipping of QmlMozView. When this page is active we do not need to clip
     // if input method is not visible.
     clip: status != PageStatus.Active || webContainer.inputPanelVisible
+    allowedOrientations: Orientation.Landscape | Orientation.Portrait | Orientation.LandscapeInverted
+
+    orientationTransitions: Transition {
+        to: 'Portrait,Landscape,LandscapeInverted'
+        from: 'Portrait,Landscape,LandscapeInverted'
+        SequentialAnimation {
+            PropertyAction {
+                target: browserPage
+                property: 'orientationTransitionRunning'
+                value: true
+            }
+            ParallelAnimation {
+                FadeAnimation {
+                    target: webView
+                    to: 0
+                    duration: 150
+                }
+                FadeAnimation {
+                    target: controlArea
+                    to: 0
+                    duration: 150
+                }
+            }
+            PropertyAction {
+                target: browserPage
+                properties: 'width,height,rotation,orientation'
+            }
+            ScriptAction {
+                script: {
+                    // Restores the Bindings to width, height and rotation
+                    _defaultTransition = false
+                    webContainer.resetHeight(true)
+                    _defaultTransition = true
+                }
+            }
+            FadeAnimation {
+                target: controlArea
+                to: 1
+                duration: 150
+            }
+            // End-2-end implementation for OnUpdateDisplayPort should
+            // give better solution and reduce visible relayoutting.
+            FadeAnimation {
+                target: webView
+                to: 1
+                duration: 850
+            }
+            PropertyAction {
+                target: browserPage
+                property: 'orientationTransitionRunning'
+                value: false
+            }
+        }
+    }
 
     TabModel {
         id: tabModel
@@ -258,6 +312,15 @@ Page {
         // are reflected in the Tab element.
         property bool loadWhenTabChanges: false
         property bool backForwardNavigation: false
+
+        function closeCurrentTab() {
+            closeTab(currentTabIndex, true)
+            if (!tabModel.count) {
+                browserPage.title = ""
+                browserPage.url = ""
+                pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage, "initialSearchFocus": true })
+            }
+        }
 
         tabId: tabModel.currentTabId
 
@@ -283,8 +346,8 @@ Page {
         id: webContainer
 
         width: parent.width
-        // We have currently orientation locked. Need to be tested when landscape enabled.
         height: browserPage.orientation === Orientation.Portrait ? Screen.height : Screen.width
+
         pageActive: browserPage.status == PageStatus.Active
         webView: webView
 
@@ -309,8 +372,6 @@ Page {
             connectionHelper.closeNetworkSession()
         }
     }
-
-
 
     QmlMozView {
         id: webView
@@ -649,6 +710,7 @@ Page {
 
         anchors.bottom: webContainer.bottom
         width: parent.width
+
         visible: !_ctxMenuActive
         opacity: fullscreenMode ? 0.0 : 1.0
         Behavior on opacity { FadeAnimation { duration: webContainer.foreground ? 300 : 0 } }
@@ -674,18 +736,12 @@ Page {
         Browser.StatusBar {
             width: parent.width
             height: visible ? toolBarContainer.height * 3 : 0
+            visible: isPortrait
             opacity: progressBar.opacity
             title: browserPage.title
             url: browserPage.url
             onSearchClicked: controlArea.openTabPage(true, false, PageStackAction.Animated)
-            onCloseClicked: {
-                closeTab(currentTabIndex, true)
-                if (!tabModel.count) {
-                    browserPage.title = ""
-                    browserPage.url = ""
-                    pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage, "initialSearchFocus": true })
-                }
-            }
+            onCloseClicked: tab.closeCurrentTab()
         }
 
         Browser.ToolBarContainer {
@@ -701,13 +757,16 @@ Page {
 
             // ToolBar
             Row {
+                id: toolbarRow
+
                 anchors {
                     left: parent.left; leftMargin: Theme.paddingMedium
                     right: parent.right; rightMargin: Theme.paddingMedium
                     verticalCenter: parent.verticalCenter
                 }
+
                 // 5 icons, 4 spaces between
-                spacing: (width - (backIcon.width * 5)) / 4
+                spacing: isPortrait ? (width - (backIcon.width * 5)) / 4 : 9
 
                 Browser.IconButton {
                     id:backIcon
@@ -717,6 +776,30 @@ Page {
                         tab.backForwardNavigation = true
                         tab.goBack()
                     }
+                }
+
+                // Spacer
+                Item {
+                    visible: isLandscape
+                    height: Theme.itemSizeSmall
+                    width: browserPage.width
+                           - toolbarRow.spacing * (toolbarRow.children.length - 1)
+                           - backIcon.width * (toolbarRow.children.length - 1)
+                           - parent.anchors.leftMargin
+                           - parent.anchors.rightMargin
+
+                    Browser.TitleBar {
+                        url: browserPage.url
+                        title: browserPage.title
+                        height: parent.height
+                        onClicked: controlArea.openTabPage(true, false, PageStackAction.Animated)
+                    }
+                }
+
+                Browser.IconButton {
+                    visible: isLandscape
+                    source: "image://theme/icon-m-close"
+                    onClicked: tab.closeCurrentTab()
                 }
 
                 Browser.IconButton {
