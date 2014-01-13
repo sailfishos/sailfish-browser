@@ -115,6 +115,9 @@ bool DBWorker::execute(QSqlQuery &query)
 
 void DBWorker::createTab(int tabId)
 {
+#ifdef DEBUG_LOGS
+    qDebug() << "new tab id: " << tabId;
+#endif
     QSqlQuery query = prepare("INSERT INTO tab (tab_id, tab_history_id) VALUES (?,?);");
     query.bindValue(0, tabId);
     query.bindValue(1, 0);
@@ -123,6 +126,9 @@ void DBWorker::createTab(int tabId)
 
 bool DBWorker::updateTab(int tabId, int tabHistoryId)
 {
+#ifdef DEBUG_LOGS
+    qDebug() << "tab:" << tabId << "tab history id:" << tabHistoryId;
+#endif
     QSqlQuery query = prepare("UPDATE tab SET tab_history_id = ? WHERE tab_id = ?;");
     query.bindValue(0, tabHistoryId);
     query.bindValue(1, tabId);
@@ -147,11 +153,18 @@ Tab DBWorker::getTabData(int tabId, int historyId)
     Link link = getLinkFromTabHistory(hId);
     int nextId = getNextLinkIdFromTabHistory(hId);
     int previousId = getPreviousLinkIdFromTabHistory(hId);
+#ifdef DEBUG_LOGS
+    qDebug() << tabId << historyId << "next link id:" << nextId << "previous link id:" << previousId << link.linkId()<< link.title() << link.url();
+#endif
     return Tab(tabId, link, nextId, previousId);
 }
 
 void DBWorker::removeTab(int tabId)
 {
+#ifdef DEBUG_LOGS
+    qDebug() << "tab id:" << tabId;
+#endif
+
     QSqlQuery query = prepare("DELETE FROM tab WHERE tab_id = ?;");
     query.bindValue(0, tabId);
     execute(query);
@@ -204,7 +217,7 @@ void DBWorker::getTab(int tabId)
     if (query.first()) {
 #ifdef DEBUG_LOGS
         Tab tab = getTabData(query.value(0).toInt(), query.value(1).toInt());
-        qDebug() << "DBWorker::getTab:" << tab.currentLink().title() << tab.currentLink().url();
+        qDebug() << query.value(0).toInt() << query.value(1).toInt() << tab.currentLink().title() << tab.currentLink().url();
 #endif
         emit tabAvailable(getTabData(query.value(0).toInt(), query.value(1).toInt()));
     }
@@ -229,9 +242,15 @@ int DBWorker::getMaxTabId()
     QSqlQuery query = prepare("SELECT MAX(tab_id) FROM tab");
     if (execute(query)) {
         if (query.first()) {
+#ifdef DEBUG_LOGS
+            qDebug() << "read from db: " << query.value(0).toInt();
+#endif
             return query.value(0).toInt();
         }
     }
+#ifdef DEBUG_LOGS
+    qDebug() << "query failed";
+#endif
     return 0;
 }
 
@@ -284,7 +303,7 @@ void DBWorker::navigateTo(int tabId, QString url, QString title, QString path) {
     }
 
 #ifdef DEBUG_LOGS
-    qDebug() << "DBWorker::navigateTo:" << title << url;
+    qDebug() << "emit tab changed:" << tabId << historyId << title << url;
 #endif
     emit tabChanged(getTabData(tabId, historyId));
 }
@@ -293,11 +312,11 @@ void DBWorker::updateTab(int tabId, QString url, QString title, QString path)
 {
     Link currentLink = getCurrentLink(tabId);
     if (!currentLink.isValid()) {
-        qWarning() << Q_FUNC_INFO << "attempt to update url that is not stored in db.";
+        qWarning() << "attempt to update url that is not stored in db." << tabId << title << url << path << currentLink.linkId() << currentLink.url();
         return;
     }
 #ifdef DEBUG_LOGS
-    qDebug() << "DBWorker::updateTab:" << title << url;
+    qDebug() << tabId << title << url << path;
 #endif
     updateLink(currentLink.linkId(), url, title, path);
     emit tabChanged(getTabData(tabId));
@@ -384,6 +403,9 @@ int DBWorker::getPreviousLinkIdFromTabHistory(int tabHistoryId)
 }
 
 void DBWorker::clearDeprecatedTabHistory(int tabId, int currentLinkId) {
+#ifdef DEBUG_LOGS
+    qDebug() << "tab id:" << tabId << "current link id:" << currentLinkId;
+#endif
     QSqlQuery query = prepare("DELETE FROM tab_history WHERE tab_id = ? AND link_id > ?;");
     query.bindValue(0, tabId);
     query.bindValue(1, currentLinkId);
@@ -406,6 +428,9 @@ int DBWorker::getNextLinkIdFromTabHistory(int tabHistoryId)
 // Adds url to table history if it is not already there
 bool DBWorker::addToHistory(int linkId)
 {
+#ifdef DEBUG_LOGS
+    qDebug() << "link id:" << linkId;
+#endif
     QSqlQuery query = prepare("SELECT link_id FROM history WHERE link_id = ?;");
     query.bindValue(0, linkId);
     if (!execute(query)) {
@@ -455,6 +480,9 @@ int DBWorker::addToTabHistory(int tabId, int linkId)
         return 0;
     }
 
+#ifdef DEBUG_LOGS
+    qDebug() << "tab:" << tabId << "link:" << linkId << "tab history id" << query.lastInsertId();
+#endif
     return lastId.toInt();
 }
 
@@ -501,6 +529,9 @@ int DBWorker::createLink(QString url, QString title, QString thumbPath)
         return 0;
     }
 
+#ifdef DEBUG_LOGS
+    qDebug() << title << url << thumbPath << lastId.toInt();
+#endif
     return lastId.toInt();
 }
 

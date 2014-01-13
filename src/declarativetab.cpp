@@ -74,7 +74,7 @@ QString DeclarativeTab::title() const {
 
 void DeclarativeTab::setTitle(QString title) {
 #ifdef DEBUG_LOGS
-    qDebug() << "DeclarativeTab::setTitle:" << title;
+    qDebug() << title;
 #endif
     if(title != m_link.title() && m_link.isValid()) {
         DBManager::instance()->updateTitle(m_link.url(), title);
@@ -87,7 +87,7 @@ int DeclarativeTab::tabId() const {
 
 void DeclarativeTab::setTabId(int tabId) {
 #ifdef DEBUG_LOGS
-    qDebug() << "DeclarativeTab::setTabId:" << m_tabId << " old values: " << m_link.title() << m_link.url() << " arg tab: " << tabId;
+    qDebug() << m_tabId << " old values: " << m_link.title() << m_link.url() << " arg tab: " << tabId;
 #endif
 
     if (tabId > 0 && tabId != m_tabId) {
@@ -97,7 +97,7 @@ void DeclarativeTab::setTabId(int tabId) {
     }
 
 #ifdef DEBUG_LOGS
-    qDebug() << "DeclarativeTab::setTabId second condition:" << (tabId > 0) << m_valid;
+    qDebug() << "second condition:" << (tabId > 0) << m_valid;
 #endif
 
     if ((tabId > 0) != m_valid) {
@@ -135,10 +135,10 @@ void DeclarativeTab::goBack()
 
 void DeclarativeTab::navigateTo(QString url, QString title, QString path)
 {
-    if (url != m_link.url()) {
 #ifdef DEBUG_LOGS
-        qDebug() << "DeclarativeTab::navigateTo:" << title << url;
+    qDebug() << m_link.url() << m_link.title() << title << url << path;
 #endif
+    if (url != m_link.url()) {
         DBManager::instance()->navigateTo(m_tabId, url, title, path);
     } else {
         updateTab(url, title, path);
@@ -148,7 +148,7 @@ void DeclarativeTab::navigateTo(QString url, QString title, QString path)
 void DeclarativeTab::updateTab(QString url, QString title, QString path)
 {
 #ifdef DEBUG_LOGS
-    qDebug() << "DeclarativeTab::updateTab:" << title << url << m_tabId << path;
+    qDebug() << title << url << m_tabId << path;
 #endif
     if ((!url.isEmpty() && url != m_link.url())
             || (!title.isEmpty() && title != m_link.title())
@@ -167,7 +167,7 @@ void DeclarativeTab::tabChanged(Tab tab)
     }
 
 #ifdef DEBUG_LOGS
-    qDebug() << "DeclarativeTab::tabChanged old values:" << m_link.title() << m_link.url() << "current tab:" <<  m_tabId << " changed tab:" << tab.tabId();
+    qDebug() << "old values:" << m_link.title() << m_link.url() << "current tab:" <<  m_tabId << " changed tab:" << tab.tabId();
 #endif
     bool thumbChanged = m_link.thumbPath() != tab.currentLink().thumbPath();
     bool titleStringChanged = m_link.title() != tab.currentLink().title();
@@ -175,7 +175,8 @@ void DeclarativeTab::tabChanged(Tab tab)
 
     m_link = tab.currentLink();
 #ifdef DEBUG_LOGS
-    qDebug() << "DeclarativeTab::tabChanged new values:" << m_link.title() << m_link.url() << "current tab:" <<  m_tabId << " changed tab:" << tab.tabId();
+    qDebug() << "new values:" << m_link.title() << m_link.url() << "current tab:" <<  m_tabId << " changed tab:" << tab.tabId();
+    qDebug() << "previous link: " << m_previousLinkId << tab.previousLink() << m_nextLinkId << tab.nextLink();
 #endif
 
     if (urlStringChanged) {
@@ -205,7 +206,7 @@ void DeclarativeTab::updateThumbPath(QString url, QString path, int tabId)
 {
     Q_UNUSED(url)
 #ifdef DEBUG_LOGS
-    qDebug() << "DeclarativeTab::updateThumbPath:" << url << m_link.url() << path << tabId;
+    qDebug() << url << m_link.url() << path << tabId;
 #endif
     if (valid() && tabId == m_tabId) {
         m_link.setThumbPath(path);
@@ -217,7 +218,7 @@ void DeclarativeTab::updateThumbPath(QString url, QString path, int tabId)
 void DeclarativeTab::updateTitle(QString url, QString title)
 {
 #ifdef DEBUG_LOGS
-    qDebug() << "DeclarativeTab::updateTitle:" << url << title << m_tabId;
+    qDebug() << url << title << m_tabId;
 #endif
     if (m_link.url() == url) {
         if (title != m_link.title()) {
