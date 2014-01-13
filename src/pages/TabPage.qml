@@ -34,7 +34,6 @@ Page {
         pageStack.pop(browserPage)
     }
 
-    allowedOrientations: Orientation.Landscape | Orientation.Portrait | Orientation.LandscapeInverted
     backNavigation: browserPage.tabs.count > 0 && browserPage.url != ""
     onStatusChanged: {
         // If tabs have been closed and user swipes
