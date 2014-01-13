@@ -40,7 +40,8 @@ QHash<int, QByteArray> DeclarativeTabModel::roleNames() const
 
 void DeclarativeTabModel::addTab(const QString& url, bool foreground) {
     int tabId = DBManager::instance()->createTab();
-    Tab tab(tabId, Link(0, url, "", ""), 0, 0);
+    int linkId = DBManager::instance()->createLink(tabId, url);
+    Tab tab(tabId, Link(linkId, url, "", ""), 0, 0);
     beginInsertRows(QModelIndex(), rowCount(), rowCount());
     m_tabs.append(tab);
     endInsertRows();

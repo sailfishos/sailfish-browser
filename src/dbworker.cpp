@@ -124,6 +124,31 @@ void DBWorker::createTab(int tabId)
     execute(query);
 }
 
+int DBWorker::createLink(int tabId, QString url)
+{
+    if (url.isEmpty()) {
+        return 0;
+    }
+
+    int linkId = createLink(url, "", "");
+
+    if (!addToHistory(linkId)) {
+        qWarning() << Q_FUNC_INFO << "failed to add url to history" << url;
+    }
+
+    int historyId = addToTabHistory(tabId, linkId);
+    if (historyId > 0) {
+        updateTab(tabId, historyId);
+    } else {
+        qWarning() << Q_FUNC_INFO << "failed to add url to tab history" << url;
+    }
+
+#ifdef DEBUG_LOGS
+    qDebug() << "created link:" << linkId << "with history id:" << historyId << "for tab:" << tabId << url;
+#endif
+    return linkId;
+}
+
 bool DBWorker::updateTab(int tabId, int tabHistoryId)
 {
 #ifdef DEBUG_LOGS

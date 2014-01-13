@@ -24,6 +24,7 @@ public:
     static DBManager *instance();
 
     int createTab();
+    int createLink(int tabId, QString url);
     void getTab(int tabId);
     void getAllTabs();
     void removeTab(int tabId);

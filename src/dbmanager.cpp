@@ -19,8 +19,9 @@ DBManager *DBManager::instance()
     return dbManager;
 }
 
-DBManager::DBManager(QObject *parent) :
-    QObject(parent)
+DBManager::DBManager(QObject *parent)
+    : QObject(parent)
+    , m_maxTabId(0)
 {
     qRegisterMetaType<QList<Tab> >("QList<Tab>");
     qRegisterMetaType<QList<Link> >("QList<Link>");
@@ -50,6 +51,14 @@ int DBManager::createTab()
 {
     QMetaObject::invokeMethod(worker, "createTab", Qt::QueuedConnection, Q_ARG(int, ++m_maxTabId));
     return m_maxTabId;
+}
+
+int DBManager::createLink(int tabId, QString url)
+{
+    int linkId;
+    QMetaObject::invokeMethod(worker, "createLink", Qt::BlockingQueuedConnection,
+                              Q_RETURN_ARG(int, linkId), Q_ARG(int, tabId), Q_ARG(QString, url));
+    return linkId;
 }
 
 void DBManager::getTab(int tabId)

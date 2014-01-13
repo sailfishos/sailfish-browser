@@ -28,6 +28,7 @@ public:
 public slots:
     void init();
     void createTab(int tabId);
+    int createLink(int tabId, QString url);
     void removeTab(int tabId);
     void removeAllTabs();
     void getTab(int tabId);
