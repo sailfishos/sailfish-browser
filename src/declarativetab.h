@@ -12,6 +12,7 @@
 #include <QObject>
 #include <QQuickItem>
 #include <QStringList>
+#include <QFutureWatcher>
 
 #include "tab.h"
 #include "link.h"
@@ -59,6 +60,7 @@ public slots:
 
 private slots:
     void updateThumbPath(QString url, QString path, int tabId);
+    void screenCaptureReady();
 
 signals:
     void thumbPathChanged();
@@ -70,13 +72,22 @@ signals:
     void canGoBackChanged();
 
 private:
+    struct ScreenCapture {
+        int tabId;
+        QString path;
+        QString url;
+    };
+
     void init();
-    void saveToFile(QString url, QImage image, QRect cropBounds, int tabId, qreal rotate);
+    // Grep following todos
+    // TODO: Remove url parameter from this, worker, and manager.
+    ScreenCapture saveToFile(QString url, QImage image, QRect cropBounds, int tabId, qreal rotate);
 
     int m_tabId;
     bool m_valid;
     Link m_link;
     int m_nextLinkId, m_previousLinkId;
+    QFutureWatcher<ScreenCapture> m_screenCapturer;
 };
 
 #endif // DECLARATIVETAB_H

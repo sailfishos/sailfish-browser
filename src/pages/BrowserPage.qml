@@ -43,13 +43,14 @@ Page {
     // Used by newTab function
     property bool newTabRequested
 
-    function newTab(link, foreground, title) {
+    function newTab(url, foreground, title) {
         if (foreground) {
             // This might be something that we don't want to have.
             if (webView.loading) {
                 webView.stop()
             }
             tab.loadWhenTabChanges = true
+            captureScreen()
         }
         // tabMovel.addTab does not trigger anymore navigateTo call. Always done via
         // QmlMozView onUrlChanged handler.
@@ -57,8 +58,8 @@ Page {
         // active in one of the tabs, the tab containing the url is not brought to foreground.
         // This was broken already before this change. We need to add mapping between intented
         // load url and actual result url to TabModel::activateTab so that finding can be done.
-        tabModel.addTab(link, foreground)
-        load(link, title)
+        tabModel.addTab(url, foreground)
+        load(url, title)
     }
 
     function closeTab(index, loadActive) {
@@ -119,11 +120,6 @@ Page {
         webView.chrome = true
 
         if ((url !== "" && webView.url != url) || force) {
-            // We clear the old thumbnail when on foreground
-            // so that incase user tabs thumbs page before firstPaint we are not showing wrong thumb
-            if (webContainer.pageActive && tab.thumbnailPath!="") {
-                WebUtils.deleteThumbnail(tab.thumbnailPath)
-            }
             browserPage.url = url
             resourceController.firstFrameRendered = false
             webView.load(url)
@@ -370,6 +366,12 @@ Page {
 
         onWebViewSuspended: {
             connectionHelper.closeNetworkSession()
+        }
+
+        onFirstFrameRenderedChanged: {
+            if (firstFrameRendered) {
+                captureScreen()
+            }
         }
     }
 

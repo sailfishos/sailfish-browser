@@ -198,14 +198,6 @@ QString DeclarativeWebUtils::picturesDir() const
     return QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
 }
 
-void DeclarativeWebUtils::deleteThumbnail(QString path) const
-{
-    QFile f(path);
-    if (f.exists()) {
-        f.remove();
-    }
-}
-
 QString DeclarativeWebUtils::displayableUrl(QString fullUrl) const
 {
     QUrl url(fullUrl);

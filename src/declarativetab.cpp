@@ -30,7 +30,8 @@ DeclarativeTab::DeclarativeTab(QQuickItem *parent)
 
 DeclarativeTab::~DeclarativeTab()
 {
-
+    m_screenCapturer.cancel();
+    m_screenCapturer.waitForFinished();
 }
 
 void DeclarativeTab::init()
@@ -43,6 +44,7 @@ void DeclarativeTab::init()
             this, SLOT(updateThumbPath(QString,QString,int)));
     connect(DBManager::instance(), SIGNAL(titleChanged(QString,QString)),
             this, SLOT(updateTitle(QString,QString)));
+    connect(&m_screenCapturer, SIGNAL(finished()), this, SLOT(screenCaptureReady()));
 
     QString cacheLocation = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
     QDir dir(cacheLocation);
@@ -214,6 +216,19 @@ void DeclarativeTab::updateThumbPath(QString url, QString path, int tabId)
     }
 }
 
+void DeclarativeTab::screenCaptureReady()
+{
+    ScreenCapture capture = m_screenCapturer.result();
+#ifdef DEBUG_LOGS
+    qDebug() << capture.tabId << capture.path << capture.url;
+#endif
+    if (capture.tabId != -1) {
+        // Update immediately without dbworker round trip.
+        updateThumbPath(capture.url, capture.path, capture.tabId);
+        DBManager::instance()->updateThumbPath(capture.url, capture.path, capture.tabId);
+    }
+}
+
 // Data changed in DB
 void DeclarativeTab::updateTitle(QString url, QString title)
 {
@@ -244,23 +259,40 @@ void DeclarativeTab::captureScreen(QString url, int x, int y, int width, int hei
         return;
     }
 
+    // Cleanup old thumb.
+    updateThumbPath(url, "", m_tabId);
+
     QImage image = window()->grabWindow();
     QRect cropBounds(x, y, width, height);
 
+#ifdef DEBUG_LOGS
+    qDebug() << "about to set future";
+#endif
     // asynchronous save to avoid the slow I/O
-    QtConcurrent::run(this, &DeclarativeTab::saveToFile, url, image, cropBounds, m_tabId, rotate);
+    m_screenCapturer.setFuture(QtConcurrent::run(this, &DeclarativeTab::saveToFile, url, image, cropBounds, m_tabId, rotate));
 }
 
-void DeclarativeTab::saveToFile(QString url, QImage image, QRect cropBounds, int tabId, qreal rotate) {
-    QString path = QString("%1/tab-%2-thumb.jpg").arg(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)).arg(tabId);
+DeclarativeTab::ScreenCapture DeclarativeTab::saveToFile(QString url, QImage image, QRect cropBounds, int tabId, qreal rotate) {
+    QString path = QString("%1/tab-%2-thumb.png").arg(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)).arg(tabId);
+    QFile f(path);
+    if (f.exists()) {
+        f.remove();
+    }
+    f.close();
+
     QTransform transform;
     transform.rotate(360 - rotate);
     image = image.transformed(transform);
     image = image.copy(cropBounds);
 
+    ScreenCapture capture;
     if(image.save(path)) {
-        DBManager::instance()->updateThumbPath(url, path, tabId);
+        capture.tabId = tabId;
+        capture.path = path;
+        capture.url = url;
     } else {
+        capture.tabId = -1;
         qWarning() << Q_FUNC_INFO << "failed to save image" << path;
     }
+    return capture;
 }
