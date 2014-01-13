@@ -20,7 +20,6 @@
 class DeclarativeTab : public QQuickItem {
     Q_OBJECT
 
-    Q_PROPERTY(int tabId READ tabId WRITE setTabId NOTIFY tabIdChanged)
     Q_PROPERTY(bool valid READ valid NOTIFY validChanged FINAL)
     Q_PROPERTY(QString thumbnailPath READ thumbnailPath WRITE setThumbnailPath NOTIFY thumbPathChanged)
     Q_PROPERTY(QString url READ url NOTIFY urlChanged)
@@ -40,10 +39,9 @@ public:
     QString title() const;
     void setTitle(QString title);
 
-    int tabId() const;
-    void setTabId(int tabId);
 
     bool valid() const;
+    void invalidate();
 
     bool canGoForward() const;
     bool canGoBack() const;
@@ -63,15 +61,16 @@ private slots:
     void screenCaptureReady();
 
 signals:
-    void thumbPathChanged();
+    void thumbPathChanged(QString path, int tabId);
     void urlChanged();
-    void tabIdChanged();
     void validChanged();
     void titleChanged();
     void canGoFowardChanged();
     void canGoBackChanged();
 
 private:
+    void setTabId(int tabId);
+
     struct ScreenCapture {
         int tabId;
         QString path;

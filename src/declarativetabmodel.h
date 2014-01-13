@@ -10,17 +10,21 @@
 
 #include <QAbstractListModel>
 #include <QQmlParserStatus>
+#include <QPointer>
 
 #include "tab.h"
+
+class DeclarativeTab;
 
 class DeclarativeTabModel : public QAbstractListModel, public QQmlParserStatus
 {
     Q_OBJECT
     Q_INTERFACES(QQmlParserStatus)
 
-    Q_PROPERTY(int count READ rowCount NOTIFY countChanged)
-    Q_PROPERTY(int currentTabId READ currentTabId NOTIFY currentTabChanged)
-    Q_PROPERTY(int currentTabIndex READ currentTabIndex WRITE setCurrentTabIndex NOTIFY currentTabChanged)
+    Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
+    Q_PROPERTY(int currentTabId READ currentTabId NOTIFY currentTabIdChanged FINAL)
+    Q_PROPERTY(DeclarativeTab *currentTab READ currentTab WRITE setCurrentTab NOTIFY currentTabChanged FINAL)
+    Q_PROPERTY(bool loaded READ loaded NOTIFY loadedChanged FINAL)
 public:
     DeclarativeTabModel(QObject *parent = 0);
     
@@ -35,6 +39,10 @@ public:
     Q_INVOKABLE void remove(const int index);
     Q_INVOKABLE void clear();
     Q_INVOKABLE bool activateTab(const QString& url);
+    Q_INVOKABLE bool activateTab(const int &index);
+    Q_INVOKABLE void closeActiveTab();
+
+    int count() const;
 
     // From QAbstractListModel
     int rowCount(const QModelIndex & parent = QModelIndex()) const;
@@ -45,10 +53,14 @@ public:
     void classBegin();
     void componentComplete();
 
-    void setCurrentTabIndex(const int index);
-    int currentTabIndex() const;
-
     int currentTabId() const;
+
+    DeclarativeTab *currentTab() const;
+    void setCurrentTab(DeclarativeTab *currentTab);
+
+    bool loaded() const;
+
+    static bool tabSort(const Tab &t1, const Tab &t2);
 
 public slots:
     void tabsAvailable(QList<Tab> tabs);
@@ -56,17 +68,25 @@ public slots:
 signals:
     void countChanged();
     void currentTabChanged();
+    void currentTabIdChanged();
+    void loadedChanged();
 
 private slots:
+    void updateThumbPath(QString path, int tabId);
     void updateThumbPath(QString url, QString path, int tabId);
     void updateTitle(QString url, QString title);
     void tabChanged(Tab tab);
 
 private:
     void load();
-    void removeTab(int index);
+    void removeTab(const Tab &tab, int index = -1);
+    void saveTabOrder();
+    int loadTabOrder();
+    void updateActiveTab(const Tab &newActiveTab, bool updateCurrentTab = true);
 
+    QPointer<DeclarativeTab> m_currentTab;
+    Tab m_activeTab;
     QList<Tab> m_tabs;
-    int m_currentTabIndex;
+    bool m_loaded;
 };
 #endif // DECLARATIVETABMODEL_H

@@ -129,7 +129,7 @@ Page {
             Grid {
                 id: tabsGrid
                 visible: !page.newTab
-                columns: page.isPortrait ? 2 : 3
+                columns: page.isPortrait ? 2 : 4
                 rows: Math.ceil(browserPage.tabs.count / columns)
                 anchors.bottom: favoriteHeader.bottom
                 move: Transition {
@@ -181,17 +181,11 @@ Page {
                             anchors.fill: parent
                             asynchronous: true
                             source: thumbnailPath
-                            cache: false
-                            fillMode: Image.PreserveAspectCrop
-                            sourceSize {
-                                width: parent.width
-                                height: width
-                            }
+                            sourceSize.width: Screen.width / 2
                             visible: status !== Image.Error && thumbnailPath !== ""
 
                             RadialGradient {
-                                id: gradient
-                                source: thumb.visible? thumb : placeHolder
+                                source: thumb
                                 width: thumb.width
                                 height: thumb.height
                                 anchors.centerIn: parent
@@ -223,7 +217,6 @@ Page {
                         onClicked: {
                             _loadRequested = true
                             browserPage.loadTab(model.index, model.url, model.title)
-                            window.pageStack.pop(browserPage)
                         }
                     }
                 }
@@ -255,45 +248,52 @@ Page {
         Rectangle {
             id: headerContent
             width: parent.width
-            height: Theme.itemSizeLarge + titleRow.height + searchField.height + Theme.paddingLarge
-            color: Theme.rgba(Theme.highlightColor,0.1)
+            height: Screen.width / 2
+            color: Theme.rgba(Theme.highlightColor, 0.1)
 
-            Row {
-                id: titleRow
-                spacing: Theme.paddingSmall
+            Image {
+                id: headerThumbnail
+                width: height
+                height: parent.height
+                sourceSize.height: height
+                anchors.right: parent.right
+                asynchronous: true
+                source: browserPage.currentTab.thumbnailPath
+                cache: false
+                visible: status !== Image.Error && source !== ""
+            }
 
+            OpacityRampEffect {
+                opacity: 0.6
+                sourceItem: headerThumbnail
+                slope: 1.0
+                offset: 0.0
+                direction: OpacityRamp.RightToLeft
+            }
+
+            Label {
+                id: titleLabel
                 anchors {
                     bottom: searchField.top
                     bottomMargin: Theme.paddingMediun
                     left: parent.left
                     leftMargin: Theme.paddingLarge
+                    right: searchField.right
+                    rightMargin: Theme.paddingMedium
                 }
-
-                Rectangle {
-                    height: Theme.iconSizeSmall
-                    width: height
-                    radius: 5.0
-                    color: Theme.highlightColor
-                    opacity: 0.1
-                }
-
-                Label {
-                    id: titleLabel
-                    //% "New tab"
-                    text: (browserPage.tabs.count == 0 || newTab) ? qsTrId("sailfish_browser-la-new_tab") : (browserPage.currentTab.url == _search ? browserPage.currentTab.title : "")
-                    color: Theme.highlightColor
-                    font.pixelSize: Theme.fontSizeSmall
-                    width: page.width * 3.0 / 4.0
-                    truncationMode: TruncationMode.Fade
-                }
+                //% "New tab"
+                text: (browserPage.tabs.count == 0 || newTab) ? qsTrId("sailfish_browser-la-new_tab") : (browserPage.currentTab.url == _search ? browserPage.currentTab.title : "")
+                color: Theme.highlightColor
+                font.pixelSize: Theme.fontSizeSmall
+                width: parent.width - Theme.iconSizeSmall - Theme.paddingSmall
+                truncationMode: TruncationMode.Fade
             }
 
             TextField {
                 id: searchField
 
-                anchors { bottom: parent.bottom; bottomMargin: Theme.paddingMedium }
-
-                width: page.width
+                anchors.bottom: parent.bottom
+                width: page.width - (closeActiveTab.visible ? closeActiveTab.width : 0)
                 // Handle initially newTab state. Currently newTab initially
                 // true when triggering new tab cover action.
                 text: newTab ? "" : browserPage.currentTab.url
@@ -301,7 +301,7 @@ Page {
                 //: Placeholder for the search/address field
                 //% "Search or Address"
                 placeholderText: qsTrId("sailfish_browser-ph-search_or_url")
-                color: searchField.focus? Theme.highlightColor : Theme.primaryColor
+                color: searchField.focus ? Theme.highlightColor : Theme.primaryColor
                 focusOutBehavior: FocusBehavior.KeepFocus
                 inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase | Qt.ImhUrlCharactersOnly
 
@@ -332,7 +332,20 @@ Page {
                         searchField.selectAll()
                     }
                 }
+            }
 
+            IconButton {
+                id: closeActiveTab
+                visible: browserPage.currentTab.valid && !page.newTab && !searchField.focus
+                anchors {
+                    top: searchField.top
+                    right: parent.right; rightMargin: Theme.paddingMedium
+                }
+                icon.source: "image://theme/icon-m-close"
+                onClicked: {
+                    _tabClosed = true
+                    browserPage.closeActiveTab(false)
+                }
             }
         }
     }

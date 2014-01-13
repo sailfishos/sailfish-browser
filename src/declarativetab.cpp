@@ -36,14 +36,6 @@ DeclarativeTab::~DeclarativeTab()
 
 void DeclarativeTab::init()
 {
-    connect(DBManager::instance(), SIGNAL(tabChanged(Tab)),
-            this, SLOT(tabChanged(Tab)));
-    connect(DBManager::instance(), SIGNAL(tabAvailable(Tab)),
-            this, SLOT(tabChanged(Tab)));
-    connect(DBManager::instance(), SIGNAL(thumbPathChanged(QString,QString,int)),
-            this, SLOT(updateThumbPath(QString,QString,int)));
-    connect(DBManager::instance(), SIGNAL(titleChanged(QString,QString)),
-            this, SLOT(updateTitle(QString,QString)));
     connect(&m_screenCapturer, SIGNAL(finished()), this, SLOT(screenCaptureReady()));
 
     QString cacheLocation = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
@@ -83,10 +75,6 @@ void DeclarativeTab::setTitle(QString title) {
     }
 }
 
-int DeclarativeTab::tabId() const {
-    return m_tabId;
-}
-
 void DeclarativeTab::setTabId(int tabId) {
 #ifdef DEBUG_LOGS
     qDebug() << m_tabId << " old values: " << m_link.title() << m_link.url() << " arg tab: " << tabId;
@@ -94,8 +82,6 @@ void DeclarativeTab::setTabId(int tabId) {
 
     if (tabId > 0 && tabId != m_tabId) {
         m_tabId = tabId;
-        DBManager::instance()->getTab(m_tabId);
-        emit tabIdChanged();
     }
 
 #ifdef DEBUG_LOGS
@@ -111,6 +97,40 @@ void DeclarativeTab::setTabId(int tabId) {
 bool DeclarativeTab::valid() const
 {
     return m_valid;
+}
+
+void DeclarativeTab::invalidate()
+{
+    m_tabId = 0;
+    if (m_valid) {
+        m_valid = false;
+        emit validChanged();
+    }
+
+    if (!m_link.thumbPath().isEmpty()) {
+        m_link.setThumbPath("");
+        emit thumbPathChanged("", m_tabId);
+    }
+
+    if (!m_link.title().isEmpty()) {
+        m_link.setTitle("");
+        emit titleChanged();
+    }
+
+    if (!m_link.url().isEmpty()) {
+        m_link.setUrl("");
+        emit urlChanged();
+    }
+
+    if (m_nextLinkId != 0) {
+        m_nextLinkId = 0;
+        emit canGoFowardChanged();
+    }
+
+    if (m_previousLinkId != 0) {
+        m_previousLinkId = 0;
+        emit canGoBackChanged();
+    }
 }
 
 bool DeclarativeTab::canGoForward() const {
@@ -159,15 +179,8 @@ void DeclarativeTab::updateTab(QString url, QString title, QString path)
     }
 }
 
-// Data changed in DB
 void DeclarativeTab::tabChanged(Tab tab)
 {
-    // For valid tab "tab.tabId() != m_tabId" is ok as request is set by
-    // setTabId. For invalid tab we can reset all properties.
-    if (tab.tabId() != m_tabId && tab.isValid()) {
-        return;
-    }
-
 #ifdef DEBUG_LOGS
     qDebug() << "old values:" << m_link.title() << m_link.url() << "current tab:" <<  m_tabId << " changed tab:" << tab.tabId();
 #endif
@@ -175,6 +188,7 @@ void DeclarativeTab::tabChanged(Tab tab)
     bool titleStringChanged = m_link.title() != tab.currentLink().title();
     bool urlStringChanged = m_link.url() != tab.currentLink().url();
 
+    setTabId(tab.tabId());
     m_link = tab.currentLink();
 #ifdef DEBUG_LOGS
     qDebug() << "new values:" << m_link.title() << m_link.url() << "current tab:" <<  m_tabId << " changed tab:" << tab.tabId();
@@ -185,7 +199,7 @@ void DeclarativeTab::tabChanged(Tab tab)
         emit urlChanged();
     }
     if (thumbChanged) {
-        emit thumbPathChanged();
+        emit thumbPathChanged(m_link.thumbPath(), tab.tabId());
     }
     if (titleStringChanged) {
         emit titleChanged();
@@ -206,13 +220,14 @@ void DeclarativeTab::tabChanged(Tab tab)
 // Data changed in DB
 void DeclarativeTab::updateThumbPath(QString url, QString path, int tabId)
 {
+    // TODO: Remove url parameter from this, worker, and manager.
     Q_UNUSED(url)
 #ifdef DEBUG_LOGS
     qDebug() << url << m_link.url() << path << tabId;
 #endif
-    if (valid() && tabId == m_tabId) {
+    if (valid() && tabId == m_tabId && m_link.thumbPath() != path) {
         m_link.setThumbPath(path);
-        emit thumbPathChanged();
+        emit thumbPathChanged(path, tabId);
     }
 }
 

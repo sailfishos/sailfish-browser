@@ -21,7 +21,6 @@ Page {
     property alias tabs: tabModel
     property alias favorites: favoriteModel
     property alias history: historyModel
-    property alias currentTabIndex: tabModel.currentTabIndex
     property alias viewLoading: webView.loading
     property alias currentTab: tab
     property string title
@@ -58,6 +57,7 @@ Page {
         // active in one of the tabs, the tab containing the url is not brought to foreground.
         // This was broken already before this change. We need to add mapping between intented
         // load url and actual result url to TabModel::activateTab so that finding can be done.
+        newTabRequested = true
         tabModel.addTab(url, foreground)
         load(url, title)
     }
@@ -67,12 +67,31 @@ Page {
             return
         }
 
-        if (index == currentTabIndex && webView.loading) {
+        if (webView.loading) {
             webView.stop()
         }
 
         tab.loadWhenTabChanges = loadActive
         tabModel.remove(index)
+    }
+
+    function closeActiveTab(loadActive) {
+        if (tabModel.count === 0) {
+            return
+        }
+
+        if (webView.loading) {
+            webView.stop()
+        }
+
+        tab.loadWhenTabChanges = loadActive
+        tabModel.closeActiveTab();
+
+        if (tabModel.count === 0 && browserPage.status === PageStatus.Active) {
+            browserPage.title = ""
+            browserPage.url = ""
+            pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage, "initialSearchFocus": true })
+        }
     }
 
     function reload() {
@@ -92,7 +111,6 @@ Page {
     }
 
     function load(url, title, force) {
-
         if (url.substring(0, 6) !== "about:" && url.substring(0, 5) !== "file:"
             && !connectionHelper.haveNetworkConnectivity()
             && !browserPage._deferredLoad) {
@@ -107,7 +125,8 @@ Page {
         }
 
         if (tabModel.count == 0) {
-            newTab(url, true)
+            newTabRequested = true
+            tabModel.addTab(url, true)
         }
 
         if (title) {
@@ -139,16 +158,10 @@ Page {
             browserPage.title = title
         }
 
-        if (currentTabIndex !== index) {
-            tab.loadWhenTabChanges = true;
-            currentTabIndex = index
-        } else {
-            // In case of close currentTabIndex might have already been updated correctly.
-            // Case would be: two tabs open, close second (index 1) in TabPage, currentTabIndex will
-            // be 1. When last remaining tab is activated currentTabIndex change won't trigger
-            // reload.
-            load(url, title)
-        }
+        tab.loadWhenTabChanges = true;
+        tabModel.activateTab(index)
+        // When tab is loaded we always pop back to BrowserPage.
+        pageStack.pop(browserPage)
     }
 
     function deleteTabHistory() {
@@ -157,7 +170,11 @@ Page {
 
     function captureScreen() {
         if (status == PageStatus.Active && resourceController.firstFrameRendered) {
-            var size = browserPage.isPortrait ? webView.width : webContainer.height - toolBarContainer.height
+            var size = Screen.width
+            if (browserPage.isLandscape && !fullscreenMode) {
+                size -= toolbarRow.height
+            }
+
             tab.captureScreen(webView.url, 0, 0, size, size, browserPage.rotation)
         }
     }
@@ -291,6 +308,7 @@ Page {
 
     TabModel {
         id: tabModel
+        currentTab: tab
     }
 
     HistoryModel {
@@ -308,17 +326,6 @@ Page {
         // are reflected in the Tab element.
         property bool loadWhenTabChanges: false
         property bool backForwardNavigation: false
-
-        function closeCurrentTab() {
-            closeTab(currentTabIndex, true)
-            if (!tabModel.count) {
-                browserPage.title = ""
-                browserPage.url = ""
-                pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage, "initialSearchFocus": true })
-            }
-        }
-
-        tabId: tabModel.currentTabId
 
         onUrlChanged: {
             if (tab.valid && (loadWhenTabChanges || backForwardNavigation)) {
@@ -379,7 +386,11 @@ Page {
         id: webView
 
         readonly property bool loaded: loadProgress === 100
+        readonly property bool readyToLoad: viewReady && tabModel.loaded
         property bool userHasDraggedWhileLoading
+        property bool viewReady
+
+
         visible: WebUtils.firstUseDone
 
         enabled: browserPage.status == PageStatus.Active
@@ -394,6 +405,21 @@ Page {
         focus: true
         width: browserPage.width
         state: ""
+
+        onReadyToLoadChanged: {
+            if (!WebUtils.firstUseDone) {
+                return
+            }
+
+            if (WebUtils.initialPage !== "") {
+                browserPage.load(WebUtils.initialPage)
+            } else if (tabModel.count > 0) {
+                // First tab is actived when tabs are loaded to the tabs model.
+                browserPage.load(tab.url, tab.title)
+            } else {
+                browserPage.load(WebUtils.homePage)
+            }
+        }
 
         //{ // TODO
         // No resizes while page is not active
@@ -469,17 +495,7 @@ Page {
             loadFrameScript("chrome://embedlite/content/SelectAsyncHelper.js")
             loadFrameScript("chrome://embedlite/content/embedhelper.js")
 
-            if (!WebUtils.firstUseDone) {
-                return
-            }
-
-            if (WebUtils.initialPage !== "") {
-                browserPage.load(WebUtils.initialPage)
-            } else if (historyModel.count != 0 && tab.url != "") {
-                browserPage.load(tab.url)
-            } else {
-                browserPage.load(WebUtils.homePage)
-            }
+            viewReady = true
         }
 
         onDraggingChanged: {
@@ -743,7 +759,7 @@ Page {
             title: browserPage.title
             url: browserPage.url
             onSearchClicked: controlArea.openTabPage(true, false, PageStackAction.Animated)
-            onCloseClicked: tab.closeCurrentTab()
+            onCloseClicked: browserPage.closeActiveTab(true)
         }
 
         Browser.ToolBarContainer {
@@ -801,7 +817,7 @@ Page {
                 Browser.IconButton {
                     visible: isLandscape
                     source: "image://theme/icon-m-close"
-                    onClicked: tab.closeCurrentTab()
+                    onClicked: browserPage.closeActiveTab(true)
                 }
 
                 Browser.IconButton {
@@ -823,7 +839,7 @@ Page {
                     onClicked: controlArea.openTabPage(false, false, PageStackAction.Animated)
 
                     Label {
-                        text: tabs.count
+                        text: tabModel.count
                         x: (parent.width - contentWidth) / 2 - 5
                         y: (parent.height - contentHeight) / 2 - 5
                         font.pixelSize: Theme.fontSizeExtraSmall
@@ -894,7 +910,7 @@ Page {
             }
             if (webView.url != "") {
                 captureScreen()
-                if (!tabs.activateTab(url)) {
+                if (!tabModel.activateTab(url)) {
                     // Not found in tabs list, create newtab and load
                     newTab(url, true)
                 }
@@ -904,7 +920,6 @@ Page {
                     load(url)
                 } else {
                     tabModel.addTab(url, false)
-                    currentTabIndex = tabModel.count - 1
                 }
             }
             if (browserPage.status !== PageStatus.Active) {
