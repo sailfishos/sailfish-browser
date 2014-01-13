@@ -19,7 +19,6 @@ Page {
     property bool initialSearchFocus
     property bool newTab
 
-    property bool _tabClosed
     property bool _loadRequested
     property bool _editing
     property string _search
@@ -43,7 +42,7 @@ Page {
         // enters url on search field, or actives loading by tapping on an open tab
         // then loadRequested is set true and this code
         // path does not trigger loading again.
-        if (_tabClosed && !_loadRequested && status == PageStatus.Deactivating) {
+        if (!_loadRequested && status == PageStatus.Deactivating) {
             browserPage.load(browserPage.currentTab.url, browserPage.currentTab.title)
         }
     }
@@ -201,18 +200,7 @@ Page {
                                 }
                             }
                         }
-
-                        IconButton {
-                            anchors {
-                                bottom: parent.bottom; bottomMargin: Theme.paddingMedium
-                                right: parent.right; rightMargin: Theme.paddingMedium
-                            }
-                            icon.source: "image://theme/icon-m-close"
-                            onClicked: {
-                                _tabClosed = true
-                                browserPage.closeTab(index, false)
-                            }
-                        }
+                        Browser.CloseTabButton {}
 
                         onClicked: {
                             _loadRequested = true
@@ -293,7 +281,7 @@ Page {
                 id: searchField
 
                 anchors.bottom: parent.bottom
-                width: page.width - (closeActiveTab.visible ? closeActiveTab.width : 0)
+                width: page.width - (closeActiveTabButton.visible ? closeActiveTabButton.width : 0)
                 // Handle initially newTab state. Currently newTab initially
                 // true when triggering new tab cover action.
                 text: newTab ? "" : browserPage.currentTab.url
@@ -334,18 +322,10 @@ Page {
                 }
             }
 
-            IconButton {
-                id: closeActiveTab
+            Browser.CloseTabButton {
+                id: closeActiveTabButton
                 visible: browserPage.currentTab.valid && !page.newTab && !searchField.focus
-                anchors {
-                    top: searchField.top
-                    right: parent.right; rightMargin: Theme.paddingMedium
-                }
-                icon.source: "image://theme/icon-m-close"
-                onClicked: {
-                    _tabClosed = true
-                    browserPage.closeActiveTab(false)
-                }
+                closeActiveTab: true
             }
         }
     }
