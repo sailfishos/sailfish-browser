@@ -1,7 +1,7 @@
 Name:       sailfish-browser
 
 Summary:    Sailfish Browser
-Version:    0.8.2
+Version:    0.8.3
 Release:    1
 Group:      Applications/Internet
 License:    Prop
@@ -21,7 +21,7 @@ BuildRequires:  pkgconfig(qdeclarative5-boostable)
 BuildRequires:  qt5-qttools
 BuildRequires:  qt5-qttools-linguist
 BuildRequires:  gdb
-Requires: sailfishsilica-qt5 >= 0.11.1
+Requires: sailfishsilica-qt5 >= 0.11.4
 Requires: jolla-ambient >= 0.3.24
 Requires: xulrunner-qt5 >= 26.0.4.1
 Requires: embedlite-components-qt5 >= 1.3.11
