@@ -238,7 +238,6 @@ Page {
     // This clipping can handle also clipping of QmlMozView. When this page is active we do not need to clip
     // if input method is not visible.
     clip: status != PageStatus.Active || webContainer.inputPanelVisible
-    allowedOrientations: Orientation.Landscape | Orientation.Portrait | Orientation.LandscapeInverted
 
     orientationTransitions: Transition {
         to: 'Portrait,Landscape,LandscapeInverted'
