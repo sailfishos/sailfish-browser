@@ -218,7 +218,8 @@ Page {
                                                             "linkHref": linkHref,
                                                             "imageSrc": imageSrc,
                                                             "linkTitle": linkTitle.trim(),
-                                                            "contentType": contentType
+                                                            "contentType": contentType,
+                                                            "viewId": webView.uniqueID()
                                                         })
                 hideVirtualKeyboard()
                 _contextMenu.show()
