@@ -182,7 +182,7 @@ void DeclarativeTab::updateTab(QString url, QString title, QString path)
 void DeclarativeTab::tabChanged(Tab tab)
 {
 #ifdef DEBUG_LOGS
-    qDebug() << "old values:" << m_link.title() << m_link.url() << "current tab:" <<  m_tabId << " changed tab:" << tab.tabId();
+    qDebug() << "old values:" << m_link.title() << m_link.url() << m_link.thumbPath() << "current tab:" <<  m_tabId << " changed tab:" << tab.tabId();
 #endif
     bool thumbChanged = m_link.thumbPath() != tab.currentLink().thumbPath();
     bool titleStringChanged = m_link.title() != tab.currentLink().title();
@@ -191,7 +191,7 @@ void DeclarativeTab::tabChanged(Tab tab)
     setTabId(tab.tabId());
     m_link = tab.currentLink();
 #ifdef DEBUG_LOGS
-    qDebug() << "new values:" << m_link.title() << m_link.url() << "current tab:" <<  m_tabId << " changed tab:" << tab.tabId();
+    qDebug() << "new values:" << m_link.title() << m_link.url() << m_link.thumbPath() << "current tab:" <<  m_tabId << " changed tab:" << tab.tabId();
     qDebug() << "previous link: " << m_previousLinkId << tab.previousLink() << m_nextLinkId << tab.nextLink();
 #endif
 
