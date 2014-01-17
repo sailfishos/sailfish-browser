@@ -289,12 +289,6 @@ void DeclarativeTab::captureScreen(QString url, int x, int y, int width, int hei
 
 DeclarativeTab::ScreenCapture DeclarativeTab::saveToFile(QString url, QImage image, QRect cropBounds, int tabId, qreal rotate) {
     QString path = QString("%1/tab-%2-thumb.png").arg(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)).arg(tabId);
-    QFile f(path);
-    if (f.exists()) {
-        f.remove();
-    }
-    f.close();
-
     QTransform transform;
     transform.rotate(360 - rotate);
     image = image.transformed(transform);

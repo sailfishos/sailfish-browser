@@ -351,6 +351,12 @@ void DeclarativeTabModel::updateActiveTab(const Tab &newActiveTab, bool updateCu
     qDebug() << "old active tab: " << m_activeTab.tabId() << m_activeTab.isValid() << m_activeTab.currentLink().url() << m_tabs.count();
     qDebug() << "new active tab: " << newActiveTab.tabId() << newActiveTab.isValid() << newActiveTab.currentLink().url();
 #endif
+    QFile f(newActiveTab.currentLink().thumbPath());
+    if (f.exists()) {
+        f.remove();
+    }
+    f.close();
+
     m_activeTab = newActiveTab;
     emit currentTabIdChanged();
 
