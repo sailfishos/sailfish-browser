@@ -248,7 +248,7 @@ Page {
                 asynchronous: true
                 source: browserPage.currentTab.thumbnailPath
                 cache: false
-                visible: status !== Image.Error && source !== ""
+                visible: status !== Image.Error && source !== "" && !page.newTab
             }
 
             OpacityRampEffect {
