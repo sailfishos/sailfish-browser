@@ -1,7 +1,7 @@
 Name:       sailfish-browser
 
 Summary:    Sailfish Browser
-Version:    0.8.3
+Version:    0.9.0
 Release:    1
 Group:      Applications/Internet
 License:    Prop
