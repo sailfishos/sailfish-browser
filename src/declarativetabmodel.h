@@ -25,6 +25,8 @@ class DeclarativeTabModel : public QAbstractListModel, public QQmlParserStatus
     Q_PROPERTY(int currentTabId READ currentTabId NOTIFY currentTabIdChanged FINAL)
     Q_PROPERTY(DeclarativeTab *currentTab READ currentTab WRITE setCurrentTab NOTIFY currentTabChanged FINAL)
     Q_PROPERTY(bool loaded READ loaded NOTIFY loadedChanged FINAL)
+    Q_PROPERTY(bool browsing READ browsing WRITE setBrowsing NOTIFY browsingChanged FINAL)
+
 public:
     DeclarativeTabModel(QObject *parent = 0);
     
@@ -60,6 +62,9 @@ public:
 
     bool loaded() const;
 
+    bool browsing() const;
+    void setBrowsing(bool browsing);
+
     static bool tabSort(const Tab &t1, const Tab &t2);
 
 public slots:
@@ -70,6 +75,7 @@ signals:
     void currentTabChanged();
     void currentTabIdChanged();
     void loadedChanged();
+    void browsingChanged();
 
 private slots:
     void updateThumbPath(QString path, int tabId);
@@ -88,5 +94,7 @@ private:
     Tab m_activeTab;
     QList<Tab> m_tabs;
     bool m_loaded;
+    bool m_browsing;
+    bool m_activeTabClosed;
 };
 #endif // DECLARATIVETABMODEL_H

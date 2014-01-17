@@ -20,6 +20,8 @@ DeclarativeTabModel::DeclarativeTabModel(QObject *parent)
     : QAbstractListModel(parent)
     , m_currentTab(0)
     , m_loaded(false)
+    , m_browsing(false)
+    , m_activeTabClosed(false)
 {
     connect(DBManager::instance(), SIGNAL(tabsAvailable(QList<Tab>)),
             this, SLOT(tabsAvailable(QList<Tab>)));
@@ -90,6 +92,8 @@ void DeclarativeTabModel::clear()
     emit countChanged();
     closeActiveTab();
     endResetModel();
+    // No need guard anything as all tabs got closed.
+    m_activeTabClosed = false;
 }
 
 
@@ -136,11 +140,15 @@ bool DeclarativeTabModel::activateTab(const int &index)
 
 void DeclarativeTabModel::closeActiveTab()
 {
+#ifdef DEBUG_LOGS
+    qDebug() << m_activeTab.isValid() << m_activeTab.tabId() << m_activeTab.currentLink().thumbPath() << m_activeTab.currentLink().url();
+#endif
     if (m_activeTab.isValid()) {
         // Invalidate active tab
         removeTab(m_activeTab);
         m_activeTab.setTabId(0);
         emit countChanged();
+        m_activeTabClosed = true;
         if (!activateTab(0) && m_currentTab) {
             // Last active tab got closed.
             Link emptyLink;
@@ -210,6 +218,28 @@ bool DeclarativeTabModel::loaded() const
     return m_loaded;
 }
 
+bool DeclarativeTabModel::browsing() const
+{
+    return m_browsing;
+}
+
+void DeclarativeTabModel::setBrowsing(bool browsing)
+{
+    if (browsing != m_browsing) {
+        if (browsing && m_currentTab && m_activeTab.isValid()) {
+            m_currentTab->updateThumbPath(m_activeTab.currentLink().url(), "", m_activeTab.tabId());
+            QFile f(m_activeTab.currentLink().thumbPath());
+            if (f.exists()) {
+                f.remove();
+            }
+            f.close();
+        }
+
+        m_browsing = browsing;
+        emit browsingChanged();
+    }
+}
+
 void DeclarativeTabModel::classBegin()
 {
     DBManager::instance()->getAllTabs();
@@ -256,8 +286,14 @@ void DeclarativeTabModel::tabsAvailable(QList<Tab> tabs)
 
 void DeclarativeTabModel::tabChanged(Tab tab)
 {
+    // When a tab was closed do not update anything from database as
+    // loading might be on going.
+    if (m_activeTabClosed && this->sender() == DBManager::instance()) {
+        m_activeTabClosed = false;
+        return;
+    }
 #ifdef DEBUG_LOGS
-    qDebug() << "tab: " << tab.tabId() << tab.currentLink().url() << tab.currentLink().title() << m_tabs.indexOf(tab);
+    qDebug() << "tab: " << tab.tabId() << m_activeTab.tabId() << tab.currentLink().thumbPath() << tab.currentLink().url() << tab.currentLink().title() << m_tabs.indexOf(tab);
 #endif
     if (tab.tabId() == m_activeTab.tabId()) {
         updateActiveTab(tab);
@@ -351,12 +387,6 @@ void DeclarativeTabModel::updateActiveTab(const Tab &newActiveTab, bool updateCu
     qDebug() << "old active tab: " << m_activeTab.tabId() << m_activeTab.isValid() << m_activeTab.currentLink().url() << m_tabs.count();
     qDebug() << "new active tab: " << newActiveTab.tabId() << newActiveTab.isValid() << newActiveTab.currentLink().url();
 #endif
-    QFile f(newActiveTab.currentLink().thumbPath());
-    if (f.exists()) {
-        f.remove();
-    }
-    f.close();
-
     m_activeTab = newActiveTab;
     emit currentTabIdChanged();
 

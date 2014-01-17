@@ -55,9 +55,9 @@ public:
 public slots:
     void tabChanged(Tab tab);
     void updateTitle(QString url, QString title);
+    void updateThumbPath(QString url, QString path, int tabId);
 
 private slots:
-    void updateThumbPath(QString url, QString path, int tabId);
     void screenCaptureReady();
 
 signals:

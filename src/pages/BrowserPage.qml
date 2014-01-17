@@ -309,6 +309,7 @@ Page {
     TabModel {
         id: tabModel
         currentTab: tab
+        browsing: browserPage.status === PageStatus.Active
     }
 
     HistoryModel {
