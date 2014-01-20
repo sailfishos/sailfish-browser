@@ -22,6 +22,7 @@ WebContainer {
     property alias loading: webView.loading
     property int loadProgress
     property alias contentItem: webView
+    property TabModel tabModel
     readonly property bool fullscreenMode: (webView.chromeGestureEnabled && !webView.chrome) || webContainer.inputPanelVisible || !webContainer.foreground
 
     // TODO : This must be encapsulated into a newTab / loadTab function
@@ -47,8 +48,9 @@ WebContainer {
         webView.sendAsyncMessage(name, data)
     }
 
-    // Temporary functions / properties
+    // Temporary functions / properties, remove once all functions have been moved
     property alias chrome: webView.chrome
+    property alias tab: tab
     function load(url) {
         webView.load(url)
     }
@@ -68,6 +70,20 @@ WebContainer {
         id: background
         anchors.fill: parent
         color: webView.bgcolor ? webView.bgcolor : "white"
+    }
+
+    Tab {
+        id: tab
+
+        // TODO: this will be internal of the WebView in newWebView branch.
+        property bool backForwardNavigation: false
+
+        onUrlChanged: {
+            if (tab.valid && backForwardNavigation) {
+                // Both url and title are updated before url changed is emitted.
+                load(url, title)
+            }
+        }
     }
 
     QmlMozView {
