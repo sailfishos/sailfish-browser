@@ -243,7 +243,7 @@ Page {
                                                             "imageSrc": imageSrc,
                                                             "linkTitle": linkTitle.trim(),
                                                             "contentType": contentType,
-                                                            "viewId": webView.uniqueID()
+                                                            "viewId": webView.currentTab.viewId()
                                                         })
                 hideVirtualKeyboard()
                 _contextMenu.show()

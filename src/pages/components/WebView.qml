@@ -92,6 +92,11 @@ WebContainer {
         // TODO: this will be internal of the WebView in newWebView branch.
         property bool backForwardNavigation: false
 
+        function viewId() {
+            // QmlMozView uniqueID() should be a property
+            return webView.uniqueID()
+        }
+
         onUrlChanged: {
             if (tab.valid && backForwardNavigation) {
                 // Both url and title are updated before url changed is emitted.
