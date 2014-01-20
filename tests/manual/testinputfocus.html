@@ -1,10 +1,59 @@
 <html>
   <head>
+  <script>
+
+  function writeLog(str) {
+    console.log(str)
+    var logDiv = document.getElementById("output")
+    logDiv.innerHTML = logDiv.innerHTML + "<br/>" + str
+  }
+
+  function logKeyEvent(e, type) {
+    writeLog(type + ": " + e.keyCode + ", " + e.charCode + ", " + e.which)
+  }
+
+  function handleKeyDown(e) {
+    logKeyEvent(e, "handleKeyDown")
+  }
+
+  function handleKeyPress(e) {
+    logKeyEvent(e, "handleKeyPress")
+  }
+
+  function handleKeyUp(e) {
+    logKeyEvent(e, "handleKeyUp")
+  }
+
+  function end(e) {
+    writeLog("end: " + e.data)
+  }
+
+  function start(e) {
+    writeLog("start: " + e.data)
+  }
+
+  function update(e) {
+    writeLog("update: " + e.data)
+  }
+
+  function init() {
+    try {
+      var textArea = document.getElementById("emptyTextArea");
+      textArea.addEventListener("compositionstart", start, true);
+      textArea.addEventListener("compositionupdate", update, true);
+      textArea.addEventListener("compositionend", end, true);
+      textArea.addEventListener("keypress", handleKeyPress, true);
+      textArea.addEventListener("keydown", handleKeyDown, true);
+      textArea.addEventListener("keyup", handleKeyUp, true);
+    } catch(ex) {}
+  }
+  </script>
+
   <style type="text/css">
     input {width:100%;height:100%;}
   </style>
   </head>
-  <body>
+  <body onload="init()">
     <div style="position:relative;width:50%;top:30px;left:20px;height:30px;">
       <input type="text" value="Top left 50% width" tabindex="2">
     </div>
@@ -29,8 +78,10 @@
     Maecenas mollis tincidunt ultrices. Nullam vel arcu et sem malesuada tempor ac a elit. Aliquam elementum tortor malesuada, ornare elit in, viverra augue. Proin laoreet lobortis nulla, quis.
     </textarea>
 
+    <div id="output"></div>
+
     <br/><br/>
-    <textarea rows="4" cols="50" style="width:200px;height:150px"></textarea>
+    <textarea id="emptyTextArea" rows="4" cols="50" style="width:200px;height:150px"></textarea>
 
     <!-- Some lorem ipsum text -->
     <p contenteditable="true">
