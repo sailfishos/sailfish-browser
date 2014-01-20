@@ -367,21 +367,11 @@ Page {
     Column {
         id: controlArea
 
-        // This should be just a binding for progressBar.progress but currently progress is going up and down
-        property real loadProgress: webView.loadProgress / 100.0
-
         anchors.bottom: webView.bottom
         width: parent.width
-
         visible: !_ctxMenuActive
         opacity: webView.fullscreenMode ? 0.0 : 1.0
         Behavior on opacity { FadeAnimation { duration: webView.foreground ? 300 : 0 } }
-
-        onLoadProgressChanged: {
-            if (loadProgress > progressBar.progress) {
-                progressBar.progress = loadProgress
-            }
-        }
 
         function openTabPage(focus, newTab, operationType) {
             if (browserPage.status === PageStatus.Active) {
@@ -415,6 +405,7 @@ Page {
                 id: progressBar
                 anchors.fill: parent
                 opacity: webView.loading ? 1.0 : 0.0
+                progress: webView.loadProgress / 100.0
             }
 
             // ToolBar

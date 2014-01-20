@@ -20,7 +20,7 @@ WebContainer {
     // This cannot be bindings in multiple mozview case. Will change in
     // later commits.
     property alias loading: webView.loading
-    property alias loadProgress: webView.loadProgress
+    property int loadProgress
     property alias contentItem: webView
     readonly property bool fullscreenMode: (webView.chromeGestureEnabled && !webView.chrome) || webContainer.inputPanelVisible || !webContainer.foreground
 
@@ -106,6 +106,12 @@ WebContainer {
                 browserPage.load(tab.url, tab.title)
             } else {
                 browserPage.load(WebUtils.homePage)
+            }
+        }
+
+        onLoadProgressChanged: {
+            if (loadProgress > webContainer.loadProgress) {
+                webContainer.loadProgress = loadProgress
             }
         }
 
