@@ -269,7 +269,7 @@ Page {
                     duration: 150
                 }
                 FadeAnimation {
-                    target: controlArea
+                    target: !fullscreenMode ? controlArea : null
                     to: 0
                     duration: 150
                 }
@@ -287,7 +287,7 @@ Page {
                 }
             }
             FadeAnimation {
-                target: controlArea
+                target: !fullscreenMode ? controlArea : null
                 to: 1
                 duration: 150
             }
