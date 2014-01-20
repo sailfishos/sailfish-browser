@@ -24,6 +24,20 @@ WebContainer {
     property alias contentItem: webView
     property TabModel tabModel
     readonly property bool fullscreenMode: (webView.chromeGestureEnabled && !webView.chrome) || webContainer.inputPanelVisible || !webContainer.foreground
+    property alias canGoBack: tab.canGoBack
+    property alias canGoForward: tab.canGoForward
+
+    function goBack() {
+        tab.goBack()
+    }
+
+    function goForward() {
+        tab.goForward()
+    }
+
+    function stop() {
+        webView.stop()
+    }
 
     // TODO : This must be encapsulated into a newTab / loadTab function
     // Load goes so that we first use engine load to resolve url

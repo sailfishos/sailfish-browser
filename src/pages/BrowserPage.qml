@@ -433,12 +433,13 @@ Page {
                 }
 
                 Browser.IconButton {
-                    id: backIcon
+                    id:backIcon
                     source: "image://theme/icon-m-back"
-                    enabled: tab.canGoBack
+                    enabled: webView.canGoBack
                     onClicked: {
+                        // This backForwardNavigation is internal to WebView
                         tab.backForwardNavigation = true
-                        tab.goBack()
+                        webView.goBack()
                     }
                 }
 
@@ -482,10 +483,11 @@ Page {
 
                 Browser.IconButton {
                     source: "image://theme/icon-m-forward"
-                    enabled: tab.canGoForward
+                    enabled: webView.canGoForward
                     onClicked: {
+                        // This backForwardNavigation is internal of WebView
                         tab.backForwardNavigation = true
-                        tab.goForward()
+                        webView.goForward()
                     }
                 }
             }
