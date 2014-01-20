@@ -13,12 +13,14 @@ import QtQuick 2.1
 import Sailfish.Silica 1.0
 import Sailfish.Browser 1.0
 import Qt5Mozilla 1.0
+import org.nemomobile.connectivity 1.0
 
 WebContainer {
     id: webContainer
 
     // This cannot be bindings in multiple mozview case. Will change in
     // later commits.
+    property bool active
     property alias loading: webView.loading
     property int loadProgress
     property alias contentItem: webView
@@ -63,8 +65,21 @@ WebContainer {
         webView.sendAsyncMessage(name, data)
     }
 
+    function captureScreen() {
+        if (active && resourceController.firstFrameRendered) {
+            var size = Screen.width
+            if (browserPage.isLandscape && !webContainer.fullscreenMode) {
+                size -= toolbarRow.height
+            }
+
+            tab.captureScreen(webView.url, 0, 0, size, size, browserPage.rotation)
+        }
+    }
+
     // Temporary functions / properties, remove once all functions have been moved
     property alias chrome: webView.chrome
+    property alias resourceController: resourceController
+    property alias connectionHelper: connectionHelper
     function load(url) {
         webView.load(url)
     }
@@ -72,7 +87,7 @@ WebContainer {
     width: parent.width
     height: browserPage.orientation === Orientation.Portrait ? Screen.height : Screen.width
 
-    pageActive: browserPage.status == PageStatus.Active
+    pageActive: active
     webView: webView
 
     foreground: Qt.application.active
@@ -116,7 +131,7 @@ WebContainer {
 
         visible: WebUtils.firstUseDone
 
-        enabled: browserPage.status == PageStatus.Active
+        enabled: parent.active
         // There needs to be enough content for enabling chrome gesture
         chromeGestureThreshold: toolBarContainer.height
         chromeGestureEnabled: contentHeight > webContainer.height + chromeGestureThreshold
@@ -446,4 +461,44 @@ WebContainer {
             }
         }
     }
+
+    ConnectionHelper {
+        id: connectionHelper
+
+        onNetworkConnectivityEstablished: {
+            var url
+            var title
+
+            if (browserPage._deferredLoad) {
+                url = browserPage._deferredLoad["url"]
+                title = browserPage._deferredLoad["title"]
+                browserPage._deferredLoad = null
+
+                browserPage.load(url, title, true)
+            } else if (browserPage._deferredReload) {
+                browserPage._deferredReload = false
+                webView.reload()
+            }
+        }
+
+        onNetworkConnectivityUnavailable: {
+            browserPage._deferredLoad = null
+            browserPage._deferredReload = false
+        }
+    }
+
+    ResourceController {
+        id: resourceController
+        webView: webView
+        background: webContainer.background
+
+        onWebViewSuspended: connectionHelper.closeNetworkSession()
+        onFirstFrameRenderedChanged: {
+            if (firstFrameRendered) {
+                captureScreen()
+            }
+        }
+    }
+
+    Component.onDestruction: connectionHelper.closeNetworkSession()
 }
