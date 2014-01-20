@@ -12,7 +12,7 @@ import "pages"
 ApplicationWindow {
     id: window
 
-    _defaultPageOrientations: Orientation.Landscape | Orientation.Portrait | Orientation.LandscapeInverted
+    _defaultPageOrientations: WebUtils.firstUseDone ? Orientation.Landscape | Orientation.Portrait | Orientation.LandscapeInverted : Orientation.Portrait
     initialPage: Component {BrowserPage {}}
     cover: undefined
 }
