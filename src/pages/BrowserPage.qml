@@ -25,7 +25,7 @@ Page {
     property alias favorites: favoriteModel
     property alias history: historyModel
     property alias viewLoading: webView.loading
-    property alias currentTab: webView.tab
+    property alias currentTab: webView.currentTab
     property string title
     property string url
 
@@ -64,7 +64,7 @@ Page {
         }
 
         webView.newTabData = null
-        tabModel.remove(index)
+        webView.tabModel.remove(index)
     }
 
     function closeActiveTab() {
@@ -182,7 +182,7 @@ Page {
                 size -= toolbarRow.height
             }
 
-            webView.tab.captureScreen(webView.url, 0, 0, size, size, browserPage.rotation)
+            webView.currentTab.captureScreen(webView.url, 0, 0, size, size, browserPage.rotation)
         }
     }
 
@@ -344,7 +344,7 @@ Page {
         id: webView
 
         tabModel: TabModel {
-            currentTab: webView.tab
+            currentTab: webView.currentTab
             browsing: browserPage.status === PageStatus.Active
         }
     }
@@ -445,7 +445,7 @@ Page {
 
                 Browser.IconButton {
                     enabled: webView.visible
-                    property bool favorited: favorites.count > 0 && favorites.contains(webView.tab.url)
+                    property bool favorited: favorites.count > 0 && favorites.contains(webView.currentTab.url)
                     source: favorited ? "image://theme/icon-m-favorite-selected" : "image://theme/icon-m-favorite"
                     onClicked: {
                         if (favorited) {
