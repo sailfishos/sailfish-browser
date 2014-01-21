@@ -36,6 +36,17 @@ WebContainer {
     // Groupped properties
     property alias popups: webPopus
 
+    // TODO : This must be encapsulated into a newTab / loadTab function
+    // Load goes so that we first use engine load to resolve url
+    // and then save that resolved url to the history. This way
+    // urls that resolve to download urls won't get saved to the
+    // history (as those won't trigger url change). As an added bonus
+    // a redirected url will be saved with the redirected url not with
+    // the input url.
+    //
+    // "newWebView" branch has some building blocks to help here.
+    property var newTabData
+
     function goBack() {
         tab.goBack()
     }
@@ -48,16 +59,22 @@ WebContainer {
         webView.stop()
     }
 
-    // TODO : This must be encapsulated into a newTab / loadTab function
-    // Load goes so that we first use engine load to resolve url
-    // and then save that resolved url to the history. This way
-    // urls that resolve to download urls won't get saved to the
-    // history (as those won't trigger url change). As an added bonus
-    // a redirected url will be saved with the redirected url not with
-    // the input url.
-    //
-    // "newWebView" branch has some building blocks to help here.
-    property var newTabData
+    function reload() {
+        var url = webView.url.toString()
+        browserPage.url = url
+
+        if (url.substring(0, 6) !== "about:" && url.substring(0, 5) !== "file:"
+            && !browserPage._deferredReload
+            && !connectionHelper.haveNetworkConnectivity()) {
+
+            browserPage._deferredReload = true
+            browserPage._deferredLoad = null
+            connectionHelper.attemptToConnectNetwork()
+            return
+        }
+
+        webView.reload()
+    }
 
     function suspend() {
         webView.suspendView()
