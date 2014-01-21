@@ -137,7 +137,7 @@ Page {
 
                 Repeater {
                     model: browserPage.tabs
-                    Browser.TabDelegate {
+                    Browser.TabItem {
                         width: page.width/tabsGrid.columns
                         height: width
 
