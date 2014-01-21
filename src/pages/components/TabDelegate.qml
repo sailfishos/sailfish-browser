@@ -9,8 +9,10 @@ import QtQuick 2.1
 import QtGraphicalEffects 1.0
 import Sailfish.Silica 1.0
 
-BackgroundItem {
+Item {
     id: tabDelegate
+
+    signal clicked
 
     Rectangle {
         id: placeHolder
@@ -70,5 +72,11 @@ BackgroundItem {
             }
         }
     }
+
+    BackgroundItem {
+        anchors.fill: parent
+        onClicked: tabDelegate.clicked()
+    }
+
     CloseTabButton {}
 }
