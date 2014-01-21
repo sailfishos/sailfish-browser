@@ -170,10 +170,6 @@ Page {
         browserPage.load(url, title, true)
     }
 
-    function deleteTabHistory() {
-        historyModel.clear()
-    }
-
     function openAuthDialog(input) {
         var data = input !== undefined ? input : browserPage._authData
         var winid = data.winid
