@@ -31,10 +31,7 @@ Page {
     property string favicon
     property Item _contextMenu
     property bool _ctxMenuActive: _contextMenu != null && _contextMenu.active
-    // As QML can't disconnect closure from a signal (but methods only)
-    // let's keep auth data in this auxilary attribute whose sole purpose is to
-    // pass arguments to openAuthDialog().
-    property var _authData: null
+
     property var _deferredLoad: null
     property bool _deferredReload
 
@@ -170,37 +167,6 @@ Page {
         browserPage.load(url, title, true)
     }
 
-    function openAuthDialog(input) {
-        var data = input !== undefined ? input : browserPage._authData
-        var winid = data.winid
-
-        if (browserPage._authData !== null) {
-            auxTimer.triggered.disconnect(browserPage.openAuthDialog)
-            browserPage._authData = null
-        }
-
-        var dialog = pageStack.push(Qt.resolvedUrl("components/AuthDialog.qml"),
-                                    {
-                                        "hostname": data.text,
-                                        "realm": data.title,
-                                        "username": data.defaultValue,
-                                        "passwordOnly": data.passwordOnly
-                                    })
-        dialog.accepted.connect(function () {
-            webView.sendAsyncMessage("authresponse",
-                                     {
-                                         "winid": winid,
-                                         "accepted": true,
-                                         "username": dialog.username,
-                                         "password": dialog.password
-                                     })
-        })
-        dialog.rejected.connect(function() {
-            webView.sendAsyncMessage("authresponse",
-                                     {"winid": winid, "accepted": false})
-        })
-    }
-
     function openContextMenu(linkHref, imageSrc, linkTitle, contentType) {
         // Possible path that leads to a new tab. Thus, capturing current
         // view before opening context menu.
@@ -307,9 +273,16 @@ Page {
         id: webView
 
         active: browserPage.status === PageStatus.Active
+
         tabModel: TabModel {
             currentTab: webView.currentTab
             browsing: browserPage.status === PageStatus.Active
+        }
+
+        Component.onCompleted: {
+            // These should be a property binding and web container should
+            // have a property group from C++ so that it'd would be available earlier.
+            popups.passwordComponentUrl = Qt.resolvedUrl("components/AuthDialog.qml")
         }
     }
 
@@ -530,12 +503,6 @@ Page {
 
     BookmarkModel {
         id: favoriteModel
-    }
-
-    Timer {
-        id: auxTimer
-
-        interval: 1000
     }
 
     Browser.BrowserNotification {

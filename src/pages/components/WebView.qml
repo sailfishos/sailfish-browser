@@ -30,6 +30,9 @@ WebContainer {
     property alias canGoBack: tab.canGoBack
     property alias canGoForward: tab.canGoForward
 
+    // Groupped properties
+    property alias popups: webPopus
+
     function goBack() {
         tab.goBack()
     }
@@ -128,6 +131,43 @@ WebContainer {
         property bool userHasDraggedWhileLoading
         property bool viewReady
 
+        // As QML can't disconnect closure from a signal (but methods only)
+        // let's keep auth data in this auxilary attribute whose sole purpose is to
+        // pass arguments to openAuthDialog().
+        property var _authData: null
+
+        function openAuthDialog(input) {
+            var data = input !== undefined ? input : webView._authData
+            var winid = data.winid
+
+            if (webView._authData !== null) {
+                auxTimer.triggered.disconnect(webView.openAuthDialog)
+                webView._authData = null
+            }
+
+            console.log("password component url: ", webPopus.passwordComponentUrl)
+
+            var dialog = pageStack.push(webPopus.passwordComponentUrl,
+                                        {
+                                            "hostname": data.text,
+                                            "realm": data.title,
+                                            "username": data.defaultValue,
+                                            "passwordOnly": data.passwordOnly
+                                        })
+            dialog.accepted.connect(function () {
+                webView.sendAsyncMessage("authresponse",
+                                         {
+                                             "winid": winid,
+                                             "accepted": true,
+                                             "username": dialog.username,
+                                             "password": dialog.password
+                                         })
+            })
+            dialog.rejected.connect(function() {
+                webView.sendAsyncMessage("authresponse",
+                                         {"winid": winid, "accepted": false})
+            })
+        }
 
         visible: WebUtils.firstUseDone
 
@@ -337,14 +377,14 @@ WebContainer {
                     // User has just entered wrong credentials and webView wants
                     // user's input again immediately even thogh the accepted
                     // dialog is still deactivating.
-                    browserPage._authData = data
+                    webView._authData = data
                     // A better solution would be to connect to browserPage.statusChanged,
                     // but QML Page transitions keep corrupting even
                     // after browserPage.status === PageStatus.Active thus auxTimer.
-                    auxTimer.triggered.connect(browserPage.openAuthDialog)
+                    auxTimer.triggered.connect(webView.openAuthDialog)
                     auxTimer.start()
                 } else {
-                    browserPage.openAuthDialog(data)
+                    webView.openAuthDialog(data)
                 }
                 break
             }
@@ -508,6 +548,18 @@ WebContainer {
                 captureScreen()
             }
         }
+    }
+
+    Timer {
+        id: auxTimer
+
+        interval: 1000
+    }
+
+    QtObject {
+        id: webPopus
+
+        property string passwordComponentUrl
     }
 
     Component.onDestruction: connectionHelper.closeNetworkSession()
