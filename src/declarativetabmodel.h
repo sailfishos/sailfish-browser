@@ -80,6 +80,8 @@ signals:
     void currentTabIdChanged();
     void loadedChanged();
     void browsingChanged();
+    void aboutToCloseActiveTab();
+    void activeTabClosed();
 
 private slots:
     void updateThumbPath(QString path, int tabId);

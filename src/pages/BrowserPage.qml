@@ -61,29 +61,6 @@ Page {
         webView.tabModel.remove(index)
     }
 
-    function closeActiveTab() {
-        if (webView.tabModel.count === 0) {
-            return
-        }
-
-        if (webView.loading) {
-            webView.stop()
-        }
-
-        webView.newTabData = null
-        webView.tabModel.closeActiveTab()
-
-        if (webView.tabModel.count === 0 && browserPage.status === PageStatus.Active) {
-            browserPage.title = ""
-            browserPage.url = ""
-            pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage, "initialSearchFocus": true })
-        } else {
-            browserPage.title = tab.title
-            browserPage.url = tab.url
-            load(tab.url, tab.title)
-        }
-    }
-
     function load(url, title, force) {
         if (url.substring(0, 6) !== "about:" && url.substring(0, 5) !== "file:"
             && !webView.connectionHelper.haveNetworkConnectivity()
@@ -221,6 +198,14 @@ Page {
         tabModel: TabModel {
             currentTab: webView.currentTab
             browsing: browserPage.status === PageStatus.Active
+
+            onCountChanged: {
+                if (count === 0 && browsing) {
+                    browserPage.title = ""
+                    browserPage.url = ""
+                    pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage, "initialSearchFocus": true })
+                }
+            }
         }
 
         Component.onCompleted: {
@@ -260,7 +245,7 @@ Page {
             title: browserPage.title
             url: browserPage.url
             onSearchClicked: controlArea.openTabPage(true, false, PageStackAction.Animated)
-            onCloseClicked: browserPage.closeActiveTab()
+            onCloseClicked: webView.tabModel.closeActiveTab()
         }
 
         Browser.ToolBarContainer {
@@ -291,7 +276,7 @@ Page {
                 Browser.IconButton {
                     visible: isLandscape
                     source: "image://theme/icon-m-close"
-                    onClicked: browserPage.closeActiveTab()
+                    onClicked: webView.tabModel.closeActiveTab()
                 }
 
                 // Spacer

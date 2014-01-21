@@ -157,6 +157,7 @@ void DeclarativeTabModel::closeActiveTab()
     qDebug() << m_activeTab.isValid() << m_activeTab.tabId() << m_activeTab.currentLink().thumbPath() << m_activeTab.currentLink().url();
 #endif
     if (m_activeTab.isValid()) {
+        emit aboutToCloseActiveTab();
         // Invalidate active tab
         removeTab(m_activeTab);
         m_activeTab.setTabId(0);
@@ -168,6 +169,7 @@ void DeclarativeTabModel::closeActiveTab()
             m_activeTab.setCurrentLink(emptyLink);
             m_currentTab->invalidate();
         }
+        emit activeTabClosed();
     }
 }
 

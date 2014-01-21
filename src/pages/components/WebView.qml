@@ -562,6 +562,21 @@ WebContainer {
                 webContainer.newTabData = null
             }
         }
+
+        onAboutToCloseActiveTab: {
+            if (webView.loading) {
+                webView.stop()
+            }
+        }
+
+        onActiveTabClosed: {
+            webContainer.newTabData = null
+            if (tabModel.count > 0) {
+                browserPage.title = tab.title
+                browserPage.url = tab.url
+                load(tab.url, tab.title)
+            }
+        }
     }
 
     ConnectionHelper {
