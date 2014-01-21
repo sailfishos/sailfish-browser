@@ -462,6 +462,16 @@ WebContainer {
         }
     }
 
+    Connections {
+        target: tabModel
+
+        onCountChanged: {
+            if (tabModel.count === 0) {
+                webContainer.newTabData = null
+            }
+        }
+    }
+
     ConnectionHelper {
         id: connectionHelper
 

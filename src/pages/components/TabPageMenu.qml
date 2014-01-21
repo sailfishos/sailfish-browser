@@ -20,7 +20,7 @@ PullDownMenu {
     MenuItem {
         //% "Close all tabs"
         text: qsTrId("sailfish_browser-me-close_all")
-        onClicked: browserPage.closeAllTabs()
+        onClicked: browserPage.tabs.clear()
     }
     MenuItem {
         enabled: shareEnabled
