@@ -29,7 +29,7 @@ Page {
 
     function load(url, title) {
         if (page.newTab) {
-            browserPage.newTab(url, true, title)
+            browserPage.tabs.newTab(url, title, true)
         } else {
             browserPage.load(url, title)
         }

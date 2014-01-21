@@ -96,7 +96,7 @@ void tst_declarativetab::initTestCase()
     QSignalSpy currentUrlChangedSpy(tab, SIGNAL(urlChanged()));
     QSignalSpy forwardSpy(tab, SIGNAL(canGoFowardChanged()));
     QSignalSpy backSpy(tab, SIGNAL(canGoBackChanged()));
-    tabModel->addTab("http://www.jolla.com", true);
+    tabModel->addTab("http://www.jolla.com", "", true);
     QCOMPARE(currentUrlChangedSpy.count(), 1);
     QCOMPARE(forwardSpy.count(), 0);
     QCOMPARE(backSpy.count(), 0);

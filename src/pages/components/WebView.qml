@@ -27,11 +27,14 @@ WebContainer {
     property alias loading: webView.loading
     property int loadProgress
     property alias contentItem: webView
-    property TabModel tabModel
+    property alias tabModel: model
     property alias currentTab: tab
     readonly property bool fullscreenMode: (webView.chromeGestureEnabled && !webView.chrome) || webContainer.inputPanelVisible || !webContainer.foreground
     property alias canGoBack: tab.canGoBack
     property alias canGoForward: tab.canGoForward
+
+    property alias url: tab.url
+    property alias title: tab.title
 
     // Groupped properties
     property alias popups: webPopus
@@ -59,16 +62,61 @@ WebContainer {
         webView.stop()
     }
 
+    function load(url, title, force) {
+        if (url.substring(0, 6) !== "about:" && url.substring(0, 5) !== "file:"
+            && !connectionHelper.haveNetworkConnectivity()
+            && !webView._deferredLoad) {
+
+            webView._deferredReload = false
+            webView._deferredLoad = {
+                "url": url,
+                "title": title
+            }
+            connectionHelper.attemptToConnectNetwork()
+            return
+        }
+
+        if (tabModel.count == 0) {
+            // Url is not need in webContainer.newTabData as we let engine to resolve
+            // the url and use the resolved url.
+            webContainer.newTabData = { "title": title, "foreground" : true }
+        }
+
+        if (title) {
+            browserPage.title = title
+        } else {
+            browserPage.title = ""
+        }
+
+        // Always enable chrome when load is called.
+        webView.chrome = true
+
+        if ((url !== "" && webView.url != url) || force) {
+            browserPage.url = url
+            resourceController.firstFrameRendered = false
+            webView.load(url)
+        } else if (webView.url == url && webContainer.newTabData) {
+            // Url will not change when the very same url is already loaded. Thus, we just add tab directly.
+            // This is currently the only exception. Normally tab is added after engine has
+            // resolved the url.
+            tabModel.addTab(url, webContainer.newTabData.foreground)
+            if (webContainer.newTabData.title) {
+                tab.title = webContainer.newTabData.title
+            }
+            webContainer.newTabData = null
+        }
+    }
+
     function reload() {
         var url = webView.url.toString()
         browserPage.url = url
 
         if (url.substring(0, 6) !== "about:" && url.substring(0, 5) !== "file:"
-            && !browserPage._deferredReload
+            && !webView._deferredReload
             && !connectionHelper.haveNetworkConnectivity()) {
 
-            browserPage._deferredReload = true
-            browserPage._deferredLoad = null
+            webView._deferredReload = true
+            webView._deferredLoad = null
             connectionHelper.attemptToConnectNetwork()
             return
         }
@@ -103,9 +151,6 @@ WebContainer {
     property alias chrome: webView.chrome
     property alias resourceController: resourceController
     property alias connectionHelper: connectionHelper
-    function load(url) {
-        webView.load(url)
-    }
 
     width: parent.width
     height: browserPage.orientation === Orientation.Portrait ? Screen.height : Screen.width
@@ -122,6 +167,27 @@ WebContainer {
         id: background
         anchors.fill: parent
         color: webView.bgcolor ? webView.bgcolor : "white"
+    }
+
+    TabModel {
+        id: model
+
+        function newTab(url, title, foreground) {
+            if (foreground) {
+                // This might be something that we don't want to have.
+                if (webView.loading) {
+                    webView.stop()
+                }
+                webView.captureScreen()
+            }
+
+            // Url is not need in webView.newTabData as we let engine to resolve
+            // the url and use the resolved url.
+            newTabData = { "title": title, "foreground" : foreground }
+            load(url, title)
+        }
+
+        currentTab: tab
     }
 
     Tab {
@@ -153,6 +219,9 @@ WebContainer {
         // let's keep auth data in this auxilary attribute whose sole purpose is to
         // pass arguments to openAuthDialog().
         property var _authData: null
+
+        property bool _deferredReload
+        property var _deferredLoad: null
 
         function openAuthDialog(input) {
             var data = input !== undefined ? input : webView._authData
@@ -586,21 +655,21 @@ WebContainer {
             var url
             var title
 
-            if (browserPage._deferredLoad) {
-                url = browserPage._deferredLoad["url"]
-                title = browserPage._deferredLoad["title"]
-                browserPage._deferredLoad = null
+            if (webView._deferredLoad) {
+                url = webView._deferredLoad["url"]
+                title = webView._deferredLoad["title"]
+                webView._deferredLoad = null
 
                 browserPage.load(url, title, true)
-            } else if (browserPage._deferredReload) {
-                browserPage._deferredReload = false
+            } else if (webView._deferredReload) {
+                webView._deferredReload = false
                 webView.reload()
             }
         }
 
         onNetworkConnectivityUnavailable: {
-            browserPage._deferredLoad = null
-            browserPage._deferredReload = false
+            webView._deferredLoad = null
+            webView._deferredReload = false
         }
     }
 

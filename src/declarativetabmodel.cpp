@@ -54,17 +54,16 @@ QHash<int, QByteArray> DeclarativeTabModel::roleNames() const
 }
 
 // TODO : Remove foreground flag.
-void DeclarativeTabModel::addTab(const QString& url, bool foreground) {
+void DeclarativeTabModel::addTab(const QString& url, const QString &title, bool foreground) {
     if (!LinkValidator::navigable(url)) {
         return;
     }
-
     int tabId = DBManager::instance()->createTab();
     int linkId = DBManager::instance()->createLink(tabId, url);
 #ifdef DEBUG_LOGS
     qDebug() << "new tab id:" << tabId << "new link id:" << linkId;
 #endif
-    Tab tab(tabId, Link(linkId, url, "", ""), 0, 0);
+    Tab tab(tabId, Link(linkId, url, "", title), 0, 0);
     if (m_activeTab.isValid()) {
         beginInsertRows(QModelIndex(), 0, 0);
         m_tabs.insert(0, m_activeTab);

@@ -105,12 +105,13 @@ void tst_declarativetabmodel::cleanupTestCase()
 void tst_declarativetabmodel::validTabs_data()
 {
     QTest::addColumn<QString>("url");
+    QTest::addColumn<QString>("title");
     QTest::addColumn<int>("count");
     QTest::addColumn<bool>("foreground");
 
     for (int i = 0; i < originalTabOrder.count(); ++i) {
         const char *newName = QString("%1-tab").arg(i+1).toLatin1().constData();
-        QTest::newRow(newName) << originalTabOrder.at(i) << i+1 << true;
+        QTest::newRow(newName) << originalTabOrder.at(i) << QString("title-%1").arg(i+1) << i+1 << true;
     }
 }
 
@@ -121,17 +122,19 @@ void tst_declarativetabmodel::validTabs()
     QSignalSpy currentUrlChangedSpy(tabModel->currentTab(), SIGNAL(urlChanged()));
 
     QFETCH(QString, url);
+    QFETCH(QString, title);
     QFETCH(bool, foreground);
     QFETCH(int, count);
 
     QString previousActiveUrl = tabModel->currentTab()->url();
 
-    tabModel->addTab(url, foreground);
+    tabModel->addTab(url, title, foreground);
     QCOMPARE(tabModel->count(), count);
     QCOMPARE(countChangeSpy.count(), 1);
     QCOMPARE(currentTabIdChangeSpy.count(), 1);
     QCOMPARE(currentUrlChangedSpy.count(), 1);
     QCOMPARE(tabModel->currentTab()->url(), url);
+    QCOMPARE(tabModel->currentTab()->title(), title);
 
     if (tabModel->rowCount() > 0) {
         QModelIndex index = tabModel->createIndex(0, 0);
@@ -234,10 +237,11 @@ void tst_declarativetabmodel::closeActiveTab()
 void tst_declarativetabmodel::invalidTabs_data()
 {
     QTest::addColumn<QString>("url");
-    QTest::newRow("tel") << "tel:+123456798";
-    QTest::newRow("sms") << "sms:+123456798";
-    QTest::newRow("mailto") << "mailto:joe@example.com";
-    QTest::newRow("mailto query does not count") << "mailto:joe@example.com?cc=bob@example.com&body=hello1";
+    QTest::addColumn<QString>("title");
+    QTest::newRow("tel") << "tel:+123456798" << "tel";
+    QTest::newRow("sms") << "sms:+123456798" << "sms";
+    QTest::newRow("mailto") << "mailto:joe@example.com" << "mailto1";
+    QTest::newRow("mailto query does not count") << "mailto:joe@example.com?cc=bob@example.com&body=hello1" << "mailto2";
 }
 
 void tst_declarativetabmodel::invalidTabs()
@@ -246,8 +250,9 @@ void tst_declarativetabmodel::invalidTabs()
     QSignalSpy currentTabIdChangeSpy(tabModel, SIGNAL(currentTabIdChanged()));
 
     QFETCH(QString, url);
+    QFETCH(QString, title);
     int originalCount = tabModel->count();
-    tabModel->addTab(url);
+    tabModel->addTab(url, title);
 
     QCOMPARE(tabModel->count(), originalCount);
     QCOMPARE(countChangeSpy.count(), 0);

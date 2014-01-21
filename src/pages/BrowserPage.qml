@@ -27,26 +27,7 @@ Page {
     property alias currentTab: webView.currentTab
     property string title
     property string url
-
     property string favicon
-
-    property var _deferredLoad: null
-    property bool _deferredReload
-
-    function newTab(url, foreground, title) {
-        if (foreground) {
-            // This might be something that we don't want to have.
-            if (webView.loading) {
-                webView.stop()
-            }
-            webView.captureScreen()
-        }
-
-        // Url is not need in webView.newTabData as we let engine to resolve
-        // the url and use the resolved url.
-        webView.newTabData = { "title": title, "foreground" : foreground }
-        load(url, title)
-    }
 
     function closeTab(index) {
         if (webView.tabModel.count == 0) {
@@ -62,46 +43,7 @@ Page {
     }
 
     function load(url, title, force) {
-        if (url.substring(0, 6) !== "about:" && url.substring(0, 5) !== "file:"
-            && !webView.connectionHelper.haveNetworkConnectivity()
-            && !browserPage._deferredLoad) {
-
-            browserPage._deferredReload = false
-            browserPage._deferredLoad = {
-                "url": url,
-                "title": title
-            }
-            webView.connectionHelper.attemptToConnectNetwork()
-            return
-        }
-
-        if (webView.tabModel.count == 0) {
-            // Url is not need in webView.newTabData as we let engine to resolve
-            // the url and use the resolved url.
-            webView.newTabData = { "title": title, "foreground" : true }
-        }
-
-        if (title) {
-            browserPage.title = title
-        } else {
-            browserPage.title = ""
-        }
-
-        // Always enable chrome when load is called.
-        webView.chrome = true
-        if ((url !== "" && webView.url != url) || force) {
-            browserPage.url = url
-            webView.resourceController.firstFrameRendered = false
-            webView.load(url)
-        } else if (webView.url == url && webView.newTabData) {
-            // Url will not change when the very same url is already loaded. Thus, we just add tab directly.
-            // This is currently the only exception. Normally tab is added after engine has
-            // resolved the url.
-            tabModel.addTab(url, webView.newTabData.foreground)
-            if (webView.newTabData.title) {
-                tab.title = webView.newTabData.title
-            }
-        }
+        webView.load(url, title, force)
     }
 
     function loadTab(index, url, title) {
@@ -195,18 +137,15 @@ Page {
 
         active: browserPage.status === PageStatus.Active
 
-        tabModel: TabModel {
-            currentTab: webView.currentTab
-            browsing: browserPage.status === PageStatus.Active
-
-            onCountChanged: {
-                if (count === 0 && browsing) {
-                    browserPage.title = ""
-                    browserPage.url = ""
-                    pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage, "initialSearchFocus": true })
-                }
+        tabModel.browsing: browserPage.status === PageStatus.Active
+        tabModel.onCountChanged: {
+            if (tabModel.count === 0 && tabModel.browsing) {
+                browserPage.title = ""
+                browserPage.url = ""
+                pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage, "initialSearchFocus": true })
             }
         }
+
 
         Component.onCompleted: {
             // These should be a property binding and web container should
@@ -399,7 +338,7 @@ Page {
                 webView.captureScreen()
                 if (!webView.tabModel.activateTab(url)) {
                     // Not found in tabs list, create newtab and load
-                    newTab(url, true)
+                    webView.tabModel.newTab(url, "", true)
                 }
             } else {
                 // New browser instance, just load the content
@@ -407,7 +346,7 @@ Page {
                     firstUseOverlay.destroy()
                     webView.visible = true
                 }
-                newTab(url, true)
+                webView.tabModel.newTab(url, "", true)
             }
             if (browserPage.status !== PageStatus.Active) {
                 pageStack.pop(browserPage, PageStackAction.Immediate)
