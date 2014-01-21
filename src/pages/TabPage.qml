@@ -318,6 +318,7 @@ Page {
                     onTriggered: {
                         searchField.forceActiveFocus()
                         searchField.selectAll()
+                        searchField._updateFlickables()
                     }
                 }
             }
