@@ -35,6 +35,7 @@ WebContainer {
 
     readonly property alias url: tab.url
     readonly property alias title: tab.title
+    property string favicon
 
     // Groupped properties
     property alias popups: webPopus
@@ -412,7 +413,7 @@ WebContainer {
         onLoadingChanged: {
             if (loading) {
                 userHasDraggedWhileLoading = false
-                favicon = ""
+                webContainer.favicon = ""
                 webView.chrome = true
                 webContainer.resetHeight(false)
             }
@@ -421,7 +422,7 @@ WebContainer {
             switch (message) {
             case "chrome:linkadded": {
                 if (data.rel === "shortcut icon") {
-                    favicon = data.href
+                    webContainer.favicon = data.href
                 }
                 break
             }
