@@ -96,7 +96,6 @@ WebContainer {
 
         // Always enable chrome when load is called.
         webView.chrome = true
-
         if ((url !== "" && webView.url != url) || force) {
             tab.url = url
             resourceController.firstFrameRendered = false
@@ -189,7 +188,7 @@ WebContainer {
     Tab {
         id: tab
 
-        // TODO: this will be internal of the WebView in newWebView branch.
+        // Used with back and forward navigation.
         property bool backForwardNavigation: false
 
         onUrlChanged: {
