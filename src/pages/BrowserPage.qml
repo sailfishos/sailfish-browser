@@ -26,19 +26,6 @@ Page {
     property alias viewLoading: webView.loading
     property alias currentTab: webView.currentTab
 
-    function closeTab(index) {
-        if (webView.tabModel.count == 0) {
-            return
-        }
-
-        if (webView.loading) {
-            webView.stop()
-        }
-
-        webView.newTabData = null
-        webView.tabModel.remove(index)
-    }
-
     function load(url, title, force) {
         webView.load(url, title, force)
     }

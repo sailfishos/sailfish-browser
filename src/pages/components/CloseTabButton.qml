@@ -27,7 +27,7 @@ IconButton {
         if (closeActiveTab) {
             browserPage.tabs.closeActiveTab()
         } else {
-            browserPage.closeTab(index, false)
+            browserPage.tabs.remove(index)
         }
     }
 }

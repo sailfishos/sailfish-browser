@@ -106,7 +106,6 @@ WebContainer {
             // This is currently the only exception. Normally tab is added after engine has
             // resolved the url.
             tabModel.addTab(url, webContainer.newTabData.title)
-            webContainer.newTabData = null
         }
     }
 
@@ -606,11 +605,7 @@ WebContainer {
     Connections {
         target: tabModel
 
-        onCountChanged: {
-            if (tabModel.count === 0) {
-                webContainer.newTabData = null
-            }
-        }
+        onCountChanged: webContainer.newTabData = null
 
         onActiveTabChanged: {
             webContainer.newTabData = null
