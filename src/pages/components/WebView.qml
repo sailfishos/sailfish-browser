@@ -149,14 +149,10 @@ WebContainer {
         }
     }
 
-    // Temporary functions / properties, remove once all functions have been moved
-    property alias chrome: webView.chrome
-    property alias resourceController: resourceController
-    property alias connectionHelper: connectionHelper
-
     width: parent.width
     height: browserPage.orientation === Orientation.Portrait ? Screen.height : Screen.width
 
+    // TODO: Rename pageActive to active and remove there the beginning
     pageActive: active
     webView: webView
 
