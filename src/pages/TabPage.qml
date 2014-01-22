@@ -23,6 +23,9 @@ Page {
     // focus to input field on opening
     property bool initialSearchFocus
     property bool newTab
+    property bool historyVisible: _editing || initialSearchFocus
+    property Item historyHeader
+    property Item favoriteHeader
 
     property bool _editing
     property string _search
@@ -42,11 +45,6 @@ Page {
     }
 
     backNavigation: browserPage.tabs.count > 0 && browserPage.currentTab.url != ""
-
-    property bool historyVisible: _editing || initialSearchFocus
-    property Item historyHeader
-    property Item favoriteHeader
-
     states: [
         State {
             name: "historylist"
@@ -151,6 +149,8 @@ Page {
                     Browser.TabItem {
                         width: page.width/tabsGrid.columns
                         height: width
+                        // activateTab doesn't work inside delagate because this tab is removed (deleted)
+                        // from the model and old active tab pushed to first.
                         onClicked: activateTab(model.index)
                     }
                 }
