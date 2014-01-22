@@ -84,7 +84,7 @@ WebContainer {
         if (tabModel.count == 0) {
             // Url is not need in webContainer.newTabData as we let engine to resolve
             // the url and use the resolved url.
-            webContainer.newTabData = { "title": title, "foreground" : true }
+            webContainer.newTabData = { "title": title }
         }
 
         // Bookmarks and history items pass url and title as arguments.
@@ -105,10 +105,7 @@ WebContainer {
             // Url will not change when the very same url is already loaded. Thus, we just add tab directly.
             // This is currently the only exception. Normally tab is added after engine has
             // resolved the url.
-            tabModel.addTab(url, webContainer.newTabData.foreground)
-            if (webContainer.newTabData.title) {
-                tab.title = webContainer.newTabData.title
-            }
+            tabModel.addTab(url, webContainer.newTabData.title)
             webContainer.newTabData = null
         }
     }
@@ -178,18 +175,16 @@ WebContainer {
     TabModel {
         id: model
 
-        function newTab(url, title, foreground) {
-            if (foreground) {
-                // This might be something that we don't want to have.
-                if (webView.loading) {
-                    webView.stop()
-                }
-                webView.captureScreen()
+        function newTab(url, title) {
+            // This might be something that we don't want to have.
+            if (webView.loading) {
+                webView.stop()
             }
+            webView.captureScreen()
 
             // Url is not need in webView.newTabData as we let engine to resolve
             // the url and use the resolved url.
-            newTabData = { "title": title, "foreground" : foreground }
+            newTabData = { "title": title }
             load(url, title)
         }
 
@@ -351,10 +346,7 @@ WebContainer {
             } else {
                 // Delay adding of the new tab until url has been resolved.
                 // Url will not change if there is download link behind.
-                tabModel.addTab(url, newTabData.foreground)
-                if (newTabData.title) {
-                    tab.title = newTabData.title
-                }
+                tabModel.addTab(url, newTabData.title)
             }
 
             newTabData = null
@@ -620,17 +612,17 @@ WebContainer {
             }
         }
 
-        onAboutToCloseActiveTab: {
+        onActiveTabChanged: {
+            webContainer.newTabData = null
             if (webView.loading) {
                 webView.stop()
             }
-        }
 
-        onActiveTabClosed: {
-            webContainer.newTabData = null
-            if (tabModel.count > 0) {
-                load(tab.url, tab.title)
+            // When all tabs are closed, we're in invalid state.
+            if (tab.valid && webView.readyToLoad) {
+                webContainer.load(tab.url, tab.title)
             }
+            webContainer.currentTabChanged()
         }
     }
 

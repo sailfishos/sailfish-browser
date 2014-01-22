@@ -29,10 +29,15 @@ Page {
 
     function load(url, title) {
         if (page.newTab) {
-            browserPage.tabs.newTab(url, title, true)
+            browserPage.tabs.newTab(url, title)
         } else {
             browserPage.load(url, title)
         }
+        pageStack.pop(browserPage)
+    }
+
+    function activateTab(index) {
+        browserPage.tabs.activateTab(index)
         pageStack.pop(browserPage)
     }
 
@@ -146,8 +151,7 @@ Page {
                     Browser.TabItem {
                         width: page.width/tabsGrid.columns
                         height: width
-
-                        onClicked: browserPage.loadTab(model.index, model.url, model.title)
+                        onClicked: activateTab(model.index)
                     }
                 }
                 Behavior on height {

@@ -53,8 +53,7 @@ QHash<int, QByteArray> DeclarativeTabModel::roleNames() const
     return roles;
 }
 
-// TODO : Remove foreground flag.
-void DeclarativeTabModel::addTab(const QString& url, const QString &title, bool foreground) {
+void DeclarativeTabModel::addTab(const QString& url, const QString &title) {
     if (!LinkValidator::navigable(url)) {
         return;
     }
@@ -70,7 +69,7 @@ void DeclarativeTabModel::addTab(const QString& url, const QString &title, bool 
         endInsertRows();
     }
 
-    updateActiveTab(tab, foreground);
+    updateActiveTab(tab);
     emit countChanged();
 }
 
@@ -112,7 +111,6 @@ void DeclarativeTabModel::clear()
 bool DeclarativeTabModel::activateTab(const QString& url)
 {
     if (m_activeTab.currentLink().url() == url && m_currentTab) {
-        m_currentTab->tabChanged(m_activeTab);
         return true;
     }
     for (int i = 0; i < m_tabs.size(); i++) {
@@ -156,7 +154,6 @@ void DeclarativeTabModel::closeActiveTab()
     qDebug() << m_activeTab.isValid() << m_activeTab.tabId() << m_activeTab.currentLink().thumbPath() << m_activeTab.currentLink().url();
 #endif
     if (m_activeTab.isValid()) {
-        emit aboutToCloseActiveTab();
         // Invalidate active tab
         removeTab(m_activeTab);
         m_activeTab.setTabId(0);
@@ -167,8 +164,8 @@ void DeclarativeTabModel::closeActiveTab()
             Link emptyLink;
             m_activeTab.setCurrentLink(emptyLink);
             m_currentTab->invalidate();
+            emit activeTabChanged();
         }
-        emit activeTabClosed();
     }
 }
 
@@ -283,7 +280,7 @@ void DeclarativeTabModel::tabsAvailable(QList<Tab> tabs)
         }
         const Tab &activeTab = m_tabs.at(index);
         m_tabs.removeAt(index);
-        updateActiveTab(activeTab, true);
+        updateActiveTab(activeTab);
     }
 
     qSort(m_tabs.begin(), m_tabs.end(), DeclarativeTabModel::tabSort);
@@ -428,7 +425,7 @@ int DeclarativeTabModel::loadTabOrder()
     }
 }
 
-void DeclarativeTabModel::updateActiveTab(const Tab &newActiveTab, bool updateCurrentTab)
+void DeclarativeTabModel::updateActiveTab(const Tab &newActiveTab)
 {
 #ifdef DEBUG_LOGS
     qDebug() << "change tab: " << updateCurrentTab << m_currentTab;
@@ -439,8 +436,9 @@ void DeclarativeTabModel::updateActiveTab(const Tab &newActiveTab, bool updateCu
     emit currentTabIdChanged();
 
     saveTabOrder();
-    if (updateCurrentTab && m_currentTab) {
+    if (m_currentTab) {
         m_currentTab->tabChanged(m_activeTab);
+        emit activeTabChanged();
     }
 }
 

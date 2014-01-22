@@ -107,11 +107,10 @@ void tst_declarativetabmodel::validTabs_data()
     QTest::addColumn<QString>("url");
     QTest::addColumn<QString>("title");
     QTest::addColumn<int>("count");
-    QTest::addColumn<bool>("foreground");
 
     for (int i = 0; i < originalTabOrder.count(); ++i) {
         const char *newName = QString("%1-tab").arg(i+1).toLatin1().constData();
-        QTest::newRow(newName) << originalTabOrder.at(i) << QString("title-%1").arg(i+1) << i+1 << true;
+        QTest::newRow(newName) << originalTabOrder.at(i) << QString("title-%1").arg(i+1) << i+1;
     }
 }
 
@@ -123,12 +122,11 @@ void tst_declarativetabmodel::validTabs()
 
     QFETCH(QString, url);
     QFETCH(QString, title);
-    QFETCH(bool, foreground);
     QFETCH(int, count);
 
     QString previousActiveUrl = tabModel->currentTab()->url();
 
-    tabModel->addTab(url, title, foreground);
+    tabModel->addTab(url, title);
     QCOMPARE(tabModel->count(), count);
     QCOMPARE(countChangeSpy.count(), 1);
     QCOMPARE(currentTabIdChangeSpy.count(), 1);
