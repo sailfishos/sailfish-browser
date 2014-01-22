@@ -316,7 +316,7 @@ void DeclarativeTabModel::tabChanged(Tab tab)
     }
 
 #ifdef DEBUG_LOGS
-    qDebug() << "tab: " << tab.tabId() << m_activeTab.tabId() << tab.currentLink().thumbPath() << tab.currentLink().url() << tab.currentLink().title() << m_tabs.indexOf(tab);
+    qDebug() << "tab: " << tab.tabId() << m_activeTab.tabId() << m_activeTab.currentLink().title() << tab.currentLink().thumbPath() << tab.currentLink().url() << tab.currentLink().title() << m_tabs.indexOf(tab);
 #endif
     if (tab.tabId() == m_activeTab.tabId()) {
         updateActiveTab(tab);

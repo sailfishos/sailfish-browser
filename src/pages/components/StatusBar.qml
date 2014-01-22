@@ -16,8 +16,8 @@ import "." as Browser
 Rectangle {
     id: statusBar
 
-    property string title
-    property string url
+    property alias title: titleBar.title
+    property alias url: titleBar.url
 
     signal searchClicked
     signal closeClicked

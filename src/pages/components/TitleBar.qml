@@ -15,8 +15,8 @@ import Sailfish.Silica 1.0
 BackgroundItem {
     id: backgroundItem
 
-    property string title
-    property string url
+    property alias title: titleLabel.text
+    property alias url: urlLabel.text
 
     implicitHeight: texts.height
     contentItem.color: "transparent"
@@ -28,7 +28,7 @@ BackgroundItem {
         anchors.verticalCenter: parent.verticalCenter
 
         Label {
-            text: title
+            id: titleLabel
             width: parent.width
             color: backgroundItem.highlighted ? Theme.highlightColor : Theme.highlightDimmerColor
             font.pixelSize: Theme.fontSizeExtraSmall
@@ -36,7 +36,7 @@ BackgroundItem {
             truncationMode: TruncationMode.Fade
         }
         Label {
-            text: url
+            id: urlLabel
             width: parent.width
             color: backgroundItem.highlighted ? Theme.highlightColor : Theme.highlightDimmerColor
             font.pixelSize: Theme.fontSizeTiny

@@ -36,7 +36,7 @@ Page {
         pageStack.pop(browserPage)
     }
 
-    backNavigation: browserPage.tabs.count > 0 && browserPage.url != ""
+    backNavigation: browserPage.tabs.count > 0 && browserPage.currentTab.url != ""
 
     property bool historyVisible: _editing || initialSearchFocus
     property Item historyHeader
