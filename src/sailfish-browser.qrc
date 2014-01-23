@@ -30,6 +30,7 @@
     <file>pages/components/TabPageMenu.qml</file>
     <file>pages/components/WebView.qml</file>
     <file>pages/components/WebPopupHandler.js</file>
+    <file>pages/components/WebPromptHandler.js</file>
     <file>pages/components/FavoriteList.qml</file>
     <file>pages/components/HistoryList.qml</file>
     <file>pages/components/ResourceController.qml</file>

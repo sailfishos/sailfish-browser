@@ -15,6 +15,7 @@ import Sailfish.Browser 1.0
 import Qt5Mozilla 1.0
 import org.nemomobile.connectivity 1.0
 import "WebPopupHandler.js" as PopupHandler
+import "WebPromptHandler.js" as PromptHandler
 
 WebContainer {
     id: webContainer
@@ -336,47 +337,15 @@ WebContainer {
                 break;
             }
             case "embed:alert": {
-                var winid = data.winid
-                var dialog = pageStack.push(webPrompts.alertComponentUrl,
-                                            {"text": data.text})
-                // TODO: also the Async message must be sent when window gets closed
-                dialog.done.connect(function() {
-                    sendAsyncMessage("alertresponse", {"winid": winid})
-                })
+                PromptHandler.openAlert(data)
                 break
             }
             case "embed:confirm": {
-                var winid = data.winid
-                var dialog = pageStack.push(webPrompts.confirmComponentUrl,
-                                            {"text": data.text})
-                // TODO: also the Async message must be sent when window gets closed
-                dialog.accepted.connect(function() {
-                    sendAsyncMessage("confirmresponse",
-                                     {"winid": winid, "accepted": true})
-                })
-                dialog.rejected.connect(function() {
-                    sendAsyncMessage("confirmresponse",
-                                     {"winid": winid, "accepted": false})
-                })
+                PromptHandler.openConfirm(data)
                 break
             }
             case "embed:prompt": {
-                var winid = data.winid
-                var dialog = pageStack.push(webPrompts.queryComponentUrl,
-                                            {"text": data.text, "value": data.defaultValue})
-                // TODO: also the Async message must be sent when window gets closed
-                dialog.accepted.connect(function() {
-                    sendAsyncMessage("promptresponse",
-                                     {
-                                         "winid": winid,
-                                         "accepted": true,
-                                         "promptvalue": dialog.value
-                                     })
-                })
-                dialog.rejected.connect(function() {
-                    sendAsyncMessage("promptresponse",
-                                     {"winid": winid, "accepted": false})
-                })
+                PromptHandler.openPrompt(data)
                 break
             }
             case "embed:auth": {
@@ -469,9 +438,15 @@ WebContainer {
             // Not yet actually changed but new activeWebView
             // needs to be set to PopupHandler
             PopupHandler.activeWebView = webView
+            // Stop previous webView
             if (webView.loading) {
                 webView.stop()
             }
+
+            // Not yet actually changed but new activeWebView
+            // needs to be set to PopupHandler
+            PopupHandler.activeWebView = webView
+            PromptHandler.activeWebView = webView
 
             // When all tabs are closed, we're in invalid state.
             if (tab.valid && webView.readyToLoad) {
@@ -556,5 +531,9 @@ WebContainer {
         PopupHandler.componentParent = browserPage
         PopupHandler.resourceController = resourceController
         PopupHandler.WebUtils = WebUtils
+
+        PromptHandler.pageStack = pageStack
+        PromptHandler.activeWebView = webView
+        PromptHandler.prompts = webPrompts
     }
 }
