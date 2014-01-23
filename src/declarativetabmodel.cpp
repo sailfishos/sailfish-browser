@@ -428,17 +428,24 @@ int DeclarativeTabModel::loadTabOrder()
 void DeclarativeTabModel::updateActiveTab(const Tab &newActiveTab)
 {
 #ifdef DEBUG_LOGS
-    qDebug() << "change tab: " << updateCurrentTab << m_currentTab;
+    qDebug() << "change tab: " << m_currentTab;
     qDebug() << "old active tab: " << m_activeTab.tabId() << m_activeTab.isValid() << m_activeTab.currentLink().url() << m_tabs.count();
     qDebug() << "new active tab: " << newActiveTab.tabId() << newActiveTab.isValid() << newActiveTab.currentLink().url();
 #endif
+
+    bool tabIdChanged = m_activeTab.tabId() != newActiveTab.tabId();
     m_activeTab = newActiveTab;
-    emit currentTabIdChanged();
+    if (tabIdChanged) {
+        emit currentTabIdChanged();
+    }
 
     saveTabOrder();
     if (m_currentTab) {
+        tabIdChanged = m_currentTab->tabId() != newActiveTab.tabId();
         m_currentTab->tabChanged(m_activeTab);
-        emit activeTabChanged();
+        if (tabIdChanged) {
+            emit activeTabChanged();
+        }
     }
 }
 
