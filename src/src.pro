@@ -82,4 +82,5 @@ HEADERS += \
 OTHER_FILES = *.qml \
               pages/*.qml \
               pages/components/*.qml \
+              pages/components/*.js \
               rpm/sailfish-browser.spec

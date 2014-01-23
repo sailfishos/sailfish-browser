@@ -14,6 +14,7 @@ import Sailfish.Silica 1.0
 import Sailfish.Browser 1.0
 import Qt5Mozilla 1.0
 import org.nemomobile.connectivity 1.0
+import "WebPopupHandler.js" as PopupHandler
 
 WebContainer {
     id: webContainer
@@ -22,7 +23,7 @@ WebContainer {
     // later commits.
     property bool active
     // This property should cover all possible popus
-    property alias popupActive: webView._ctxMenuActive
+    property alias popupActive: webPopups.active
 
     property alias loading: webView.loading
     property int loadProgress
@@ -38,7 +39,7 @@ WebContainer {
     property string favicon
 
     // Groupped properties
-    property alias popups: webPopus
+    property alias popups: webPopups
     property alias prompts: webPrompts
 
     // TODO : This must be encapsulated into a newTab / loadTab function
@@ -199,84 +200,10 @@ WebContainer {
         property bool userHasDraggedWhileLoading
         property bool viewReady
 
-        property Item _contextMenu
-        property bool _ctxMenuActive: _contextMenu != null && _contextMenu.active
-
-        // As QML can't disconnect closure from a signal (but methods only)
-        // let's keep auth data in this auxilary attribute whose sole purpose is to
-        // pass arguments to openAuthDialog().
-        property var _authData: null
-
         property bool _deferredReload
         property var _deferredLoad: null
 
-        function openAuthDialog(input) {
-            var data = input !== undefined ? input : webView._authData
-            var winid = data.winid
-
-            if (webView._authData !== null) {
-                auxTimer.triggered.disconnect(webView.openAuthDialog)
-                webView._authData = null
-            }
-
-            var dialog = pageStack.push(webPopus.authenticationComponentUrl,
-                                        {
-                                            "hostname": data.text,
-                                            "realm": data.title,
-                                            "username": data.defaultValue,
-                                            "passwordOnly": data.passwordOnly
-                                        })
-            dialog.accepted.connect(function () {
-                webView.sendAsyncMessage("authresponse",
-                                         {
-                                             "winid": winid,
-                                             "accepted": true,
-                                             "username": dialog.username,
-                                             "password": dialog.password
-                                         })
-            })
-            dialog.rejected.connect(function() {
-                webView.sendAsyncMessage("authresponse",
-                                         {"winid": winid, "accepted": false})
-            })
-        }
-
-        function openContextMenu(linkHref, imageSrc, linkTitle, contentType) {
-            var ctxMenuComp
-
-            if (_contextMenu) {
-                _contextMenu.linkHref = linkHref
-                _contextMenu.linkTitle = linkTitle.trim()
-                _contextMenu.imageSrc = imageSrc
-                hideVirtualKeyboard()
-                _contextMenu.show()
-            } else {
-                ctxMenuComp = Qt.createComponent(webPopus.contextMenuComponentUrl)
-                if (ctxMenuComp.status !== Component.Error) {
-                    _contextMenu = ctxMenuComp.createObject(browserPage,
-                                                            {
-                                                                "linkHref": linkHref,
-                                                                "imageSrc": imageSrc,
-                                                                "linkTitle": linkTitle.trim(),
-                                                                "contentType": contentType,
-                                                                "viewId": webView.uniqueID()
-                                                            })
-                    hideVirtualKeyboard()
-                    _contextMenu.show()
-                } else {
-                    console.log("Can't load BrowserContextMenu.qml")
-                }
-            }
-        }
-
-        function hideVirtualKeyboard() {
-            if (Qt.inputMethod.visible) {
-                webContainer.parent.focus = true
-            }
-        }
-
         visible: WebUtils.firstUseDone
-
         enabled: parent.active
         // There needs to be enough content for enabling chrome gesture
         chromeGestureThreshold: toolBarContainer.height
@@ -313,12 +240,12 @@ WebContainer {
 
         onTitleChanged: tab.title = title
         onUrlChanged: {
-            if (!resourceController.isRejectedGeolocationUrl(url)) {
-                resourceController.rejectedGeolocationUrl = ""
+            if (!PopupHandler.isRejectedGeolocationUrl(url)) {
+                PopupHandler.rejectedGeolocationUrl = ""
             }
 
-            if (!resourceController.isAcceptedGeolocationUrl(url)) {
-                resourceController.acceptedGeolocationUrl = ""
+            if (!PopupHandler.isAcceptedGeolocationUrl(url)) {
+                PopupHandler.acceptedGeolocationUrl = ""
             }
 
             if (tab.backForwardNavigation) {
@@ -405,14 +332,7 @@ WebContainer {
                 break
             }
             case "embed:selectasync": {
-                var dialog
-
-                dialog = pageStack.push(webPrompts.selectComponentUrl,
-                                        {
-                                            "options": data.options,
-                                            "multiple": data.multiple,
-                                            "webview": webView
-                                        })
+                PopupHandler.openSelectDialog(data)
                 break;
             }
             case "embed:alert": {
@@ -460,69 +380,19 @@ WebContainer {
                 break
             }
             case "embed:auth": {
-                if (pageStack.busy) {
-                    // User has just entered wrong credentials and webView wants
-                    // user's input again immediately even thogh the accepted
-                    // dialog is still deactivating.
-                    webView._authData = data
-                    // A better solution would be to connect to browserPage.statusChanged,
-                    // but QML Page transitions keep corrupting even
-                    // after browserPage.status === PageStatus.Active thus auxTimer.
-                    auxTimer.triggered.connect(webView.openAuthDialog)
-                    auxTimer.start()
-                } else {
-                    webView.openAuthDialog(data)
-                }
+                PopupHandler.openAuthDialog(data)
                 break
             }
             case "embed:permissions": {
-                // Ask for location permission
-                if (resourceController.isAcceptedGeolocationUrl(webView.url)) {
-                    sendAsyncMessage("embedui:premissions", {
-                                         allow: true,
-                                         checkedDontAsk: false,
-                                         id: data.id })
-                } else if (resourceController.isRejectedGeolocationUrl(webView.url)) {
-                    sendAsyncMessage("embedui:premissions", {
-                                         allow: false,
-                                         checkedDontAsk: false,
-                                         id: data.id })
-                } else {
-                    var dialog = pageStack.push(webPopus.locationComponentUrl, {})
-                    dialog.accepted.connect(function() {
-                        sendAsyncMessage("embedui:premissions", {
-                                             allow: true,
-                                             checkedDontAsk: false,
-                                             id: data.id })
-                        resourceController.acceptedGeolocationUrl = WebUtils.displayableUrl(webView.url)
-                        resourceController.rejectedGeolocationUrl = ""
-                    })
-                    dialog.rejected.connect(function() {
-                        sendAsyncMessage("embedui:premissions", {
-                                             allow: false,
-                                             checkedDontAsk: false,
-                                             id: data.id })
-                        resourceController.rejectedGeolocationUrl = WebUtils.displayableUrl(webView.url)
-                        resourceController.acceptedGeolocationUrl = ""
-                    })
-                }
+                PopupHandler.openLocationDialog(data)
                 break
             }
             case "embed:login": {
-                pageStack.push(popups.passwordManagerComponentUrl,
-                               {
-                                   "webView": webView,
-                                   "requestId": data.id,
-                                   "notificationType": data.name,
-                                   "formData": data.formdata
-                               })
+                PopupHandler.openPasswordManagerDialog(data)
                 break
             }
             case "Content:ContextMenu": {
-                webView.contextMenuRequested(data)
-                if (data.types.indexOf("image") !== -1 || data.types.indexOf("link") !== -1) {
-                    openContextMenu(data.linkURL, data.mediaURL, data.linkTitle, data.contentType)
-                }
+                PopupHandler.openContextMenu(data)
                 break
             }
             case "Content:SelectionRange": {
@@ -560,7 +430,7 @@ WebContainer {
             color: Theme.highlightDimmerColor
             smooth: true
             radius: 2.5
-            visible: webView.contentHeight > webView.height && !webView.pinching && !webView._ctxMenuActive
+            visible: webView.contentHeight > webView.height && !webView.pinching && !webPopups.active
             opacity: webView.verticalScrollDecorator.moving ? 1.0 : 0.0
             Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
         }
@@ -574,7 +444,7 @@ WebContainer {
             color: Theme.highlightDimmerColor
             smooth: true
             radius: 2.5
-            visible: webView.contentWidth > webView.width && !webView.pinching && !webView._ctxMenuActive
+            visible: webView.contentWidth > webView.width && !webView.pinching && !webPopups.active
             opacity: webView.horizontalScrollDecorator.moving ? 1.0 : 0.0
             Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
         }
@@ -596,6 +466,9 @@ WebContainer {
 
         onActiveTabChanged: {
             webContainer.newTabData = null
+            // Not yet actually changed but new activeWebView
+            // needs to be set to PopupHandler
+            PopupHandler.activeWebView = webView
             if (webView.loading) {
                 webView.stop()
             }
@@ -653,7 +526,9 @@ WebContainer {
     }
 
     QtObject {
-        id: webPopus
+        id: webPopups
+
+        property bool active
 
         // url support is missing and these should be typed as urls.
         // We don't want to create component before it's needed.
@@ -673,4 +548,13 @@ WebContainer {
     }
 
     Component.onDestruction: connectionHelper.closeNetworkSession()
+    Component.onCompleted: {
+        PopupHandler.auxTimer = auxTimer
+        PopupHandler.pageStack = pageStack
+        PopupHandler.popups = webPopups
+        PopupHandler.activeWebView = webView
+        PopupHandler.componentParent = browserPage
+        PopupHandler.resourceController = resourceController
+        PopupHandler.WebUtils = WebUtils
+    }
 }
