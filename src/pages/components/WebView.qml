@@ -125,14 +125,6 @@ WebContainer {
         webView.reload()
     }
 
-    function suspend() {
-        webView.suspendView()
-    }
-
-    function resume() {
-        webView.resumeView()
-    }
-
     function sendAsyncMessage(name, data) {
         webView.sendAsyncMessage(name, data)
     }
@@ -643,7 +635,7 @@ WebContainer {
 
     ResourceController {
         id: resourceController
-        webView: webContainer
+        webView: webView
         background: webContainer.background
 
         onWebViewSuspended: connectionHelper.closeNetworkSession()

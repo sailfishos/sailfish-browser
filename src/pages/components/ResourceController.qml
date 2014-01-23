@@ -84,10 +84,10 @@ Item {
 
     on_SuspendableChanged: {
         if (_suspendable) {
-            webView.suspend()
+            webView.suspendView()
             webViewSuspended()
         } else {
-            webView.resume()
+            webView.resumeView()
         }
     }
 
