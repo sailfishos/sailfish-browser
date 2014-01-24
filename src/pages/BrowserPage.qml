@@ -785,16 +785,12 @@ Page {
                 }
 
                 // 5 icons, 4 spaces between
-                spacing: isPortrait ? (width - (backIcon.width * 5)) / 4 : 9
+                spacing: isPortrait ? (width - (backIcon.width * 5)) / 4 : Theme.paddingSmall
 
                 Browser.IconButton {
-                    id:backIcon
-                    source: "image://theme/icon-m-back"
-                    enabled: tab.canGoBack
-                    onClicked: {
-                        tab.backForwardNavigation = true
-                        tab.goBack()
-                    }
+                    visible: isLandscape
+                    source: "image://theme/icon-m-close"
+                    onClicked: browserPage.closeActiveTab(true)
                 }
 
                 // Spacer
@@ -812,13 +808,19 @@ Page {
                         title: browserPage.title
                         height: parent.height
                         onClicked: controlArea.openTabPage(true, false, PageStackAction.Animated)
+                        // Workaround for binding loop jb#15182
+                        clip: true
                     }
                 }
 
                 Browser.IconButton {
-                    visible: isLandscape
-                    source: "image://theme/icon-m-close"
-                    onClicked: browserPage.closeActiveTab(true)
+                    id: backIcon
+                    source: "image://theme/icon-m-back"
+                    enabled: tab.canGoBack
+                    onClicked: {
+                        tab.backForwardNavigation = true
+                        tab.goBack()
+                    }
                 }
 
                 Browser.IconButton {
@@ -840,6 +842,7 @@ Page {
                     onClicked: controlArea.openTabPage(false, false, PageStackAction.Animated)
 
                     Label {
+                        visible: tabModel.count > 0
                         text: tabModel.count
                         x: (parent.width - contentWidth) / 2 - 5
                         y: (parent.height - contentHeight) / 2 - 5
