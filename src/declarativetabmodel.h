@@ -76,7 +76,8 @@ public slots:
 
 signals:
     void countChanged();
-    void activeTabChanged();
+    void activeTabChanged(int tabId);
+    void tabClosed(int tabId);
     void currentTabChanged();
     void currentTabIdChanged();
     void loadedChanged();

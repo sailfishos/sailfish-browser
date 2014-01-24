@@ -14,6 +14,7 @@ import Sailfish.Silica 1.0
 import Sailfish.Browser 1.0
 import Qt5Mozilla 1.0
 import org.nemomobile.connectivity 1.0
+import "WebViewTabCache.js" as TabCache
 import "WebPopupHandler.js" as PopupHandler
 import "WebPromptHandler.js" as PromptHandler
 
@@ -77,10 +78,6 @@ WebContainer {
     }
 
     function load(url, title, force) {
-        if (!contentItem) {
-            return
-        }
-
         if (url.substring(0, 6) !== "about:" && url.substring(0, 5) !== "file:"
             && !connectionHelper.haveNetworkConnectivity()
             && !contentItem._deferredLoad) {
@@ -94,6 +91,7 @@ WebContainer {
             return
         }
 
+        // This guarantees at that least one webview exists.
         if (tabModel.count == 0) {
             // Url is not need in webContainer.newTabData as we let engine to resolve
             // the url and use the resolved url.
@@ -179,7 +177,7 @@ WebContainer {
     toolbarHeight: toolBarContainer.height
 
     on_ReadyToLoadChanged: {
-        if (!visible) {
+        if (!visible || !_readyToLoad) {
             return
         }
 
@@ -225,7 +223,7 @@ WebContainer {
         property bool backForwardNavigation: false
 
         onUrlChanged: {
-            if (tab.valid && backForwardNavigation) {
+            if (tab.valid && backForwardNavigation && url != "about:blank") {
                 // Both url and title are updated before url changed is emitted.
                 load(url, title)
             }
@@ -267,6 +265,8 @@ WebContainer {
 
             onTitleChanged: tab.title = title
             onUrlChanged: {
+                if (url == "about:blank") return
+
                 if (!PopupHandler.isRejectedGeolocationUrl(url)) {
                     PopupHandler.rejectedGeolocationUrl = ""
                 }
@@ -463,21 +463,18 @@ WebContainer {
 
         onCountChanged: webContainer.newTabData = null
 
+        // arguments of the signal handler: int tabId
         onActiveTabChanged: {
             webContainer.newTabData = null
-            // Not yet actually changed but new activeWebView
-            // needs to be set to PopupHandler
-            PopupHandler.activeWebView = webView
-            // Stop previous webView
-            if (contentItem && contentItem.loading) {
-                contentItem.stop()
+
+            if (!TabCache.initialized) {
+                TabCache.init({"tab": tab, "container": webContainer},
+                              webViewComponent, webContainer)
             }
 
-            // Not yet actually changed but new activeWebView
-            // needs to be set to PopupHandler
-            PopupHandler.activeWebView = webView
-            PromptHandler.activeWebView = webView
-            webContainer.contentItem = webView
+            if (tabId > 0) {
+                webContainer.contentItem = TabCache.getView(tabId)
+            }
 
             // When all tabs are closed, we're in invalid state.
             if (tab.valid && webContainer._readyToLoad) {
@@ -485,6 +482,9 @@ WebContainer {
             }
             webContainer.currentTabChanged()
         }
+
+        // arguments of the signal handler: int tabId
+        onTabClosed: TabCache.releaseView(tabId)
     }
 
     ConnectionHelper {
@@ -494,13 +494,14 @@ WebContainer {
             var url
             var title
 
+            // TODO: this should be deferred till view created.
             if (contentItem && contentItem._deferredLoad) {
                 url = contentItem._deferredLoad["url"]
                 title = contentItem._deferredLoad["title"]
                 contentItem._deferredLoad = null
 
                 webContainer.load(url, title, true)
-            } else if (contentItem._deferredReload) {
+            } else if (contentItem && contentItem._deferredReload) {
                 contentItem._deferredReload = false
                 contentItem.reload()
             }
@@ -557,18 +558,14 @@ WebContainer {
 
     Component.onDestruction: connectionHelper.closeNetworkSession()
     Component.onCompleted: {
-        contentItem = webViewComponent.createObject(webContainer, {"tab": tab, "container": webContainer})
-
         PopupHandler.auxTimer = auxTimer
         PopupHandler.pageStack = pageStack
         PopupHandler.popups = webPopups
-        PopupHandler.activeWebView = contentItem
         PopupHandler.componentParent = browserPage
         PopupHandler.resourceController = resourceController
         PopupHandler.WebUtils = WebUtils
 
         PromptHandler.pageStack = pageStack
-        PromptHandler.activeWebView = contentItem
         PromptHandler.prompts = webPrompts
     }
 }
