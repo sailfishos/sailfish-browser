@@ -201,66 +201,95 @@ Page {
                 direction: OpacityRamp.RightToLeft
             }
 
-            Label {
-                id: titleLabel
-                anchors {
-                    bottom: searchField.top
-                    bottomMargin: Theme.paddingMediun
-                    left: parent.left
-                    leftMargin: Theme.paddingLarge
-                    right: searchField.right
-                    rightMargin: Theme.paddingMedium
+            Column {
+                id: urlColumn
+
+                property int indicatorWidth: window.indicatorParentItem.childrenRect.width
+
+                x: page.isPortrait ?  0 : indicatorWidth + Theme.paddingLarge
+                anchors.topMargin: Theme.itemSizeLarge / 2 - titleLabel.height / 2
+
+                states: [
+                    State {
+                        when: page.isLandscape
+                        AnchorChanges {
+                            target: urlColumn
+                            anchors.bottom: undefined
+                            anchors.top: headerContent.top
+                        }
+                    },
+                    State {
+                        when: page.isPortrait
+                        AnchorChanges {
+                            target: urlColumn
+                            anchors.bottom: headerContent.bottom
+                            anchors.top: undefined
+                        }
+                    }
+                ]
+
+                Label {
+                    id: titleLabel
+                    x: Theme.paddingLarge
+                    //% "New tab"
+                    text: (browserPage.tabs.count == 0 || newTab) ? qsTrId("sailfish_browser-la-new_tab") : (browserPage.currentTab.url == _search ? browserPage.currentTab.title : "")
+                    color: Theme.highlightColor
+                    font.pixelSize: Theme.fontSizeSmall
+                    width: searchField.width - x - Theme.paddingMedium
+                    truncationMode: TruncationMode.Fade
                 }
-                //% "New tab"
-                text: (browserPage.tabs.count == 0 || newTab) ? qsTrId("sailfish_browser-la-new_tab") : (browserPage.currentTab.url == _search ? browserPage.currentTab.title : "")
-                color: Theme.highlightColor
-                font.pixelSize: Theme.fontSizeSmall
-                width: parent.width - Theme.iconSizeSmall - Theme.paddingSmall
-                truncationMode: TruncationMode.Fade
-            }
+                TextField {
+                    id: searchField
 
-            TextField {
-                id: searchField
+                    width: page.isPortrait ? page.width - (closeActiveTabButton.visible ? closeActiveTabButton.width : 0)
+                                           : page.width - urlColumn.x - Theme.paddingMedium
+                    // Handle initially newTab state. Currently newTab initially
+                    // true when triggering new tab cover action.
+                    text: newTab ? "" : browserPage.currentTab.url
 
-                anchors.bottom: parent.bottom
-                width: page.width - (closeActiveTabButton.visible ? closeActiveTabButton.width : 0)
-                // Handle initially newTab state. Currently newTab initially
-                // true when triggering new tab cover action.
-                text: newTab ? "" : browserPage.currentTab.url
+                    //: Placeholder for the search/address field
+                    //% "Search or Address"
+                    placeholderText: qsTrId("sailfish_browser-ph-search_or_url")
+                    color: searchField.focus ? Theme.highlightColor : Theme.primaryColor
+                    focusOutBehavior: FocusBehavior.KeepFocus
+                    inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase | Qt.ImhUrlCharactersOnly
 
-                //: Placeholder for the search/address field
-                //% "Search or Address"
-                placeholderText: qsTrId("sailfish_browser-ph-search_or_url")
-                color: searchField.focus ? Theme.highlightColor : Theme.primaryColor
-                focusOutBehavior: FocusBehavior.KeepFocus
-                inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase | Qt.ImhUrlCharactersOnly
+                    label: text.length == 0 ? "" : (text == browserPage.currentTab.url
+                                                    //: Current browser page loaded
+                                                    //% "Done"
+                                                    && !browserPage.viewLoading ? qsTrId("sailfish_browser-la-done")
+                                                                                  //% "Search"
+                                                                                : qsTrId("sailfish_browser-la-search"))
 
-                label: text.length == 0 ? "" : (text == browserPage.currentTab.url
-                                                //: Current browser page loaded
-                                                //% "Done"
-                                                && !browserPage.viewLoading ? qsTrId("sailfish_browser-la-done")
-                                                                              //% "Search"
-                                                                            : qsTrId("sailfish_browser-la-search"))
+                    EnterKey.iconSource: "image://theme/icon-m-enter-accept"
+                    EnterKey.onClicked: {
+                        Qt.inputMethod.hide()
+                        // let gecko figure out how to handle malformed URLs
+                        page.load(searchField.text)
+                    }
 
-                EnterKey.iconSource: "image://theme/icon-m-enter-accept"
-                EnterKey.onClicked: {
-                    Qt.inputMethod.hide()
-                    // let gecko figure out how to handle malformed URLs
-                    page.load(searchField.text)
+                    onTextChanged: if (text != browserPage.currentTab.url) browserPage.history.search(text)
+
+                    Binding { target: page; property: "_search"; value: searchField.text }
+                    Binding { target: page; property: "_editing"; value: searchField.focus }
+
+                    Timer {
+                        id: focusTimer
+                        interval: 1
+                        onTriggered: {
+                            searchField.forceActiveFocus()
+                            searchField.selectAll()
+                            searchField._updateFlickables()
+                        }
+                    }
                 }
 
-                onTextChanged: if (text != browserPage.currentTab.url) browserPage.history.search(text)
-
-                Binding { target: page; property: "_search"; value: searchField.text }
-                Binding { target: page; property: "_editing"; value: searchField.focus }
-
-                Timer {
-                    id: focusTimer
-                    interval: 1
-                    onTriggered: {
-                        searchField.forceActiveFocus()
-                        searchField.selectAll()
-                        searchField._updateFlickables()
+                Connections {
+                    target: page
+                    onStatusChanged: {
+                        // break binding when pushed to stick with proper value for this depth of pagestack
+                        if (status === PageStatus.Active && window.indicatorParentItem.childrenRect.width == urlColumn.indicatorWidth)
+                            urlColumn.indicatorWidth = window.indicatorParentItem.childrenRect.width
                     }
                 }
             }
