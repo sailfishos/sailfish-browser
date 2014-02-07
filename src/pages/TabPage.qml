@@ -133,7 +133,8 @@ Page {
                 id: tabsGrid
                 visible: !page.newTab
                 columns: page.isPortrait ? 2 : 4
-                rows: Math.ceil(browserPage.tabs.count / columns)
+                rows: Math.ceil((browserPage.tabs.count - 1) / columns)
+                height: rows > 0 ? rows * (page.width / tabsGrid.columns) : 0
                 anchors.bottom: favoriteHeader.bottom
                 move: Transition {
                     NumberAnimation { properties: "x,y"; easing.type: Easing.InOutQuad; duration: 200 }
@@ -151,9 +152,9 @@ Page {
                         }
                     }
                 }
-            }
-            Behavior on height {
-                NumberAnimation { easing.type: Easing.InOutQuad; duration: 200 }
+                Behavior on height {
+                    NumberAnimation { easing.type: Easing.InOutQuad; duration: 200 }
+                }
             }
         }
         model: browserPage.favorites
