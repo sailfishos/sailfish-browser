@@ -7,6 +7,9 @@
            <case manual="false" name="declarativetabmodel">
                <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_declarativetabmodel -platform minimal</step>
            </case>
+           <case manual="false" name="declarativetab">
+               <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_declarativetab -platform wayland-egl</step>
+           </case>
        </set>
    </suite>
 </testdefinition>
