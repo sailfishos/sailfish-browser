@@ -52,45 +52,32 @@ TS_PATH = $$PWD
 TS_FILE = $$OUT_PWD/sailfish-browser.ts
 EE_QM = $$OUT_PWD/sailfish-browser_eng_en.qm
 include(../translations/translations.pri)
+include(history.pri)
 
 # C++ sources
 SOURCES += \
     sailfishbrowser.cpp \
     declarativebookmarkmodel.cpp \
     bookmark.cpp \
+    declarativewebcontainer.cpp \
     declarativewebutils.cpp \
     browserservice.cpp \
     dbusadaptor.cpp \
     downloadmanager.cpp \
     settingmanager.cpp \
-    closeeventfilter.cpp \
-    declarativetabmodel.cpp \
-    declarativetab.cpp \
-    declarativewebcontainer.cpp \
-    dbmanager.cpp \
-    dbworker.cpp \
-    link.cpp \
-    declarativehistorymodel.cpp \
-    tab.cpp
+    closeeventfilter.cpp
 
 # C++ headers
 HEADERS += \
     declarativebookmarkmodel.h \
     bookmark.h \
+    declarativewebcontainer.h \
     declarativewebutils.h \
     browserservice.h \
     dbusadaptor.h \
     downloadmanager.h \
     settingmanager.h \
-    closeeventfilter.h \
-    declarativetabmodel.h \
-    declarativetab.h \
-    declarativewebcontainer.h \
-    dbmanager.h \
-    dbworker.h \
-    link.h \
-    declarativehistorymodel.h \
-    tab.h
+    closeeventfilter.h
 
 OTHER_FILES = *.qml \
               pages/*.qml \

@@ -49,6 +49,7 @@ QHash<int, QByteArray> DeclarativeTabModel::roleNames() const
     return roles;
 }
 
+// TODO : Remove foreground flag.
 void DeclarativeTabModel::addTab(const QString& url, bool foreground) {
     int tabId = DBManager::instance()->createTab();
     int linkId = DBManager::instance()->createLink(tabId, url);
