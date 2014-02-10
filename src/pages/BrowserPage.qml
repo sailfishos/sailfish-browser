@@ -438,7 +438,7 @@ Page {
         onTitleChanged: {
             // This is always after url has changed
             browserPage.title = title
-            tab.updateTab(browserPage.url, browserPage.title, "")
+            tab.updateTab(browserPage.url, browserPage.title)
         }
 
         onUrlChanged: {
@@ -453,13 +453,13 @@ Page {
             }
 
             if (tab.backForwardNavigation) {
-                tab.updateTab(browserPage.url, browserPage.title, "")
+                tab.updateTab(browserPage.url, browserPage.title)
                 tab.backForwardNavigation = false
             } else if (!browserPage.newTabRequested) {
                 // Use browserPage.title here to avoid wrong title to blink.
                 // browserPage.load() updates browserPage's title before load starts.
                 // QmlMozView's title is not correct over here.
-                tab.navigateTo(browserPage.url, browserPage.title, "")
+                tab.navigateTo(browserPage.url)
             }
             tab.loadWhenTabChanges = false
             browserPage.newTabRequested = false
@@ -515,7 +515,7 @@ Page {
                     // This is always up-to-date in both link clicked and back/forward navigation
                     // captureScreen does not work here as we might have changed to TabPage.
                     // Tab icon clicked takes care of the rest.
-                    tab.updateTab(browserPage.url, browserPage.title, "")
+                    tab.updateTab(browserPage.url, browserPage.title)
                 }
 
                 if (!userHasDraggedWhileLoading) {
