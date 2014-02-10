@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testdefinition version="1.0">
    <suite name="sailfish-browser-tests" domain="ui">
-       <description>Sailfish Browser UI automatic tests</description>
+       <description>Sailfish Browser automatic tests</description>
        <set name="unit-tests" feature="Sailfish Browser UI">
            <description>Sailfish Browser UI unit tests</description>
-           <case manual="false" name="unittests">
-               <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp;DISPLAY=:0 qmltestrunner</step>
+           <case manual="false" name="declarativetabmodel">
+               <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_declarativetabmodel -platform minimal</step>
            </case>
        </set>
    </suite>

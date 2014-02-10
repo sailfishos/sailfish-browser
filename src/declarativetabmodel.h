@@ -100,5 +100,7 @@ private:
     bool m_loaded;
     bool m_browsing;
     bool m_activeTabClosed;
+
+    friend class tst_declarativetabmodel;
 };
 #endif // DECLARATIVETABMODEL_H

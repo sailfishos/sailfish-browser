@@ -68,7 +68,7 @@ DBWorker::DBWorker(QObject *parent) :
 void DBWorker::init()
 {
     QString databaseDir = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
-    const QString dbFileName = QStringLiteral("sailfish-browser.sqlite");
+    const QString dbFileName = QLatin1String(DB_NAME);
     QDir dir(databaseDir);
 
     if(!dir.mkpath(databaseDir)) {
