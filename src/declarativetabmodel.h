@@ -86,6 +86,9 @@ private slots:
     void updateThumbPath(QString url, QString path, int tabId);
     void updateTitle(QString url, QString title);
     void tabChanged(Tab tab);
+    void handleNavigation(QString url);
+    void handleTitleUpdate(QString title);
+    void navigated(Tab tab);
 
 private:
     void load();
@@ -100,6 +103,7 @@ private:
     bool m_loaded;
     bool m_browsing;
     bool m_activeTabClosed;
+    bool m_navigated;
 
     friend class tst_declarativetabmodel;
 };

@@ -67,6 +67,8 @@ private slots:
     void screenCaptureReady();
 
 signals:
+    void navigated(QString url);
+    void titleUpdated(QString title);
     void thumbPathChanged(QString path, int tabId);
     void urlChanged();
     void validChanged();
@@ -91,7 +93,7 @@ private:
     int m_tabId;
     bool m_valid;
     Link m_link;
-    int m_nextLinkId, m_previousLinkId;
+    bool m_canGoForward, m_canGoBack;
     QFutureWatcher<ScreenCapture> m_screenCapturer;
 };
 

@@ -26,12 +26,15 @@ DeclarativeTabModel::DeclarativeTabModel(QObject *parent)
     , m_loaded(false)
     , m_browsing(false)
     , m_activeTabClosed(false)
+    , m_navigated(false)
 {
     connect(DBManager::instance(), SIGNAL(tabsAvailable(QList<Tab>)),
             this, SLOT(tabsAvailable(QList<Tab>)));
 
     connect(DBManager::instance(), SIGNAL(tabChanged(Tab)),
             this, SLOT(tabChanged(Tab)));
+    connect(DBManager::instance(), SIGNAL(navigated(Tab)),
+            this, SLOT(navigated(Tab)));
 
     connect(DBManager::instance(), SIGNAL(thumbPathChanged(QString,QString,int)),
             this, SLOT(updateThumbPath(QString,QString,int)));
@@ -212,6 +215,8 @@ void DeclarativeTabModel::setCurrentTab(DeclarativeTab *currentTab)
         m_currentTab = currentTab;
         if (m_currentTab) {
             connect(m_currentTab, SIGNAL(thumbPathChanged(QString,int)), this, SLOT(updateThumbPath(QString,int)));
+            connect(m_currentTab, SIGNAL(navigated(QString)), this, SLOT(handleNavigation(QString)));
+            connect(m_currentTab, SIGNAL(titleUpdated(QString)), this, SLOT(handleTitleUpdate(QString)));
         }
 
         emit currentTabChanged();
@@ -293,10 +298,17 @@ void DeclarativeTabModel::tabChanged(Tab tab)
 {
     // When a tab was closed do not update anything from database as
     // loading might be on going.
-    if (m_activeTabClosed && this->sender() == DBManager::instance()) {
-        m_activeTabClosed = false;
-        return;
+    if (this->sender() == DBManager::instance()) {
+        if (m_activeTabClosed) {
+            m_activeTabClosed = false;
+            return;
+        }
+
+        if (m_navigated) {
+            return;
+        }
     }
+
 #ifdef DEBUG_LOGS
     qDebug() << "tab: " << tab.tabId() << m_activeTab.tabId() << tab.currentLink().thumbPath() << tab.currentLink().url() << tab.currentLink().title() << m_tabs.indexOf(tab);
 #endif
@@ -322,6 +334,31 @@ void DeclarativeTabModel::tabChanged(Tab tab)
             emit dataChanged(start, end, roles);
         }
     }
+}
+
+void DeclarativeTabModel::handleNavigation(QString url)
+{
+    Link currentLink = m_activeTab.currentLink();
+    currentLink.setTitle("");
+    currentLink.setThumbPath("");
+    currentLink.setUrl(url);
+    m_activeTab.setCurrentLink(currentLink);
+    m_navigated = true;
+}
+
+void DeclarativeTabModel::handleTitleUpdate(QString title)
+{
+    Link currentLink = m_activeTab.currentLink();
+    currentLink.setTitle(title);
+    m_activeTab.setCurrentLink(currentLink);
+}
+
+void DeclarativeTabModel::navigated(Tab tab)
+{
+    if (tab.tabId() == m_activeTab.tabId()) {
+        updateActiveTab(tab);
+    }
+    m_navigated = false;
 }
 
 
@@ -447,6 +484,13 @@ void DeclarativeTabModel::updateThumbPath(QString url, QString path, int tabId)
 
 void DeclarativeTabModel::updateTitle(QString url, QString title)
 {
+    if (m_activeTab.currentLink().url() == url
+            && m_activeTab.currentLink().title() != title) {
+        Link link = m_activeTab.currentLink();
+        link.setTitle(title);
+        m_activeTab.setCurrentLink(link);
+    }
+
     QVector<int> roles;
     roles << TitleRole;
     for (int i = 0; i < m_tabs.count(); i++) {
