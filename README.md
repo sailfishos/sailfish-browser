@@ -5,15 +5,16 @@ More information about the architecture can be found from http://blog.idempotent
 
 Maintainers
 -----------
-Dmitry Rozhkov (rojkov)
-Raine Mäkeläinen (rainemak)
-Vesa-Matti Hartikainen (veskuh)
+- Dmitry Rozhkov (rojkov)
+- Raine Mäkeläinen (rainemak)
+- Vesa-Matti Hartikainen (veskuh)
 
 Engine and adaptation
 ---------------------
-QtMozEmbed - Qt bindings - https://github.com/tmeshkova/qtmozembed
-embedlite components - Embedding Compontents - https://github.com/tmeshkova/embedlite-components
-Gecko with embedlite - browser engine with embedding API - https://github.com/tmeshkova/gecko-dev/tree/embedlite/embedding/embedlite  
+- QtMozEmbed - Qt bindings - https://github.com/tmeshkova/qtmozembed
+embedlite components - 
+- Embedding Compontents - https://github.com/tmeshkova/embedlite-components
+- Gecko with embedlite - browser engine with embedding API - https://github.com/tmeshkova/gecko-dev/tree/embedlite/embedding/embedlite  
 
 License
 -------
