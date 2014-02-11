@@ -13,6 +13,7 @@
 
 #include "dbmanager.h"
 #include "declarativetab.h"
+#include "linkvalidator.h"
 #include <QFile>
 #ifdef DEBUG_LOGS
 #include <QDebug>
@@ -54,6 +55,10 @@ QHash<int, QByteArray> DeclarativeTabModel::roleNames() const
 
 // TODO : Remove foreground flag.
 void DeclarativeTabModel::addTab(const QString& url, bool foreground) {
+    if (!LinkValidator::navigable(url)) {
+        return;
+    }
+
     int tabId = DBManager::instance()->createTab();
     int linkId = DBManager::instance()->createLink(tabId, url);
 #ifdef DEBUG_LOGS
