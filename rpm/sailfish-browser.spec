@@ -60,6 +60,7 @@ Translation source for Sailfish Browser
 Summary: Tests for Sailfish browser
 License:   Prop
 Group: Applications/Internet
+BuildRequires:  pkgconfig(Qt5Test)
 Requires:   %{name} = %{version}-%{release}
 Requires:   qt5-qtdeclarative-devel-tools
 Requires:   qt5-qtdeclarative-import-qttest
