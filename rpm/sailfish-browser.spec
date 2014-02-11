@@ -63,6 +63,7 @@ Group: Applications/Internet
 Requires:   %{name} = %{version}-%{release}
 Requires:   qt5-qtdeclarative-devel-tools
 Requires:   qt5-qtdeclarative-import-qttest
+Requires:   mce-tools
 
 %description tests
 Unit tests and additional data needed for functional tests

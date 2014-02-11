@@ -3,6 +3,9 @@
    <suite name="sailfish-browser-tests" domain="ui">
        <description>Sailfish Browser automatic tests</description>
        <set name="unit-tests" feature="Sailfish Browser UI">
+           <pre_steps>
+               <step>/usr/sbin/mcetool -jdisabled -Doff -B1 -jenabled -U -B1 -kunlocked</step>
+           </pre_steps>
            <description>Sailfish Browser UI unit tests</description>
            <case manual="false" name="declarativetabmodel">
                <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_declarativetabmodel -platform minimal</step>
@@ -10,6 +13,9 @@
            <case manual="false" name="declarativetab">
                <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_declarativetab -platform wayland-egl</step>
            </case>
+           <post_steps>
+               <step>/usr/sbin/mcetool -jdisabled -Doff</step>
+           </post_steps>
        </set>
    </suite>
 </testdefinition>
