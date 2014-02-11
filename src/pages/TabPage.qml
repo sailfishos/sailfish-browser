@@ -100,10 +100,20 @@ Page {
         header: Item {
             id: historyHeader
             width: commonHeader.width
-            height: commonHeader.height
+            height: commonHeader.height + historySectionHeader.height
+
+            // common header parented
+            onChildrenChanged: historyList.contentY = -historyHeader.height
+
+            SectionHeader {
+                id: historySectionHeader
+                //: Section header for history items
+                //% "History"
+                text: qsTrId("sailfish_browser-he-history")
+                anchors.bottom: historyHeader.bottom
+            }
 
             Component.onCompleted: page.historyHeader = historyHeader
-
         }
         model: browserPage.history
         search: _search
@@ -125,7 +135,7 @@ Page {
         header: Item {
             id: favoriteHeader
             width: commonHeader.width
-            height: page.newTab ? commonHeader.height : commonHeader.height + tabsGrid.height
+            height: (page.newTab ? commonHeader.height : commonHeader.height + tabsGrid.height) + favoriteSectionHeader.height
 
             Component.onCompleted: page.favoriteHeader = favoriteHeader
 
@@ -135,7 +145,7 @@ Page {
                 columns: page.isPortrait ? 2 : 4
                 rows: Math.ceil((browserPage.tabs.count - 1) / columns)
                 height: rows > 0 ? rows * (page.width / tabsGrid.columns) : 0
-                anchors.bottom: favoriteHeader.bottom
+                anchors.bottom: favoriteSectionHeader.top
                 move: Transition {
                     NumberAnimation { properties: "x,y"; easing.type: Easing.InOutQuad; duration: 200 }
                 }
@@ -156,6 +166,14 @@ Page {
                     NumberAnimation { easing.type: Easing.InOutQuad; duration: 200 }
                 }
             }
+
+            SectionHeader {
+                id: favoriteSectionHeader
+                //: Section header for favorites
+                //% "Favorites"
+                text: qsTrId("sailfish_browser-he-favorites")
+                anchors.bottom: favoriteHeader.bottom
+            }
         }
         model: browserPage.favorites
         hasContextMenu: !page.newTab
@@ -175,10 +193,22 @@ Page {
     }
 
 
-    Item {
+    Column {
         id: commonHeader
         width: page.width
-        height: headerContent.height
+
+        PageHeader {
+            id: pageHeader
+            //% "New tab"
+            title: (browserPage.tabs.count == 0 || newTab) ? qsTrId("sailfish_browser-la-new_tab") :
+                                                           //% "Search"
+                                                           (historyVisible ? qsTrId("sailfish_browser-la-search")
+                                                                             //: Header at the Tab page
+                                                                             //% "Tabs"
+                                                                           : qsTrId("sailfish_browser-he-tabs"))
+            visible: page.isPortrait
+            height: visible ? Theme.itemSizeLarge : 0
+        }
 
         Rectangle {
             id: headerContent
@@ -236,7 +266,7 @@ Page {
                 Label {
                     id: titleLabel
                     x: Theme.paddingLarge
-                    //% "New tab"
+                    // Reuse new tab label (la-new_tab)
                     text: (browserPage.tabs.count == 0 || newTab) ? qsTrId("sailfish_browser-la-new_tab") : (browserPage.currentTab.url == _search ? browserPage.currentTab.title : "")
                     color: Theme.highlightColor
                     font.pixelSize: Theme.fontSizeSmall
@@ -259,12 +289,29 @@ Page {
                     focusOutBehavior: FocusBehavior.KeepFocus
                     inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase | Qt.ImhUrlCharactersOnly
 
-                    label: text.length == 0 ? "" : (text == browserPage.currentTab.url
-                                                    //: Current browser page loaded
-                                                    //% "Done"
-                                                    && !browserPage.viewLoading ? qsTrId("sailfish_browser-la-done")
-                                                                                  //% "Search"
-                                                                                : qsTrId("sailfish_browser-la-search"))
+
+                    label: {
+                        if (text.length === 0) return ""
+
+                        if (searchField.activeFocus || text !== browserPage.currentTab.url) {
+                            // Reuse search label
+                            return qsTrId("sailfish_browser-la-search")
+                        }
+
+                        //: Active browser tab.
+                        //% "Active Tab
+                        var activeTab = qsTrId("sailfish_browser-la-active-tab")
+
+                        if (text === browserPage.currentTab.url && browserPage.viewLoading) {
+                            //: Current browser page loading.
+                            //% "Loading"
+                            return activeTab + " • " + qsTrId("sailfish_browser-la-loading")
+                        } else {
+                            //: Current browser page loaded.
+                            //% "Done"
+                            return activeTab + " • " + qsTrId("sailfish_browser-la-done")
+                        }
+                    }
 
                     EnterKey.iconSource: "image://theme/icon-m-enter-accept"
                     EnterKey.onClicked: {
