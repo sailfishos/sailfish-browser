@@ -2,7 +2,8 @@
 TEMPLATE = subdirs
 
 SUBDIRS += tst_declarativetabmodel \
-    tst_declarativetab
+    tst_declarativetab \
+    tst_linkvalidator
 
 OTHER_FILES += \
     *.xml
