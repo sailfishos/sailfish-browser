@@ -54,6 +54,7 @@ public slots:
     void tabListAvailable(QList<Tab> tabs);
 
 signals:
+    void navigated(Tab tab);
     void tabChanged(Tab tab);
     void tabAvailable(Tab tab);
     void tabsAvailable(QList<Tab> tab);

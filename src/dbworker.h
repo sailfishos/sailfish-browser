@@ -58,6 +58,7 @@ public slots:
 signals:
     void tabAvailable(Tab tab);
     void tabChanged(Tab tab);
+    void navigated(Tab tab);
     void tabsAvailable(QList<Tab> tabs);
     void thumbPathChanged(QString url, QString path, int tabId);
     void titleChanged(QString url, QString title);

@@ -26,8 +26,8 @@ DeclarativeTab::DeclarativeTab(QQuickItem *parent)
     : QQuickItem(parent)
     , m_tabId(0)
     , m_valid(false)
-    , m_nextLinkId(0)
-    , m_previousLinkId(0)
+    , m_canGoForward(false)
+    , m_canGoBack(false)
 {
     init();
 }
@@ -66,6 +66,13 @@ QString DeclarativeTab::url() const {
     return m_link.url();
 }
 
+void DeclarativeTab::setUrl(QString url)
+{
+    if (url != m_link.url() && m_link.isValid()) {
+        updateTab(url, m_link.title());
+    }
+}
+
 QString DeclarativeTab::title() const {
     return m_link.title();
 }
@@ -75,8 +82,15 @@ void DeclarativeTab::setTitle(QString title) {
     qDebug() << title;
 #endif
     if(title != m_link.title() && m_link.isValid()) {
+        m_link.setTitle(title);
+        emit titleChanged();
         DBManager::instance()->updateTitle(m_link.url(), title);
     }
+}
+
+int DeclarativeTab::tabId() const
+{
+    return m_tabId;
 }
 
 void DeclarativeTab::setTabId(int tabId) {
@@ -126,60 +140,92 @@ void DeclarativeTab::invalidate()
         emit urlChanged();
     }
 
-    if (m_nextLinkId != 0) {
-        m_nextLinkId = 0;
+    if (m_canGoForward) {
+        m_canGoForward = false;
         emit canGoFowardChanged();
     }
 
-    if (m_previousLinkId != 0) {
-        m_previousLinkId = 0;
+    if (m_canGoBack) {
+        m_canGoBack = false;
         emit canGoBackChanged();
     }
 }
 
 bool DeclarativeTab::canGoForward() const {
-    return m_nextLinkId > 0;
+    return m_canGoForward;
 }
 
 bool DeclarativeTab::canGoBack() const {
-    return m_previousLinkId > 0;
+    return m_canGoBack;
 }
 
 void DeclarativeTab::goForward()
 {
-    if (m_nextLinkId > 0) {
+    if (m_canGoForward) {
         DBManager::instance()->goForward(m_tabId);
     }
 }
 
 void DeclarativeTab::goBack()
 {
-    if (m_previousLinkId > 0) {
+    if (m_canGoBack) {
         DBManager::instance()->goBack(m_tabId);
     }
 }
 
-void DeclarativeTab::navigateTo(QString url, QString title, QString path)
+void DeclarativeTab::navigateTo(QString url)
 {
 #ifdef DEBUG_LOGS
-    qDebug() << m_link.url() << m_link.title() << title << url << path;
+    qDebug() << "current link:" << m_link.url() << m_link.title() << "new url:" << url;
 #endif
     if (url != m_link.url()) {
-        DBManager::instance()->navigateTo(m_tabId, url, title, path);
+        m_link.setUrl(url);
+        emit urlChanged();
+
+        if (!m_link.title().isEmpty()) {
+            m_link.setTitle("");
+            emit titleChanged();
+        }
+
+        if (!m_link.thumbPath().isEmpty()) {
+            m_link.setThumbPath("");
+            emit thumbPathChanged("", m_tabId);
+        }
+
+        emit navigated(url);
+        DBManager::instance()->navigateTo(m_tabId, url, m_link.title(), m_link.thumbPath());
     } else {
-        updateTab(url, title, path);
+        updateTab(url, m_link.title());
     }
 }
 
-void DeclarativeTab::updateTab(QString url, QString title, QString path)
+void DeclarativeTab::updateTab(QString url, QString title)
 {
 #ifdef DEBUG_LOGS
-    qDebug() << title << url << m_tabId << path;
+    qDebug() << title << url << m_tabId;
 #endif
-    if ((!url.isEmpty() && url != m_link.url())
-            || (!title.isEmpty() && title != m_link.title())
-            || (!path.isEmpty() && path != m_link.title())) {
-        DBManager::instance()->updateTab(m_tabId, url, title, path);
+
+    bool urlHasChanged = false;
+    bool titleHasChanged = false;
+
+    if (url != m_link.url()) {
+        urlHasChanged = true;
+        m_link.setUrl(url);
+        emit urlChanged();
+    }
+
+    if (title != m_link.title()) {
+        titleHasChanged = true;
+        m_link.setTitle(title);
+        emit titleChanged();
+    }
+
+    if (titleHasChanged) {
+        emit titleUpdated(title);
+    }
+
+    if (urlHasChanged || titleHasChanged) {
+        DBManager::instance()->updateTab(m_tabId, m_link.url(), m_link.title(), m_link.thumbPath());
     }
 }
 
@@ -196,7 +242,7 @@ void DeclarativeTab::tabChanged(Tab tab)
     m_link = tab.currentLink();
 #ifdef DEBUG_LOGS
     qDebug() << "new values:" << m_link.title() << m_link.url() << m_link.thumbPath() << "current tab:" <<  m_tabId << " changed tab:" << tab.tabId();
-    qDebug() << "previous link: " << m_previousLinkId << tab.previousLink() << m_nextLinkId << tab.nextLink();
+    qDebug() << "previous link: " << m_canGoBack << tab.previousLink() << m_canGoForward << tab.nextLink();
 #endif
 
     if (urlStringChanged) {
@@ -209,13 +255,13 @@ void DeclarativeTab::tabChanged(Tab tab)
         emit titleChanged();
     }
 
-    if (m_nextLinkId != tab.nextLink()) {
-        m_nextLinkId = tab.nextLink();
+    if (m_canGoForward != (tab.nextLink() > 0)) {
+        m_canGoForward = tab.nextLink() > 0;
         emit canGoFowardChanged();
     }
 
-    if (m_previousLinkId != tab.previousLink()) {
-        m_previousLinkId = tab.previousLink();
+    if (m_canGoBack != (tab.previousLink() > 0)) {
+        m_canGoBack = tab.previousLink() > 0;
         emit canGoBackChanged();
     }
 
