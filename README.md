@@ -18,4 +18,8 @@ embedlite components -
 
 License
 -------
-The browser is open source and licensed under Mozilla Public License v2.0 (http://www.mozilla.org/MPL/2.0/). 
+The browser is open source and licensed under Mozilla Public License v2.0 (http://www.mozilla.org/MPL/2.0/).
+
+Wiki
+----
+For more information see wiki: https://github.com/sailfishos/sailfish-browser/wiki/Sailfish-Browser-wiki
