@@ -25,7 +25,7 @@ IconButton {
     icon.source: "image://theme/icon-m-close"
     onClicked: {
         if (closeActiveTab) {
-            browserPage.closeActiveTab(true)
+            browserPage.closeActiveTab()
         } else {
             browserPage.closeTab(index, false)
         }
