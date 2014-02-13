@@ -23,8 +23,8 @@ Rectangle {
     property int viewId
     readonly property bool active: visible
 
-    visible: false
-    opacity: visible ? 1.0 : 0.0
+    visible: opacity > 0.0
+    opacity: 0.0
 
     width: parent.width
     height: parent.height
@@ -86,7 +86,7 @@ Rectangle {
             text: qsTrId("sailfish_browser-me-open_link_in_new_tab")
 
             onClicked: {
-                root.visible = false
+                root._hide()
                 browserPage.newTab(root.linkHref, true)
             }
         }
@@ -98,7 +98,7 @@ Rectangle {
             text: qsTrId("sailfish_browser-me-share_link")
 
             onClicked: {
-                root.visible = false
+                root._hide()
                 pageStack.push(Qt.resolvedUrl("../ShareLinkPage.qml"), {"link" : root.linkHref, "linkTitle": root.linkTitle})
             }
         }
@@ -110,7 +110,7 @@ Rectangle {
             text: qsTrId("sailfish_browser-me-copy_to_clipboard")
 
             onClicked: {
-                root.visible = false
+                root._hide()
                 Clipboard.text = root.linkHref
             }
         }
@@ -122,7 +122,7 @@ Rectangle {
             text: qsTrId("sailfish_browser-me-open_image_in_new_tab")
 
             onClicked: {
-                root.visible = false
+                root._hide()
                 browserPage.newTab(root.imageSrc, false)
             }
         }
@@ -134,7 +134,7 @@ Rectangle {
             text: qsTrId("sailfish_browser-me-save_image_to_gallery")
 
             onClicked: {
-                root.visible = false
+                root._hide()
                 // drop query string from URL and split to sections
                 var urlSections = imageSrc.split("?")[0].split("/")
                 var leafName = urlSections[urlSections.length - 1]
@@ -197,7 +197,7 @@ Rectangle {
                 menu.highlightedItem.down = false
                 menu.highlightedItem.clicked()
             } else {
-                onClicked: root.visible = false
+                onClicked: root._hide()
             }
         }
     }
@@ -230,6 +230,10 @@ Rectangle {
     }
 
     function show() {
-        visible = true
+        opacity = 1.0
+    }
+
+    function _hide() {
+        opacity = 0.0
     }
 }
