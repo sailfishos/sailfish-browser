@@ -21,6 +21,7 @@
 #include <QTime>
 
 #include "dbmanager.h"
+#include "linkvalidator.h"
 
 DeclarativeTab::DeclarativeTab(QQuickItem *parent)
     : QQuickItem(parent)
@@ -175,6 +176,13 @@ void DeclarativeTab::goBack()
 
 void DeclarativeTab::navigateTo(QString url)
 {
+    if (!LinkValidator::navigable(url)) {
+#ifdef DEBUG_LOGS
+        qDebug() << "invalid url: " << url << title;
+#endif
+        return;
+    }
+
 #ifdef DEBUG_LOGS
     qDebug() << "current link:" << m_link.url() << m_link.title() << "new url:" << url;
 #endif
@@ -201,6 +209,13 @@ void DeclarativeTab::navigateTo(QString url)
 
 void DeclarativeTab::updateTab(QString url, QString title)
 {
+    if (!LinkValidator::navigable(url)) {
+#ifdef DEBUG_LOGS
+        qDebug() << "invalid url: " << url << title;
+#endif
+        return;
+    }
+
 #ifdef DEBUG_LOGS
     qDebug() << title << url << m_tabId;
 #endif

@@ -249,11 +249,8 @@ void tst_declarativetabmodel::invalidTabs()
     int originalCount = tabModel->count();
     tabModel->addTab(url);
 
-    QEXPECT_FAIL("", "Currently tel, sms, mailto, can be added as tabs, will fix soon", Continue);
     QCOMPARE(tabModel->count(), originalCount);
-    QEXPECT_FAIL("", "Count should not change with tel, sms, mailto", Continue);
     QCOMPARE(countChangeSpy.count(), 0);
-    QEXPECT_FAIL("", "Current tab id should not change with tel, sms, mailto", Continue);
     QCOMPARE(currentTabIdChangeSpy.count(), 0);
 }
 

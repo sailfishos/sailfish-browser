@@ -5,6 +5,7 @@ SOURCES += \
     $$PWD/dbmanager.cpp \
     $$PWD/dbworker.cpp \
     $$PWD/link.cpp \
+    $$PWD/linkvalidator.cpp \
     $$PWD/declarativehistorymodel.cpp \
     $$PWD/tab.cpp
 
@@ -15,6 +16,7 @@ HEADERS += \
     $$PWD/dbmanager.h \
     $$PWD/dbworker.h \
     $$PWD/link.h \
+    $$PWD/linkvalidator.h \
     $$PWD/declarativehistorymodel.h \
     $$PWD/tab.h
 

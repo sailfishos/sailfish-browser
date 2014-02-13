@@ -49,6 +49,12 @@ private slots:
     void navigateToInvalidUrls_data();
     void navigateToInvalidUrls();
 
+    void updateInvalidUrls_data();
+    void updateInvalidUrls();
+
+    void updateValidUrls_data();
+    void updateValidUrls();
+
 private:
     DeclarativeTabModel *tabModel;
     DeclarativeTab *tab;
@@ -270,6 +276,8 @@ void tst_declarativetab::navigateToInvalidUrls_data()
     QTest::newRow("sms") << "sms:+123456798";
     QTest::newRow("mailto") << "mailto:joe@example.com";
     QTest::newRow("mailto query does not count") << "mailto:joe@example.com?cc=bob@example.com&body=hello1";
+    QTest::newRow("geo") << "geo:61.49464,23.77513";
+    QTest::newRow("geo://") << "geo://61.49464,23.77513";
 }
 
 void tst_declarativetab::navigateToInvalidUrls()
@@ -282,10 +290,66 @@ void tst_declarativetab::navigateToInvalidUrls()
     QFETCH(QString, url);
     tab->navigateTo(url);
 
-    QEXPECT_FAIL("", "Currently tel, sms, mailto, can be navigated, will fix soon", Continue);
     QCOMPARE(urlChangedSpy.count(), 0);
-    QEXPECT_FAIL("", "Title should not change with tel, sms, mailto", Continue);
     QCOMPARE(titleChangedSpy.count(), 0);
+}
+
+void tst_declarativetab::updateInvalidUrls_data()
+{
+    QTest::addColumn<QString>("url");
+    QTest::addColumn<QString>("title");
+    QTest::newRow("tel") << "tel:+123456798" << "tel";
+    QTest::newRow("sms") << "sms:+123456798" << "sms";;
+    QTest::newRow("mailto") << "mailto:joe@example.com" << "1st mailto";
+    QTest::newRow("mailto query does not count") << "mailto:joe@example.com?cc=bob@example.com&body=hello1"  << "2nd mailto";
+    QTest::newRow("geo") << "geo:61.49464,23.77513" << "1st geo";
+    QTest::newRow("geo://") << "geo://61.49464,23.77513" << "2nd geo";
+}
+
+void tst_declarativetab::updateInvalidUrls()
+{
+    QString expectedUrl = "http://foobar/invalid";
+    QString expectedTitle = "Invalid FooBar";
+    tab->updateTab(expectedUrl, expectedTitle);
+
+    QFETCH(QString, url);
+    QFETCH(QString, title);
+
+    QSignalSpy urlChangedSpy(tab, SIGNAL(urlChanged()));
+    QSignalSpy titleChangedSpy(tab, SIGNAL(titleChanged()));
+
+    tab->updateTab(url, title);
+
+    QCOMPARE(urlChangedSpy.count(), 0);
+    QCOMPARE(titleChangedSpy.count(), 0);
+    QCOMPARE(tab->url(), expectedUrl);
+    QCOMPARE(tab->title(), expectedTitle);
+}
+
+void tst_declarativetab::updateValidUrls_data()
+{
+    QTest::addColumn<QString>("url");
+    QTest::addColumn<QString>("title");
+    QTest::newRow("http") << "http://foobar" << "FooBar";
+    QTest::newRow("https") << "https://foobar" << "FooBar 2";
+    QTest::newRow("file") << "file://foo/bar/index.html" << "Local foobar";
+    QTest::newRow("relative") << "foo/bar/index.html" << "Relative foobar";
+}
+
+void tst_declarativetab::updateValidUrls()
+{
+    QFETCH(QString, url);
+    QFETCH(QString, title);
+
+    QSignalSpy urlChangedSpy(tab, SIGNAL(urlChanged()));
+    QSignalSpy titleChangedSpy(tab, SIGNAL(titleChanged()));
+
+    tab->updateTab(url, title);
+
+    QCOMPARE(urlChangedSpy.count(), 1);
+    QCOMPARE(titleChangedSpy.count(), 1);
+    QCOMPARE(tab->url(), url);
+    QCOMPARE(tab->title(), title);
 }
 
 int main(int argc, char *argv[])
