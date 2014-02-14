@@ -43,30 +43,22 @@ Page {
     property var _deferredLoad: null
     property bool _deferredReload
 
-    // Used by newTab function
-    property bool newTabRequested
-
     function newTab(url, foreground, title) {
         if (foreground) {
             // This might be something that we don't want to have.
             if (webView.loading) {
                 webView.stop()
             }
-            tab.loadWhenTabChanges = true
             captureScreen()
         }
-        // tabMovel.addTab does not trigger anymore navigateTo call. Always done via
-        // QmlMozView onUrlChanged handler.
-        // Loading newTabs seems to be broken. When an url that was already loaded is loaded again and still
-        // active in one of the tabs, the tab containing the url is not brought to foreground.
-        // This was broken already before this change. We need to add mapping between intented
-        // load url and actual result url to TabModel::activateTab so that finding can be done.
-        newTabRequested = true
-        tabModel.addTab(url, foreground)
+
+        // Url is not need in webView.newTabData as we let engine to resolve
+        // the url and use the resolved url.
+        webView.newTabData = { "title": title, "foreground" : foreground }
         load(url, title)
     }
 
-    function closeTab(index, loadActive) {
+    function closeTab(index) {
         if (tabModel.count == 0) {
             return
         }
@@ -75,11 +67,11 @@ Page {
             webView.stop()
         }
 
-        tab.loadWhenTabChanges = loadActive
+        webView.newTabData = null
         tabModel.remove(index)
     }
 
-    function closeActiveTab(loadActive) {
+    function closeActiveTab() {
         if (tabModel.count === 0) {
             return
         }
@@ -88,18 +80,23 @@ Page {
             webView.stop()
         }
 
-        tab.loadWhenTabChanges = loadActive
+        webView.newTabData = null
         tabModel.closeActiveTab();
 
         if (tabModel.count === 0 && browserPage.status === PageStatus.Active) {
             browserPage.title = ""
             browserPage.url = ""
             pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage, "initialSearchFocus": true })
+        } else {
+            browserPage.title = tab.title
+            browserPage.url = tab.url
+            load(tab.url, tab.title)
         }
     }
 
     function reload() {
-        var url = browserPage.url
+        var url = webView.url.toString()
+        browserPage.url = url
 
         if (url.substring(0, 6) !== "about:" && url.substring(0, 5) !== "file:"
             && !browserPage._deferredReload
@@ -129,8 +126,9 @@ Page {
         }
 
         if (tabModel.count == 0) {
-            newTabRequested = true
-            tabModel.addTab(url, true)
+            // Url is not need in webView.newTabData as we let engine to resolve
+            // the url and use the resolved url.
+            webView.newTabData = { "title": title, "foreground" : true }
         }
 
         if (title) {
@@ -141,11 +139,18 @@ Page {
 
         // Always enable chrome when load is called.
         webView.chrome = true
-
         if ((url !== "" && webView.url != url) || force) {
             browserPage.url = url
             resourceController.firstFrameRendered = false
             webView.load(url)
+        } else if (webView.url == url && webView.newTabData) {
+            // Url will not change when the very same url is already loaded. Thus, we just add tab directly.
+            // This is currently the only exception. Normally tab is added after engine has
+            // resolved the url.
+            tabModel.addTab(url, webView.newTabData.foreground)
+            if (webView.newTabData.title) {
+                tab.title = webView.newTabData.title
+            }
         }
     }
 
@@ -162,10 +167,12 @@ Page {
             browserPage.title = title
         }
 
-        tab.loadWhenTabChanges = true;
         tabModel.activateTab(index)
         // When tab is loaded we always pop back to BrowserPage.
         pageStack.pop(browserPage)
+        webView.newTabData = null
+        // TODO: force argument of load should be removed
+        browserPage.load(url, title, true)
     }
 
     function deleteTabHistory() {
@@ -185,6 +192,7 @@ Page {
 
     function closeAllTabs() {
         tabModel.clear()
+        webView.newTabData = null
     }
 
     function openAuthDialog(input) {
@@ -325,19 +333,13 @@ Page {
     Tab {
         id: tab
 
-        // Indicates whether the next url that is set to this Tab element will be loaded.
-        // Used when new tabs are created, tabs are loaded, and with back and forward,
-        // All of these actions load data asynchronously from the DB, and the changes
-        // are reflected in the Tab element.
-        property bool loadWhenTabChanges: false
+        // TODO: this will be internal of the WebView in newWebView branch.
         property bool backForwardNavigation: false
 
         onUrlChanged: {
-            if (tab.valid && (loadWhenTabChanges || backForwardNavigation)) {
+            if (tab.valid && backForwardNavigation) {
                 // Both url and title are updated before url changed is emitted.
                 load(url, title)
-                // loadWhenTabChanges will be set to false when mozview says that url has changed
-                // loadWhenTabChanges = false
             }
         }
     }
@@ -395,6 +397,16 @@ Page {
         property bool userHasDraggedWhileLoading
         property bool viewReady
 
+        // TODO : This must be encapsulated into a newTab / loadTab function
+        // Load goes so that we first use engine load to resolve url
+        // and then save that resolved url to the history. This way
+        // urls that resolve to download urls won't get saved to the
+        // history (as those won't trigger url change). As an added bonus
+        // a redirected url will be saved with the redirected url not with
+        // the input url.
+        //
+        // "newWebView" branch has some building blocks to help here.
+        property var newTabData
 
         visible: WebUtils.firstUseDone
 
@@ -455,14 +467,21 @@ Page {
             if (tab.backForwardNavigation) {
                 tab.updateTab(browserPage.url, browserPage.title)
                 tab.backForwardNavigation = false
-            } else if (!browserPage.newTabRequested) {
+            } else if (!newTabData) {
                 // Use browserPage.title here to avoid wrong title to blink.
                 // browserPage.load() updates browserPage's title before load starts.
                 // QmlMozView's title is not correct over here.
                 tab.navigateTo(browserPage.url)
+            } else {
+                // Delay adding of the new tab until url has been resolved.
+                // Url will not change if there is download link behind.
+                tabModel.addTab(browserPage.url, newTabData.foreground)
+                if (newTabData.title) {
+                    tab.title = newTabData.title
+                }
             }
-            tab.loadWhenTabChanges = false
-            browserPage.newTabRequested = false
+
+            newTabData = null
         }
 
         onBgcolorChanged: {
@@ -510,17 +529,8 @@ Page {
         }
 
         onLoadedChanged: {
-            if (loaded) {
-                if (url != "about:blank" && url) {
-                    // This is always up-to-date in both link clicked and back/forward navigation
-                    // captureScreen does not work here as we might have changed to TabPage.
-                    // Tab icon clicked takes care of the rest.
-                    tab.updateTab(browserPage.url, browserPage.title)
-                }
-
-                if (!userHasDraggedWhileLoading) {
-                    webContainer.resetHeight(false)
-                }
+            if (loaded && !userHasDraggedWhileLoading) {
+                webContainer.resetHeight(false)
             }
         }
 
@@ -764,7 +774,7 @@ Page {
             title: browserPage.title
             url: browserPage.url
             onSearchClicked: controlArea.openTabPage(true, false, PageStackAction.Animated)
-            onCloseClicked: browserPage.closeActiveTab(true)
+            onCloseClicked: browserPage.closeActiveTab()
         }
 
         Browser.ToolBarContainer {
@@ -794,7 +804,7 @@ Page {
                 Browser.IconButton {
                     visible: isLandscape
                     source: "image://theme/icon-m-close"
-                    onClicked: browserPage.closeActiveTab(true)
+                    onClicked: browserPage.closeActiveTab()
                 }
 
                 // Spacer
@@ -927,7 +937,7 @@ Page {
                 if (WebUtils.firstUseDone) {
                     load(url)
                 } else {
-                    tabModel.addTab(url, false)
+                    newTab(url, false, "")
                 }
             }
             if (browserPage.status !== PageStatus.Active) {
