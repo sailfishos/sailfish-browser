@@ -45,6 +45,14 @@
       textArea.addEventListener("keypress", handleKeyPress, true);
       textArea.addEventListener("keydown", handleKeyDown, true);
       textArea.addEventListener("keyup", handleKeyUp, true);
+
+      var numberField = document.getElementById("numberField");
+      numberField.addEventListener("compositionstart", start, true);
+      numberField.addEventListener("compositionupdate", update, true);
+      numberField.addEventListener("compositionend", end, true);
+      numberField.addEventListener("keypress", handleKeyPress, true);
+      numberField.addEventListener("keydown", handleKeyDown, true);
+      numberField.addEventListener("keyup", handleKeyUp, true);
     } catch(ex) {}
   }
   </script>
@@ -82,6 +90,12 @@
 
     <br/><br/>
     <textarea id="emptyTextArea" rows="4" cols="50" style="width:200px;height:150px"></textarea>
+    <br/><br/>
+
+    <div style="position:relative;width:200px;height:40px">
+      <input id="numberField" type="number" value="input number"></input>
+    </div>
+    <br/><br/>
 
     <!-- Some lorem ipsum text -->
     <p contenteditable="true">
