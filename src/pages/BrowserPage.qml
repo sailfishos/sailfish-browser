@@ -700,28 +700,28 @@ Page {
             id: verticalScrollDecorator
 
             width: 5
-            height: webView.verticalScrollDecorator.height
-            y: webView.verticalScrollDecorator.y
+            height: webView.verticalScrollDecorator.size
+            y: webView.verticalScrollDecorator.position
             anchors.right: parent ? parent.right: undefined
             color: Theme.highlightDimmerColor
             smooth: true
             radius: 2.5
             visible: webView.contentHeight > webView.height && !webView.pinching && !_ctxMenuActive
-            opacity: webView.moving ? 1.0 : 0.0
+            opacity: webView.verticalScrollDecorator.moving ? 1.0 : 0.0
             Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
         }
 
         Rectangle {
             id: horizontalScrollDecorator
-            width: webView.horizontalScrollDecorator.width
+            width: webView.horizontalScrollDecorator.size
             height: 5
-            x: webView.horizontalScrollDecorator.x
+            x: webView.horizontalScrollDecorator.position
             y: browserPage.height - (fullscreenMode ? 0 : toolBarContainer.height) - height
             color: Theme.highlightDimmerColor
             smooth: true
             radius: 2.5
             visible: webView.contentWidth > webView.width && !webView.pinching && !_ctxMenuActive
-            opacity: webView.moving ? 1.0 : 0.0
+            opacity: webView.horizontalScrollDecorator.moving ? 1.0 : 0.0
             Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
         }
 
