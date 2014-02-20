@@ -424,7 +424,7 @@ Page {
         state: ""
 
         onReadyToLoadChanged: {
-            if (!WebUtils.firstUseDone) {
+            if (!visible) {
                 return
             }
 
@@ -918,14 +918,13 @@ Page {
     Connections {
         target: WebUtils
         onOpenUrlRequested: {
-            if (url == "") {
-                // User tapped on icon when browser was already open.
-                // let's just bring the browser to front
-                if (!window.applicationActive) {
-                    window.activate()
-                }
-                return
+            if (!window.applicationActive) {
+                window.activate()
+
+                // url is empty when user tapped icon when browser was already open.
+                if (url == "") return
             }
+
             if (webView.url != "") {
                 captureScreen()
                 if (!tabModel.activateTab(url)) {
@@ -934,17 +933,14 @@ Page {
                 }
             } else {
                 // New browser instance, just load the content
-                if (WebUtils.firstUseDone) {
-                    load(url)
-                } else {
-                    newTab(url, false, "")
+                if (firstUseOverlay) {
+                    firstUseOverlay.destroy()
+                    webView.visible = true
                 }
+                load(url)
             }
             if (browserPage.status !== PageStatus.Active) {
                 pageStack.pop(browserPage, PageStackAction.Immediate)
-            }
-            if (!window.applicationActive) {
-                window.activate()
             }
         }
         onFirstUseDoneChanged: {
