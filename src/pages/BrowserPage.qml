@@ -853,8 +853,10 @@ Page {
                 Browser.IconButton {
                     id: tabPageButton
                     source: "image://theme/icon-m-tabs"
-                    onClicked: controlArea.openTabPage(false, false, PageStackAction.Animated)
-
+                    onClicked: {
+                        if (!WebUtils.firstUseDone) WebUtils.firstUseDone = true
+                        controlArea.openTabPage(false, false, PageStackAction.Animated)
+                    }
                     Label {
                         visible: tabModel.count > 0
                         text: tabModel.count
@@ -906,12 +908,6 @@ Page {
                     browserPage.reload()
                 }
             }
-        }
-    }
-
-    onStatusChanged: {
-        if (status === PageStatus.Inactive && !WebUtils.firstUseDone) {
-            WebUtils.firstUseDone = true
         }
     }
 
