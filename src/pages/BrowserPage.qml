@@ -838,7 +838,7 @@ Page {
                 }
 
                 Browser.IconButton {
-                    enabled: WebUtils.firstUseDone
+                    enabled: webView.visible
                     property bool favorited: favorites.count > 0 && favorites.contains(tab.url)
                     source: favorited ? "image://theme/icon-m-favorite-selected" : "image://theme/icon-m-favorite"
                     onClicked: {
@@ -868,7 +868,7 @@ Page {
                 }
 
                 Browser.IconButton {
-                    enabled: WebUtils.firstUseDone
+                    enabled: webView.visible
                     source: webView.loading ? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
                     onClicked: webView.loading ? webView.stop() : browserPage.reload()
                 }
@@ -937,7 +937,7 @@ Page {
                     firstUseOverlay.destroy()
                     webView.visible = true
                 }
-                load(url)
+                newTab(url, true)
             }
             if (browserPage.status !== PageStatus.Active) {
                 pageStack.pop(browserPage, PageStackAction.Immediate)
