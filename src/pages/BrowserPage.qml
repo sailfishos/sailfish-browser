@@ -424,7 +424,7 @@ Page {
         state: ""
 
         onReadyToLoadChanged: {
-            if (!WebUtils.firstUseDone) {
+            if (!visible) {
                 return
             }
 
@@ -838,7 +838,7 @@ Page {
                 }
 
                 Browser.IconButton {
-                    enabled: WebUtils.firstUseDone
+                    enabled: webView.visible
                     property bool favorited: favorites.count > 0 && favorites.contains(tab.url)
                     source: favorited ? "image://theme/icon-m-favorite-selected" : "image://theme/icon-m-favorite"
                     onClicked: {
@@ -853,8 +853,10 @@ Page {
                 Browser.IconButton {
                     id: tabPageButton
                     source: "image://theme/icon-m-tabs"
-                    onClicked: controlArea.openTabPage(false, false, PageStackAction.Animated)
-
+                    onClicked: {
+                        if (!WebUtils.firstUseDone) WebUtils.firstUseDone = true
+                        controlArea.openTabPage(false, false, PageStackAction.Animated)
+                    }
                     Label {
                         visible: tabModel.count > 0
                         text: tabModel.count
@@ -868,7 +870,7 @@ Page {
                 }
 
                 Browser.IconButton {
-                    enabled: WebUtils.firstUseDone
+                    enabled: webView.visible
                     source: webView.loading ? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
                     onClicked: webView.loading ? webView.stop() : browserPage.reload()
                 }
@@ -909,23 +911,16 @@ Page {
         }
     }
 
-    onStatusChanged: {
-        if (status === PageStatus.Inactive && !WebUtils.firstUseDone) {
-            WebUtils.firstUseDone = true
-        }
-    }
-
     Connections {
         target: WebUtils
         onOpenUrlRequested: {
-            if (url == "") {
-                // User tapped on icon when browser was already open.
-                // let's just bring the browser to front
-                if (!window.applicationActive) {
-                    window.activate()
-                }
-                return
+            if (!window.applicationActive) {
+                window.activate()
+
+                // url is empty when user tapped icon when browser was already open.
+                if (url == "") return
             }
+
             if (webView.url != "") {
                 captureScreen()
                 if (!tabModel.activateTab(url)) {
@@ -934,17 +929,14 @@ Page {
                 }
             } else {
                 // New browser instance, just load the content
-                if (WebUtils.firstUseDone) {
-                    load(url)
-                } else {
-                    newTab(url, false, "")
+                if (firstUseOverlay) {
+                    firstUseOverlay.destroy()
+                    webView.visible = true
                 }
+                newTab(url, true)
             }
             if (browserPage.status !== PageStatus.Active) {
                 pageStack.pop(browserPage, PageStackAction.Immediate)
-            }
-            if (!window.applicationActive) {
-                window.activate()
             }
         }
         onFirstUseDoneChanged: {
