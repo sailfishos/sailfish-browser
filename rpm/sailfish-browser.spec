@@ -1,10 +1,10 @@
 Name:       sailfish-browser
 
 Summary:    Sailfish Browser
-Version:    0.9.4
+Version:    0.9.8
 Release:    1
 Group:      Applications/Internet
-License:    Prop
+License:    MPLv2
 Url:        https://bitbucket.org/jolla/ui-sailfish-browser
 Source0:    %{name}-%{version}.tar.bz2
 BuildRequires:  pkgconfig(Qt5Core)
@@ -41,7 +41,7 @@ Sailfish Web Browser
 
 %package settings
 Summary:  Browser plugin for Jolla Settings
-License:  Prop
+License:  MPLv2
 Group:    Applications/Internet
 Requires: jolla-settings >= 0.11.29
 
@@ -50,7 +50,7 @@ Browser plugin for Jolla Settings
 
 %package ts-devel
 Summary: Translation source for Sailfish browser
-License:   Prop
+License:   MPLv2
 Group:     Applications/Internet
 
 %description ts-devel
@@ -58,7 +58,7 @@ Translation source for Sailfish Browser
 
 %package tests
 Summary: Tests for Sailfish browser
-License:   Prop
+License:   MPLv2
 Group: Applications/Internet
 BuildRequires:  pkgconfig(Qt5Test)
 Requires:   %{name} = %{version}-%{release}
