@@ -1,7 +1,9 @@
 TEMPLATE = aux
 
 # Data for functional tests
-testdata.files = *.html \
+testdata.files = *.txt \
+                 *.sh \
+                 *.html \
                  *.css \
                  navigation/*.html \
                  icon-launcher-testbrowser.png
