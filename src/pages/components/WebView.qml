@@ -21,9 +21,6 @@ import "WebPromptHandler.js" as PromptHandler
 WebContainer {
     id: webContainer
 
-    // This cannot be bindings in multiple mozview case. Will change in
-    // later commits.
-    property bool active
     // This property should cover all possible popus
     property alias popupActive: webPopups.active
 
@@ -167,8 +164,6 @@ WebContainer {
     width: parent.width
     height: browserPage.orientation === Orientation.Portrait ? Screen.height : Screen.width
 
-    // TODO: Rename pageActive to active and remove there the beginning
-    pageActive: active
     webView: contentItem
 
     foreground: Qt.application.active

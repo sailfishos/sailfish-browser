@@ -22,7 +22,7 @@ class DeclarativeWebContainer : public QQuickItem {
 
     Q_PROPERTY(QQuickItem *webView READ webView WRITE setWebView NOTIFY webViewChanged FINAL)
     Q_PROPERTY(bool foreground READ foreground WRITE setForeground NOTIFY foregroundChanged FINAL)
-    Q_PROPERTY(bool pageActive READ pageActive WRITE setPageActive NOTIFY pageActiveChanged FINAL)
+    Q_PROPERTY(bool active READ active WRITE setActive NOTIFY activeChanged FINAL)
     Q_PROPERTY(bool inputPanelVisible READ inputPanelVisible NOTIFY inputPanelVisibleChanged FINAL)
     Q_PROPERTY(qreal inputPanelHeight READ inputPanelHeight WRITE setInputPanelHeight NOTIFY inputPanelHeightChanged FINAL)
     Q_PROPERTY(qreal inputPanelOpenHeight READ inputPanelOpenHeight WRITE setInputPanelOpenHeight NOTIFY inputPanelOpenHeightChanged FINAL)
@@ -41,8 +41,8 @@ public:
 
     bool background() const;
 
-    bool pageActive() const;
-    void setPageActive(bool active);
+    bool active() const;
+    void setActive(bool active);
 
     bool inputPanelVisible() const;
 
@@ -60,7 +60,7 @@ signals:
     void pageStackChanged();
     void foregroundChanged();
     void backgroundChanged();
-    void pageActiveChanged();
+    void activeChanged();
     void inputPanelVisibleChanged();
     void inputPanelHeightChanged();
     void inputPanelOpenHeightChanged();
@@ -86,7 +86,7 @@ private:
     bool m_background;
     bool m_windowVisible;
     int m_backgroundTimer;
-    bool m_pageActive;
+    bool m_active;
     bool m_inputPanelVisible;
     qreal m_inputPanelHeight;
     qreal m_inputPanelOpenHeight;

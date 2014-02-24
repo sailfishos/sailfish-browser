@@ -23,7 +23,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     , m_background(false)
     , m_windowVisible(false)
     , m_backgroundTimer(0)
-    , m_pageActive(false)
+    , m_active(false)
     , m_inputPanelVisible(false)
     , m_inputPanelHeight(0.0)
     , m_inputPanelOpenHeight(0.0)
@@ -87,24 +87,24 @@ bool DeclarativeWebContainer::background() const
     return m_background;
 }
 
-bool DeclarativeWebContainer::pageActive() const
+bool DeclarativeWebContainer::active() const
 {
-    return m_pageActive;
+    return m_active;
 }
 
-void DeclarativeWebContainer::setPageActive(bool active)
+void DeclarativeWebContainer::setActive(bool active)
 {
-    if (m_pageActive != active) {
-        m_pageActive = active;
-        emit pageActiveChanged();
+    if (m_active != active) {
+        m_active = active;
+        emit activeChanged();
 
         // If dialog has been opened, we need to verify that input panel is not visible.
         // This might happen when the user fills in login details to a form and
         // presses enter to accept the form after which PasswordManagerDialog is pushed to pagestack
         // on top the BrowserPage. Once PassowordManagerDialog is accepted/rejected
-        // this condition can be met. If pageActive changes to true before keyboard is fully closed,
+        // this condition can be met. If active changes to true before keyboard is fully closed,
         // then the inputPanelVisibleChanged() signal is emitted by setInputPanelHeight.
-        if (m_pageActive && m_inputPanelHeight == 0 && m_inputPanelVisible) {
+        if (m_active && m_inputPanelHeight == 0 && m_inputPanelVisible) {
             m_inputPanelVisible = false;
             emit inputPanelVisibleChanged();
         }
@@ -126,7 +126,7 @@ void DeclarativeWebContainer::setInputPanelHeight(qreal height)
     if (m_inputPanelHeight != height) {
         bool imVisibleChanged = false;
         m_inputPanelHeight = height;
-        if (m_pageActive) {
+        if (m_active) {
             if (m_inputPanelHeight == 0) {
                 if (m_inputPanelVisible) {
                     m_inputPanelVisible = false;
