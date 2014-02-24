@@ -219,7 +219,7 @@ void DeclarativeTabModel::setCurrentTab(DeclarativeTab *currentTab)
         if (m_currentTab) {
             connect(m_currentTab, SIGNAL(thumbPathChanged(QString,int)), this, SLOT(updateThumbPath(QString,int)));
             connect(m_currentTab, SIGNAL(navigated(QString)), this, SLOT(handleNavigation(QString)));
-            connect(m_currentTab, SIGNAL(titleUpdated(QString)), this, SLOT(handleTitleUpdate(QString)));
+            connect(m_currentTab, SIGNAL(titleChanged()), this, SLOT(handleTitleChanged()));
         }
 
         emit currentTabChanged();
@@ -349,11 +349,13 @@ void DeclarativeTabModel::handleNavigation(QString url)
     m_navigated = true;
 }
 
-void DeclarativeTabModel::handleTitleUpdate(QString title)
+void DeclarativeTabModel::handleTitleChanged()
 {
-    Link currentLink = m_activeTab.currentLink();
-    currentLink.setTitle(title);
-    m_activeTab.setCurrentLink(currentLink);
+    if (m_currentTab) {
+        Link currentLink = m_activeTab.currentLink();
+        currentLink.setTitle(m_currentTab->title());
+        m_activeTab.setCurrentLink(currentLink);
+    }
 }
 
 void DeclarativeTabModel::navigated(Tab tab)

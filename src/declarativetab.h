@@ -68,7 +68,6 @@ private slots:
 
 signals:
     void navigated(QString url);
-    void titleUpdated(QString title);
     void thumbPathChanged(QString path, int tabId);
     void urlChanged();
     void validChanged();

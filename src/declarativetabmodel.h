@@ -89,7 +89,7 @@ private slots:
     void updateTitle(QString url, QString title);
     void tabChanged(Tab tab);
     void handleNavigation(QString url);
-    void handleTitleUpdate(QString title);
+    void handleTitleChanged();
     void navigated(Tab tab);
 
 private:

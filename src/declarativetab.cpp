@@ -235,10 +235,6 @@ void DeclarativeTab::updateTab(QString url, QString title)
         emit titleChanged();
     }
 
-    if (titleHasChanged) {
-        emit titleUpdated(title);
-    }
-
     if (urlHasChanged || titleHasChanged) {
         DBManager::instance()->updateTab(m_tabId, m_link.url(), m_link.title(), m_link.thumbPath());
     }
