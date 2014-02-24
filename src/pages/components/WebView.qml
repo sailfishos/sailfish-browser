@@ -41,16 +41,6 @@ WebContainer {
     property alias popups: webPopups
     property alias prompts: webPrompts
 
-    // TODO : This must be encapsulated into a newTab / loadTab function
-    // Load goes so that we first use engine load to resolve url
-    // and then save that resolved url to the history. This way
-    // urls that resolve to download urls won't get saved to the
-    // history (as those won't trigger url change). As an added bonus
-    // a redirected url will be saved with the redirected url not with
-    // the input url.
-    //
-    // "newWebView" branch has some building blocks to help here.
-    property var newTabData
     // Move to C++
     readonly property bool _readyToLoad: contentItem &&
                                          contentItem.viewReady &&
@@ -90,9 +80,9 @@ WebContainer {
 
         // This guarantees at that least one webview exists.
         if (tabModel.count == 0) {
-            // Url is not need in webContainer.newTabData as we let engine to resolve
+            // Url is not need in model._newTabData as we let engine to resolve
             // the url and use the resolved url.
-            webContainer.newTabData = { "title": title }
+            model._newTabData = { "title": title }
         }
 
         // Bookmarks and history items pass url and title as arguments.
@@ -108,11 +98,11 @@ WebContainer {
             tab.url = url
             resourceController.firstFrameRendered = false
             contentItem.load(url)
-        } else if (contentItem.url == url && webContainer.newTabData) {
+        } else if (contentItem.url == url && model._newTabData) {
             // Url will not change when the very same url is already loaded. Thus, we just add tab directly.
             // This is currently the only exception. Normally tab is added after engine has
             // resolved the url.
-            tabModel.addTab(url, webContainer.newTabData.title)
+            tabModel.addTab(url, model._newTabData.title)
         }
     }
 
@@ -197,6 +187,14 @@ WebContainer {
     TabModel {
         id: model
 
+        // Load goes so that we first use engine load to resolve url
+        // and then save that resolved url to the history. This way
+        // urls that resolve to download urls won't get saved to the
+        // history (as those won't trigger url change). By doing this way
+        // a redirected url will be saved with the redirected url not with
+        // the input url.
+        property var _newTabData
+
         function newTab(url, title) {
             // This might be something that we don't want to have.
             if (contentItem && contentItem.loading) {
@@ -204,9 +202,9 @@ WebContainer {
             }
             captureScreen()
 
-            // Url is not need in webView.newTabData as we let engine to resolve
+            // Url is not need in model._newTabData as we let engine to resolve
             // the url and use the resolved url.
-            newTabData = { "title": title }
+            _newTabData = { "title": title }
             load(url, title)
         }
 
@@ -275,16 +273,16 @@ WebContainer {
                 if (tab.backForwardNavigation) {
                     tab.updateTab(url, tab.title)
                     tab.backForwardNavigation = false
-                } else if (!newTabData) {
+                } else if (!model._newTabData) {
                     // WebView.load() updates title before load starts.
                     tab.navigateTo(url)
                 } else {
                     // Delay adding of the new tab until url has been resolved.
                     // Url will not change if there is download link behind.
-                    tabModel.addTab(url, newTabData.title)
+                    tabModel.addTab(url, model._newTabData.title)
                 }
 
-                newTabData = null
+                model._newTabData = null
             }
 
             onBgcolorChanged: {
@@ -458,11 +456,11 @@ WebContainer {
     Connections {
         target: tabModel
 
-        onCountChanged: webContainer.newTabData = null
+        onCountChanged: model._newTabData = null
 
         // arguments of the signal handler: int tabId
         onActiveTabChanged: {
-            webContainer.newTabData = null
+            model._newTabData = null
 
             if (!TabCache.initialized) {
                 TabCache.init({"tab": tab, "container": webContainer},
