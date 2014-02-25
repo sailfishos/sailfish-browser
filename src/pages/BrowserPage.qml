@@ -91,7 +91,9 @@ Page {
         } else {
             browserPage.title = tab.title
             browserPage.url = tab.url
-            load(tab.url, tab.title)
+            if (tab.url != "") {
+                load(tab.url, tab.title)
+            }
         }
     }
 
@@ -327,6 +329,7 @@ Page {
         currentTab: tab
         browsing: browserPage.status === PageStatus.Active && !webView.newTabData && webView.loaded
         onBrowsingChanged: if (browsing) captureScreen()
+        onCountChanged: if (count === 0) webView.load("about:blank")
     }
 
     HistoryModel {
@@ -456,10 +459,17 @@ Page {
         onTitleChanged: {
             // This is always after url has changed
             browserPage.title = title
+
+            if (url == "about:blank") return
             tab.updateTab(browserPage.url, browserPage.title)
         }
 
         onUrlChanged: {
+            if (url == "about:blank") {
+                browserPage.url = ""
+                return
+            }
+
             browserPage.url = url
 
             if (!resourceController.isRejectedGeolocationUrl(url)) {
