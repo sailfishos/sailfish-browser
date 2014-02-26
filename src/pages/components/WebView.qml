@@ -217,12 +217,35 @@ WebContainer {
 
         function releaseView(tabId) {
             TabCache.releaseView(tabId)
-            if (model.count == 0) {
+            if (count == 0) {
                 webContainer.contentItem = null
             }
         }
 
         currentTab: tab
+
+        // arguments of the signal handler: int tabId
+        onActiveTabChanged: {
+            if (_newTabData) {
+                webContainer.currentTabChanged()
+                return
+            }
+
+            activateView(tabId)
+
+            // When all tabs are closed, we're in invalid state.
+            if (tab.valid && webContainer._readyToLoad &&
+               (contentItem.tabId !== tabId || tab.url != contentItem.url)) {
+                webContainer.load(tab.url, tab.title)
+            }
+            webContainer.currentTabChanged()
+        }
+
+        // arguments of the signal handler: int tabId
+        onTabClosed: {
+            releaseView(tabId)
+            _newTabData = null
+        }
     }
 
     Tab {
@@ -480,33 +503,6 @@ WebContainer {
         visible: contentItem && contentItem.contentWidth > contentItem.width && !contentItem.pinching && !webPopups.active
         opacity: contentItem && contentItem.horizontalScrollDecorator.moving ? 1.0 : 0.0
         Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
-    }
-
-    Connections {
-        target: tabModel
-
-        // arguments of the signal handler: int tabId
-        onActiveTabChanged: {
-            if (model._newTabData) {
-                webContainer.currentTabChanged()
-                return
-            }
-
-            model.activateView(tabId)
-
-            // When all tabs are closed, we're in invalid state.
-            if (tab.valid && webContainer._readyToLoad &&
-               (contentItem.tabId !== tabId || tab.url != contentItem.url)) {
-                webContainer.load(tab.url, tab.title)
-            }
-            webContainer.currentTabChanged()
-        }
-
-        // arguments of the signal handler: int tabId
-        onTabClosed: {
-            model.releaseView(tabId)
-            model._newTabData = null
-        }
     }
 
     Connections {
