@@ -26,12 +26,10 @@
 static const QString system_components_time_stamp("/var/lib/_MOZEMBED_CACHE_CLEAN_");
 static const QString profilePath("/.mozilla/mozembed");
 
-DeclarativeWebUtils::DeclarativeWebUtils(QStringList arguments,
-                                         BrowserService *service,
+DeclarativeWebUtils::DeclarativeWebUtils(BrowserService *service,
                                          QObject *parent) :
     QObject(parent),
     m_homePage("http://www.jolla.com"),
-    m_arguments(arguments),
     m_service(service)
 {
     connect(QMozContext::GetInstance(), SIGNAL(onInitialized()),
@@ -153,20 +151,8 @@ void DeclarativeWebUtils::updateWebEngineSettings()
 
 void DeclarativeWebUtils::openUrl(QString url)
 {
-    m_arguments << url;
-
     emit openUrlRequested(url);
 }
-
-QString DeclarativeWebUtils::initialPage()
-{
-    if (m_arguments.count() > 1) {
-        return m_arguments.last();
-    } else {
-        return "";
-    }
-}
-
 
 void DeclarativeWebUtils::setFirstUseDone(bool firstUseDone) {
     QString path = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + QStringLiteral("/.firstUseDone");

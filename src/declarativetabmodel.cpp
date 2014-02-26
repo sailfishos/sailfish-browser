@@ -28,7 +28,7 @@ DeclarativeTabModel::DeclarativeTabModel(QObject *parent)
     , m_browsing(false)
     , m_activeTabClosed(false)
     , m_navigated(false)
-    , m_nextTabId(DBManager::instance()->getMaxTabId())
+    , m_nextTabId(DBManager::instance()->getMaxTabId() + 1)
 {
     connect(DBManager::instance(), SIGNAL(tabsAvailable(QList<Tab>)),
             this, SLOT(tabsAvailable(QList<Tab>)));
@@ -291,12 +291,6 @@ void DeclarativeTabModel::tabsAvailable(QList<Tab> tabs)
     qSort(m_tabs.begin(), m_tabs.end(), DeclarativeTabModel::tabSort);
     endResetModel();
 
-    // Startup should be synced to this.
-    if (!m_loaded) {
-        m_loaded = true;
-        emit loadedChanged();
-    }
-
     if (count() != oldCount) {
         emit countChanged();
     }
@@ -305,6 +299,12 @@ void DeclarativeTabModel::tabsAvailable(QList<Tab> tabs)
     if (m_nextTabId != maxTabId + 1) {
         m_nextTabId = maxTabId + 1;
         emit nextTabIdChanged();
+    }
+
+    // Startup should be synced to this.
+    if (!m_loaded) {
+        m_loaded = true;
+        emit loadedChanged();
     }
 }
 

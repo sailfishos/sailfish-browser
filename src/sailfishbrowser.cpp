@@ -112,7 +112,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     app->setApplicationName(QString("sailfish-browser"));
     app->setOrganizationName(QString("org.sailfishos"));
 
-    DeclarativeWebUtils * utils = new DeclarativeWebUtils(app->arguments(), service, app.data());
+    DeclarativeWebUtils * utils = new DeclarativeWebUtils(service, app.data());
     utils->clearStartupCacheIfNeeded();
     view->rootContext()->setContextProperty("WebUtils", utils);
     view->rootContext()->setContextProperty("MozContext", QMozContext::GetInstance());
@@ -148,6 +148,12 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 
     // Setup embedding
     QTimer::singleShot(0, QMozContext::GetInstance(), SLOT(runEmbedding()));
+
+    if (qApp->arguments().count() > 1) {
+        utils->openUrl(qApp->arguments().last());
+    } else {
+        utils->openUrl("");
+    }
 
     return app->exec();
 }

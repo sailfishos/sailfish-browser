@@ -94,8 +94,9 @@ WebContainer {
             tab.title = ""
         }
 
-        if (model._newTabData && !force) {
-            model.activateView(model.nextTabId)
+        if (model._newTabData && !force && model.activateView(model.nextTabId)) {
+            // Wait view to be ready, do not load immediately.
+            // Loading continues only if model.activateView didn't do anything.
             return
         }
 
@@ -165,11 +166,7 @@ WebContainer {
             return
         }
 
-        // TODO: Remove this see, comments in WebView Component.onCompleted
-        if (WebUtils.initialPage !== "" && !_loadInitialWebPage) {
-            webContainer.load(WebUtils.initialPage, "", true)
-            _loadInitialWebPage = true
-        } else if (model._newTabData) {
+        if (model._newTabData) {
             contentItem.loadTab(model._newTabData.url, false)
         } else if (model.count > 0) {
             // First tab is actived when tabs are loaded to the tabs model.
@@ -211,9 +208,11 @@ WebContainer {
                               webViewComponent, webContainer)
             }
 
-            if (tabId > 0 || !webContainer.contentItem) {
+            if (tabId > 0 || !webContainer.contentItem || webContainer.contentItem.tabId !== tabId) {
                 webContainer.contentItem = TabCache.getView(tabId)
+                return true
             }
+            return false
         }
 
         function releaseView(tabId) {
@@ -486,8 +485,6 @@ WebContainer {
     Connections {
         target: tabModel
 
-        onCountChanged: model._newTabData = null
-
         // arguments of the signal handler: int tabId
         onActiveTabChanged: {
             if (model._newTabData) {
@@ -495,7 +492,6 @@ WebContainer {
                 return
             }
 
-            model._newTabData = null
             model.activateView(tabId)
 
             // When all tabs are closed, we're in invalid state.
@@ -507,7 +503,10 @@ WebContainer {
         }
 
         // arguments of the signal handler: int tabId
-        onTabClosed: model.releaseView(tabId)
+        onTabClosed: {
+            model.releaseView(tabId)
+            model._newTabData = null
+        }
     }
 
     Connections {
@@ -613,11 +612,5 @@ WebContainer {
 
         PromptHandler.pageStack = pageStack
         PromptHandler.prompts = webPrompts
-
-        // TODO: this is only here because initialPage doesn't trigger openUrl.
-        // That should be fixed. This creates one extra tab that doesn't necessary
-        // get deleted at all. We should active tab only after we know that tabs
-        // are loaded.
-        model.activateView(model.nextTabId)
     }
 }
