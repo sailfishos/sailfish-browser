@@ -54,12 +54,13 @@ void DeclarativeWebContainer::setWebView(QQuickItem *webView)
 {
     if (m_webView != webView) {
         m_webView = webView;
-
-        connect(m_webView, SIGNAL(imeNotification(int,bool,int,int,QString)),
-                this, SLOT(imeNotificationChanged(int,bool,int,int,QString)));
-        connect(m_webView, SIGNAL(contentHeightChanged()), this, SLOT(resetHeight()));
-        connect(m_webView, SIGNAL(scrollableOffsetChanged()), this, SLOT(resetHeight()));
-        connect(this, SIGNAL(heightChanged()), this, SLOT(resetHeight()));
+        if (m_webView) {
+            connect(m_webView, SIGNAL(imeNotification(int,bool,int,int,QString)),
+                    this, SLOT(imeNotificationChanged(int,bool,int,int,QString)));
+            connect(m_webView, SIGNAL(contentHeightChanged()), this, SLOT(resetHeight()));
+            connect(m_webView, SIGNAL(scrollableOffsetChanged()), this, SLOT(resetHeight()));
+            connect(this, SIGNAL(heightChanged()), this, SLOT(resetHeight()));
+        }
         emit webViewChanged();
     }
 }
