@@ -64,6 +64,8 @@ WebContainer {
         }
     }
 
+    // force property only used by WebView itself for deferred loading when
+    // network connectivity is established or when loading initial web page.
     function load(url, title, force) {
         if (url.substring(0, 6) !== "about:" && url.substring(0, 5) !== "file:"
             && !connectionHelper.haveNetworkConnectivity()
@@ -157,18 +159,21 @@ WebContainer {
 
     onTabModelChanged: PopupHandler.tabModel = tabModel
 
+    property bool _loadInitialWebPage
     on_ReadyToLoadChanged: {
         if (!visible || !_readyToLoad) {
             return
         }
 
-        if (model._newTabData) {
+        // TODO: Remove this see, comments in WebView Component.onCompleted
+        if (WebUtils.initialPage !== "" && !_loadInitialWebPage) {
+            webContainer.load(WebUtils.initialPage, "", true)
+            _loadInitialWebPage = true
+        } else if (model._newTabData) {
             contentItem.loadTab(model._newTabData.url, false)
         } else if (model.count > 0) {
             // First tab is actived when tabs are loaded to the tabs model.
             webContainer.load(tab.url, tab.title)
-        } else if (WebUtils.initialPage !== "") {
-            webContainer.load(WebUtils.initialPage)
         } else {
             webContainer.load(WebUtils.homePage, "")
         }

@@ -26,8 +26,8 @@ Page {
     property alias viewLoading: webView.loading
     property alias currentTab: webView.currentTab
 
-    function load(url, title, force) {
-        webView.load(url, title, force)
+    function load(url, title) {
+        webView.load(url, title)
     }
 
     // Safety clipping. There is clipping in ApplicationWindow that should react upon focus changes.
