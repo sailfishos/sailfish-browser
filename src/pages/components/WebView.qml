@@ -158,9 +158,6 @@ WebContainer {
     inputPanelOpenHeight: window.pageStack.imSize
     toolbarHeight: toolBarContainer.height
 
-    onTabModelChanged: PopupHandler.tabModel = tabModel
-
-    property bool _loadInitialWebPage
     on_ReadyToLoadChanged: {
         if (!visible || !_readyToLoad) {
             return
