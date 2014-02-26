@@ -52,6 +52,11 @@ DBManager::DBManager(QObject *parent)
                               Q_RETURN_ARG(SettingsMap, m_settings));
 }
 
+int DBManager::getMaxTabId()
+{
+    return m_maxTabId;
+}
+
 int DBManager::createTab()
 {
     QMetaObject::invokeMethod(worker, "createTab", Qt::QueuedConnection, Q_ARG(int, ++m_maxTabId));

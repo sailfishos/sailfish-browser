@@ -27,6 +27,7 @@ class DeclarativeTabModel : public QAbstractListModel, public QQmlParserStatus
 
     Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
     Q_PROPERTY(int currentTabId READ currentTabId NOTIFY currentTabIdChanged FINAL)
+    Q_PROPERTY(int nextTabId READ nextTabId NOTIFY nextTabIdChanged FINAL)
     Q_PROPERTY(DeclarativeTab *currentTab READ currentTab WRITE setCurrentTab NOTIFY currentTabChanged FINAL)
     Q_PROPERTY(bool loaded READ loaded NOTIFY loadedChanged FINAL)
     Q_PROPERTY(bool browsing READ browsing WRITE setBrowsing NOTIFY browsingChanged FINAL)
@@ -60,6 +61,7 @@ public:
     void componentComplete();
 
     int currentTabId() const;
+    int nextTabId() const;
 
     DeclarativeTab *currentTab() const;
     void setCurrentTab(DeclarativeTab *currentTab);
@@ -80,6 +82,7 @@ signals:
     void tabClosed(int tabId);
     void currentTabChanged();
     void currentTabIdChanged();
+    void nextTabIdChanged();
     void loadedChanged();
     void browsingChanged();
 
@@ -106,6 +109,7 @@ private:
     bool m_browsing;
     bool m_activeTabClosed;
     bool m_navigated;
+    int m_nextTabId;
 
     friend class tst_declarativetabmodel;
 };

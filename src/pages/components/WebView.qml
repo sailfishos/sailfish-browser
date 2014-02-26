@@ -79,10 +79,10 @@ WebContainer {
         }
 
         // This guarantees at that least one webview exists.
-        if (tabModel.count == 0) {
+        if (model.count == 0) {
             // Url is not need in model._newTabData as we let engine to resolve
             // the url and use the resolved url.
-            model._newTabData = { "title": title }
+            model._newTabData = { "url": url, "title": title }
         }
 
         // Bookmarks and history items pass url and title as arguments.
@@ -92,18 +92,18 @@ WebContainer {
             tab.title = ""
         }
 
-        // Always enable chrome when load is called.
-        contentItem.chrome = true
-        if ((url !== "" && contentItem.url != url) || force) {
-            tab.url = url
-            resourceController.firstFrameRendered = false
-            contentItem.load(url)
-        } else if (contentItem.url == url && model._newTabData) {
-            // Url will not change when the very same url is already loaded. Thus, we just add tab directly.
-            // This is currently the only exception. Normally tab is added after engine has
-            // resolved the url.
-            tabModel.addTab(url, model._newTabData.title)
+        if (!contentItem || model._newTabData) {
+            if (!TabCache.initialized) {
+                TabCache.init({"tab": tab, "container": webContainer},
+                              webViewComponent, webContainer)
+            }
+
+            contentItem = TabCache.getView(model.nextTabId)
+            // wait view to be ready
+            return
         }
+
+        contentItem.loadTab(url, force)
     }
 
     function reload() {
@@ -168,11 +168,13 @@ WebContainer {
             return
         }
 
-        if (WebUtils.initialPage !== "") {
-            webContainer.load(WebUtils.initialPage)
-        } else if (tabModel.count > 0) {
+        if (model._newTabData) {
+            contentItem.loadTab(model._newTabData.url, false)
+        } else if (model.count > 0) {
             // First tab is actived when tabs are loaded to the tabs model.
             webContainer.load(tab.url, tab.title)
+        } else if (WebUtils.initialPage !== "") {
+            webContainer.load(WebUtils.initialPage)
         } else {
             webContainer.load(WebUtils.homePage, "")
         }
@@ -204,7 +206,7 @@ WebContainer {
 
             // Url is not need in model._newTabData as we let engine to resolve
             // the url and use the resolved url.
-            _newTabData = { "title": title }
+            _newTabData = { "url": url, "title": title }
             load(url, title)
         }
 
@@ -239,6 +241,20 @@ WebContainer {
 
             property bool _deferredReload
             property var _deferredLoad: null
+
+            function loadTab(newUrl, force) {
+                // Always enable chrome when load is called.
+                chrome = true
+                if ((newUrl !== "" && url != newUrl) || force) {
+                    resourceController.firstFrameRendered = false
+                    webView.load(newUrl)
+                } else if (url == newUrl && model._newTabData) {
+                    // Url will not change when the very same url is already loaded. Thus, we just add tab directly.
+                    // This is currently the only exception. Normally tab is added after engine has
+                    // resolved the url.
+                    tabModel.addTab(newUrl, model._newTabData.title)
+                }
+            }
 
             enabled: container.active
             // There needs to be enough content for enabling chrome gesture
@@ -461,6 +477,11 @@ WebContainer {
 
         // arguments of the signal handler: int tabId
         onActiveTabChanged: {
+            if (model._newTabData) {
+                webContainer.currentTabChanged()
+                return
+            }
+
             model._newTabData = null
 
             if (!TabCache.initialized) {
@@ -468,7 +489,7 @@ WebContainer {
                               webViewComponent, webContainer)
             }
 
-            if (tabId > 0) {
+            if (tabId > 0 || !webContainer.contentItem) {
                 webContainer.contentItem = TabCache.getView(tabId)
             }
 

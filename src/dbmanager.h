@@ -50,6 +50,8 @@ public:
     QString getSetting(QString name);
     void deleteSetting(QString name);
 
+    int getMaxTabId();
+
 public slots:
     void tabListAvailable(QList<Tab> tabs);
 
@@ -66,8 +68,6 @@ signals:
 
 private:
     DBManager(QObject *parent = 0);
-
-    int getMaxTabId();
 
     int m_maxTabId;
     QMap<QString, QString> m_settings;

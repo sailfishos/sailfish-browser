@@ -28,6 +28,7 @@ DeclarativeTabModel::DeclarativeTabModel(QObject *parent)
     , m_browsing(false)
     , m_activeTabClosed(false)
     , m_navigated(false)
+    , m_nextTabId(DBManager::instance()->getMaxTabId())
 {
     connect(DBManager::instance(), SIGNAL(tabsAvailable(QList<Tab>)),
             this, SLOT(tabsAvailable(QList<Tab>)));
@@ -59,6 +60,7 @@ void DeclarativeTabModel::addTab(const QString& url, const QString &title) {
     }
     int tabId = DBManager::instance()->createTab();
     int linkId = DBManager::instance()->createLink(tabId, url);
+
 #ifdef DEBUG_LOGS
     qDebug() << "new tab id:" << tabId << "new link id:" << linkId;
 #endif
@@ -71,6 +73,9 @@ void DeclarativeTabModel::addTab(const QString& url, const QString &title) {
 
     updateActiveTab(tab);
     emit countChanged();
+
+    m_nextTabId = ++tabId;
+    emit nextTabIdChanged();
 }
 
 int DeclarativeTabModel::currentTabId() const
@@ -79,6 +84,11 @@ int DeclarativeTabModel::currentTabId() const
         return m_activeTab.tabId();
     }
     return 0;
+}
+
+int DeclarativeTabModel::nextTabId() const
+{
+    return m_nextTabId;
 }
 
 void DeclarativeTabModel::remove(const int index) {
@@ -289,6 +299,12 @@ void DeclarativeTabModel::tabsAvailable(QList<Tab> tabs)
 
     if (count() != oldCount) {
         emit countChanged();
+    }
+
+    int maxTabId = DBManager::instance()->getMaxTabId();
+    if (m_nextTabId != maxTabId + 1) {
+        m_nextTabId = maxTabId + 1;
+        emit nextTabIdChanged();
     }
 }
 
