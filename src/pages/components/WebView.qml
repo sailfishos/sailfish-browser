@@ -84,7 +84,7 @@ WebContainer {
         if (model.count == 0) {
             // Url is not need in model._newTabData as we let engine to resolve
             // the url and use the resolved url.
-            model._newTabData = { "url": url, "title": title }
+            model._newTabData = { "url": url, "title": title, "previousView": contentItem }
         }
 
         // Bookmarks and history items pass url and title as arguments.
@@ -199,7 +199,7 @@ WebContainer {
         function newTab(url, title) {
             // Url is not need in model._newTabData as we let engine to resolve
             // the url and use the resolved url.
-            _newTabData = { "url": url, "title": title }
+            _newTabData = { "url": url, "title": title, "previousView": contentItem }
             load(url, title)
         }
 
@@ -508,6 +508,29 @@ WebContainer {
 
         // arguments of the signal handler: int tabId
         onTabClosed: model.releaseView(tabId)
+    }
+
+    Connections {
+        target: MozContext
+        onRecvObserve: {
+            if (message === "embed:download") {
+                switch (data.msg) {
+                    case "dl-fail":
+                    case "dl-done": {
+                        model.releaseView(contentItem.tabId)
+                        if (model._newTabData) {
+                            contentItem = model._newTabData.previousView
+                        }
+
+                        model._newTabData = null
+                        if (contentItem) {
+                            contentItem.visible = true
+                        }
+                        break
+                    }
+                }
+            }
+        }
     }
 
     ConnectionHelper {
