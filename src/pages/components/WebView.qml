@@ -283,11 +283,16 @@ WebContainer {
                 if ((newUrl !== "" && url != newUrl) || force) {
                     resourceController.firstFrameRendered = false
                     webView.load(newUrl)
-                } else if (url == newUrl && model._newTabData) {
+                }
+
+                // This looks like a not needed condition for now. However, if we add a max number of real tabs
+                // limit then this could make sense again.
+                else if (url == newUrl && model._newTabData) {
                     // Url will not change when the very same url is already loaded. Thus, we just add tab directly.
                     // This is currently the only exception. Normally tab is added after engine has
                     // resolved the url.
                     tabModel.addTab(newUrl, model._newTabData.title)
+                    model._newTabData = null
                 }
             }
 
