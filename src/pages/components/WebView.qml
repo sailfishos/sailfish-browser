@@ -235,6 +235,7 @@ WebContainer {
             readonly property bool loaded: loadProgress === 100
             property bool userHasDraggedWhileLoading
             property bool viewReady
+            property int tabId
 
             property bool _deferredReload
             property var _deferredLoad: null
@@ -479,7 +480,12 @@ WebContainer {
         }
 
         // arguments of the signal handler: int tabId
-        onTabClosed: TabCache.releaseView(tabId)
+        onTabClosed: {
+            TabCache.releaseView(tabId)
+            if (model.count == 0) {
+                webContainer.contentItem = null
+            }
+        }
     }
 
     ConnectionHelper {
@@ -494,7 +500,6 @@ WebContainer {
                 url = contentItem._deferredLoad["url"]
                 title = contentItem._deferredLoad["title"]
                 contentItem._deferredLoad = null
-
                 webContainer.load(url, title, true)
             } else if (contentItem && contentItem._deferredReload) {
                 contentItem._deferredReload = false
