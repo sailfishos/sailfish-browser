@@ -24,7 +24,6 @@ var _popupHandler
 var _tabCount
 
 var _activeWebView
-var _tabs = []
 var _activeTabs = {}
 
 function init(args, component, container) {
@@ -32,8 +31,7 @@ function init(args, component, container) {
     _webViewComponent = component
     _parent = container
     initialized = true
-    _tabs.push(_webViewComponent.createObject(_parent, _arguments))
-    _tabCount = _tabs.length
+    _tabCount = 0
 }
 
 function getView(tabId) {
@@ -42,10 +40,7 @@ function getView(tabId) {
     }
 
     var webView = _activeTabs[tabId]
-    if (!webView && _tabs.length > 0) {
-        webView = _tabs.shift()
-        _activeTabs[tabId] = webView
-    } else if (!webView){
+    if (!webView){
         webView = _webViewComponent.createObject(_parent, _arguments)
         _activeTabs[tabId] = webView
         ++_tabCount
@@ -62,7 +57,7 @@ function releaseView(tabId) {
         delete _activeTabs[tabId]
         viewToRelease.destroy()
         --_tabCount
-        if (_tabCount === 0) {
+        if (_tabCount === 0 || _activeWebView && _activeWebView.tabId === tabId) {
             _activeWebView = null
         }
     }
