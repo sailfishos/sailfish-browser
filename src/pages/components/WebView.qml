@@ -192,12 +192,6 @@ WebContainer {
         property var _newTabData
 
         function newTab(url, title) {
-            // This might be something that we don't want to have.
-            if (contentItem && contentItem.loading) {
-                contentItem.stop()
-            }
-            captureScreen()
-
             // Url is not need in model._newTabData as we let engine to resolve
             // the url and use the resolved url.
             _newTabData = { "url": url, "title": title }
