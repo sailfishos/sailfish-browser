@@ -85,7 +85,6 @@ void DeclarativeTabModel::remove(const int index) {
     if (!m_tabs.isEmpty() && index >= 0 && index < m_tabs.count()) {
         beginRemoveRows(QModelIndex(), index, index);
         removeTab(m_tabs.at(index), index);
-        emit countChanged();
         endRemoveRows();
         saveTabOrder();
     }
@@ -100,7 +99,6 @@ void DeclarativeTabModel::clear()
     for (int i = m_tabs.count() - 1; i >= 0; --i) {
         removeTab(m_tabs.at(i), i);
     }
-    emit countChanged();
     closeActiveTab();
     endResetModel();
     // No need guard anything as all tabs got closed.
@@ -156,9 +154,6 @@ void DeclarativeTabModel::closeActiveTab()
     if (m_activeTab.isValid()) {
         // Invalidate active tab
         removeTab(m_activeTab);
-        m_activeTab.setTabId(0);
-        emit countChanged();
-        m_activeTabClosed = true;
         if (!activateTab(0) && m_currentTab) {
             // Last active tab got closed.
             Link emptyLink;
@@ -374,8 +369,12 @@ void DeclarativeTabModel::removeTab(const Tab &tab, int index)
 #endif
 
     int tabId = tab.tabId();
-    emit tabClosed(tabId);
     DBManager::instance()->removeTab(tabId);
+
+    if (tabId == m_currentTab->tabId()) {
+        m_activeTab.setTabId(0);
+        m_activeTabClosed = true;
+    }
 
     QFile f(tab.currentLink().thumbPath());
     if (f.exists()) {
@@ -385,6 +384,9 @@ void DeclarativeTabModel::removeTab(const Tab &tab, int index)
     if (index >= 0) {
         m_tabs.removeAt(index);
     }
+
+    emit countChanged();
+    emit tabClosed(tabId);
 }
 
 void DeclarativeTabModel::saveTabOrder()
