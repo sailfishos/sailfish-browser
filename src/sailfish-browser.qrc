@@ -27,6 +27,7 @@
     <file>pages/components/UserPrompt.qml</file>
     <file>pages/components/TitleBar.qml</file>
     <file>pages/components/TabItem.qml</file>
+    <file>pages/components/TabModel.qml</file>
     <file>pages/components/TabPageMenu.qml</file>
     <file>pages/components/WebView.qml</file>
     <file>pages/components/WebPopupHandler.js</file>

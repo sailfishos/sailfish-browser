@@ -14,9 +14,9 @@ import Sailfish.Silica 1.0
 import Sailfish.Browser 1.0
 import Qt5Mozilla 1.0
 import org.nemomobile.connectivity 1.0
-import "WebViewTabCache.js" as TabCache
 import "WebPopupHandler.js" as PopupHandler
 import "WebPromptHandler.js" as PromptHandler
+import "." as Browser
 
 WebContainer {
     id: webContainer
@@ -182,70 +182,12 @@ WebContainer {
         color: contentItem && contentItem.bgcolor ? contentItem.bgcolor : "white"
     }
 
-    TabModel {
+    Browser.TabModel {
         id: model
 
-        // Load goes so that we first use engine load to resolve url
-        // and then save that resolved url to the history. This way
-        // urls that resolve to download urls won't get saved to the
-        // history (as those won't trigger url change). By doing this way
-        // a redirected url will be saved with the redirected url not with
-        // the input url.
-        property var _newTabData
-
-        function newTab(url, title) {
-            // Url is not need in model._newTabData as we let engine to resolve
-            // the url and use the resolved url.
-            _newTabData = { "url": url, "title": title, "previousView": contentItem }
-            load(url, title)
-        }
-
-        // TODO: Check could this be merged with activateTab(tabId)
-        // TabModel could keep also TabCache internally.
-        function activateView(tabId) {
-            if (!TabCache.initialized) {
-                TabCache.init({"tab": tab, "container": webContainer},
-                              webViewComponent, webContainer)
-            }
-
-            if (tabId > 0 || !webContainer.contentItem || webContainer.contentItem.tabId !== tabId) {
-                webContainer.contentItem = TabCache.getView(tabId)
-                return true
-            }
-            return false
-        }
-
-        function releaseView(tabId) {
-            TabCache.releaseView(tabId)
-            if (count == 0) {
-                webContainer.contentItem = null
-            }
-        }
-
         currentTab: tab
-
-        // arguments of the signal handler: int tabId
-        onActiveTabChanged: {
-            if (_newTabData) {
-                webContainer.currentTabChanged()
-                return
-            }
-
-            activateView(tabId)
-
-            // When all tabs are closed, we're in invalid state.
-            if (tab.valid && webContainer._readyToLoad &&
-               (contentItem.tabId !== tabId || tab.url != contentItem.url)) {
-                webContainer.load(tab.url, tab.title)
-            }
-            webContainer.currentTabChanged()
-        }
-
-        // arguments of the signal handler: int tabId
-        onTabClosed: {
-            releaseView(tabId)
-            _newTabData = null
-        }
+        webViewComponent: webViewComponent
+        webViewContainer: webContainer
     }
 
     Tab {
