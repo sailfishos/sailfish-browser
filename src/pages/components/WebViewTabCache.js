@@ -77,3 +77,11 @@ function _updateActiveView(webView) {
     PopupHandler.activeWebView = _activeWebView
     PromptHandler.activeWebView = _activeWebView
 }
+
+function _dumpTabs() {
+    console.log("---- dump tabs from function:", arguments.callee.caller.name, " --------")
+    for (var i in _activeTabs) {
+        console.log("tabId: ", i, " view: ", _activeTabs[i])
+    }
+    console.log("---- dump tabs end -----------------------------------------------------")
+}
