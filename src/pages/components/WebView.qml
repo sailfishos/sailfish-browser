@@ -15,14 +15,13 @@ import Sailfish.Browser 1.0
 import Qt5Mozilla 1.0
 import org.nemomobile.connectivity 1.0
 import "WebPopupHandler.js" as PopupHandler
-import "WebPromptHandler.js" as PromptHandler
 import "." as Browser
 
 WebContainer {
     id: webContainer
 
     // This property should cover all possible popus
-    property alias popupActive: webPopups.active
+    property bool popupActive
 
     property bool loading
     property int loadProgress
@@ -36,10 +35,6 @@ WebContainer {
     readonly property alias url: tab.url
     readonly property alias title: tab.title
     property string favicon
-
-    // Groupped properties
-    property alias popups: webPopups
-    property alias prompts: webPrompts
 
     // Move to C++
     readonly property bool _readyToLoad: contentItem &&
@@ -358,15 +353,15 @@ WebContainer {
                     break;
                 }
                 case "embed:alert": {
-                    PromptHandler.openAlert(data)
+                    PopupHandler.openAlert(data)
                     break
                 }
                 case "embed:confirm": {
-                    PromptHandler.openConfirm(data)
+                    PopupHandler.openConfirm(data)
                     break
                 }
                 case "embed:prompt": {
-                    PromptHandler.openPrompt(data)
+                    PopupHandler.openPrompt(data)
                     break
                 }
                 case "embed:auth": {
@@ -431,7 +426,7 @@ WebContainer {
         color: _decoratorColor
         smooth: true
         radius: 2.5
-        visible: contentItem && contentItem.contentHeight > contentItem.height && !contentItem.pinching && !webPopups.active
+        visible: contentItem && contentItem.contentHeight > contentItem.height && !contentItem.pinching && !popupActive
         opacity: contentItem && contentItem.verticalScrollDecorator.moving ? 1.0 : 0.0
         Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
     }
@@ -447,7 +442,7 @@ WebContainer {
         color: _decoratorColor
         smooth: true
         radius: 2.5
-        visible: contentItem && contentItem.contentWidth > contentItem.width && !contentItem.pinching && !webPopups.active
+        visible: contentItem && contentItem.contentWidth > contentItem.width && !contentItem.pinching && !popupActive
         opacity: contentItem && contentItem.horizontalScrollDecorator.moving ? 1.0 : 0.0
         Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
     }
@@ -521,39 +516,13 @@ WebContainer {
         interval: 1000
     }
 
-    QtObject {
-        id: webPopups
-
-        property bool active
-
-        // url support is missing and these should be typed as urls.
-        // We don't want to create component before it's needed.
-        property string authenticationComponentUrl
-        property string passwordManagerComponentUrl
-        property string contextMenuComponentUrl
-        property string selectComponentUrl
-        property string locationComponentUrl
-    }
-
-    QtObject {
-        id: webPrompts
-
-        property string alertComponentUrl
-        property string confirmComponentUrl
-        property string queryComponentUrl
-    }
-
     Component.onDestruction: connectionHelper.closeNetworkSession()
     Component.onCompleted: {
         PopupHandler.auxTimer = auxTimer
         PopupHandler.pageStack = pageStack
-        PopupHandler.popups = webPopups
-        PopupHandler.componentParent = browserPage
+        PopupHandler.webViewContainer = webContainer
         PopupHandler.resourceController = resourceController
         PopupHandler.WebUtils = WebUtils
         PopupHandler.tabModel = tabModel
-
-        PromptHandler.pageStack = pageStack
-        PromptHandler.prompts = webPrompts
     }
 }

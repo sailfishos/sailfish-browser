@@ -104,21 +104,6 @@ Page {
                 pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage, "initialSearchFocus": true })
             }
         }
-
-
-        Component.onCompleted: {
-            // These should be a property binding and web container should
-            // have a property group from C++ so that it'd would be available earlier.
-            popups.authenticationComponentUrl = Qt.resolvedUrl("components/AuthDialog.qml")
-            popups.passwordManagerComponentUrl = Qt.resolvedUrl("components/PasswordManagerDialog.qml")
-            popups.contextMenuComponentUrl = Qt.resolvedUrl("components/BrowserContextMenu.qml")
-            popups.selectComponentUrl = Qt.resolvedUrl("components/SelectDialog.qml")
-            popups.locationComponentUrl = Qt.resolvedUrl("components/LocationDialog.qml")
-
-            prompts.alertComponentUrl = Qt.resolvedUrl("components/AlertDialog.qml")
-            prompts.confirmComponentUrl = Qt.resolvedUrl("components/ConfirmDialog.qml")
-            prompts.queryComponentUrl = Qt.resolvedUrl("components/PromptDialog.qml")
-        }
     }
 
     Column {

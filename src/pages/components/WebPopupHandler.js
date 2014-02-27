@@ -12,20 +12,28 @@
 .pragma library
 .import QtQuick 2.1 as QtQuick
 
-var activeWebView
+var webViewContainer
 var popups
 var pageStack
 var auxTimer
 var contextMenuComponent
-var componentParent
 var resourceController
 var tabModel
 // TODO: WebUtils context property. Should be singleton.
 var WebUtils
 
-// TODO: Handle these per activeWebView (map of webviews + accepted/rejectedGeolocationUrl)
+// TODO: Handle these per QmlMozView (map of webviews + accepted/rejectedGeolocationUrl)
 var acceptedGeolocationUrl = ""
 var rejectedGeolocationUrl = ""
+
+var _authenticationComponentUrl = Qt.resolvedUrl("AuthDialog.qml")
+var _passwordManagerComponentUrl = Qt.resolvedUrl("PasswordManagerDialog.qml")
+var _contextMenuComponentUrl = Qt.resolvedUrl("BrowserContextMenu.qml")
+var _selectComponentUrl = Qt.resolvedUrl("SelectDialog.qml")
+var _locationComponentUrl = Qt.resolvedUrl("LocationDialog.qml")
+var _alertComponentUrl = Qt.resolvedUrl("AlertDialog.qml")
+var _confirmComponentUrl = Qt.resolvedUrl("ConfirmDialog.qml")
+var _queryComponentUrl = Qt.resolvedUrl("PromptDialog.qml")
 
 // Singleton
 var _contextMenu
@@ -37,7 +45,7 @@ var _authData = null
 
 function _hideVirtualKeyboard() {
     if (Qt.inputMethod.visible) {
-        componentParent.focus = true
+        webViewContainer.parent.focus = true
     }
 }
 
@@ -67,11 +75,11 @@ function openAuthDialog(input) {
         var winid = data.winid
 
         if (_authData !== null) {
-            auxTimer.triggered.disconnect(activeWebView.openAuthDialog)
-            activeWebView._authData = null
+            auxTimer.triggered.disconnect(openAuthDialog)
+            _authData = null
         }
 
-        var dialog = pageStack.push(popups.authenticationComponentUrl,
+        var dialog = pageStack.push(_authenticationComponentUrl,
                                     {
                                         "hostname": data.text,
                                         "realm": data.title,
@@ -79,7 +87,7 @@ function openAuthDialog(input) {
                                         "passwordOnly": data.passwordOnly
                                     })
         dialog.accepted.connect(function () {
-            activeWebView.sendAsyncMessage("authresponse",
+            webViewContainer.sendAsyncMessage("authresponse",
                                            {
                                                "winid": winid,
                                                "accepted": true,
@@ -88,25 +96,25 @@ function openAuthDialog(input) {
                                            })
         })
         dialog.rejected.connect(function() {
-            activeWebView.sendAsyncMessage("authresponse",
+            webViewContainer.sendAsyncMessage("authresponse",
                                            {"winid": winid, "accepted": false})
         })
     }
 }
 
 function openSelectDialog(data) {
-    var dialog = pageStack.push(popups.selectComponentUrl,
+    var dialog = pageStack.push(_selectComponentUrl,
                                 {
                                     "options": data.options,
                                     "multiple": data.multiple,
-                                    "webview": activeWebView
+                                    "webview": webViewContainer.contentItem
                                 })
 }
 
 function openPasswordManagerDialog(data) {
-    pageStack.push(popups.passwordManagerComponentUrl,
+    pageStack.push(_passwordManagerComponentUrl,
                    {
-                       "webView": activeWebView,
+                       "webView": webViewContainer.contentItem,
                        "requestId": data.id,
                        "notificationType": data.name,
                        "formData": data.formdata
@@ -114,7 +122,7 @@ function openPasswordManagerDialog(data) {
 }
 
 function openContextMenu(data) {
-    activeWebView.contextMenuRequested(data)
+    webViewContainer.contentItem.contextMenuRequested(data)
     if (data.types.indexOf("image") !== -1 || data.types.indexOf("link") !== -1) {
         var linkHref = data.linkURL
         var imageSrc = data.mediaURL
@@ -127,20 +135,20 @@ function openContextMenu(data) {
             _hideVirtualKeyboard()
             _contextMenu.show()
         } else {
-            contextMenuComponent = Qt.createComponent(popups.contextMenuComponentUrl)
+            contextMenuComponent = Qt.createComponent(_contextMenuComponentUrl)
             if (contextMenuComponent.status !== QtQuick.Component.Error) {
-                _contextMenu = contextMenuComponent.createObject(componentParent,
+                _contextMenu = contextMenuComponent.createObject(webViewContainer.parent,
                                                         {
                                                             "linkHref": linkHref,
                                                             "imageSrc": imageSrc,
                                                             "linkTitle": linkTitle.trim(),
                                                             "contentType": contentType,
                                                             "tabModel": tabModel,
-                                                            "viewId": activeWebView.uniqueID()
+                                                            "viewId": webViewContainer.contentItem.uniqueID()
                                                         })
                 _hideVirtualKeyboard()
 
-                popups.active = Qt.binding(function() { return (_contextMenu.active) })
+                webViewContainer.popupActive = Qt.binding(function() { return (_contextMenu.active) })
                 _contextMenu.show()
             } else {
                 console.log("Can't load BrowserContextMenu.qml")
@@ -151,21 +159,21 @@ function openContextMenu(data) {
 
 function openLocationDialog(data) {
     // Ask for location permission
-    var url = activeWebView.url
+    var url = webViewContainer.contentItem.url
     if (isAcceptedGeolocationUrl(url)) {
-        activeWebView.sendAsyncMessage("embedui:premissions", {
+        webViewContainer.sendAsyncMessage("embedui:premissions", {
                              allow: true,
                              checkedDontAsk: false,
                              id: data.id })
     } else if (isRejectedGeolocationUrl(url)) {
-        activeWebView.sendAsyncMessage("embedui:premissions", {
+        webViewContainer.sendAsyncMessage("embedui:premissions", {
                              allow: false,
                              checkedDontAsk: false,
                              id: data.id })
     } else {
-        var dialog = pageStack.push(popups.locationComponentUrl, {})
+        var dialog = pageStack.push(_locationComponentUrl, {})
         dialog.accepted.connect(function() {
-            activeWebView.sendAsyncMessage("embedui:premissions", {
+            webViewContainer.sendAsyncMessage("embedui:premissions", {
                                                allow: true,
                                                checkedDontAsk: false,
                                                id: data.id })
@@ -173,7 +181,7 @@ function openLocationDialog(data) {
             rejectedGeolocationUrl = ""
         })
         dialog.rejected.connect(function() {
-            activeWebView.sendAsyncMessage("embedui:premissions", {
+            webViewContainer.sendAsyncMessage("embedui:premissions", {
                                                allow: false,
                                                checkedDontAsk: false,
                                                id: data.id })
@@ -181,4 +189,48 @@ function openLocationDialog(data) {
             acceptedGeolocationUrl = ""
         })
     }
+}
+
+function openAlert(data) {
+    var winid = data.winid
+    var dialog = pageStack.push(_alertComponentUrl,
+                                {"text": data.text})
+    // TODO: also the Async message must be sent when window gets closed
+    dialog.done.connect(function() {
+        webViewContainer.sendAsyncMessage("alertresponse", {"winid": winid})
+    })
+}
+
+function openConfirm(data) {
+    var winid = data.winid
+    var dialog = pageStack.push(_confirmComponentUrl,
+                                {"text": data.text})
+    // TODO: also the Async message must be sent when window gets closed
+    dialog.accepted.connect(function() {
+        webViewContainer.sendAsyncMessage("confirmresponse",
+                         {"winid": winid, "accepted": true})
+    })
+    dialog.rejected.connect(function() {
+        webViewContainer.sendAsyncMessage("confirmresponse",
+                         {"winid": winid, "accepted": false})
+    })
+}
+
+function openPrompt(data) {
+    var winid = data.winid
+    var dialog = pageStack.push(_queryComponentUrl,
+                                {"text": data.text, "value": data.defaultValue})
+    // TODO: also the Async message must be sent when window gets closed
+    dialog.accepted.connect(function() {
+        webViewContainer.sendAsyncMessage("promptresponse",
+                         {
+                             "winid": winid,
+                             "accepted": true,
+                             "promptvalue": dialog.value
+                         })
+    })
+    dialog.rejected.connect(function() {
+        webViewContainer.sendAsyncMessage("promptresponse",
+                         {"winid": winid, "accepted": false})
+    })
 }

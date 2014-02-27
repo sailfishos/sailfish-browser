@@ -10,8 +10,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 .pragma library
-.import "WebPopupHandler.js" as PopupHandler
-.import "WebPromptHandler.js" as PromptHandler
 
 var initialized = false
 
@@ -19,8 +17,6 @@ var initialized = false
 var _webViewComponent
 var _arguments
 var _parent
-var _promptHandler
-var _popupHandler
 var _tabCount
 
 var _activeWebView
@@ -74,8 +70,6 @@ function _updateActiveView(webView) {
     _activeWebView = webView
     _activeWebView.resumeView()
     _activeWebView.visible = true
-    PopupHandler.activeWebView = _activeWebView
-    PromptHandler.activeWebView = _activeWebView
 }
 
 function _dumpTabs() {
