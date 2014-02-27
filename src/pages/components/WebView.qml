@@ -134,24 +134,20 @@ WebContainer {
 
         if (active && resourceController.firstFrameRendered && !popupActive) {
             var size = Screen.width
-            if (browserPage.isLandscape && !webContainer.fullscreenMode) {
-                size -= toolbarRow.height
+            if (webContainer.parent.isLandscape && !webContainer.fullscreenMode) {
+                size -= toolbarHeight
             }
 
-            tab.captureScreen(contentItem.url, 0, 0, size, size, browserPage.rotation)
+            tab.captureScreen(contentItem.url, 0, 0, size, size, webContainer.parent.rotation)
         }
     }
 
-    visible: WebUtils.firstUseDone
     width: parent.width
-    height: browserPage.orientation === Orientation.Portrait ? Screen.height : Screen.width
-
-    webView: contentItem
-
+    height: webContainer.parent.orientation === Orientation.Portrait ? Screen.height : Screen.width
     foreground: Qt.application.active
     inputPanelHeight: window.pageStack.panelSize
     inputPanelOpenHeight: window.pageStack.imSize
-    toolbarHeight: toolBarContainer.height
+    webView: contentItem
 
     on_ReadyToLoadChanged: {
         if (!visible || !_readyToLoad) {
@@ -437,7 +433,7 @@ WebContainer {
         width: contentItem ? contentItem.horizontalScrollDecorator.size : 0
         height: 5
         x: contentItem ? contentItem.horizontalScrollDecorator.position : 0
-        y: webContainer.parent.height - (fullscreenMode ? 0 : toolBarContainer.height) - height
+        y: webContainer.parent.height - (fullscreenMode ? 0 : toolbarHeight) - height
         z: 1
         color: _decoratorColor
         smooth: true

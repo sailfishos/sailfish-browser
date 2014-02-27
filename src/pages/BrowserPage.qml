@@ -98,7 +98,10 @@ Page {
     Browser.WebView {
         id: webView
 
+        visible: WebUtils.firstUseDone
         active: browserPage.status === PageStatus.Active
+        toolbarHeight: toolBarContainer.height
+
         tabModel.onCountChanged: {
             if (tabModel.count === 0 && tabModel.browsing) {
                 pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage, "initialSearchFocus": true })
