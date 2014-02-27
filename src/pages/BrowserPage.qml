@@ -180,7 +180,7 @@ Page {
     }
 
     function captureScreen() {
-        if (status == PageStatus.Active && resourceController.firstFrameRendered) {
+        if (status == PageStatus.Active && resourceController.firstFrameRendered && !_ctxMenuActive) {
             var size = Screen.width
             if (browserPage.isLandscape && !fullscreenMode) {
                 size -= toolbarRow.height
@@ -227,6 +227,9 @@ Page {
     }
 
     function openContextMenu(linkHref, imageSrc, linkTitle, contentType) {
+        // Possible path that leads to a new tab. Thus, capturing current
+        // view before opening context menu.
+        captureScreen()
         var ctxMenuComp
 
         if (_contextMenu) {
@@ -321,7 +324,7 @@ Page {
     TabModel {
         id: tabModel
         currentTab: tab
-        browsing: browserPage.status === PageStatus.Active
+        browsing: browserPage.status === PageStatus.Active && !webView.newTabData
     }
 
     HistoryModel {
