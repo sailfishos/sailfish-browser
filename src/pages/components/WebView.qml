@@ -132,7 +132,7 @@ WebContainer {
             return
         }
 
-        if (active && resourceController.firstFrameRendered) {
+        if (active && resourceController.firstFrameRendered && !popupActive) {
             var size = Screen.width
             if (browserPage.isLandscape && !webContainer.fullscreenMode) {
                 size -= toolbarRow.height
