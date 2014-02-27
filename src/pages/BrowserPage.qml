@@ -99,7 +99,6 @@ Page {
         id: webView
 
         active: browserPage.status === PageStatus.Active
-        tabModel.browsing: browserPage.status === PageStatus.Active
         tabModel.onCountChanged: {
             if (tabModel.count === 0 && tabModel.browsing) {
                 pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage, "initialSearchFocus": true })
