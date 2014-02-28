@@ -22,6 +22,7 @@ Rectangle {
     property string contentType
     property int viewId
     readonly property bool active: visible
+    readonly property bool landscape: width > height
 
     visible: opacity > 0.0
     opacity: 0.0
@@ -63,7 +64,7 @@ Rectangle {
             width: root.width - Theme.paddingLarge*2
             wrapMode: Text.Wrap
             elide: Text.ElideRight
-            maximumLineCount: 4
+            maximumLineCount: landscape ? 1 : 4
             font.pixelSize: title.visible ? Theme.fontSizeMedium : Theme.fontSizeExtraLarge
             horizontalAlignment: Text.AlignHCenter
             opacity: .6
@@ -76,7 +77,7 @@ Rectangle {
         property Item highlightedItem
 
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: Theme.itemSizeSmall
+        anchors.bottomMargin: landscape ? Theme.paddingLarge : Theme.itemSizeSmall
         width: parent.width
 
         MenuItem {
