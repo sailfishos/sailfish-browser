@@ -275,6 +275,9 @@ Page {
         onOpenUrlRequested: {
             if (!window.applicationActive) {
                 window.activate()
+
+                // url is empty when user tapped icon when browser was already open.
+                if (url == "") return
             }
 
             if (webView.url != "") {
