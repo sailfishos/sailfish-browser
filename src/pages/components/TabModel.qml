@@ -62,10 +62,9 @@ TabModel {
             return
         }
 
-        activateView(tabId)
-
-        // When all tabs are closed, we're in invalid state.
-        if (currentTab.valid && webViewContainer._readyToLoad &&
+        console.log("active tab changed: ", tabId)
+        // When all tabs are closed tabId is invalid and view will not get activated.
+        if (activateView(tabId) && currentTab.valid && webViewContainer._readyToLoad &&
                 (contentItem.tabId !== tabId || currentTab.url != contentItem.url)) {
             webViewContainer.load(currentTab.url, currentTab.title)
         }
