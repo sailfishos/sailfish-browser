@@ -13,6 +13,7 @@ import QtQuick 2.0
 import QtGraphicalEffects 1.0
 import Sailfish.Browser 1.0
 import Sailfish.Silica 1.0
+import Sailfish.Silica.private 1.0
 import "components" as Browser
 
 Page {
@@ -124,6 +125,10 @@ Page {
             height: (page.newTab ? commonHeader.height : commonHeader.height + tabsGrid.height) + favoriteSectionHeader.height
 
             Component.onCompleted: page.favoriteHeader = favoriteHeader
+
+            VisibilityCull {
+                target: tabsGrid
+            }
 
             Grid {
                 id: tabsGrid
