@@ -41,9 +41,10 @@ TabModel {
                           webViewComponent, webViewContainer)
         }
 
-        if (tabId > 0 || !webViewContainer.contentItem || webViewContainer.contentItem.tabId !== tabId) {
-            webViewContainer.contentItem = TabCache.getView(tabId)
-            return true
+        if (tabId > 0 || !webViewContainer.contentItem) {
+            var activationObject = TabCache.getView(tabId)
+            webViewContainer.contentItem = activationObject.view
+            return activationObject.activated
         }
         return false
     }

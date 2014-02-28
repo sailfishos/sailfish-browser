@@ -32,7 +32,9 @@ function init(args, component, container) {
 
 function getView(tabId) {
     if (!_webViewComponent || (_activeWebView && _activeWebView.tabId === tabId)) {
-        return _activeWebView
+        _activeWebView.resumeView()
+        _activeWebView.visible = true
+        return { "view": _activeWebView, "activated": false }
     }
 
     var webView = _activeTabs[tabId]
@@ -44,7 +46,7 @@ function getView(tabId) {
 
     webView.tabId = tabId
     _updateActiveView(webView)
-    return webView
+    return { "view": webView, "activated": true }
 }
 
 function releaseView(tabId) {

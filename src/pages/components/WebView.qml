@@ -75,19 +75,19 @@ WebContainer {
             return
         }
 
+        // Modify url and title to string
+        title = title ? "" + title : ""
+        url = url ? "" + url : ""
+
         // This guarantees at that least one webview exists.
         if (model.count == 0) {
             // Url is not need in model._newTabData as we let engine to resolve
             // the url and use the resolved url.
-            model._newTabData = { "url": url, "title": title, "previousView": contentItem }
+            model._newTabData = { "url": url, "title": title, "previousView": null }
         }
 
         // Bookmarks and history items pass url and title as arguments.
-        if (title) {
-            tab.title = title
-        } else {
-            tab.title = ""
-        }
+        tab.title = title
 
         if (model._newTabData && !force && model.activateView(model.nextTabId)) {
             // Wait view to be ready, do not load immediately.
@@ -149,17 +149,24 @@ WebContainer {
     inputPanelOpenHeight: window.pageStack.imSize
     webView: contentItem
 
+    // Triggered when tabs of tab model are available and QmlMozView is ready to load.
+    // Load test
+    // 1) model._newTabData with url -> loadTab (already activated view)
+    // 2) model has tabs, load active tab -> load (activate view when needed)
+    // 3) load home page -> load (activate view when needed)
     on_ReadyToLoadChanged: {
         if (!visible || !_readyToLoad) {
             return
         }
 
-        if (model._newTabData) {
+        if (model._newTabData && model._newTabData.url) {
             contentItem.loadTab(model._newTabData.url, false)
         } else if (model.count > 0) {
             // First tab is actived when tabs are loaded to the tabs model.
+            model._newTabData = null
             webContainer.load(tab.url, tab.title)
         } else {
+            // This can happen only during startup.
             webContainer.load(WebUtils.homePage, "")
         }
     }
@@ -453,6 +460,9 @@ WebContainer {
                         model.releaseView(contentItem.tabId)
                         if (model._newTabData) {
                             contentItem = model._newTabData.previousView
+                            if (contentItem) {
+                                model.activateView(contentItem.tabId)
+                            }
                         }
 
                         model._newTabData = null

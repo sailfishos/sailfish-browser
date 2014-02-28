@@ -275,9 +275,6 @@ Page {
         onOpenUrlRequested: {
             if (!window.applicationActive) {
                 window.activate()
-
-                // url is empty when user tapped icon when browser was already open.
-                if (url == "") return
             }
 
             if (webView.url != "") {
@@ -292,6 +289,8 @@ Page {
                     firstUseOverlay.destroy()
                     webView.visible = true
                 }
+                // TabModel.newTab and WebView are handling empty urls and triggers
+                // view creation when needed.
                 webView.tabModel.newTab(url, "")
             }
             if (browserPage.status !== PageStatus.Active) {
