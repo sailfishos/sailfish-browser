@@ -89,13 +89,9 @@ WebContainer {
         // Bookmarks and history items pass url and title as arguments.
         tab.title = title
 
-        if (model._newTabData && !force && model.activateView(model.nextTabId)) {
-            // Wait view to be ready, do not load immediately.
-            // Loading continues only if model.activateView didn't do anything.
-            return
+        if (!model.activateView(model.nextTabId) || !model._newTabData || force) {
+            contentItem.loadTab(url, force)
         }
-
-        contentItem.loadTab(url, force)
     }
 
     function reload() {
