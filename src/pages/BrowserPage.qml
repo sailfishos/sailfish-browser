@@ -277,7 +277,7 @@ Page {
                 window.activate()
 
                 // url is empty when user tapped icon when browser was already open.
-                if (url == "") return
+                if (url == "" && !launch) return
             }
 
             if (webView.url != "") {

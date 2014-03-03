@@ -42,13 +42,12 @@ public:
     Q_INVOKABLE QString displayableUrl(QString fullUrl) const;
 
 public slots:
-    void openUrl(QString url);
     QString homePage();
     void clearStartupCacheIfNeeded();
 
 signals:
     void homePageChanged();
-    void openUrlRequested(QString url);
+    void openUrlRequested(QString url, bool launch = false);
     void firstUseDoneChanged();
 
 private slots:

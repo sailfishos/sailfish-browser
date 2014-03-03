@@ -128,7 +128,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
                      settingMgr, SLOT(initialize()));
 
     QObject::connect(QMozContext::GetInstance(), SIGNAL(newWindowRequested(QString)),
-                     utils, SLOT(openUrl(QString)));
+                     utils, SIGNAL(openUrlRequested(QString)));
 
 #ifdef USE_RESOURCES
     view->setSource(QUrl("qrc:///browser.qml"));
@@ -150,9 +150,9 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     QTimer::singleShot(0, QMozContext::GetInstance(), SLOT(runEmbedding()));
 
     if (qApp->arguments().count() > 1) {
-        utils->openUrl(qApp->arguments().last());
+        emit utils->openUrlRequested(qApp->arguments().last(), true);
     } else {
-        utils->openUrl("");
+        emit utils->openUrlRequested("", true);
     }
 
     return app->exec();

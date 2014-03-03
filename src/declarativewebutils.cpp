@@ -38,7 +38,7 @@ DeclarativeWebUtils::DeclarativeWebUtils(BrowserService *service,
             this, SLOT(handleObserve(QString, QVariant)));
 
     connect(service, SIGNAL(openUrlRequested(QString)),
-            this, SLOT(openUrl(QString)));
+            this, SIGNAL(openUrlRequested(QString)));
 
     QString path = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + QStringLiteral("/.firstUseDone");
     m_firstUseDone = fileExists(path);
@@ -147,11 +147,6 @@ void DeclarativeWebUtils::updateWebEngineSettings()
 
     mozContext->setPref(QString("embedlite.inputItemSize"), QVariant(38));
     mozContext->setPref(QString("embedlite.zoomMargin"), QVariant(14));
-}
-
-void DeclarativeWebUtils::openUrl(QString url)
-{
-    emit openUrlRequested(url);
 }
 
 void DeclarativeWebUtils::setFirstUseDone(bool firstUseDone) {
