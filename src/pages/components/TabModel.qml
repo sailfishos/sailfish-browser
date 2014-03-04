@@ -15,8 +15,12 @@ import "WebViewTabCache.js" as TabCache
 
 TabModel {
     property Component webViewComponent
-    property Item contentItem
     property Item webViewContainer
+
+    readonly property bool hasNewTabData: _newTabData && _newTabData.url
+    readonly property string newTabUrl: hasNewTabData ? _newTabData.url : ""
+    readonly property string newTabTitle: hasNewTabData ? _newTabData.title : ""
+    readonly property Item newTabPreviousView: hasNewTabData ? _newTabData.previousView : null
 
     // Load goes so that we first use engine load to resolve url
     // and then save that resolved url to the history. This way
@@ -24,24 +28,32 @@ TabModel {
     // history (as those won't trigger url change). By doing this way
     // a redirected url will be saved with the redirected url not with
     // the input url.
-    property var _newTabData
+    property var _newTabData: null
 
     function newTab(url, title) {
+        newTabData(url, title, webViewContainer.contentItem)
+        webViewContainer.load(url, title)
+    }
+
+    function newTabData(url, title, contentItem) {
         // Url is not need in model._newTabData as we let engine to resolve
         // the url and use the resolved url.
-        _newTabData = { "url": url, "title": title, "previousView": webViewContainer.contentItem }
-        webViewContainer.load(url, title)
+        _newTabData = { "url": url, "title": title, "previousView": contentItem }
+    }
+
+    function resetNewTabData() {
+        _newTabData = null
     }
 
     // TODO: Check could this be merged with activateTab(tabId)
     // TabModel could keep also TabCache internally.
-    function activateView(tabId) {
+    function activateView(tabId, force) {
         if (!TabCache.initialized) {
             TabCache.init({"tab": currentTab, "container": webViewContainer},
                           webViewComponent, webViewContainer)
         }
 
-        if (tabId > 0 || !webViewContainer.contentItem) {
+        if ((loaded || force) && (tabId > 0 || !webViewContainer.contentItem)) {
             var activationObject = TabCache.getView(tabId)
             webViewContainer.contentItem = activationObject.view
             return activationObject.activated
@@ -54,26 +66,33 @@ TabModel {
         if (count == 0) {
             webViewContainer.contentItem = null
         }
+        resetNewTabData()
     }
 
     // arguments of the signal handler: int tabId
     onActiveTabChanged: {
-        if (_newTabData) {
+        if (hasNewTabData && loaded) {
             webViewContainer.currentTabChanged()
             return
         }
 
         // When all tabs are closed tabId is invalid and view will not get activated.
-        if (activateView(tabId) && currentTab.valid && webViewContainer._readyToLoad &&
-                (contentItem.tabId !== tabId || currentTab.url != contentItem.url)) {
+        if (activateView(tabId, true) && currentTab.valid && webViewContainer._readyToLoad
+                && (webViewContainer.contentItem.tabId !== tabId || currentTab.url != webViewContainer.contentItem.url)) {
             webViewContainer.load(currentTab.url, currentTab.title)
         }
+
         webViewContainer.currentTabChanged()
     }
 
     // arguments of the signal handler: int tabId
-    onTabClosed: {
-        releaseView(tabId)
-        _newTabData = null
+    onTabClosed: releaseView(tabId)
+
+    onLoadedChanged: {
+        // Load placeholder for the case where now tabs exist. If a tab exists,
+        // it gets initialized by onActiveTabChanged.
+        if (loaded && !webViewContainer.contentItem) {
+            activateView(nextTabId, true)
+        }
     }
 }

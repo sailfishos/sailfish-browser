@@ -81,16 +81,15 @@ WebContainer {
 
         // This guarantees at that least one webview exists.
         if (model.count == 0) {
-            // Url is not need in model._newTabData as we let engine to resolve
-            // the url and use the resolved url.
-            model._newTabData = { "url": url, "title": title, "previousView": null }
+            model.newTabData(url, title, null)
         }
 
         // Bookmarks and history items pass url and title as arguments.
         tab.title = title
 
-        if (!model.activateView(model.nextTabId) || !model._newTabData || force) {
-            contentItem.loadTab(url, force)
+        if (!model.hasNewTabData || force || !model.activateView(model.nextTabId)) {
+            // First contentItem will be created once tab activated.
+            if (contentItem) contentItem.loadTab(url, force)
         }
     }
 
@@ -147,19 +146,20 @@ WebContainer {
 
     // Triggered when tabs of tab model are available and QmlMozView is ready to load.
     // Load test
-    // 1) model._newTabData with url -> loadTab (already activated view)
+    // 1) model.hasNewTabData -> loadTab (already activated view)
     // 2) model has tabs, load active tab -> load (activate view when needed)
     // 3) load home page -> load (activate view when needed)
     on_ReadyToLoadChanged: {
-        if (!visible || !_readyToLoad) {
+        // visible could be possible delay property for _readyToLoad if so wanted.
+        if (!_readyToLoad) {
             return
         }
 
-        if (model._newTabData && model._newTabData.url) {
-            contentItem.loadTab(model._newTabData.url, false)
+        if (model.hasNewTabData) {
+            contentItem.loadTab(model.newTabUrl, false)
         } else if (model.count > 0) {
             // First tab is actived when tabs are loaded to the tabs model.
-            model._newTabData = null
+            model.resetNewTabData()
             webContainer.load(tab.url, tab.title)
         } else {
             // This can happen only during startup.
@@ -181,7 +181,7 @@ WebContainer {
         webViewContainer: webContainer
 
         // Enable browsing after new tab actually created or it was not even requested
-        browsing: webContainer.active && !_newTabData
+        browsing: webContainer.active && !hasNewTabData
     }
 
     Tab {
@@ -223,12 +223,12 @@ WebContainer {
 
                 // This looks like a not needed condition for now. However, if we add a max number of real tabs
                 // limit then this could make sense again.
-                else if (url == newUrl && model._newTabData) {
+                else if (url == newUrl && model.hasNewTabData) {
                     // Url will not change when the very same url is already loaded. Thus, we just add tab directly.
                     // This is currently the only exception. Normally tab is added after engine has
                     // resolved the url.
-                    tabModel.addTab(newUrl, model._newTabData.title)
-                    model._newTabData = null
+                    tabModel.addTab(newUrl, model.newTabTitle)
+                    model.resetNewTabData()
                 }
             }
 
@@ -266,16 +266,16 @@ WebContainer {
                 if (tab.backForwardNavigation) {
                     tab.updateTab(url, tab.title)
                     tab.backForwardNavigation = false
-                } else if (!model._newTabData) {
+                } else if (!model.hasNewTabData) {
                     // WebView.load() updates title before load starts.
                     tab.navigateTo(url)
                 } else {
                     // Delay adding of the new tab until url has been resolved.
                     // Url will not change if there is download link behind.
-                    tabModel.addTab(url, model._newTabData.title)
+                    tabModel.addTab(url, model.newTabTitle)
                 }
 
-                model._newTabData = null
+                model.resetNewTabData()
             }
 
             onBgcolorChanged: {
@@ -454,14 +454,12 @@ WebContainer {
                     case "dl-fail":
                     case "dl-done": {
                         model.releaseView(contentItem.tabId)
-                        if (model._newTabData) {
-                            contentItem = model._newTabData.previousView
-                            if (contentItem) {
-                                model.activateView(contentItem.tabId)
-                            }
+                        contentItem = model.newTabPreviousView
+                        if (contentItem) {
+                            model.activateView(contentItem.tabId)
                         }
 
-                        model._newTabData = null
+                        model.resetNewTabData()
                         if (contentItem) {
                             contentItem.visible = true
                         }
