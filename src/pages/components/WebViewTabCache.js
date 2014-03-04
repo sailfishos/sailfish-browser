@@ -37,6 +37,8 @@ function getView(tabId) {
         return { "view": _activeWebView, "activated": false }
     }
 
+    console.log("WebViewTabCache::getView about to create a new tab or activate old")
+
     var webView = _activeTabs[tabId]
     if (!webView){
         webView = _webViewComponent.createObject(_parent, _arguments)
@@ -46,6 +48,7 @@ function getView(tabId) {
 
     webView.tabId = tabId
     _updateActiveView(webView)
+    _dumpTabs()
     return { "view": webView, "activated": true }
 }
 
@@ -76,6 +79,7 @@ function _updateActiveView(webView) {
 
 function _dumpTabs() {
     console.log("---- dump tabs from function:", arguments.callee.caller.name, " --------")
+    console.trace()
     for (var i in _activeTabs) {
         console.log("tabId: ", i, " view: ", _activeTabs[i])
     }
