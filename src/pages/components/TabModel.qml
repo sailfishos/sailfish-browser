@@ -53,7 +53,7 @@ TabModel {
                           webViewComponent, webViewContainer)
         }
 
-        if ((loaded || force) && (tabId > 0 || !webViewContainer.contentItem)) {
+        if ((loaded || force) && tabId > 0) {
             var activationObject = TabCache.getView(tabId)
             webViewContainer.contentItem = activationObject.view
             return activationObject.activated

@@ -453,15 +453,14 @@ WebContainer {
                 switch (data.msg) {
                     case "dl-fail":
                     case "dl-done": {
+                        var previousContentItem = model.newTabPreviousView
                         model.releaseView(contentItem.tabId)
-                        contentItem = model.newTabPreviousView
-                        if (contentItem) {
-                            model.activateView(contentItem.tabId)
-                        }
-
-                        model.resetNewTabData()
-                        if (contentItem) {
-                            contentItem.visible = true
+                        if (previousContentItem) {
+                            model.activateView(previousContentItem.tabId)
+                        } else if (model.count === 0) {
+                            // Download doesn't add tab to model. Mimic
+                            // model change in case tabs count goes to zero.
+                            model.countChanged()
                         }
                         break
                     }
