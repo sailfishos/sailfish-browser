@@ -81,7 +81,7 @@ function _dumpTabs() {
     console.log("---- dump tabs from function:", arguments.callee.caller.name, " --------")
     console.trace()
     for (var i in _activeTabs) {
-        console.log("tabId: ", i, " view: ", _activeTabs[i])
+        console.log("tabId: ", i, " view: ", _activeTabs[i], " title: ", _activeTabs[i].title)
     }
     console.log("---- dump tabs end -----------------------------------------------------")
 }
