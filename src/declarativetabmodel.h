@@ -48,6 +48,8 @@ public:
     Q_INVOKABLE bool activateTab(const int &index);
     Q_INVOKABLE void closeActiveTab();
 
+    Q_INVOKABLE void dumpTabs() const;
+
     int count() const;
 
     // From QAbstractListModel
