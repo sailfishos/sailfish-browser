@@ -12,12 +12,12 @@
 .pragma library
 
 var initialized = false
+var count
 
 // Private
 var _webViewComponent
 var _arguments
 var _parent
-var _tabCount
 
 var _activeWebView
 var _activeTabs = {}
@@ -27,7 +27,7 @@ function init(args, component, container) {
     _webViewComponent = component
     _parent = container
     initialized = true
-    _tabCount = 0
+    count = 0
 }
 
 function getView(tabId) {
@@ -43,7 +43,7 @@ function getView(tabId) {
     if (!webView){
         webView = _webViewComponent.createObject(_parent, _arguments)
         _activeTabs[tabId] = webView
-        ++_tabCount
+        ++count
     }
 
     webView.tabId = tabId
@@ -54,15 +54,21 @@ function getView(tabId) {
 
 function releaseView(tabId) {
     var viewToRelease = _activeTabs[tabId]
+    console.log("--- releaseView: ", tabId, viewToRelease)
+    _dumpTabs()
     if (viewToRelease) {
         delete _activeTabs[tabId]
         viewToRelease.destroy()
-        --_tabCount
-        if (_tabCount === 0 || _activeWebView && _activeWebView.tabId === tabId) {
+        --count
+        if (count === 0 || _activeWebView && _activeWebView.tabId === tabId) {
             _activeWebView = null
         }
     }
+    console.log("--- releaseView end --- ")
+    _dumpTabs()
 }
+
+
 
 function _updateActiveView(webView) {
     if (_activeWebView) {

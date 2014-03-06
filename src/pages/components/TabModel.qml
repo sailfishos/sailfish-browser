@@ -69,6 +69,12 @@ TabModel {
         resetNewTabData()
     }
 
+    function _manageMaxTabCount() {
+        if (TabCache.count > 5) {
+            releaseView(lastTabId())
+        }
+    }
+
     // arguments of the signal handler: int tabId
     onActiveTabChanged: {
         if (hasNewTabData && loaded) {
@@ -83,7 +89,11 @@ TabModel {
         }
 
         webViewContainer.currentTabChanged()
+        _manageMaxTabCount()
     }
+
+    // arguments of the signal handler: int tabId
+    onTabAdded: _manageMaxTabCount()
 
     // arguments of the signal handler: int tabId
     onTabClosed: releaseView(tabId)
