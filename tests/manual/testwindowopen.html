@@ -1,0 +1,30 @@
+<html>
+  <head>
+  <script>
+  var myWindow = null
+  function createWindow1()
+  {
+    myWindow = window.open('subwindow_closed_outside.html')
+    setTimeout(function() { myWindow.close() }, 5000);
+  }
+
+  function createWindow2()
+  {
+    window.open("subwindow_closed_inside.html")
+  }
+  </script>
+  </head>
+  <body>
+    <div id="div" style="width:400px;height:150px">
+      <a href="javascript:void(0)" onclick="createWindow1()"><h1>Create a window that is closed from here</h1></a>
+    </div>
+
+    <div id="div" style="width:400px;height:150px">
+      <a href="javascript:void(0)" onclick="createWindow2()"><h1>Create a window that is closed from there</h1></a>
+    </div>
+
+    <div id="div" style="width:400px;height:150px">
+      <a href="javascript:void(0)" onclick="window.close()"><h1>Close this window</h1></a>
+    </div>
+  </body>
+</html>
