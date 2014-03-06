@@ -49,7 +49,6 @@ Page {
             if (webView.loading) {
                 webView.stop()
             }
-            captureScreen()
         }
 
         // Url is not need in webView.newTabData as we let engine to resolve
@@ -324,7 +323,8 @@ Page {
     TabModel {
         id: tabModel
         currentTab: tab
-        browsing: browserPage.status === PageStatus.Active && !webView.newTabData
+        browsing: browserPage.status === PageStatus.Active && !webView.newTabData && webView.loaded
+        onBrowsingChanged: if (browsing) captureScreen()
     }
 
     HistoryModel {
@@ -925,6 +925,8 @@ Page {
             }
 
             if (webView.url != "") {
+                // Remove this from newWebView branch as foreground property of newTab will be gone as well and
+                // it could handle all newTab cases related to onOpenUrlRequsted.
                 captureScreen()
                 if (!tabModel.activateTab(url)) {
                     // Not found in tabs list, create newtab and load

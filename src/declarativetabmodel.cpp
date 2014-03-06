@@ -171,6 +171,17 @@ void DeclarativeTabModel::closeActiveTab()
     }
 }
 
+void DeclarativeTabModel::dumpTabs() const
+{
+    if (m_activeTab.isValid()) {
+        qDebug() << "active tab id:" << m_activeTab.tabId() << "valid:" << m_activeTab.isValid() << "url:" << m_activeTab.currentLink().url() << "title:" << m_activeTab.currentLink().title() << "thumb:" << m_activeTab.currentLink().thumbPath();
+    }
+
+    for (int i = 0; i < m_tabs.size(); i++) {
+        qDebug() << "tab[" << i << "] id:" << m_tabs.at(i).tabId() << "valid:" << m_tabs.at(i).isValid() << "url:" << m_tabs.at(i).currentLink().url() << "title:" << m_tabs.at(i).currentLink().title() << "thumb:" << m_tabs.at(i).currentLink().thumbPath();
+    }
+}
+
 int DeclarativeTabModel::count() const
 {
     if (m_activeTab.isValid()) {
