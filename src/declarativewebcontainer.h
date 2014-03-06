@@ -16,11 +16,12 @@
 #include <QPointer>
 
 class QTimerEvent;
+class QuickMozView;
 
 class DeclarativeWebContainer : public QQuickItem {
     Q_OBJECT
 
-    Q_PROPERTY(QQuickItem *webView READ webView WRITE setWebView NOTIFY webViewChanged FINAL)
+    Q_PROPERTY(QuickMozView *webView READ webView WRITE setWebView NOTIFY webViewChanged FINAL)
     Q_PROPERTY(bool foreground READ foreground WRITE setForeground NOTIFY foregroundChanged FINAL)
     Q_PROPERTY(bool active READ active WRITE setActive NOTIFY activeChanged FINAL)
     Q_PROPERTY(bool inputPanelVisible READ inputPanelVisible NOTIFY inputPanelVisibleChanged FINAL)
@@ -33,8 +34,8 @@ public:
     DeclarativeWebContainer(QQuickItem *parent = 0);
     ~DeclarativeWebContainer();
 
-    QQuickItem *webView() const;
-    void setWebView(QQuickItem *webView);
+    QuickMozView *webView() const;
+    void setWebView(QuickMozView *webView);
 
     bool foreground() const;
     void setForeground(bool active);
@@ -81,7 +82,7 @@ private:
     qreal contentHeight() const;
 
 private:
-    QPointer<QQuickItem> m_webView;
+    QPointer<QuickMozView> m_webView;
     bool m_foreground;
     bool m_background;
     bool m_windowVisible;

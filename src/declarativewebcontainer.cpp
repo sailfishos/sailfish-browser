@@ -15,6 +15,7 @@
 #include <QMetaObject>
 #include <QTimerEvent>
 #include <QQuickWindow>
+#include <quickmozview.h>
 
 DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     : QQuickItem(parent)
@@ -45,12 +46,12 @@ DeclarativeWebContainer::~DeclarativeWebContainer()
     }
 }
 
-QQuickItem *DeclarativeWebContainer::webView() const
+QuickMozView *DeclarativeWebContainer::webView() const
 {
     return m_webView;
 }
 
-void DeclarativeWebContainer::setWebView(QQuickItem *webView)
+void DeclarativeWebContainer::setWebView(QuickMozView *webView)
 {
     if (m_webView != webView) {
         m_webView = webView;
@@ -223,17 +224,8 @@ void DeclarativeWebContainer::imeNotificationChanged(int state, bool open, int c
 
 qreal DeclarativeWebContainer::contentHeight() const
 {
-    static QMetaProperty property;
-
     if (m_webView) {
-        if (!property.isValid()) {
-            const QMetaObject *webViewMetaObject = m_webView->metaObject();
-            int propertyIndex = webViewMetaObject->indexOfProperty("contentHeight");
-            property = webViewMetaObject->property(propertyIndex);
-        }
-
-        qreal height = property.read(m_webView).toReal();
-        return height;
+        return m_webView->contentHeight();
     } else {
         return 0.0;
     }
