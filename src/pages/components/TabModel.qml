@@ -78,7 +78,7 @@ TabModel {
 
     // arguments of the signal handler: int tabId
     onActiveTabChanged: {
-        if (hasNewTabData && loaded) {
+        if (hasNewTabData) {
             webViewContainer.currentTabChanged()
             return
         }
