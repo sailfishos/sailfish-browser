@@ -48,6 +48,7 @@ public:
     Q_INVOKABLE bool activateTab(const QString &url);
     Q_INVOKABLE bool activateTab(const int &index);
     Q_INVOKABLE void closeActiveTab();
+    Q_INVOKABLE int lastTabId() const;
 
     int count() const;
 
@@ -79,6 +80,7 @@ public slots:
 signals:
     void countChanged();
     void activeTabChanged(int tabId);
+    void tabAdded(int tabId);
     void tabClosed(int tabId);
     void currentTabChanged();
     void currentTabIdChanged();

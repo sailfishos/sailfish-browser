@@ -73,6 +73,7 @@ void DeclarativeTabModel::addTab(const QString& url, const QString &title) {
 
     updateActiveTab(tab);
     emit countChanged();
+    emit tabAdded(tabId);
 
     m_nextTabId = ++tabId;
     emit nextTabIdChanged();
@@ -172,6 +173,11 @@ void DeclarativeTabModel::closeActiveTab()
             emit activeTabChanged(0);
         }
     }
+}
+
+int DeclarativeTabModel::lastTabId() const
+{
+    return m_tabs.at(m_tabs.count() - 1).tabId();
 }
 
 int DeclarativeTabModel::count() const
