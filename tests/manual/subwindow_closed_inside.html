@@ -1,0 +1,17 @@
+<html>
+  <head>
+  <script>
+  function closeTimer()
+  {
+    setTimeout(function() {
+      window.close()
+    }, 5000);
+  }
+  </script>
+
+  </head>
+  <body onload="closeTimer()">
+    <h1>This window should close in 5secs by itself</h1>
+    <h2 id="log"></h2>
+  </body>
+</html>
