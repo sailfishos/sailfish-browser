@@ -30,15 +30,16 @@ TabModel {
     // the input url.
     property var _newTabData: null
 
-    function newTab(url, title) {
-        newTabData(url, title, webViewContainer.contentItem)
+    function newTab(url, title, parentId) {
+        newTabData(url, title, webViewContainer.contentItem, parentId)
         webViewContainer.load(url, title)
     }
 
-    function newTabData(url, title, contentItem) {
+    function newTabData(url, title, contentItem, parentId) {
         // Url is not need in model._newTabData as we let engine to resolve
         // the url and use the resolved url.
-        _newTabData = { "url": url, "title": title, "previousView": contentItem }
+        parentId = parentId ? parentId : 0
+        _newTabData = { "url": url, "title": title, "previousView": contentItem, "parentId": parentId }
     }
 
     function resetNewTabData() {
@@ -54,7 +55,7 @@ TabModel {
         }
 
         if ((loaded || force) && tabId > 0) {
-            var activationObject = TabCache.getView(tabId)
+            var activationObject = TabCache.getView(tabId, hasNewTabData ? _newTabData.parentId : 0)
             webViewContainer.contentItem = activationObject.view
             return activationObject.activated
         }

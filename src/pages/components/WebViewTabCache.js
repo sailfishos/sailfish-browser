@@ -30,7 +30,7 @@ function init(args, component, container) {
     count = 0
 }
 
-function getView(tabId) {
+function getView(tabId, parentId) {
     if (!_webViewComponent || (_activeWebView && _activeWebView.tabId === tabId)) {
         _activeWebView.resumeView()
         _activeWebView.visible = true
@@ -41,7 +41,9 @@ function getView(tabId) {
 
     var webView = _activeTabs[tabId]
     if (!webView){
+        _arguments.parentid = parentId
         webView = _webViewComponent.createObject(_parent, _arguments)
+        console.log("New view id: ", webView.uniqueID(), parentId)
         _activeTabs[tabId] = webView
         ++count
     }

@@ -61,6 +61,7 @@ SOURCES += \
     bookmark.cpp \
     declarativewebcontainer.cpp \
     declarativewebutils.cpp \
+    declarativewebviewcreator.cpp \
     browserservice.cpp \
     dbusadaptor.cpp \
     downloadmanager.cpp \
@@ -73,6 +74,7 @@ HEADERS += \
     bookmark.h \
     declarativewebcontainer.h \
     declarativewebutils.h \
+    declarativewebviewcreator.h \
     browserservice.h \
     dbusadaptor.h \
     downloadmanager.h \

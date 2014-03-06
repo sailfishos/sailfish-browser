@@ -34,6 +34,7 @@
 #include "declarativetabmodel.h"
 #include "declarativehistorymodel.h"
 #include "declarativewebcontainer.h"
+#include "declarativewebviewcreator.h"
 
 #ifdef HAS_BOOSTER
 #include <MDeclarativeCache>
@@ -102,6 +103,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     qmlRegisterType<DeclarativeHistoryModel>("Sailfish.Browser", 1, 0, "HistoryModel");
     qmlRegisterType<DeclarativeTab>("Sailfish.Browser", 1, 0, "Tab");
     qmlRegisterType<DeclarativeWebContainer>("Sailfish.Browser", 1, 0, "WebContainer");
+    qmlRegisterType<DeclarativeWebViewCreator>("Sailfish.Browser", 1, 0, "WebViewCreator");
 
     QString componentPath(DEFAULT_COMPONENTS_PATH);
     QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/components/EmbedLiteBinComponents.manifest"));
@@ -126,9 +128,6 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     SettingManager * settingMgr = new SettingManager(app.data());
     QObject::connect(QMozContext::GetInstance(), SIGNAL(onInitialized()),
                      settingMgr, SLOT(initialize()));
-
-    QObject::connect(QMozContext::GetInstance(), SIGNAL(newWindowRequested(QString)),
-                     utils, SIGNAL(openUrlRequested(QString)));
 
 #ifdef USE_RESOURCES
     view->setSource(QUrl("qrc:///browser.qml"));

@@ -80,7 +80,7 @@ WebContainer {
         url = url ? "" + url : ""
 
         // This guarantees at that least one webview exists.
-        if (model.count == 0) {
+        if (model.count == 0 && !model.hasNewTabData) {
             model.newTabData(url, title, null)
         }
 
@@ -165,6 +165,11 @@ WebContainer {
             // This can happen only during startup.
             webContainer.load(WebUtils.homePage, "")
         }
+    }
+
+    WebViewCreator {
+        activeWebView: contentItem
+        onNewWindowRequested: model.newTab(url, "", parentId)
     }
 
     Rectangle {
@@ -398,6 +403,16 @@ WebContainer {
                     break
                 }
                 }
+            }
+
+            onWindowCloseRequested: {
+                console.log("WebView onWindowCloseRequested")
+                var previousContentItem = model.newTabPreviousView
+                if (previousContentItem) {
+                    model.activateView(previousContentItem.tabId)
+                }
+                // TODO: this doesn't work yet. Makes engine to crash.
+                // model.releaseView(tabId)
             }
 
             // We decided to disable "text selection" until we understand how it
