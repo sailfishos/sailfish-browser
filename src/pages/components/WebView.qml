@@ -186,7 +186,8 @@ WebContainer {
         webViewContainer: webContainer
 
         // Enable browsing after new tab actually created or it was not even requested
-        browsing: webContainer.active && !hasNewTabData
+        browsing: webContainer.active && !hasNewTabData && contentItem && contentItem.loaded
+        onBrowsingChanged: if (browsing) captureScreen()
     }
 
     Tab {

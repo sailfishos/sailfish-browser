@@ -50,6 +50,8 @@ public:
     Q_INVOKABLE void closeActiveTab();
     Q_INVOKABLE int lastTabId() const;
 
+    Q_INVOKABLE void dumpTabs() const;
+
     int count() const;
 
     // From QAbstractListModel
