@@ -407,13 +407,12 @@ WebContainer {
             }
 
             onWindowCloseRequested: {
-                console.log("WebView onWindowCloseRequested")
-                var previousContentItem = model.newTabPreviousView
-                if (previousContentItem) {
-                    model.activateView(previousContentItem.tabId)
+                console.log("WebView onWindowCloseRequested:", tabId)
+                var parentView = model.parentView(tabId)
+                if (parentView) {
+                    model.activateTabById(parentView.tabId)
                 }
-                // TODO: this doesn't work yet. Makes engine to crash.
-                // model.releaseView(tabId)
+                model.removeTabById(tabId)
             }
 
             // We decided to disable "text selection" until we understand how it

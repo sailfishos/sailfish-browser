@@ -44,9 +44,11 @@ public:
 
     Q_INVOKABLE void addTab(const QString &url, const QString &title);
     Q_INVOKABLE void remove(const int index);
+    Q_INVOKABLE void removeTabById(const int &tabId);
     Q_INVOKABLE void clear();
     Q_INVOKABLE bool activateTab(const QString &url);
     Q_INVOKABLE bool activateTab(const int &index);
+    Q_INVOKABLE void activateTabById(const int &tabId);
     Q_INVOKABLE void closeActiveTab();
     Q_INVOKABLE int lastTabId() const;
 

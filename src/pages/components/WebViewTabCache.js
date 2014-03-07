@@ -41,7 +41,7 @@ function getView(tabId, parentId) {
 
     var webView = _activeTabs[tabId]
     if (!webView){
-        _arguments.parentid = parentId
+        _arguments.parentId = parentId
         webView = _webViewComponent.createObject(_parent, _arguments)
         console.log("New view id: ", webView.uniqueID(), parentId)
         _activeTabs[tabId] = webView
@@ -70,6 +70,21 @@ function releaseView(tabId) {
     _dumpTabs()
 }
 
+function parentView(tabId) {
+    var webView = _activeTabs[tabId]
+    if (webView) {
+        var parentId = webView.parentId
+        for (var i in _activeTabs) {
+            var parentView = _activeTabs[i]
+            if (parentView.uniqueID() == parentId) {
+                console.log("Found parent view: ", parentView, parentView.title, parentView.url)
+                return parentView
+            }
+        }
+        console.log("ParentView not found")
+    }
+    return null
+}
 
 
 function _updateActiveView(webView) {

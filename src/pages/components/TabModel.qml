@@ -70,6 +70,11 @@ TabModel {
         resetNewTabData()
     }
 
+    // Returns parent view of the given tabId
+    function parentView(tabId) {
+        return TabCache.parentView(tabId)
+    }
+
     function _manageMaxTabCount() {
         if (TabCache.count > 5) {
             releaseView(lastTabId())
@@ -100,7 +105,7 @@ TabModel {
     onTabClosed: releaseView(tabId)
 
     onLoadedChanged: {
-        // Load placeholder for the case where now tabs exist. If a tab exists,
+        // Load placeholder for the case where no tabs exist. If a tab exists,
         // it gets initialized by onActiveTabChanged.
         if (loaded && !webViewContainer.contentItem) {
             activateView(nextTabId, true)

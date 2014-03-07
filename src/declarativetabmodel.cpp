@@ -101,6 +101,20 @@ void DeclarativeTabModel::remove(const int index) {
     }
 }
 
+void DeclarativeTabModel::removeTabById(const int &tabId)
+{
+    if (m_activeTab.tabId() == tabId) {
+        closeActiveTab();
+    } else {
+        for (int i = 0; i < m_tabs.size(); i++) {
+            if (m_tabs.at(i).tabId() == tabId) {
+                remove(i);
+                break;
+            }
+        }
+    }
+}
+
 void DeclarativeTabModel::clear()
 {
     if (count() == 0)
@@ -155,6 +169,20 @@ bool DeclarativeTabModel::activateTab(const int &index)
         return true;
     }
     return false;
+}
+
+void DeclarativeTabModel::activateTabById(const int &tabId)
+{
+    if (m_activeTab.tabId() == tabId) {
+        return;
+    }
+
+    for (int i = 0; i < m_tabs.size(); i++) {
+        if (m_tabs.at(i).tabId() == tabId) {
+            activateTab(i);
+            break;
+        }
+    }
 }
 
 void DeclarativeTabModel::closeActiveTab()
