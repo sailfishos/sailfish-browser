@@ -409,10 +409,11 @@ WebContainer {
             onWindowCloseRequested: {
                 console.log("WebView onWindowCloseRequested:", tabId)
                 var parentView = model.parentView(tabId)
+                // Closing only allowed if window was created by script
                 if (parentView) {
                     model.activateTabById(parentView.tabId)
+                    model.removeTabById(tabId)
                 }
-                model.removeTabById(tabId)
             }
 
             // We decided to disable "text selection" until we understand how it

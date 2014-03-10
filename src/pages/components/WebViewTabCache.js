@@ -90,10 +90,13 @@ function parentView(tabId) {
 function _updateActiveView(webView) {
     if (_activeWebView) {
         _activeWebView.visible = false
-        if (_activeWebView.loading) {
-            _activeWebView.stop()
+        // Allow subpending only current active is not creator (parent).
+        if (webView.parentId !== _activeWebView.uniqueID()) {
+            if (_activeWebView.loading) {
+                _activeWebView.stop()
+            }
+            _activeWebView.suspendView()
         }
-        _activeWebView.suspendView()
     }
     _activeWebView = webView
     _activeWebView.resumeView()
