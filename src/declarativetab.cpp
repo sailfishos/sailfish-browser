@@ -29,6 +29,7 @@ DeclarativeTab::DeclarativeTab(QQuickItem *parent)
     , m_valid(false)
     , m_canGoForward(false)
     , m_canGoBack(false)
+    , m_backForwardNavigation(false)
 {
     init();
 }
@@ -58,9 +59,7 @@ QString DeclarativeTab::thumbnailPath() const {
 }
 
 void DeclarativeTab::setThumbnailPath(QString thumbPath) {
-    if(thumbPath != m_link.thumbPath() && m_link.isValid()) {
-        DBManager::instance()->updateThumbPath(m_link.url(), thumbPath, m_tabId);
-    }
+    updateThumbPath("", thumbPath, m_tabId);
 }
 
 QString DeclarativeTab::url() const {
@@ -70,7 +69,8 @@ QString DeclarativeTab::url() const {
 void DeclarativeTab::setUrl(QString url)
 {
     if (url != m_link.url() && m_link.isValid()) {
-        updateTab(url, m_link.title());
+        m_link.setUrl(url);
+        emit urlChanged();
     }
 }
 
@@ -85,6 +85,7 @@ void DeclarativeTab::setTitle(QString title) {
     if(title != m_link.title() && m_link.isValid()) {
         m_link.setTitle(title);
         emit titleChanged();
+        // TODO: Remove this
         DBManager::instance()->updateTitle(m_link.url(), title);
     }
 }
@@ -160,6 +161,19 @@ bool DeclarativeTab::canGoBack() const {
     return m_canGoBack;
 }
 
+bool DeclarativeTab::backForwardNavigation() const
+{
+    return m_backForwardNavigation;
+}
+
+void DeclarativeTab::setBackForwardNavigation(bool backForwardNavigation)
+{
+    if (backForwardNavigation != m_backForwardNavigation) {
+        m_backForwardNavigation = backForwardNavigation;
+        emit backForwardNavigationChanged();
+    }
+}
+
 void DeclarativeTab::goForward()
 {
     if (m_canGoForward) {
@@ -171,72 +185,6 @@ void DeclarativeTab::goBack()
 {
     if (m_canGoBack) {
         DBManager::instance()->goBack(m_tabId);
-    }
-}
-
-void DeclarativeTab::navigateTo(QString url)
-{
-    if (!LinkValidator::navigable(url)) {
-#ifdef DEBUG_LOGS
-        qDebug() << "invalid url: " << url << title;
-#endif
-        return;
-    }
-
-#ifdef DEBUG_LOGS
-    qDebug() << "current link:" << m_link.url() << m_link.title() << "new url:" << url;
-#endif
-    if (url != m_link.url()) {
-        m_link.setUrl(url);
-        emit urlChanged();
-
-        if (!m_link.title().isEmpty()) {
-            m_link.setTitle("");
-            emit titleChanged();
-        }
-
-        if (!m_link.thumbPath().isEmpty()) {
-            m_link.setThumbPath("");
-            emit thumbPathChanged("", m_tabId);
-        }
-
-        emit navigated(url);
-        DBManager::instance()->navigateTo(m_tabId, url, m_link.title(), m_link.thumbPath());
-    } else {
-        updateTab(url, m_link.title());
-    }
-}
-
-void DeclarativeTab::updateTab(QString url, QString title)
-{
-    if (!LinkValidator::navigable(url)) {
-#ifdef DEBUG_LOGS
-        qDebug() << "invalid url: " << url << title;
-#endif
-        return;
-    }
-
-#ifdef DEBUG_LOGS
-    qDebug() << title << url << m_tabId;
-#endif
-
-    bool urlHasChanged = false;
-    bool titleHasChanged = false;
-
-    if (url != m_link.url()) {
-        urlHasChanged = true;
-        m_link.setUrl(url);
-        emit urlChanged();
-    }
-
-    if (title != m_link.title()) {
-        titleHasChanged = true;
-        m_link.setTitle(title);
-        emit titleChanged();
-    }
-
-    if (urlHasChanged || titleHasChanged) {
-        DBManager::instance()->updateTab(m_tabId, m_link.url(), m_link.title(), m_link.thumbPath());
     }
 }
 

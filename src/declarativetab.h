@@ -30,6 +30,7 @@ class DeclarativeTab : public QQuickItem {
     Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY titleChanged FINAL)
     Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY canGoFowardChanged FINAL)
     Q_PROPERTY(bool canGoBack READ canGoBack NOTIFY canGoBackChanged FINAL)
+    Q_PROPERTY(bool backForwardNavigation READ backForwardNavigation WRITE setBackForwardNavigation NOTIFY backForwardNavigationChanged FINAL)
 
 public:
     DeclarativeTab(QQuickItem *parent = 0);
@@ -52,10 +53,11 @@ public:
     bool canGoForward() const;
     bool canGoBack() const;
 
+    bool backForwardNavigation() const;
+    void setBackForwardNavigation(bool backForwardNavigation);
+
     Q_INVOKABLE void goForward();
     Q_INVOKABLE void goBack();
-    Q_INVOKABLE void updateTab(QString url, QString title);
-    Q_INVOKABLE void navigateTo(QString url);
     Q_INVOKABLE void captureScreen(QString url, int x, int y, int width, int height, qreal rotate);
 
 public slots:
@@ -67,13 +69,13 @@ private slots:
     void screenCaptureReady();
 
 signals:
-    void navigated(QString url);
     void thumbPathChanged(QString path, int tabId);
     void urlChanged();
     void validChanged();
     void titleChanged();
     void canGoFowardChanged();
     void canGoBackChanged();
+    void backForwardNavigationChanged();
 
 private:
     void setTabId(int tabId);
@@ -93,6 +95,7 @@ private:
     bool m_valid;
     Link m_link;
     bool m_canGoForward, m_canGoBack;
+    bool m_backForwardNavigation;
     QFutureWatcher<ScreenCapture> m_screenCapturer;
 };
 

@@ -85,6 +85,7 @@ WebContainer {
         }
 
         // Bookmarks and history items pass url and title as arguments.
+        tab.url = url
         tab.title = title
 
         if (!model.hasNewTabData || force || !model.activateView(model.nextTabId)) {
@@ -193,9 +194,6 @@ WebContainer {
     Tab {
         id: tab
 
-        // Used with back and forward navigation.
-        property bool backForwardNavigation: false
-
         onUrlChanged: {
             if (tab.valid && backForwardNavigation && url != "about:blank") {
                 // Both url and title are updated before url changed is emitted.
@@ -269,18 +267,7 @@ WebContainer {
                     PopupHandler.acceptedGeolocationUrl = ""
                 }
 
-                if (tab.backForwardNavigation) {
-                    tab.updateTab(url, tab.title)
-                    tab.backForwardNavigation = false
-                } else if (!model.hasNewTabData) {
-                    // WebView.load() updates title before load starts.
-                    tab.navigateTo(url)
-                } else {
-                    // Delay adding of the new tab until url has been resolved.
-                    // Url will not change if there is download link behind.
-                    tabModel.addTab(url, model.newTabTitle)
-                }
-
+                model.updateUrl(tabId, url)
                 model.resetNewTabData()
             }
 
