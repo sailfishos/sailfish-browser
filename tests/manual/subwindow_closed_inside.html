@@ -5,6 +5,7 @@
   function closeTimer()
   {
     setTimeout(function() {
+      window.opener.location.href = "testpage.html"
       window.close()
     }, 5000);
   }
