@@ -39,6 +39,8 @@ public:
 
 private slots:
     void initTestCase();
+    void testTitle();
+    void testUrl();
     void cleanupTestCase();
 
 private:
@@ -86,6 +88,22 @@ void tst_declarativetab::initTestCase()
     QCOMPARE(currentUrlChangedSpy.count(), 1);
     QCOMPARE(forwardSpy.count(), 0);
     QCOMPARE(backSpy.count(), 0);
+}
+
+void tst_declarativetab::testTitle()
+{
+    QSignalSpy titleChangeSpy(tab, SIGNAL(titleChanged()));
+    tab->setTitle("FooBar");
+    QCOMPARE(titleChangeSpy.count(), 1);
+    QCOMPARE(tab->title(), QString("FooBar"));
+}
+
+void tst_declarativetab::testUrl()
+{
+    QSignalSpy urlChangeSpy(tab, SIGNAL(urlChanged()));
+    tab->setUrl("http://foobar.com");
+    QCOMPARE(urlChangeSpy.count(), 1);
+    QCOMPARE(tab->url(), QString("http://foobar.com"));
 }
 
 void tst_declarativetab::cleanupTestCase()

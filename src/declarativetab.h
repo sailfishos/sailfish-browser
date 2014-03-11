@@ -28,7 +28,7 @@ class DeclarativeTab : public QQuickItem {
     Q_PROPERTY(QString thumbnailPath READ thumbnailPath WRITE setThumbnailPath NOTIFY thumbPathChanged FINAL)
     Q_PROPERTY(QString url READ url WRITE setUrl NOTIFY urlChanged FINAL)
     Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY titleChanged FINAL)
-    Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY canGoFowardChanged FINAL)
+    Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY canGoForwardChanged FINAL)
     Q_PROPERTY(bool canGoBack READ canGoBack NOTIFY canGoBackChanged FINAL)
     Q_PROPERTY(bool backForwardNavigation READ backForwardNavigation WRITE setBackForwardNavigation NOTIFY backForwardNavigationChanged FINAL)
 
@@ -62,7 +62,6 @@ public:
 
 public slots:
     void tabChanged(Tab tab);
-    void updateTitle(QString url, QString title);
     void updateThumbPath(QString url, QString path, int tabId);
 
 private slots:
@@ -73,7 +72,7 @@ signals:
     void urlChanged();
     void validChanged();
     void titleChanged();
-    void canGoFowardChanged();
+    void canGoForwardChanged();
     void canGoBackChanged();
     void backForwardNavigationChanged();
 

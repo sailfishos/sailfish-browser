@@ -85,8 +85,6 @@ void DeclarativeTab::setTitle(QString title) {
     if(title != m_link.title() && m_link.isValid()) {
         m_link.setTitle(title);
         emit titleChanged();
-        // TODO: Remove this
-        DBManager::instance()->updateTitle(m_link.url(), title);
     }
 }
 
@@ -144,7 +142,7 @@ void DeclarativeTab::invalidate()
 
     if (m_canGoForward) {
         m_canGoForward = false;
-        emit canGoFowardChanged();
+        emit canGoForwardChanged();
     }
 
     if (m_canGoBack) {
@@ -177,6 +175,7 @@ void DeclarativeTab::setBackForwardNavigation(bool backForwardNavigation)
 void DeclarativeTab::goForward()
 {
     if (m_canGoForward) {
+        setBackForwardNavigation(true);
         DBManager::instance()->goForward(m_tabId);
     }
 }
@@ -184,6 +183,7 @@ void DeclarativeTab::goForward()
 void DeclarativeTab::goBack()
 {
     if (m_canGoBack) {
+        setBackForwardNavigation(true);
         DBManager::instance()->goBack(m_tabId);
     }
 }
@@ -216,7 +216,7 @@ void DeclarativeTab::tabChanged(Tab tab)
 
     if (m_canGoForward != (tab.nextLink() > 0)) {
         m_canGoForward = tab.nextLink() > 0;
-        emit canGoFowardChanged();
+        emit canGoForwardChanged();
     }
 
     if (m_canGoBack != (tab.previousLink() > 0)) {
@@ -226,7 +226,6 @@ void DeclarativeTab::tabChanged(Tab tab)
 
 }
 
-// Data changed in DB
 void DeclarativeTab::updateThumbPath(QString url, QString path, int tabId)
 {
     // TODO: Remove url parameter from this, worker, and manager.
@@ -250,20 +249,6 @@ void DeclarativeTab::screenCaptureReady()
         // Update immediately without dbworker round trip.
         updateThumbPath(capture.url, capture.path, capture.tabId);
         DBManager::instance()->updateThumbPath(capture.url, capture.path, capture.tabId);
-    }
-}
-
-// Data changed in DB
-void DeclarativeTab::updateTitle(QString url, QString title)
-{
-#ifdef DEBUG_LOGS
-    qDebug() << url << title << m_tabId;
-#endif
-    if (m_link.url() == url) {
-        if (title != m_link.title()) {
-            m_link.setTitle(title);
-            emit titleChanged();
-        }
     }
 }
 

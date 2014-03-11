@@ -62,11 +62,12 @@ int DBManager::createTab()
     return m_maxTabId;
 }
 
-int DBManager::createLink(int tabId, QString url)
+int DBManager::createLink(int tabId, QString url, QString title)
 {
     int linkId;
     QMetaObject::invokeMethod(worker, "createLink", Qt::BlockingQueuedConnection,
-                              Q_RETURN_ARG(int, linkId), Q_ARG(int, tabId), Q_ARG(QString, url));
+                              Q_RETURN_ARG(int, linkId), Q_ARG(int, tabId),
+                              Q_ARG(QString, url), Q_ARG(QString, title));
     return linkId;
 }
 
@@ -118,10 +119,10 @@ void DBManager::removeAllTabs()
     QMetaObject::invokeMethod(worker, "removeAllTabs", Qt::QueuedConnection);
 }
 
-void DBManager::updateTitle(QString url, QString title)
+void DBManager::updateTitle(int linkId, QString title)
 {
     QMetaObject::invokeMethod(worker, "updateTitle", Qt::QueuedConnection,
-                              Q_ARG(QString, url), Q_ARG(QString, title));
+                              Q_ARG(int, linkId), Q_ARG(QString, title));
 }
 
 void DBManager::updateThumbPath(QString url, QString path, int tabId)

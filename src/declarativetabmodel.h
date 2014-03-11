@@ -81,6 +81,7 @@ public:
 public slots:
     void tabsAvailable(QList<Tab> tabs);
     void updateUrl(int tabId, QString url);
+    void updateTitle(int tabId, QString title);
 
 signals:
     void countChanged();
@@ -96,9 +97,7 @@ signals:
 private slots:
     void updateThumbPath(QString path, int tabId);
     void updateThumbPath(QString url, QString path, int tabId);
-    void updateTitle(QString url, QString title);
     void tabChanged(const Tab &tab);
-    void handleTitleChanged();
 
 private:
     void load();
@@ -114,7 +113,6 @@ private:
     QList<Tab> m_tabs;
     bool m_loaded;
     bool m_browsing;
-    bool m_activeTabClosed;
     int m_nextTabId;
 
     friend class tst_declarativetabmodel;

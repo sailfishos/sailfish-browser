@@ -43,13 +43,10 @@ WebContainer {
     property color _decoratorColor: Theme.highlightDimmerColor
 
     function goBack() {
-        tab.backForwardNavigation = true
         tab.goBack()
     }
 
     function goForward() {
-        // This backForwardNavigation is internal of WebView
-        tab.backForwardNavigation = true
         tab.goForward()
     }
 
@@ -101,6 +98,7 @@ WebContainer {
 
         var url = contentItem.url.toString()
         tab.url = url
+        tab.title = contentItem.title
 
         if (url.substring(0, 6) !== "about:" && url.substring(0, 5) !== "file:"
             && !contentItem._deferredReload
@@ -255,7 +253,7 @@ WebContainer {
                 }
             }
 
-            onTitleChanged: tab.title = title
+            onTitleChanged: model.updateTitle(tabId, title)
             onUrlChanged: {
                 if (url == "about:blank") return
 

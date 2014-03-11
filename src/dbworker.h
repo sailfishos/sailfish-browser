@@ -32,7 +32,7 @@ public:
 public slots:
     void init();
     void createTab(int tabId);
-    int createLink(int tabId, QString url);
+    int createLink(int tabId, QString url, QString title);
     void removeTab(int tabId);
     void removeAllTabs();
     void getTab(int tabId);
@@ -41,7 +41,7 @@ public slots:
     void updateTab(int tabId, QString url, QString title, QString path);
     int getMaxTabId();
 
-    void updateTitle(QString url, QString title);
+    void updateTitle(int linkId, QString title);
     void updateThumbPath(QString url, QString path, int tabId);
 
     void goForward(int tabId);
