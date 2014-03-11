@@ -300,12 +300,6 @@ void DBWorker::navigateTo(int tabId, QString url, QString title, QString path) {
         return;
     }
 
-    int linkId = 0;
-    Link tmp = getLink(url);
-    if (tmp.isValid()) {
-        linkId = tmp.linkId();
-    }
-
     // Return if the current url of the tab is the same as the parameter url
     Link currentLink = getCurrentLink(tabId);
     if (currentLink.isValid() && currentLink.url() == url) {
@@ -314,12 +308,7 @@ void DBWorker::navigateTo(int tabId, QString url, QString title, QString path) {
 
     clearDeprecatedTabHistory(tabId, currentLink.linkId());
 
-    if (linkId == 0) {
-        linkId = createLink(url, title, path);
-    } else {
-        updateLink(linkId, url, title, path);
-    }
-
+    int linkId = createLink(url, title, path);
     if (!addToHistory(linkId)) {
         qWarning() << Q_FUNC_INFO << "failed to add url to history" << url;
     }
