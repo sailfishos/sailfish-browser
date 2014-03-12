@@ -71,7 +71,7 @@ Item {
 
     on_SuspendableChanged: {
         if (_suspendable) {
-            webView.suspendView()
+            if (webView) webView.suspendView()
             webViewSuspended()
         } else {
             webView.resumeView()
