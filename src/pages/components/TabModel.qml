@@ -55,15 +55,15 @@ TabModel {
         }
 
         if ((loaded || force) && tabId > 0) {
-            var activationObject = TabCache.getView(tabId, hasNewTabData ? _newTabData.parentId : 0)
+            var activationObject = TabCache.getTab(tabId, hasNewTabData ? _newTabData.parentId : 0)
             webViewContainer.contentItem = activationObject.view
             return activationObject.activated
         }
         return false
     }
 
-    function releaseView(tabId) {
-        TabCache.releaseView(tabId)
+    function releaseTab(tabId, virtualize) {
+        TabCache.releaseTab(tabId, virtualize)
         if (count == 0) {
             webViewContainer.contentItem = null
         }
@@ -71,13 +71,13 @@ TabModel {
     }
 
     // Returns parent view of the given tabId
-    function parentView(tabId) {
-        return TabCache.parentView(tabId)
+    function parentTabId(tabId) {
+        return TabCache.parentTabId(tabId)
     }
 
     function _manageMaxTabCount() {
         if (TabCache.count > 5) {
-            releaseView(lastTabId())
+            releaseTab(lastTabId(), true)
         }
     }
 
@@ -102,7 +102,7 @@ TabModel {
     onTabAdded: _manageMaxTabCount()
 
     // arguments of the signal handler: int tabId
-    onTabClosed: releaseView(tabId)
+    onTabClosed: releaseTab(tabId)
 
     onLoadedChanged: {
         // Load placeholder for the case where no tabs exist. If a tab exists,

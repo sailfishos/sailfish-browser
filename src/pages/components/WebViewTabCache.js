@@ -30,75 +30,96 @@ function init(args, component, container) {
     count = 0
 }
 
-function getView(tabId, parentId) {
+function getTab(tabId, parentId) {
     if (!_webViewComponent || (_activeWebView && _activeWebView.tabId === tabId)) {
         _activeWebView.resumeView()
         _activeWebView.visible = true
         return { "view": _activeWebView, "activated": false }
     }
 
-    console.log("WebViewTabCache::getView about to create a new tab or activate old")
+    console.log("WebViewTabCache::getTab about to create a new tab or activate old: ", tabId)
 
-    var webView = _activeTabs[tabId]
-    if (!webView){
+    var tab = _activeTabs[tabId]
+    var resurrect = tab && !tab.view
+    if (!tab || tab && !tab.view){
         _arguments.parentId = parentId
-        webView = _webViewComponent.createObject(_parent, _arguments)
-        console.log("New view id: ", webView.uniqueID(), parentId)
-        _activeTabs[tabId] = webView
+        _arguments.tabId = tabId
+        var webView = _webViewComponent.createObject(_parent, _arguments)
+        console.log("New view id: ", webView.uniqueID(), parentId, "tab id:", tabId)
+        if (!tab) {
+            tab = { "view": webView, "cssContentRect": null }
+        } else {
+            tab.view = webView
+        }
+        _activeTabs[tabId] = tab
         ++count
     }
 
-    webView.tabId = tabId
-    _updateActiveView(webView)
+    _updateActiveTab(tab, resurrect)
     _dumpTabs()
-    return { "view": webView, "activated": true }
+    return { "view": tab.view, "activated": true }
 }
 
-function releaseView(tabId) {
-    var viewToRelease = _activeTabs[tabId]
-    console.log("--- releaseView: ", tabId, viewToRelease)
+function releaseTab(tabId, virtualize) {
+    var tab = _activeTabs[tabId]
+    console.log("--- releaseTab: ", tabId, (tab ? tab.view : null))
     _dumpTabs()
-    if (viewToRelease) {
-        delete _activeTabs[tabId]
-        viewToRelease.destroy()
+    if (tab) {
+        tab.view.destroy()
+        if (virtualize) {
+            _activeTabs[tabId].view = null
+        } else {
+            delete _activeTabs[tabId]
+        }
+
         --count
         if (count === 0 || _activeWebView && _activeWebView.tabId === tabId) {
             _activeWebView = null
         }
     }
-    console.log("--- releaseView end --- ")
+    console.log("--- releaseTab end --- ")
     _dumpTabs()
 }
 
-function parentView(tabId) {
-    var webView = _activeTabs[tabId]
-    if (webView) {
-        var parentId = webView.parentId
+function parentTabId(tabId) {
+    var tab = _activeTabs[tabId]
+    if (tab && tab.view) {
+        var parentId = tab.view.parentId
         for (var i in _activeTabs) {
-            var parentView = _activeTabs[i]
-            if (parentView.uniqueID() == parentId) {
-                console.log("Found parent view: ", parentView, parentView.title, parentView.url)
-                return parentView
+            var parentTab = _activeTabs[i]
+            if (parentTab.view && parentTab.view.uniqueID() == parentId) {
+                console.log("Found parent view: ", parentTab, parentTab.view.title, parentTab.view.url, parentTab.cssContentRect)
+                return parentTab.tabId
             }
         }
-        console.log("ParentView not found")
+        console.log("ParentTab not found")
     }
     return null
 }
 
 
-function _updateActiveView(webView) {
+function _updateActiveTab(tab, resurrect) {
     if (_activeWebView) {
+        _activeTabs[_activeWebView.tabId].cssContentRect = {
+            "x": _activeWebView.contentRect.x, "y": _activeWebView.contentRect.y,
+            "width": _activeWebView.contentRect.width, "height": _activeWebView.contentRect.height
+        }
         _activeWebView.visible = false
+
         // Allow subpending only current active is not creator (parent).
-        if (webView.parentId !== _activeWebView.uniqueID()) {
+        if (tab.view.parentId !== _activeWebView.uniqueID()) {
             if (_activeWebView.loading) {
                 _activeWebView.stop()
             }
             _activeWebView.suspendView()
         }
     }
-    _activeWebView = webView
+    _activeWebView = tab.view
+    if (resurrect) {
+        _activeWebView.resurrectedContentRect = tab.cssContentRect
+        _activeTabs[_activeWebView.tabId].cssContentRect = null
+    }
+
     _activeWebView.resumeView()
     _activeWebView.visible = true
 }
@@ -107,7 +128,9 @@ function _dumpTabs() {
     console.log("---- dump tabs from function:", arguments.callee.caller.name, " --------")
     console.trace()
     for (var i in _activeTabs) {
-        console.log("tabId: ", i, " view: ", _activeTabs[i], " title: ", _activeTabs[i].title)
+        console.log("tabId: ", i, " view: ", _activeTabs[i].view,
+                    "title: ", (_activeTabs[i].view ? _activeTabs[i].view.title : "VIEW NOT ALIVE!"),
+                    "cssContentRect:", _activeTabs[i].cssContentRect)
     }
     console.log("---- dump tabs end -----------------------------------------------------")
 }

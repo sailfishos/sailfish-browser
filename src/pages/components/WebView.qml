@@ -211,6 +211,7 @@ WebContainer {
             property bool userHasDraggedWhileLoading
             property bool viewReady
             property int tabId
+            property var resurrectedContentRect
 
             property bool _deferredReload
             property var _deferredLoad: null
@@ -317,6 +318,14 @@ WebContainer {
             onLoadedChanged: {
                 if (loaded && !userHasDraggedWhileLoading) {
                     container.resetHeight(false)
+                    if (resurrectedContentRect) {
+                        sendAsyncMessage("embedui:zoomToRect",
+                                         {
+                                             "x": resurrectedContentRect.x, "y": resurrectedContentRect.y,
+                                             "width": resurrectedContentRect.width, "height": resurrectedContentRect.height
+                                         })
+                        resurrectedContentRect = null
+                    }
                 }
             }
 
@@ -393,10 +402,10 @@ WebContainer {
 
             onWindowCloseRequested: {
                 console.log("WebView onWindowCloseRequested:", tabId)
-                var parentView = model.parentView(tabId)
+                var parentTabId = model.parentTabId(tabId)
                 // Closing only allowed if window was created by script
-                if (parentView) {
-                    model.activateTabById(parentView.tabId)
+                if (parentTabId) {
+                    model.activateTabById(parentTabId)
                     model.removeTabById(tabId)
                 }
             }
@@ -455,7 +464,7 @@ WebContainer {
                     case "dl-fail":
                     case "dl-done": {
                         var previousContentItem = model.newTabPreviousView
-                        model.releaseView(contentItem.tabId)
+                        model.releaseTab(contentItem.tabId)
                         if (previousContentItem) {
                             model.activateView(previousContentItem.tabId)
                         } else if (model.count === 0) {
