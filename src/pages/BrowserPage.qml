@@ -103,7 +103,7 @@ Page {
         toolbarHeight: toolBarContainer.height
 
         tabModel.onCountChanged: {
-            if (tabModel.count === 0 && tabModel.browsing) {
+            if (tabModel.count === 0 && browserPage.status === PageStatus.Active) {
                 pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage, "initialSearchFocus": true })
             }
         }
