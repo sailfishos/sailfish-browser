@@ -249,6 +249,11 @@ WebContainer {
             state: ""
 
             onLoadProgressChanged: {
+                // Ignore first load progress if it is directly 50%
+                if (container.loadProgress === 0 && loadProgress === 50) {
+                    return
+                }
+
                 if (loadProgress > container.loadProgress) {
                     container.loadProgress = loadProgress
                 }
@@ -334,6 +339,7 @@ WebContainer {
                 if (loading) {
                     userHasDraggedWhileLoading = false
                     container.favicon = ""
+                    container.loadProgress = 0
                     webView.chrome = true
                     container.resetHeight(false)
                 }
