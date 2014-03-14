@@ -31,6 +31,6 @@ Item {
         font.pixelSize: header ? Theme.fontSizeHuge : Theme.fontSizeMedium
         width: iconSource == "" ? parent.width : parent.width - icon.width - Theme.paddingMedium
         anchors.right: parent.right
-        wrapMode: Text.Wrap
+        wrapMode: Text.WordWrap
     }
 }
