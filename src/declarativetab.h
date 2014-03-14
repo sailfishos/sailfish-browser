@@ -12,28 +12,24 @@
 #ifndef DECLARATIVETAB_H
 #define DECLARATIVETAB_H
 
-#include <QImage>
 #include <QObject>
-#include <QQuickItem>
-#include <QStringList>
-#include <QFutureWatcher>
+#include <QString>
+#include <QDebug>
+#include <qqml.h>
 
 #include "tab.h"
 #include "link.h"
 
-class DeclarativeTab : public QQuickItem {
+class DeclarativeTab : public QObject {
     Q_OBJECT
 
     Q_PROPERTY(bool valid READ valid NOTIFY validChanged FINAL)
-    Q_PROPERTY(QString thumbnailPath READ thumbnailPath WRITE setThumbnailPath NOTIFY thumbPathChanged FINAL)
+    Q_PROPERTY(QString thumbnailPath READ thumbnailPath NOTIFY thumbPathChanged FINAL)
     Q_PROPERTY(QString url READ url WRITE setUrl NOTIFY urlChanged FINAL)
     Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY titleChanged FINAL)
-    Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY canGoForwardChanged FINAL)
-    Q_PROPERTY(bool canGoBack READ canGoBack NOTIFY canGoBackChanged FINAL)
-    Q_PROPERTY(bool backForwardNavigation READ backForwardNavigation WRITE setBackForwardNavigation NOTIFY backForwardNavigationChanged FINAL)
 
 public:
-    DeclarativeTab(QQuickItem *parent = 0);
+    DeclarativeTab(QObject *parent = 0);
     ~DeclarativeTab();
 
     QString thumbnailPath() const;
@@ -48,54 +44,31 @@ public:
     int tabId() const;
 
     bool valid() const;
-    void invalidate();
+    void setInvalid();
+    void invalidateTabData();
 
-    bool canGoForward() const;
-    bool canGoBack() const;
-
-    bool backForwardNavigation() const;
-    void setBackForwardNavigation(bool backForwardNavigation);
-
-    Q_INVOKABLE void goForward();
-    Q_INVOKABLE void goBack();
-    Q_INVOKABLE void captureScreen(QString url, int x, int y, int width, int height, qreal rotate);
-
-public slots:
-    void tabChanged(Tab tab);
-    void updateThumbPath(QString url, QString path, int tabId);
-
-private slots:
-    void screenCaptureReady();
+    Tab tabData() const;
+    int linkId() const;
 
 signals:
     void thumbPathChanged(QString path, int tabId);
     void urlChanged();
     void validChanged();
     void titleChanged();
-    void canGoForwardChanged();
-    void canGoBackChanged();
-    void backForwardNavigationChanged();
 
 private:
-    void setTabId(int tabId);
+    void updateTabData(const Tab &tab);
+    void activatePreviousLink();
+    void activateNextLink();
 
-    struct ScreenCapture {
-        int tabId;
-        QString path;
-        QString url;
-    };
-
-    void init();
-    // Grep following todos
-    // TODO: Remove url parameter from this, worker, and manager.
-    ScreenCapture saveToFile(QString url, QImage image, QRect cropBounds, int tabId, qreal rotate);
-
-    int m_tabId;
-    bool m_valid;
+    Tab m_tab;
     Link m_link;
-    bool m_canGoForward, m_canGoBack;
-    bool m_backForwardNavigation;
-    QFutureWatcher<ScreenCapture> m_screenCapturer;
+    friend class DeclarativeWebContainer;
+    friend class tst_declarativetab;
 };
+
+QDebug operator<<(QDebug, const DeclarativeTab *);
+
+QML_DECLARE_TYPE(DeclarativeTab)
 
 #endif // DECLARATIVETAB_H

@@ -101,6 +101,7 @@ Page {
         visible: WebUtils.firstUseDone
         active: browserPage.status === PageStatus.Active
         toolbarHeight: toolBarContainer.height
+        portrait: browserPage.isPortrait
 
         tabModel.onCountChanged: {
             if (tabModel.count === 0 && browserPage.status === PageStatus.Active) {

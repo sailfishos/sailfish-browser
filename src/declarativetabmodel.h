@@ -28,7 +28,6 @@ class DeclarativeTabModel : public QAbstractListModel, public QQmlParserStatus
     Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
     Q_PROPERTY(int currentTabId READ currentTabId NOTIFY currentTabIdChanged FINAL)
     Q_PROPERTY(int nextTabId READ nextTabId NOTIFY nextTabIdChanged FINAL)
-    Q_PROPERTY(DeclarativeTab *currentTab READ currentTab WRITE setCurrentTab NOTIFY currentTabChanged FINAL)
     Q_PROPERTY(bool loaded READ loaded NOTIFY loadedChanged FINAL)
     Q_PROPERTY(bool browsing READ browsing WRITE setBrowsing NOTIFY browsingChanged FINAL)
 
@@ -68,13 +67,15 @@ public:
     int currentTabId() const;
     int nextTabId() const;
 
-    DeclarativeTab *currentTab() const;
     void setCurrentTab(DeclarativeTab *currentTab);
 
     bool loaded() const;
 
     bool browsing() const;
     void setBrowsing(bool browsing);
+
+    bool backForwardNavigation() const;
+    void setBackForwardNavigation(bool backForwardNavigation);
 
     static bool tabSort(const Tab &t1, const Tab &t2);
 
@@ -94,6 +95,9 @@ signals:
     void loadedChanged();
     void browsingChanged();
 
+    void _activeTabInvalidated();
+    void _activeTabChanged(const Tab &tab);
+
 private slots:
     void updateThumbPath(QString path, int tabId);
     void updateThumbPath(QString url, QString path, int tabId);
@@ -101,7 +105,8 @@ private slots:
 
 private:
     void load();
-    void removeTab(const Tab &tab, int index = -1);
+    bool activateTab(const int &index, bool treatCurrentTabAsValid);
+    void removeTab(int tabId, const QString &thumbnail, int index = -1);
     int findTabIndex(int tabId, bool &activeTab) const;
     void saveTabOrder();
     int loadTabOrder();
@@ -109,11 +114,11 @@ private:
     void updateTabUrl(int tabId, const QString &url, bool navigate);
 
     QPointer<DeclarativeTab> m_currentTab;
-    Tab m_activeTab;
     QList<Tab> m_tabs;
     bool m_loaded;
     bool m_browsing;
     int m_nextTabId;
+    bool m_backForwardNavigation;
 
     friend class tst_declarativetabmodel;
 };

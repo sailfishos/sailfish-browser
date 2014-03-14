@@ -10,31 +10,62 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "declarativewebcontainer.h"
+#include "declarativetab.h"
+#include "declarativetabmodel.h"
+#include "dbmanager.h"
 
 #include <QPointer>
-#include <QMetaObject>
 #include <QTimerEvent>
 #include <QQuickWindow>
 #include <quickmozview.h>
+#include <QDir>
+#include <QTransform>
+#include <QStandardPaths>
+#include <QtConcurrentRun>
+#include <QGuiApplication>
+#include <QScreen>
+
+#include <QMetaMethod>
 
 DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     : QQuickItem(parent)
     , m_webView(0)
+    , m_model(0)
+    , m_currentTab(new DeclarativeTab(this))
     , m_foreground(true)
     , m_background(false)
     , m_windowVisible(false)
     , m_backgroundTimer(0)
     , m_active(false)
+    , m_popupActive(false)
+    , m_portrait(true)
+    , m_fullScreenMode(false)
     , m_inputPanelVisible(false)
     , m_inputPanelHeight(0.0)
     , m_inputPanelOpenHeight(0.0)
     , m_toolbarHeight(0.0)
+    , m_canGoForward(false)
+    , m_canGoBack(false)
+    , m_realNavigation(false)
+    , m_firstFrameRendered(false)
 {
     setFlag(QQuickItem::ItemHasContents, true);
+    connect(m_currentTab, SIGNAL(titleChanged()), this, SIGNAL(titleChanged()));
+    connect(m_currentTab, SIGNAL(urlChanged()), this, SIGNAL(urlChanged()));
+    connect(m_currentTab, SIGNAL(urlChanged()), this, SLOT(triggerLoad()));
     if (!window()) {
         connect(this, SIGNAL(windowChanged(QQuickWindow*)), this, SLOT(handleWindowChanged(QQuickWindow*)));
     } else {
         connect(window(), SIGNAL(visibleChanged(bool)), this, SLOT(windowVisibleChanged(bool)));
+    }
+
+    connect(&m_screenCapturer, SIGNAL(finished()), this, SLOT(screenCaptureReady()));
+
+    QString cacheLocation = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+    QDir dir(cacheLocation);
+    if(!dir.exists() && !dir.mkpath(cacheLocation)) {
+        qWarning() << "Can't create directory "+ cacheLocation;
+        return;
     }
 }
 
@@ -44,6 +75,9 @@ DeclarativeWebContainer::~DeclarativeWebContainer()
     if (m_webView) {
         disconnect(m_webView, 0, 0, 0);
     }
+
+    m_screenCapturer.cancel();
+    m_screenCapturer.waitForFinished();
 }
 
 QuickMozView *DeclarativeWebContainer::webView() const
@@ -54,15 +88,19 @@ QuickMozView *DeclarativeWebContainer::webView() const
 void DeclarativeWebContainer::setWebView(QuickMozView *webView)
 {
     if (m_webView != webView) {
-        m_webView = webView;
         if (m_webView) {
-            connect(m_webView, SIGNAL(imeNotification(int,bool,int,int,QString)),
+            disconnect(m_webView);
+        }
+
+        if (webView) {
+            connect(webView, SIGNAL(imeNotification(int,bool,int,int,QString)),
                     this, SLOT(imeNotificationChanged(int,bool,int,int,QString)));
-            connect(m_webView, SIGNAL(contentHeightChanged()), this, SLOT(resetHeight()));
-            connect(m_webView, SIGNAL(scrollableOffsetChanged()), this, SLOT(resetHeight()));
+            connect(webView, SIGNAL(contentHeightChanged()), this, SLOT(resetHeight()));
+            connect(webView, SIGNAL(scrollableOffsetChanged()), this, SLOT(resetHeight()));
             connect(this, SIGNAL(heightChanged()), this, SLOT(resetHeight()));
         }
-        emit webViewChanged();
+        m_webView = webView;
+        emit contentItemChanged();
     }
 }
 
@@ -150,29 +188,77 @@ void DeclarativeWebContainer::setInputPanelHeight(qreal height)
     }
 }
 
-qreal DeclarativeWebContainer::inputPanelOpenHeight() const
+bool DeclarativeWebContainer::canGoForward() const
 {
-    return m_inputPanelOpenHeight;
+    return m_canGoForward;
 }
 
-void DeclarativeWebContainer::setInputPanelOpenHeight(qreal height)
+bool DeclarativeWebContainer::canGoBack() const
 {
-    if (m_inputPanelOpenHeight != height) {
-        m_inputPanelOpenHeight = height;
-        emit inputPanelOpenHeightChanged();
+    return m_canGoBack;
+}
+
+QString DeclarativeWebContainer::title() const
+{
+    return m_currentTab->title();
+}
+
+QString DeclarativeWebContainer::url() const
+{
+    return m_currentTab->url();
+}
+
+DeclarativeTab *DeclarativeWebContainer::currentTab() const
+{
+    return m_currentTab;
+}
+
+void DeclarativeWebContainer::goForward()
+{
+    if (m_canGoForward && m_currentTab->valid()) {
+        m_currentTab->activateNextLink();
+        if (m_webView && m_webView->canGoForward()) {
+            m_realNavigation = true;
+            m_webView->goForward();
+        } else {
+            m_realNavigation = false;
+        }
+
+        m_model->setBackForwardNavigation(true);
+        DBManager::instance()->goForward(m_model->currentTabId());
     }
 }
 
-qreal DeclarativeWebContainer::toolbarHeight() const
+void DeclarativeWebContainer::goBack()
 {
-    return m_toolbarHeight;
+    if (m_canGoBack && m_currentTab->valid()) {
+        m_currentTab->activatePreviousLink();
+        if (m_webView && m_webView->canGoBack()) {
+            m_realNavigation = true;
+            m_webView->goBack();
+        } else {
+            m_realNavigation = false;
+        }
+
+        m_model->setBackForwardNavigation(true);
+        DBManager::instance()->goBack(m_model->currentTabId());
+    }
 }
 
-void DeclarativeWebContainer::setToolbarHeight(qreal height)
+void DeclarativeWebContainer::captureScreen()
 {
-    if (m_toolbarHeight != height) {
-        m_toolbarHeight = height;
-        emit toolbarHeightChanged();
+    if (!m_webView) {
+        return;
+    }
+
+    if (m_active && m_firstFrameRendered && !m_popupActive) {
+        int size = QGuiApplication::primaryScreen()->size().width();
+        if (!m_portrait && !m_fullScreenMode) {
+            size -= m_toolbarHeight;
+        }
+
+        qreal rotation = parentItem() ? parentItem()->rotation() : 0;
+        captureScreen(url(), size, rotation);
     }
 }
 
@@ -231,6 +317,26 @@ qreal DeclarativeWebContainer::contentHeight() const
     }
 }
 
+DeclarativeWebContainer::ScreenCapture DeclarativeWebContainer::saveToFile(QString url, QImage image, QRect cropBounds, int tabId, qreal rotate)
+{
+    QString path = QString("%1/tab-%2-thumb.png").arg(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)).arg(tabId);
+    QTransform transform;
+    transform.rotate(360 - rotate);
+    image = image.transformed(transform);
+    image = image.copy(cropBounds);
+
+    ScreenCapture capture;
+    if(image.save(path)) {
+        capture.tabId = tabId;
+        capture.path = path;
+        capture.url = url;
+    } else {
+        capture.tabId = -1;
+        qWarning() << Q_FUNC_INFO << "failed to save image" << path;
+    }
+    return capture;
+}
+
 void DeclarativeWebContainer::timerEvent(QTimerEvent *event)
 {
     if (m_backgroundTimer == event->timerId()) {
@@ -247,9 +353,20 @@ void DeclarativeWebContainer::timerEvent(QTimerEvent *event)
     }
 }
 
+void DeclarativeWebContainer::componentComplete()
+{
+    QQuickItem::componentComplete();
+    QVariant var = property("tabModel");
+    m_model = qobject_cast<DeclarativeTabModel *>(qvariant_cast<QObject*>(var));
+    m_model->setCurrentTab(m_currentTab);
+    connect(m_model, SIGNAL(_activeTabChanged(const Tab&)), this, SLOT(updateTabData(const Tab&)));
+    connect(m_model, SIGNAL(_activeTabInvalidated()), this, SLOT(invalidateTabData()));
+}
+
 
 void DeclarativeWebContainer::windowVisibleChanged(bool visible)
 {
+    Q_UNUSED(visible);
     if (window()) {
         m_windowVisible = window()->isVisible();
         m_backgroundTimer = startTimer(1000);
@@ -261,4 +378,90 @@ void DeclarativeWebContainer::handleWindowChanged(QQuickWindow *window)
     if (window) {
         connect(window, SIGNAL(visibleChanged(bool)), this, SLOT(windowVisibleChanged(bool)));
     }
+}
+
+void DeclarativeWebContainer::updateTabData(const Tab &tab)
+{
+    m_currentTab->updateTabData(tab);
+
+#ifdef DEBUG_LOGS
+    qDebug() << "previous link: " << m_canGoBack << tab.previousLink() << m_canGoForward << tab.nextLink();
+#endif
+    if (m_canGoForward != (tab.nextLink() > 0)) {
+        m_canGoForward = tab.nextLink() > 0;
+        emit canGoForwardChanged();
+    }
+
+    if (m_canGoBack != (tab.previousLink() > 0)) {
+        m_canGoBack = tab.previousLink() > 0;
+        emit canGoBackChanged();
+    }
+}
+
+void DeclarativeWebContainer::invalidateTabData()
+{
+    m_currentTab->invalidateTabData();
+    if (m_canGoForward) {
+        m_canGoForward = false;
+        emit canGoForwardChanged();
+    }
+
+    if (m_canGoBack) {
+        m_canGoBack = false;
+        emit canGoBack();
+    }
+}
+
+void DeclarativeWebContainer::screenCaptureReady()
+{
+    ScreenCapture capture = m_screenCapturer.result();
+#ifdef DEBUG_LOGS
+    qDebug() << capture.tabId << capture.path << capture.url;
+#endif
+    if (capture.tabId != -1) {
+        // Update immediately without dbworker round trip.
+        if (capture.tabId == m_currentTab->tabId()) {
+            m_currentTab->setThumbnailPath(capture.path);
+        }
+        // TODO: Cleanup url.
+        DBManager::instance()->updateThumbPath(capture.url, capture.path, capture.tabId);
+    }
+}
+
+void DeclarativeWebContainer::triggerLoad()
+{
+    bool realNavigation = m_realNavigation;
+    m_realNavigation = false;
+    if (m_webView && m_currentTab->valid() && !realNavigation && url() != "about:blank") {
+        QMetaObject::invokeMethod(this, "load", Qt::DirectConnection,
+                                  Q_ARG(QVariant, url()),
+                                  Q_ARG(QVariant, title()),
+                                  Q_ARG(QVariant, false));
+    }
+}
+
+/**
+ * @brief DeclarativeTab::captureScreen
+ * Rotation transformation is applied first, then geometry values on top of it.
+ * @param url
+ * @param size
+ * @param rotate clockwise rotation of the image in degrees
+ */
+void DeclarativeWebContainer::captureScreen(QString url, int size, qreal rotate)
+{
+    if (!window() || !window()->isActive() || !m_currentTab->valid()) {
+        return;
+    }
+
+    // Cleanup old thumb.
+    m_currentTab->setThumbnailPath("");
+
+    QImage image = window()->grabWindow();
+    QRect cropBounds(0, 0, size, size);
+
+#ifdef DEBUG_LOGS
+    qDebug() << "about to set future";
+#endif
+    // asynchronous save to avoid the slow I/O
+    m_screenCapturer.setFuture(QtConcurrent::run(this, &DeclarativeWebContainer::saveToFile, url, image, cropBounds, m_currentTab->tabId(), rotate));
 }

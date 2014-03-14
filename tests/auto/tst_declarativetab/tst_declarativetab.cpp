@@ -18,16 +18,15 @@
 
 #include "declarativetab.h"
 #include "declarativetabmodel.h"
+#include "declarativewebcontainer.h"
 
 static const QByteArray QML_SNIPPET = \
         "import QtQuick 2.0\n" \
         "import Sailfish.Browser 1.0\n" \
-        "Item {\n" \
+        "WebContainer {\n" \
         "   property alias tabModel: model\n" \
-        "   property alias tabItem: tab\n" \
         "   width: 100; height: 100\n" \
-        "   Tab { id: tab }\n" \
-        "   TabModel { id: model;  currentTab: tab }\n" \
+        "   TabModel { id: model }\n" \
         "}\n";
 
 class tst_declarativetab : public QObject
@@ -41,6 +40,8 @@ private slots:
     void initTestCase();
     void testTitle();
     void testUrl();
+    void testUpdateTabData();
+
     void cleanupTestCase();
 
 private:
@@ -70,8 +71,8 @@ void tst_declarativetab::initTestCase()
     tabModel = qobject_cast<DeclarativeTabModel *>(qvariant_cast<QObject*>(var));
     QVERIFY(tabModel);
 
-    var = obj->property("tabItem");
-    tab = qobject_cast<DeclarativeTab *>(qvariant_cast<QObject*>(var));
+    DeclarativeWebContainer *webContainer = qobject_cast<DeclarativeWebContainer *>(obj);
+    tab = webContainer->currentTab();
     QVERIFY(tab);
 
     if (!tabModel->loaded()) {
@@ -82,12 +83,8 @@ void tst_declarativetab::initTestCase()
     }
 
     QSignalSpy currentUrlChangedSpy(tab, SIGNAL(urlChanged()));
-    QSignalSpy forwardSpy(tab, SIGNAL(canGoFowardChanged()));
-    QSignalSpy backSpy(tab, SIGNAL(canGoBackChanged()));
     tabModel->addTab("http://www.jolla.com", "");
     QCOMPARE(currentUrlChangedSpy.count(), 1);
-    QCOMPARE(forwardSpy.count(), 0);
-    QCOMPARE(backSpy.count(), 0);
 }
 
 void tst_declarativetab::testTitle()
@@ -104,6 +101,56 @@ void tst_declarativetab::testUrl()
     tab->setUrl("http://foobar.com");
     QCOMPARE(urlChangeSpy.count(), 1);
     QCOMPARE(tab->url(), QString("http://foobar.com"));
+}
+
+void tst_declarativetab::testUpdateTabData()
+{
+    QSignalSpy urlChangeSpy(tab, SIGNAL(urlChanged()));
+    QSignalSpy titleChangeSpy(tab, SIGNAL(titleChanged()));
+
+    Tab newTab;
+    // Update only linkId.
+    int linkId = tab->linkId() + 1;
+    Link link(linkId, "http://foobar.com", "", "FooBar");
+    newTab.setCurrentLink(link);
+    tab->updateTabData(newTab);
+
+    QCOMPARE(urlChangeSpy.count(), 0);
+    QCOMPARE(titleChangeSpy.count(), 0);
+    QCOMPARE(tab->linkId(), linkId);
+
+    // Update title
+    linkId = tab->linkId();
+    link.setTitle("");
+    newTab.setCurrentLink(link);
+    tab->updateTabData(newTab);
+    QCOMPARE(urlChangeSpy.count(), 0);
+    QCOMPARE(titleChangeSpy.count(), 1);
+    QVERIFY(tab->title().isEmpty());
+    QCOMPARE(tab->linkId(), linkId);
+
+    // Update url
+    link.setUrl("http://foobar.com/page2");
+    newTab.setCurrentLink(link);
+    tab->updateTabData(newTab);
+
+    QCOMPARE(urlChangeSpy.count(), 1);
+    QCOMPARE(titleChangeSpy.count(), 1);
+    QCOMPARE(tab->url(), QString("http://foobar.com/page2"));
+    QVERIFY(tab->title().isEmpty());
+    QCOMPARE(tab->linkId(), linkId);
+
+    // Update url, title, link (navigation)
+    linkId = tab->linkId() + 1;
+    link = Link(linkId, "http://foobar.com/page3", "", "FooBar");
+    newTab.setCurrentLink(link);
+    tab->updateTabData(newTab);
+
+    QCOMPARE(urlChangeSpy.count(), 2);
+    QCOMPARE(titleChangeSpy.count(), 2);
+    QCOMPARE(tab->url(), QString("http://foobar.com/page3"));
+    QCOMPARE(tab->title(), QString("FooBar"));
+    QCOMPARE(tab->linkId(), linkId);
 }
 
 void tst_declarativetab::cleanupTestCase()
@@ -125,8 +172,9 @@ int main(int argc, char *argv[])
     QGuiApplication app(argc, argv);
     app.setAttribute(Qt::AA_Use96Dpi, true);
     tst_declarativetab testcase;
-    qmlRegisterType<DeclarativeTab>("Sailfish.Browser", 1, 0, "Tab");
+    qmlRegisterUncreatableType<DeclarativeTab>("Sailfish.Browser", 1, 0, "Tab", "");
     qmlRegisterType<DeclarativeTabModel>("Sailfish.Browser", 1, 0, "TabModel");
+    qmlRegisterType<DeclarativeWebContainer>("Sailfish.Browser", 1, 0, "WebContainer");
     return QTest::qExec(&testcase, argc, argv); \
 }
 #include "tst_declarativetab.moc"

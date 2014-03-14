@@ -11,78 +11,46 @@
 
 #include "declarativetab.h"
 
-#include <QQuickWindow>
-#include <QQuickView>
-#include <QFile>
-#include <QDir>
-#include <QTransform>
-#include <QStandardPaths>
-#include <QtConcurrentRun>
-#include <QTime>
+DeclarativeTab::DeclarativeTab(QObject *parent)
+    : QObject(parent)
+{}
 
-#include "dbmanager.h"
-#include "linkvalidator.h"
+DeclarativeTab::~DeclarativeTab() {}
 
-DeclarativeTab::DeclarativeTab(QQuickItem *parent)
-    : QQuickItem(parent)
-    , m_tabId(0)
-    , m_valid(false)
-    , m_canGoForward(false)
-    , m_canGoBack(false)
-    , m_backForwardNavigation(false)
+QString DeclarativeTab::thumbnailPath() const
 {
-    init();
-}
-
-DeclarativeTab::~DeclarativeTab()
-{
-    m_screenCapturer.cancel();
-    m_screenCapturer.waitForFinished();
-}
-
-void DeclarativeTab::init()
-{
-    connect(&m_screenCapturer, SIGNAL(finished()), this, SLOT(screenCaptureReady()));
-
-    QString cacheLocation = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
-    QDir dir(cacheLocation);
-    if(!dir.exists()) {
-        if(!dir.mkpath(cacheLocation)) {
-            qWarning() << "Can't create directory "+ cacheLocation;
-            return;
-        }
-    }
-}
-
-QString DeclarativeTab::thumbnailPath() const {
     return m_link.thumbPath();
 }
 
-void DeclarativeTab::setThumbnailPath(QString thumbPath) {
-    updateThumbPath("", thumbPath, m_tabId);
+void DeclarativeTab::setThumbnailPath(QString thumbPath)
+{
+    if (m_tab.isValid() && m_link.thumbPath() != thumbPath) {
+        m_link.setThumbPath(thumbPath);
+        emit thumbPathChanged(thumbPath, m_tab.tabId());
+    }
 }
 
-QString DeclarativeTab::url() const {
+QString DeclarativeTab::url() const
+{
     return m_link.url();
 }
 
 void DeclarativeTab::setUrl(QString url)
 {
-    if (url != m_link.url() && m_link.isValid()) {
+    if (m_tab.isValid() && m_link.url() != url) {
         m_link.setUrl(url);
         emit urlChanged();
     }
 }
 
-QString DeclarativeTab::title() const {
+QString DeclarativeTab::title() const
+{
     return m_link.title();
 }
 
-void DeclarativeTab::setTitle(QString title) {
-#ifdef DEBUG_LOGS
-    qDebug() << title;
-#endif
-    if(title != m_link.title() && m_link.isValid()) {
+void DeclarativeTab::setTitle(QString title)
+{
+    if (m_tab.isValid() && m_link.title() != title) {
         m_link.setTitle(title);
         emit titleChanged();
     }
@@ -90,44 +58,29 @@ void DeclarativeTab::setTitle(QString title) {
 
 int DeclarativeTab::tabId() const
 {
-    return m_tabId;
-}
-
-void DeclarativeTab::setTabId(int tabId) {
-#ifdef DEBUG_LOGS
-    qDebug() << m_tabId << " old values: " << m_link.title() << m_link.url() << " arg tab: " << tabId;
-#endif
-
-    if (tabId > 0 && tabId != m_tabId) {
-        m_tabId = tabId;
-    }
-
-#ifdef DEBUG_LOGS
-    qDebug() << "second condition:" << (tabId > 0) << m_valid;
-#endif
-
-    if ((tabId > 0) != m_valid) {
-        m_valid = tabId > 0;
-        emit validChanged();
-    }
+    return m_tab.tabId();
 }
 
 bool DeclarativeTab::valid() const
 {
-    return m_valid;
+    return m_tab.isValid();
 }
 
-void DeclarativeTab::invalidate()
+void DeclarativeTab::setInvalid()
 {
-    m_tabId = 0;
-    if (m_valid) {
-        m_valid = false;
+    if (m_tab.isValid()) {
+        m_tab.setTabId(0);
         emit validChanged();
     }
+}
 
+void DeclarativeTab::invalidateTabData()
+{
+    int tabId = m_tab.tabId();
+    setInvalid();
     if (!m_link.thumbPath().isEmpty()) {
         m_link.setThumbPath("");
-        emit thumbPathChanged("", m_tabId);
+        emit thumbPathChanged("", tabId);
     }
 
     if (!m_link.title().isEmpty()) {
@@ -139,163 +92,73 @@ void DeclarativeTab::invalidate()
         m_link.setUrl("");
         emit urlChanged();
     }
-
-    if (m_canGoForward) {
-        m_canGoForward = false;
-        emit canGoForwardChanged();
-    }
-
-    if (m_canGoBack) {
-        m_canGoBack = false;
-        emit canGoBackChanged();
-    }
 }
 
-bool DeclarativeTab::canGoForward() const {
-    return m_canGoForward;
-}
-
-bool DeclarativeTab::canGoBack() const {
-    return m_canGoBack;
-}
-
-bool DeclarativeTab::backForwardNavigation() const
+Tab DeclarativeTab::tabData() const
 {
-    return m_backForwardNavigation;
+    return m_tab;
 }
 
-void DeclarativeTab::setBackForwardNavigation(bool backForwardNavigation)
+int DeclarativeTab::linkId() const
 {
-    if (backForwardNavigation != m_backForwardNavigation) {
-        m_backForwardNavigation = backForwardNavigation;
-        emit backForwardNavigationChanged();
-    }
+    return m_link.linkId();
 }
 
-void DeclarativeTab::goForward()
+void DeclarativeTab::updateTabData(const Tab &tab)
 {
-    if (m_canGoForward) {
-        setBackForwardNavigation(true);
-        DBManager::instance()->goForward(m_tabId);
-    }
-}
+    Link newLink = tab.currentLink();
 
-void DeclarativeTab::goBack()
-{
-    if (m_canGoBack) {
-        setBackForwardNavigation(true);
-        DBManager::instance()->goBack(m_tabId);
-    }
-}
+    bool thumbChanged = m_link.thumbPath() != newLink.thumbPath();
+    bool titleStringChanged = m_link.title() != newLink.title();
+    bool urlStringChanged = m_link.url() != newLink.url();
 
-void DeclarativeTab::tabChanged(Tab tab)
-{
 #ifdef DEBUG_LOGS
-    qDebug() << "old values:" << m_link.title() << m_link.url() << m_link.thumbPath() << "current tab:" <<  m_tabId << " changed tab:" << tab.tabId();
-#endif
-    bool thumbChanged = m_link.thumbPath() != tab.currentLink().thumbPath();
-    bool titleStringChanged = m_link.title() != tab.currentLink().title();
-    bool urlStringChanged = m_link.url() != tab.currentLink().url();
-
-    setTabId(tab.tabId());
-    m_link = tab.currentLink();
-#ifdef DEBUG_LOGS
-    qDebug() << "new values:" << m_link.title() << m_link.url() << m_link.thumbPath() << "current tab:" <<  m_tabId << " changed tab:" << tab.tabId();
-    qDebug() << "previous link: " << m_canGoBack << tab.previousLink() << m_canGoForward << tab.nextLink();
+    qDebug() << "old values:" << m_link.title() << m_link.url() << m_link.thumbPath() << m_link.linkId() << "current tab:" <<  m_tab.tabId() << " changed tab:" << tab.tabId();
+    qDebug() << "new values:" << newLink.title() << newLink.url() << newLink.thumbPath() << newLink.linkId();
 #endif
 
+    bool validValueChanged = m_tab.isValid() != tab.isValid();
+    if (validValueChanged || urlStringChanged || thumbChanged || titleStringChanged || m_link.linkId() != newLink.linkId()) {
+        m_tab = tab;
+        m_link = newLink;
+    }
+
+    if (validValueChanged) {
+        emit validChanged();
+    }
     if (urlStringChanged) {
         emit urlChanged();
     }
     if (thumbChanged) {
-        emit thumbPathChanged(m_link.thumbPath(), tab.tabId());
+        emit thumbPathChanged(newLink.thumbPath(), tab.tabId());
     }
     if (titleStringChanged) {
         emit titleChanged();
     }
-
-    if (m_canGoForward != (tab.nextLink() > 0)) {
-        m_canGoForward = tab.nextLink() > 0;
-        emit canGoForwardChanged();
-    }
-
-    if (m_canGoBack != (tab.previousLink() > 0)) {
-        m_canGoBack = tab.previousLink() > 0;
-        emit canGoBackChanged();
-    }
-
 }
 
-void DeclarativeTab::updateThumbPath(QString url, QString path, int tabId)
+void DeclarativeTab::activatePreviousLink()
 {
-    // TODO: Remove url parameter from this, worker, and manager.
-    Q_UNUSED(url)
-#ifdef DEBUG_LOGS
-    qDebug() << url << m_link.url() << path << tabId;
-#endif
-    if (valid() && tabId == m_tabId && m_link.thumbPath() != path) {
-        m_link.setThumbPath(path);
-        emit thumbPathChanged(path, tabId);
+    int previousLink = m_tab.previousLink();
+    if (previousLink > 0) {
+        m_link = Link(previousLink, url(), thumbnailPath(), title());
     }
 }
 
-void DeclarativeTab::screenCaptureReady()
+void DeclarativeTab::activateNextLink()
 {
-    ScreenCapture capture = m_screenCapturer.result();
-#ifdef DEBUG_LOGS
-    qDebug() << capture.tabId << capture.path << capture.url;
-#endif
-    if (capture.tabId != -1) {
-        // Update immediately without dbworker round trip.
-        updateThumbPath(capture.url, capture.path, capture.tabId);
-        DBManager::instance()->updateThumbPath(capture.url, capture.path, capture.tabId);
+    int nextLink = m_tab.nextLink();
+    if (nextLink > 0) {
+        m_link = Link(nextLink, url(), thumbnailPath(), title());
     }
 }
 
-/**
- * @brief DeclarativeTab::captureScreen
- * Rotation transformation is applied first, then geometry values on top of it.
- * @param url
- * @param x
- * @param y
- * @param width
- * @param height
- * @param rotate clockwise rotation of the image in degrees
- */
-void DeclarativeTab::captureScreen(QString url, int x, int y, int width, int height, qreal rotate)
-{
-    if (!window() || !window()->isActive() || !valid()) {
-        return;
+QDebug operator<<(QDebug dbg, const DeclarativeTab *tab) {
+    if (!tab) {
+        return dbg << "DeclarativeTab (this = 0x0)";
     }
-
-    // Cleanup old thumb.
-    updateThumbPath(url, "", m_tabId);
-
-    QImage image = window()->grabWindow();
-    QRect cropBounds(x, y, width, height);
-
-#ifdef DEBUG_LOGS
-    qDebug() << "about to set future";
-#endif
-    // asynchronous save to avoid the slow I/O
-    m_screenCapturer.setFuture(QtConcurrent::run(this, &DeclarativeTab::saveToFile, url, image, cropBounds, m_tabId, rotate));
+    dbg.nospace() << "DeclarativeTab(tabId = " << tab->tabId() << ", valid = " << tab->valid() << ", linkId = " << tab->linkId()
+                  << ", url = " << tab->url() << ", title = " << tab->title() << ", thumbnailPath = " << tab->thumbnailPath() << ")";
+    return dbg.space();
 }
 
-DeclarativeTab::ScreenCapture DeclarativeTab::saveToFile(QString url, QImage image, QRect cropBounds, int tabId, qreal rotate) {
-    QString path = QString("%1/tab-%2-thumb.png").arg(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)).arg(tabId);
-    QTransform transform;
-    transform.rotate(360 - rotate);
-    image = image.transformed(transform);
-    image = image.copy(cropBounds);
-
-    ScreenCapture capture;
-    if(image.save(path)) {
-        capture.tabId = tabId;
-        capture.path = path;
-        capture.url = url;
-    } else {
-        capture.tabId = -1;
-        qWarning() << Q_FUNC_INFO << "failed to save image" << path;
-    }
-    return capture;
-}

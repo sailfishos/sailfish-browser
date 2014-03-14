@@ -20,20 +20,10 @@ import "." as Browser
 WebContainer {
     id: webContainer
 
-    // This property should cover all possible popus
-    property bool popupActive
-
     property bool loading
     property int loadProgress
-    property Item contentItem
+    // TODO: Push this to C++ if possible. Check if TabModel is feasible to merged to DeclarativeTabModel
     property alias tabModel: model
-    property alias currentTab: tab
-    readonly property bool fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) || webContainer.inputPanelVisible || !webContainer.foreground
-    property alias canGoBack: tab.canGoBack
-    property alias canGoForward: tab.canGoForward
-
-    readonly property alias url: tab.url
-    readonly property alias title: tab.title
     property string favicon
 
     // Move to C++
@@ -41,14 +31,6 @@ WebContainer {
                                          contentItem.viewReady &&
                                          tabModel.loaded
     property color _decoratorColor: Theme.highlightDimmerColor
-
-    function goBack() {
-        tab.goBack()
-    }
-
-    function goForward() {
-        tab.goForward()
-    }
 
     function stop() {
         if (contentItem) {
@@ -82,8 +64,8 @@ WebContainer {
         }
 
         // Bookmarks and history items pass url and title as arguments.
-        tab.url = url
-        tab.title = title
+        currentTab.url = url
+        currentTab.title = title
 
         if (!model.hasNewTabData || force || !model.activateView(model.nextTabId)) {
             // First contentItem will be created once tab activated.
@@ -97,8 +79,8 @@ WebContainer {
         }
 
         var url = contentItem.url.toString()
-        tab.url = url
-        tab.title = contentItem.title
+        currentTab.url = url
+        currentTab.title = contentItem.title
 
         if (url.substring(0, 6) !== "about:" && url.substring(0, 5) !== "file:"
             && !contentItem._deferredReload
@@ -121,27 +103,13 @@ WebContainer {
         contentItem.sendAsyncMessage(name, data)
     }
 
-    function captureScreen() {
-        if (!contentItem) {
-            return
-        }
-
-        if (active && resourceController.firstFrameRendered && !popupActive) {
-            var size = Screen.width
-            if (webContainer.parent.isLandscape && !webContainer.fullscreenMode) {
-                size -= toolbarHeight
-            }
-
-            tab.captureScreen(contentItem.url, 0, 0, size, size, webContainer.parent.rotation)
-        }
-    }
-
     width: parent.width
     height: webContainer.parent.orientation === Orientation.Portrait ? Screen.height : Screen.width
     foreground: Qt.application.active
     inputPanelHeight: window.pageStack.panelSize
     inputPanelOpenHeight: window.pageStack.imSize
-    webView: contentItem
+    fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) || webContainer.inputPanelVisible || !webContainer.foreground
+    _firstFrameRendered: resourceController.firstFrameRendered
 
     // Triggered when tabs of tab model are available and QmlMozView is ready to load.
     // Load test
@@ -159,7 +127,7 @@ WebContainer {
         } else if (model.count > 0) {
             // First tab is actived when tabs are loaded to the tabs model.
             model.resetNewTabData()
-            webContainer.load(tab.url, tab.title)
+            webContainer.load(currentTab.url, currentTab.title)
         } else {
             // This can happen only during startup.
             webContainer.load(WebUtils.homePage, "")
@@ -177,27 +145,16 @@ WebContainer {
         color: contentItem && contentItem.bgcolor ? contentItem.bgcolor : "white"
     }
 
+    // TODO: See comment at line 29. Merge this with DeclarativeTabModel if feasible.
     Browser.TabModel {
         id: model
 
-        currentTab: tab
         webViewComponent: webViewComponent
         webViewContainer: webContainer
 
         // Enable browsing after new tab actually created or it was not even requested
         browsing: webContainer.active && !hasNewTabData && contentItem && contentItem.loaded
         onBrowsingChanged: if (browsing) captureScreen()
-    }
-
-    Tab {
-        id: tab
-
-        onUrlChanged: {
-            if (tab.valid && backForwardNavigation && url != "about:blank") {
-                // Both url and title are updated before url changed is emitted.
-                load(url, title)
-            }
-        }
     }
 
     Component {
