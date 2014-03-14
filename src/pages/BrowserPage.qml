@@ -22,6 +22,8 @@ Page {
     id: browserPage
 
     property Item firstUseOverlay
+    property bool firstUseFullscreen
+
     property alias tabs: tabModel
     property alias favorites: favoriteModel
     property alias history: historyModel
@@ -31,7 +33,7 @@ Page {
     property string url
 
     // Move this inside WebContainer
-    readonly property bool fullscreenMode: (webView.chromeGestureEnabled && !webView.chrome) || webContainer.inputPanelVisible || !webContainer.foreground
+    readonly property bool fullscreenMode: (webView.chromeGestureEnabled && !webView.chrome) || webContainer.inputPanelVisible || !webContainer.foreground || firstUseFullscreen
 
     property string favicon
     property Item _contextMenu
@@ -740,6 +742,7 @@ Page {
 
     Column {
         id: controlArea
+        z:1
 
         // This should be just a binding for progressBar.progress but currently progress is going up and down
         property real loadProgress: webView.loadProgress / 100.0
@@ -946,6 +949,8 @@ Page {
         }
         onFirstUseDoneChanged: {
             if (WebUtils.firstUseDone && firstUseOverlay) {
+                webView.visible = true
+                webContainer.visible = true
                 firstUseOverlay.destroy()
             }
         }
@@ -955,9 +960,11 @@ Page {
         if (!WebUtils.firstUseDone) {
             var component = Qt.createComponent(Qt.resolvedUrl("components/FirstUseOverlay.qml"))
             if (component.status == Component.Ready) {
-                firstUseOverlay = component.createObject(browserPage, {"width": browserPage.width, "height": browserPage.height - toolBarContainer.height });
+                firstUseOverlay = component.createObject(browserPage, {"width":browserPage.width, "height":browserPage.heigh, "gestureThreshold" : toolBarContainer.height});
+                webView.visible = false
+                webContainer.visible = false
             } else {
-                console.log("FirstUseOverlay create failed " + component.status)
+                console.log("FirstUseOverlay create failed " + component.errorString())
             }
         }
     }
