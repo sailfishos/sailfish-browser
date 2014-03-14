@@ -362,6 +362,7 @@ Page {
 
         width: parent.width
         height: browserPage.orientation === Orientation.Portrait ? Screen.height : Screen.width
+        visible: WebUtils.firstUseDone
 
         pageActive: browserPage.status == PageStatus.Active
         webView: webView
@@ -949,8 +950,6 @@ Page {
         }
         onFirstUseDoneChanged: {
             if (WebUtils.firstUseDone && firstUseOverlay) {
-                webView.visible = true
-                webContainer.visible = true
                 firstUseOverlay.destroy()
             }
         }
@@ -961,8 +960,6 @@ Page {
             var component = Qt.createComponent(Qt.resolvedUrl("components/FirstUseOverlay.qml"))
             if (component.status == Component.Ready) {
                 firstUseOverlay = component.createObject(browserPage, {"width":browserPage.width, "height":browserPage.heigh, "gestureThreshold" : toolBarContainer.height});
-                webView.visible = false
-                webContainer.visible = false
             } else {
                 console.log("FirstUseOverlay create failed " + component.errorString())
             }

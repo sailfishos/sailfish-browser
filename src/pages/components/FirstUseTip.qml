@@ -22,7 +22,6 @@ Item {
 
     Image {
         id: icon
-        width: Theme.itemSizeSmall; height: Theme.itemSizeSmall
     }
 
     Label {
