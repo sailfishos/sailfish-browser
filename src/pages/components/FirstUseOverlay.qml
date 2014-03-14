@@ -45,7 +45,6 @@ SilicaFlickable {
         spacing: Theme.paddingLarge
         height: window.height + gestureThreshold * 2
 
-
         FirstUseTip {
             //: Hello, here's few tips about the browser toolbar
             //% "Hello, here's few tips about the browser toolbar"
@@ -89,15 +88,12 @@ SilicaFlickable {
     }
 
     Label {
-        opacity: browserPage.firstUseFullscreen ? 1.0 : 0.0
         //: Flick down to reveal the toolbar
         //% "Flick down to reveal the toolbar"
         text: qsTrId("sailfish_browser-la-toolbar_hint")
         wrapMode: Text.WordWrap
         width: parent.width - Theme.paddingLarge
         color: Theme.highlightColor
-        font.pixelSize: Theme.fontSizeMedium
-        Behavior on opacity { FadeAnimation {} }
         anchors {
             bottom: parent.bottom; bottomMargin: Theme.paddingLarge
             left: parent.left; leftMargin: Theme.paddingLarge
