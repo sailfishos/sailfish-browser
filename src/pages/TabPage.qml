@@ -291,7 +291,7 @@ Page {
                         }
 
                         //: Active browser tab.
-                        //% "Active Tab
+                        //% "Active Tab"
                         var activeTab = qsTrId("sailfish_browser-la-active-tab")
 
                         if (text === browserPage.currentTab.url && browserPage.viewLoading) {
