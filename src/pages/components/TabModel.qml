@@ -57,6 +57,7 @@ TabModel {
         if ((loaded || force) && tabId > 0) {
             var activationObject = TabCache.getTab(tabId, hasNewTabData ? _newTabData.parentId : 0)
             webViewContainer.contentItem = activationObject.view
+            webViewContainer.contentItem.chrome = true
             return activationObject.activated
         }
         return false
