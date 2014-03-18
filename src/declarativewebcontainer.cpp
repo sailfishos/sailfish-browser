@@ -432,7 +432,8 @@ void DeclarativeWebContainer::triggerLoad()
 {
     bool realNavigation = m_realNavigation;
     m_realNavigation = false;
-    if (m_webView && m_currentTab->valid() && !realNavigation && url() != "about:blank") {
+    // Back / forward navigation activated and MozView instance cannot be used.
+    if (m_webView && m_currentTab->valid() && m_model->backForwardNavigation() && !realNavigation && url() != "about:blank") {
         QMetaObject::invokeMethod(this, "load", Qt::DirectConnection,
                                   Q_ARG(QVariant, url()),
                                   Q_ARG(QVariant, title()),
