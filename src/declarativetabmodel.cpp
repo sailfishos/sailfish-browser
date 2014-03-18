@@ -176,8 +176,9 @@ void DeclarativeTabModel::closeActiveTab()
         qDebug() << m_currentTab;
 #endif
         // Clear active tab data and try to active a tab from the first model index.
+        int activeTabId = m_currentTab->tabId();
         m_currentTab->setInvalid();
-        removeTab(m_currentTab->tabId(), m_currentTab->thumbnailPath());
+        removeTab(activeTabId, m_currentTab->thumbnailPath());
         if (!activateTab(0)) {
             // Last active tab got closed.
             emit _activeTabInvalidated();
