@@ -118,7 +118,8 @@ void DeclarativeTab::updateTabData(const Tab &tab)
 #endif
 
     bool validValueChanged = m_tab.isValid() != tab.isValid();
-    if (validValueChanged || urlStringChanged || thumbChanged || titleStringChanged || m_link.linkId() != newLink.linkId()) {
+    if (validValueChanged || urlStringChanged || thumbChanged || titleStringChanged
+            || m_link.linkId() != newLink.linkId() || m_tab.tabId() != tab.tabId()) {
         m_tab = tab;
         m_link = newLink;
     }
