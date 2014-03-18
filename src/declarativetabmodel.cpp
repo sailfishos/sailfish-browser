@@ -240,15 +240,7 @@ void DeclarativeTabModel::componentComplete()
 void DeclarativeTabModel::setCurrentTab(DeclarativeTab *currentTab)
 {
     if (currentTab != m_currentTab) {
-        if (m_currentTab) {
-            m_currentTab->disconnect(this);
-        }
-
         m_currentTab = currentTab;
-        if (m_currentTab) {
-            connect(m_currentTab, SIGNAL(thumbPathChanged(QString,int)), this, SLOT(updateThumbPath(QString,int)));
-        }
-
         emit currentTabChanged();
     }
 }
@@ -398,7 +390,7 @@ void DeclarativeTabModel::updateTitle(int tabId, QString title)
     int linkId = -1;
     if (isActiveTab && m_currentTab->title() != title) {
         linkId = m_currentTab->linkId();
-        m_currentTab->setTitle(title);
+        m_currentTab->updateTabData(title);
         updateDb = true;
     } else if (tabIndex >= 0) {
         Link link = m_tabs.at(tabIndex).currentLink();
@@ -531,9 +523,7 @@ void DeclarativeTabModel::updateTabUrl(int tabId, const QString &url, bool navig
 
     bool updateDb = false;
     if (isActiveTab) {
-        m_currentTab->setUrl(url);
-        m_currentTab->setTitle("");
-        m_currentTab->setThumbnailPath("");
+        m_currentTab->updateTabData(url, "", "");
         updateDb = true;
     } else if (tabIndex >= 0) {
         Link link = m_tabs.at(tabIndex).currentLink();
@@ -569,12 +559,6 @@ bool DeclarativeTabModel::tabSort(const Tab &t1, const Tab &t2)
     } else {
         return i1 < i2;
     }
-}
-
-void DeclarativeTabModel::updateThumbPath(QString path, int tabId)
-{
-    // TODO: Remove url parameter from this, db worker, and db manager.
-    updateThumbPath("", path, tabId);
 }
 
 void DeclarativeTabModel::updateThumbPath(QString url, QString path, int tabId)

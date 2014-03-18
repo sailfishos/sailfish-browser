@@ -40,7 +40,10 @@ private slots:
     void initTestCase();
     void testTitle();
     void testUrl();
+    void testThumbnail();
     void testUpdateTabData();
+    void testUpdateTabTitle();
+    void testUpdateTabAll();
 
     void cleanupTestCase();
 
@@ -103,6 +106,21 @@ void tst_declarativetab::testUrl()
     QCOMPARE(tab->url(), QString("http://foobar.com"));
 }
 
+void tst_declarativetab::testThumbnail()
+{
+    // Thumbnail setter is used only from C++. Thus, it updates also Tab data.
+    tab->setThumbnailPath("");
+    QSignalSpy thumbnailChangeSpy(tab, SIGNAL(thumbPathChanged()));
+    Tab tabData = tab->tabData();
+    QVERIFY(tabData.currentLink().thumbPath().isEmpty());
+    QVERIFY(tab->thumbnailPath().isEmpty());
+    tab->setThumbnailPath("foobar.png");
+    tabData = tab->tabData();
+    QCOMPARE(thumbnailChangeSpy.count(), 1);
+    QCOMPARE(tabData.currentLink().thumbPath(), QString("foobar.png"));
+    QCOMPARE(tab->thumbnailPath(), QString("foobar.png"));
+}
+
 void tst_declarativetab::testUpdateTabData()
 {
     QSignalSpy urlChangeSpy(tab, SIGNAL(urlChanged()));
@@ -151,6 +169,85 @@ void tst_declarativetab::testUpdateTabData()
     QCOMPARE(tab->url(), QString("http://foobar.com/page3"));
     QCOMPARE(tab->title(), QString("FooBar"));
     QCOMPARE(tab->linkId(), linkId);
+}
+
+void tst_declarativetab::testUpdateTabTitle()
+{
+    Link link(1, "", "", "");
+    Tab tabData(1, link, 0, 0);
+    tab->updateTabData(tabData);
+    QSignalSpy titleChangeSpy(tab, SIGNAL(titleChanged()));
+    tabData = tab->tabData();
+    QVERIFY(tabData.currentLink().title().isEmpty());
+    QVERIFY(tab->title().isEmpty());
+    tab->setTitle("FooBar");
+    tabData = tab->tabData();
+    QVERIFY(tabData.currentLink().title().isEmpty());
+    QCOMPARE(titleChangeSpy.count(), 1);
+    QCOMPARE(tab->title(), QString("FooBar"));
+    tab->updateTabData("FooBar 2");
+    tabData = tab->tabData();
+    QCOMPARE(tabData.currentLink().title(), QString("FooBar 2"));
+    QCOMPARE(titleChangeSpy.count(), 2);
+    QCOMPARE(tab->title(), QString("FooBar 2"));
+}
+
+void tst_declarativetab::testUpdateTabAll()
+{
+    Link link(1, "", "", "");
+    Tab tabData(1, link, 0, 0);
+    tab->updateTabData(tabData);
+    QSignalSpy urlChangeSpy(tab, SIGNAL(urlChanged()));
+    QSignalSpy titleChangeSpy(tab, SIGNAL(titleChanged()));
+    QSignalSpy thumbnailChangeSpy(tab, SIGNAL(thumbPathChanged()));
+
+    tab->updateTabData("http://foobar.com", "", "");
+    QCOMPARE(urlChangeSpy.count(), 1);
+    QCOMPARE(titleChangeSpy.count(), 0);
+    QCOMPARE(thumbnailChangeSpy.count(), 0);
+    tabData = tab->tabData();
+    QCOMPARE(tabData.currentLink().url(), QString("http://foobar.com"));
+    QVERIFY(tabData.currentLink().title().isEmpty());
+    QVERIFY(tabData.currentLink().thumbPath().isEmpty());
+    QCOMPARE(tab->url(), QString("http://foobar.com"));
+    QVERIFY(tab->title().isEmpty());
+    QVERIFY(tab->thumbnailPath().isEmpty());
+
+    tab->updateTabData("http://foobar.com", "FooBar", "");
+    QCOMPARE(urlChangeSpy.count(), 1);
+    QCOMPARE(titleChangeSpy.count(), 1);
+    QCOMPARE(thumbnailChangeSpy.count(), 0);
+    tabData = tab->tabData();
+    QCOMPARE(tabData.currentLink().url(), QString("http://foobar.com"));
+    QCOMPARE(tabData.currentLink().title(), QString("FooBar"));
+    QVERIFY(tabData.currentLink().thumbPath().isEmpty());
+    QCOMPARE(tab->url(), QString("http://foobar.com"));
+    QCOMPARE(tab->title(), QString("FooBar"));
+    QVERIFY(tab->thumbnailPath().isEmpty());
+
+    tab->updateTabData("http://foobar.com", "FooBar", "FooBar.png");
+    QCOMPARE(urlChangeSpy.count(), 1);
+    QCOMPARE(titleChangeSpy.count(), 1);
+    QCOMPARE(thumbnailChangeSpy.count(), 1);
+    tabData = tab->tabData();
+    QCOMPARE(tabData.currentLink().url(), QString("http://foobar.com"));
+    QCOMPARE(tabData.currentLink().title(), QString("FooBar"));
+    QCOMPARE(tabData.currentLink().thumbPath(), QString("FooBar.png"));
+    QCOMPARE(tab->url(), QString("http://foobar.com"));
+    QCOMPARE(tab->title(), QString("FooBar"));
+    QCOMPARE(tab->thumbnailPath(), QString("FooBar.png"));
+
+    tab->updateTabData("", "", "");
+    QCOMPARE(urlChangeSpy.count(), 2);
+    QCOMPARE(titleChangeSpy.count(), 2);
+    QCOMPARE(thumbnailChangeSpy.count(), 2);
+    tabData = tab->tabData();
+    QVERIFY(tabData.currentLink().url().isEmpty());
+    QVERIFY(tabData.currentLink().title().isEmpty());
+    QVERIFY(tabData.currentLink().thumbPath().isEmpty());
+    QVERIFY(tab->url().isEmpty());
+    QVERIFY(tab->title().isEmpty());
+    QVERIFY(tab->thumbnailPath().isEmpty());
 }
 
 void tst_declarativetab::cleanupTestCase()

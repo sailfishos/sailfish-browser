@@ -26,7 +26,8 @@ void DeclarativeTab::setThumbnailPath(QString thumbPath)
 {
     if (m_tab.isValid() && m_link.thumbPath() != thumbPath) {
         m_link.setThumbPath(thumbPath);
-        emit thumbPathChanged(thumbPath, m_tab.tabId());
+        m_tab.setCurrentLink(m_link);
+        emit thumbPathChanged();
     }
 }
 
@@ -76,11 +77,10 @@ void DeclarativeTab::setInvalid()
 
 void DeclarativeTab::invalidateTabData()
 {
-    int tabId = m_tab.tabId();
     setInvalid();
     if (!m_link.thumbPath().isEmpty()) {
         m_link.setThumbPath("");
-        emit thumbPathChanged("", tabId);
+        emit thumbPathChanged();
     }
 
     if (!m_link.title().isEmpty()) {
@@ -102,6 +102,20 @@ Tab DeclarativeTab::tabData() const
 int DeclarativeTab::linkId() const
 {
     return m_link.linkId();
+}
+
+void DeclarativeTab::updateTabData(const QString &title)
+{
+    setTitle(title);
+    m_tab.setCurrentLink(m_link);
+}
+
+void DeclarativeTab::updateTabData(const QString &url, const QString &title, const QString &thumbnail)
+{
+    setUrl(url);
+    setTitle(title);
+    setThumbnailPath(thumbnail);
+    m_tab.setCurrentLink(m_link);
 }
 
 void DeclarativeTab::updateTabData(const Tab &tab)
@@ -131,7 +145,7 @@ void DeclarativeTab::updateTabData(const Tab &tab)
         emit urlChanged();
     }
     if (thumbChanged) {
-        emit thumbPathChanged(newLink.thumbPath(), tab.tabId());
+        emit thumbPathChanged();
     }
     if (titleStringChanged) {
         emit titleChanged();

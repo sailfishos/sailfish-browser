@@ -99,7 +99,6 @@ signals:
     void _activeTabChanged(const Tab &tab);
 
 private slots:
-    void updateThumbPath(QString path, int tabId);
     void updateThumbPath(QString url, QString path, int tabId);
     void tabChanged(const Tab &tab);
 

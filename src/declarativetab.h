@@ -50,8 +50,12 @@ public:
     Tab tabData() const;
     int linkId() const;
 
+    // Used by DeclarativeTabModel to update both visible and internal tab data.
+    void updateTabData(const QString &title);
+    void updateTabData(const QString &url, const QString &title, const QString &thumbnail);
+
 signals:
-    void thumbPathChanged(QString path, int tabId);
+    void thumbPathChanged();
     void urlChanged();
     void validChanged();
     void titleChanged();
