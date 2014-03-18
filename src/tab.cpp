@@ -76,3 +76,15 @@ bool Tab::operator!=(const Tab &other) const
 {
     return !(*this == other);
 }
+
+QDebug operator<<(QDebug dbg, const Tab *tab) {
+    if (!tab) {
+        return dbg << "Tab (this = 0x0)";
+    }
+
+    Link currentLink = tab->currentLink();
+    dbg.nospace() << "Tab(tabId = " << tab->tabId() << ", isValid = " << tab->isValid() << ", linkId = " << currentLink.linkId()
+                  << ", previousLink = " << tab->previousLink() << ", nextLink = " << tab->nextLink()
+                  << ", url = " << currentLink.url() << ", title = " << currentLink.title() << ", thumbnailPath = " << currentLink.thumbPath() << ")";
+    return dbg.space();
+}

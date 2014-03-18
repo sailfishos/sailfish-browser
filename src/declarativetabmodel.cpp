@@ -53,10 +53,10 @@ void DeclarativeTabModel::addTab(const QString& url, const QString &title) {
     int tabId = DBManager::instance()->createTab();
     int linkId = DBManager::instance()->createLink(tabId, url, title);
 
-#ifdef DEBUG_LOGS
-    qDebug() << "new tab id:" << tabId << "new link id:" << linkId;
-#endif
     Tab tab(tabId, Link(linkId, url, "", title), 0, 0);
+#ifdef DEBUG_LOGS
+    qDebug() << "new tab data:" << &tab;
+#endif
     if (m_currentTab && m_currentTab->valid()) {
         beginInsertRows(QModelIndex(), 0, 0);
         m_tabs.insert(0, m_currentTab->tabData());
@@ -137,7 +137,7 @@ bool DeclarativeTabModel::activateTab(const int &index)
     if (index >= 0 && index < m_tabs.count()) {
         Tab newActiveTab = m_tabs.at(index);
 #ifdef DEBUG_LOGS
-        qDebug() << "active tab: " << index << newActiveTab.currentLink().url();
+        qDebug() << "activate tab: " << index << &newActiveTab;
 #endif
         beginRemoveRows(QModelIndex(), index, index);
         m_tabs.removeAt(index);
@@ -198,7 +198,7 @@ void DeclarativeTabModel::dumpTabs() const
     }
 
     for (int i = 0; i < m_tabs.size(); i++) {
-        qDebug() << "tab[" << i << "] id:" << m_tabs.at(i).tabId() << "valid:" << m_tabs.at(i).isValid() << "url:" << m_tabs.at(i).currentLink().url() << "title:" << m_tabs.at(i).currentLink().title() << "thumb:" << m_tabs.at(i).currentLink().thumbPath();
+        qDebug() << "tab[" << i << "]:" << &m_tabs.at(i);
     }
 }
 
@@ -345,8 +345,7 @@ void DeclarativeTabModel::tabChanged(const Tab &tab)
 
 #ifdef DEBUG_LOGS
     qDebug() << m_currentTab;
-    qDebug() << "new tab id:" << tab.tabId() << tab.currentLink().url() << tab.currentLink().title()
-             << "new tab link:" << tab.previousLink() << tab.nextLink() << "index:" << m_tabs.indexOf(tab);
+    qDebug() << "new tab data:" << &tab;
 #endif
     if (m_currentTab && m_currentTab->tabId() == tab.tabId()) {
         updateActiveTab(tab);
@@ -460,7 +459,7 @@ void DeclarativeTabModel::saveTabOrder()
         const Tab &tab = m_tabs.at(i);
         tabOrder.append(QString("%1,").arg(tab.tabId()));
 #ifdef DEBUG_LOGS
-        qDebug() << "append: " << tab.tabId() << tab.currentLink().url() << tab.currentLink().title() << tab.currentLink().thumbPath();
+        qDebug() << "append:" << &tab;
 #endif
     }
     DBManager::instance()->saveSetting("tabOrder", tabOrder);
@@ -506,7 +505,7 @@ void DeclarativeTabModel::updateActiveTab(const Tab &newActiveTab)
 
 #ifdef DEBUG_LOGS
     qDebug() << "old active tab: " << m_currentTab << m_tabs.count();
-    qDebug() << "new active tab: " << newActiveTab.tabId() << newActiveTab.isValid() << newActiveTab.currentLink().url();
+    qDebug() << "new active tab: " << &newActiveTab;
 #endif
     int activeTabId = m_currentTab->tabId();
     emit _activeTabChanged(newActiveTab);

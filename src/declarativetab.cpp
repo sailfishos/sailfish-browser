@@ -113,8 +113,8 @@ void DeclarativeTab::updateTabData(const Tab &tab)
     bool urlStringChanged = m_link.url() != newLink.url();
 
 #ifdef DEBUG_LOGS
-    qDebug() << "old values:" << m_link.title() << m_link.url() << m_link.thumbPath() << m_link.linkId() << "current tab:" <<  m_tab.tabId() << " changed tab:" << tab.tabId();
-    qDebug() << "new values:" << newLink.title() << newLink.url() << newLink.thumbPath() << newLink.linkId();
+    qDebug() << "old values:" << &m_tab;
+    qDebug() << "new values:" << &tab;
 #endif
 
     bool validValueChanged = m_tab.isValid() != tab.isValid();

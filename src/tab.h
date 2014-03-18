@@ -13,6 +13,7 @@
 #define TAB_H
 
 #include <QString>
+#include <QDebug>
 
 #include "link.h"
 
@@ -45,4 +46,7 @@ private:
     int m_nextLinkId;
     int m_previousLinkId;
 };
+
+QDebug operator<<(QDebug, const Tab *);
+
 #endif // TAB_H

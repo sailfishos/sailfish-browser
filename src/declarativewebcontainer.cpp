@@ -385,7 +385,7 @@ void DeclarativeWebContainer::updateTabData(const Tab &tab)
     m_currentTab->updateTabData(tab);
 
 #ifdef DEBUG_LOGS
-    qDebug() << "previous link: " << m_canGoBack << tab.previousLink() << m_canGoForward << tab.nextLink();
+    qDebug() << "canGoBack = " << m_canGoBack << "canGoForward = " << m_canGoForward << &tab;
 #endif
     if (m_canGoForward != (tab.nextLink() > 0)) {
         m_canGoForward = tab.nextLink() > 0;
