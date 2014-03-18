@@ -115,6 +115,8 @@ Page {
     }
 
     function load(url, title, force) {
+        if (url == "about:blank") return
+
         if (url.substring(0, 6) !== "about:" && url.substring(0, 5) !== "file:"
             && !connectionHelper.haveNetworkConnectivity()
             && !browserPage._deferredLoad) {
