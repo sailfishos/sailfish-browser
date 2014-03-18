@@ -163,7 +163,6 @@ WebContainer {
             id: webView
 
             property Item container
-            property Item tab
             readonly property bool loaded: loadProgress === 100
             property bool userHasDraggedWhileLoading
             property bool viewReady
