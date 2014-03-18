@@ -1,0 +1,21 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+    <file>tst_webview.qml</file>
+    <file alias="AlertDialog.qml">../../../src/pages/components/AlertDialog.qml</file>
+    <file alias="AuthDialog.qml">../../../src/pages/components/AuthDialog.qml</file>
+    <file alias="BrowserContextMenu.qml">../../../src/pages/components/BrowserContextMenu.qml</file>
+    <file alias="ConfirmDialog.qml">../../../src/pages/components/ConfirmDialog.qml</file>
+    <file alias="LocationDialog.qml">../../../src/pages/components/LocationDialog.qml</file>
+    <file alias="PasswordManagerDialog.qml">../../../src/pages/components/PasswordManagerDialog.qml</file>
+    <file alias="PromptDialog.qml">../../../src/pages/components/PromptDialog.qml</file>
+    <file alias="PromptLabel.qml">../../../src/pages/components/PromptLabel.qml</file>
+    <file alias="ResourceController.qml">../../../src/pages/components/ResourceController.qml</file>
+    <file alias="SelectDialog.qml">../../../src/pages/components/SelectDialog.qml</file>
+    <file alias="TabModel.qml">../../../src/pages/components/TabModel.qml</file>
+    <file alias="WebView.qml">../../../src/pages/components/WebView.qml</file>
+    <file alias="WebPopupHandler.js">../../../src/pages/components/WebPopupHandler.js</file>
+    <file alias="WebViewTabCache.js">../../../src/pages/components/WebViewTabCache.js</file>
+    <file alias="UserPrompt.qml">../../../src/pages/components/UserPrompt.qml</file>
+    <file alias="ResourceController.qml">../../../src/pages/components/ResourceController.qml</file>
+</qresource>
+</RCC>
