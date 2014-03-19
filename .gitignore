@@ -1,2 +1,6 @@
 *~
 *.swp
+*.o
+*.moc
+moc_*.cpp
+*.qm
