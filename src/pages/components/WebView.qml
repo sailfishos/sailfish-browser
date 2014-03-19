@@ -263,6 +263,7 @@ WebContainer {
                 addMessageListener("Content:SelectionRange");
                 addMessageListener("Content:SelectionCopied");
                 addMessageListener("embed:selectasync")
+                addMessageListener("embed:filepicker")
 
                 loadFrameScript("chrome://embedlite/content/SelectAsyncHelper.js")
                 loadFrameScript("chrome://embedlite/content/embedhelper.js")
@@ -307,6 +308,10 @@ WebContainer {
                     if (data.rel === "shortcut icon") {
                         container.favicon = data.href
                     }
+                    break
+                }
+                case "embed:filepicker": {
+                    PopupHandler.openFilePicker(data)
                     break
                 }
                 case "embed:selectasync": {
