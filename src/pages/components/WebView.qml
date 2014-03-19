@@ -22,6 +22,7 @@ WebContainer {
 
     property bool loading
     property int loadProgress
+    readonly property int loaded: loadProgress === 100
     // TODO: Push this to C++ if possible. Check if TabModel is feasible to merged to DeclarativeTabModel
     property alias tabModel: model
     property string favicon
@@ -104,7 +105,7 @@ WebContainer {
     }
 
     width: parent.width
-    height: webContainer.parent.orientation === Orientation.Portrait ? Screen.height : Screen.width
+    height: portrait ? Screen.height : Screen.width
     foreground: Qt.application.active
     inputPanelHeight: window.pageStack.panelSize
     inputPanelOpenHeight: window.pageStack.imSize
