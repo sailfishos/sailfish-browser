@@ -56,6 +56,7 @@ SOURCES += \
     declarativebookmarkmodel.cpp \
     bookmark.cpp \
     declarativewebcontainer.cpp \
+    declarativewebpage.cpp \
     declarativewebutils.cpp \
     declarativewebviewcreator.cpp \
     browserservice.cpp \
@@ -69,6 +70,7 @@ HEADERS += \
     declarativebookmarkmodel.h \
     bookmark.h \
     declarativewebcontainer.h \
+    declarativewebpage.h \
     declarativewebutils.h \
     declarativewebviewcreator.h \
     browserservice.h \

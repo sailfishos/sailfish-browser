@@ -20,8 +20,6 @@
 #include <QScreen>
 #include <QDBusConnection>
 
-//#include "qdeclarativemozview.h"
-#include "quickmozview.h"
 #include "qmozcontext.h"
 
 #include "declarativebookmarkmodel.h"
@@ -34,6 +32,7 @@
 #include "declarativetabmodel.h"
 #include "declarativehistorymodel.h"
 #include "declarativewebcontainer.h"
+#include "declarativewebpage.h"
 #include "declarativewebviewcreator.h"
 
 #ifdef HAS_BOOSTER
@@ -103,6 +102,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     qmlRegisterType<DeclarativeHistoryModel>("Sailfish.Browser", 1, 0, "HistoryModel");
     qmlRegisterUncreatableType<DeclarativeTab>("Sailfish.Browser", 1, 0, "Tab", "");
     qmlRegisterType<DeclarativeWebContainer>("Sailfish.Browser", 1, 0, "WebContainer");
+    qmlRegisterType<DeclarativeWebPage>("Sailfish.Browser", 1, 0, "WebPage");
     qmlRegisterType<DeclarativeWebViewCreator>("Sailfish.Browser", 1, 0, "WebViewCreator");
 
     QString componentPath(DEFAULT_COMPONENTS_PATH);

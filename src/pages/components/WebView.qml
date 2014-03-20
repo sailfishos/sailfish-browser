@@ -159,26 +159,17 @@ WebContainer {
 
     Component {
         id: webViewComponent
-        QmlMozView {
-            id: webView
+        WebPage {
+            id: webPage
 
-            property Item container
-            property string favicon
-            readonly property bool loaded: loadProgress === 100
-            property bool userHasDraggedWhileLoading
-            property bool viewReady
-            property int tabId
-            property var resurrectedContentRect
-
-            property bool _deferredReload
-            property var _deferredLoad: null
+            loaded: loadProgress === 100
 
             function loadTab(newUrl, force) {
                 // Always enable chrome when load is called.
                 chrome = true
                 if ((newUrl !== "" && url != newUrl) || force) {
                     resourceController.firstFrameRendered = false
-                    webView.load(newUrl)
+                    webPage.load(newUrl)
                 }
 
                 // This looks like a not needed condition for now. However, if we add a max number of real tabs
@@ -233,8 +224,8 @@ WebContainer {
             }
 
             onBgcolorChanged: {
-                // Update only webView
-                if (container.contentItem === webView) {
+                // Update only webPage
+                if (container.contentItem === webPage) {
                     var bgLightness = WebUtils.getLightness(bgcolor)
                     var dimmerLightness = WebUtils.getLightness(Theme.highlightDimmerColor)
                     var highBgLightness = WebUtils.getLightness(Theme.highlightBackgroundColor)
@@ -296,7 +287,7 @@ WebContainer {
                 if (loading) {
                     userHasDraggedWhileLoading = false
                     container.loadProgress = 0
-                    webView.chrome = true
+                    webPage.chrome = true
                     favicon = ""
                     container.resetHeight(false)
                 }
@@ -347,7 +338,7 @@ WebContainer {
                     break
                 }
                 case "Content:SelectionRange": {
-                    webView.selectionRangeUpdated(data)
+                    webPage.selectionRangeUpdated(data)
                     break
                 }
                 }
@@ -356,7 +347,7 @@ WebContainer {
                 // sender expects that this handler will update `response` argument
                 switch (message) {
                 case "Content:SelectionCopied": {
-                    webView.selectionCopied(data)
+                    webPage.selectionCopied(data)
 
                     if (data.succeeded) {
                         //% "Copied to clipboard"
@@ -368,7 +359,7 @@ WebContainer {
             }
 
             onWindowCloseRequested: {
-                console.log("WebView onWindowCloseRequested:", tabId)
+                console.log("webPage onWindowCloseRequested:", tabId)
                 var parentTabId = model.parentTabId(tabId)
                 // Closing only allowed if window was created by script
                 if (parentTabId) {
@@ -384,7 +375,7 @@ WebContainer {
                 name: "boundHeightControl"
                 when: container.inputPanelVisible || !container.foreground || !visible
                 PropertyChanges {
-                    target: webView
+                    target: webPage
                     height: container.parent.height
                 }
             }
