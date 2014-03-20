@@ -22,7 +22,6 @@ WebContainer {
 
     property bool loading: contentItem ? contentItem.loading : false
     property int loadProgress
-    readonly property int loaded: loadProgress === 100
     // TODO: Push this to C++ if possible. Check if TabModel is feasible to merged to DeclarativeTabModel
     property alias tabModel: model
     property string favicon: contentItem ? contentItem.favicon : ""

@@ -119,5 +119,6 @@ private:
     bool m_backForwardNavigation;
 
     friend class tst_declarativetabmodel;
+    friend class tst_webview;
 };
 #endif // DECLARATIVETABMODEL_H
