@@ -20,12 +20,12 @@ import "." as Browser
 WebContainer {
     id: webContainer
 
-    property bool loading
+    property bool loading: contentItem ? contentItem.loading : false
     property int loadProgress
     readonly property int loaded: loadProgress === 100
     // TODO: Push this to C++ if possible. Check if TabModel is feasible to merged to DeclarativeTabModel
     property alias tabModel: model
-    property string favicon
+    property string favicon: contentItem ? contentItem.favicon : ""
 
     // Move to C++
     readonly property bool _readyToLoad: contentItem &&
@@ -164,6 +164,7 @@ WebContainer {
             id: webView
 
             property Item container
+            property string favicon
             readonly property bool loaded: loadProgress === 100
             property bool userHasDraggedWhileLoading
             property bool viewReady
@@ -292,12 +293,11 @@ WebContainer {
             }
 
             onLoadingChanged: {
-                container.loading = loading
                 if (loading) {
                     userHasDraggedWhileLoading = false
-                    container.favicon = ""
                     container.loadProgress = 0
                     webView.chrome = true
+                    favicon = ""
                     container.resetHeight(false)
                 }
             }
@@ -306,7 +306,7 @@ WebContainer {
                 switch (message) {
                 case "chrome:linkadded": {
                     if (data.rel === "shortcut icon") {
-                        container.favicon = data.href
+                        favicon = data.href
                     }
                     break
                 }

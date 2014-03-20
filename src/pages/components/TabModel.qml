@@ -58,6 +58,7 @@ TabModel {
             var activationObject = TabCache.getTab(tabId, hasNewTabData ? _newTabData.parentId : 0)
             webViewContainer.contentItem = activationObject.view
             webViewContainer.contentItem.chrome = true
+            webViewContainer.loadProgress = webViewContainer.contentItem.loadProgress
             return activationObject.activated
         }
         return false
