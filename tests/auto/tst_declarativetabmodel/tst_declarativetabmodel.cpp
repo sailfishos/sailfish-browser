@@ -216,8 +216,6 @@ void tst_declarativetabmodel::activateTabs()
     QCOMPARE(currentOrder.at(2), originalTabOrder.at(0).url);
 }
 
-
-
 void tst_declarativetabmodel::remove()
 {
     QSignalSpy currentTabIdChangeSpy(tabModel, SIGNAL(currentTabIdChanged()));
