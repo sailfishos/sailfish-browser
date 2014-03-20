@@ -14,7 +14,11 @@ SOURCES += ../../../src/declarativewebcontainer.cpp
 CONFIG += link_pkgconfig
 
 # WebContainer need this
-PKGCONFIG += qt5embedwidget
+isEmpty(QTEMBED_LIB) {
+  PKGCONFIG += qt5embedwidget
+} else {
+  LIBS+=$$QTEMBED_LIB
+}
 
 # install the test
 target.path = /opt/tests/sailfish-browser/auto
