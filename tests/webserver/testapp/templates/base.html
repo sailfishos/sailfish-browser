@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+            button {
+                font-size: 40pt
+            }
+            input, div, a, p, li {
+                font-size: 40pt;
+            }
+            h1 {
+                font-size: 60pt;
+            }
+        </style>
+        <title>{% block title %}Testing{% endblock %}</title>
+        {% block scripts %}{% endblock %}
+    </head>
+    <body>
+        <ul>
+            <li><a href="{% url testauth %}">Basic Auth</a></li>
+            <li><a href="{% url testupload %}">Upload</a></li>
+            <li><a href="{% url show_ajax_page %}">Ajax test</a></li>
+        </ul>
+        <p>&nbsp;</p>
+        {% block content %}some content{% endblock %}
+    </body>
+</html>

@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}
+test Ajax
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+    function testajax() {
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.open("GET", "/testajaxreq/", false);
+        xmlhttp.send();
+        console.log("responseText: " + xmlhttp.responseText);
+        console.log(xmlhttp);
+        document.getElementById("result").innerHTML="Sync " + xmlhttp.responseText;
+    }
+
+    function testajax_async() {
+        var xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange=function() {
+            console.log("responseText: " + xmlhttp.responseText);
+            console.log(xmlhttp);
+            document.getElementById("result").innerHTML="Async " + xmlhttp.responseText;
+        }
+        xmlhttp.open("GET", "/testajaxreq/", true);
+        xmlhttp.send();
+    }
+</script>
+{% endblock %}
+
+{% block content %}
+<button onclick="testajax();">Sync Ajax</button>
+<button onclick="testajax_async();">Async Ajax</button>
+<p>&nbsp;</p>
+<div id="result"></div>
+{% endblock %}
