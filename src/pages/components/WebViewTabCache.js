@@ -97,7 +97,7 @@ function parentTabId(tabId) {
         for (var i in _activeTabs) {
             var parentTab = _activeTabs[i]
             if (parentTab.view && parentTab.view.uniqueID() == parentId) {
-                return parentTab.tabId
+                return parentTab.view.tabId
             }
         }
     }
