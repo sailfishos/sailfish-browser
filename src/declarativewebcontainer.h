@@ -40,6 +40,11 @@ class DeclarativeWebContainer : public QQuickItem {
     Q_PROPERTY(qreal toolbarHeight MEMBER m_toolbarHeight NOTIFY toolbarHeightChanged FINAL)
     Q_PROPERTY(bool background READ background NOTIFY backgroundChanged FINAL)
 
+    Q_PROPERTY(QString favicon MEMBER m_favicon NOTIFY faviconChanged)
+
+    Q_PROPERTY(bool loading MEMBER m_loading NOTIFY loadingChanged FINAL)
+    Q_PROPERTY(int loadProgress MEMBER m_loadProgress NOTIFY loadProgressChanged FINAL)
+
     // Navigation related properties
     Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY canGoForwardChanged FINAL)
     Q_PROPERTY(bool canGoBack READ canGoBack NOTIFY canGoBackChanged FINAL)
@@ -49,8 +54,9 @@ class DeclarativeWebContainer : public QQuickItem {
 
     Q_PROPERTY(DeclarativeTab *currentTab READ currentTab NOTIFY currentTabChanged FINAL)
 
-    // "private" properties there could probably be pushed to C++ side.
+    // "private" properties.
     Q_PROPERTY(bool _firstFrameRendered MEMBER m_firstFrameRendered NOTIFY _firstFrameRenderedChanged FINAL)
+    Q_PROPERTY(bool _readyToLoad MEMBER m_readyToLoad NOTIFY _readyToLoadChanged)
 
 public:
     DeclarativeWebContainer(QQuickItem *parent = 0);
@@ -102,6 +108,10 @@ signals:
     void inputPanelOpenHeightChanged();
     void toolbarHeightChanged();
 
+    void faviconChanged();
+    void loadingChanged();
+    void loadProgressChanged();
+
     void canGoForwardChanged();
     void canGoBackChanged();
 
@@ -109,6 +119,7 @@ signals:
     void urlChanged();
 
     void _firstFrameRenderedChanged();
+    void _readyToLoadChanged();
 
     void currentTabChanged();
 
@@ -158,10 +169,15 @@ private:
     qreal m_inputPanelOpenHeight;
     qreal m_toolbarHeight;
 
+    QString m_favicon;
+
+    bool m_loading;
+    int m_loadProgress;
     bool m_canGoForward;
     bool m_canGoBack;
     bool m_realNavigation;
     bool m_firstFrameRendered;
+    bool m_readyToLoad;
 
     QFutureWatcher<ScreenCapture> m_screenCapturer;
 };

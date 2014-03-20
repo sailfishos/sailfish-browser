@@ -20,16 +20,8 @@ import "." as Browser
 WebContainer {
     id: webContainer
 
-    property bool loading: contentItem ? contentItem.loading : false
-    property int loadProgress
     // TODO: Push this to C++ if possible. Check if TabModel is feasible to merged to DeclarativeTabModel
     property alias tabModel: model
-    property string favicon: contentItem ? contentItem.favicon : ""
-
-    // Move to C++
-    readonly property bool _readyToLoad: contentItem &&
-                                         contentItem.viewReady &&
-                                         tabModel.loaded
     property color _decoratorColor: Theme.highlightDimmerColor
 
     function stop() {
@@ -110,6 +102,10 @@ WebContainer {
     inputPanelOpenHeight: window.pageStack.imSize
     fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) || webContainer.inputPanelVisible || !webContainer.foreground
     _firstFrameRendered: resourceController.firstFrameRendered
+    _readyToLoad: contentItem && contentItem.viewReady && tabModel.loaded
+
+    loading: contentItem ? contentItem.loading : false
+    favicon: contentItem ? contentItem.favicon : ""
 
     // Triggered when tabs of tab model are available and QmlMozView is ready to load.
     // Load test
@@ -202,7 +198,7 @@ WebContainer {
             signal contextMenuRequested(variant data)
 
             focus: true
-            width: container.parent.width
+            width: container.width
             state: ""
 
             onLoadProgressChanged: {
