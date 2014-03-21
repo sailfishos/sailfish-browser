@@ -27,7 +27,8 @@ Item {
     Label {
         id: label
         color: Theme.highlightColor
-        font.pixelSize: header ? Theme.fontSizeHuge : Theme.fontSizeMedium
+        font.pixelSize: header ? Theme.fontSizeLarge : Theme.fontSizeMedium
+        font.family: header ? Theme.fontFamilyHeading : Theme.fontFamily
         width: iconSource == "" ? parent.width : parent.width - icon.width - Theme.paddingMedium
         anchors.right: parent.right
         wrapMode: Text.WordWrap
