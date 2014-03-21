@@ -44,10 +44,13 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     , m_inputPanelHeight(0.0)
     , m_inputPanelOpenHeight(0.0)
     , m_toolbarHeight(0.0)
+    , m_loading(false)
+    , m_loadProgress(0)
     , m_canGoForward(false)
     , m_canGoBack(false)
     , m_realNavigation(false)
     , m_firstFrameRendered(false)
+    , m_readyToLoad(false)
 {
     setFlag(QQuickItem::ItemHasContents, true);
     connect(m_currentTab, SIGNAL(titleChanged()), this, SIGNAL(titleChanged()));
