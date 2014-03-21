@@ -216,7 +216,6 @@ WebContainer {
                 }
 
                 model.updateUrl(tabId, url)
-                model.resetNewTabData()
             }
 
             onBgcolorChanged: {

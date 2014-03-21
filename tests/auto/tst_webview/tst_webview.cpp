@@ -133,10 +133,7 @@ void tst_webview::testNewTab()
 
     // Mimic favorite opening to a new tab. Favorites can have both url and title and when entering
     // url through virtual keyboard only url is provided.
-    QMetaObject::invokeMethod(tabModel, "newTab", Qt::DirectConnection,
-                              Q_ARG(QVariant, newUrl),
-                              Q_ARG(QVariant, newTitle),
-                              Q_ARG(QVariant, 0));
+    tabModel->newTab(newUrl, newTitle);
 
     // Wait for MozView instance change.
     waitSignals(contentItemSpy, 1);

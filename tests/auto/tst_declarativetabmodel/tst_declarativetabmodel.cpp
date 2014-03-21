@@ -70,6 +70,10 @@ private slots:
 
     void updateTitle();
 
+    void newTab();
+    void newTabData();
+    void resetNewTabData();
+
     void clear();
 
 private:
@@ -657,6 +661,72 @@ void tst_declarativetabmodel::updateTitle()
     tabModel->updateTitle(tab2, title);
     QCOMPARE(currentTabTitleSpy.count(), 5);
     QCOMPARE(webContainerTitleSpy.count(), 5);
+}
+
+void tst_declarativetabmodel::newTab()
+{
+    tabModel->resetNewTabData();
+
+    QSignalSpy newTabDataChanged(tabModel, SIGNAL(hasNewTabDataChanged()));
+    QSignalSpy newTabUrlChanged(tabModel, SIGNAL(newTabUrlChanged()));
+    QSignalSpy newTabTitleChanged(tabModel, SIGNAL(newTabTitleChanged()));
+    QSignalSpy newTabPreviousViewChanged(tabModel, SIGNAL(newTabPreviousViewChanged()));
+
+    tabModel->newTab("http://foobar.com", "FooBar");
+
+    QCOMPARE(newTabDataChanged.count(), 1);
+    QCOMPARE(newTabUrlChanged.count(), 1);
+    QCOMPARE(newTabTitleChanged.count(), 1);
+    QCOMPARE(newTabPreviousViewChanged.count(), 0);
+
+    QCOMPARE(tabModel->newTabUrl(), QString("http://foobar.com"));
+    QCOMPARE(tabModel->newTabTitle(), QString("FooBar"));
+}
+
+void tst_declarativetabmodel::newTabData()
+{
+    tabModel->resetNewTabData();
+
+    QSignalSpy newTabDataChanged(tabModel, SIGNAL(hasNewTabDataChanged()));
+    QSignalSpy newTabUrlChanged(tabModel, SIGNAL(newTabUrlChanged()));
+    QSignalSpy newTabTitleChanged(tabModel, SIGNAL(newTabTitleChanged()));
+    QSignalSpy newTabPreviousViewChanged(tabModel, SIGNAL(newTabPreviousViewChanged()));
+
+    QQuickItem item;
+    tabModel->newTabData("http://foobar.com", "FooBar", &item);
+
+    QCOMPARE(newTabDataChanged.count(), 1);
+    QCOMPARE(newTabUrlChanged.count(), 1);
+    QCOMPARE(newTabTitleChanged.count(), 1);
+    QCOMPARE(newTabPreviousViewChanged.count(), 1);
+
+    QCOMPARE(tabModel->newTabUrl(), QString("http://foobar.com"));
+    QCOMPARE(tabModel->newTabTitle(), QString("FooBar"));
+    QCOMPARE(tabModel->newTabPreviousView(), &item);
+}
+
+void tst_declarativetabmodel::resetNewTabData()
+{
+    // Old values (see newTabData test):
+    // url = "http://foobar.com"
+    // title = "FooBar"
+    // previousView = Temporary QQuickItem pointer (non zero)
+    QSignalSpy newTabDataChanged(tabModel, SIGNAL(hasNewTabDataChanged()));
+    QSignalSpy newTabUrlChanged(tabModel, SIGNAL(newTabUrlChanged()));
+    QSignalSpy newTabTitleChanged(tabModel, SIGNAL(newTabTitleChanged()));
+    QSignalSpy newTabPreviousViewChanged(tabModel, SIGNAL(newTabPreviousViewChanged()));
+
+    tabModel->resetNewTabData();
+
+    QCOMPARE(newTabDataChanged.count(), 1);
+    QCOMPARE(newTabUrlChanged.count(), 1);
+    QCOMPARE(newTabTitleChanged.count(), 1);
+    QCOMPARE(newTabPreviousViewChanged.count(), 1);
+
+    QVERIFY(!tabModel->hasNewTabData());
+    QVERIFY(tabModel->newTabUrl().isEmpty());
+    QVERIFY(tabModel->newTabTitle().isEmpty());
+    QVERIFY(!tabModel->newTabPreviousView());
 }
 
 void tst_declarativetabmodel::clear()

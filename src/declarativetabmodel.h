@@ -15,8 +15,12 @@
 #include <QAbstractListModel>
 #include <QQmlParserStatus>
 #include <QPointer>
+#include <QScopedPointer>
+#include <QQuickItem>
+#include <QQmlComponent>
 
 #include "tab.h"
+#include "declarativewebcontainer.h"
 
 class DeclarativeTab;
 
@@ -30,6 +34,20 @@ class DeclarativeTabModel : public QAbstractListModel, public QQmlParserStatus
     Q_PROPERTY(int nextTabId READ nextTabId NOTIFY nextTabIdChanged FINAL)
     Q_PROPERTY(bool loaded READ loaded NOTIFY loadedChanged FINAL)
     Q_PROPERTY(bool browsing READ browsing WRITE setBrowsing NOTIFY browsingChanged FINAL)
+    // TODO: Remove newTab related functions from WebContainer, WebPage, and TabModel pushed to C++ side.
+    Q_PROPERTY(bool hasNewTabData READ hasNewTabData NOTIFY hasNewTabDataChanged FINAL)
+    // TODO: Only needed by on_ReadyToLoadChanged handler of WebView
+    Q_PROPERTY(QString newTabUrl READ newTabUrl NOTIFY newTabUrlChanged FINAL)
+    // TODO: Only needed by WebPage::loadTab
+    Q_PROPERTY(QString newTabTitle READ newTabTitle NOTIFY newTabTitleChanged FINAL)
+    // TODO: Only needed by download handler
+    Q_PROPERTY(QQuickItem* newTabPreviousView READ newTabPreviousView NOTIFY newTabPreviousViewChanged FINAL)
+    Q_PROPERTY(QQmlComponent* webPageComponent MEMBER m_webPageComponent NOTIFY webPageComponentChanged FINAL)
+    Q_PROPERTY(DeclarativeWebContainer* webView MEMBER m_webView NOTIFY webViewChanged FINAL)
+
+    // Temporary property. Once rest from TabModel pushed to C++ this must be removed.
+    // Used from one place from imperative code (activateView).
+    Q_PROPERTY(int _newTabParentId READ newTabParentId FINAL)
 
 public:
     DeclarativeTabModel(QObject *parent = 0);
@@ -50,6 +68,10 @@ public:
     Q_INVOKABLE void activateTabById(const int &tabId);
     Q_INVOKABLE void closeActiveTab();
     Q_INVOKABLE int lastTabId() const;
+
+    Q_INVOKABLE void newTab(const QString &url, const QString &title, int parentId = 0);
+    Q_INVOKABLE void newTabData(const QString &url, const QString &title, QQuickItem *contentItem = 0, int parentId = 0);
+    Q_INVOKABLE void resetNewTabData();
 
     Q_INVOKABLE void dumpTabs() const;
 
@@ -74,6 +96,13 @@ public:
     bool browsing() const;
     void setBrowsing(bool browsing);
 
+    bool hasNewTabData() const;
+    QString newTabUrl() const;
+    QString newTabTitle() const;
+    QQuickItem* newTabPreviousView() const;
+
+    int newTabParentId() const;
+
     bool backForwardNavigation() const;
     void setBackForwardNavigation(bool backForwardNavigation);
 
@@ -94,6 +123,12 @@ signals:
     void nextTabIdChanged();
     void loadedChanged();
     void browsingChanged();
+    void hasNewTabDataChanged();
+    void newTabUrlChanged();
+    void newTabTitleChanged();
+    void newTabPreviousViewChanged();
+    void webPageComponentChanged();
+    void webViewChanged();
 
     void _activeTabInvalidated();
     void _activeTabChanged(const Tab &tab);
@@ -103,6 +138,20 @@ private slots:
     void tabChanged(const Tab &tab);
 
 private:
+    struct NewTabData {
+        NewTabData(QString url, QString title, QQuickItem *previousView, int parentId)
+            : url(url)
+            , title(title)
+            , previousView(previousView)
+            , parentId(parentId)
+        {}
+
+        QString url;
+        QString title;
+        QQuickItem *previousView;
+        int parentId;
+    };
+
     void load();
     void removeTab(int tabId, const QString &thumbnail, int index = -1);
     int findTabIndex(int tabId, bool &activeTab) const;
@@ -110,6 +159,7 @@ private:
     int loadTabOrder();
     void updateActiveTab(const Tab &newActiveTab);
     void updateTabUrl(int tabId, const QString &url, bool navigate);
+    void updateNewTabData(NewTabData *newTabData, bool urlChanged, bool titleChanged, bool previousViewChanged);
 
     QPointer<DeclarativeTab> m_currentTab;
     QList<Tab> m_tabs;
@@ -117,6 +167,10 @@ private:
     bool m_browsing;
     int m_nextTabId;
     bool m_backForwardNavigation;
+
+    QPointer<QQmlComponent> m_webPageComponent;
+    QPointer<DeclarativeWebContainer> m_webView;
+    QScopedPointer<NewTabData> m_newTabData;
 
     friend class tst_declarativetabmodel;
     friend class tst_webview;

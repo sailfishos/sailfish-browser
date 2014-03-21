@@ -14,38 +14,6 @@ import Sailfish.Browser 1.0
 import "WebViewTabCache.js" as TabCache
 
 TabModel {
-    property Component webPageComponent
-    property Item webView
-
-    readonly property bool hasNewTabData: _newTabData && _newTabData.url
-    readonly property string newTabUrl: hasNewTabData ? _newTabData.url : ""
-    readonly property string newTabTitle: hasNewTabData ? _newTabData.title : ""
-    readonly property Item newTabPreviousView: hasNewTabData ? _newTabData.previousView : null
-
-    // Load goes so that we first use engine load to resolve url
-    // and then save that resolved url to the history. This way
-    // urls that resolve to download urls won't get saved to the
-    // history (as those won't trigger url change). By doing this way
-    // a redirected url will be saved with the redirected url not with
-    // the input url.
-    property var _newTabData: null
-
-    function newTab(url, title, parentId) {
-        newTabData(url, title, webView.contentItem, parentId)
-        webView.load(url, title)
-    }
-
-    function newTabData(url, title, contentItem, parentId) {
-        // Url is not need in model._newTabData as we let engine to resolve
-        // the url and use the resolved url.
-        parentId = parentId ? parentId : 0
-        _newTabData = { "url": url, "title": title, "previousView": contentItem, "parentId": parentId }
-    }
-
-    function resetNewTabData() {
-        _newTabData = null
-    }
-
     // TODO: Check could this be merged with activateTab(tabId)
     // TabModel could keep also TabCache internally.
     function activateView(tabId, force) {
@@ -54,7 +22,7 @@ TabModel {
         }
 
         if ((loaded || force) && tabId > 0) {
-            var activationObject = TabCache.getTab(tabId, hasNewTabData ? _newTabData.parentId : 0)
+            var activationObject = TabCache.getTab(tabId, _newTabParentId)
             webView.contentItem = activationObject.view
             webView.contentItem.chrome = true
             webView.loadProgress = webView.contentItem.loadProgress

@@ -13,10 +13,13 @@
 
 #include "dbmanager.h"
 #include "declarativetab.h"
+#include "declarativewebcontainer.h"
 #include "linkvalidator.h"
+
 #include <QFile>
 #include <QDebug>
 #include <QStringList>
+#include <quickmozview.h>
 
 static QList<int> s_tabOrder;
 
@@ -27,6 +30,8 @@ DeclarativeTabModel::DeclarativeTabModel(QObject *parent)
     , m_browsing(false)
     , m_nextTabId(DBManager::instance()->getMaxTabId() + 1)
     , m_backForwardNavigation(false)
+    , m_webPageComponent(0)
+    , m_webView(0)
 {
     connect(DBManager::instance(), SIGNAL(tabsAvailable(QList<Tab>)),
             this, SLOT(tabsAvailable(QList<Tab>)));
@@ -192,6 +197,35 @@ int DeclarativeTabModel::lastTabId() const
     return m_tabs.at(m_tabs.count() - 1).tabId();
 }
 
+void DeclarativeTabModel::newTab(const QString &url, const QString &title, int parentId)
+{
+    newTabData(url, title, m_webView ? m_webView->webView() : 0, parentId);
+    if (m_webView) {
+        QMetaObject::invokeMethod(m_webView, "load", Qt::DirectConnection,
+                                  Q_ARG(QVariant, url),
+                                  Q_ARG(QVariant, title),
+                                  Q_ARG(QVariant, false));
+    }
+}
+
+void DeclarativeTabModel::newTabData(const QString &url, const QString &title, QQuickItem *contentItem, int parentId)
+{
+    bool urlChanged = newTabUrl() != url;
+    bool titleChanged = newTabTitle() != title;
+    bool previousViewChanged = newTabPreviousView() != contentItem;
+
+    updateNewTabData(new NewTabData(url, title, contentItem, parentId), urlChanged, titleChanged, previousViewChanged);
+}
+
+void DeclarativeTabModel::resetNewTabData()
+{
+    bool urlChanged = !newTabUrl().isEmpty();
+    bool titleChanged = !newTabTitle().isEmpty();
+    bool previousViewChanged = newTabPreviousView() != 0;
+
+    updateNewTabData(0, urlChanged, titleChanged, previousViewChanged);
+}
+
 void DeclarativeTabModel::dumpTabs() const
 {
     if (m_currentTab && m_currentTab->valid()) {
@@ -270,6 +304,31 @@ void DeclarativeTabModel::setBrowsing(bool browsing)
         m_browsing = browsing;
         emit browsingChanged();
     }
+}
+
+bool DeclarativeTabModel::hasNewTabData() const
+{
+    return m_newTabData && !m_newTabData->url.isEmpty();
+}
+
+QString DeclarativeTabModel::newTabUrl() const
+{
+    return hasNewTabData() ? m_newTabData->url : "";
+}
+
+QString DeclarativeTabModel::newTabTitle() const
+{
+    return hasNewTabData() ? m_newTabData->title : "";
+}
+
+QQuickItem *DeclarativeTabModel::newTabPreviousView() const
+{
+    return hasNewTabData() ? m_newTabData->previousView : 0;
+}
+
+int DeclarativeTabModel::newTabParentId() const
+{
+    return hasNewTabData() ? m_newTabData->parentId : 0;
 }
 
 bool DeclarativeTabModel::backForwardNavigation() const
@@ -370,15 +429,13 @@ void DeclarativeTabModel::updateUrl(int tabId, QString url)
     {
         updateTabUrl(tabId, url, false);
     } else {
-        QVariant hasNewTabDataVar = property("hasNewTabData");
-        bool hasNewTabData = hasNewTabDataVar.isValid() && hasNewTabDataVar.toBool();
-        if (!hasNewTabData && m_currentTab) {
+        if (!hasNewTabData() && m_currentTab) {
             updateTabUrl(tabId, url, true);
         } else {
-            QString newTabTitle = property("newTabTitle").toString();
-            addTab(url, newTabTitle);
+            addTab(url, newTabTitle());
         }
     }
+    resetNewTabData();
 }
 
 void DeclarativeTabModel::updateTitle(int tabId, QString title)
@@ -548,6 +605,28 @@ void DeclarativeTabModel::updateTabUrl(int tabId, const QString &url, bool navig
     }
 
     setBackForwardNavigation(false);
+}
+
+void DeclarativeTabModel::updateNewTabData(NewTabData *newTabData, bool urlChanged, bool titleChanged, bool previousViewChanged)
+{
+    bool hadNewTabData = hasNewTabData();
+    m_newTabData.reset(newTabData);
+
+    if (urlChanged) {
+        emit newTabUrlChanged();
+    }
+
+    if (titleChanged) {
+        emit newTabTitleChanged();
+    }
+
+    if (previousViewChanged) {
+        emit newTabPreviousViewChanged();
+    }
+
+    if (hadNewTabData != hasNewTabData()) {
+        emit hasNewTabDataChanged();
+    }
 }
 
 bool DeclarativeTabModel::tabSort(const Tab &t1, const Tab &t2)
