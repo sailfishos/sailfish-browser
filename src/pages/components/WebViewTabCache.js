@@ -15,7 +15,7 @@ var initialized = false
 var count
 
 // Private
-var _webViewComponent
+var _webPageComponent
 var _arguments
 var _parent
 
@@ -26,14 +26,14 @@ var debug = false
 
 function init(args, component, container) {
     _arguments = args
-    _webViewComponent = component
+    _webPageComponent = component
     _parent = container
     initialized = true
     count = 0
 }
 
 function getTab(tabId, parentId) {
-    if (!_webViewComponent || (_activeWebView && _activeWebView.tabId === tabId)) {
+    if (!_webPageComponent || (_activeWebView && _activeWebView.tabId === tabId)) {
         _activeWebView.resumeView()
         _activeWebView.visible = true
         return { "view": _activeWebView, "activated": false }
@@ -46,7 +46,7 @@ function getTab(tabId, parentId) {
     if (!tab || tab && !tab.view){
         _arguments.parentId = parentId
         _arguments.tabId = tabId
-        var webView = _webViewComponent.createObject(_parent, _arguments)
+        var webView = _webPageComponent.createObject(_parent, _arguments)
         if (debug) console.log("New view id: ", webView.uniqueID(), parentId, "tab id:", tabId)
         if (!tab) {
             tab = { "view": webView, "cssContentRect": null }
