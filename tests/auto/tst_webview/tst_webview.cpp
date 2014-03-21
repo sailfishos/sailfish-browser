@@ -13,12 +13,12 @@
 #include <QQmlContext>
 #include <QQuickView>
 #include <quickmozview.h>
+#include <qmozcontext.h>
 
 #include "declarativetab.h"
 #include "declarativetabmodel.h"
 #include "declarativewebcontainer.h"
 #include "declarativewebviewcreator.h"
-#include "qmozcontext.h"
 #include "webUtilsMock.h"
 
 class tst_webview : public QObject
@@ -30,13 +30,23 @@ public:
 
 private slots:
     void initTestCase();
+    void testNewTab_data();
+    void testNewTab();
+    void testActivateTab();
+    void testCloseActiveTab();
+    void testRemoveTab();
+    void testUrlLoading();
     void cleanupTestCase();
 
 private:
+    QString formatUrl(QString fileName) const;
+    void waitSignals(QSignalSpy &spy, int expectedSignalCount) const;
+
     DeclarativeTabModel *tabModel;
     DeclarativeTab *tab;
     DeclarativeWebContainer *webContainer;
     QQuickView *view;
+    QString baseUrl;
 };
 
 
@@ -58,18 +68,17 @@ void tst_webview::initTestCase()
     QVariant var = appWindow->property("webView");
     webContainer = qobject_cast<DeclarativeWebContainer *>(qvariant_cast<QObject*>(var));
     QVERIFY(webContainer);
+    QSignalSpy loadingChanged(webContainer, SIGNAL(loadingChanged()));
 
     var = webContainer->property("tabModel");
     tabModel = qobject_cast<DeclarativeTabModel *>(qvariant_cast<QObject*>(var));
     QVERIFY(tabModel);
+    QSignalSpy tabAddedSpy(tabModel, SIGNAL(tabAdded(int)));
 
     tab = webContainer->currentTab();
     QVERIFY(tab);
 
-    QSignalSpy viewReady(webContainer, SIGNAL(_readyToLoadChanged()));
-    QSignalSpy firstPageLoaded(webContainer, SIGNAL(loadedChanged()));
-    viewReady.wait();
-    firstPageLoaded.wait();
+    waitSignals(loadingChanged, 2);
 
     QuickMozView *webView = webContainer->webView();
     QVERIFY(webView);
@@ -79,6 +88,281 @@ void tst_webview::initTestCase()
     QCOMPARE(tab->url(), WebUtilsMock::instance()->homePage);
     QCOMPARE(tab->title(), QString("TestPage"));
     QCOMPARE(tabModel->count(), 1);
+
+    baseUrl = QUrl(WebUtilsMock::instance()->homePage).toLocalFile();
+    baseUrl = QFileInfo(baseUrl).canonicalPath();
+
+    waitSignals(tabAddedSpy, 1);
+    QCOMPARE(tabAddedSpy.count(), 1);
+}
+
+void tst_webview::testNewTab_data()
+{
+    QTest::addColumn<QString>("newUrl");
+    QTest::addColumn<QString>("newTitle");
+    QTest::addColumn<QString>("expectedTitle");
+    QTest::addColumn<int>("expectedTitleChangeCount");
+    QTest::newRow("testselect") << formatUrl("testselect.html") << "TestSelect" << "TestSelect" << 1;
+    QTest::newRow("testuseragent") << formatUrl("testuseragent.html") << "TestUserAgent" << "TestUserAgent" << 1;
+    // The new tab added without newTitle -> title loaded from testnavigation.html page.
+    // Same as creating a new tab by typing the address to the url field.
+    QTest::newRow("testnavigation") << formatUrl("testnavigation.html") << "" << "TestNavigation" << 2;
+}
+
+void tst_webview::testNewTab()
+{
+    QFETCH(QString, newUrl);
+    QFETCH(QString, newTitle);
+    QFETCH(QString, expectedTitle);
+    QFETCH(int, expectedTitleChangeCount);
+
+    QSignalSpy urlChangedSpy(webContainer, SIGNAL(urlChanged()));
+    QSignalSpy titleChangedSpy(webContainer, SIGNAL(titleChanged()));
+
+    QSignalSpy tabCountSpy(tabModel, SIGNAL(countChanged()));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int)));
+    QSignalSpy tabAddedSpy(tabModel, SIGNAL(tabAdded(int)));
+    QSignalSpy contentItemSpy(webContainer, SIGNAL(contentItemChanged()));
+    QSignalSpy loadingChanged(webContainer, SIGNAL(loadingChanged()));
+
+    int expectedTabCount = tabModel->count() + 1;
+
+    QuickMozView *previousView = webContainer->webView();
+    QVERIFY(previousView);
+
+    // Mimic favorite opening to a new tab. Favorites can have both url and title and when entering
+    // url through virtual keyboard only url is provided.
+    QMetaObject::invokeMethod(tabModel, "newTab", Qt::DirectConnection,
+                              Q_ARG(QVariant, newUrl),
+                              Q_ARG(QVariant, newTitle),
+                              Q_ARG(QVariant, 0));
+
+    // Wait for MozView instance change.
+    waitSignals(contentItemSpy, 1);
+
+    QVERIFY(webContainer->webView());
+    QVERIFY(previousView != webContainer->webView());
+    QCOMPARE(contentItemSpy.count(), 1);
+    waitSignals(loadingChanged, 2);
+
+    // These are difficult to spy at this point as url changes almost immediately
+    // and contentItem is changed in newTab code path.
+    QCOMPARE(webContainer->webView()->url().toString(), newUrl);
+    QCOMPARE(webContainer->webView()->title(), expectedTitle);
+
+    // ~last in the sequence of adding a new tab.
+    waitSignals(tabAddedSpy, 1);
+
+    // Url and title signals emitted are only once.
+    QCOMPARE(urlChangedSpy.count(), 1);
+    QCOMPARE(titleChangedSpy.count(), expectedTitleChangeCount);
+    QCOMPARE(tabCountSpy.count(), 1);
+    QCOMPARE(tabModel->count(), expectedTabCount);
+    QCOMPARE(webContainer->url(), newUrl);
+    QCOMPARE(webContainer->title(), expectedTitle);
+    QCOMPARE(tab->url(), newUrl);
+    QCOMPARE(tab->title(), expectedTitle);
+    QCOMPARE(activeTabChangedSpy.count(), 1);
+
+    // Signaled always when tab is changed.
+    QList<QVariant> arguments = activeTabChangedSpy.takeFirst();
+    int activatedTabId = arguments.at(0).toInt();
+    QCOMPARE(activatedTabId, tab->tabId());
+
+    // Signaled only when tab added.
+    QCOMPARE(tabAddedSpy.count(), 1);
+    arguments = tabAddedSpy.takeFirst();
+    int addedTabId = arguments.at(0).toInt();
+    QCOMPARE(addedTabId, tab->tabId());
+}
+
+/*!
+    Test tab activation, url and title change, and loading status. Tab order
+    changing is tested by tst_declarativetabmodel.
+*/
+void tst_webview::testActivateTab()
+{
+    // Active tabs in order:
+    // "testnavigation.html", "TestNavigation" (active)
+    // "testuseragent.html", "TestUserAgent" (0)
+    // "testselect.html", "TestSelect" (1)
+    // "testpage.html", "TestPage" (2)
+    QCOMPARE(tabModel->count(), 4);
+
+    // "testpage.html", "TestPage"
+    QModelIndex modelIndex = tabModel->createIndex(2, 0);
+    QString newActiveUrl = tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString();
+    QString newActiveTitle = tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString();
+    int newActiveTabId = tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt();
+
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int)));
+    QSignalSpy urlChangedSpy(webContainer, SIGNAL(urlChanged()));
+    QSignalSpy titleChangedSpy(webContainer, SIGNAL(titleChanged()));
+    QSignalSpy tabUrlChangedSpy(tab, SIGNAL(urlChanged()));
+    QSignalSpy tabTitleChangedSpy(tab, SIGNAL(titleChanged()));
+    QSignalSpy contentItemSpy(webContainer, SIGNAL(contentItemChanged()));
+
+    tabModel->activateTab(2);
+    QCOMPARE(activeTabChangedSpy.count(), 1);
+    QCOMPARE(contentItemSpy.count(), 1);
+    // Tab already loaded.
+    QVERIFY(!webContainer->webView()->loading());
+    QCOMPARE(webContainer->webView()->loadProgress(), 100);
+
+    QCOMPARE(tab->tabId(), newActiveTabId);
+    QCOMPARE(webContainer->url(), newActiveUrl);
+    QCOMPARE(webContainer->title(), newActiveTitle);
+    QCOMPARE(urlChangedSpy.count(), 1);
+    QCOMPARE(titleChangedSpy.count(), 1);
+    QCOMPARE(tab->url(), newActiveUrl);
+    QCOMPARE(tab->title(), newActiveTitle);
+    QCOMPARE(tabUrlChangedSpy.count(), 1);
+    QCOMPARE(tabTitleChangedSpy.count(), 1);
+
+    // Signaled always when tab is changed.
+    QList<QVariant> arguments = activeTabChangedSpy.takeFirst();
+    int activatedTabId = arguments.at(0).toInt();
+    QCOMPARE(activatedTabId, tab->tabId());
+}
+
+void tst_webview::testCloseActiveTab()
+{
+    // Active tabs in order:
+    // "testpage.html", "TestPage" (active)
+    // "testnavigation.html", "TestNavigation" (0)
+    // "testuseragent.html", "TestUserAgent" (1)
+    // "testselect.html", "TestSelect" (2)
+
+    // "testnavigation.html", "TestNavigation"
+    QModelIndex modelIndex = tabModel->createIndex(0, 0);
+    QString newActiveUrl = tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString();
+    QString newActiveTitle = tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString();
+    int newActiveTabId = tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt();
+
+    int previousTabId = tab->tabId();
+
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int)));
+    QSignalSpy tabClosedSpy(tabModel, SIGNAL(tabClosed(int)));
+    QSignalSpy urlChangedSpy(webContainer, SIGNAL(urlChanged()));
+    QSignalSpy titleChangedSpy(webContainer, SIGNAL(titleChanged()));
+    QSignalSpy tabUrlChangedSpy(tab, SIGNAL(urlChanged()));
+    QSignalSpy tabTitleChangedSpy(tab, SIGNAL(titleChanged()));
+    QSignalSpy contentItemSpy(webContainer, SIGNAL(contentItemChanged()));
+
+    tabModel->closeActiveTab();
+    QCOMPARE(activeTabChangedSpy.count(), 1);
+    QCOMPARE(tabClosedSpy.count(), 1);
+    QList<QVariant> arguments = tabClosedSpy.takeFirst();
+    int closedTabId = arguments.at(0).toInt();
+    QCOMPARE(closedTabId, previousTabId);
+    QCOMPARE(tabModel->count(), 3);
+    QCOMPARE(contentItemSpy.count(), 1);
+    // Tab already loaded.
+    QVERIFY(!webContainer->webView()->loading());
+    QCOMPARE(webContainer->webView()->loadProgress(), 100);
+
+    QCOMPARE(tab->tabId(), newActiveTabId);
+    QCOMPARE(webContainer->url(), newActiveUrl);
+    QCOMPARE(webContainer->title(), newActiveTitle);
+    QCOMPARE(urlChangedSpy.count(), 1);
+    QCOMPARE(titleChangedSpy.count(), 1);
+    QCOMPARE(tab->url(), newActiveUrl);
+    QCOMPARE(tab->title(), newActiveTitle);
+    QCOMPARE(tabUrlChangedSpy.count(), 1);
+    QCOMPARE(tabTitleChangedSpy.count(), 1);
+
+    // Signaled always when tab is changed.
+    arguments = activeTabChangedSpy.takeFirst();
+    int activatedTabId = arguments.at(0).toInt();
+    QCOMPARE(activatedTabId, tab->tabId());
+}
+
+void tst_webview::testRemoveTab()
+{
+    // Active tabs in order:
+    // "testnavigation.html", "TestNavigation" (active)
+    // "testuseragent.html", "TestUserAgent" (0)
+    // "testselect.html", "TestSelect" (1)
+
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int)));
+    QSignalSpy tabClosedSpy(tabModel, SIGNAL(tabClosed(int)));
+
+    QSignalSpy urlChangedSpy(webContainer, SIGNAL(urlChanged()));
+    QSignalSpy titleChangedSpy(webContainer, SIGNAL(titleChanged()));
+    QSignalSpy tabUrlChangedSpy(tab, SIGNAL(urlChanged()));
+    QSignalSpy tabTitleChangedSpy(tab, SIGNAL(titleChanged()));
+    QSignalSpy contentItemSpy(webContainer, SIGNAL(contentItemChanged()));
+
+    QModelIndex modelIndex = tabModel->createIndex(0, 0);
+    int tabIdOfIndexZero = tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt();
+    tabModel->remove(0);
+
+    QCOMPARE(tabClosedSpy.count(), 1);
+    QList<QVariant> arguments = tabClosedSpy.takeFirst();
+    int closedTabId = arguments.at(0).toInt();
+    QCOMPARE(closedTabId, tabIdOfIndexZero);
+    QCOMPARE(tabModel->count(), 2);
+
+    QVERIFY(activeTabChangedSpy.count() == 0);
+    QVERIFY(urlChangedSpy.count() == 0);
+    QVERIFY(titleChangedSpy.count() == 0);
+    QVERIFY(tabUrlChangedSpy.count() == 0);
+    QVERIFY(tabTitleChangedSpy.count() == 0);
+    QVERIFY(contentItemSpy.count() == 0);
+}
+
+void tst_webview::testUrlLoading()
+{
+    // Active tabs in order:
+    // "testnavigation.html", "TestNavigation" (active)
+    // "testselect.html", "TestSelect" (0)
+
+    QSignalSpy urlChangedSpy(webContainer, SIGNAL(urlChanged()));
+    QSignalSpy titleChangedSpy(webContainer, SIGNAL(titleChanged()));
+    QSignalSpy tabUrlChangedSpy(tab, SIGNAL(urlChanged()));
+    QSignalSpy tabTitleChangedSpy(tab, SIGNAL(titleChanged()));
+    QSignalSpy pageUrlChangedSpy(webContainer->webView(), SIGNAL(urlChanged()));
+    QSignalSpy pageTitleChangedSpy(webContainer->webView(), SIGNAL(titleChanged()));
+    QSignalSpy backNavigationChangedSpy(webContainer, SIGNAL(canGoBackChanged()));
+
+
+    QSignalSpy contentItemSpy(webContainer, SIGNAL(contentItemChanged()));
+    QSignalSpy loadingChanged(webContainer, SIGNAL(loadingChanged()));
+
+    QString newUrl = formatUrl("testurlscheme.html");
+    QString newTitle = "TestUrlScheme";
+
+    // Mimic favorite opening to a new tab. Favorites can have both url and title and when entering
+    // url through virtual keyboard only url is provided.
+    QMetaObject::invokeMethod(webContainer, "load", Qt::DirectConnection,
+                              Q_ARG(QVariant, newUrl),
+                              Q_ARG(QVariant, newTitle),
+                              Q_ARG(QVariant, false));
+    waitSignals(loadingChanged, 2);
+
+    QCOMPARE(contentItemSpy.count(), 0);
+
+    QCOMPARE(pageUrlChangedSpy.count(), 1);
+    QCOMPARE(pageTitleChangedSpy.count(), 1);
+    QCOMPARE(webContainer->webView()->url().toString(), newUrl);
+    QCOMPARE(webContainer->webView()->title(), newTitle);
+
+    // Title changes twice as as url change will not trigger title change.
+    // TODO: titleChangedSpy and tabTitleChangedSpy should be changed so
+    // that emit happens only once (JB#16850).
+    QCOMPARE(urlChangedSpy.count(), 1);
+    QCOMPARE(titleChangedSpy.count(), 3);
+    QCOMPARE(webContainer->url(), newUrl);
+    QCOMPARE(webContainer->title(), newTitle);
+    QCOMPARE(tabUrlChangedSpy.count(), 1);
+    QCOMPARE(tabTitleChangedSpy.count(), 3);
+    QCOMPARE(tab->url(), newUrl);
+    QCOMPARE(tab->title(), newTitle);
+
+    waitSignals(backNavigationChangedSpy, 1);
+    QVERIFY(webContainer->canGoBack());
+    QVERIFY(!webContainer->canGoForward());
+    QCOMPARE(tabModel->count(), 2);
 }
 
 void tst_webview::cleanupTestCase()
@@ -97,6 +381,27 @@ void tst_webview::cleanupTestCase()
     QFile dbFile(dbFileName);
     QVERIFY(dbFile.remove());
     QMozContext::GetInstance()->stopEmbedding();
+}
+
+/*!
+    Format url from \a fileName that is given as relative to the homePage.
+*/
+QString tst_webview::formatUrl(QString fileName) const
+{
+    return QUrl::fromLocalFile(baseUrl + "/" + fileName).toString();
+}
+
+/*!
+    Wait signal of \a spy to be emitted \a expectedSignalCount.
+
+    Note: this might cause indefinite loop, if not used cautiously. Check
+    that \a spy is initialized before expected emits can happen.
+ */
+void tst_webview::waitSignals(QSignalSpy &spy, int expectedSignalCount) const
+{
+    while (spy.count() < expectedSignalCount) {
+        spy.wait();
+    }
 }
 
 int main(int argc, char *argv[])

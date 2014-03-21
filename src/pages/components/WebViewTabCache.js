@@ -22,6 +22,8 @@ var _parent
 var _activeWebView
 var _activeTabs = {}
 
+var debug = false
+
 function init(args, component, container) {
     _arguments = args
     _webViewComponent = component
@@ -37,7 +39,7 @@ function getTab(tabId, parentId) {
         return { "view": _activeWebView, "activated": false }
     }
 
-    console.log("WebViewTabCache::getTab about to create a new tab or activate old: ", tabId)
+    if (debug) console.log("WebViewTabCache::getTab about to create a new tab or activate old: ", tabId)
 
     var tab = _activeTabs[tabId]
     var resurrect = tab && !tab.view
@@ -45,7 +47,7 @@ function getTab(tabId, parentId) {
         _arguments.parentId = parentId
         _arguments.tabId = tabId
         var webView = _webViewComponent.createObject(_parent, _arguments)
-        console.log("New view id: ", webView.uniqueID(), parentId, "tab id:", tabId)
+        if (debug) console.log("New view id: ", webView.uniqueID(), parentId, "tab id:", tabId)
         if (!tab) {
             tab = { "view": webView, "cssContentRect": null }
         } else {
@@ -56,14 +58,18 @@ function getTab(tabId, parentId) {
     }
 
     _updateActiveTab(tab, resurrect)
-    _dumpTabs()
+
+    if (debug) _dumpTabs()
+
     return { "view": tab.view, "activated": true }
 }
 
 function releaseTab(tabId, virtualize) {
     var tab = _activeTabs[tabId]
-    console.log("--- releaseTab: ", tabId, (tab ? tab.view : null))
-    _dumpTabs()
+    if (debug) {
+        console.log("--- releaseTab: ", tabId, (tab ? tab.view : null))
+        _dumpTabs()
+    }
     if (tab) {
         tab.view.destroy()
         if (virtualize) {
@@ -77,8 +83,11 @@ function releaseTab(tabId, virtualize) {
             _activeWebView = null
         }
     }
-    console.log("--- releaseTab end --- ")
-    _dumpTabs()
+
+    if (debug) {
+        console.log("--- releaseTab end --- ")
+        _dumpTabs()
+    }
 }
 
 function parentTabId(tabId) {
@@ -88,11 +97,9 @@ function parentTabId(tabId) {
         for (var i in _activeTabs) {
             var parentTab = _activeTabs[i]
             if (parentTab.view && parentTab.view.uniqueID() == parentId) {
-                console.log("Found parent view: ", parentTab, parentTab.view.title, parentTab.view.url, parentTab.cssContentRect)
-                return parentTab.tabId
+                return parentTab.view.tabId
             }
         }
-        console.log("ParentTab not found")
     }
     return null
 }

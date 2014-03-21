@@ -104,7 +104,6 @@ private slots:
 
 private:
     void load();
-    bool activateTab(const int &index, bool treatCurrentTabAsValid);
     void removeTab(int tabId, const QString &thumbnail, int index = -1);
     int findTabIndex(int tabId, bool &activeTab) const;
     void saveTabOrder();
@@ -120,5 +119,6 @@ private:
     bool m_backForwardNavigation;
 
     friend class tst_declarativetabmodel;
+    friend class tst_webview;
 };
 #endif // DECLARATIVETABMODEL_H
