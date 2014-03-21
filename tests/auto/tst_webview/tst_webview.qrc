@@ -16,6 +16,5 @@
     <file alias="WebPopupHandler.js">../../../src/pages/components/WebPopupHandler.js</file>
     <file alias="WebViewTabCache.js">../../../src/pages/components/WebViewTabCache.js</file>
     <file alias="UserPrompt.qml">../../../src/pages/components/UserPrompt.qml</file>
-    <file alias="ResourceController.qml">../../../src/pages/components/ResourceController.qml</file>
 </qresource>
 </RCC>
