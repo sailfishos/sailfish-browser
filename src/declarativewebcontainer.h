@@ -62,6 +62,7 @@ public:
     DeclarativeWebContainer(QQuickItem *parent = 0);
     ~DeclarativeWebContainer();
 
+    // TODO: Rename these
     QuickMozView *webView() const;
     void setWebView(QuickMozView *webView);
 

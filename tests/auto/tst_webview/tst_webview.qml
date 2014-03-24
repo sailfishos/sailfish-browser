@@ -28,6 +28,9 @@ ApplicationWindow {
         active: true
         toolbarHeight: 50
         portrait: true
+
+        // Mimic onOpenUrlRequested handler of BrowserPage
+        Component.onCompleted: tabModel.newTab(WebUtils.homePage, "")
     }
 
     cover: undefined
