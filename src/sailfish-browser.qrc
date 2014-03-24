@@ -27,7 +27,6 @@
     <file>pages/components/UserPrompt.qml</file>
     <file>pages/components/TitleBar.qml</file>
     <file>pages/components/TabItem.qml</file>
-    <file>pages/components/TabModel.qml</file>
     <file>pages/components/TabPageMenu.qml</file>
     <file>pages/components/WebView.qml</file>
     <file>pages/components/WebPopupHandler.js</file>
@@ -35,6 +34,5 @@
     <file>pages/components/HistoryList.qml</file>
     <file>pages/components/ResourceController.qml</file>
     <file>pages/components/UploadFilePicker.qml</file>
-    <file>pages/components/WebViewTabCache.js</file>
 </qresource>
 </RCC>

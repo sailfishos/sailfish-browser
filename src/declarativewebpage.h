@@ -19,13 +19,13 @@
 
 class DeclarativeWebPage : public QuickMozView {
     Q_OBJECT
-    Q_PROPERTY(DeclarativeWebContainer* container MEMBER m_container NOTIFY containerChanged FINAL)
-    Q_PROPERTY(int tabId MEMBER m_tabId NOTIFY tabIdChanged FINAL)
+    Q_PROPERTY(DeclarativeWebContainer* container READ container WRITE setContainer NOTIFY containerChanged FINAL)
+    Q_PROPERTY(int tabId READ tabId FINAL)
     Q_PROPERTY(bool viewReady MEMBER m_viewReady NOTIFY viewReadyChanged FINAL)
     Q_PROPERTY(bool loaded MEMBER m_loaded NOTIFY loadedChanged FINAL)
     Q_PROPERTY(bool userHasDraggedWhileLoading MEMBER m_userHasDraggedWhileLoading NOTIFY userHasDraggedWhileLoadingChanged FINAL)
     Q_PROPERTY(QString favicon MEMBER m_favicon NOTIFY faviconChanged FINAL)
-    Q_PROPERTY(QVariant resurrectedContentRect MEMBER m_resurrectedContentRect NOTIFY resurrectedContentRectChanged)
+    Q_PROPERTY(QVariant resurrectedContentRect READ resurrectedContentRect WRITE setResurrectedContentRect NOTIFY resurrectedContentRectChanged)
 
     // Private
     Q_PROPERTY(bool _deferredReload MEMBER m_deferredReload NOTIFY _deferredReloadChanged FINAL)
@@ -35,9 +35,17 @@ public:
     DeclarativeWebPage(QuickMozView *parent = 0);
     ~DeclarativeWebPage();
 
+    DeclarativeWebContainer* container() const;
+    void setContainer(DeclarativeWebContainer *container);
+
+    int tabId() const;
+    void setTabId(int tabId);
+
+    QVariant resurrectedContentRect() const;
+    void setResurrectedContentRect(QVariant resurrectedContentRect);
+
 signals:
     void containerChanged();
-    void tabIdChanged();
     void viewReadyChanged();
     void loadedChanged();
     void userHasDraggedWhileLoadingChanged();

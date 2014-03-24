@@ -130,6 +130,19 @@ bool DeclarativeWebContainer::background() const
     return m_background;
 }
 
+int DeclarativeWebContainer::loadProgress() const
+{
+    return m_loadProgress;
+}
+
+void DeclarativeWebContainer::setLoadProgress(int loadProgress)
+{
+    if (m_loadProgress != loadProgress) {
+        m_loadProgress = loadProgress;
+        emit loadProgressChanged();
+    }
+}
+
 bool DeclarativeWebContainer::active() const
 {
     return m_active;
@@ -214,6 +227,19 @@ QString DeclarativeWebContainer::url() const
 DeclarativeTab *DeclarativeWebContainer::currentTab() const
 {
     return m_currentTab;
+}
+
+bool DeclarativeWebContainer::readyToLoad() const
+{
+    return m_readyToLoad;
+}
+
+void DeclarativeWebContainer::setReadyToLoad(bool readyToLoad)
+{
+    if (m_readyToLoad != readyToLoad) {
+        m_readyToLoad = readyToLoad;
+        emit _readyToLoadChanged();
+    }
 }
 
 void DeclarativeWebContainer::goForward()

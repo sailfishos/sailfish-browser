@@ -59,7 +59,7 @@ WebContainer {
         currentTab.url = url
         currentTab.title = title
 
-        if (!model.hasNewTabData || force || !model.activateView(model.nextTabId)) {
+        if (!model.hasNewTabData || force || !model.activatePage(model.nextTabId)) {
             // First contentItem will be created once tab activated.
             if (contentItem) contentItem.loadTab(url, force)
         }
@@ -142,7 +142,7 @@ WebContainer {
     }
 
     // TODO: See comment at line 29. Merge this with DeclarativeTabModel if feasible.
-    Browser.TabModel {
+    TabModel {
         id: model
 
         webPageComponent: webPageComponent
@@ -151,6 +151,10 @@ WebContainer {
         // Enable browsing after new tab actually created or it was not even requested
         browsing: webView.active && !hasNewTabData && contentItem && contentItem.loaded
         onBrowsingChanged: if (browsing) captureScreen()
+
+        onTriggerLoad: webView.load(url, title)
+
+        Component.onCompleted: console.log("TabModel Component.onCompleted")
     }
 
     Component {
@@ -353,16 +357,6 @@ WebContainer {
                 }
             }
 
-            onWindowCloseRequested: {
-                console.log("webPage onWindowCloseRequested:", tabId)
-                var parentTabId = model.parentTabId(tabId)
-                // Closing only allowed if window was created by script
-                if (parentTabId) {
-                    model.activateTabById(parentTabId)
-                    model.removeTabById(tabId)
-                }
-            }
-
             // We decided to disable "text selection" until we understand how it
             // should look like in Sailfish.
             // TextSelectionController {}
@@ -417,9 +411,11 @@ WebContainer {
                     case "dl-fail":
                     case "dl-done": {
                         var previousContentItem = model.newTabPreviousView
+                        // TODO: Move releaseTab C++ public but not exposed to QML once
+                        // download handling pushed to C++.
                         model.releaseTab(contentItem.tabId)
                         if (previousContentItem) {
-                            model.activateView(previousContentItem.tabId)
+                            model.activatePage(previousContentItem.tabId)
                         } else if (model.count === 0) {
                             // Download doesn't add tab to model. Mimic
                             // model change in case tabs count goes to zero.
