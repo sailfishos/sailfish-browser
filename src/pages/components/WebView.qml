@@ -18,7 +18,7 @@ import "WebPopupHandler.js" as PopupHandler
 import "." as Browser
 
 WebContainer {
-    id: webContainer
+    id: webView
 
     // TODO: Push this to C++ if possible. Check if TabModel is feasible to merged to DeclarativeTabModel
     property alias tabModel: model
@@ -100,7 +100,7 @@ WebContainer {
     foreground: Qt.application.active
     inputPanelHeight: window.pageStack.panelSize
     inputPanelOpenHeight: window.pageStack.imSize
-    fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) || webContainer.inputPanelVisible || !webContainer.foreground
+    fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) || webView.inputPanelVisible || !webView.foreground
     _firstFrameRendered: resourceController.firstFrameRendered
     _readyToLoad: contentItem && contentItem.viewReady && tabModel.loaded
 
@@ -123,10 +123,10 @@ WebContainer {
         } else if (model.count > 0) {
             // First tab is actived when tabs are loaded to the tabs model.
             model.resetNewTabData()
-            webContainer.load(currentTab.url, currentTab.title)
+            webView.load(currentTab.url, currentTab.title)
         } else {
             // This can happen only during startup.
-            webContainer.load(WebUtils.homePage, "")
+            webView.load(WebUtils.homePage, "")
         }
     }
 
@@ -145,16 +145,16 @@ WebContainer {
     Browser.TabModel {
         id: model
 
-        webViewComponent: webViewComponent
-        webViewContainer: webContainer
+        webPageComponent: webPageComponent
+        webView: webView
 
         // Enable browsing after new tab actually created or it was not even requested
-        browsing: webContainer.active && !hasNewTabData && contentItem && contentItem.loaded
+        browsing: webView.active && !hasNewTabData && contentItem && contentItem.loaded
         onBrowsingChanged: if (browsing) captureScreen()
     }
 
     Component {
-        id: webViewComponent
+        id: webPageComponent
         WebPage {
             id: webPage
 
@@ -400,7 +400,7 @@ WebContainer {
         width: contentItem ? contentItem.horizontalScrollDecorator.size : 0
         height: 5
         x: contentItem ? contentItem.horizontalScrollDecorator.position : 0
-        y: webContainer.parent.height - (fullscreenMode ? 0 : toolbarHeight) - height
+        y: webView.parent.height - (fullscreenMode ? 0 : toolbarHeight) - height
         z: 1
         color: _decoratorColor
         smooth: true
@@ -445,7 +445,7 @@ WebContainer {
                 url = contentItem._deferredLoad["url"]
                 title = contentItem._deferredLoad["title"]
                 contentItem._deferredLoad = null
-                webContainer.load(url, title, true)
+                webView.load(url, title, true)
             } else if (contentItem && contentItem._deferredReload) {
                 contentItem._deferredReload = false
                 contentItem.reload()
@@ -463,7 +463,7 @@ WebContainer {
     ResourceController {
         id: resourceController
         webView: contentItem
-        background: webContainer.background
+        background: webView.background
 
         onWebViewSuspended: connectionHelper.closeNetworkSession()
         onFirstFrameRenderedChanged: {
@@ -483,7 +483,7 @@ WebContainer {
     Component.onCompleted: {
         PopupHandler.auxTimer = auxTimer
         PopupHandler.pageStack = pageStack
-        PopupHandler.webViewContainer = webContainer
+        PopupHandler.webView = webView
         PopupHandler.resourceController = resourceController
         PopupHandler.WebUtils = WebUtils
         PopupHandler.tabModel = tabModel

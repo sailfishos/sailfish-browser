@@ -14,8 +14,8 @@ import Sailfish.Browser 1.0
 import "WebViewTabCache.js" as TabCache
 
 TabModel {
-    property Component webViewComponent
-    property Item webViewContainer
+    property Component webPageComponent
+    property Item webView
 
     readonly property bool hasNewTabData: _newTabData && _newTabData.url
     readonly property string newTabUrl: hasNewTabData ? _newTabData.url : ""
@@ -31,8 +31,8 @@ TabModel {
     property var _newTabData: null
 
     function newTab(url, title, parentId) {
-        newTabData(url, title, webViewContainer.contentItem, parentId)
-        webViewContainer.load(url, title)
+        newTabData(url, title, webView.contentItem, parentId)
+        webView.load(url, title)
     }
 
     function newTabData(url, title, contentItem, parentId) {
@@ -50,15 +50,14 @@ TabModel {
     // TabModel could keep also TabCache internally.
     function activateView(tabId, force) {
         if (!TabCache.initialized) {
-            TabCache.init({"tab": currentTab, "container": webViewContainer},
-                          webViewComponent, webViewContainer)
+            TabCache.init({"container": webView}, webPageComponent, webView)
         }
 
         if ((loaded || force) && tabId > 0) {
             var activationObject = TabCache.getTab(tabId, hasNewTabData ? _newTabData.parentId : 0)
-            webViewContainer.contentItem = activationObject.view
-            webViewContainer.contentItem.chrome = true
-            webViewContainer.loadProgress = webViewContainer.contentItem.loadProgress
+            webView.contentItem = activationObject.view
+            webView.contentItem.chrome = true
+            webView.loadProgress = webView.contentItem.loadProgress
             return activationObject.activated
         }
         return false
@@ -67,7 +66,7 @@ TabModel {
     function releaseTab(tabId, virtualize) {
         TabCache.releaseTab(tabId, virtualize)
         if (count == 0) {
-            webViewContainer.contentItem = null
+            webView.contentItem = null
         }
         resetNewTabData()
     }
@@ -86,17 +85,17 @@ TabModel {
     // arguments of the signal handler: int tabId
     onActiveTabChanged: {
         if (hasNewTabData) {
-            webViewContainer.currentTabChanged()
+            webView.currentTabChanged()
             return
         }
 
         // When all tabs are closed tabId is invalid and view will not get activated.
-        if (activateView(tabId, true) && currentTab.valid && webViewContainer._readyToLoad
-                && (webViewContainer.contentItem.tabId !== tabId || currentTab.url != webViewContainer.contentItem.url)) {
-            webViewContainer.load(currentTab.url, currentTab.title)
+        if (activateView(tabId, true) && webView.currentTab.valid && webView._readyToLoad
+                && (webView.contentItem.tabId !== tabId || webView.currentTab.url != webView.contentItem.url)) {
+            webView.load(webView.currentTab.url, webView.currentTab.title)
         }
 
-        webViewContainer.currentTabChanged()
+        webView.currentTabChanged()
         _manageMaxTabCount()
     }
 
@@ -109,7 +108,7 @@ TabModel {
     onLoadedChanged: {
         // Load placeholder for the case where no tabs exist. If a tab exists,
         // it gets initialized by onActiveTabChanged.
-        if (loaded && !webViewContainer.contentItem) {
+        if (loaded && !webView.contentItem) {
             activateView(nextTabId, true)
         }
     }
