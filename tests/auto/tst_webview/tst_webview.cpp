@@ -18,6 +18,7 @@
 #include "declarativetab.h"
 #include "declarativetabmodel.h"
 #include "declarativewebcontainer.h"
+#include "declarativewebpage.h"
 #include "declarativewebviewcreator.h"
 #include "webUtilsMock.h"
 
@@ -417,6 +418,7 @@ int main(int argc, char *argv[])
     qmlRegisterUncreatableType<DeclarativeTab>("Sailfish.Browser", 1, 0, "Tab", "");
     qmlRegisterType<DeclarativeTabModel>("Sailfish.Browser", 1, 0, "TabModel");
     qmlRegisterType<DeclarativeWebContainer>("Sailfish.Browser", 1, 0, "WebContainer");
+    qmlRegisterType<DeclarativeWebPage>("Sailfish.Browser", 1, 0, "WebPage");
     qmlRegisterType<DeclarativeWebViewCreator>("Sailfish.Browser", 1, 0, "WebViewCreator");
     qmlRegisterSingletonType<WebUtilsMock>("Sailfish.Browser", 1, 0, "WebUtils", WebUtilsMock::singletonApiFactory);
     view.rootContext()->setContextProperty("MozContext", QMozContext::GetInstance());

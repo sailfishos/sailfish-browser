@@ -123,7 +123,8 @@ function _updateActiveTab(tab, resurrect) {
     }
     _activeWebView = tab.view
     if (resurrect) {
-        _activeWebView.resurrectedContentRect = tab.cssContentRect
+        _activeWebView.resurrectedContentRect = Qt.rect(tab.cssContentRect.x, tab.cssContentRect.y,
+                                                        tab.cssContentRect.width, tab.cssContentRect.height)
         _activeTabs[_activeWebView.tabId].cssContentRect = null
     }
 
