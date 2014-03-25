@@ -12,12 +12,12 @@
 #include "declarativewebcontainer.h"
 #include "declarativetab.h"
 #include "declarativetabmodel.h"
+#include "declarativewebpage.h"
 #include "dbmanager.h"
 
 #include <QPointer>
 #include <QTimerEvent>
 #include <QQuickWindow>
-#include <quickmozview.h>
 #include <QDir>
 #include <QTransform>
 #include <QStandardPaths>
@@ -29,7 +29,7 @@
 
 DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     : QQuickItem(parent)
-    , m_webView(0)
+    , m_webPage(0)
     , m_model(0)
     , m_currentTab(new DeclarativeTab(this))
     , m_foreground(true)
@@ -75,34 +75,34 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
 DeclarativeWebContainer::~DeclarativeWebContainer()
 {
     // Disconnect all signal slot connections
-    if (m_webView) {
-        disconnect(m_webView, 0, 0, 0);
+    if (m_webPage) {
+        disconnect(m_webPage, 0, 0, 0);
     }
 
     m_screenCapturer.cancel();
     m_screenCapturer.waitForFinished();
 }
 
-QuickMozView *DeclarativeWebContainer::webView() const
+DeclarativeWebPage *DeclarativeWebContainer::webPage() const
 {
-    return m_webView;
+    return m_webPage;
 }
 
-void DeclarativeWebContainer::setWebView(QuickMozView *webView)
+void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
 {
-    if (m_webView != webView) {
-        if (m_webView) {
-            disconnect(m_webView);
+    if (m_webPage != webPage) {
+        if (m_webPage) {
+            disconnect(m_webPage);
         }
 
-        if (webView) {
-            connect(webView, SIGNAL(imeNotification(int,bool,int,int,QString)),
+        if (webPage) {
+            connect(webPage, SIGNAL(imeNotification(int,bool,int,int,QString)),
                     this, SLOT(imeNotificationChanged(int,bool,int,int,QString)));
-            connect(webView, SIGNAL(contentHeightChanged()), this, SLOT(resetHeight()));
-            connect(webView, SIGNAL(scrollableOffsetChanged()), this, SLOT(resetHeight()));
+            connect(webPage, SIGNAL(contentHeightChanged()), this, SLOT(resetHeight()));
+            connect(webPage, SIGNAL(scrollableOffsetChanged()), this, SLOT(resetHeight()));
             connect(this, SIGNAL(heightChanged()), this, SLOT(resetHeight()));
         }
-        m_webView = webView;
+        m_webPage = webPage;
         emit contentItemChanged();
     }
 }
@@ -220,9 +220,9 @@ void DeclarativeWebContainer::goForward()
 {
     if (m_canGoForward && m_currentTab->valid()) {
         m_currentTab->activateNextLink();
-        if (m_webView && m_webView->canGoForward()) {
+        if (m_webPage && m_webPage->canGoForward()) {
             m_realNavigation = true;
-            m_webView->goForward();
+            m_webPage->goForward();
         } else {
             m_realNavigation = false;
         }
@@ -236,9 +236,9 @@ void DeclarativeWebContainer::goBack()
 {
     if (m_canGoBack && m_currentTab->valid()) {
         m_currentTab->activatePreviousLink();
-        if (m_webView && m_webView->canGoBack()) {
+        if (m_webPage && m_webPage->canGoBack()) {
             m_realNavigation = true;
-            m_webView->goBack();
+            m_webPage->goBack();
         } else {
             m_realNavigation = false;
         }
@@ -250,7 +250,7 @@ void DeclarativeWebContainer::goBack()
 
 void DeclarativeWebContainer::captureScreen()
 {
-    if (!m_webView) {
+    if (!m_webPage) {
         return;
     }
 
@@ -267,7 +267,7 @@ void DeclarativeWebContainer::captureScreen()
 
 void DeclarativeWebContainer::resetHeight(bool respectContentHeight)
 {
-    if (!m_webView || !m_webView->state().isEmpty()) {
+    if (!m_webPage || !m_webPage->state().isEmpty()) {
         return;
     }
 
@@ -275,19 +275,19 @@ void DeclarativeWebContainer::resetHeight(bool respectContentHeight)
 
     // Application active
     if (respectContentHeight) {
-        // Handle webView height over here, BrowserPage.qml loading
+        // Handle webPage height over here, BrowserPage.qml loading
         // reset might be redundant as we have also loaded trigger
         // reset. However, I'd leave it there for safety reasons.
         // We need to reset height always back to short height when loading starts
         // so that after tab change there is always initial short composited height.
         // Height may expand when content is moved.
         if (contentHeight() > fullHeight + m_toolbarHeight) {
-            m_webView->setHeight(fullHeight);
+            m_webPage->setHeight(fullHeight);
         } else {
-            m_webView->setHeight(fullHeight - m_toolbarHeight);
+            m_webPage->setHeight(fullHeight - m_toolbarHeight);
         }
     } else {
-        m_webView->setHeight(fullHeight - m_toolbarHeight);
+        m_webPage->setHeight(fullHeight - m_toolbarHeight);
     }
 }
 
@@ -313,8 +313,8 @@ void DeclarativeWebContainer::imeNotificationChanged(int state, bool open, int c
 
 qreal DeclarativeWebContainer::contentHeight() const
 {
-    if (m_webView) {
-        return m_webView->contentHeight();
+    if (m_webPage) {
+        return m_webPage->contentHeight();
     } else {
         return 0.0;
     }
@@ -436,7 +436,7 @@ void DeclarativeWebContainer::triggerLoad()
     bool realNavigation = m_realNavigation;
     m_realNavigation = false;
     // Back / forward navigation activated and MozView instance cannot be used.
-    if (m_webView && m_currentTab->valid() && m_model->backForwardNavigation() && !realNavigation && url() != "about:blank") {
+    if (m_webPage && m_currentTab->valid() && m_model->backForwardNavigation() && !realNavigation && url() != "about:blank") {
         QMetaObject::invokeMethod(this, "load", Qt::DirectConnection,
                                   Q_ARG(QVariant, url()),
                                   Q_ARG(QVariant, title()),

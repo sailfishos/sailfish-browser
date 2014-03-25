@@ -20,14 +20,14 @@
 #include <QFutureWatcher>
 
 class QTimerEvent;
-class QuickMozView;
 class DeclarativeTab;
 class DeclarativeTabModel;
+class DeclarativeWebPage;
 
 class DeclarativeWebContainer : public QQuickItem {
     Q_OBJECT
 
-    Q_PROPERTY(QuickMozView *contentItem READ webView WRITE setWebView NOTIFY contentItemChanged FINAL)
+    Q_PROPERTY(DeclarativeWebPage *contentItem READ webPage WRITE setWebPage NOTIFY contentItemChanged FINAL)
     Q_PROPERTY(bool foreground READ foreground WRITE setForeground NOTIFY foregroundChanged FINAL)
     Q_PROPERTY(bool active READ active WRITE setActive NOTIFY activeChanged FINAL)
     // This property should cover all possible popus
@@ -62,9 +62,8 @@ public:
     DeclarativeWebContainer(QQuickItem *parent = 0);
     ~DeclarativeWebContainer();
 
-    // TODO: Rename these
-    QuickMozView *webView() const;
-    void setWebView(QuickMozView *webView);
+    DeclarativeWebPage *webPage() const;
+    void setWebPage(DeclarativeWebPage *webPage);
 
     bool foreground() const;
     void setForeground(bool active);
@@ -154,7 +153,7 @@ private:
     // TODO: Remove url parameter from this, worker, and manager.
     ScreenCapture saveToFile(QString url, QImage image, QRect cropBounds, int tabId, qreal rotate);
 
-    QPointer<QuickMozView> m_webView;
+    QPointer<DeclarativeWebPage> m_webPage;
     QPointer<DeclarativeTabModel> m_model;
     QPointer<DeclarativeTab> m_currentTab;
     bool m_foreground;

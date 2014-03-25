@@ -12,7 +12,6 @@
 #include <QtTest>
 #include <QQmlContext>
 #include <QQuickView>
-#include <quickmozview.h>
 #include <qmozcontext.h>
 
 #include "declarativetab.h"
@@ -81,11 +80,11 @@ void tst_webview::initTestCase()
 
     waitSignals(loadingChanged, 2);
 
-    QuickMozView *webView = webContainer->webView();
-    QVERIFY(webView);
+    DeclarativeWebPage *webPage = webContainer->webPage();
+    QVERIFY(webPage);
     QVERIFY(WebUtilsMock::instance());
-    QCOMPARE(webView->url().toString(), WebUtilsMock::instance()->homePage);
-    QCOMPARE(webView->title(), QString("TestPage"));
+    QCOMPARE(webPage->url().toString(), WebUtilsMock::instance()->homePage);
+    QCOMPARE(webPage->title(), QString("TestPage"));
     QCOMPARE(tab->url(), WebUtilsMock::instance()->homePage);
     QCOMPARE(tab->title(), QString("TestPage"));
     QCOMPARE(tabModel->count(), 1);
@@ -128,8 +127,8 @@ void tst_webview::testNewTab()
 
     int expectedTabCount = tabModel->count() + 1;
 
-    QuickMozView *previousView = webContainer->webView();
-    QVERIFY(previousView);
+    DeclarativeWebPage *previousPage = webContainer->webPage();
+    QVERIFY(previousPage);
 
     // Mimic favorite opening to a new tab. Favorites can have both url and title and when entering
     // url through virtual keyboard only url is provided.
@@ -138,15 +137,15 @@ void tst_webview::testNewTab()
     // Wait for MozView instance change.
     waitSignals(contentItemSpy, 1);
 
-    QVERIFY(webContainer->webView());
-    QVERIFY(previousView != webContainer->webView());
+    QVERIFY(webContainer->webPage());
+    QVERIFY(previousPage != webContainer->webPage());
     QCOMPARE(contentItemSpy.count(), 1);
     waitSignals(loadingChanged, 2);
 
     // These are difficult to spy at this point as url changes almost immediately
     // and contentItem is changed in newTab code path.
-    QCOMPARE(webContainer->webView()->url().toString(), newUrl);
-    QCOMPARE(webContainer->webView()->title(), expectedTitle);
+    QCOMPARE(webContainer->webPage()->url().toString(), newUrl);
+    QCOMPARE(webContainer->webPage()->title(), expectedTitle);
 
     // ~last in the sequence of adding a new tab.
     waitSignals(tabAddedSpy, 1);
@@ -204,8 +203,8 @@ void tst_webview::testActivateTab()
     QCOMPARE(activeTabChangedSpy.count(), 1);
     QCOMPARE(contentItemSpy.count(), 1);
     // Tab already loaded.
-    QVERIFY(!webContainer->webView()->loading());
-    QCOMPARE(webContainer->webView()->loadProgress(), 100);
+    QVERIFY(!webContainer->webPage()->loading());
+    QCOMPARE(webContainer->webPage()->loadProgress(), 100);
 
     QCOMPARE(tab->tabId(), newActiveTabId);
     QCOMPARE(webContainer->url(), newActiveUrl);
@@ -256,8 +255,8 @@ void tst_webview::testCloseActiveTab()
     QCOMPARE(tabModel->count(), 3);
     QCOMPARE(contentItemSpy.count(), 1);
     // Tab already loaded.
-    QVERIFY(!webContainer->webView()->loading());
-    QCOMPARE(webContainer->webView()->loadProgress(), 100);
+    QVERIFY(!webContainer->webPage()->loading());
+    QCOMPARE(webContainer->webPage()->loadProgress(), 100);
 
     QCOMPARE(tab->tabId(), newActiveTabId);
     QCOMPARE(webContainer->url(), newActiveUrl);
@@ -319,8 +318,8 @@ void tst_webview::testUrlLoading()
     QSignalSpy titleChangedSpy(webContainer, SIGNAL(titleChanged()));
     QSignalSpy tabUrlChangedSpy(tab, SIGNAL(urlChanged()));
     QSignalSpy tabTitleChangedSpy(tab, SIGNAL(titleChanged()));
-    QSignalSpy pageUrlChangedSpy(webContainer->webView(), SIGNAL(urlChanged()));
-    QSignalSpy pageTitleChangedSpy(webContainer->webView(), SIGNAL(titleChanged()));
+    QSignalSpy pageUrlChangedSpy(webContainer->webPage(), SIGNAL(urlChanged()));
+    QSignalSpy pageTitleChangedSpy(webContainer->webPage(), SIGNAL(titleChanged()));
     QSignalSpy backNavigationChangedSpy(webContainer, SIGNAL(canGoBackChanged()));
 
 
@@ -342,8 +341,8 @@ void tst_webview::testUrlLoading()
 
     QCOMPARE(pageUrlChangedSpy.count(), 1);
     QCOMPARE(pageTitleChangedSpy.count(), 1);
-    QCOMPARE(webContainer->webView()->url().toString(), newUrl);
-    QCOMPARE(webContainer->webView()->title(), newTitle);
+    QCOMPARE(webContainer->webPage()->url().toString(), newUrl);
+    QCOMPARE(webContainer->webPage()->title(), newTitle);
 
     // Title changes twice as as url change will not trigger title change.
     // TODO: titleChangedSpy and tabTitleChangedSpy should be changed so
