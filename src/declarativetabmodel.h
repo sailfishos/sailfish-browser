@@ -24,6 +24,7 @@
 #include "declarativewebcontainer.h"
 
 class DeclarativeTab;
+class DeclarativeWebPage;
 
 class DeclarativeTabModel : public QAbstractListModel, public QQmlParserStatus
 {
@@ -41,8 +42,6 @@ class DeclarativeTabModel : public QAbstractListModel, public QQmlParserStatus
     Q_PROPERTY(QString newTabUrl READ newTabUrl NOTIFY newTabUrlChanged FINAL)
     // TODO: Only needed by WebPage::loadTab
     Q_PROPERTY(QString newTabTitle READ newTabTitle NOTIFY newTabTitleChanged FINAL)
-    // TODO: Only needed by download handler
-    Q_PROPERTY(QQuickItem* newTabPreviousView READ newTabPreviousView NOTIFY newTabPreviousViewChanged FINAL)
     Q_PROPERTY(QQmlComponent* webPageComponent MEMBER m_webPageComponent NOTIFY webPageComponentChanged FINAL)
     Q_PROPERTY(DeclarativeWebContainer* webView MEMBER m_webView NOTIFY webViewChanged FINAL)
 
@@ -63,12 +62,10 @@ public:
     Q_INVOKABLE bool activateTab(int index);
     Q_INVOKABLE bool activatePage(int tabId, bool force = false);
     Q_INVOKABLE void closeActiveTab();
-    // Remove invokable once "embed:download" handler is in C++ side.
-    Q_INVOKABLE void releaseTab(int tabId, bool virtualize = false);
 
     Q_INVOKABLE int lastTabId() const;
     Q_INVOKABLE void newTab(const QString &url, const QString &title, int parentId = 0);
-    Q_INVOKABLE void newTabData(const QString &url, const QString &title, QQuickItem *contentItem = 0, int parentId = 0);
+    Q_INVOKABLE void newTabData(const QString &url, const QString &title, DeclarativeWebPage *contentItem = 0, int parentId = 0);
     Q_INVOKABLE void resetNewTabData();
 
     Q_INVOKABLE void dumpTabs() const;
@@ -76,6 +73,7 @@ public:
     int count() const;
     bool activateTabById(int tabId);
     void removeTabById(int tabId);
+    void releaseTab(int tabId, bool virtualize = false);
 
     // From QAbstractListModel
     int rowCount(const QModelIndex & parent = QModelIndex()) const;
@@ -99,7 +97,6 @@ public:
     bool hasNewTabData() const;
     QString newTabUrl() const;
     QString newTabTitle() const;
-    QQuickItem* newTabPreviousView() const;
 
     int newTabParentId() const;
     int parentTabId(int tabId) const;
@@ -127,7 +124,6 @@ signals:
     void hasNewTabDataChanged();
     void newTabUrlChanged();
     void newTabTitleChanged();
-    void newTabPreviousViewChanged();
     void webPageComponentChanged();
     void webViewChanged();
     void triggerLoad(QString url, QString title);
@@ -139,20 +135,21 @@ private slots:
     void updateThumbPath(QString url, QString path, int tabId);
     void tabChanged(const Tab &tab);
     void onActiveTabChanged(int tabId);
+    void onDownloadStarted();
     void closeWindow();
 
 private:
     struct NewTabData {
-        NewTabData(QString url, QString title, QQuickItem *previousView, int parentId)
+        NewTabData(QString url, QString title, DeclarativeWebPage *previousPage, int parentId)
             : url(url)
             , title(title)
-            , previousView(previousView)
+            , previousPage(previousPage)
             , parentId(parentId)
         {}
 
         QString url;
         QString title;
-        QQuickItem *previousView;
+        DeclarativeWebPage *previousPage;
         int parentId;
     };
 
@@ -163,8 +160,9 @@ private:
     int loadTabOrder();
     void updateActiveTab(const Tab &newActiveTab);
     void updateTabUrl(int tabId, const QString &url, bool navigate);
-    void updateNewTabData(NewTabData *newTabData, bool urlChanged, bool titleChanged, bool previousViewChanged);
+    void updateNewTabData(NewTabData *newTabData, bool urlChanged, bool titleChanged);
     void manageMaxTabCount();
+    DeclarativeWebPage* newTabPreviousPage() const;
 
     QPointer<DeclarativeTab> m_currentTab;
     QList<Tab> m_tabs;

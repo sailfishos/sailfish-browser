@@ -19,6 +19,8 @@
 #include <QDir>
 #include <QScreen>
 #include <QDBusConnection>
+#include <QDBusMessage>
+#include <QDBusPendingCall>
 
 #include "qmozcontext.h"
 
@@ -119,7 +121,12 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     view->rootContext()->setContextProperty("WebUtils", utils);
     view->rootContext()->setContextProperty("MozContext", QMozContext::GetInstance());
 
-    DownloadManager  * dlMgr = new DownloadManager(service, app.data());
+    DownloadManager *dlMgr = DownloadManager::instance();
+    dlMgr->connect(service, SIGNAL(cancelTransferRequested(int)),
+            dlMgr, SLOT(cancelTransfer(int)));
+    dlMgr->connect(service, SIGNAL(restartTransferRequested(int)),
+            dlMgr, SLOT(restartTransfer(int)));
+
     CloseEventFilter * clsEventFilter = new CloseEventFilter(dlMgr, app.data());
     view->installEventFilter(clsEventFilter);
     QObject::connect(service, SIGNAL(openUrlRequested(QString)),

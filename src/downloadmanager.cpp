@@ -12,20 +12,25 @@
 #include "downloadmanager.h"
 #include "qmozcontext.h"
 
-DownloadManager::DownloadManager(BrowserService *service, QObject *parent)
-    : QObject(parent)
+#include <transferengineinterface.h>
+#include <transfertypes.h>
+
+static DownloadManager *gSingleton = 0;
+
+DownloadManager::DownloadManager()
+    : QObject()
 {
     m_transferClient = new TransferEngineInterface("org.nemo.transferengine",
                                                    "/org/nemo/transferengine",
                                                    QDBusConnection::sessionBus(),
                                                    this);
-
     connect(QMozContext::GetInstance(), SIGNAL(recvObserve(const QString, const QVariant)),
             this, SLOT(recvObserve(const QString, const QVariant)));
-    connect(service, SIGNAL(cancelTransferRequested(int)),
-            this, SLOT(cancelTransfer(int)));
-    connect(service, SIGNAL(restartTransferRequested(int)),
-            this, SLOT(restartTransfer(int)));
+}
+
+DownloadManager::~DownloadManager()
+{
+    gSingleton = 0;
 }
 
 void DownloadManager::recvObserve(const QString message, const QVariant data)
@@ -43,6 +48,7 @@ void DownloadManager::recvObserve(const QString message, const QVariant data)
         m_transferClient->startTransfer(m_download2transferMap.value(downloadId));
         m_statusCache.insert(downloadId, DownloadStarted);
     } else if (msg == "dl-start") { // create new transfer
+        emit downloadStarted();
         QStringList callback;
         callback << "org.sailfishos.browser" << "/" << "org.sailfishos.browser";
         QDBusPendingReply<int> reply = m_transferClient->createDownload(dataMap.value("displayName").toString(),
@@ -129,6 +135,14 @@ void DownloadManager::restartTransfer(int transferId)
                                          TransferEngineData::TransferInterrupted,
                                          QString("Transfer got unavailable"));
     }
+}
+
+DownloadManager *DownloadManager::instance()
+{
+    if (!gSingleton) {
+        gSingleton = new DownloadManager();
+    }
+    return gSingleton;
 }
 
 bool DownloadManager::existActiveTransfers()

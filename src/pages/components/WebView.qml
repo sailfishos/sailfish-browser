@@ -56,8 +56,11 @@ WebContainer {
         }
 
         // Bookmarks and history items pass url and title as arguments.
-        currentTab.url = url
-        currentTab.title = title
+        // Only set url and title if title exists.
+        if (title) {
+            currentTab.title = title
+            currentTab.url = url
+        }
 
         if (!model.hasNewTabData || force || !model.activatePage(model.nextTabId)) {
             // First contentItem will be created once tab activated.
@@ -153,8 +156,6 @@ WebContainer {
         onBrowsingChanged: if (browsing) captureScreen()
 
         onTriggerLoad: webView.load(url, title)
-
-        Component.onCompleted: console.log("TabModel Component.onCompleted")
     }
 
     Component {
@@ -401,31 +402,6 @@ WebContainer {
         visible: contentItem && contentItem.contentWidth > contentItem.width && !contentItem.pinching && !popupActive
         opacity: contentItem && contentItem.horizontalScrollDecorator.moving ? 1.0 : 0.0
         Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
-    }
-
-    Connections {
-        target: MozContext
-        onRecvObserve: {
-            if (message === "embed:download") {
-                switch (data.msg) {
-                    case "dl-fail":
-                    case "dl-done": {
-                        var previousContentItem = model.newTabPreviousView
-                        // TODO: Move releaseTab C++ public but not exposed to QML once
-                        // download handling pushed to C++.
-                        model.releaseTab(contentItem.tabId)
-                        if (previousContentItem) {
-                            model.activatePage(previousContentItem.tabId)
-                        } else if (model.count === 0) {
-                            // Download doesn't add tab to model. Mimic
-                            // model change in case tabs count goes to zero.
-                            model.countChanged()
-                        }
-                        break
-                    }
-                }
-            }
-        }
     }
 
     ConnectionHelper {
