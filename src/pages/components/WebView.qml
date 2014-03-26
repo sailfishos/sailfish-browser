@@ -102,7 +102,6 @@ WebContainer {
     inputPanelHeight: window.pageStack.panelSize
     inputPanelOpenHeight: window.pageStack.imSize
     fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) || webView.inputPanelVisible || !webView.foreground || (contentItem && contentItem.fullscreen)
-    _firstFrameRendered: resourceController.firstFrameRendered
     _readyToLoad: contentItem && contentItem.viewReady && tabModel.loaded
 
     loading: contentItem ? contentItem.loading : false
@@ -158,26 +157,6 @@ WebContainer {
             id: webPage
 
             loaded: loadProgress === 100 && !loading
-
-            function loadTab(newUrl, force) {
-                // Always enable chrome when load is called.
-                chrome = true
-                if ((newUrl !== "" && url != newUrl) || force) {
-                    resourceController.firstFrameRendered = false
-                    webPage.load(newUrl)
-                }
-
-                // This looks like a not needed condition for now. However, if we add a max number of real tabs
-                // limit then this could make sense again.
-                else if (url == newUrl && tabModel.hasNewTabData) {
-                    // Url will not change when the very same url is already loaded. Thus, we just add tab directly.
-                    // This is currently the only exception. Normally tab is added after engine has
-                    // resolved the url.
-                    tabModel.addTab(newUrl, tabModel.newTabTitle)
-                    tabModel.resetNewTabData()
-                }
-            }
-
             enabled: container.active
             // There needs to be enough content for enabling chrome gesture
             chromeGestureThreshold: container.toolbarHeight
@@ -431,11 +410,6 @@ WebContainer {
         background: webView.background
 
         onWebViewSuspended: connectionHelper.closeNetworkSession()
-        onFirstFrameRenderedChanged: {
-            if (firstFrameRendered) {
-                captureScreen()
-            }
-        }
     }
 
     Timer {

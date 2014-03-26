@@ -27,6 +27,7 @@ static QList<int> s_tabOrder;
 DeclarativeTabModel::DeclarativeTabModel(QObject *parent)
     : QAbstractListModel(parent)
     , m_currentTab(0)
+    , m_webView(0)
     , m_loaded(false)
     , m_browsing(false)
     , m_nextTabId(DBManager::instance()->getMaxTabId() + 1)
@@ -199,18 +200,12 @@ void DeclarativeTabModel::newTab(const QString &url, const QString &title, int p
 
 void DeclarativeTabModel::newTabData(const QString &url, const QString &title, DeclarativeWebPage *contentItem, int parentId)
 {
-    bool urlChanged = newTabUrl() != url;
-    bool titleChanged = newTabTitle() != title;
-
-    updateNewTabData(new NewTabData(url, title, contentItem, parentId), urlChanged, titleChanged);
+    updateNewTabData(new NewTabData(url, title, contentItem, parentId));
 }
 
 void DeclarativeTabModel::resetNewTabData()
 {
-    bool urlChanged = !newTabUrl().isEmpty();
-    bool titleChanged = !newTabTitle().isEmpty();
-
-    updateNewTabData(0, urlChanged, titleChanged);
+    updateNewTabData(0);
 }
 
 void DeclarativeTabModel::dumpTabs() const
@@ -333,6 +328,11 @@ void DeclarativeTabModel::setBackForwardNavigation(bool backForwardNavigation)
     m_backForwardNavigation = backForwardNavigation;
 }
 
+void DeclarativeTabModel::setWebView(DeclarativeWebContainer *webView)
+{
+    m_webView = webView;
+}
+
 void DeclarativeTabModel::classBegin()
 {
     DBManager::instance()->getAllTabs();
@@ -417,11 +417,12 @@ void DeclarativeTabModel::tabChanged(const Tab &tab)
 
 void DeclarativeTabModel::updateUrl(int tabId, QString url)
 {
-    if (m_currentTab && m_backForwardNavigation && m_currentTab->tabId() == tabId)
+    bool activeTab = m_webView && m_webView->isActiveTab(tabId);
+    if (m_backForwardNavigation && activeTab)
     {
         updateTabUrl(tabId, url, false);
     } else {
-        if (!hasNewTabData() && m_currentTab) {
+        if (!hasNewTabData() && activeTab) {
             updateTabUrl(tabId, url, true);
         } else {
             addTab(url, newTabTitle());
@@ -480,18 +481,15 @@ void DeclarativeTabModel::removeTab(int tabId, const QString &thumbnail, int ind
 
 int DeclarativeTabModel::findTabIndex(int tabId, bool &activeTab) const
 {
-    if (m_currentTab && m_currentTab->tabId() == tabId) {
-        activeTab = true;
-        return -1;
-    } else {
-        activeTab = false;
+    activeTab = m_webView && m_webView->isActiveTab(tabId);
+    if (!activeTab) {
         for (int i = 0; i < m_tabs.size(); i++) {
             if (m_tabs.at(i).tabId() == tabId) {
                 return i;
             }
         }
-        return -1;
     }
+    return -1;
 }
 
 void DeclarativeTabModel::saveTabOrder()
@@ -599,17 +597,15 @@ void DeclarativeTabModel::updateTabUrl(int tabId, const QString &url, bool navig
     setBackForwardNavigation(false);
 }
 
-void DeclarativeTabModel::updateNewTabData(NewTabData *newTabData, bool urlChanged, bool titleChanged)
+void DeclarativeTabModel::updateNewTabData(NewTabData *newTabData)
 {
     bool hadNewTabData = hasNewTabData();
-    m_newTabData.reset(newTabData);
+    QString currentTabUrl = newTabUrl();
+    bool urlChanged = newTabData ? currentTabUrl != newTabData->url : !currentTabUrl.isEmpty();
 
+    m_newTabData.reset(newTabData);
     if (urlChanged) {
         emit newTabUrlChanged();
-    }
-
-    if (titleChanged) {
-        emit newTabTitleChanged();
     }
 
     if (hadNewTabData != hasNewTabData()) {
@@ -634,7 +630,7 @@ void DeclarativeTabModel::updateThumbPath(QString url, QString path, int tabId)
 #ifdef DEBUG_LOGS
     qDebug() << m_currentTab;
 #endif
-    if (m_currentTab && m_currentTab->tabId() == tabId) {
+    if (m_webView && m_webView->isActiveTab(tabId)) {
         m_currentTab->setThumbnailPath(path);
     } else {
         QVector<int> roles;

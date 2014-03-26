@@ -46,6 +46,9 @@ public:
     void setResurrectedContentRect(QVariant resurrectedContentRect);
 
     bool fullscreen() const;
+    bool domContentLoaded() const;
+
+    Q_INVOKABLE void loadTab(QString newUrl, bool force);
 
 signals:
     void containerChanged();
@@ -74,6 +77,7 @@ private:
     bool m_loaded;
     bool m_userHasDraggedWhileLoading;
     bool m_fullscreen;
+    bool m_domContentLoaded;
     QString m_favicon;
     QVariant m_resurrectedContentRect;
 

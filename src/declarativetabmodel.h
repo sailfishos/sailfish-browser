@@ -39,8 +39,6 @@ class DeclarativeTabModel : public QAbstractListModel, public QQmlParserStatus
     Q_PROPERTY(bool hasNewTabData READ hasNewTabData NOTIFY hasNewTabDataChanged FINAL)
     // TODO: Only needed by on_ReadyToLoadChanged handler of WebView
     Q_PROPERTY(QString newTabUrl READ newTabUrl NOTIFY newTabUrlChanged FINAL)
-    // TODO: Only needed by WebPage::loadTab
-    Q_PROPERTY(QString newTabTitle READ newTabTitle NOTIFY newTabTitleChanged FINAL)
 
 public:
     DeclarativeTabModel(QObject *parent = 0);
@@ -52,7 +50,6 @@ public:
         TabIdRole
     };
 
-    Q_INVOKABLE void addTab(const QString &url, const QString &title);
     Q_INVOKABLE void remove(int index);
     Q_INVOKABLE void clear();
     Q_INVOKABLE bool activateTab(const QString &url);
@@ -66,6 +63,7 @@ public:
     Q_INVOKABLE void dumpTabs() const;
 
     int count() const;
+    void addTab(const QString &url, const QString &title);
     bool activateTabById(int tabId);
     void removeTabById(int tabId);
 
@@ -90,7 +88,6 @@ public:
 
     bool hasNewTabData() const;
     QString newTabUrl() const;
-    QString newTabTitle() const;
 
     int newTabParentId() const;
 
@@ -99,6 +96,7 @@ public:
 
     DeclarativeWebPage* newTabPreviousPage() const;
     const QList<Tab>& tabs() const;
+    void setWebView(DeclarativeWebContainer *webView);
 
     static bool tabSort(const Tab &t1, const Tab &t2);
 
@@ -119,8 +117,6 @@ signals:
     void browsingChanged();
     void hasNewTabDataChanged();
     void newTabUrlChanged();
-    void newTabTitleChanged();
-    void webViewChanged();
     void newTabRequested(QString url, QString title, int parentId);
 
     void _activeTabInvalidated();
@@ -152,9 +148,12 @@ private:
     int loadTabOrder();
     void updateActiveTab(const Tab &newActiveTab);
     void updateTabUrl(int tabId, const QString &url, bool navigate);
-    void updateNewTabData(NewTabData *newTabData, bool urlChanged, bool titleChanged);
+
+    void updateNewTabData(NewTabData *newTabData);
+    QString newTabTitle() const;
 
     QPointer<DeclarativeTab> m_currentTab;
+    QPointer<DeclarativeWebContainer> m_webView;
     QList<Tab> m_tabs;
     bool m_loaded;
     bool m_browsing;

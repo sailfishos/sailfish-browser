@@ -51,7 +51,6 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     , m_canGoForward(false)
     , m_canGoBack(false)
     , m_realNavigation(false)
-    , m_firstFrameRendered(false)
     , m_readyToLoad(false)
     , m_maxLiveTabCount(5)
 {
@@ -128,6 +127,7 @@ void DeclarativeWebContainer::setTabModel(DeclarativeTabModel *model)
         m_model = model;
         if (m_model) {
             m_model->setCurrentTab(m_currentTab);
+            m_model->setWebView(this);
             connect(m_model, SIGNAL(_activeTabChanged(const Tab&)), this, SLOT(updateTabData(const Tab&)));
             connect(m_model, SIGNAL(_activeTabInvalidated()), this, SLOT(invalidateTabData()));
             connect(m_model, SIGNAL(activeTabChanged(int)), this, SLOT(onActiveTabChanged(int)));
@@ -275,6 +275,15 @@ void DeclarativeWebContainer::setReadyToLoad(bool readyToLoad)
     }
 }
 
+bool DeclarativeWebContainer::isActiveTab(int tabId)
+{
+#ifdef NO_WEB_PAGE
+    return m_currentTab->tabId() == tabId;
+#else
+    return m_webPage && m_webPage->tabId() == tabId && m_currentTab->tabId() == tabId;
+#endif
+}
+
 void DeclarativeWebContainer::goForward()
 {
     if (m_canGoForward && m_currentTab->valid()) {
@@ -331,7 +340,7 @@ void DeclarativeWebContainer::captureScreen()
         return;
     }
 
-    if (m_active && m_firstFrameRendered && !m_popupActive) {
+    if (m_active && m_webPage->domContentLoaded() && !m_popupActive) {
         int size = QGuiApplication::primaryScreen()->size().width();
         if (!m_portrait && !m_fullScreenMode) {
             size -= m_toolbarHeight;
@@ -489,7 +498,7 @@ void DeclarativeWebContainer::screenCaptureReady()
 #endif
     if (capture.tabId != -1) {
         // Update immediately without dbworker round trip.
-        if (capture.tabId == m_currentTab->tabId()) {
+        if (capture.tabId == m_currentTab->tabId() && isActiveTab(capture.tabId)) {
             m_currentTab->setThumbnailPath(capture.path);
         }
         // TODO: Cleanup url.

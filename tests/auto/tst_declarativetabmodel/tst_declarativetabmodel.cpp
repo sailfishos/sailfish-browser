@@ -668,14 +668,12 @@ void tst_declarativetabmodel::newTabData()
 
     QSignalSpy newTabDataChanged(tabModel, SIGNAL(hasNewTabDataChanged()));
     QSignalSpy newTabUrlChanged(tabModel, SIGNAL(newTabUrlChanged()));
-    QSignalSpy newTabTitleChanged(tabModel, SIGNAL(newTabTitleChanged()));
-
+    QVERIFY(tabModel->newTabTitle().isEmpty());
     DeclarativeWebPage page;
     tabModel->newTabData("http://foobar.com", "FooBar", &page);
 
     QCOMPARE(newTabDataChanged.count(), 1);
     QCOMPARE(newTabUrlChanged.count(), 1);
-    QCOMPARE(newTabTitleChanged.count(), 1);
 
     QCOMPARE(tabModel->newTabUrl(), QString("http://foobar.com"));
     QCOMPARE(tabModel->newTabTitle(), QString("FooBar"));
@@ -690,15 +688,13 @@ void tst_declarativetabmodel::resetNewTabData()
     // previousPage = Temporary DeclarativeWebPage pointer (non zero)
     QSignalSpy newTabDataChanged(tabModel, SIGNAL(hasNewTabDataChanged()));
     QSignalSpy newTabUrlChanged(tabModel, SIGNAL(newTabUrlChanged()));
-    QSignalSpy newTabTitleChanged(tabModel, SIGNAL(newTabTitleChanged()));
 
     QVERIFY(tabModel->newTabPreviousPage());
-
+    QVERIFY(!tabModel->newTabTitle().isEmpty());
     tabModel->resetNewTabData();
 
     QCOMPARE(newTabDataChanged.count(), 1);
     QCOMPARE(newTabUrlChanged.count(), 1);
-    QCOMPARE(newTabTitleChanged.count(), 1);
 
     QVERIFY(!tabModel->hasNewTabData());
     QVERIFY(tabModel->newTabUrl().isEmpty());

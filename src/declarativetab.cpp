@@ -71,6 +71,10 @@ void DeclarativeTab::setInvalid()
 {
     if (m_tab.isValid()) {
         m_tab.setTabId(0);
+        Link link;
+        m_tab.setCurrentLink(link);
+        m_tab.setNextLink(0);
+        m_tab.setPreviousLink(0);
         emit validChanged();
     }
 }
