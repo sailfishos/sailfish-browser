@@ -20,12 +20,47 @@ DeclarativeWebPage::DeclarativeWebPage(QuickMozView *parent)
     , m_userHasDraggedWhileLoading(false)
     , m_deferredReload(false)
 {
-
 }
 
 DeclarativeWebPage::~DeclarativeWebPage()
 {
 
+}
+
+DeclarativeWebContainer *DeclarativeWebPage::container() const
+{
+    return m_container;
+}
+
+void DeclarativeWebPage::setContainer(DeclarativeWebContainer *container)
+{
+    if (m_container != container) {
+        m_container = container;
+        emit containerChanged();
+    }
+}
+
+int DeclarativeWebPage::tabId() const
+{
+    return m_tabId;
+}
+
+void DeclarativeWebPage::setTabId(int tabId)
+{
+    m_tabId = tabId;
+}
+
+QVariant DeclarativeWebPage::resurrectedContentRect() const
+{
+    return m_resurrectedContentRect;
+}
+
+void DeclarativeWebPage::setResurrectedContentRect(QVariant resurrectedContentRect)
+{
+    if (m_resurrectedContentRect != resurrectedContentRect) {
+        m_resurrectedContentRect = resurrectedContentRect;
+        emit resurrectedContentRectChanged();
+    }
 }
 
 void DeclarativeWebPage::componentComplete()

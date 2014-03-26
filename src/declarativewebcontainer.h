@@ -43,7 +43,7 @@ class DeclarativeWebContainer : public QQuickItem {
     Q_PROPERTY(QString favicon MEMBER m_favicon NOTIFY faviconChanged)
 
     Q_PROPERTY(bool loading MEMBER m_loading NOTIFY loadingChanged FINAL)
-    Q_PROPERTY(int loadProgress MEMBER m_loadProgress NOTIFY loadProgressChanged FINAL)
+    Q_PROPERTY(int loadProgress READ loadProgress WRITE setLoadProgress NOTIFY loadProgressChanged FINAL)
 
     // Navigation related properties
     Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY canGoForwardChanged FINAL)
@@ -56,7 +56,7 @@ class DeclarativeWebContainer : public QQuickItem {
 
     // "private" properties.
     Q_PROPERTY(bool _firstFrameRendered MEMBER m_firstFrameRendered NOTIFY _firstFrameRenderedChanged FINAL)
-    Q_PROPERTY(bool _readyToLoad MEMBER m_readyToLoad NOTIFY _readyToLoadChanged)
+    Q_PROPERTY(bool _readyToLoad READ readyToLoad WRITE setReadyToLoad NOTIFY _readyToLoadChanged FINAL)
 
 public:
     DeclarativeWebContainer(QQuickItem *parent = 0);
@@ -69,6 +69,9 @@ public:
     void setForeground(bool active);
 
     bool background() const;
+
+    int loadProgress() const;
+    void setLoadProgress(int loadProgress);
 
     bool active() const;
     void setActive(bool active);
@@ -88,6 +91,9 @@ public:
     QString url() const;
 
     DeclarativeTab *currentTab() const;
+
+    bool readyToLoad() const;
+    void setReadyToLoad(bool readyToLoad);
 
     Q_INVOKABLE void goForward();
     Q_INVOKABLE void goBack();
