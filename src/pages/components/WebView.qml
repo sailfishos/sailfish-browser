@@ -162,7 +162,7 @@ WebContainer {
         WebPage {
             id: webPage
 
-            loaded: loadProgress === 100
+            loaded: loadProgress === 100 && !loading
 
             function loadTab(newUrl, force) {
                 // Always enable chrome when load is called.
