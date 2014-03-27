@@ -100,7 +100,7 @@ WebContainer {
     foreground: Qt.application.active
     inputPanelHeight: window.pageStack.panelSize
     inputPanelOpenHeight: window.pageStack.imSize
-    fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) || webView.inputPanelVisible || !webView.foreground
+    fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) || webView.inputPanelVisible || !webView.foreground || (contentItem && contentItem.fullscreen)
     _firstFrameRendered: resourceController.firstFrameRendered
     _readyToLoad: contentItem && contentItem.viewReady && tabModel.loaded
 
