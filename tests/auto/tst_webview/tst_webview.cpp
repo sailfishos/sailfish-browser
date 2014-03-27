@@ -102,11 +102,28 @@ void tst_webview::testNewTab_data()
     QTest::addColumn<QString>("newTitle");
     QTest::addColumn<QString>("expectedTitle");
     QTest::addColumn<int>("expectedTitleChangeCount");
-    QTest::newRow("testselect") << formatUrl("testselect.html") << "TestSelect" << "TestSelect" << 1;
-    QTest::newRow("testuseragent") << formatUrl("testuseragent.html") << "TestUserAgent" << "TestUserAgent" << 1;
+    QTest::addColumn<QStringList>("activeTabs");
+
+    QString homePage = WebUtilsMock::instance()->homePage;
+    QStringList activeTabOrder = QStringList() << formatUrl("testselect.html")
+                                               << homePage;
+    QTest::newRow("testselect") << formatUrl("testselect.html") << "TestSelect"
+                                << "TestSelect" << 1 << activeTabOrder;
+
+    activeTabOrder = QStringList() << formatUrl("testuseragent.html")
+                                   << formatUrl("testselect.html")
+                                   << homePage;
+    QTest::newRow("testuseragent") << formatUrl("testuseragent.html") << "TestUserAgent"
+                                   << "TestUserAgent" << 1 << activeTabOrder;
+
     // The new tab added without newTitle -> title loaded from testnavigation.html page.
     // Same as creating a new tab by typing the address to the url field.
-    QTest::newRow("testnavigation") << formatUrl("testnavigation.html") << "" << "TestNavigation" << 2;
+    activeTabOrder = QStringList() << formatUrl("testnavigation.html")
+                                   << formatUrl("testuseragent.html")
+                                   << formatUrl("testselect.html")
+                                   << homePage;
+    QTest::newRow("testnavigation") << formatUrl("testnavigation.html") << ""
+                                    << "TestNavigation" << 2 << activeTabOrder;
 }
 
 void tst_webview::testNewTab()
@@ -171,6 +188,15 @@ void tst_webview::testNewTab()
     arguments = tabAddedSpy.takeFirst();
     int addedTabId = arguments.at(0).toInt();
     QCOMPARE(addedTabId, tab->tabId());
+
+    QFETCH(QStringList, activeTabs);
+    QCOMPARE(tab->url(), activeTabs.at(0));
+    activeTabs.removeFirst();
+    for (int i = 0; i < activeTabs.count(); ++i) {
+        QModelIndex modelIndex = tabModel->createIndex(i, 0);
+        QString url = tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString();
+        QCOMPARE(url, activeTabs.at(i));
+    }
 }
 
 /*!
