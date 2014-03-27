@@ -16,6 +16,7 @@
 #include "declarativewebcontainer.h"
 #include "declarativewebpage.h"
 #include "linkvalidator.h"
+#include "downloadmanager.h"
 
 #include <QFile>
 #include <QDebug>
@@ -41,6 +42,7 @@ DeclarativeTabModel::DeclarativeTabModel(QObject *parent)
             this, SLOT(tabChanged(Tab)));
     connect(DBManager::instance(), SIGNAL(thumbPathChanged(QString,QString,int)),
             this, SLOT(updateThumbPath(QString,QString,int)));
+    connect(DownloadManager::instance(), SIGNAL(downloadStarted()), this, SLOT(onDownloadStarted()));
     connect(this, SIGNAL(activeTabChanged(int)), this, SLOT(onActiveTabChanged(int)));
 }
 
@@ -235,22 +237,20 @@ void DeclarativeTabModel::newTab(const QString &url, const QString &title, int p
     }
 }
 
-void DeclarativeTabModel::newTabData(const QString &url, const QString &title, QQuickItem *contentItem, int parentId)
+void DeclarativeTabModel::newTabData(const QString &url, const QString &title, DeclarativeWebPage *contentItem, int parentId)
 {
     bool urlChanged = newTabUrl() != url;
     bool titleChanged = newTabTitle() != title;
-    bool previousViewChanged = newTabPreviousView() != contentItem;
 
-    updateNewTabData(new NewTabData(url, title, contentItem, parentId), urlChanged, titleChanged, previousViewChanged);
+    updateNewTabData(new NewTabData(url, title, contentItem, parentId), urlChanged, titleChanged);
 }
 
 void DeclarativeTabModel::resetNewTabData()
 {
     bool urlChanged = !newTabUrl().isEmpty();
     bool titleChanged = !newTabTitle().isEmpty();
-    bool previousViewChanged = newTabPreviousView() != 0;
 
-    updateNewTabData(0, urlChanged, titleChanged, previousViewChanged);
+    updateNewTabData(0, urlChanged, titleChanged);
 }
 
 void DeclarativeTabModel::dumpTabs() const
@@ -348,9 +348,9 @@ QString DeclarativeTabModel::newTabTitle() const
     return hasNewTabData() ? m_newTabData->title : "";
 }
 
-QQuickItem *DeclarativeTabModel::newTabPreviousView() const
+DeclarativeWebPage *DeclarativeTabModel::newTabPreviousPage() const
 {
-    return hasNewTabData() ? m_newTabData->previousView : 0;
+    return hasNewTabData() ? m_newTabData->previousPage : 0;
 }
 
 int DeclarativeTabModel::newTabParentId() const
@@ -485,6 +485,27 @@ void DeclarativeTabModel::onActiveTabChanged(int tabId)
 
     emit m_webView->currentTabChanged();
     manageMaxTabCount();
+}
+
+void DeclarativeTabModel::onDownloadStarted()
+{
+    // This is not 100% solid. A new tab is created for every incoming
+    // url. In slow network connectivity one can close previous tab or
+    // create a new tab before downloadStarted is emitted
+    // by DownloadManager. To get this to the 100%, we would need to
+    // pass windowId of the active window when download is started and close
+    // the passed windowId instead.
+    if (hasNewTabData() && m_webView && m_webView->webPage() && count() > 0) {
+        DeclarativeWebPage *previousWebPage = newTabPreviousPage();
+        releaseTab(m_webView->webPage()->tabId());
+        if (previousWebPage) {
+            activatePage(previousWebPage->tabId());
+        } else if (count() == 0) {
+            // Download doesn't add tab to model. Mimic
+            // model change in case tabs count goes to zero.
+            emit countChanged();
+        }
+    }
 }
 
 void DeclarativeTabModel::closeWindow()
@@ -685,7 +706,7 @@ void DeclarativeTabModel::updateTabUrl(int tabId, const QString &url, bool navig
     setBackForwardNavigation(false);
 }
 
-void DeclarativeTabModel::updateNewTabData(NewTabData *newTabData, bool urlChanged, bool titleChanged, bool previousViewChanged)
+void DeclarativeTabModel::updateNewTabData(NewTabData *newTabData, bool urlChanged, bool titleChanged)
 {
     bool hadNewTabData = hasNewTabData();
     m_newTabData.reset(newTabData);
@@ -696,10 +717,6 @@ void DeclarativeTabModel::updateNewTabData(NewTabData *newTabData, bool urlChang
 
     if (titleChanged) {
         emit newTabTitleChanged();
-    }
-
-    if (previousViewChanged) {
-        emit newTabPreviousViewChanged();
     }
 
     if (hadNewTabData != hasNewTabData()) {

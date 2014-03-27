@@ -18,6 +18,7 @@
 #include "declarativetab.h"
 #include "declarativetabmodel.h"
 #include "declarativewebcontainer.h"
+#include "declarativewebpage.h"
 #include "dbmanager.h"
 
 static const QByteArray QML_SNIPPET = \
@@ -670,14 +671,15 @@ void tst_declarativetabmodel::newTab()
     QSignalSpy newTabDataChanged(tabModel, SIGNAL(hasNewTabDataChanged()));
     QSignalSpy newTabUrlChanged(tabModel, SIGNAL(newTabUrlChanged()));
     QSignalSpy newTabTitleChanged(tabModel, SIGNAL(newTabTitleChanged()));
-    QSignalSpy newTabPreviousViewChanged(tabModel, SIGNAL(newTabPreviousViewChanged()));
 
+    DeclarativeWebPage *previousPage = tabModel->newTabPreviousPage();
     tabModel->newTab("http://foobar.com", "FooBar");
 
     QCOMPARE(newTabDataChanged.count(), 1);
     QCOMPARE(newTabUrlChanged.count(), 1);
     QCOMPARE(newTabTitleChanged.count(), 1);
-    QCOMPARE(newTabPreviousViewChanged.count(), 0);
+    QVERIFY(!previousPage);
+    QCOMPARE(tabModel->newTabPreviousPage(), previousPage);
 
     QCOMPARE(tabModel->newTabUrl(), QString("http://foobar.com"));
     QCOMPARE(tabModel->newTabTitle(), QString("FooBar"));
@@ -690,19 +692,17 @@ void tst_declarativetabmodel::newTabData()
     QSignalSpy newTabDataChanged(tabModel, SIGNAL(hasNewTabDataChanged()));
     QSignalSpy newTabUrlChanged(tabModel, SIGNAL(newTabUrlChanged()));
     QSignalSpy newTabTitleChanged(tabModel, SIGNAL(newTabTitleChanged()));
-    QSignalSpy newTabPreviousViewChanged(tabModel, SIGNAL(newTabPreviousViewChanged()));
 
-    QQuickItem item;
-    tabModel->newTabData("http://foobar.com", "FooBar", &item);
+    DeclarativeWebPage page;
+    tabModel->newTabData("http://foobar.com", "FooBar", &page);
 
     QCOMPARE(newTabDataChanged.count(), 1);
     QCOMPARE(newTabUrlChanged.count(), 1);
     QCOMPARE(newTabTitleChanged.count(), 1);
-    QCOMPARE(newTabPreviousViewChanged.count(), 1);
 
     QCOMPARE(tabModel->newTabUrl(), QString("http://foobar.com"));
     QCOMPARE(tabModel->newTabTitle(), QString("FooBar"));
-    QCOMPARE(tabModel->newTabPreviousView(), &item);
+    QCOMPARE(tabModel->newTabPreviousPage(), &page);
 }
 
 void tst_declarativetabmodel::resetNewTabData()
@@ -710,23 +710,23 @@ void tst_declarativetabmodel::resetNewTabData()
     // Old values (see newTabData test):
     // url = "http://foobar.com"
     // title = "FooBar"
-    // previousView = Temporary QQuickItem pointer (non zero)
+    // previousPage = Temporary DeclarativeWebPage pointer (non zero)
     QSignalSpy newTabDataChanged(tabModel, SIGNAL(hasNewTabDataChanged()));
     QSignalSpy newTabUrlChanged(tabModel, SIGNAL(newTabUrlChanged()));
     QSignalSpy newTabTitleChanged(tabModel, SIGNAL(newTabTitleChanged()));
-    QSignalSpy newTabPreviousViewChanged(tabModel, SIGNAL(newTabPreviousViewChanged()));
+
+    QVERIFY(tabModel->newTabPreviousPage());
 
     tabModel->resetNewTabData();
 
     QCOMPARE(newTabDataChanged.count(), 1);
     QCOMPARE(newTabUrlChanged.count(), 1);
     QCOMPARE(newTabTitleChanged.count(), 1);
-    QCOMPARE(newTabPreviousViewChanged.count(), 1);
 
     QVERIFY(!tabModel->hasNewTabData());
     QVERIFY(tabModel->newTabUrl().isEmpty());
     QVERIFY(tabModel->newTabTitle().isEmpty());
-    QVERIFY(!tabModel->newTabPreviousView());
+    QVERIFY(!tabModel->newTabPreviousPage());
 }
 
 void tst_declarativetabmodel::clear()

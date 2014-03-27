@@ -16,21 +16,20 @@
 #include <QHash>
 #include <QString>
 #include <QVariant>
-#include "browserservice.h"
-#include <transferengineinterface.h>
-#include <transfertypes.h>
 
+class TransferEngineInterface;
 
 class DownloadManager : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit DownloadManager(BrowserService *service, QObject *parent = 0);
+    static DownloadManager *instance();
 
     bool existActiveTransfers();
 
 signals:
+    void downloadStarted();
     void allTransfersCompleted();
 
 public slots:
@@ -42,6 +41,9 @@ private slots:
     void restartTransfer(int transferId);
 
 private:
+    explicit DownloadManager();
+    ~DownloadManager();
+
     enum Status {
         DownloadStarted,
         DownloadDone,
