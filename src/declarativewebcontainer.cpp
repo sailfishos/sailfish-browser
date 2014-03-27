@@ -307,7 +307,7 @@ void DeclarativeWebContainer::resetHeight(bool respectContentHeight)
         // We need to reset height always back to short height when loading starts
         // so that after tab change there is always initial short composited height.
         // Height may expand when content is moved.
-        if (contentHeight() > fullHeight + m_toolbarHeight) {
+        if (contentHeight() > (fullHeight + m_toolbarHeight) || m_webPage->fullscreen()) {
             m_webPage->setHeight(fullHeight);
         } else {
             m_webPage->setHeight(fullHeight - m_toolbarHeight);

@@ -24,6 +24,7 @@ class DeclarativeWebPage : public QuickMozView {
     Q_PROPERTY(bool viewReady MEMBER m_viewReady NOTIFY viewReadyChanged FINAL)
     Q_PROPERTY(bool loaded MEMBER m_loaded NOTIFY loadedChanged FINAL)
     Q_PROPERTY(bool userHasDraggedWhileLoading MEMBER m_userHasDraggedWhileLoading NOTIFY userHasDraggedWhileLoadingChanged FINAL)
+    Q_PROPERTY(bool fullscreen READ fullscreen NOTIFY fullscreenChanged FINAL)
     Q_PROPERTY(QString favicon MEMBER m_favicon NOTIFY faviconChanged FINAL)
     Q_PROPERTY(QVariant resurrectedContentRect READ resurrectedContentRect WRITE setResurrectedContentRect NOTIFY resurrectedContentRectChanged)
 
@@ -44,11 +45,14 @@ public:
     QVariant resurrectedContentRect() const;
     void setResurrectedContentRect(QVariant resurrectedContentRect);
 
+    bool fullscreen() const;
+
 signals:
     void containerChanged();
     void viewReadyChanged();
     void loadedChanged();
     void userHasDraggedWhileLoadingChanged();
+    void fullscreenChanged();
     void faviconChanged();
     void resurrectedContentRectChanged();
 
@@ -58,12 +62,18 @@ signals:
 protected:
     void componentComplete();
 
+private slots:
+    void setFullscreen(const bool fullscreen);
+    void onRecvAsyncMessage(const QString& message, const QVariant& data);
+    void onViewInitialized();
+
 private:
     QPointer<DeclarativeWebContainer> m_container;
     int m_tabId;
     bool m_viewReady;
     bool m_loaded;
     bool m_userHasDraggedWhileLoading;
+    bool m_fullscreen;
     QString m_favicon;
     QVariant m_resurrectedContentRect;
 

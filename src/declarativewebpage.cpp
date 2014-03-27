@@ -11,6 +11,8 @@
 
 #include "declarativewebpage.h"
 
+static const QString gFullScreenMessage("embed:fullscreenchanged");
+
 DeclarativeWebPage::DeclarativeWebPage(QuickMozView *parent)
     : QuickMozView(parent)
     , m_container(0)
@@ -18,8 +20,12 @@ DeclarativeWebPage::DeclarativeWebPage(QuickMozView *parent)
     , m_viewReady(false)
     , m_loaded(false)
     , m_userHasDraggedWhileLoading(false)
+    , m_fullscreen(false)
     , m_deferredReload(false)
 {
+    connect(this, SIGNAL(viewInitialized()), this, SLOT(onViewInitialized()));
+    connect(this, SIGNAL(recvAsyncMessage(const QString, const QVariant)),
+            this, SLOT(onRecvAsyncMessage(const QString&, const QVariant&)));
 }
 
 DeclarativeWebPage::~DeclarativeWebPage()
@@ -66,4 +72,30 @@ void DeclarativeWebPage::setResurrectedContentRect(QVariant resurrectedContentRe
 void DeclarativeWebPage::componentComplete()
 {
     QuickMozView::componentComplete();
+}
+
+void DeclarativeWebPage::onViewInitialized()
+{
+    addMessageListener(gFullScreenMessage);
+}
+
+void DeclarativeWebPage::onRecvAsyncMessage(const QString& message, const QVariant& data)
+{
+    if (message == gFullScreenMessage) {
+        setFullscreen(data.toMap().value(QString("fullscreen")).toBool());
+    }
+}
+
+bool DeclarativeWebPage::fullscreen() const
+{
+    return m_fullscreen;
+}
+
+void DeclarativeWebPage::setFullscreen(const bool fullscreen)
+{
+    if (m_fullscreen != fullscreen) {
+        m_fullscreen = fullscreen;
+        m_container->resetHeight();
+        emit fullscreenChanged();
+    }
 }
