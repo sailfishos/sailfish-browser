@@ -36,7 +36,7 @@ DeclarativeTabModel::DeclarativeTabModel(QObject *parent)
     , m_webPageComponent(0)
     , m_webView(0)
 {
-    m_tabCache.reset(new TabCache(this));
+    m_webPages.reset(new WebPages(this));
     connect(DBManager::instance(), SIGNAL(tabsAvailable(QList<Tab>)),
             this, SLOT(tabsAvailable(QList<Tab>)));
     connect(DBManager::instance(), SIGNAL(tabChanged(Tab)),
@@ -185,9 +185,9 @@ bool DeclarativeTabModel::activateTabById(int tabId)
 
 bool DeclarativeTabModel::activatePage(int tabId, bool force)
 {
-    m_tabCache->initialize(m_webView.data(), m_webPageComponent.data());
-    if ((m_loaded || force) && tabId > 0 && m_tabCache->initialized()) {
-        TabActivationData activationData = m_tabCache->tab(tabId, newTabParentId());
+    m_webPages->initialize(m_webView.data(), m_webPageComponent.data());
+    if ((m_loaded || force) && tabId > 0 && m_webPages->initialized()) {
+        WebPageActivationData activationData = m_webPages->page(tabId, newTabParentId());
         m_webView->setWebPage(activationData.webPage);
         m_webView->webPage()->setChrome(true);
         m_webView->setLoadProgress(m_webView->webPage()->loadProgress());
@@ -217,8 +217,8 @@ void DeclarativeTabModel::closeActiveTab()
 
 void DeclarativeTabModel::releaseTab(int tabId, bool virtualize)
 {
-    if (m_tabCache && m_webView) {
-        m_tabCache->release(tabId, virtualize);
+    if (m_webPages && m_webView) {
+        m_webPages->release(tabId, virtualize);
         if (count() == 0) {
             m_webView->setWebPage(0);
         }
@@ -357,8 +357,8 @@ int DeclarativeTabModel::newTabParentId() const
 
 int DeclarativeTabModel::parentTabId(int tabId) const
 {
-    if (m_tabCache) {
-        return m_tabCache->parentTabId(tabId);
+    if (m_webPages) {
+        return m_webPages->parentTabId(tabId);
     }
     return 0;
 }
@@ -729,7 +729,7 @@ void DeclarativeTabModel::manageMaxTabCount()
     }
 
     // ActiveTab + m_maxLiveTabCount -1 == m_maxLiveTabCount
-    for (int i = m_maxLiveTabCount - 1; i < m_tabs.count() && m_tabCache && m_tabCache->count() > m_maxLiveTabCount; ++i) {
+    for (int i = m_maxLiveTabCount - 1; i < m_tabs.count() && m_webPages && m_webPages->count() > m_maxLiveTabCount; ++i) {
         releaseTab(m_tabs.at(i).tabId(), true);
     }
 }

@@ -8,7 +8,7 @@ SOURCES += \
     $$PWD/linkvalidator.cpp \
     $$PWD/declarativehistorymodel.cpp \
     $$PWD/tab.cpp \
-    $$PWD/tabcache.cpp
+    $$PWD/webpages.cpp
 
 # C++ headers
 HEADERS += \
@@ -20,6 +20,6 @@ HEADERS += \
     $$PWD/linkvalidator.h \
     $$PWD/declarativehistorymodel.h \
     $$PWD/tab.h \
-    $$PWD/tabcache.h
+    $$PWD/webpages.h
 
 DEFINES += DB_NAME=\\\"sailfish-browser.sqlite\\\"

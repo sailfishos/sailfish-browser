@@ -20,7 +20,7 @@
 #include <QQmlComponent>
 
 #include "tab.h"
-#include "tabcache.h"
+#include "webpages.h"
 #include "declarativewebcontainer.h"
 
 class DeclarativeTab;
@@ -176,7 +176,7 @@ private:
     QPointer<QQmlComponent> m_webPageComponent;
     QPointer<DeclarativeWebContainer> m_webView;
     QScopedPointer<NewTabData> m_newTabData;
-    QScopedPointer<TabCache> m_tabCache;
+    QScopedPointer<WebPages> m_webPages;
 
     friend class tst_declarativetabmodel;
     friend class tst_webview;

@@ -9,7 +9,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "tabcache.h"
+#include "webpages.h"
 #include "declarativewebcontainer.h"
 #include "declarativewebpage.h"
 
@@ -24,24 +24,24 @@
 #include <QDebug>
 #endif
 
-TabCache::TabCache(QObject *parent)
+WebPages::WebPages(QObject *parent)
     : QObject(parent)
-    , m_activeTab(0)
+    , m_activePage(0)
     , m_count(0)
 {
 }
 
-TabCache::~TabCache()
+WebPages::~WebPages()
 {
-    QMapIterator<int, TabEntry*> tabs(m_activeTabs);
-    while (tabs.hasNext()) {
-        tabs.next();
-        TabEntry *tabEntry = tabs.value();
-        delete tabEntry;
+    QMapIterator<int, WebPageEntry*> pages(m_activePages);
+    while (pages.hasNext()) {
+        pages.next();
+        WebPageEntry *pageEntry = pages.value();
+        delete pageEntry;
     }
 }
 
-void TabCache::initialize(DeclarativeWebContainer *webContainer, QQmlComponent *webPageComponent)
+void WebPages::initialize(DeclarativeWebContainer *webContainer, QQmlComponent *webPageComponent)
 {
     if (!m_webContainer || !m_webPageComponent) {
         m_webContainer = webContainer;
@@ -49,36 +49,36 @@ void TabCache::initialize(DeclarativeWebContainer *webContainer, QQmlComponent *
     }
 }
 
-bool TabCache::initialized() const
+bool WebPages::initialized() const
 {
     return m_webContainer && m_webPageComponent;
 }
 
-int TabCache::count() const
+int WebPages::count() const
 {
     return m_count;
 }
 
-TabActivationData TabCache::tab(int tabId, int parentId)
+WebPageActivationData WebPages::page(int tabId, int parentId)
 {
     if (!m_webPageComponent) {
         qWarning() << "TabModel not initialized!";
-        return TabActivationData(0, false);
+        return WebPageActivationData(0, false);
     }
 
-    if (m_activeTab && m_activeTab->webPage && m_activeTab->webPage->tabId() == tabId) {
-        m_activeTab->webPage->resumeView();
-        m_activeTab->webPage->setVisible(true);
-        return TabActivationData(m_activeTab->webPage, false);
+    if (m_activePage && m_activePage->webPage && m_activePage->webPage->tabId() == tabId) {
+        m_activePage->webPage->resumeView();
+        m_activePage->webPage->setVisible(true);
+        return WebPageActivationData(m_activePage->webPage, false);
     }
 
 #ifdef DEBUG_LOGS
     qDebug() << "about to create a new tab or activate old:" << tabId;
 #endif
 
-    TabEntry *tabEntry = m_activeTabs.value(tabId, 0);
-    bool resurrect = tabEntry && !tabEntry->webPage;
-    if (!tabEntry || resurrect) {
+    WebPageEntry *pageEntry = m_activePages.value(tabId, 0);
+    bool resurrect = pageEntry && !pageEntry->webPage;
+    if (!pageEntry || resurrect) {
         QQmlContext *creationContext = m_webPageComponent->creationContext();
         QQmlContext *context = new QQmlContext(creationContext ? creationContext : QQmlEngine::contextForObject(m_webContainer));
         QObject *object = m_webPageComponent->beginCreate(context);
@@ -91,17 +91,17 @@ TabActivationData TabCache::tab(int tabId, int parentId)
                 webPage->setParentID(parentId);
                 webPage->setTabId(tabId);
                 webPage->setContainer(m_webContainer);
-                if (!tabEntry) {
-                    tabEntry = new TabEntry(webPage, 0);
+                if (!pageEntry) {
+                    pageEntry = new WebPageEntry(webPage, 0);
                 } else {
-                    tabEntry->webPage = webPage;
+                    pageEntry->webPage = webPage;
                 }
 
                 m_webPageComponent->completeCreate();
 #ifdef DEBUG_LOGS
                 qDebug() << "New view id:" << webPage->uniqueID() << "parentId:" << webPage->parentId() << "tab id:" << webPage->tabId();
 #endif
-                m_activeTabs.insert(tabId, tabEntry);
+                m_activePages.insert(tabId, pageEntry);
                 ++m_count;
             } else {
                 qmlInfo(m_webContainer) << "webPage component must be a WebPage component";
@@ -113,70 +113,70 @@ TabActivationData TabCache::tab(int tabId, int parentId)
         }
     }
 
-    updateActiveTab(tabEntry, resurrect);
+    updateActivePage(pageEntry, resurrect);
 #ifdef DEBUG_LOGS
-    dumpTabs();
+    dumpPages();
 #endif
 
-    return TabActivationData(tabEntry->webPage, true);
+    return WebPageActivationData(pageEntry->webPage, true);
 }
 
-void TabCache::release(int tabId, bool virtualize)
+void WebPages::release(int tabId, bool virtualize)
 {
-    TabEntry *tabEntry = m_activeTabs.value(tabId, 0);
+    WebPageEntry *pageEntry = m_activePages.value(tabId, 0);
 #ifdef DEBUG_LOGS
-    qDebug() << "--- beginning: " << tabId << (tabEntry ? tabEntry->webPage : 0);
-    dumpTabs();
+    qDebug() << "--- beginning: " << tabId << (pageEntry ? pageEntry->webPage : 0);
+    dumpPages();
 #endif
-    if (tabEntry) {
+    if (pageEntry) {
         --m_count;
-        DeclarativeWebPage *activeWebPage = m_activeTab && m_activeTab->webPage ? m_activeTab->webPage : 0;
+        DeclarativeWebPage *activeWebPage = m_activePage && m_activePage->webPage ? m_activePage->webPage : 0;
         if (m_count == 0 || (activeWebPage && activeWebPage->tabId() == tabId)) {
-            m_activeTab = 0;
+            m_activePage = 0;
         }
 
-        delete tabEntry->webPage;
-        tabEntry->webPage = 0;
+        delete pageEntry->webPage;
+        pageEntry->webPage = 0;
         if (virtualize) {
-            m_activeTabs.insert(tabId, tabEntry);
+            m_activePages.insert(tabId, pageEntry);
         } else {
-            delete tabEntry;
-            m_activeTabs.remove(tabId);
+            delete pageEntry;
+            m_activePages.remove(tabId);
         }
     }
 
 #ifdef DEBUG_LOGS
     qDebug() << "--- end ---";
-    dumpTabs();
+    dumpPages();
 #endif
 }
 
-int TabCache::parentTabId(int tabId) const
+int WebPages::parentTabId(int tabId) const
 {
-    TabEntry *tabEntry = m_activeTabs.value(tabId, 0);
-    if (tabEntry && tabEntry->webPage) {
-        int parentId = tabEntry->webPage->parentId();
-        QMapIterator<int, TabEntry*> tabs(m_activeTabs);
-        while (tabs.hasNext()) {
-            tabs.next();
-            TabEntry *parentTabEntry = tabs.value();
-            if (parentTabEntry->webPage && (int)parentTabEntry->webPage->uniqueID() == parentId) {
-                return parentTabEntry->webPage->tabId();
+    WebPageEntry *pageEntry = m_activePages.value(tabId, 0);
+    if (pageEntry && pageEntry->webPage) {
+        int parentId = pageEntry->webPage->parentId();
+        QMapIterator<int, WebPageEntry*> pages(m_activePages);
+        while (pages.hasNext()) {
+            pages.next();
+            WebPageEntry *parentPageEntry = pages.value();
+            if (parentPageEntry->webPage && (int)parentPageEntry->webPage->uniqueID() == parentId) {
+                return parentPageEntry->webPage->tabId();
             }
         }
     }
     return 0;
 }
 
-void TabCache::updateActiveTab(TabEntry *tab, bool resurrect)
+void WebPages::updateActivePage(WebPageEntry *webPageEntry, bool resurrect)
 {
     DeclarativeWebPage * activeWebPage = 0;
-    if (m_activeTab && (activeWebPage = m_activeTab->webPage)) {
-        m_activeTab->cssContentRect = new QRectF(activeWebPage->contentRect());
+    if (m_activePage && (activeWebPage = m_activePage->webPage)) {
+        m_activePage->cssContentRect = new QRectF(activeWebPage->contentRect());
         activeWebPage->setVisible(false);
 
         // Allow subpending only current active is not creator (parent).
-        if (tab->webPage->parentId() != (int)activeWebPage->uniqueID()) {
+        if (webPageEntry->webPage->parentId() != (int)activeWebPage->uniqueID()) {
              if (activeWebPage->loading()) {
                  activeWebPage->stop();
              }
@@ -184,13 +184,13 @@ void TabCache::updateActiveTab(TabEntry *tab, bool resurrect)
         }
     }
 
-    m_activeTab = tab;
-    activeWebPage = m_activeTab->webPage;
+    m_activePage = webPageEntry;
+    activeWebPage = m_activePage->webPage;
     if (resurrect && activeWebPage) {
         // Copy rect value
-        activeWebPage->setResurrectedContentRect(*m_activeTab->cssContentRect);
-        delete m_activeTab->cssContentRect;
-        m_activeTab->cssContentRect = 0;
+        activeWebPage->setResurrectedContentRect(*m_activePage->cssContentRect);
+        delete m_activePage->cssContentRect;
+        m_activePage->cssContentRect = 0;
     }
 
     if (activeWebPage) {
@@ -199,28 +199,28 @@ void TabCache::updateActiveTab(TabEntry *tab, bool resurrect)
     }
 }
 
-void TabCache::dumpTabs() const
+void WebPages::dumpPages() const
 {
     qDebug() << "---- start ----";
-    QMapIterator<int, TabEntry*> tabs(m_activeTabs);
-    while (tabs.hasNext()) {
-        tabs.next();
-        TabEntry *tabEntry = tabs.value();
-        qDebug() << "tabId: " << tabs.key() << "page: " << tabEntry->webPage
-                 << "title:" << (tabEntry->webPage ? tabEntry->webPage->title() : "VIEW NOT ALIVE!")
-                 << "cssContentRect:" << tabEntry->cssContentRect;
+    QMapIterator<int, WebPageEntry*> pages(m_activePages);
+    while (pages.hasNext()) {
+        pages.next();
+        WebPageEntry *pageEntry = pages.value();
+        qDebug() << "tabId: " << pages.key() << "page: " << pageEntry->webPage
+                 << "title:" << (pageEntry->webPage ? pageEntry->webPage->title() : "VIEW NOT ALIVE!")
+                 << "cssContentRect:" << pageEntry->cssContentRect;
     }
     qDebug() << "---- end ------";
 }
 
 
-TabCache::TabEntry::TabEntry(DeclarativeWebPage *webPage, QRectF *cssContentRect)
+WebPages::WebPageEntry::WebPageEntry(DeclarativeWebPage *webPage, QRectF *cssContentRect)
     : webPage(webPage)
     , cssContentRect(cssContentRect)
 {
 }
 
-TabCache::TabEntry::~TabEntry()
+WebPages::WebPageEntry::~WebPageEntry()
 {
     if (cssContentRect) {
         delete cssContentRect;
