@@ -60,7 +60,7 @@ WebContainer {
             currentTab.url = url
         }
 
-        if (!tabModel.hasNewTabData || force || !tabModel.activatePage(tabModel.nextTabId)) {
+        if (!tabModel.hasNewTabData || force || !webView.activatePage(tabModel.nextTabId)) {
             // First contentItem will be created once tab activated.
             if (contentItem) contentItem.loadTab(url, force)
         }
@@ -108,15 +108,12 @@ WebContainer {
     loading: contentItem ? contentItem.loading : false
     favicon: contentItem ? contentItem.favicon : ""
 
-    tabModel: TabModel {
-        webPageComponent: webPageComponent
-        webView: webView
+    webPageComponent: webPageComponent
 
+    tabModel: TabModel {
         // Enable browsing after new tab actually created or it was not even requested
         browsing: webView.active && !hasNewTabData && contentItem && contentItem.loaded
         onBrowsingChanged: if (browsing) captureScreen()
-
-        onTriggerLoad: webView.load(url, title)
     }
 
     // Triggered when tabs of tab model are available and QmlMozView is ready to load.
@@ -141,6 +138,8 @@ WebContainer {
             webView.load(WebUtils.homePage, "")
         }
     }
+
+    onTriggerLoad: webView.load(url, title)
 
     WebViewCreator {
         activeWebView: contentItem

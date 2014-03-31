@@ -398,7 +398,7 @@ void tst_webview::testLiveTabCount()
     QCOMPARE(tabModel->count(), expectedTabCount);
     QCOMPARE(activeTabChangedSpy.count(), 1);
 
-    QCOMPARE(tabModel->m_tabCache->count(), liveTabCount);
+    QCOMPARE(webContainer->m_webPages->count(), liveTabCount);
 }
 
 void tst_webview::cleanupTestCase()

@@ -16,7 +16,6 @@
 #include "declarativewebcontainer.h"
 #include "declarativewebpage.h"
 #include "linkvalidator.h"
-#include "downloadmanager.h"
 
 #include <QFile>
 #include <QDebug>
@@ -30,22 +29,15 @@ DeclarativeTabModel::DeclarativeTabModel(QObject *parent)
     , m_currentTab(0)
     , m_loaded(false)
     , m_browsing(false)
-    , m_maxLiveTabCount(5)
     , m_nextTabId(DBManager::instance()->getMaxTabId() + 1)
     , m_backForwardNavigation(false)
-    , m_webPageComponent(0)
-    , m_webView(0)
 {
-    m_webPages.reset(new WebPages(this));
     connect(DBManager::instance(), SIGNAL(tabsAvailable(QList<Tab>)),
             this, SLOT(tabsAvailable(QList<Tab>)));
     connect(DBManager::instance(), SIGNAL(tabChanged(Tab)),
             this, SLOT(tabChanged(Tab)));
     connect(DBManager::instance(), SIGNAL(thumbPathChanged(QString,QString,int)),
             this, SLOT(updateThumbPath(QString,QString,int)));
-    connect(DownloadManager::instance(), SIGNAL(downloadStarted()), this, SLOT(onDownloadStarted()));
-    connect(this, SIGNAL(activeTabChanged(int)), this, SLOT(onActiveTabChanged(int)));
-    connect(this, SIGNAL(maxLiveTabCountChanged()), this, SLOT(manageMaxTabCount()));
 }
 
 QHash<int, QByteArray> DeclarativeTabModel::roleNames() const
@@ -78,7 +70,6 @@ void DeclarativeTabModel::addTab(const QString& url, const QString &title) {
     updateActiveTab(tab);
     emit countChanged();
     emit tabAdded(tabId);
-    manageMaxTabCount();
 
     m_nextTabId = ++tabId;
     emit nextTabIdChanged();
@@ -183,20 +174,6 @@ bool DeclarativeTabModel::activateTabById(int tabId)
     return false;
 }
 
-bool DeclarativeTabModel::activatePage(int tabId, bool force)
-{
-    m_webPages->initialize(m_webView.data(), m_webPageComponent.data());
-    if ((m_loaded || force) && tabId > 0 && m_webPages->initialized()) {
-        WebPageActivationData activationData = m_webPages->page(tabId, newTabParentId());
-        m_webView->setWebPage(activationData.webPage);
-        m_webView->webPage()->setChrome(true);
-        m_webView->setLoadProgress(m_webView->webPage()->loadProgress());
-        connect(m_webView->webPage(), SIGNAL(windowCloseRequested()), this, SLOT(closeWindow()), Qt::UniqueConnection);
-        return activationData.activated;
-    }
-    return false;
-}
-
 void DeclarativeTabModel::closeActiveTab()
 {
     if (m_currentTab && m_currentTab->valid()) {
@@ -215,23 +192,9 @@ void DeclarativeTabModel::closeActiveTab()
     }
 }
 
-void DeclarativeTabModel::releaseTab(int tabId, bool virtualize)
-{
-    if (m_webPages && m_webView) {
-        m_webPages->release(tabId, virtualize);
-        if (count() == 0) {
-            m_webView->setWebPage(0);
-        }
-        resetNewTabData();
-    }
-}
-
 void DeclarativeTabModel::newTab(const QString &url, const QString &title, int parentId)
 {
-    newTabData(url, title, m_webView ? m_webView->webPage() : 0, parentId);
-    if (m_webView) {
-        emit triggerLoad(url, title);
-    }
+    emit newTabRequested(url, title, parentId);
 }
 
 void DeclarativeTabModel::newTabData(const QString &url, const QString &title, DeclarativeWebPage *contentItem, int parentId)
@@ -350,17 +313,14 @@ DeclarativeWebPage *DeclarativeTabModel::newTabPreviousPage() const
     return hasNewTabData() ? m_newTabData->previousPage : 0;
 }
 
+const QList<Tab> &DeclarativeTabModel::tabs() const
+{
+    return m_tabs;
+}
+
 int DeclarativeTabModel::newTabParentId() const
 {
     return hasNewTabData() ? m_newTabData->parentId : 0;
-}
-
-int DeclarativeTabModel::parentTabId(int tabId) const
-{
-    if (m_webPages) {
-        return m_webPages->parentTabId(tabId);
-    }
-    return 0;
 }
 
 bool DeclarativeTabModel::backForwardNavigation() const
@@ -416,13 +376,6 @@ void DeclarativeTabModel::tabsAvailable(QList<Tab> tabs)
     // Startup should be synced to this.
     if (!m_loaded) {
         m_loaded = true;
-
-        // Load placeholder for the case where no tabs exist. If a tab exists,
-        // it gets initialized by onActiveTabChanged.
-        if (m_webView && !m_webView->webPage()) {
-            activatePage(nextTabId(), true);
-        }
-
         emit loadedChanged();
     }
 }
@@ -458,62 +411,6 @@ void DeclarativeTabModel::tabChanged(const Tab &tab)
             QModelIndex start = index(i, 0);
             QModelIndex end = index(i, 0);
             emit dataChanged(start, end, roles);
-        }
-    }
-}
-
-void DeclarativeTabModel::onActiveTabChanged(int tabId)
-{
-    if (!m_webView) {
-        qWarning() << "No WebView available! This should not happen in normal circumstances, only with unit tests";
-        return;
-    }
-
-    if (hasNewTabData()) {
-        emit m_webView->currentTabChanged();
-        return;
-    }
-
-    DeclarativeWebPage *currentPage = m_webView->webPage() ? m_webView->webPage() : 0;
-    if (activatePage(tabId, true) && m_currentTab && m_currentTab->valid() && m_webView->readyToLoad()
-            && (currentPage && (currentPage->tabId() != tabId || currentPage->url().toString() != m_currentTab->url()))) {
-        emit triggerLoad(m_currentTab->url(), m_currentTab->title());
-    }
-
-    emit m_webView->currentTabChanged();
-    manageMaxTabCount();
-}
-
-void DeclarativeTabModel::onDownloadStarted()
-{
-    // This is not 100% solid. A new tab is created for every incoming
-    // url. In slow network connectivity one can close previous tab or
-    // create a new tab before downloadStarted is emitted
-    // by DownloadManager. To get this to the 100%, we would need to
-    // pass windowId of the active window when download is started and close
-    // the passed windowId instead.
-    if (hasNewTabData() && m_webView && m_webView->webPage() && count() > 0) {
-        DeclarativeWebPage *previousWebPage = newTabPreviousPage();
-        releaseTab(m_webView->webPage()->tabId());
-        if (previousWebPage) {
-            activatePage(previousWebPage->tabId());
-        } else if (count() == 0) {
-            // Download doesn't add tab to model. Mimic
-            // model change in case tabs count goes to zero.
-            emit countChanged();
-        }
-    }
-}
-
-void DeclarativeTabModel::closeWindow()
-{
-    DeclarativeWebPage *webPage = qobject_cast<DeclarativeWebPage *>(sender());
-    if (webPage) {
-        int parentPageTabId = parentTabId(webPage->tabId());
-        // Closing only allowed if window was created by script
-        if (parentPageTabId > 0) {
-            activateTabById(parentPageTabId);
-            removeTabById(webPage->tabId());
         }
     }
 }
@@ -578,7 +475,6 @@ void DeclarativeTabModel::removeTab(int tabId, const QString &thumbnail, int ind
     }
 
     emit countChanged();
-    releaseTab(tabId);
     emit tabClosed(tabId);
 }
 
@@ -718,19 +614,6 @@ void DeclarativeTabModel::updateNewTabData(NewTabData *newTabData, bool urlChang
 
     if (hadNewTabData != hasNewTabData()) {
         emit hasNewTabDataChanged();
-    }
-}
-
-void DeclarativeTabModel::manageMaxTabCount()
-{
-    // Minimum is 1 tab.
-    if (m_maxLiveTabCount < 1) {
-        return;
-    }
-
-    // ActiveTab + m_maxLiveTabCount -1 == m_maxLiveTabCount
-    for (int i = m_maxLiveTabCount - 1; i < m_tabs.count() && m_webPages && m_webPages->count() > m_maxLiveTabCount; ++i) {
-        releaseTab(m_tabs.at(i).tabId(), true);
     }
 }
 
