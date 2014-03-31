@@ -25,9 +25,8 @@ static const QByteArray QML_SNIPPET = \
         "import QtQuick 2.0\n" \
         "import Sailfish.Browser 1.0\n" \
         "WebContainer {\n" \
-        "   property alias tabModel: model\n" \
+        "   tabModel: TabModel {}\n" \
         "   width: 100; height: 100\n" \
-        "   TabModel { id: model }\n" \
         "}\n";
 
 struct TestTab {
@@ -71,7 +70,6 @@ private slots:
 
     void updateTitle();
 
-    void newTab();
     void newTabData();
     void resetNewTabData();
 
@@ -662,27 +660,6 @@ void tst_declarativetabmodel::updateTitle()
     tabModel->updateTitle(tab2, title);
     QCOMPARE(currentTabTitleSpy.count(), 5);
     QCOMPARE(webContainerTitleSpy.count(), 5);
-}
-
-void tst_declarativetabmodel::newTab()
-{
-    tabModel->resetNewTabData();
-
-    QSignalSpy newTabDataChanged(tabModel, SIGNAL(hasNewTabDataChanged()));
-    QSignalSpy newTabUrlChanged(tabModel, SIGNAL(newTabUrlChanged()));
-    QSignalSpy newTabTitleChanged(tabModel, SIGNAL(newTabTitleChanged()));
-
-    DeclarativeWebPage *previousPage = tabModel->newTabPreviousPage();
-    tabModel->newTab("http://foobar.com", "FooBar");
-
-    QCOMPARE(newTabDataChanged.count(), 1);
-    QCOMPARE(newTabUrlChanged.count(), 1);
-    QCOMPARE(newTabTitleChanged.count(), 1);
-    QVERIFY(!previousPage);
-    QCOMPARE(tabModel->newTabPreviousPage(), previousPage);
-
-    QCOMPARE(tabModel->newTabUrl(), QString("http://foobar.com"));
-    QCOMPARE(tabModel->newTabTitle(), QString("FooBar"));
 }
 
 void tst_declarativetabmodel::newTabData()

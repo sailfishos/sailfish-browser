@@ -9,8 +9,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef TABCACHE_H
-#define TABCACHE_H
+#ifndef WEBPAGES_H
+#define WEBPAGES_H
 
 #include <QObject>
 #include <QMap>
@@ -20,8 +20,8 @@ class QQmlComponent;
 class DeclarativeWebContainer;
 class DeclarativeWebPage;
 
-struct TabActivationData {
-    TabActivationData(DeclarativeWebPage *webPage, bool activated)
+struct WebPageActivationData {
+    WebPageActivationData(DeclarativeWebPage *webPage, bool activated)
         : webPage(webPage)
         , activated(activated)
     {}
@@ -30,39 +30,39 @@ struct TabActivationData {
     bool activated;
 };
 
-class TabCache : public QObject
+class WebPages : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit TabCache(QObject *parent = 0);
-    ~TabCache();
+    explicit WebPages(QObject *parent = 0);
+    ~WebPages();
 
     void initialize(DeclarativeWebContainer *webContainer, QQmlComponent *webPageComponent);
     bool initialized() const;
     int count() const;
 
-    TabActivationData tab(int tabId, int parentId = 0);
+    WebPageActivationData page(int tabId, int parentId = 0);
     void release(int tabId, bool virtualize = false);
     int parentTabId(int tabId) const;
 
 private:
-    struct TabEntry {
-        TabEntry(DeclarativeWebPage *webPage, QRectF *cssContentRect);
-        ~TabEntry();
+    struct WebPageEntry {
+        WebPageEntry(DeclarativeWebPage *webPage, QRectF *cssContentRect);
+        ~WebPageEntry();
 
         DeclarativeWebPage *webPage;
         QRectF *cssContentRect;
     };
 
-    void updateActiveTab(TabEntry *tab, bool resurrect);
-    void dumpTabs() const;
+    void updateActivePage(WebPageEntry *webPageEntry, bool resurrect);
+    void dumpPages() const;
 
     QPointer<DeclarativeWebContainer> m_webContainer;
     QPointer<QQmlComponent> m_webPageComponent;
-    // Contains both virtual and real tabs
-    QMap<int, TabEntry*> m_activeTabs;
-    TabEntry *m_activeTab;
+    // Contains both virtual and real
+    QMap<int, WebPageEntry*> m_activePages;
+    WebPageEntry *m_activePage;
     int m_count;
 };
 

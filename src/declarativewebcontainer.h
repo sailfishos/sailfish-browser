@@ -13,6 +13,7 @@
 #define DECLARATIVEWEBCONTAINER_H
 
 #include "tab.h"
+#include "webpages.h"
 
 #include <QQuickItem>
 #include <QPointer>
@@ -28,8 +29,10 @@ class DeclarativeWebContainer : public QQuickItem {
     Q_OBJECT
 
     Q_PROPERTY(DeclarativeWebPage *contentItem READ webPage WRITE setWebPage NOTIFY contentItemChanged FINAL)
+    Q_PROPERTY(DeclarativeTabModel *tabModel READ tabModel WRITE setTabModel NOTIFY tabModelChanged FINAL)
     Q_PROPERTY(bool foreground READ foreground WRITE setForeground NOTIFY foregroundChanged FINAL)
     Q_PROPERTY(bool active READ active WRITE setActive NOTIFY activeChanged FINAL)
+    Q_PROPERTY(int maxLiveTabCount MEMBER m_maxLiveTabCount NOTIFY maxLiveTabCountChanged FINAL)
     // This property should cover all possible popus
     Q_PROPERTY(bool popupActive MEMBER m_popupActive NOTIFY popupActiveChanged FINAL)
     Q_PROPERTY(bool portrait MEMBER m_portrait NOTIFY portraitChanged FINAL)
@@ -53,6 +56,7 @@ class DeclarativeWebContainer : public QQuickItem {
     Q_PROPERTY(QString url READ url NOTIFY urlChanged FINAL)
 
     Q_PROPERTY(DeclarativeTab *currentTab READ currentTab NOTIFY currentTabChanged FINAL)
+    Q_PROPERTY(QQmlComponent* webPageComponent MEMBER m_webPageComponent NOTIFY webPageComponentChanged FINAL)
 
     // "private" properties.
     Q_PROPERTY(bool _firstFrameRendered MEMBER m_firstFrameRendered NOTIFY _firstFrameRenderedChanged FINAL)
@@ -64,6 +68,9 @@ public:
 
     DeclarativeWebPage *webPage() const;
     void setWebPage(DeclarativeWebPage *webPage);
+
+    DeclarativeTabModel *tabModel() const;
+    void setTabModel(DeclarativeTabModel *model);
 
     bool foreground() const;
     void setForeground(bool active);
@@ -97,15 +104,18 @@ public:
 
     Q_INVOKABLE void goForward();
     Q_INVOKABLE void goBack();
+    Q_INVOKABLE bool activatePage(int tabId, bool force = false);
 
     Q_INVOKABLE void captureScreen();
 
 signals:
     void contentItemChanged();
+    void tabModelChanged();
     void pageStackChanged();
     void foregroundChanged();
     void backgroundChanged();
     void activeChanged();
+    void maxLiveTabCountChanged();
     void popupActiveChanged();
     void portraitChanged();
     void fullscreenModeChanged();
@@ -128,6 +138,9 @@ signals:
     void _readyToLoadChanged();
 
     void currentTabChanged();
+    void webPageComponentChanged();
+
+    void triggerLoad(QString url, QString title);
 
 public slots:
     void resetHeight(bool respectContentHeight = true);
@@ -140,14 +153,21 @@ private slots:
     void invalidateTabData();
     void screenCaptureReady();
     void triggerLoad();
+    void onActiveTabChanged(int tabId);
+    void onModelLoaded();
+    void onDownloadStarted();
+    void onNewTabRequested(QString url, QString title, int parentId);
+    void manageMaxTabCount();
+    void releasePage(int tabId, bool virtualize = false);
+    void closeWindow();
 
 protected:
     void timerEvent(QTimerEvent *event);
-    void componentComplete();
 
 private:
     qreal contentHeight() const;
     void captureScreen(QString url, int size, qreal rotate);
+    int parentTabId(int tabId) const;
 
     struct ScreenCapture {
         int tabId;
@@ -162,6 +182,8 @@ private:
     QPointer<DeclarativeWebPage> m_webPage;
     QPointer<DeclarativeTabModel> m_model;
     QPointer<DeclarativeTab> m_currentTab;
+    QPointer<QQmlComponent> m_webPageComponent;
+    QScopedPointer<WebPages> m_webPages;
     bool m_foreground;
     bool m_background;
     bool m_windowVisible;
@@ -184,8 +206,11 @@ private:
     bool m_realNavigation;
     bool m_firstFrameRendered;
     bool m_readyToLoad;
+    int m_maxLiveTabCount;
 
     QFutureWatcher<ScreenCapture> m_screenCapturer;
+
+    friend class tst_webview;
 };
 
 QML_DECLARE_TYPE(DeclarativeWebContainer)

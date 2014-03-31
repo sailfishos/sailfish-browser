@@ -20,8 +20,6 @@ import "." as Browser
 WebContainer {
     id: webView
 
-    // TODO: Push this to C++ if possible. Check if TabModel is feasible to merged to DeclarativeTabModel
-    property alias tabModel: model
     property color _decoratorColor: Theme.highlightDimmerColor
 
     function stop() {
@@ -51,8 +49,8 @@ WebContainer {
         url = url ? "" + url : ""
 
         // This guarantees at that least one webview exists.
-        if (model.count == 0 && !model.hasNewTabData) {
-            model.newTabData(url, title, null)
+        if (tabModel.count == 0 && !tabModel.hasNewTabData) {
+            tabModel.newTabData(url, title, null)
         }
 
         // Bookmarks and history items pass url and title as arguments.
@@ -62,7 +60,7 @@ WebContainer {
             currentTab.url = url
         }
 
-        if (!model.hasNewTabData || force || !model.activatePage(model.nextTabId)) {
+        if (!tabModel.hasNewTabData || force || !webView.activatePage(tabModel.nextTabId)) {
             // First contentItem will be created once tab activated.
             if (contentItem) contentItem.loadTab(url, force)
         }
@@ -110,9 +108,17 @@ WebContainer {
     loading: contentItem ? contentItem.loading : false
     favicon: contentItem ? contentItem.favicon : ""
 
+    webPageComponent: webPageComponent
+
+    tabModel: TabModel {
+        // Enable browsing after new tab actually created or it was not even requested
+        browsing: webView.active && !hasNewTabData && contentItem && contentItem.loaded
+        onBrowsingChanged: if (browsing) captureScreen()
+    }
+
     // Triggered when tabs of tab model are available and QmlMozView is ready to load.
     // Load test
-    // 1) model.hasNewTabData -> loadTab (already activated view)
+    // 1) tabModel.hasNewTabData -> loadTab (already activated view)
     // 2) model has tabs, load active tab -> load (activate view when needed)
     // 3) load home page -> load (activate view when needed)
     on_ReadyToLoadChanged: {
@@ -121,11 +127,11 @@ WebContainer {
             return
         }
 
-        if (model.hasNewTabData) {
-            contentItem.loadTab(model.newTabUrl, false)
-        } else if (model.count > 0) {
-            // First tab is actived when tabs are loaded to the tabs model.
-            model.resetNewTabData()
+        if (tabModel.hasNewTabData) {
+            contentItem.loadTab(tabModel.newTabUrl, false)
+        } else if (tabModel.count > 0) {
+            // First tab is actived when tabs are loaded to the tabs tabModel.
+            tabModel.resetNewTabData()
             webView.load(currentTab.url, currentTab.title)
         } else {
             // This can happen only during startup.
@@ -133,29 +139,17 @@ WebContainer {
         }
     }
 
+    onTriggerLoad: webView.load(url, title)
+
     WebViewCreator {
         activeWebView: contentItem
-        onNewWindowRequested: model.newTab(url, "", parentId)
+        onNewWindowRequested: tabModel.newTab(url, "", parentId)
     }
 
     Rectangle {
         id: background
         anchors.fill: parent
         color: contentItem && contentItem.bgcolor ? contentItem.bgcolor : "white"
-    }
-
-    // TODO: See comment at line 29. Merge this with DeclarativeTabModel if feasible.
-    TabModel {
-        id: model
-
-        webPageComponent: webPageComponent
-        webView: webView
-
-        // Enable browsing after new tab actually created or it was not even requested
-        browsing: webView.active && !hasNewTabData && contentItem && contentItem.loaded
-        onBrowsingChanged: if (browsing) captureScreen()
-
-        onTriggerLoad: webView.load(url, title)
     }
 
     Component {
@@ -175,12 +169,12 @@ WebContainer {
 
                 // This looks like a not needed condition for now. However, if we add a max number of real tabs
                 // limit then this could make sense again.
-                else if (url == newUrl && model.hasNewTabData) {
+                else if (url == newUrl && tabModel.hasNewTabData) {
                     // Url will not change when the very same url is already loaded. Thus, we just add tab directly.
                     // This is currently the only exception. Normally tab is added after engine has
                     // resolved the url.
-                    tabModel.addTab(newUrl, model.newTabTitle)
-                    model.resetNewTabData()
+                    tabModel.addTab(newUrl, tabModel.newTabTitle)
+                    tabModel.resetNewTabData()
                 }
             }
 
@@ -208,7 +202,7 @@ WebContainer {
                 }
             }
 
-            onTitleChanged: model.updateTitle(tabId, title)
+            onTitleChanged: tabModel.updateTitle(tabId, title)
             onUrlChanged: {
                 if (url == "about:blank") return
 
@@ -220,7 +214,7 @@ WebContainer {
                     PopupHandler.acceptedGeolocationUrl = ""
                 }
 
-                model.updateUrl(tabId, url)
+                tabModel.updateUrl(tabId, url)
             }
 
             onBgcolorChanged: {

@@ -14,6 +14,7 @@
 #include "declarativetabmodel.h"
 #include "declarativewebpage.h"
 #include "dbmanager.h"
+#include "downloadmanager.h"
 
 #include <QPointer>
 #include <QTimerEvent>
@@ -32,6 +33,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     , m_webPage(0)
     , m_model(0)
     , m_currentTab(new DeclarativeTab(this))
+    , m_webPageComponent(0)
     , m_foreground(true)
     , m_background(false)
     , m_windowVisible(false)
@@ -51,7 +53,9 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     , m_realNavigation(false)
     , m_firstFrameRendered(false)
     , m_readyToLoad(false)
+    , m_maxLiveTabCount(5)
 {
+    m_webPages.reset(new WebPages(this));
     setFlag(QQuickItem::ItemHasContents, true);
     connect(m_currentTab, SIGNAL(titleChanged()), this, SIGNAL(titleChanged()));
     connect(m_currentTab, SIGNAL(urlChanged()), this, SIGNAL(urlChanged()));
@@ -63,6 +67,8 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     }
 
     connect(&m_screenCapturer, SIGNAL(finished()), this, SLOT(screenCaptureReady()));
+    connect(DownloadManager::instance(), SIGNAL(downloadStarted()), this, SLOT(onDownloadStarted()));
+    connect(this, SIGNAL(maxLiveTabCountChanged()), this, SLOT(manageMaxTabCount()));
 
     QString cacheLocation = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
     QDir dir(cacheLocation);
@@ -104,6 +110,33 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
         }
         m_webPage = webPage;
         emit contentItemChanged();
+    }
+}
+
+DeclarativeTabModel *DeclarativeWebContainer::tabModel() const
+{
+    return m_model;
+}
+
+void DeclarativeWebContainer::setTabModel(DeclarativeTabModel *model)
+{
+    if (m_model != model) {
+        if (m_model) {
+            disconnect(m_model);
+        }
+
+        m_model = model;
+        if (m_model) {
+            m_model->setCurrentTab(m_currentTab);
+            connect(m_model, SIGNAL(_activeTabChanged(const Tab&)), this, SLOT(updateTabData(const Tab&)));
+            connect(m_model, SIGNAL(_activeTabInvalidated()), this, SLOT(invalidateTabData()));
+            connect(m_model, SIGNAL(activeTabChanged(int)), this, SLOT(onActiveTabChanged(int)));
+            connect(m_model, SIGNAL(loadedChanged()), this, SLOT(onModelLoaded()));
+            connect(m_model, SIGNAL(tabAdded(int)), this, SLOT(manageMaxTabCount()));
+            connect(m_model, SIGNAL(tabClosed(int)), this, SLOT(releasePage(int)));
+            connect(m_model, SIGNAL(newTabRequested(QString,QString,int)), this, SLOT(onNewTabRequested(QString,QString,int)));
+        }
+        emit tabModelChanged();
     }
 }
 
@@ -274,6 +307,24 @@ void DeclarativeWebContainer::goBack()
     }
 }
 
+bool DeclarativeWebContainer::activatePage(int tabId, bool force)
+{
+    if (!m_model) {
+        return false;
+    }
+
+    m_webPages->initialize(this, m_webPageComponent.data());
+    if ((m_model->loaded() || force) && tabId > 0 && m_webPages->initialized()) {
+        WebPageActivationData activationData = m_webPages->page(tabId, m_model->newTabParentId());
+        setWebPage(activationData.webPage);
+        m_webPage->setChrome(true);
+        setLoadProgress(m_webPage->loadProgress());
+        connect(m_webPage, SIGNAL(windowCloseRequested()), this, SLOT(closeWindow()), Qt::UniqueConnection);
+        return activationData.activated;
+    }
+    return false;
+}
+
 void DeclarativeWebContainer::captureScreen()
 {
     if (!m_webPage) {
@@ -382,17 +433,6 @@ void DeclarativeWebContainer::timerEvent(QTimerEvent *event)
     }
 }
 
-void DeclarativeWebContainer::componentComplete()
-{
-    QQuickItem::componentComplete();
-    QVariant var = property("tabModel");
-    m_model = qobject_cast<DeclarativeTabModel *>(qvariant_cast<QObject*>(var));
-    m_model->setCurrentTab(m_currentTab);
-    connect(m_model, SIGNAL(_activeTabChanged(const Tab&)), this, SLOT(updateTabData(const Tab&)));
-    connect(m_model, SIGNAL(_activeTabInvalidated()), this, SLOT(invalidateTabData()));
-}
-
-
 void DeclarativeWebContainer::windowVisibleChanged(bool visible)
 {
     Q_UNUSED(visible);
@@ -470,6 +510,58 @@ void DeclarativeWebContainer::triggerLoad()
     }
 }
 
+void DeclarativeWebContainer::onActiveTabChanged(int tabId)
+{
+    if (m_model->hasNewTabData()) {
+        emit currentTabChanged();
+        return;
+    }
+
+    if (activatePage(tabId, true) && m_currentTab && m_currentTab->valid() && m_readyToLoad
+            && (m_webPage->tabId() != tabId || m_webPage->url().toString() != m_currentTab->url())) {
+        emit triggerLoad(m_currentTab->url(), m_currentTab->title());
+    }
+
+    emit currentTabChanged();
+    manageMaxTabCount();
+}
+
+void DeclarativeWebContainer::onModelLoaded()
+{
+    // Load placeholder when no pages exist. If a page exists,
+    // it gets initialized by onActiveTabChanged.
+    if (!webPage()) {
+        activatePage(m_model->nextTabId(), true);
+    }
+}
+
+void DeclarativeWebContainer::onDownloadStarted()
+{
+    // This is not 100% solid. A new tab is created for every incoming
+    // url. In slow network connectivity one can close previous tab or
+    // create a new tab before downloadStarted is emitted
+    // by DownloadManager. To get this to the 100%, we would need to
+    // pass windowId of the active window when download is started and close
+    // the passed windowId instead.
+    if (m_model && m_model->hasNewTabData() && m_model->count() > 0 && m_webPage) {
+        DeclarativeWebPage *previousWebPage = m_model->newTabPreviousPage();
+        releasePage(m_webPage->tabId());
+        if (previousWebPage) {
+            activatePage(previousWebPage->tabId());
+        } else if (m_model->count() == 0) {
+            // Download doesn't add tab to model. Mimic
+            // model change in case tabs count goes to zero.
+            emit m_model->countChanged();
+        }
+    }
+}
+
+void DeclarativeWebContainer::onNewTabRequested(QString url, QString title, int parentId)
+{
+    m_model->newTabData(url, title, webPage(), parentId);
+    emit triggerLoad(url, title);
+}
+
 /**
  * @brief DeclarativeTab::captureScreen
  * Rotation transformation is applied first, then geometry values on top of it.
@@ -494,4 +586,51 @@ void DeclarativeWebContainer::captureScreen(QString url, int size, qreal rotate)
 #endif
     // asynchronous save to avoid the slow I/O
     m_screenCapturer.setFuture(QtConcurrent::run(this, &DeclarativeWebContainer::saveToFile, url, image, cropBounds, m_currentTab->tabId(), rotate));
+}
+
+int DeclarativeWebContainer::parentTabId(int tabId) const
+{
+    if (m_webPages) {
+        return m_webPages->parentTabId(tabId);
+    }
+    return 0;
+}
+
+void DeclarativeWebContainer::releasePage(int tabId, bool virtualize)
+{
+    if (m_webPages) {
+        m_webPages->release(tabId, virtualize);
+        if (m_model->count() == 0) {
+            setWebPage(0);
+        }
+        m_model->resetNewTabData();
+    }
+}
+
+void DeclarativeWebContainer::closeWindow()
+{
+    DeclarativeWebPage *webPage = qobject_cast<DeclarativeWebPage *>(sender());
+    if (webPage && m_model) {
+        int parentPageTabId = parentTabId(webPage->tabId());
+        // Closing only allowed if window was created by script
+        if (parentPageTabId > 0) {
+            m_model->activateTabById(parentPageTabId);
+            m_model->removeTabById(webPage->tabId());
+        }
+    }
+}
+
+void DeclarativeWebContainer::manageMaxTabCount()
+{
+    // Minimum is 1 tab.
+    if (m_maxLiveTabCount < 1 || !m_model) {
+        return;
+    }
+
+    const QList<Tab> &tabs = m_model->tabs();
+
+    // ActiveTab + m_maxLiveTabCount -1 == m_maxLiveTabCount
+    for (int i = m_maxLiveTabCount - 1; i < tabs.count() && m_webPages && m_webPages->count() > m_maxLiveTabCount; ++i) {
+        releasePage(tabs.at(i).tabId(), true);
+    }
 }
