@@ -36,6 +36,8 @@ private slots:
     void testCloseActiveTab();
     void testRemoveTab();
     void testUrlLoading();
+    void testLiveTabCount_data();
+    void testLiveTabCount();
     void cleanupTestCase();
 
 private:
@@ -362,8 +364,47 @@ void tst_webview::testUrlLoading()
     QCOMPARE(tabModel->count(), 2);
 }
 
+void tst_webview::testLiveTabCount_data()
+{
+    QTest::addColumn<QString>("newUrl");
+    QTest::addColumn<int>("expectedTabCount");
+    QTest::addColumn<int>("liveTabCount");
+    QTest::newRow("testuseragent") << formatUrl("testuseragent.html") << 3 << 3;
+    QTest::newRow("testinputfocus") << formatUrl("testinputfocus.html") << 4 << 4;
+    QTest::newRow("testurlscheme") << formatUrl("testurlscheme.html") << 5 << 5;
+    QTest::newRow("testwindowopen") << formatUrl("testwindowopen.html") << 6 << 5;
+    QTest::newRow("testwebprompts") << formatUrl("testwebprompts.html") << 7 << 5;
+}
+
+void tst_webview::testLiveTabCount()
+{
+    QFETCH(QString, newUrl);
+    QFETCH(int, expectedTabCount);
+    QFETCH(int, liveTabCount);
+
+    QSignalSpy tabCountSpy(tabModel, SIGNAL(countChanged()));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int)));
+    QSignalSpy tabAddedSpy(tabModel, SIGNAL(tabAdded(int)));
+    QSignalSpy loadingChanged(webContainer, SIGNAL(loadingChanged()));
+
+    tabModel->newTab(newUrl, "");
+    waitSignals(loadingChanged, 2);
+
+    // ~last in the sequence of adding a new tab.
+    waitSignals(tabAddedSpy, 1);
+
+    // Url and title signals emitted are only once.
+    QCOMPARE(tabCountSpy.count(), 1);
+    QCOMPARE(tabModel->count(), expectedTabCount);
+    QCOMPARE(activeTabChangedSpy.count(), 1);
+
+    QCOMPARE(tabModel->m_tabCache->count(), liveTabCount);
+}
+
 void tst_webview::cleanupTestCase()
 {
+    QTest::qWait(500);
+
     tabModel->clear();
     QVERIFY(tabModel->count() == 0);
     QVERIFY(tab->url().isEmpty());

@@ -30,6 +30,7 @@ DeclarativeTabModel::DeclarativeTabModel(QObject *parent)
     , m_currentTab(0)
     , m_loaded(false)
     , m_browsing(false)
+    , m_maxLiveTabCount(5)
     , m_nextTabId(DBManager::instance()->getMaxTabId() + 1)
     , m_backForwardNavigation(false)
     , m_webPageComponent(0)
@@ -44,6 +45,7 @@ DeclarativeTabModel::DeclarativeTabModel(QObject *parent)
             this, SLOT(updateThumbPath(QString,QString,int)));
     connect(DownloadManager::instance(), SIGNAL(downloadStarted()), this, SLOT(onDownloadStarted()));
     connect(this, SIGNAL(activeTabChanged(int)), this, SLOT(onActiveTabChanged(int)));
+    connect(this, SIGNAL(maxLiveTabCountChanged()), this, SLOT(manageMaxTabCount()));
 }
 
 QHash<int, QByteArray> DeclarativeTabModel::roleNames() const
@@ -222,11 +224,6 @@ void DeclarativeTabModel::releaseTab(int tabId, bool virtualize)
         }
         resetNewTabData();
     }
-}
-
-int DeclarativeTabModel::lastTabId() const
-{
-    return m_tabs.at(m_tabs.count() - 1).tabId();
 }
 
 void DeclarativeTabModel::newTab(const QString &url, const QString &title, int parentId)
@@ -726,8 +723,14 @@ void DeclarativeTabModel::updateNewTabData(NewTabData *newTabData, bool urlChang
 
 void DeclarativeTabModel::manageMaxTabCount()
 {
-    if (m_tabCache && m_tabCache->count() > 5) {
-        releaseTab(lastTabId(), true);
+    // Minimum is 1 tab.
+    if (m_maxLiveTabCount < 1) {
+        return;
+    }
+
+    // ActiveTab + m_maxLiveTabCount -1 == m_maxLiveTabCount
+    for (int i = m_maxLiveTabCount - 1; i < m_tabs.count() && m_tabCache && m_tabCache->count() > m_maxLiveTabCount; ++i) {
+        releaseTab(m_tabs.at(i).tabId(), true);
     }
 }
 

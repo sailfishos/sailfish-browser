@@ -33,6 +33,7 @@ class DeclarativeTabModel : public QAbstractListModel, public QQmlParserStatus
 
     Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
     Q_PROPERTY(int currentTabId READ currentTabId NOTIFY currentTabIdChanged FINAL)
+    Q_PROPERTY(int maxLiveTabCount MEMBER m_maxLiveTabCount NOTIFY maxLiveTabCountChanged FINAL)
     Q_PROPERTY(int nextTabId READ nextTabId NOTIFY nextTabIdChanged FINAL)
     Q_PROPERTY(bool loaded READ loaded NOTIFY loadedChanged FINAL)
     Q_PROPERTY(bool browsing READ browsing WRITE setBrowsing NOTIFY browsingChanged FINAL)
@@ -63,7 +64,6 @@ public:
     Q_INVOKABLE bool activatePage(int tabId, bool force = false);
     Q_INVOKABLE void closeActiveTab();
 
-    Q_INVOKABLE int lastTabId() const;
     Q_INVOKABLE void newTab(const QString &url, const QString &title, int parentId = 0);
     Q_INVOKABLE void newTabData(const QString &url, const QString &title, DeclarativeWebPage *contentItem = 0, int parentId = 0);
     Q_INVOKABLE void resetNewTabData();
@@ -118,6 +118,7 @@ signals:
     void tabClosed(int tabId);
     void currentTabChanged();
     void currentTabIdChanged();
+    void maxLiveTabCountChanged();
     void nextTabIdChanged();
     void loadedChanged();
     void browsingChanged();
@@ -137,6 +138,7 @@ private slots:
     void onActiveTabChanged(int tabId);
     void onDownloadStarted();
     void closeWindow();
+    void manageMaxTabCount();
 
 private:
     struct NewTabData {
@@ -161,13 +163,13 @@ private:
     void updateActiveTab(const Tab &newActiveTab);
     void updateTabUrl(int tabId, const QString &url, bool navigate);
     void updateNewTabData(NewTabData *newTabData, bool urlChanged, bool titleChanged);
-    void manageMaxTabCount();
     DeclarativeWebPage* newTabPreviousPage() const;
 
     QPointer<DeclarativeTab> m_currentTab;
     QList<Tab> m_tabs;
     bool m_loaded;
     bool m_browsing;
+    int m_maxLiveTabCount;
     int m_nextTabId;
     bool m_backForwardNavigation;
 
