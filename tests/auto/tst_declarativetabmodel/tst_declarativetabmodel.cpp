@@ -25,9 +25,8 @@ static const QByteArray QML_SNIPPET = \
         "import QtQuick 2.0\n" \
         "import Sailfish.Browser 1.0\n" \
         "WebContainer {\n" \
-        "   property alias tabModel: model\n" \
+        "   tabModel: TabModel {}\n" \
         "   width: 100; height: 100\n" \
-        "   TabModel { id: model }\n" \
         "}\n";
 
 struct TestTab {

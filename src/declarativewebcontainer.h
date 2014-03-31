@@ -28,6 +28,7 @@ class DeclarativeWebContainer : public QQuickItem {
     Q_OBJECT
 
     Q_PROPERTY(DeclarativeWebPage *contentItem READ webPage WRITE setWebPage NOTIFY contentItemChanged FINAL)
+    Q_PROPERTY(DeclarativeTabModel *tabModel READ tabModel WRITE setTabModel NOTIFY tabModelChanged FINAL)
     Q_PROPERTY(bool foreground READ foreground WRITE setForeground NOTIFY foregroundChanged FINAL)
     Q_PROPERTY(bool active READ active WRITE setActive NOTIFY activeChanged FINAL)
     // This property should cover all possible popus
@@ -64,6 +65,9 @@ public:
 
     DeclarativeWebPage *webPage() const;
     void setWebPage(DeclarativeWebPage *webPage);
+
+    DeclarativeTabModel *tabModel() const;
+    void setTabModel(DeclarativeTabModel *model);
 
     bool foreground() const;
     void setForeground(bool active);
@@ -102,6 +106,7 @@ public:
 
 signals:
     void contentItemChanged();
+    void tabModelChanged();
     void pageStackChanged();
     void foregroundChanged();
     void backgroundChanged();
@@ -143,7 +148,6 @@ private slots:
 
 protected:
     void timerEvent(QTimerEvent *event);
-    void componentComplete();
 
 private:
     qreal contentHeight() const;

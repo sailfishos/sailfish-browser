@@ -107,6 +107,28 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
     }
 }
 
+DeclarativeTabModel *DeclarativeWebContainer::tabModel() const
+{
+    return m_model;
+}
+
+void DeclarativeWebContainer::setTabModel(DeclarativeTabModel *model)
+{
+    if (m_model != model) {
+        if (m_model) {
+            disconnect(m_model);
+        }
+
+        m_model = model;
+        if (m_model) {
+            m_model->setCurrentTab(m_currentTab);
+            connect(m_model, SIGNAL(_activeTabChanged(const Tab&)), this, SLOT(updateTabData(const Tab&)));
+            connect(m_model, SIGNAL(_activeTabInvalidated()), this, SLOT(invalidateTabData()));
+        }
+        emit tabModelChanged();
+    }
+}
+
 bool DeclarativeWebContainer::foreground() const
 {
     return m_foreground;
@@ -381,17 +403,6 @@ void DeclarativeWebContainer::timerEvent(QTimerEvent *event)
         killTimer(m_backgroundTimer);
     }
 }
-
-void DeclarativeWebContainer::componentComplete()
-{
-    QQuickItem::componentComplete();
-    QVariant var = property("tabModel");
-    m_model = qobject_cast<DeclarativeTabModel *>(qvariant_cast<QObject*>(var));
-    m_model->setCurrentTab(m_currentTab);
-    connect(m_model, SIGNAL(_activeTabChanged(const Tab&)), this, SLOT(updateTabData(const Tab&)));
-    connect(m_model, SIGNAL(_activeTabInvalidated()), this, SLOT(invalidateTabData()));
-}
-
 
 void DeclarativeWebContainer::windowVisibleChanged(bool visible)
 {
