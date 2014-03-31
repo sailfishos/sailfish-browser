@@ -23,7 +23,6 @@
 #include "declarativewebcontainer.h"
 
 class DeclarativeTab;
-class DeclarativeWebPage;
 
 class DeclarativeTabModel : public QAbstractListModel, public QQmlParserStatus
 {
@@ -65,7 +64,7 @@ public:
     int count() const;
     void addTab(const QString &url, const QString &title);
     bool activateTabById(int tabId);
-    void removeTabById(int tabId);
+    void removeTabById(int tabId, bool activeTab);
 
     // From QAbstractListModel
     int rowCount(const QModelIndex & parent = QModelIndex()) const;
@@ -96,14 +95,15 @@ public:
 
     DeclarativeWebPage* newTabPreviousPage() const;
     const QList<Tab>& tabs() const;
-    void setWebView(DeclarativeWebContainer *webView);
+
+    void updateUrl(int tabId, bool activeTab, QString url);
+    void updateTitle(int tabId, bool activeTab, QString title);
+    void updateThumbnailPath(int tabId, bool activeTab, QString path);
 
     static bool tabSort(const Tab &t1, const Tab &t2);
 
 public slots:
     void tabsAvailable(QList<Tab> tabs);
-    void updateUrl(int tabId, QString url);
-    void updateTitle(int tabId, QString title);
 
 signals:
     void countChanged();
@@ -123,7 +123,6 @@ signals:
     void _activeTabChanged(const Tab &tab);
 
 private slots:
-    void updateThumbPath(QString url, QString path, int tabId);
     void tabChanged(const Tab &tab);
 
 private:
@@ -143,17 +142,16 @@ private:
 
     void load();
     void removeTab(int tabId, const QString &thumbnail, int index = -1);
-    int findTabIndex(int tabId, bool &activeTab) const;
+    int findTabIndex(int tabId) const;
     void saveTabOrder();
     int loadTabOrder();
     void updateActiveTab(const Tab &newActiveTab);
-    void updateTabUrl(int tabId, const QString &url, bool navigate);
+    void updateTabUrl(int tabId, bool activeTab, const QString &url, bool navigate);
 
     void updateNewTabData(NewTabData *newTabData);
     QString newTabTitle() const;
 
     QPointer<DeclarativeTab> m_currentTab;
-    QPointer<DeclarativeWebContainer> m_webView;
     QList<Tab> m_tabs;
     bool m_loaded;
     bool m_browsing;

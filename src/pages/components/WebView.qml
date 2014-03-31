@@ -181,7 +181,6 @@ WebContainer {
                 }
             }
 
-            onTitleChanged: tabModel.updateTitle(tabId, title)
             onUrlChanged: {
                 if (url == "about:blank") return
 
@@ -192,8 +191,6 @@ WebContainer {
                 if (!PopupHandler.isAcceptedGeolocationUrl(url)) {
                     PopupHandler.acceptedGeolocationUrl = ""
                 }
-
-                tabModel.updateUrl(tabId, url)
             }
 
             onBgcolorChanged: {

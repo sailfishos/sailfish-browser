@@ -160,6 +160,9 @@ private slots:
     void manageMaxTabCount();
     void releasePage(int tabId, bool virtualize = false);
     void closeWindow();
+    void onUrlChanged();
+    void onTitleChanged();
+    void onThumbnailPathChanged(QString url, QString path, int tabId);
 
 protected:
     void timerEvent(QTimerEvent *event);

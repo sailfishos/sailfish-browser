@@ -67,6 +67,8 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
 
     connect(&m_screenCapturer, SIGNAL(finished()), this, SLOT(screenCaptureReady()));
     connect(DownloadManager::instance(), SIGNAL(downloadStarted()), this, SLOT(onDownloadStarted()));
+    connect(DBManager::instance(), SIGNAL(thumbPathChanged(QString,QString,int)),
+            this, SLOT(onThumbnailPathChanged(QString,QString,int)));
     connect(this, SIGNAL(maxLiveTabCountChanged()), this, SLOT(manageMaxTabCount()));
 
     QString cacheLocation = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
@@ -127,7 +129,6 @@ void DeclarativeWebContainer::setTabModel(DeclarativeTabModel *model)
         m_model = model;
         if (m_model) {
             m_model->setCurrentTab(m_currentTab);
-            m_model->setWebView(this);
             connect(m_model, SIGNAL(_activeTabChanged(const Tab&)), this, SLOT(updateTabData(const Tab&)));
             connect(m_model, SIGNAL(_activeTabInvalidated()), this, SLOT(invalidateTabData()));
             connect(m_model, SIGNAL(activeTabChanged(int)), this, SLOT(onActiveTabChanged(int)));
@@ -329,6 +330,8 @@ bool DeclarativeWebContainer::activatePage(int tabId, bool force)
         m_webPage->setChrome(true);
         setLoadProgress(m_webPage->loadProgress());
         connect(m_webPage, SIGNAL(windowCloseRequested()), this, SLOT(closeWindow()), Qt::UniqueConnection);
+        connect(m_webPage, SIGNAL(urlChanged()), this, SLOT(onUrlChanged()), Qt::UniqueConnection);
+        connect(m_webPage, SIGNAL(titleChanged()), this, SLOT(onTitleChanged()), Qt::UniqueConnection);
         return activationData.activated;
     }
     return false;
@@ -624,8 +627,36 @@ void DeclarativeWebContainer::closeWindow()
         // Closing only allowed if window was created by script
         if (parentPageTabId > 0) {
             m_model->activateTabById(parentPageTabId);
-            m_model->removeTabById(webPage->tabId());
+            m_model->removeTabById(webPage->tabId(), isActiveTab(webPage->tabId()));
         }
+    }
+}
+
+void DeclarativeWebContainer::onUrlChanged()
+{
+    DeclarativeWebPage *webPage = qobject_cast<DeclarativeWebPage *>(sender());
+    if (webPage && m_model) {
+        QString url = webPage->url().toString();
+        int tabId = webPage->tabId();
+        m_model->updateUrl(tabId, isActiveTab(tabId), url);
+    }
+}
+
+void DeclarativeWebContainer::onTitleChanged()
+{
+    DeclarativeWebPage *webPage = qobject_cast<DeclarativeWebPage *>(sender());
+    if (webPage && m_model) {
+        QString title = webPage->title();
+        int tabId = webPage->tabId();
+        m_model->updateTitle(tabId, isActiveTab(tabId), title);
+    }
+}
+
+void DeclarativeWebContainer::onThumbnailPathChanged(QString url, QString path, int tabId)
+{
+    Q_UNUSED(url);
+    if (m_model) {
+        m_model->updateThumbnailPath(tabId, isActiveTab(tabId), path);
     }
 }
 
