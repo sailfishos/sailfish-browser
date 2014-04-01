@@ -104,6 +104,7 @@ void DeclarativeWebPage::onRecvAsyncMessage(const QString& message, const QVaria
         setFullscreen(data.toMap().value(QString("fullscreen")).toBool());
     } else if (message == gDomContentLoadedMessage && data.toMap().value("rootFrame").toBool()) {
         m_domContentLoaded = true;
+        emit domContentLoadedChanged();
     }
 }
 

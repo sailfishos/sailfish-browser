@@ -56,6 +56,7 @@ signals:
     void loadedChanged();
     void userHasDraggedWhileLoadingChanged();
     void fullscreenChanged();
+    void domContentLoadedChanged();
     void faviconChanged();
     void resurrectedContentRectChanged();
 
