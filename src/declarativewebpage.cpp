@@ -14,7 +14,7 @@
 static const QString gFullScreenMessage("embed:fullscreenchanged");
 static const QString gDomContentLoadedMessage("embed:domcontentloaded");
 
-DeclarativeWebPage::DeclarativeWebPage(QuickMozView *parent)
+DeclarativeWebPage::DeclarativeWebPage(QQuickItem *parent)
     : QuickMozView(parent)
     , m_container(0)
     , m_tabId(0)
