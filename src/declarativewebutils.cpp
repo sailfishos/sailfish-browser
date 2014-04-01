@@ -144,7 +144,8 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     // Scale up content size
     mozContext->setPixelRatio(1.5);
 
-    mozContext->setPref(QString("embedlite.inputItemSize"), QVariant(38));
+    // Theme.fontSizeSmall
+    mozContext->setPref(QString("embedlite.inputItemSize"), QVariant(28));
     mozContext->setPref(QString("embedlite.zoomMargin"), QVariant(14));
 }
 
