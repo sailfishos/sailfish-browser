@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Browser
+NotShowIn=X-MeeGo;
+X-MeeGo-Logical-Id=sailfish-browser-ap-name
+X-MeeGo-Translation-Catalog=sailfish-browser
+MimeType=text/html;x-maemo-urischeme/http;x-maemo-urischeme/https;
+X-Maemo-Service=org.sailfishos.browser
+X-Maemo-Method=org.sailfishos.browser.openUrl

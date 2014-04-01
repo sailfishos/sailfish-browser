@@ -156,9 +156,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     QTimer::singleShot(0, QMozContext::GetInstance(), SLOT(runEmbedding()));
 
     if (qApp->arguments().count() > 1) {
-        emit utils->openUrlRequested(qApp->arguments().last(), true);
-    } else {
-        emit utils->openUrlRequested("", true);
+        emit utils->openUrlRequested(qApp->arguments().last());
     }
 
     return app->exec();
