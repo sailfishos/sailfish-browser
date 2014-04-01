@@ -276,25 +276,18 @@ Page {
         onOpenUrlRequested: {
             if (!window.applicationActive) {
                 window.activate()
-
-                // url is empty when user tapped icon when browser was already open.
-                if (url == "" && !launch) return
             }
+            // url is empty when user tapped icon when browser was already open.
+            if (url == "") return
 
-            if (webView.url != "") {
-                webView.captureScreen()
-                if (!webView.tabModel.activateTab(url)) {
-                    // Not found in tabs list, create newtab and load
-                    webView.tabModel.newTab(url, "")
-                }
-            } else {
-                // New browser instance, just load the content
-                if (firstUseOverlay) {
-                    firstUseOverlay.destroy()
-                    webView.visible = true
-                }
-                // TabModel.newTab and WebView are handling empty urls and triggers
-                // view creation when needed.
+            // We have incoming URL so let's show it
+            if (firstUseOverlay) {
+                firstUseOverlay.destroy()
+                webView.visible = true
+            }
+            webView.captureScreen()
+            if (!webView.tabModel.activateTab(url)) {
+                // Not found in tabs list, create newtab and load
                 webView.tabModel.newTab(url, "")
             }
             if (browserPage.status !== PageStatus.Active) {

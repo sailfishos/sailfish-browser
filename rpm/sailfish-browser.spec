@@ -105,6 +105,7 @@ rm -rf %{buildroot}
 # >> files
 %{_bindir}/%{name}
 %{_datadir}/applications/%{name}.desktop
+%{_datadir}/applications/open-url.desktop
 %{_datadir}/%{name}/*
 %{_datadir}/translations/sailfish-browser_eng_en.qm
 %{_datadir}/dbus-1/services/*.service

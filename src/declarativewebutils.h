@@ -47,7 +47,7 @@ public slots:
 
 signals:
     void homePageChanged();
-    void openUrlRequested(QString url, bool launch = false);
+    void openUrlRequested(QString url);
     void firstUseDoneChanged();
 
 private slots:
