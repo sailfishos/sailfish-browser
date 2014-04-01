@@ -23,7 +23,6 @@
 #include "declarativewebcontainer.h"
 
 class DeclarativeTab;
-class DeclarativeWebPage;
 
 class DeclarativeTabModel : public QAbstractListModel, public QQmlParserStatus
 {
@@ -39,8 +38,6 @@ class DeclarativeTabModel : public QAbstractListModel, public QQmlParserStatus
     Q_PROPERTY(bool hasNewTabData READ hasNewTabData NOTIFY hasNewTabDataChanged FINAL)
     // TODO: Only needed by on_ReadyToLoadChanged handler of WebView
     Q_PROPERTY(QString newTabUrl READ newTabUrl NOTIFY newTabUrlChanged FINAL)
-    // TODO: Only needed by WebPage::loadTab
-    Q_PROPERTY(QString newTabTitle READ newTabTitle NOTIFY newTabTitleChanged FINAL)
 
 public:
     DeclarativeTabModel(QObject *parent = 0);
@@ -52,7 +49,6 @@ public:
         TabIdRole
     };
 
-    Q_INVOKABLE void addTab(const QString &url, const QString &title);
     Q_INVOKABLE void remove(int index);
     Q_INVOKABLE void clear();
     Q_INVOKABLE bool activateTab(const QString &url);
@@ -66,8 +62,9 @@ public:
     Q_INVOKABLE void dumpTabs() const;
 
     int count() const;
+    void addTab(const QString &url, const QString &title);
     bool activateTabById(int tabId);
-    void removeTabById(int tabId);
+    void removeTabById(int tabId, bool activeTab);
 
     // From QAbstractListModel
     int rowCount(const QModelIndex & parent = QModelIndex()) const;
@@ -90,7 +87,6 @@ public:
 
     bool hasNewTabData() const;
     QString newTabUrl() const;
-    QString newTabTitle() const;
 
     int newTabParentId() const;
 
@@ -100,12 +96,14 @@ public:
     DeclarativeWebPage* newTabPreviousPage() const;
     const QList<Tab>& tabs() const;
 
+    void updateUrl(int tabId, bool activeTab, QString url);
+    void updateTitle(int tabId, bool activeTab, QString title);
+    void updateThumbnailPath(int tabId, bool activeTab, QString path);
+
     static bool tabSort(const Tab &t1, const Tab &t2);
 
 public slots:
     void tabsAvailable(QList<Tab> tabs);
-    void updateUrl(int tabId, QString url);
-    void updateTitle(int tabId, QString title);
 
 signals:
     void countChanged();
@@ -119,15 +117,12 @@ signals:
     void browsingChanged();
     void hasNewTabDataChanged();
     void newTabUrlChanged();
-    void newTabTitleChanged();
-    void webViewChanged();
     void newTabRequested(QString url, QString title, int parentId);
 
     void _activeTabInvalidated();
     void _activeTabChanged(const Tab &tab);
 
 private slots:
-    void updateThumbPath(QString url, QString path, int tabId);
     void tabChanged(const Tab &tab);
 
 private:
@@ -147,12 +142,14 @@ private:
 
     void load();
     void removeTab(int tabId, const QString &thumbnail, int index = -1);
-    int findTabIndex(int tabId, bool &activeTab) const;
+    int findTabIndex(int tabId) const;
     void saveTabOrder();
     int loadTabOrder();
     void updateActiveTab(const Tab &newActiveTab);
-    void updateTabUrl(int tabId, const QString &url, bool navigate);
-    void updateNewTabData(NewTabData *newTabData, bool urlChanged, bool titleChanged);
+    void updateTabUrl(int tabId, bool activeTab, const QString &url, bool navigate);
+
+    void updateNewTabData(NewTabData *newTabData);
+    QString newTabTitle() const;
 
     QPointer<DeclarativeTab> m_currentTab;
     QList<Tab> m_tabs;

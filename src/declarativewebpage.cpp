@@ -12,6 +12,7 @@
 #include "declarativewebpage.h"
 
 static const QString gFullScreenMessage("embed:fullscreenchanged");
+static const QString gDomContentLoadedMessage("embed:domcontentloaded");
 
 DeclarativeWebPage::DeclarativeWebPage(QuickMozView *parent)
     : QuickMozView(parent)
@@ -21,6 +22,7 @@ DeclarativeWebPage::DeclarativeWebPage(QuickMozView *parent)
     , m_loaded(false)
     , m_userHasDraggedWhileLoading(false)
     , m_fullscreen(false)
+    , m_domContentLoaded(false)
     , m_deferredReload(false)
 {
     connect(this, SIGNAL(viewInitialized()), this, SLOT(onViewInitialized()));
@@ -56,6 +58,11 @@ void DeclarativeWebPage::setTabId(int tabId)
     m_tabId = tabId;
 }
 
+bool DeclarativeWebPage::domContentLoaded() const
+{
+    return m_domContentLoaded;
+}
+
 QVariant DeclarativeWebPage::resurrectedContentRect() const
 {
     return m_resurrectedContentRect;
@@ -69,6 +76,17 @@ void DeclarativeWebPage::setResurrectedContentRect(QVariant resurrectedContentRe
     }
 }
 
+void DeclarativeWebPage::loadTab(QString newUrl, bool force)
+{
+    // Always enable chrome when load is called.
+    setChrome(true);
+    QString oldUrl = url().toString();
+    if ((!newUrl.isEmpty() && oldUrl != newUrl) || force) {
+        m_domContentLoaded = false;
+        load(newUrl);
+    }
+}
+
 void DeclarativeWebPage::componentComplete()
 {
     QuickMozView::componentComplete();
@@ -77,12 +95,15 @@ void DeclarativeWebPage::componentComplete()
 void DeclarativeWebPage::onViewInitialized()
 {
     addMessageListener(gFullScreenMessage);
+    addMessageListener(gDomContentLoadedMessage);
 }
 
 void DeclarativeWebPage::onRecvAsyncMessage(const QString& message, const QVariant& data)
 {
     if (message == gFullScreenMessage) {
         setFullscreen(data.toMap().value(QString("fullscreen")).toBool());
+    } else if (message == gDomContentLoadedMessage && data.toMap().value("rootFrame").toBool()) {
+        m_domContentLoaded = true;
     }
 }
 

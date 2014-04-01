@@ -17,7 +17,6 @@ import org.freedesktop.contextkit 1.0
 // QtObject cannot have children
 Item {
     property Item webView
-    property bool firstFrameRendered
 
     property bool videoActive
     property bool audioActive
@@ -85,9 +84,7 @@ Item {
     Connections {
         target: MozContext
         onRecvObserve: {
-            if (message === "embedlite-before-first-paint") {
-                firstFrameRendered = true
-            } else if (message === "media-decoder-info") {
+            if (message === "media-decoder-info") {
                 if (data.state === "meta") {
                     _isAudioStream = data.a
                     _isVideoStream = data.v

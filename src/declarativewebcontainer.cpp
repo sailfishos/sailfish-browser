@@ -51,7 +51,6 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     , m_canGoForward(false)
     , m_canGoBack(false)
     , m_realNavigation(false)
-    , m_firstFrameRendered(false)
     , m_readyToLoad(false)
     , m_maxLiveTabCount(5)
 {
@@ -68,6 +67,8 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
 
     connect(&m_screenCapturer, SIGNAL(finished()), this, SLOT(screenCaptureReady()));
     connect(DownloadManager::instance(), SIGNAL(downloadStarted()), this, SLOT(onDownloadStarted()));
+    connect(DBManager::instance(), SIGNAL(thumbPathChanged(QString,QString,int)),
+            this, SLOT(onThumbnailPathChanged(QString,QString,int)));
     connect(this, SIGNAL(maxLiveTabCountChanged()), this, SLOT(manageMaxTabCount()));
 
     QString cacheLocation = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
@@ -275,6 +276,15 @@ void DeclarativeWebContainer::setReadyToLoad(bool readyToLoad)
     }
 }
 
+bool DeclarativeWebContainer::isActiveTab(int tabId)
+{
+#ifdef NO_WEB_PAGE
+    return m_currentTab->tabId() == tabId;
+#else
+    return m_webPage && m_webPage->tabId() == tabId && m_currentTab->tabId() == tabId;
+#endif
+}
+
 void DeclarativeWebContainer::goForward()
 {
     if (m_canGoForward && m_currentTab->valid()) {
@@ -320,6 +330,8 @@ bool DeclarativeWebContainer::activatePage(int tabId, bool force)
         m_webPage->setChrome(true);
         setLoadProgress(m_webPage->loadProgress());
         connect(m_webPage, SIGNAL(windowCloseRequested()), this, SLOT(closeWindow()), Qt::UniqueConnection);
+        connect(m_webPage, SIGNAL(urlChanged()), this, SLOT(onUrlChanged()), Qt::UniqueConnection);
+        connect(m_webPage, SIGNAL(titleChanged()), this, SLOT(onTitleChanged()), Qt::UniqueConnection);
         return activationData.activated;
     }
     return false;
@@ -331,7 +343,7 @@ void DeclarativeWebContainer::captureScreen()
         return;
     }
 
-    if (m_active && m_firstFrameRendered && !m_popupActive) {
+    if (m_active && m_webPage->domContentLoaded() && !m_popupActive) {
         int size = QGuiApplication::primaryScreen()->size().width();
         if (!m_portrait && !m_fullScreenMode) {
             size -= m_toolbarHeight;
@@ -489,7 +501,7 @@ void DeclarativeWebContainer::screenCaptureReady()
 #endif
     if (capture.tabId != -1) {
         // Update immediately without dbworker round trip.
-        if (capture.tabId == m_currentTab->tabId()) {
+        if (capture.tabId == m_currentTab->tabId() && isActiveTab(capture.tabId)) {
             m_currentTab->setThumbnailPath(capture.path);
         }
         // TODO: Cleanup url.
@@ -615,8 +627,36 @@ void DeclarativeWebContainer::closeWindow()
         // Closing only allowed if window was created by script
         if (parentPageTabId > 0) {
             m_model->activateTabById(parentPageTabId);
-            m_model->removeTabById(webPage->tabId());
+            m_model->removeTabById(webPage->tabId(), isActiveTab(webPage->tabId()));
         }
+    }
+}
+
+void DeclarativeWebContainer::onUrlChanged()
+{
+    DeclarativeWebPage *webPage = qobject_cast<DeclarativeWebPage *>(sender());
+    if (webPage && m_model) {
+        QString url = webPage->url().toString();
+        int tabId = webPage->tabId();
+        m_model->updateUrl(tabId, isActiveTab(tabId), url);
+    }
+}
+
+void DeclarativeWebContainer::onTitleChanged()
+{
+    DeclarativeWebPage *webPage = qobject_cast<DeclarativeWebPage *>(sender());
+    if (webPage && m_model) {
+        QString title = webPage->title();
+        int tabId = webPage->tabId();
+        m_model->updateTitle(tabId, isActiveTab(tabId), title);
+    }
+}
+
+void DeclarativeWebContainer::onThumbnailPathChanged(QString url, QString path, int tabId)
+{
+    Q_UNUSED(url);
+    if (m_model) {
+        m_model->updateThumbnailPath(tabId, isActiveTab(tabId), path);
     }
 }
 

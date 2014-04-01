@@ -59,7 +59,6 @@ class DeclarativeWebContainer : public QQuickItem {
     Q_PROPERTY(QQmlComponent* webPageComponent MEMBER m_webPageComponent NOTIFY webPageComponentChanged FINAL)
 
     // "private" properties.
-    Q_PROPERTY(bool _firstFrameRendered MEMBER m_firstFrameRendered NOTIFY _firstFrameRenderedChanged FINAL)
     Q_PROPERTY(bool _readyToLoad READ readyToLoad WRITE setReadyToLoad NOTIFY _readyToLoadChanged FINAL)
 
 public:
@@ -102,6 +101,8 @@ public:
     bool readyToLoad() const;
     void setReadyToLoad(bool readyToLoad);
 
+    bool isActiveTab(int tabId);
+
     Q_INVOKABLE void goForward();
     Q_INVOKABLE void goBack();
     Q_INVOKABLE bool activatePage(int tabId, bool force = false);
@@ -134,7 +135,6 @@ signals:
     void titleChanged();
     void urlChanged();
 
-    void _firstFrameRenderedChanged();
     void _readyToLoadChanged();
 
     void currentTabChanged();
@@ -160,6 +160,9 @@ private slots:
     void manageMaxTabCount();
     void releasePage(int tabId, bool virtualize = false);
     void closeWindow();
+    void onUrlChanged();
+    void onTitleChanged();
+    void onThumbnailPathChanged(QString url, QString path, int tabId);
 
 protected:
     void timerEvent(QTimerEvent *event);
@@ -204,7 +207,6 @@ private:
     bool m_canGoForward;
     bool m_canGoBack;
     bool m_realNavigation;
-    bool m_firstFrameRendered;
     bool m_readyToLoad;
     int m_maxLiveTabCount;
 

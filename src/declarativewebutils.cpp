@@ -136,8 +136,7 @@ void DeclarativeWebUtils::updateWebEngineSettings()
                              << "clipboard:setdata"
                              << "media-decoder-info"
                              << "embed:download"
-                             << "embed:search"
-                             << "embedlite-before-first-paint");
+                             << "embed:search");
 
     // Enable internet search
     mozContext->setPref(QString("keyword.enabled"), QVariant(true));
