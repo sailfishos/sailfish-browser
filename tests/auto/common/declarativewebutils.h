@@ -9,34 +9,36 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef WEBUTILS_MOCK
-#define WEBUTILS_MOCK
+#ifndef DECLARATIVEWEBUTILS_H
+#define DECLARATIVEWEBUTILS_H
 
 #include <QObject>
 #include <QString>
 #include <QColor>
 #include <qqml.h>
 
-class WebUtilsMock : public QObject
+class DeclarativeWebUtils : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QString homePage MEMBER homePage NOTIFY homePageChanged FINAL)
+    Q_PROPERTY(QString homePage READ homePage NOTIFY homePageChanged FINAL)
 
 public:
-    explicit WebUtilsMock(QObject *parent = 0);
+    explicit DeclarativeWebUtils(QObject *parent = 0);
 
     Q_INVOKABLE int getLightness(QColor color) const;
     Q_INVOKABLE QString displayableUrl(QString fullUrl) const;
 
-    static QObject *singletonApiFactory(QQmlEngine *, QJSEngine *);
-    static WebUtilsMock *instance();
+    static DeclarativeWebUtils *instance();
 
-    QString homePage;
+    QString homePage() const;
 
 signals:
     void homePageChanged();
+
+private:
+    QString m_homePage;
 };
 
-QML_DECLARE_TYPE(WebUtilsMock)
+QML_DECLARE_TYPE(DeclarativeWebUtils)
 
 #endif

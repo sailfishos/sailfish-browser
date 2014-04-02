@@ -24,7 +24,9 @@ Page {
     property alias favorites: favoriteModel
     property alias history: historyModel
     property alias viewLoading: webView.loading
-    property alias currentTab: webView.currentTab
+    property alias url: webView.url
+    property alias title: webView.title
+    property alias thumbnailPath: webView.thumbnailPath
 
     function load(url, title) {
         webView.load(url, title)
@@ -202,7 +204,7 @@ Page {
 
                 Browser.IconButton {
                     enabled: webView.visible
-                    property bool favorited: favorites.count > 0 && favorites.contains(webView.currentTab.url)
+                    property bool favorited: favorites.count > 0 && favorites.contains(webView.url)
                     source: favorited ? "image://theme/icon-m-favorite-selected" : "image://theme/icon-m-favorite"
                     onClicked: {
                         if (favorited) {

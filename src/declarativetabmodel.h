@@ -21,8 +21,6 @@
 
 #include "tab.h"
 
-class DeclarativeTab;
-
 class DeclarativeTabModel : public QAbstractListModel, public QQmlParserStatus
 {
     Q_OBJECT
@@ -77,8 +75,6 @@ public:
     int currentTabId() const;
     int nextTabId() const;
 
-    void setCurrentTab(DeclarativeTab *currentTab);
-
     bool loaded() const;
 
     bool browsing() const;
@@ -94,6 +90,7 @@ public:
 
     QObject* newTabPreviousPage() const;
     const QList<Tab>& tabs() const;
+    const Tab& currentTab() const;
 
     void updateUrl(int tabId, bool activeTab, QString url);
     void updateTitle(int tabId, bool activeTab, QString title);
@@ -106,10 +103,9 @@ public slots:
 
 signals:
     void countChanged();
-    void activeTabChanged(int tabId);
+    void activeTabChanged(int oldTabId, int newTabId);
     void tabAdded(int tabId);
     void tabClosed(int tabId);
-    void currentTabChanged();
     void currentTabIdChanged();
     void nextTabIdChanged();
     void loadedChanged();
@@ -117,9 +113,7 @@ signals:
     void hasNewTabDataChanged();
     void newTabUrlChanged();
     void newTabRequested(QString url, QString title, int parentId);
-
-    void _activeTabInvalidated();
-    void _activeTabChanged(const Tab &tab);
+    void updateActiveTabThumbnail(QString path);
 
 private slots:
     void tabChanged(const Tab &tab);
@@ -150,7 +144,7 @@ private:
     void updateNewTabData(NewTabData *newTabData);
     QString newTabTitle() const;
 
-    QPointer<DeclarativeTab> m_currentTab;
+    Tab m_currentTab;
     QList<Tab> m_tabs;
     bool m_loaded;
     bool m_browsing;

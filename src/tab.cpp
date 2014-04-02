@@ -69,7 +69,10 @@ void Tab::setCurrentLink(const Link &currentLink)
 
 bool Tab::operator==(const Tab &other) const
 {
-    return (m_tabId == other.tabId());
+    return (m_tabId == other.tabId() &&
+            m_previousLinkId == other.previousLink() &&
+            m_nextLinkId == other.nextLink() &&
+            m_currentLink == other.currentLink());
 }
 
 bool Tab::operator!=(const Tab &other) const

@@ -44,7 +44,7 @@ Page {
         pageStack.pop(browserPage)
     }
 
-    backNavigation: browserPage.tabs.count > 0 && browserPage.currentTab.url != ""
+    backNavigation: browserPage.tabs.count > 0 && browserPage.url != ""
     states: [
         State {
             name: "historylist"
@@ -112,7 +112,7 @@ Page {
 
         Browser.TabPageMenu {
             visible: browserPage.tabs.count > 0 && !page.newTab
-            shareEnabled: browserPage.currentTab.url == _search
+            shareEnabled: browserPage.url == _search
             browserPage: page.browserPage
         }
     }
@@ -179,7 +179,7 @@ Page {
 
         Browser.TabPageMenu {
             visible: browserPage.tabs.count > 0 && !page.newTab
-            shareEnabled: browserPage.currentTab.url == _search
+            shareEnabled: browserPage.url == _search
             browserPage: page.browserPage
         }
     }
@@ -215,7 +215,7 @@ Page {
                 sourceSize.height: height
                 anchors.right: parent.right
                 asynchronous: true
-                source: browserPage.currentTab.thumbnailPath
+                source: browserPage.thumbnailPath
                 cache: false
                 visible: status !== Image.Error && source !== "" && !page.newTab
             }
@@ -259,7 +259,7 @@ Page {
                     id: titleLabel
                     x: Theme.paddingLarge
                     // Reuse new tab label (la-new_tab)
-                    text: (browserPage.tabs.count == 0 || newTab) ? qsTrId("sailfish_browser-la-new_tab") : (browserPage.currentTab.url == _search ? browserPage.currentTab.title : "")
+                    text: (browserPage.tabs.count == 0 || newTab) ? qsTrId("sailfish_browser-la-new_tab") : (browserPage.url == _search ? browserPage.title : "")
                     color: Theme.highlightColor
                     font.pixelSize: Theme.fontSizeSmall
                     width: searchField.width - x - Theme.paddingMedium
@@ -272,7 +272,7 @@ Page {
                                            : page.width - urlColumn.x - Theme.paddingMedium
                     // Handle initially newTab state. Currently newTab initially
                     // true when triggering new tab cover action.
-                    text: newTab ? "" : browserPage.currentTab.url
+                    text: newTab ? "" : browserPage.url
 
                     //: Placeholder for the search/address field
                     //% "Search or Address"
@@ -285,7 +285,7 @@ Page {
                     label: {
                         if (text.length === 0) return ""
 
-                        if (searchField.activeFocus || text !== browserPage.currentTab.url) {
+                        if (searchField.activeFocus || text !== browserPage.url) {
                             // Reuse search label
                             return qsTrId("sailfish_browser-la-search")
                         }
@@ -294,7 +294,7 @@ Page {
                         //% "Active Tab"
                         var activeTab = qsTrId("sailfish_browser-la-active-tab")
 
-                        if (text === browserPage.currentTab.url && browserPage.viewLoading) {
+                        if (text === browserPage.url && browserPage.viewLoading) {
                             //: Current browser page loading.
                             //% "Loading"
                             return activeTab + " • " + qsTrId("sailfish_browser-la-loading")
@@ -312,7 +312,7 @@ Page {
                         page.load(searchField.text)
                     }
 
-                    onTextChanged: if (text != browserPage.currentTab.url) browserPage.history.search(text)
+                    onTextChanged: if (text != browserPage.url) browserPage.history.search(text)
 
                     Binding { target: page; property: "_search"; value: searchField.text }
                     Binding { target: page; property: "_editing"; value: searchField.focus }
@@ -340,7 +340,7 @@ Page {
 
             Browser.CloseTabButton {
                 id: closeActiveTabButton
-                visible: browserPage.currentTab.valid && !page.newTab && !searchField.focus
+                visible: browserPage.tabs.count > 0 && !page.newTab && !searchField.focus
                 closeActiveTab: true
             }
         }

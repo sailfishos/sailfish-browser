@@ -10,11 +10,11 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "declarativewebcontainer.h"
-#include "declarativetab.h"
 #include "declarativetabmodel.h"
 #include "declarativewebpage.h"
 #include "dbmanager.h"
 #include "downloadmanager.h"
+#include "declarativewebutils.h"
 
 #include <QPointer>
 #include <QTimerEvent>
@@ -34,7 +34,6 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     : QQuickItem(parent)
     , m_webPage(0)
     , m_model(0)
-    , m_currentTab(new DeclarativeTab(this))
     , m_webPageComponent(0)
     , m_foreground(true)
     , m_background(false)
@@ -58,9 +57,6 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
 {
     m_webPages.reset(new WebPages(this));
     setFlag(QQuickItem::ItemHasContents, true);
-    connect(m_currentTab, SIGNAL(titleChanged()), this, SIGNAL(titleChanged()));
-    connect(m_currentTab, SIGNAL(urlChanged()), this, SIGNAL(urlChanged()));
-    connect(m_currentTab, SIGNAL(urlChanged()), this, SLOT(triggerLoad()));
     if (!window()) {
         connect(this, SIGNAL(windowChanged(QQuickWindow*)), this, SLOT(handleWindowChanged(QQuickWindow*)));
     } else {
@@ -70,8 +66,10 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     connect(&m_screenCapturer, SIGNAL(finished()), this, SLOT(screenCaptureReady()));
     connect(DownloadManager::instance(), SIGNAL(downloadStarted()), this, SLOT(onDownloadStarted()));
     connect(DBManager::instance(), SIGNAL(thumbPathChanged(QString,QString,int)),
-            this, SLOT(onThumbnailPathChanged(QString,QString,int)));
+            this, SLOT(onPageThumbnailChanged(QString,QString,int)));
     connect(this, SIGNAL(maxLiveTabCountChanged()), this, SLOT(manageMaxTabCount()));
+    connect(this, SIGNAL(_readyToLoadChanged()), this, SLOT(onReadyToLoad()));
+    connect(this, SIGNAL(heightChanged()), this, SLOT(resetHeight()));
 
     QString cacheLocation = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
     QDir dir(cacheLocation);
@@ -103,19 +101,10 @@ DeclarativeWebPage *DeclarativeWebContainer::webPage() const
 void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
 {
     if (m_webPage != webPage) {
-        if (m_webPage) {
-            disconnect(m_webPage);
-        }
-
-        if (webPage) {
-            connect(webPage, SIGNAL(imeNotification(int,bool,int,int,QString)),
-                    this, SLOT(imeNotificationChanged(int,bool,int,int,QString)));
-            connect(webPage, SIGNAL(contentHeightChanged()), this, SLOT(resetHeight()));
-            connect(webPage, SIGNAL(scrollableOffsetChanged()), this, SLOT(resetHeight()));
-            connect(this, SIGNAL(heightChanged()), this, SLOT(resetHeight()));
-        }
         m_webPage = webPage;
         emit contentItemChanged();
+        emit titleChanged();
+        emit urlChanged();
     }
 }
 
@@ -133,14 +122,13 @@ void DeclarativeWebContainer::setTabModel(DeclarativeTabModel *model)
 
         m_model = model;
         if (m_model) {
-            m_model->setCurrentTab(m_currentTab);
-            connect(m_model, SIGNAL(_activeTabChanged(const Tab&)), this, SLOT(updateTabData(const Tab&)));
-            connect(m_model, SIGNAL(_activeTabInvalidated()), this, SLOT(invalidateTabData()));
-            connect(m_model, SIGNAL(activeTabChanged(int)), this, SLOT(onActiveTabChanged(int)));
+            connect(m_model, SIGNAL(activeTabChanged(int,int)), this, SLOT(onActiveTabChanged(int,int)));
             connect(m_model, SIGNAL(loadedChanged()), this, SLOT(onModelLoaded()));
             connect(m_model, SIGNAL(tabAdded(int)), this, SLOT(manageMaxTabCount()));
             connect(m_model, SIGNAL(tabClosed(int)), this, SLOT(releasePage(int)));
-            connect(m_model, SIGNAL(newTabRequested(QString,QString,int)), this, SLOT(onNewTabRequested(QString,QString,int)));
+            // Try to make this to normal direct connection once we have removed QML_BAD_GUI_RENDER_LOOP.
+            connect(m_model, SIGNAL(newTabRequested(QString,QString,int)), this, SLOT(onNewTabRequested(QString,QString,int)), Qt::QueuedConnection);
+            connect(m_model, SIGNAL(updateActiveTabThumbnail(QString)), this, SLOT(setThumbnailPath(QString)));
         }
         emit tabModelChanged();
     }
@@ -255,17 +243,25 @@ bool DeclarativeWebContainer::canGoBack() const
 
 QString DeclarativeWebContainer::title() const
 {
-    return m_currentTab->title();
+    return m_webPage ? m_webPage->title() : "";
 }
 
 QString DeclarativeWebContainer::url() const
 {
-    return m_currentTab->url();
+    return m_webPage ? m_webPage->url().toString() : "";
 }
 
-DeclarativeTab *DeclarativeWebContainer::currentTab() const
+QString DeclarativeWebContainer::thumbnailPath() const
 {
-    return m_currentTab;
+    return m_thumbnailPath;
+}
+
+void DeclarativeWebContainer::setThumbnailPath(QString thumbnailPath)
+{
+    if (m_thumbnailPath != thumbnailPath) {
+        m_thumbnailPath = thumbnailPath;
+        emit thumbnailPathChanged();
+    }
 }
 
 bool DeclarativeWebContainer::readyToLoad() const
@@ -283,42 +279,51 @@ void DeclarativeWebContainer::setReadyToLoad(bool readyToLoad)
 
 bool DeclarativeWebContainer::isActiveTab(int tabId)
 {
-#ifdef NO_WEB_PAGE
-    return m_currentTab->tabId() == tabId;
-#else
-    return m_webPage && m_webPage->tabId() == tabId && m_currentTab->tabId() == tabId;
-#endif
+    return m_webPage && m_webPage->tabId() == tabId;
 }
 
 void DeclarativeWebContainer::goForward()
 {
-    if (m_canGoForward && m_currentTab->valid()) {
-        m_currentTab->activateNextLink();
-        if (m_webPage && m_webPage->canGoForward()) {
+    if (m_canGoForward && m_webPage) {
+        if (m_webPage->canGoForward()) {
             m_realNavigation = true;
             m_webPage->goForward();
         } else {
             m_realNavigation = false;
         }
 
+        m_canGoForward = false;
+        emit canGoForwardChanged();
+
+        if (!m_canGoBack) {
+            m_canGoBack = true;
+            emit canGoBackChanged();
+        }
         m_model->setBackForwardNavigation(true);
-        DBManager::instance()->goForward(m_model->currentTabId());
+        DBManager::instance()->goForward(m_webPage->tabId());
     }
 }
 
 void DeclarativeWebContainer::goBack()
 {
-    if (m_canGoBack && m_currentTab->valid()) {
-        m_currentTab->activatePreviousLink();
-        if (m_webPage && m_webPage->canGoBack()) {
+    if (m_canGoBack && m_webPage) {
+        if (m_webPage->canGoBack()) {
             m_realNavigation = true;
             m_webPage->goBack();
         } else {
             m_realNavigation = false;
         }
 
+        m_canGoBack = false;
+        emit canGoBackChanged();
+
+        if (!m_canGoForward) {
+            m_canGoForward = true;
+            emit canGoForwardChanged();
+        }
+
         m_model->setBackForwardNavigation(true);
-        DBManager::instance()->goBack(m_model->currentTabId());
+        DBManager::instance()->goBack(m_webPage->tabId());
     }
 }
 
@@ -334,9 +339,14 @@ bool DeclarativeWebContainer::activatePage(int tabId, bool force)
         setWebPage(activationData.webPage);
         m_webPage->setChrome(true);
         setLoadProgress(m_webPage->loadProgress());
+
+        connect(m_webPage, SIGNAL(imeNotification(int,bool,int,int,QString)),
+                this, SLOT(imeNotificationChanged(int,bool,int,int,QString)), Qt::UniqueConnection);
+        connect(m_webPage, SIGNAL(contentHeightChanged()), this, SLOT(resetHeight()), Qt::UniqueConnection);
+        connect(m_webPage, SIGNAL(scrollableOffsetChanged()), this, SLOT(resetHeight()), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(windowCloseRequested()), this, SLOT(closeWindow()), Qt::UniqueConnection);
-        connect(m_webPage, SIGNAL(urlChanged()), this, SLOT(onUrlChanged()), Qt::UniqueConnection);
-        connect(m_webPage, SIGNAL(titleChanged()), this, SLOT(onTitleChanged()), Qt::UniqueConnection);
+        connect(m_webPage, SIGNAL(urlChanged()), this, SLOT(onPageUrlChanged()), Qt::UniqueConnection);
+        connect(m_webPage, SIGNAL(titleChanged()), this, SLOT(onPageTitleChanged()), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(domContentLoadedChanged()), this, SLOT(sendVkbOpenCompositionMetrics()), Qt::UniqueConnection);
         return activationData.activated;
     }
@@ -467,13 +477,17 @@ void DeclarativeWebContainer::handleWindowChanged(QQuickWindow *window)
     }
 }
 
-void DeclarativeWebContainer::updateTabData(const Tab &tab)
+void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int newTabId)
 {
-    m_currentTab->updateTabData(tab);
-
+    if (newTabId == 0) {
+        setThumbnailPath("");
+        return;
+    }
 #ifdef DEBUG_LOGS
     qDebug() << "canGoBack = " << m_canGoBack << "canGoForward = " << m_canGoForward << &tab;
 #endif
+    const Tab &tab = m_model->currentTab();
+
     if (m_canGoForward != (tab.nextLink() > 0)) {
         m_canGoForward = tab.nextLink() > 0;
         emit canGoForwardChanged();
@@ -483,19 +497,21 @@ void DeclarativeWebContainer::updateTabData(const Tab &tab)
         m_canGoBack = tab.previousLink() > 0;
         emit canGoBackChanged();
     }
-}
 
-void DeclarativeWebContainer::invalidateTabData()
-{
-    m_currentTab->invalidateTabData();
-    if (m_canGoForward) {
-        m_canGoForward = false;
-        emit canGoForwardChanged();
-    }
+    Link link = tab.currentLink();
+    setThumbnailPath(link.thumbPath());
 
-    if (m_canGoBack) {
-        m_canGoBack = false;
-        emit canGoBack();
+    // Switch to different tab.
+    if (oldTabId != newTabId) {
+        if (m_model->hasNewTabData()) {
+            return;
+        }
+
+        if (activatePage(newTabId, true) && m_readyToLoad
+                && (m_webPage->tabId() != newTabId || m_webPage->url().toString() != link.url())) {
+            emit triggerLoad(link.url(), link.title());
+        }
+        manageMaxTabCount();
     }
 }
 
@@ -507,8 +523,8 @@ void DeclarativeWebContainer::screenCaptureReady()
 #endif
     if (capture.tabId != -1) {
         // Update immediately without dbworker round trip.
-        if (capture.tabId == m_currentTab->tabId() && isActiveTab(capture.tabId)) {
-            m_currentTab->setThumbnailPath(capture.path);
+        if (isActiveTab(capture.tabId)) {
+            setThumbnailPath(capture.path);
         }
         // TODO: Cleanup url.
         DBManager::instance()->updateThumbPath(capture.url, capture.path, capture.tabId);
@@ -520,28 +536,12 @@ void DeclarativeWebContainer::triggerLoad()
     bool realNavigation = m_realNavigation;
     m_realNavigation = false;
     // Back / forward navigation activated and MozView instance cannot be used.
-    if (m_webPage && m_currentTab->valid() && m_model->backForwardNavigation() && !realNavigation && url() != "about:blank") {
+    if (m_webPage && m_model->backForwardNavigation() && !realNavigation && url() != "about:blank") {
         QMetaObject::invokeMethod(this, "load", Qt::DirectConnection,
                                   Q_ARG(QVariant, url()),
                                   Q_ARG(QVariant, title()),
                                   Q_ARG(QVariant, false));
     }
-}
-
-void DeclarativeWebContainer::onActiveTabChanged(int tabId)
-{
-    if (m_model->hasNewTabData()) {
-        emit currentTabChanged();
-        return;
-    }
-
-    if (activatePage(tabId, true) && m_currentTab && m_currentTab->valid() && m_readyToLoad
-            && (m_webPage->tabId() != tabId || m_webPage->url().toString() != m_currentTab->url())) {
-        emit triggerLoad(m_currentTab->url(), m_currentTab->title());
-    }
-
-    emit currentTabChanged();
-    manageMaxTabCount();
 }
 
 void DeclarativeWebContainer::onModelLoaded()
@@ -577,7 +577,35 @@ void DeclarativeWebContainer::onDownloadStarted()
 void DeclarativeWebContainer::onNewTabRequested(QString url, QString title, int parentId)
 {
     m_model->newTabData(url, title, webPage(), parentId);
+    // This slot could handle new page creation directly if/
+    // when connection helper is accessible from QML.
     emit triggerLoad(url, title);
+}
+
+void DeclarativeWebContainer::onReadyToLoad()
+{
+    // Triggered when tabs of tab model are available and QmlMozView is ready to load.
+    // Load test
+    // 1) tabModel.hasNewTabData -> loadTab (already activated view)
+    // 2) model has tabs, load active tab -> load (activate view when needed)
+    // 3) load home page -> load (activate view when needed)
+
+    // visible could be possible delay property for _readyToLoad if so wanted.
+    if (!m_readyToLoad || !m_model) {
+        return;
+    }
+
+    if (m_model->hasNewTabData()) {
+        m_webPage->loadTab(m_model->newTabUrl(), false);
+    } else if (m_model->count() > 0) {
+        // First tab is actived when tabs are loaded to the tabs tabModel.
+        m_model->resetNewTabData();
+        Link link = m_model->currentTab().currentLink();
+        emit triggerLoad(link.url(), link.title());
+    } else {
+        // This can happen only during startup.
+        emit triggerLoad(DeclarativeWebUtils::instance()->homePage(), "");
+    }
 }
 
 /**
@@ -589,12 +617,12 @@ void DeclarativeWebContainer::onNewTabRequested(QString url, QString title, int 
  */
 void DeclarativeWebContainer::captureScreen(QString url, int size, qreal rotate)
 {
-    if (!window() || !window()->isActive() || !m_currentTab->valid()) {
+    if (!window() || !window()->isActive() || !m_webPage) {
         return;
     }
 
     // Cleanup old thumb.
-    m_currentTab->setThumbnailPath("");
+    setThumbnailPath("");
 
     QImage image = window()->grabWindow();
     QRect cropBounds(0, 0, size, size);
@@ -603,7 +631,7 @@ void DeclarativeWebContainer::captureScreen(QString url, int size, qreal rotate)
     qDebug() << "about to set future";
 #endif
     // asynchronous save to avoid the slow I/O
-    m_screenCapturer.setFuture(QtConcurrent::run(this, &DeclarativeWebContainer::saveToFile, url, image, cropBounds, m_currentTab->tabId(), rotate));
+    m_screenCapturer.setFuture(QtConcurrent::run(this, &DeclarativeWebContainer::saveToFile, url, image, cropBounds, m_webPage->tabId(), rotate));
 }
 
 int DeclarativeWebContainer::parentTabId(int tabId) const
@@ -618,8 +646,12 @@ void DeclarativeWebContainer::releasePage(int tabId, bool virtualize)
 {
     if (m_webPages) {
         m_webPages->release(tabId, virtualize);
-        if (m_model->count() == 0) {
-            setWebPage(0);
+        // Successfully destroyed. Emit relevant property changes.
+        if (!m_webPage) {
+            emit contentItemChanged();
+            emit titleChanged();
+            emit urlChanged();
+            setThumbnailPath("");
         }
         m_model->resetNewTabData();
     }
@@ -638,29 +670,43 @@ void DeclarativeWebContainer::closeWindow()
     }
 }
 
-void DeclarativeWebContainer::onUrlChanged()
+void DeclarativeWebContainer::onPageUrlChanged()
 {
     DeclarativeWebPage *webPage = qobject_cast<DeclarativeWebPage *>(sender());
     if (webPage && m_model) {
         QString url = webPage->url().toString();
         int tabId = webPage->tabId();
-        m_model->updateUrl(tabId, isActiveTab(tabId), url);
+        bool activeTab = isActiveTab(tabId);
+        m_model->updateUrl(tabId, activeTab, url);
+
+        if (activeTab && webPage == m_webPage) {
+            emit urlChanged();
+        }
     }
 }
 
-void DeclarativeWebContainer::onTitleChanged()
+void DeclarativeWebContainer::onPageTitleChanged()
 {
     DeclarativeWebPage *webPage = qobject_cast<DeclarativeWebPage *>(sender());
     if (webPage && m_model) {
         QString title = webPage->title();
         int tabId = webPage->tabId();
-        m_model->updateTitle(tabId, isActiveTab(tabId), title);
+        bool activeTab = isActiveTab(tabId);
+        m_model->updateTitle(tabId, activeTab, title);
+
+        if (activeTab && webPage == m_webPage) {
+            emit titleChanged();
+        }
     }
 }
 
-void DeclarativeWebContainer::onThumbnailPathChanged(QString url, QString path, int tabId)
+void DeclarativeWebContainer::onPageThumbnailChanged(QString url, QString path, int tabId)
 {
     Q_UNUSED(url);
+    if (isActiveTab(tabId)) {
+        setThumbnailPath(path);
+    }
+
     if (m_model) {
         m_model->updateThumbnailPath(tabId, isActiveTab(tabId), path);
     }
