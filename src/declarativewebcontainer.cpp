@@ -477,9 +477,9 @@ void DeclarativeWebContainer::handleWindowChanged(QQuickWindow *window)
     }
 }
 
-void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int newTabId)
+void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int activeTabId)
 {
-    if (newTabId == 0) {
+    if (activeTabId == 0) {
         setThumbnailPath("");
         return;
     }
@@ -501,15 +501,15 @@ void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int newTabId)
     setThumbnailPath(tab.thumbnailPath());
 
     // Switch to different tab.
-    if (oldTabId != newTabId) {
+    if (oldTabId != activeTabId) {
         if (m_model->hasNewTabData()) {
             return;
         }
 
         QString tabUrl = tab.url();
 
-        if (activatePage(newTabId, true) && m_readyToLoad
-                && (m_webPage->tabId() != newTabId || m_webPage->url().toString() != tabUrl)) {
+        if (activatePage(activeTabId, true) && m_readyToLoad
+                && (m_webPage->tabId() != activeTabId || m_webPage->url().toString() != tabUrl)) {
             emit triggerLoad(tabUrl, tab.title());
         }
         manageMaxTabCount();

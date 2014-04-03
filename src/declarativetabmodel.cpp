@@ -496,17 +496,17 @@ int DeclarativeTabModel::loadTabOrder()
     }
 }
 
-void DeclarativeTabModel::updateActiveTab(const Tab &newActiveTab)
+void DeclarativeTabModel::updateActiveTab(const Tab &activeTab)
 {
 #ifdef DEBUG_LOGS
     qDebug() << "old active tab: " << &m_currentTab << m_tabs.count();
-    qDebug() << "new active tab: " << &newActiveTab;
+    qDebug() << "new active tab: " << &activeTab;
 #endif
-    if (m_currentTab != newActiveTab) {
+    if (m_currentTab != activeTab) {
         int oldTabId = m_currentTab.tabId();
-        m_currentTab = newActiveTab;
+        m_currentTab = activeTab;
         emit currentTabIdChanged();
-        emit activeTabChanged(oldTabId, newActiveTab.tabId());
+        emit activeTabChanged(oldTabId, activeTab.tabId());
         saveTabOrder();
     }
 }

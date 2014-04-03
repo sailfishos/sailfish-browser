@@ -147,7 +147,7 @@ private slots:
     void handleWindowChanged(QQuickWindow *window);
     void screenCaptureReady();
     void triggerLoad();
-    void onActiveTabChanged(int oldTabId, int newTabId);
+    void onActiveTabChanged(int oldTabId, int activeTabId);
     void onModelLoaded();
     void onDownloadStarted();
     void onNewTabRequested(QString url, QString title, int parentId);

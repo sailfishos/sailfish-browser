@@ -103,7 +103,7 @@ public slots:
 
 signals:
     void countChanged();
-    void activeTabChanged(int oldTabId, int newTabId);
+    void activeTabChanged(int oldTabId, int activeTabId);
     void tabAdded(int tabId);
     void tabClosed(int tabId);
     void currentTabIdChanged();
