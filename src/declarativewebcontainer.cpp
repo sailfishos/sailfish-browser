@@ -498,8 +498,7 @@ void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int newTabId)
         emit canGoBackChanged();
     }
 
-    Link link = tab.currentLink();
-    setThumbnailPath(link.thumbPath());
+    setThumbnailPath(tab.thumbnailPath());
 
     // Switch to different tab.
     if (oldTabId != newTabId) {
@@ -507,9 +506,11 @@ void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int newTabId)
             return;
         }
 
+        QString tabUrl = tab.url();
+
         if (activatePage(newTabId, true) && m_readyToLoad
-                && (m_webPage->tabId() != newTabId || m_webPage->url().toString() != link.url())) {
-            emit triggerLoad(link.url(), link.title());
+                && (m_webPage->tabId() != newTabId || m_webPage->url().toString() != tabUrl)) {
+            emit triggerLoad(tabUrl, tab.title());
         }
         manageMaxTabCount();
     }
@@ -600,8 +601,8 @@ void DeclarativeWebContainer::onReadyToLoad()
     } else if (m_model->count() > 0) {
         // First tab is actived when tabs are loaded to the tabs tabModel.
         m_model->resetNewTabData();
-        Link link = m_model->currentTab().currentLink();
-        emit triggerLoad(link.url(), link.title());
+        const Tab &tab = m_model->currentTab();
+        emit triggerLoad(tab.url(), tab.title());
     } else {
         // This can happen only during startup.
         emit triggerLoad(DeclarativeWebUtils::instance()->homePage(), "");

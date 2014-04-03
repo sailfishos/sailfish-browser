@@ -31,6 +31,10 @@ void Tab::setTabId(int tabId)
     m_tabId = tabId;
 }
 
+int Tab::currentLink() const
+{
+    return m_currentLink.linkId();
+}
 
 int Tab::nextLink() const
 {
@@ -40,6 +44,36 @@ int Tab::nextLink() const
 void Tab::setNextLink(int nextLinkId)
 {
     m_nextLinkId = nextLinkId;
+}
+
+QString Tab::url() const
+{
+    return m_currentLink.url();
+}
+
+void Tab::setUrl(const QString &url)
+{
+    m_currentLink.setUrl(url);
+}
+
+QString Tab::thumbnailPath() const
+{
+    return m_currentLink.thumbPath();
+}
+
+void Tab::setThumbnailPath(const QString &thumbnailPath)
+{
+    m_currentLink.setThumbPath(thumbnailPath);
+}
+
+QString Tab::title() const
+{
+    return m_currentLink.title();
+}
+
+void Tab::setTitle(const QString &title)
+{
+    m_currentLink.setTitle(title);
 }
 
 bool Tab::isValid() const
@@ -57,22 +91,12 @@ void Tab::setPreviousLink(int previousLinkId)
     m_previousLinkId = previousLinkId;
 }
 
-Link Tab::currentLink() const
-{
-    return m_currentLink;
-}
-
-void Tab::setCurrentLink(const Link &currentLink)
-{
-    m_currentLink = currentLink;
-}
-
 bool Tab::operator==(const Tab &other) const
 {
     return (m_tabId == other.tabId() &&
-            m_previousLinkId == other.previousLink() &&
-            m_nextLinkId == other.nextLink() &&
-            m_currentLink == other.currentLink());
+            m_previousLinkId == other.m_previousLinkId &&
+            m_nextLinkId == other.m_nextLinkId &&
+            m_currentLink == other.m_currentLink);
 }
 
 bool Tab::operator!=(const Tab &other) const
@@ -85,9 +109,8 @@ QDebug operator<<(QDebug dbg, const Tab *tab) {
         return dbg << "Tab (this = 0x0)";
     }
 
-    Link currentLink = tab->currentLink();
-    dbg.nospace() << "Tab(tabId = " << tab->tabId() << ", isValid = " << tab->isValid() << ", linkId = " << currentLink.linkId()
+    dbg.nospace() << "Tab(tabId = " << tab->tabId() << ", isValid = " << tab->isValid() << ", linkId = " << tab->currentLink()
                   << ", previousLink = " << tab->previousLink() << ", nextLink = " << tab->nextLink()
-                  << ", url = " << currentLink.url() << ", title = " << currentLink.title() << ", thumbnailPath = " << currentLink.thumbPath() << ")";
+                  << ", url = " << tab->url() << ", title = " << tab->title() << ", thumbnailPath = " << tab->thumbnailPath() << ")";
     return dbg.space();
 }

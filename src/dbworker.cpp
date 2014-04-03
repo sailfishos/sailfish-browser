@@ -246,7 +246,7 @@ void DBWorker::getTab(int tabId)
     if (query.first()) {
 #ifdef DEBUG_LOGS
         Tab tab = getTabData(query.value(0).toInt(), query.value(1).toInt());
-        qDebug() << query.value(0).toInt() << query.value(1).toInt() << tab.currentLink().title() << tab.currentLink().url();
+        qDebug() << query.value(0).toInt() << query.value(1).toInt() << tab.title() << tab.url();
 #endif
         emit tabAvailable(getTabData(query.value(0).toInt(), query.value(1).toInt()));
     }
