@@ -22,15 +22,17 @@ ApplicationWindow {
     allowedOrientations: Orientation.Portrait
     _defaultPageOrientations: allowedOrientations
 
-    initialPage: WebView {
-        id: webView
+    initialPage: Page {
+        WebView {
+            id: webView
 
-        active: true
-        toolbarHeight: 50
-        portrait: true
+            active: true
+            toolbarHeight: 50
+            portrait: true
 
-        // Mimic onOpenUrlRequested handler of BrowserPage
-        Component.onCompleted: tabModel.newTab(WebUtils.homePage, "")
+            // Mimic onOpenUrlRequested handler of BrowserPage
+            Component.onCompleted: tabModel.newTab(WebUtils.homePage, "")
+        }
     }
 
     cover: undefined

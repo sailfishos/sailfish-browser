@@ -63,7 +63,8 @@ SOURCES += \
     dbusadaptor.cpp \
     downloadmanager.cpp \
     settingmanager.cpp \
-    closeeventfilter.cpp
+    closeeventfilter.cpp \
+    webpages.cpp
 
 # C++ headers
 HEADERS += \
@@ -77,7 +78,8 @@ HEADERS += \
     dbusadaptor.h \
     downloadmanager.h \
     settingmanager.h \
-    closeeventfilter.h
+    closeeventfilter.h \
+    webpages.h
 
 OTHER_FILES = *.qml \
               pages/*.qml \

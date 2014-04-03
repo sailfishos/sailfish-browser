@@ -30,7 +30,6 @@
 #include "downloadmanager.h"
 #include "settingmanager.h"
 #include "closeeventfilter.h"
-#include "declarativetab.h"
 #include "declarativetabmodel.h"
 #include "declarativehistorymodel.h"
 #include "declarativewebcontainer.h"
@@ -102,7 +101,6 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     qmlRegisterType<DeclarativeBookmarkModel>("Sailfish.Browser", 1, 0, "BookmarkModel");
     qmlRegisterType<DeclarativeTabModel>("Sailfish.Browser", 1, 0, "TabModel");
     qmlRegisterType<DeclarativeHistoryModel>("Sailfish.Browser", 1, 0, "HistoryModel");
-    qmlRegisterUncreatableType<DeclarativeTab>("Sailfish.Browser", 1, 0, "Tab", "");
     qmlRegisterType<DeclarativeWebContainer>("Sailfish.Browser", 1, 0, "WebContainer");
     qmlRegisterType<DeclarativeWebPage>("Sailfish.Browser", 1, 0, "WebPage");
     qmlRegisterType<DeclarativeWebViewCreator>("Sailfish.Browser", 1, 0, "WebViewCreator");
@@ -116,7 +114,10 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     app->setApplicationName(QString("sailfish-browser"));
     app->setOrganizationName(QString("org.sailfishos"));
 
-    DeclarativeWebUtils * utils = new DeclarativeWebUtils(service, app.data());
+    DeclarativeWebUtils *utils = DeclarativeWebUtils::instance();
+    utils->connect(service, SIGNAL(openUrlRequested(QString)),
+            utils, SIGNAL(openUrlRequested(QString)));
+
     utils->clearStartupCacheIfNeeded();
     view->rootContext()->setContextProperty("WebUtils", utils);
     view->rootContext()->setContextProperty("MozContext", QMozContext::GetInstance());

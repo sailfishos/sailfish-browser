@@ -2,7 +2,6 @@
 TEMPLATE = subdirs
 
 SUBDIRS += tst_declarativetabmodel \
-    tst_declarativetab \
     tst_linkvalidator \
     tst_webview
 

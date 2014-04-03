@@ -21,14 +21,13 @@
 #include <QFutureWatcher>
 
 class QTimerEvent;
-class DeclarativeTab;
 class DeclarativeTabModel;
 class DeclarativeWebPage;
 
 class DeclarativeWebContainer : public QQuickItem {
     Q_OBJECT
 
-    Q_PROPERTY(DeclarativeWebPage *contentItem READ webPage WRITE setWebPage NOTIFY contentItemChanged FINAL)
+    Q_PROPERTY(DeclarativeWebPage *contentItem READ webPage NOTIFY contentItemChanged FINAL)
     Q_PROPERTY(DeclarativeTabModel *tabModel READ tabModel WRITE setTabModel NOTIFY tabModelChanged FINAL)
     Q_PROPERTY(bool foreground READ foreground WRITE setForeground NOTIFY foregroundChanged FINAL)
     Q_PROPERTY(bool active READ active WRITE setActive NOTIFY activeChanged FINAL)
@@ -54,8 +53,8 @@ class DeclarativeWebContainer : public QQuickItem {
 
     Q_PROPERTY(QString title READ title NOTIFY titleChanged FINAL)
     Q_PROPERTY(QString url READ url NOTIFY urlChanged FINAL)
+    Q_PROPERTY(QString thumbnailPath READ thumbnailPath NOTIFY thumbnailPathChanged FINAL)
 
-    Q_PROPERTY(DeclarativeTab *currentTab READ currentTab NOTIFY currentTabChanged FINAL)
     Q_PROPERTY(QQmlComponent* webPageComponent MEMBER m_webPageComponent NOTIFY webPageComponentChanged FINAL)
 
     // "private" properties.
@@ -66,7 +65,6 @@ public:
     ~DeclarativeWebContainer();
 
     DeclarativeWebPage *webPage() const;
-    void setWebPage(DeclarativeWebPage *webPage);
 
     DeclarativeTabModel *tabModel() const;
     void setTabModel(DeclarativeTabModel *model);
@@ -95,8 +93,7 @@ public:
 
     QString title() const;
     QString url() const;
-
-    DeclarativeTab *currentTab() const;
+    QString thumbnailPath() const;
 
     bool readyToLoad() const;
     void setReadyToLoad(bool readyToLoad);
@@ -134,12 +131,11 @@ signals:
 
     void titleChanged();
     void urlChanged();
+    void thumbnailPathChanged();
 
     void _readyToLoadChanged();
 
-    void currentTabChanged();
     void webPageComponentChanged();
-
     void triggerLoad(QString url, QString title);
 
 public slots:
@@ -149,20 +145,20 @@ private slots:
     void imeNotificationChanged(int state, bool open, int cause, int focusChange, const QString& type);
     void windowVisibleChanged(bool visible);
     void handleWindowChanged(QQuickWindow *window);
-    void updateTabData(const Tab &tab);
-    void invalidateTabData();
     void screenCaptureReady();
     void triggerLoad();
-    void onActiveTabChanged(int tabId);
+    void onActiveTabChanged(int oldTabId, int activeTabId);
     void onModelLoaded();
     void onDownloadStarted();
     void onNewTabRequested(QString url, QString title, int parentId);
+    void onReadyToLoad();
     void manageMaxTabCount();
     void releasePage(int tabId, bool virtualize = false);
     void closeWindow();
-    void onUrlChanged();
-    void onTitleChanged();
-    void onThumbnailPathChanged(QString url, QString path, int tabId);
+    void onPageUrlChanged();
+    void onPageTitleChanged();
+    void onPageThumbnailChanged(QString url, QString path, int tabId);
+    void setThumbnailPath(QString thumbnailPath);
 
     // These are here to inform embedlite-components that keyboard is open or close
     // matching composition metrics.
@@ -172,6 +168,7 @@ protected:
     void timerEvent(QTimerEvent *event);
 
 private:
+    void setWebPage(DeclarativeWebPage *webPage);
     qreal contentHeight() const;
     void captureScreen(QString url, int size, qreal rotate);
     int parentTabId(int tabId) const;
@@ -189,7 +186,6 @@ private:
 
     QPointer<DeclarativeWebPage> m_webPage;
     QPointer<DeclarativeTabModel> m_model;
-    QPointer<DeclarativeTab> m_currentTab;
     QPointer<QQmlComponent> m_webPageComponent;
     QScopedPointer<WebPages> m_webPages;
     bool m_foreground;
@@ -206,6 +202,7 @@ private:
     qreal m_toolbarHeight;
 
     QString m_favicon;
+    QString m_thumbnailPath;
 
     bool m_loading;
     int m_loadProgress;

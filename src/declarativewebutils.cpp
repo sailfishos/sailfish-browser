@@ -25,23 +25,24 @@
 
 static const QString system_components_time_stamp("/var/lib/_MOZEMBED_CACHE_CLEAN_");
 static const QString profilePath("/.mozilla/mozembed");
+static DeclarativeWebUtils *gSingleton = 0;
 
-DeclarativeWebUtils::DeclarativeWebUtils(BrowserService *service,
-                                         QObject *parent) :
-    QObject(parent),
-    m_homePage("http://www.jolla.com"),
-    m_service(service)
+DeclarativeWebUtils::DeclarativeWebUtils() :
+    QObject(),
+    m_homePage("http://www.jolla.com")
 {
     connect(QMozContext::GetInstance(), SIGNAL(onInitialized()),
             this, SLOT(updateWebEngineSettings()));
     connect(QMozContext::GetInstance(), SIGNAL(recvObserve(QString, QVariant)),
             this, SLOT(handleObserve(QString, QVariant)));
 
-    connect(service, SIGNAL(openUrlRequested(QString)),
-            this, SIGNAL(openUrlRequested(QString)));
-
     QString path = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + QStringLiteral("/.firstUseDone");
     m_firstUseDone = fileExists(path);
+}
+
+DeclarativeWebUtils::~DeclarativeWebUtils()
+{
+    gSingleton = 0;
 }
 
 QUrl DeclarativeWebUtils::getFaviconForUrl(QUrl url)
@@ -168,9 +169,17 @@ bool DeclarativeWebUtils::firstUseDone() const {
     return m_firstUseDone;
 }
 
-QString DeclarativeWebUtils::homePage()
+QString DeclarativeWebUtils::homePage() const
 {
     return m_homePage;
+}
+
+DeclarativeWebUtils *DeclarativeWebUtils::instance()
+{
+    if (!gSingleton) {
+        gSingleton = new DeclarativeWebUtils();
+    }
+    return gSingleton;
 }
 
 QString DeclarativeWebUtils::downloadDir() const

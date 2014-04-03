@@ -26,14 +26,22 @@ public:
     int tabId() const;
     void setTabId(int tabId);
 
-    Link currentLink() const;
-    void setCurrentLink(const Link &currentLink);
+    int currentLink() const;
 
     int previousLink() const;
     void setPreviousLink(int previousLinkId);
 
     int nextLink() const;
     void setNextLink(int nextLinkId);
+
+    QString url() const;
+    void setUrl(const QString &url);
+
+    QString thumbnailPath() const;
+    void setThumbnailPath(const QString &thumbnailPath);
+
+    QString title() const;
+    void setTitle(const QString &title);
 
     bool isValid() const;
 

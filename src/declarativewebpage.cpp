@@ -10,6 +10,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "declarativewebpage.h"
+#include "declarativewebcontainer.h"
 
 static const QString gFullScreenMessage("embed:fullscreenchanged");
 static const QString gDomContentLoadedMessage("embed:domcontentloaded");

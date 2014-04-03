@@ -53,13 +53,6 @@ WebContainer {
             tabModel.newTabData(url, title, null)
         }
 
-        // Bookmarks and history items pass url and title as arguments.
-        // Only set url and title if title exists.
-        if (title) {
-            currentTab.title = title
-            currentTab.url = url
-        }
-
         if (!tabModel.hasNewTabData || force || !webView.activatePage(tabModel.nextTabId)) {
             // First contentItem will be created once tab activated.
             if (contentItem) contentItem.loadTab(url, force)
@@ -72,9 +65,6 @@ WebContainer {
         }
 
         var url = contentItem.url.toString()
-        currentTab.url = url
-        currentTab.title = contentItem.title
-
         if (url.substring(0, 6) !== "about:" && url.substring(0, 5) !== "file:"
             && !contentItem._deferredReload
             && !connectionHelper.haveNetworkConnectivity()) {
@@ -113,29 +103,6 @@ WebContainer {
         // Enable browsing after new tab actually created or it was not even requested
         browsing: webView.active && !hasNewTabData && contentItem && contentItem.loaded
         onBrowsingChanged: if (browsing) captureScreen()
-    }
-
-    // Triggered when tabs of tab model are available and QmlMozView is ready to load.
-    // Load test
-    // 1) tabModel.hasNewTabData -> loadTab (already activated view)
-    // 2) model has tabs, load active tab -> load (activate view when needed)
-    // 3) load home page -> load (activate view when needed)
-    on_ReadyToLoadChanged: {
-        // visible could be possible delay property for _readyToLoad if so wanted.
-        if (!_readyToLoad) {
-            return
-        }
-
-        if (tabModel.hasNewTabData) {
-            contentItem.loadTab(tabModel.newTabUrl, false)
-        } else if (tabModel.count > 0) {
-            // First tab is actived when tabs are loaded to the tabs tabModel.
-            tabModel.resetNewTabData()
-            webView.load(currentTab.url, currentTab.title)
-        } else {
-            // This can happen only during startup.
-            webView.load(WebUtils.homePage, "")
-        }
     }
 
     onTriggerLoad: webView.load(url, title)

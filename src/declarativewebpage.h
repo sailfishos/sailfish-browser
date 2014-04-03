@@ -15,7 +15,8 @@
 #include <qqml.h>
 #include <QPointer>
 #include <quickmozview.h>
-#include <declarativewebcontainer.h>
+
+class DeclarativeWebContainer;
 
 class DeclarativeWebPage : public QuickMozView {
     Q_OBJECT
