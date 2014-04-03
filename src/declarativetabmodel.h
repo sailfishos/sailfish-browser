@@ -90,7 +90,7 @@ public:
 
     QObject* newTabPreviousPage() const;
     const QList<Tab>& tabs() const;
-    const Tab& currentTab() const;
+    const Tab& activeTab() const;
 
     void updateUrl(int tabId, bool activeTab, QString url);
     void updateTitle(int tabId, bool activeTab, QString title);
@@ -138,13 +138,13 @@ private:
     int findTabIndex(int tabId) const;
     void saveTabOrder();
     int loadTabOrder();
-    void updateActiveTab(const Tab &newActiveTab);
+    void updateActiveTab(const Tab &activeTab);
     void updateTabUrl(int tabId, bool activeTab, const QString &url, bool navigate);
 
     void updateNewTabData(NewTabData *newTabData);
     QString newTabTitle() const;
 
-    Tab m_currentTab;
+    Tab m_activeTab;
     QList<Tab> m_tabs;
     bool m_loaded;
     bool m_browsing;

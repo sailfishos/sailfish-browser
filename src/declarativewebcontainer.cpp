@@ -486,7 +486,7 @@ void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int activeTabId)
 #ifdef DEBUG_LOGS
     qDebug() << "canGoBack = " << m_canGoBack << "canGoForward = " << m_canGoForward << &tab;
 #endif
-    const Tab &tab = m_model->currentTab();
+    const Tab &tab = m_model->activeTab();
 
     if (m_canGoForward != (tab.nextLink() > 0)) {
         m_canGoForward = tab.nextLink() > 0;
@@ -601,7 +601,7 @@ void DeclarativeWebContainer::onReadyToLoad()
     } else if (m_model->count() > 0) {
         // First tab is actived when tabs are loaded to the tabs tabModel.
         m_model->resetNewTabData();
-        const Tab &tab = m_model->currentTab();
+        const Tab &tab = m_model->activeTab();
         emit triggerLoad(tab.url(), tab.title());
     } else {
         // This can happen only during startup.
