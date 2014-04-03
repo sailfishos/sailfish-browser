@@ -1,10 +1,25 @@
 TARGET = tst_webview
 include(../test_common.pri)
 
-SOURCES += tst_webview.cpp \
-    ../../../src/declarativewebviewcreator.cpp
+CONFIG += link_pkgconfig
 
-HEADERS += ../../../src/declarativewebviewcreator.h
+# WebContainer need this
+isEmpty(QTEMBED_LIB) {
+  PKGCONFIG += qt5embedwidget
+} else {
+  LIBS+=$$QTEMBED_LIB
+}
+
+SOURCES += tst_webview.cpp \
+    ../../../src/declarativewebcontainer.cpp \
+    ../../../src/declarativewebpage.cpp \
+    ../../../src/declarativewebviewcreator.cpp \
+    ../../../src/webpages.cpp
+
+HEADERS += ../../../src/declarativewebcontainer.h \
+    ../../../src/declarativewebpage.h \
+    ../../../src/declarativewebviewcreator.h \
+    ../../../src/webpages.h
 
 OTHER_FILES = *.qml
 

@@ -10,21 +10,6 @@ include(../../src/history.pri)
 include(common/downloadmanager_mock.pri)
 include(common/declarativewebutils_mock.pri)
 
-HEADERS += ../../../src/declarativewebcontainer.h \
-    ../../../src/declarativewebpage.h
-
-SOURCES += ../../../src/declarativewebcontainer.cpp \
-    ../../../src/declarativewebpage.cpp
-
-CONFIG += link_pkgconfig
-
-# WebContainer need this
-isEmpty(QTEMBED_LIB) {
-  PKGCONFIG += qt5embedwidget
-} else {
-  LIBS+=$$QTEMBED_LIB
-}
-
 # install the test
 target.path = /opt/tests/sailfish-browser/auto
 INSTALLS += target
