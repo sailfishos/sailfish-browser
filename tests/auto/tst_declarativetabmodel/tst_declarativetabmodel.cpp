@@ -18,7 +18,6 @@
 #include "declarativetab.h"
 #include "declarativetabmodel.h"
 #include "declarativewebcontainer.h"
-#include "declarativewebpage.h"
 #include "dbmanager.h"
 
 static const QByteArray QML_SNIPPET = \
@@ -669,7 +668,7 @@ void tst_declarativetabmodel::newTabData()
     QSignalSpy newTabDataChanged(tabModel, SIGNAL(hasNewTabDataChanged()));
     QSignalSpy newTabUrlChanged(tabModel, SIGNAL(newTabUrlChanged()));
     QVERIFY(tabModel->newTabTitle().isEmpty());
-    DeclarativeWebPage page;
+    QObject page;
     tabModel->newTabData("http://foobar.com", "FooBar", &page);
 
     QCOMPARE(newTabDataChanged.count(), 1);
@@ -685,7 +684,7 @@ void tst_declarativetabmodel::resetNewTabData()
     // Old values (see newTabData test):
     // url = "http://foobar.com"
     // title = "FooBar"
-    // previousPage = Temporary DeclarativeWebPage pointer (non zero)
+    // previousPage = Temporary QObject pointer (non zero)
     QSignalSpy newTabDataChanged(tabModel, SIGNAL(hasNewTabDataChanged()));
     QSignalSpy newTabUrlChanged(tabModel, SIGNAL(newTabUrlChanged()));
 

@@ -13,7 +13,6 @@
 
 #include "dbmanager.h"
 #include "declarativetab.h"
-#include "declarativewebcontainer.h"
 #include "linkvalidator.h"
 
 #include <QFile>
@@ -193,7 +192,7 @@ void DeclarativeTabModel::newTab(const QString &url, const QString &title, int p
     emit newTabRequested(url, title, parentId);
 }
 
-void DeclarativeTabModel::newTabData(const QString &url, const QString &title, DeclarativeWebPage *contentItem, int parentId)
+void DeclarativeTabModel::newTabData(const QString &url, const QString &title, QObject *contentItem, int parentId)
 {
     updateNewTabData(new NewTabData(url, title, contentItem, parentId));
 }
@@ -298,7 +297,7 @@ QString DeclarativeTabModel::newTabTitle() const
     return hasNewTabData() ? m_newTabData->title : "";
 }
 
-DeclarativeWebPage *DeclarativeTabModel::newTabPreviousPage() const
+QObject *DeclarativeTabModel::newTabPreviousPage() const
 {
     return hasNewTabData() ? m_newTabData->previousPage : 0;
 }

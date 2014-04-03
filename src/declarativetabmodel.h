@@ -20,7 +20,6 @@
 #include <QQmlComponent>
 
 #include "tab.h"
-#include "declarativewebcontainer.h"
 
 class DeclarativeTab;
 
@@ -56,7 +55,7 @@ public:
     Q_INVOKABLE void closeActiveTab();
 
     Q_INVOKABLE void newTab(const QString &url, const QString &title, int parentId = 0);
-    Q_INVOKABLE void newTabData(const QString &url, const QString &title, DeclarativeWebPage *contentItem = 0, int parentId = 0);
+    Q_INVOKABLE void newTabData(const QString &url, const QString &title, QObject *contentItem = 0, int parentId = 0);
     Q_INVOKABLE void resetNewTabData();
 
     Q_INVOKABLE void dumpTabs() const;
@@ -93,7 +92,7 @@ public:
     bool backForwardNavigation() const;
     void setBackForwardNavigation(bool backForwardNavigation);
 
-    DeclarativeWebPage* newTabPreviousPage() const;
+    QObject* newTabPreviousPage() const;
     const QList<Tab>& tabs() const;
 
     void updateUrl(int tabId, bool activeTab, QString url);
@@ -127,7 +126,7 @@ private slots:
 
 private:
     struct NewTabData {
-        NewTabData(QString url, QString title, DeclarativeWebPage *previousPage, int parentId)
+        NewTabData(QString url, QString title, QObject *previousPage, int parentId)
             : url(url)
             , title(title)
             , previousPage(previousPage)
@@ -136,7 +135,7 @@ private:
 
         QString url;
         QString title;
-        DeclarativeWebPage *previousPage;
+        QObject *previousPage;
         int parentId;
     };
 

@@ -562,7 +562,7 @@ void DeclarativeWebContainer::onDownloadStarted()
     // pass windowId of the active window when download is started and close
     // the passed windowId instead.
     if (m_model && m_model->hasNewTabData() && m_model->count() > 0 && m_webPage) {
-        DeclarativeWebPage *previousWebPage = m_model->newTabPreviousPage();
+        DeclarativeWebPage *previousWebPage = qobject_cast<DeclarativeWebPage *>(m_model->newTabPreviousPage());
         releasePage(m_webPage->tabId());
         if (previousWebPage) {
             activatePage(previousWebPage->tabId());
