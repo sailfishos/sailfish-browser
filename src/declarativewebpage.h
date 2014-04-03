@@ -19,7 +19,7 @@
 
 class DeclarativeWebPage : public QuickMozView {
     Q_OBJECT
-    Q_PROPERTY(DeclarativeWebContainer* container READ container WRITE setContainer NOTIFY containerChanged FINAL)
+    Q_PROPERTY(DeclarativeWebContainer* container READ container NOTIFY containerChanged FINAL)
     Q_PROPERTY(int tabId READ tabId FINAL)
     Q_PROPERTY(bool viewReady MEMBER m_viewReady NOTIFY viewReadyChanged FINAL)
     Q_PROPERTY(bool loaded MEMBER m_loaded NOTIFY loadedChanged FINAL)
@@ -33,7 +33,7 @@ class DeclarativeWebPage : public QuickMozView {
     Q_PROPERTY(QVariant _deferredLoad MEMBER m_deferredLoad NOTIFY _deferredLoadChanged FINAL)
 
 public:
-    DeclarativeWebPage(QuickMozView *parent = 0);
+    DeclarativeWebPage(QQuickItem *parent = 0);
     ~DeclarativeWebPage();
 
     DeclarativeWebContainer* container() const;
@@ -56,6 +56,7 @@ signals:
     void loadedChanged();
     void userHasDraggedWhileLoadingChanged();
     void fullscreenChanged();
+    void domContentLoadedChanged();
     void faviconChanged();
     void resurrectedContentRectChanged();
 

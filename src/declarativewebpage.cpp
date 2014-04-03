@@ -14,7 +14,7 @@
 static const QString gFullScreenMessage("embed:fullscreenchanged");
 static const QString gDomContentLoadedMessage("embed:domcontentloaded");
 
-DeclarativeWebPage::DeclarativeWebPage(QuickMozView *parent)
+DeclarativeWebPage::DeclarativeWebPage(QQuickItem *parent)
     : QuickMozView(parent)
     , m_container(0)
     , m_tabId(0)
@@ -104,6 +104,7 @@ void DeclarativeWebPage::onRecvAsyncMessage(const QString& message, const QVaria
         setFullscreen(data.toMap().value(QString("fullscreen")).toBool());
     } else if (message == gDomContentLoadedMessage && data.toMap().value("rootFrame").toBool()) {
         m_domContentLoaded = true;
+        emit domContentLoadedChanged();
     }
 }
 

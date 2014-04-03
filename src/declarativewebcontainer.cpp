@@ -25,8 +25,10 @@
 #include <QtConcurrentRun>
 #include <QGuiApplication>
 #include <QScreen>
-
 #include <QMetaMethod>
+
+#include <qmozcontext.h>
+#include <QGuiApplication>
 
 DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     : QQuickItem(parent)
@@ -77,6 +79,9 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
         qWarning() << "Can't create directory "+ cacheLocation;
         return;
     }
+
+    connect(this, SIGNAL(heightChanged()), this, SLOT(sendVkbOpenCompositionMetrics()));
+    connect(this, SIGNAL(widthChanged()), this, SLOT(sendVkbOpenCompositionMetrics()));
 }
 
 DeclarativeWebContainer::~DeclarativeWebContainer()
@@ -332,6 +337,7 @@ bool DeclarativeWebContainer::activatePage(int tabId, bool force)
         connect(m_webPage, SIGNAL(windowCloseRequested()), this, SLOT(closeWindow()), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(urlChanged()), this, SLOT(onUrlChanged()), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(titleChanged()), this, SLOT(onTitleChanged()), Qt::UniqueConnection);
+        connect(m_webPage, SIGNAL(domContentLoadedChanged()), this, SLOT(sendVkbOpenCompositionMetrics()), Qt::UniqueConnection);
         return activationData.activated;
     }
     return false;
@@ -672,5 +678,47 @@ void DeclarativeWebContainer::manageMaxTabCount()
     // ActiveTab + m_maxLiveTabCount -1 == m_maxLiveTabCount
     for (int i = m_maxLiveTabCount - 1; i < tabs.count() && m_webPages && m_webPages->count() > m_maxLiveTabCount; ++i) {
         releasePage(tabs.at(i).tabId(), true);
+    }
+}
+
+void DeclarativeWebContainer::updateVkbHeight()
+{
+    qreal vkbHeight = 0;
+    // Keyboard rect is updated too late, when vkb hidden we cannot yet get size.
+    // We need to send correct information to embedlite-components before virtual keyboard is open
+    // so that when input element is focused contect is zoomed to the correct target (available area).
+#if 0
+    if (qGuiApp->inputMethod()) {
+        vkbHeight = qGuiApp->inputMethod()->keyboardRectangle().height();
+    }
+#else
+    // TODO: remove once keyboard height is not zero when hidden and take above #if 0 block into use.
+    vkbHeight = 440;
+    if (width() > height()) {
+        vkbHeight = 340;
+    }
+#endif
+    m_inputPanelOpenHeight = vkbHeight;
+}
+
+void DeclarativeWebContainer::sendVkbOpenCompositionMetrics()
+{
+    updateVkbHeight();
+
+    QVariantMap map;
+
+    // Round values to even numbers.
+    int vkbOpenCompositionHeight = height() - m_inputPanelOpenHeight;
+    int vkbOpenMaxCssCompositionWidth = width() / QMozContext::GetInstance()->pixelRatio();
+    int vkbOpenMaxCssCompositionHeight = vkbOpenCompositionHeight / QMozContext::GetInstance()->pixelRatio();
+
+    map.insert("compositionHeight", vkbOpenCompositionHeight);
+    map.insert("maxCssCompositionWidth", vkbOpenMaxCssCompositionWidth);
+    map.insert("maxCssCompositionHeight", vkbOpenMaxCssCompositionHeight);
+
+    QVariant data(map);
+
+    if (m_webPage) {
+        m_webPage->sendAsyncMessage("embedui:vkbOpenCompositionMetrics", data);
     }
 }

@@ -164,6 +164,10 @@ private slots:
     void onTitleChanged();
     void onThumbnailPathChanged(QString url, QString path, int tabId);
 
+    // These are here to inform embedlite-components that keyboard is open or close
+    // matching composition metrics.
+    void sendVkbOpenCompositionMetrics();
+
 protected:
     void timerEvent(QTimerEvent *event);
 
@@ -171,6 +175,7 @@ private:
     qreal contentHeight() const;
     void captureScreen(QString url, int size, qreal rotate);
     int parentTabId(int tabId) const;
+    void updateVkbHeight();
 
     struct ScreenCapture {
         int tabId;
