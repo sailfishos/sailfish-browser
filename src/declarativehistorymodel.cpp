@@ -118,6 +118,8 @@ void DeclarativeHistoryModel::tabHistoryAvailable(int tabId, QList<Link> linkLis
 
 void DeclarativeHistoryModel::historyAvailable(QList<Link> linkList)
 {
+    // DBWorker suppresses history (distinct select). Thus, id and thumbnailPath of
+    // every link is the same.
     updateModel(linkList);
 }
 
