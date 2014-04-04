@@ -24,7 +24,6 @@ class DeclarativeHistoryModel : public QAbstractListModel, public QQmlParserStat
     Q_INTERFACES(QQmlParserStatus)
 
     Q_PROPERTY(int count READ rowCount NOTIFY countChanged)
-    Q_PROPERTY(int tabId READ tabId WRITE setTabId NOTIFY tabIdChanged)
 public:
     DeclarativeHistoryModel(QObject *parent = 0);
     
@@ -35,9 +34,6 @@ public:
 
     Q_INVOKABLE void clear();
     Q_INVOKABLE void search(const QString &filter);
-
-    int tabId() const;
-    void setTabId(int tabId);
 
     // From QAbstractListModel
     int rowCount(const QModelIndex & parent = QModelIndex()) const;
@@ -50,19 +46,14 @@ public:
 
 signals:
     void countChanged();
-    void tabIdChanged();
 
 private slots:
-    void tabHistoryAvailable(int tabId, QList<Link> linkList);
     void historyAvailable(QList<Link> linkList);
-    void tabChanged(Tab tab);
     void updateTitle(QString url, QString title);
 
 private:
-    void load();
     void updateModel(QList<Link> linkList);
 
-    int m_tabId;
     QList<Link> m_links;
 };
 #endif // DECLARATIVEHISTORYMODEL_H

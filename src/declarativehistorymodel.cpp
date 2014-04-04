@@ -13,15 +13,11 @@
 
 #include "dbmanager.h"
 
-DeclarativeHistoryModel::DeclarativeHistoryModel(QObject *parent) :
-    QAbstractListModel(parent), m_tabId(-1)
+DeclarativeHistoryModel::DeclarativeHistoryModel(QObject *parent)
+    : QAbstractListModel(parent)
 {
-    connect(DBManager::instance(), SIGNAL(tabChanged(Tab)),
-            this, SLOT(tabChanged(Tab)));
     connect(DBManager::instance(), SIGNAL(historyAvailable(QList<Link>)),
             this, SLOT(historyAvailable(QList<Link>)));
-    connect(DBManager::instance(), SIGNAL(tabHistoryAvailable(int,QList<Link>)),
-            this, SLOT(tabHistoryAvailable(int, QList<Link>)));
     connect(DBManager::instance(), SIGNAL(titleChanged(QString,QString)),
             this, SLOT(updateTitle(QString,QString)));
 }
@@ -42,35 +38,13 @@ void DeclarativeHistoryModel::clear()
     beginRemoveRows(QModelIndex(), 0, m_links.count() - 1);
     m_links.clear();
     endRemoveRows();
-    if (m_tabId <= 0) {
-        DBManager::instance()->clearHistory();
-    } else {
-        DBManager::instance()->clearTabHistory(m_tabId);
-    }
+    DBManager::instance()->clearHistory();
     emit countChanged();
-}
-
-int DeclarativeHistoryModel::tabId() const
-{
-    return m_tabId;
-}
-
-void DeclarativeHistoryModel::setTabId(int tabId)
-{
-    if (m_tabId != tabId) {
-        m_tabId = tabId;
-        emit tabIdChanged();
-        load();
-    }
 }
 
 void DeclarativeHistoryModel::search(const QString &filter)
 {
-    if (filter != "") {
-        DBManager::instance()->getHistory(filter);
-    } else {
-        load();
-    }
+    DBManager::instance()->getHistory(filter);
 }
 
 int DeclarativeHistoryModel::rowCount(const QModelIndex & parent) const {
@@ -93,27 +67,11 @@ QVariant DeclarativeHistoryModel::data(const QModelIndex & index, int role) cons
 
 void DeclarativeHistoryModel::componentComplete()
 {
-    load();
+    search("");
 }
 
 void DeclarativeHistoryModel::classBegin()
 {
-}
-
-void DeclarativeHistoryModel::load()
-{
-    if (m_tabId > 0) {
-        DBManager::instance()->getTabHistory(m_tabId);
-    } else {
-        DBManager::instance()->getHistory();
-    }
-}
-
-void DeclarativeHistoryModel::tabHistoryAvailable(int tabId, QList<Link> linkList)
-{
-    if (tabId == m_tabId) {
-        updateModel(linkList);
-    }
 }
 
 void DeclarativeHistoryModel::historyAvailable(QList<Link> linkList)
@@ -156,13 +114,6 @@ void DeclarativeHistoryModel::updateModel(QList<Link> linkList)
         }
 
         emit countChanged();
-    }
-}
-
-void DeclarativeHistoryModel::tabChanged(Tab tab)
-{
-    if (m_tabId == tab.tabId()) {
-        load();
     }
 }
 
