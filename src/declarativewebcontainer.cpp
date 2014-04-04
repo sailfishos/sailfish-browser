@@ -577,10 +577,21 @@ void DeclarativeWebContainer::onDownloadStarted()
 
 void DeclarativeWebContainer::onNewTabRequested(QString url, QString title, int parentId)
 {
-    m_model->newTabData(url, title, webPage(), parentId);
-    // This slot could handle new page creation directly if/
-    // when connection helper is accessible from QML.
-    emit triggerLoad(url, title);
+    if (m_active) {
+        m_model->newTabData(url, title, webPage(), parentId);
+        // This could handle new page creation directly if/
+        // when connection helper is accessible from QML.
+        emit triggerLoad(url, title);
+    } else {
+        if (m_webPage) {
+            m_webPage->setVisible(false);
+            setWebPage(0);
+        }
+        QMetaObject::invokeMethod(this, "onNewTabRequested", Qt::QueuedConnection,
+                                  Q_ARG(QString, url),
+                                  Q_ARG(QString, title),
+                                  Q_ARG(int, parentId));
+    }
 }
 
 void DeclarativeWebContainer::onReadyToLoad()
