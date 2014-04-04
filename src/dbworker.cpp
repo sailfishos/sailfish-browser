@@ -560,7 +560,7 @@ void DBWorker::getHistory(const QString &filter)
         filterQuery = QString("WHERE (link.url LIKE '%%1%' OR link.title LIKE '%%1%') ").arg(filter);
     }
 
-    QString queryString = QString("SELECT history.link_id, link.url, link.thumb_path, link.title "
+    QString queryString = QString("SELECT DISTINCT link.url, link.title "
                                   "FROM history INNER JOIN link "
                                   "ON history.link_id = link.link_id "
                                   "%1"
@@ -573,10 +573,10 @@ void DBWorker::getHistory(const QString &filter)
 
     QList<Link> linkList;
     while (query.next()) {
-        Link url(query.value(0).toInt(),
-                           query.value(1).toString(),
-                           query.value(2).toString(),
-                           query.value(3).toString());
+        Link url(0,
+                 query.value(0).toString(),
+                 "",
+                 query.value(1).toString());
         linkList.append(url);
     }
 

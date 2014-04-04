@@ -92,8 +92,6 @@ Page {
 
     HistoryModel {
         id: historyModel
-
-        tabId: webView.tabModel.currentTabId
     }
 
     Browser.DownloadRemorsePopup { id: downloadPopup }
