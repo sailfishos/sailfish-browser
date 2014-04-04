@@ -67,14 +67,6 @@ void DeclarativeTabModel::addTab(const QString& url, const QString &title) {
     emit nextTabIdChanged();
 }
 
-int DeclarativeTabModel::currentTabId() const
-{
-    if (m_activeTab.isValid()) {
-        return m_activeTab.tabId();
-    }
-    return 0;
-}
-
 int DeclarativeTabModel::nextTabId() const
 {
     return m_nextTabId;
@@ -505,7 +497,6 @@ void DeclarativeTabModel::updateActiveTab(const Tab &activeTab)
     if (m_activeTab != activeTab) {
         int oldTabId = m_activeTab.tabId();
         m_activeTab = activeTab;
-        emit currentTabIdChanged();
         emit activeTabChanged(oldTabId, activeTab.tabId());
         saveTabOrder();
     }
