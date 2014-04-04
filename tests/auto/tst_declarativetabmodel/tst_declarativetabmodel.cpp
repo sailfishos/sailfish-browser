@@ -17,6 +17,7 @@
 
 #include "declarativetabmodel.h"
 #include "dbmanager.h"
+#include "testobject.h"
 
 static const QByteArray QML_SNIPPET = \
         "import QtQuick 2.0\n" \
@@ -34,12 +35,12 @@ struct TestTab {
     QString title;
 };
 
-class tst_declarativetabmodel : public QObject
+class tst_declarativetabmodel : public TestObject
 {
     Q_OBJECT
 
 public:
-    tst_declarativetabmodel(QObject *parent = 0);
+    tst_declarativetabmodel();
 
 private slots:
     void initTestCase();
@@ -88,10 +89,10 @@ private:
     QList<TestTab> originalTabOrder;
 };
 
-tst_declarativetabmodel::tst_declarativetabmodel(QObject *parent)
-    : QObject(parent)
-    , tabModel(0)
+tst_declarativetabmodel::tst_declarativetabmodel()
+    : TestObject(QML_SNIPPET)
 {
+    tabModel = TestObject::model<DeclarativeTabModel>("tabModel");
     originalTabOrder.append(TestTab("http://sailfishos.org", "SailfishOS.org"));
     originalTabOrder.append(TestTab("file:///opt/tests/sailfish-browser/manual/testpage.html", "Test Page"));
     originalTabOrder.append(TestTab("https://sailfishos.org/sailfish-silica/index.html", "Creating applications with Sailfish Silica | Sailfish Silica 1.0"));
@@ -100,16 +101,6 @@ tst_declarativetabmodel::tst_declarativetabmodel(QObject *parent)
 
 void tst_declarativetabmodel::initTestCase()
 {
-    QQmlComponent component(view.engine());
-    component.setData(QML_SNIPPET, QUrl());
-    QObject *obj = component.create(view.engine()->rootContext());
-
-    view.setContent(QUrl(""), 0, obj);
-    view.show();
-    QTest::qWaitForWindowExposed(&view);
-
-    QVariant var = obj->property("tabModel");
-    tabModel = qobject_cast<DeclarativeTabModel *>(qvariant_cast<QObject*>(var));
     QVERIFY(tabModel);
 
     if (!tabModel->loaded()) {
@@ -606,8 +597,8 @@ int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
     app.setAttribute(Qt::AA_Use96Dpi, true);
-    tst_declarativetabmodel testcase;
     qmlRegisterType<DeclarativeTabModel>("Sailfish.Browser", 1, 0, "TabModel");
+    tst_declarativetabmodel testcase;
     return QTest::qExec(&testcase, argc, argv); \
 }
 #include "tst_declarativetabmodel.moc"
