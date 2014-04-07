@@ -16,6 +16,7 @@
 #include <QFile>
 #include <QDebug>
 #include <QStringList>
+#include <QUrl>
 
 static QList<int> s_tabOrder;
 
@@ -43,7 +44,7 @@ QHash<int, QByteArray> DeclarativeTabModel::roleNames() const
 }
 
 void DeclarativeTabModel::addTab(const QString& url, const QString &title) {
-    if (!LinkValidator::navigable(url)) {
+    if (!LinkValidator::navigable(QUrl(url))) {
         return;
     }
     int tabId = DBManager::instance()->createTab();
@@ -513,7 +514,7 @@ void DeclarativeTabModel::updateActiveTab(const Tab &activeTab)
 
 void DeclarativeTabModel::updateTabUrl(int tabId, bool activeTab, const QString &url, bool navigate)
 {
-    if (!LinkValidator::navigable(url)) {
+    if (!LinkValidator::navigable(QUrl(url))) {
 #ifdef DEBUG_LOGS
         qDebug() << "invalid url: " << url;
 #endif
