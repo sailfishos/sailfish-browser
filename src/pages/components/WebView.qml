@@ -32,18 +32,18 @@ WebContainer {
     // force property only used by WebView itself for deferred loading when
     // network connectivity is established or when loading initial web page.
     function load(url, title, force) {
-        if (url.substring(0, 6) !== "about:" && url.substring(0, 5) !== "file:"
-            && !connectionHelper.haveNetworkConnectivity()
-            && !deferredLoad) {
+//        if (url.substring(0, 6) !== "about:" && url.substring(0, 5) !== "file:"
+//            && !connectionHelper.haveNetworkConnectivity()
+//            && !deferredLoad) {
 
-            deferredReload = false
-            deferredLoad = {
-                "url": url,
-                "title": title
-            }
-            connectionHelper.attemptToConnectNetwork()
-            return
-        }
+//            deferredReload = false
+//            deferredLoad = {
+//                "url": url,
+//                "title": title
+//            }
+//            connectionHelper.attemptToConnectNetwork()
+//            return
+//        }
 
         // Modify url and title to string
         title = title ? "" + title : ""
@@ -66,15 +66,15 @@ WebContainer {
         }
 
         var url = contentItem.url.toString()
-        if (url.substring(0, 6) !== "about:" && url.substring(0, 5) !== "file:"
-            && !deferredReload
-            && !connectionHelper.haveNetworkConnectivity()) {
+//        if (url.substring(0, 6) !== "about:" && url.substring(0, 5) !== "file:"
+//            && !deferredReload
+//            && !connectionHelper.haveNetworkConnectivity()) {
 
-            deferredReload = true
-            deferredLoad = null
-            connectionHelper.attemptToConnectNetwork()
-            return
-        }
+//            deferredReload = true
+//            deferredLoad = null
+//            connectionHelper.attemptToConnectNetwork()
+//            return
+//        }
 
         contentItem.reload()
     }
@@ -342,38 +342,38 @@ WebContainer {
         Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
     }
 
-    ConnectionHelper {
-        id: connectionHelper
+//    ConnectionHelper {
+//        id: connectionHelper
 
-        onNetworkConnectivityEstablished: {
-            var url
-            var title
+//        onNetworkConnectivityEstablished: {
+//            var url
+//            var title
 
-            if (deferredLoad) {
-                url = deferredLoad["url"]
-                title = deferredLoad["title"]
-                deferredLoad = null
-                webView.load(url, title, true)
-            } else if (deferredReload) {
-                deferredReload = false
-                contentItem.reload()
-            }
-        }
+//            if (deferredLoad) {
+//                url = deferredLoad["url"]
+//                title = deferredLoad["title"]
+//                deferredLoad = null
+//                webView.load(url, title, true)
+//            } else if (deferredReload) {
+//                deferredReload = false
+//                contentItem.reload()
+//            }
+//        }
 
-        onNetworkConnectivityUnavailable: {
-            if (contentItem) {
-                deferredLoad = null
-                deferredReload = false
-            }
-        }
-    }
+//        onNetworkConnectivityUnavailable: {
+//            if (contentItem) {
+//                deferredLoad = null
+//                deferredReload = false
+//            }
+//        }
+//    }
 
     ResourceController {
         id: resourceController
         webView: contentItem
         background: webView.background
 
-        onWebViewSuspended: connectionHelper.closeNetworkSession()
+        //onWebViewSuspended: connectionHelper.closeNetworkSession()
     }
 
     Timer {
@@ -382,7 +382,7 @@ WebContainer {
         interval: 1000
     }
 
-    Component.onDestruction: connectionHelper.closeNetworkSession()
+    //Component.onDestruction: connectionHelper.closeNetworkSession()
     Component.onCompleted: {
         PopupHandler.auxTimer = auxTimer
         PopupHandler.pageStack = pageStack
