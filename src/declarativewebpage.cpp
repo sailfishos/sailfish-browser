@@ -24,7 +24,6 @@ DeclarativeWebPage::DeclarativeWebPage(QQuickItem *parent)
     , m_userHasDraggedWhileLoading(false)
     , m_fullscreen(false)
     , m_domContentLoaded(false)
-    , m_deferredReload(false)
 {
     connect(this, SIGNAL(viewInitialized()), this, SLOT(onViewInitialized()));
     connect(this, SIGNAL(recvAsyncMessage(const QString, const QVariant)),
