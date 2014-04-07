@@ -21,6 +21,7 @@ WebContainer {
     id: webView
 
     property color _decoratorColor: Theme.highlightDimmerColor
+    property bool firstUseFullscreen
 
     function stop() {
         if (contentItem) {
@@ -91,7 +92,7 @@ WebContainer {
     foreground: Qt.application.active
     inputPanelHeight: window.pageStack.panelSize
     inputPanelOpenHeight: window.pageStack.imSize
-    fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) || webView.inputPanelVisible || !webView.foreground || (contentItem && contentItem.fullscreen)
+    fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) || webView.inputPanelVisible || !webView.foreground || (contentItem && contentItem.fullscreen) || firstUseFullscreen
     _readyToLoad: contentItem && contentItem.viewReady && tabModel.loaded
 
     loading: contentItem ? contentItem.loading : false

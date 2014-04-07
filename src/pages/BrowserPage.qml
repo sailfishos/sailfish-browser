@@ -20,6 +20,8 @@ Page {
     id: browserPage
 
     property Item firstUseOverlay
+    property alias firstUseFullscreen: webView.firstUseFullscreen
+
     property alias tabs: webView.tabModel
     property alias favorites: favoriteModel
     property alias history: historyModel
@@ -114,6 +116,7 @@ Page {
 
     Column {
         id: controlArea
+        z:1
 
         anchors.bottom: webView.bottom
         width: parent.width
@@ -307,9 +310,9 @@ Page {
         if (!WebUtils.firstUseDone) {
             var component = Qt.createComponent(Qt.resolvedUrl("components/FirstUseOverlay.qml"))
             if (component.status == Component.Ready) {
-                firstUseOverlay = component.createObject(browserPage, {"width": browserPage.width, "height": browserPage.height - toolBarContainer.height });
+                firstUseOverlay = component.createObject(browserPage, {"width":browserPage.width, "height":browserPage.heigh, "gestureThreshold" : toolBarContainer.height});
             } else {
-                console.log("FirstUseOverlay create failed " + component.status)
+                console.log("FirstUseOverlay create failed " + component.errorString())
             }
         }
     }
