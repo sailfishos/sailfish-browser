@@ -57,6 +57,9 @@ class DeclarativeWebContainer : public QQuickItem {
 
     Q_PROPERTY(QQmlComponent* webPageComponent MEMBER m_webPageComponent NOTIFY webPageComponentChanged FINAL)
 
+    Q_PROPERTY(bool deferredReload MEMBER m_deferredReload NOTIFY deferredReloadChanged FINAL)
+    Q_PROPERTY(QVariant deferredLoad MEMBER m_deferredLoad NOTIFY deferredLoadChanged FINAL)
+
     // "private" properties.
     Q_PROPERTY(bool _readyToLoad READ readyToLoad WRITE setReadyToLoad NOTIFY _readyToLoadChanged FINAL)
 
@@ -132,6 +135,9 @@ signals:
     void titleChanged();
     void urlChanged();
     void thumbnailPathChanged();
+
+    void deferredReloadChanged();
+    void deferredLoadChanged();
 
     void _readyToLoadChanged();
 
@@ -213,6 +219,9 @@ private:
     int m_maxLiveTabCount;
 
     QFutureWatcher<ScreenCapture> m_screenCapturer;
+
+    bool m_deferredReload;
+    QVariant m_deferredLoad;
 
     friend class tst_webview;
 };

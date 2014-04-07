@@ -29,10 +29,6 @@ class DeclarativeWebPage : public QuickMozView {
     Q_PROPERTY(QString favicon MEMBER m_favicon NOTIFY faviconChanged FINAL)
     Q_PROPERTY(QVariant resurrectedContentRect READ resurrectedContentRect WRITE setResurrectedContentRect NOTIFY resurrectedContentRectChanged)
 
-    // Private
-    Q_PROPERTY(bool _deferredReload MEMBER m_deferredReload NOTIFY _deferredReloadChanged FINAL)
-    Q_PROPERTY(QVariant _deferredLoad MEMBER m_deferredLoad NOTIFY _deferredLoadChanged FINAL)
-
 public:
     DeclarativeWebPage(QQuickItem *parent = 0);
     ~DeclarativeWebPage();
@@ -61,9 +57,6 @@ signals:
     void faviconChanged();
     void resurrectedContentRectChanged();
 
-    void _deferredReloadChanged();
-    void _deferredLoadChanged();
-
 protected:
     void componentComplete();
 
@@ -82,9 +75,6 @@ private:
     bool m_domContentLoaded;
     QString m_favicon;
     QVariant m_resurrectedContentRect;
-
-    bool m_deferredReload;
-    QVariant m_deferredLoad;
 };
 
 QML_DECLARE_TYPE(DeclarativeWebPage)

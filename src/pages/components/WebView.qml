@@ -34,10 +34,10 @@ WebContainer {
     function load(url, title, force) {
         if (url.substring(0, 6) !== "about:" && url.substring(0, 5) !== "file:"
             && !connectionHelper.haveNetworkConnectivity()
-            && !contentItem._deferredLoad) {
+            && !deferredLoad) {
 
-            contentItem._deferredReload = false
-            contentItem._deferredLoad = {
+            deferredReload = false
+            deferredLoad = {
                 "url": url,
                 "title": title
             }
@@ -67,11 +67,11 @@ WebContainer {
 
         var url = contentItem.url.toString()
         if (url.substring(0, 6) !== "about:" && url.substring(0, 5) !== "file:"
-            && !contentItem._deferredReload
+            && !deferredReload
             && !connectionHelper.haveNetworkConnectivity()) {
 
-            contentItem._deferredReload = true
-            contentItem._deferredLoad = null
+            deferredReload = true
+            deferredLoad = null
             connectionHelper.attemptToConnectNetwork()
             return
         }
@@ -349,22 +349,21 @@ WebContainer {
             var url
             var title
 
-            // TODO: this should be deferred till view created.
-            if (contentItem && contentItem._deferredLoad) {
-                url = contentItem._deferredLoad["url"]
-                title = contentItem._deferredLoad["title"]
-                contentItem._deferredLoad = null
+            if (deferredLoad) {
+                url = deferredLoad["url"]
+                title = deferredLoad["title"]
+                deferredLoad = null
                 webView.load(url, title, true)
-            } else if (contentItem && contentItem._deferredReload) {
-                contentItem._deferredReload = false
+            } else if (deferredReload) {
+                deferredReload = false
                 contentItem.reload()
             }
         }
 
         onNetworkConnectivityUnavailable: {
             if (contentItem) {
-                contentItem._deferredLoad = null
-                contentItem._deferredReload = false
+                deferredLoad = null
+                deferredReload = false
             }
         }
     }
