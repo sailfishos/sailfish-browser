@@ -17,14 +17,10 @@ import org.freedesktop.contextkit 1.0
 // QtObject cannot have children
 Item {
     property Item webView
-    property bool firstFrameRendered
 
     property bool videoActive
     property bool audioActive
     property bool background
-
-    property string acceptedGeolocationUrl
-    property string rejectedGeolocationUrl
 
     property bool _suspendable
     property string _mediaState: "pause"
@@ -35,16 +31,6 @@ Item {
     property bool _suspendIntention
 
     signal webViewSuspended
-
-    function isAcceptedGeolocationUrl(url) {
-        var tmpUrl = WebUtils.displayableUrl(url)
-        return acceptedGeolocationUrl && acceptedGeolocationUrl === tmpUrl
-    }
-
-    function isRejectedGeolocationUrl(url) {
-        var tmpUrl = WebUtils.displayableUrl(url)
-        return rejectedGeolocationUrl && rejectedGeolocationUrl === tmpUrl
-    }
 
     function calculateStatus() {
         var video = false
@@ -84,7 +70,7 @@ Item {
 
     on_SuspendableChanged: {
         if (_suspendable) {
-            webView.suspendView()
+            if (webView) webView.suspendView()
             webViewSuspended()
         } else {
             webView.resumeView()
@@ -98,9 +84,7 @@ Item {
     Connections {
         target: MozContext
         onRecvObserve: {
-            if (message === "embedlite-before-first-paint") {
-                firstFrameRendered = true
-            } else if (message === "media-decoder-info") {
+            if (message === "media-decoder-info") {
                 if (data.state === "meta") {
                     _isAudioStream = data.a
                     _isVideoStream = data.v

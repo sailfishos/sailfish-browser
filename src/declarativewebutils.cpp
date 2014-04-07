@@ -25,25 +25,24 @@
 
 static const QString system_components_time_stamp("/var/lib/_MOZEMBED_CACHE_CLEAN_");
 static const QString profilePath("/.mozilla/mozembed");
+static DeclarativeWebUtils *gSingleton = 0;
 
-DeclarativeWebUtils::DeclarativeWebUtils(QStringList arguments,
-                                         BrowserService *service,
-                                         QObject *parent) :
-    QObject(parent),
-    m_homePage("http://www.jolla.com"),
-    m_arguments(arguments),
-    m_service(service)
+DeclarativeWebUtils::DeclarativeWebUtils() :
+    QObject(),
+    m_homePage("http://www.jolla.com")
 {
     connect(QMozContext::GetInstance(), SIGNAL(onInitialized()),
             this, SLOT(updateWebEngineSettings()));
     connect(QMozContext::GetInstance(), SIGNAL(recvObserve(QString, QVariant)),
             this, SLOT(handleObserve(QString, QVariant)));
 
-    connect(service, SIGNAL(openUrlRequested(QString)),
-            this, SLOT(openUrl(QString)));
-
     QString path = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + QStringLiteral("/.firstUseDone");
     m_firstUseDone = fileExists(path);
+}
+
+DeclarativeWebUtils::~DeclarativeWebUtils()
+{
+    gSingleton = 0;
 }
 
 QUrl DeclarativeWebUtils::getFaviconForUrl(QUrl url)
@@ -138,8 +137,7 @@ void DeclarativeWebUtils::updateWebEngineSettings()
                              << "clipboard:setdata"
                              << "media-decoder-info"
                              << "embed:download"
-                             << "embed:search"
-                             << "embedlite-before-first-paint");
+                             << "embed:search");
 
     // Enable internet search
     mozContext->setPref(QString("keyword.enabled"), QVariant(true));
@@ -147,26 +145,10 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     // Scale up content size
     mozContext->setPixelRatio(1.5);
 
-    mozContext->setPref(QString("embedlite.inputItemSize"), QVariant(38));
+    // Theme.fontSizeSmall
+    mozContext->setPref(QString("embedlite.inputItemSize"), QVariant(28));
     mozContext->setPref(QString("embedlite.zoomMargin"), QVariant(14));
 }
-
-void DeclarativeWebUtils::openUrl(QString url)
-{
-    m_arguments << url;
-
-    emit openUrlRequested(url);
-}
-
-QString DeclarativeWebUtils::initialPage()
-{
-    if (m_arguments.count() > 1) {
-        return m_arguments.last();
-    } else {
-        return "";
-    }
-}
-
 
 void DeclarativeWebUtils::setFirstUseDone(bool firstUseDone) {
     QString path = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + QStringLiteral("/.firstUseDone");
@@ -187,9 +169,17 @@ bool DeclarativeWebUtils::firstUseDone() const {
     return m_firstUseDone;
 }
 
-QString DeclarativeWebUtils::homePage()
+QString DeclarativeWebUtils::homePage() const
 {
     return m_homePage;
+}
+
+DeclarativeWebUtils *DeclarativeWebUtils::instance()
+{
+    if (!gSingleton) {
+        gSingleton = new DeclarativeWebUtils();
+    }
+    return gSingleton;
 }
 
 QString DeclarativeWebUtils::downloadDir() const

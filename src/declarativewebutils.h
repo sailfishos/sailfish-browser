@@ -23,14 +23,13 @@ class DeclarativeWebUtils : public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(QString initialPage READ initialPage CONSTANT FINAL)
     Q_PROPERTY(QString homePage READ homePage NOTIFY homePageChanged FINAL)
     Q_PROPERTY(QString downloadDir READ downloadDir CONSTANT FINAL)
     Q_PROPERTY(QString picturesDir READ picturesDir CONSTANT FINAL)
     Q_PROPERTY(bool firstUseDone READ firstUseDone WRITE setFirstUseDone NOTIFY firstUseDoneChanged)
 
 public:
-    explicit DeclarativeWebUtils(QStringList arguments, BrowserService *service, QObject *parent = 0);
+    static DeclarativeWebUtils *instance();
 
     QString downloadDir() const;
     QString picturesDir() const;
@@ -43,9 +42,7 @@ public:
     Q_INVOKABLE QString displayableUrl(QString fullUrl) const;
 
 public slots:
-    void openUrl(QString url);
-    QString homePage();
-    QString initialPage();
+    QString homePage() const;
     void clearStartupCacheIfNeeded();
 
 signals:
@@ -58,9 +55,10 @@ private slots:
     void handleObserve(const QString message, const QVariant data);
 
 private:
+    explicit DeclarativeWebUtils();
+    ~DeclarativeWebUtils();
+
     QString m_homePage;
-    QStringList m_arguments;
-    BrowserService *m_service;
     bool m_firstUseDone;
 };
 #endif // DECLARATIVEWEBUTILS_H

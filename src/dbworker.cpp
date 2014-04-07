@@ -128,13 +128,13 @@ void DBWorker::createTab(int tabId)
     execute(query);
 }
 
-int DBWorker::createLink(int tabId, QString url)
+int DBWorker::createLink(int tabId, QString url, QString title)
 {
     if (url.isEmpty()) {
         return 0;
     }
 
-    int linkId = createLink(url, "", "");
+    int linkId = createLink(url, title, "");
 
     if (!addToHistory(linkId)) {
         qWarning() << Q_FUNC_INFO << "failed to add url to history" << url;
@@ -246,7 +246,7 @@ void DBWorker::getTab(int tabId)
     if (query.first()) {
 #ifdef DEBUG_LOGS
         Tab tab = getTabData(query.value(0).toInt(), query.value(1).toInt());
-        qDebug() << query.value(0).toInt() << query.value(1).toInt() << tab.currentLink().title() << tab.currentLink().url();
+        qDebug() << query.value(0).toInt() << query.value(1).toInt() << tab.title() << tab.url();
 #endif
         emit tabAvailable(getTabData(query.value(0).toInt(), query.value(1).toInt()));
     }
@@ -323,7 +323,7 @@ void DBWorker::navigateTo(int tabId, QString url, QString title, QString path) {
 #ifdef DEBUG_LOGS
     qDebug() << "emit tab changed:" << tabId << historyId << title << url;
 #endif
-    emit navigated(getTabData(tabId, historyId));
+    emit tabChanged(getTabData(tabId, historyId));
 }
 
 void DBWorker::updateTab(int tabId, QString url, QString title, QString path)
@@ -618,13 +618,17 @@ void DBWorker::updateThumbPath(QString url, QString path, int tabId)
     }
 }
 
-void DBWorker::updateTitle(QString url, QString title)
+void DBWorker::updateTitle(int linkId, QString title)
 {
-    QSqlQuery query = prepare("UPDATE link SET title = ? WHERE url = ?;");
+    Link link = getLink(linkId);
+    QSqlQuery query = prepare("UPDATE link SET title = ? WHERE link_id = ?;");
     query.bindValue(0, title);
-    query.bindValue(1, url);
+    query.bindValue(1, linkId);
     if (execute(query)) {
-        emit titleChanged(url, title);
+        if (link.isValid() && link.title() != title) {
+            // For browsing history
+            emit titleChanged(link.url(), title);
+        }
     }
 }
 

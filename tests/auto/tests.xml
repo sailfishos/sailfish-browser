@@ -8,13 +8,13 @@
            </pre_steps>
            <description>Sailfish Browser UI unit tests</description>
            <case manual="false" name="declarativetabmodel">
-               <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_declarativetabmodel -platform minimal</step>
-           </case>
-           <case manual="false" name="declarativetab">
-               <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_declarativetab -platform wayland-egl</step>
+               <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_declarativetabmodel -platform wayland-egl</step>
            </case>
            <case manual="false" name="linkvalidator">
                <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_linkvalidator</step>
+           </case>
+           <case manual="false" name="webview">
+               <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_webview -platform wayland-egl</step>
            </case>
            <post_steps>
                <step>/usr/sbin/mcetool -jdisabled -Doff</step>

@@ -19,9 +19,9 @@
 #include <QDir>
 #include <QScreen>
 #include <QDBusConnection>
+#include <QDBusMessage>
+#include <QDBusPendingCall>
 
-//#include "qdeclarativemozview.h"
-#include "quickmozview.h"
 #include "qmozcontext.h"
 
 #include "declarativebookmarkmodel.h"
@@ -30,10 +30,11 @@
 #include "downloadmanager.h"
 #include "settingmanager.h"
 #include "closeeventfilter.h"
-#include "declarativetab.h"
 #include "declarativetabmodel.h"
 #include "declarativehistorymodel.h"
 #include "declarativewebcontainer.h"
+#include "declarativewebpage.h"
+#include "declarativewebviewcreator.h"
 
 #ifdef HAS_BOOSTER
 #include <MDeclarativeCache>
@@ -100,8 +101,9 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     qmlRegisterType<DeclarativeBookmarkModel>("Sailfish.Browser", 1, 0, "BookmarkModel");
     qmlRegisterType<DeclarativeTabModel>("Sailfish.Browser", 1, 0, "TabModel");
     qmlRegisterType<DeclarativeHistoryModel>("Sailfish.Browser", 1, 0, "HistoryModel");
-    qmlRegisterType<DeclarativeTab>("Sailfish.Browser", 1, 0, "Tab");
     qmlRegisterType<DeclarativeWebContainer>("Sailfish.Browser", 1, 0, "WebContainer");
+    qmlRegisterType<DeclarativeWebPage>("Sailfish.Browser", 1, 0, "WebPage");
+    qmlRegisterType<DeclarativeWebViewCreator>("Sailfish.Browser", 1, 0, "WebViewCreator");
 
     QString componentPath(DEFAULT_COMPONENTS_PATH);
     QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/components/EmbedLiteBinComponents.manifest"));
@@ -112,12 +114,20 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     app->setApplicationName(QString("sailfish-browser"));
     app->setOrganizationName(QString("org.sailfishos"));
 
-    DeclarativeWebUtils * utils = new DeclarativeWebUtils(app->arguments(), service, app.data());
+    DeclarativeWebUtils *utils = DeclarativeWebUtils::instance();
+    utils->connect(service, SIGNAL(openUrlRequested(QString)),
+            utils, SIGNAL(openUrlRequested(QString)));
+
     utils->clearStartupCacheIfNeeded();
     view->rootContext()->setContextProperty("WebUtils", utils);
     view->rootContext()->setContextProperty("MozContext", QMozContext::GetInstance());
 
-    DownloadManager  * dlMgr = new DownloadManager(service, app.data());
+    DownloadManager *dlMgr = DownloadManager::instance();
+    dlMgr->connect(service, SIGNAL(cancelTransferRequested(int)),
+            dlMgr, SLOT(cancelTransfer(int)));
+    dlMgr->connect(service, SIGNAL(restartTransferRequested(int)),
+            dlMgr, SLOT(restartTransfer(int)));
+
     CloseEventFilter * clsEventFilter = new CloseEventFilter(dlMgr, app.data());
     view->installEventFilter(clsEventFilter);
     QObject::connect(service, SIGNAL(openUrlRequested(QString)),
@@ -126,9 +136,6 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     SettingManager * settingMgr = new SettingManager(app.data());
     QObject::connect(QMozContext::GetInstance(), SIGNAL(onInitialized()),
                      settingMgr, SLOT(initialize()));
-
-    QObject::connect(QMozContext::GetInstance(), SIGNAL(newWindowRequested(QString)),
-                     utils, SLOT(openUrl(QString)));
 
 #ifdef USE_RESOURCES
     view->setSource(QUrl("qrc:///browser.qml"));
@@ -148,6 +155,10 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 
     // Setup embedding
     QTimer::singleShot(0, QMozContext::GetInstance(), SLOT(runEmbedding()));
+
+    if (qApp->arguments().count() > 1) {
+        emit utils->openUrlRequested(qApp->arguments().last());
+    }
 
     return app->exec();
 }

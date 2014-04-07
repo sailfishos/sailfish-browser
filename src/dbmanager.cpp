@@ -38,7 +38,6 @@ DBManager::DBManager(QObject *parent)
     connect(worker, SIGNAL(tabsAvailable(QList<Tab>)), this, SLOT(tabListAvailable(QList<Tab>)));
     connect(worker, SIGNAL(historyAvailable(QList<Link>)), this, SIGNAL(historyAvailable(QList<Link>)));
     connect(worker, SIGNAL(tabHistoryAvailable(int,QList<Link>)), this, SIGNAL(tabHistoryAvailable(int,QList<Link>)));
-    connect(worker, SIGNAL(navigated(Tab)), this, SIGNAL(navigated(Tab)));
     connect(worker, SIGNAL(tabChanged(Tab)), this, SIGNAL(tabChanged(Tab)));
     connect(worker, SIGNAL(tabAvailable(Tab)), this, SIGNAL(tabAvailable(Tab)));
     connect(worker, SIGNAL(titleChanged(QString,QString)), this, SIGNAL(titleChanged(QString,QString)));
@@ -52,17 +51,23 @@ DBManager::DBManager(QObject *parent)
                               Q_RETURN_ARG(SettingsMap, m_settings));
 }
 
+int DBManager::getMaxTabId()
+{
+    return m_maxTabId;
+}
+
 int DBManager::createTab()
 {
     QMetaObject::invokeMethod(worker, "createTab", Qt::QueuedConnection, Q_ARG(int, ++m_maxTabId));
     return m_maxTabId;
 }
 
-int DBManager::createLink(int tabId, QString url)
+int DBManager::createLink(int tabId, QString url, QString title)
 {
     int linkId;
     QMetaObject::invokeMethod(worker, "createLink", Qt::BlockingQueuedConnection,
-                              Q_RETURN_ARG(int, linkId), Q_ARG(int, tabId), Q_ARG(QString, url));
+                              Q_RETURN_ARG(int, linkId), Q_ARG(int, tabId),
+                              Q_ARG(QString, url), Q_ARG(QString, title));
     return linkId;
 }
 
@@ -114,10 +119,10 @@ void DBManager::removeAllTabs()
     QMetaObject::invokeMethod(worker, "removeAllTabs", Qt::QueuedConnection);
 }
 
-void DBManager::updateTitle(QString url, QString title)
+void DBManager::updateTitle(int linkId, QString title)
 {
     QMetaObject::invokeMethod(worker, "updateTitle", Qt::QueuedConnection,
-                              Q_ARG(QString, url), Q_ARG(QString, title));
+                              Q_ARG(int, linkId), Q_ARG(QString, title));
 }
 
 void DBManager::updateThumbPath(QString url, QString path, int tabId)

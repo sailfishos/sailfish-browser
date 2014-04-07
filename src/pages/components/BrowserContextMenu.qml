@@ -20,6 +20,8 @@ Rectangle {
     property string linkTitle
     property string imageSrc
     property string contentType
+    property TabModel tabModel
+
     property int viewId
     readonly property bool active: visible
     readonly property bool landscape: width > height
@@ -88,7 +90,7 @@ Rectangle {
 
             onClicked: {
                 root._hide()
-                browserPage.newTab(root.linkHref, true, root.linkTitle)
+                tabModel.newTab(root.linkHref, root.linkTitle)
             }
         }
 
@@ -124,7 +126,7 @@ Rectangle {
 
             onClicked: {
                 root._hide()
-                browserPage.newTab(root.imageSrc, false)
+                tabModel.newTab(root.imageSrc, "")
             }
         }
 

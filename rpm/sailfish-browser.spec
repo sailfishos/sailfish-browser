@@ -11,7 +11,7 @@ BuildRequires:  pkgconfig(Qt5Core)
 BuildRequires:  pkgconfig(Qt5Qml)
 BuildRequires:  pkgconfig(Qt5Gui)
 BuildRequires:  pkgconfig(Qt5Quick)
-BuildRequires:  pkgconfig(qt5embedwidget) >= 1.7.3
+BuildRequires:  pkgconfig(qt5embedwidget) >= 1.8.6
 BuildRequires:  pkgconfig(Qt5DBus)
 BuildRequires:  pkgconfig(Qt5Concurrent)
 BuildRequires:  pkgconfig(Qt5Sql)
@@ -23,8 +23,8 @@ BuildRequires:  qt5-qttools-linguist
 BuildRequires:  gdb
 Requires: sailfishsilica-qt5 >= 0.11.8
 Requires: jolla-ambient >= 0.3.24
-Requires: xulrunner-qt5 >= 26.0.4.1
-Requires: embedlite-components-qt5 >= 1.3.11
+Requires: xulrunner-qt5 >= 29.0.1.4
+Requires: embedlite-components-qt5 >= 1.5.5
 Requires: sailfish-browser-settings = %{version}
 Requires: qt5-plugin-imageformat-ico
 Requires: qt5-plugin-imageformat-gif
@@ -105,6 +105,7 @@ rm -rf %{buildroot}
 # >> files
 %{_bindir}/%{name}
 %{_datadir}/applications/%{name}.desktop
+%{_datadir}/applications/open-url.desktop
 %{_datadir}/%{name}/*
 %{_datadir}/translations/sailfish-browser_eng_en.qm
 %{_datadir}/dbus-1/services/*.service

@@ -41,11 +41,7 @@ isEmpty(QTEMBED_LIB) {
   LIBS+=$$QTEMBED_LIB
 }
 
-isEmpty(DEFAULT_COMPONENT_PATH) {
-  DEFINES += DEFAULT_COMPONENTS_PATH=\"\\\"/usr/lib/mozembedlite/\\\"\"
-} else {
-  DEFINES += DEFAULT_COMPONENTS_PATH=\"\\\"$$DEFAULT_COMPONENT_PATH\\\"\"
-}
+include(common.pri)
 
 # Translations
 TS_PATH = $$PWD
@@ -60,26 +56,33 @@ SOURCES += \
     declarativebookmarkmodel.cpp \
     bookmark.cpp \
     declarativewebcontainer.cpp \
+    declarativewebpage.cpp \
     declarativewebutils.cpp \
+    declarativewebviewcreator.cpp \
     browserservice.cpp \
     dbusadaptor.cpp \
     downloadmanager.cpp \
     settingmanager.cpp \
-    closeeventfilter.cpp
+    closeeventfilter.cpp \
+    webpages.cpp
 
 # C++ headers
 HEADERS += \
     declarativebookmarkmodel.h \
     bookmark.h \
     declarativewebcontainer.h \
+    declarativewebpage.h \
     declarativewebutils.h \
+    declarativewebviewcreator.h \
     browserservice.h \
     dbusadaptor.h \
     downloadmanager.h \
     settingmanager.h \
-    closeeventfilter.h
+    closeeventfilter.h \
+    webpages.h
 
 OTHER_FILES = *.qml \
               pages/*.qml \
               pages/components/*.qml \
+              pages/components/*.js \
               rpm/sailfish-browser.spec

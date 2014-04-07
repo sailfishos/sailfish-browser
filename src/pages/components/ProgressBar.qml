@@ -35,11 +35,6 @@ Item {
             }
         }
     }
-    onVisibleChanged: {
-        if (!visible) {
-            progress = 0
-        }
-    }
 
     Behavior on opacity { FadeAnimation {} }
 }

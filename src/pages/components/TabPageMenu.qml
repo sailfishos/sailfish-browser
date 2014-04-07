@@ -20,14 +20,14 @@ PullDownMenu {
     MenuItem {
         //% "Close all tabs"
         text: qsTrId("sailfish_browser-me-close_all")
-        onClicked: browserPage.closeAllTabs()
+        onClicked: browserPage.tabs.clear()
     }
     MenuItem {
         enabled: shareEnabled
         //: Share link from browser pulley menu
         //% "Share"
         text: qsTrId("sailfish_browser-me-share_link")
-        onClicked: pageStack.push(Qt.resolvedUrl("../ShareLinkPage.qml"), {"link" : browserPage.currentTab.url, "linkTitle": browserPage.currentTab.title})
+        onClicked: pageStack.push(Qt.resolvedUrl("../ShareLinkPage.qml"), {"link" : browserPage.url, "linkTitle": browserPage.title})
     }
     MenuItem {
         //% "New tab"

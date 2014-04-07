@@ -4,8 +4,5 @@ Name=Web Browser
 X-MeeGo-Logical-Id=sailfish-browser-ap-name
 X-MeeGo-Translation-Catalog=sailfish-browser
 Icon=icon-launcher-browser
-Exec=invoker --type=silica-qt5 -s /usr/bin/sailfish-browser %U
+Exec=/usr/bin/sailfish-browser %U
 Comment=Sailfish UI application
-MimeType=text/html;x-maemo-urischeme/http;x-maemo-urischeme/https;
-X-Maemo-Service=org.sailfishos.browser
-X-Maemo-Method=org.sailfishos.browser.openUrl

@@ -12,59 +12,131 @@
 #ifndef DECLARATIVEWEBCONTAINER_H
 #define DECLARATIVEWEBCONTAINER_H
 
+#include "tab.h"
+#include "webpages.h"
+
 #include <QQuickItem>
 #include <QPointer>
+#include <QImage>
+#include <QFutureWatcher>
 
 class QTimerEvent;
+class DeclarativeTabModel;
+class DeclarativeWebPage;
 
 class DeclarativeWebContainer : public QQuickItem {
     Q_OBJECT
 
-    Q_PROPERTY(QQuickItem *webView READ webView WRITE setWebView NOTIFY webViewChanged FINAL)
+    Q_PROPERTY(DeclarativeWebPage *contentItem READ webPage NOTIFY contentItemChanged FINAL)
+    Q_PROPERTY(DeclarativeTabModel *tabModel READ tabModel WRITE setTabModel NOTIFY tabModelChanged FINAL)
     Q_PROPERTY(bool foreground READ foreground WRITE setForeground NOTIFY foregroundChanged FINAL)
-    Q_PROPERTY(bool pageActive READ pageActive WRITE setPageActive NOTIFY pageActiveChanged FINAL)
+    Q_PROPERTY(bool active READ active WRITE setActive NOTIFY activeChanged FINAL)
+    Q_PROPERTY(int maxLiveTabCount MEMBER m_maxLiveTabCount NOTIFY maxLiveTabCountChanged FINAL)
+    // This property should cover all possible popus
+    Q_PROPERTY(bool popupActive MEMBER m_popupActive NOTIFY popupActiveChanged FINAL)
+    Q_PROPERTY(bool portrait MEMBER m_portrait NOTIFY portraitChanged FINAL)
+    Q_PROPERTY(bool fullscreenMode MEMBER m_fullScreenMode NOTIFY fullscreenModeChanged FINAL)
     Q_PROPERTY(bool inputPanelVisible READ inputPanelVisible NOTIFY inputPanelVisibleChanged FINAL)
     Q_PROPERTY(qreal inputPanelHeight READ inputPanelHeight WRITE setInputPanelHeight NOTIFY inputPanelHeightChanged FINAL)
-    Q_PROPERTY(qreal inputPanelOpenHeight READ inputPanelOpenHeight WRITE setInputPanelOpenHeight NOTIFY inputPanelOpenHeightChanged FINAL)
-    Q_PROPERTY(qreal toolbarHeight READ toolbarHeight WRITE setToolbarHeight NOTIFY toolbarHeightChanged FINAL)
+    Q_PROPERTY(qreal inputPanelOpenHeight MEMBER m_inputPanelOpenHeight NOTIFY inputPanelOpenHeightChanged FINAL)
+    Q_PROPERTY(qreal toolbarHeight MEMBER m_toolbarHeight NOTIFY toolbarHeightChanged FINAL)
     Q_PROPERTY(bool background READ background NOTIFY backgroundChanged FINAL)
+
+    Q_PROPERTY(QString favicon MEMBER m_favicon NOTIFY faviconChanged)
+
+    Q_PROPERTY(bool loading MEMBER m_loading NOTIFY loadingChanged FINAL)
+    Q_PROPERTY(int loadProgress READ loadProgress WRITE setLoadProgress NOTIFY loadProgressChanged FINAL)
+
+    // Navigation related properties
+    Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY canGoForwardChanged FINAL)
+    Q_PROPERTY(bool canGoBack READ canGoBack NOTIFY canGoBackChanged FINAL)
+
+    Q_PROPERTY(QString title READ title NOTIFY titleChanged FINAL)
+    Q_PROPERTY(QString url READ url NOTIFY urlChanged FINAL)
+    Q_PROPERTY(QString thumbnailPath READ thumbnailPath NOTIFY thumbnailPathChanged FINAL)
+
+    Q_PROPERTY(QQmlComponent* webPageComponent MEMBER m_webPageComponent NOTIFY webPageComponentChanged FINAL)
+
+    // "private" properties.
+    Q_PROPERTY(bool _readyToLoad READ readyToLoad WRITE setReadyToLoad NOTIFY _readyToLoadChanged FINAL)
 
 public:
     DeclarativeWebContainer(QQuickItem *parent = 0);
     ~DeclarativeWebContainer();
 
-    QQuickItem *webView() const;
-    void setWebView(QQuickItem *webView);
+    DeclarativeWebPage *webPage() const;
+
+    DeclarativeTabModel *tabModel() const;
+    void setTabModel(DeclarativeTabModel *model);
 
     bool foreground() const;
     void setForeground(bool active);
 
     bool background() const;
 
-    bool pageActive() const;
-    void setPageActive(bool active);
+    int loadProgress() const;
+    void setLoadProgress(int loadProgress);
+
+    bool active() const;
+    void setActive(bool active);
 
     bool inputPanelVisible() const;
 
     qreal inputPanelHeight() const;
     void setInputPanelHeight(qreal height);
 
-    qreal inputPanelOpenHeight() const;
-    void setInputPanelOpenHeight(qreal height);
+    bool canGoForward() const;
+    void setCanGoForward(bool canGoForward);
 
-    qreal toolbarHeight() const;
-    void setToolbarHeight(qreal height);
+    bool canGoBack() const;
+    void setCanGoBack(bool canGoBack);
+
+    QString title() const;
+    QString url() const;
+    QString thumbnailPath() const;
+
+    bool readyToLoad() const;
+    void setReadyToLoad(bool readyToLoad);
+
+    bool isActiveTab(int tabId);
+
+    Q_INVOKABLE void goForward();
+    Q_INVOKABLE void goBack();
+    Q_INVOKABLE bool activatePage(int tabId, bool force = false);
+
+    Q_INVOKABLE void captureScreen();
 
 signals:
-    void webViewChanged();
+    void contentItemChanged();
+    void tabModelChanged();
     void pageStackChanged();
     void foregroundChanged();
     void backgroundChanged();
-    void pageActiveChanged();
+    void activeChanged();
+    void maxLiveTabCountChanged();
+    void popupActiveChanged();
+    void portraitChanged();
+    void fullscreenModeChanged();
     void inputPanelVisibleChanged();
     void inputPanelHeightChanged();
     void inputPanelOpenHeightChanged();
     void toolbarHeightChanged();
+
+    void faviconChanged();
+    void loadingChanged();
+    void loadProgressChanged();
+
+    void canGoForwardChanged();
+    void canGoBackChanged();
+
+    void titleChanged();
+    void urlChanged();
+    void thumbnailPathChanged();
+
+    void _readyToLoadChanged();
+
+    void webPageComponentChanged();
+    void triggerLoad(QString url, QString title);
 
 public slots:
     void resetHeight(bool respectContentHeight = true);
@@ -73,24 +145,78 @@ private slots:
     void imeNotificationChanged(int state, bool open, int cause, int focusChange, const QString& type);
     void windowVisibleChanged(bool visible);
     void handleWindowChanged(QQuickWindow *window);
+    void screenCaptureReady();
+    void triggerLoad();
+    void onActiveTabChanged(int oldTabId, int activeTabId);
+    void onModelLoaded();
+    void onDownloadStarted();
+    void onNewTabRequested(QString url, QString title, int parentId);
+    void onReadyToLoad();
+    void manageMaxTabCount();
+    void releasePage(int tabId, bool virtualize = false);
+    void closeWindow();
+    void onPageUrlChanged();
+    void onPageTitleChanged();
+    void onPageThumbnailChanged(QString url, QString path, int tabId);
+    void setThumbnailPath(QString thumbnailPath);
+
+    // These are here to inform embedlite-components that keyboard is open or close
+    // matching composition metrics.
+    void sendVkbOpenCompositionMetrics();
 
 protected:
     void timerEvent(QTimerEvent *event);
 
 private:
+    void setWebPage(DeclarativeWebPage *webPage);
     qreal contentHeight() const;
+    void captureScreen(QString url, int size, qreal rotate);
+    int parentTabId(int tabId) const;
+    void updateVkbHeight();
 
-private:
-    QPointer<QQuickItem> m_webView;
+    struct ScreenCapture {
+        int tabId;
+        QString path;
+        QString url;
+    };
+
+    // Grep following todos
+    // TODO: Remove url parameter from this, worker, and manager.
+    ScreenCapture saveToFile(QString url, QImage image, QRect cropBounds, int tabId, qreal rotate);
+
+    QPointer<DeclarativeWebPage> m_webPage;
+    QPointer<DeclarativeTabModel> m_model;
+    QPointer<QQmlComponent> m_webPageComponent;
+    QScopedPointer<WebPages> m_webPages;
     bool m_foreground;
     bool m_background;
     bool m_windowVisible;
     int m_backgroundTimer;
-    bool m_pageActive;
+    bool m_active;
+    bool m_popupActive;
+    bool m_portrait;
+    bool m_fullScreenMode;
     bool m_inputPanelVisible;
     qreal m_inputPanelHeight;
     qreal m_inputPanelOpenHeight;
     qreal m_toolbarHeight;
+
+    QString m_favicon;
+    QString m_thumbnailPath;
+
+    bool m_loading;
+    int m_loadProgress;
+    bool m_canGoForward;
+    bool m_canGoBack;
+    bool m_realNavigation;
+    bool m_readyToLoad;
+    int m_maxLiveTabCount;
+
+    QFutureWatcher<ScreenCapture> m_screenCapturer;
+
+    friend class tst_webview;
 };
+
+QML_DECLARE_TYPE(DeclarativeWebContainer)
 
 #endif // DECLARATIVEWEBCONTAINER_H
