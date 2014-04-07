@@ -10,6 +10,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include <QtTest>
+#include <QUrl>
 #include "linkvalidator.h"
 
 class tst_linkvalidator : public QObject
@@ -45,7 +46,7 @@ void tst_linkvalidator::navigableUrls_data()
 void tst_linkvalidator::navigableUrls()
 {
     QFETCH(QString, url);
-    QVERIFY(LinkValidator::navigable(url));
+    QVERIFY(LinkValidator::navigable(QUrl(url)));
 }
 
 void tst_linkvalidator::unnavigableUrls_data()
@@ -64,7 +65,7 @@ void tst_linkvalidator::unnavigableUrls_data()
 void tst_linkvalidator::unnavigableUrls()
 {
     QFETCH(QString, url);
-    QVERIFY(!LinkValidator::navigable(url));
+    QVERIFY(!LinkValidator::navigable(QUrl(url)));
 }
 
 QTEST_APPLESS_MAIN(tst_linkvalidator)

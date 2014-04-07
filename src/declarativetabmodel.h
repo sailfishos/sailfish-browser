@@ -16,8 +16,6 @@
 #include <QQmlParserStatus>
 #include <QPointer>
 #include <QScopedPointer>
-#include <QQuickItem>
-#include <QQmlComponent>
 
 #include "tab.h"
 
