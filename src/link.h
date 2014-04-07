@@ -22,6 +22,7 @@ public:
     Link(const Link& l);
 
     int linkId() const;
+    void setLinkId(int linkId);
 
     QString url() const;
     void setUrl(const QString &url);

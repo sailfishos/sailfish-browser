@@ -405,7 +405,7 @@ void DeclarativeTabModel::updateTitle(int tabId, bool activeTab, QString title)
 
     bool updateDb = false;
 
-    if (activeTab && m_activeTab.title() != title) {
+    if (activeTab) {
         m_activeTab.setTitle(title);
         updateDb = true;
     } else if (tabIndex >= 0 && m_tabs.at(tabIndex).title() != title) {
@@ -531,6 +531,10 @@ void DeclarativeTabModel::updateTabUrl(int tabId, bool activeTab, const QString 
         if (!navigate) {
             DBManager::instance()->updateTab(tabId, url, "", "");
         } else {
+            m_activeTab.setNextLink(0);
+            int currentLinkId = m_activeTab.currentLink();
+            m_activeTab.setPreviousLink(currentLinkId);
+            m_activeTab.setCurrentLink(++currentLinkId);
             DBManager::instance()->navigateTo(tabId, url, "", "");
         }
     }
