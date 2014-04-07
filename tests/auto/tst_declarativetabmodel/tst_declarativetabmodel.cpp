@@ -17,6 +17,7 @@
 
 #include "declarativetabmodel.h"
 #include "dbmanager.h"
+#include "testobject.h"
 
 static const QByteArray QML_SNIPPET = \
         "import QtQuick 2.0\n" \
@@ -34,12 +35,12 @@ struct TestTab {
     QString title;
 };
 
-class tst_declarativetabmodel : public QObject
+class tst_declarativetabmodel : public TestObject
 {
     Q_OBJECT
 
 public:
-    tst_declarativetabmodel(QObject *parent = 0);
+    tst_declarativetabmodel();
 
 private slots:
     void initTestCase();
@@ -81,15 +82,17 @@ private:
     bool canGoBack();
     bool canGoForward();
 
+    int currentTabId();
+
     DeclarativeTabModel *tabModel;
     QQuickView view;
     QList<TestTab> originalTabOrder;
 };
 
-tst_declarativetabmodel::tst_declarativetabmodel(QObject *parent)
-    : QObject(parent)
-    , tabModel(0)
+tst_declarativetabmodel::tst_declarativetabmodel()
+    : TestObject(QML_SNIPPET)
 {
+    tabModel = TestObject::model<DeclarativeTabModel>("tabModel");
     originalTabOrder.append(TestTab("http://sailfishos.org", "SailfishOS.org"));
     originalTabOrder.append(TestTab("file:///opt/tests/sailfish-browser/manual/testpage.html", "Test Page"));
     originalTabOrder.append(TestTab("https://sailfishos.org/sailfish-silica/index.html", "Creating applications with Sailfish Silica | Sailfish Silica 1.0"));
@@ -98,16 +101,6 @@ tst_declarativetabmodel::tst_declarativetabmodel(QObject *parent)
 
 void tst_declarativetabmodel::initTestCase()
 {
-    QQmlComponent component(view.engine());
-    component.setData(QML_SNIPPET, QUrl());
-    QObject *obj = component.create(view.engine()->rootContext());
-
-    view.setContent(QUrl(""), 0, obj);
-    view.show();
-    QTest::qWaitForWindowExposed(&view);
-
-    QVariant var = obj->property("tabModel");
-    tabModel = qobject_cast<DeclarativeTabModel *>(qvariant_cast<QObject*>(var));
     QVERIFY(tabModel);
 
     if (!tabModel->loaded()) {
@@ -147,7 +140,6 @@ void tst_declarativetabmodel::validTabs_data()
 void tst_declarativetabmodel::validTabs()
 {
     QSignalSpy countChangeSpy(tabModel, SIGNAL(countChanged()));
-    QSignalSpy currentTabIdChangeSpy(tabModel, SIGNAL(currentTabIdChanged()));
 
     QFETCH(QString, url);
     QFETCH(QString, title);
@@ -158,7 +150,6 @@ void tst_declarativetabmodel::validTabs()
     tabModel->addTab(url, title);
     QCOMPARE(tabModel->count(), count);
     QCOMPARE(countChangeSpy.count(), 1);
-    QCOMPARE(currentTabIdChangeSpy.count(), 1);
     QCOMPARE(tabModel->activeTab().url(), url);
     QCOMPARE(tabModel->activeTab().title(), title);
 
@@ -183,23 +174,23 @@ void tst_declarativetabmodel::activateTabs()
     // "https://sailfishos.org/sailfish-silica/index.html" (2)
     // "file:///opt/tests/sailfish-browser/manual/testpage.html" (1)
     // "http://sailfishos.org" (0)
-    QSignalSpy currentTabIdChangeSpy(tabModel, SIGNAL(currentTabIdChanged()));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,int)));
     for (int i = 0; i < originalTabOrder.count() - 1; ++i) {
         QString previousActiveUrl = tabModel->activeTab().url();
         // Activate always last tab
         tabModel->activateTab(2);
-        QCOMPARE(currentTabIdChangeSpy.count(), 1);
+        QCOMPARE(activeTabChangedSpy.count(), 1);
         QCOMPARE(tabModel->activeTab().url(), originalTabOrder.at(i).url);
         // Previous active url should be pushed to the first model data index
         QModelIndex modelIndex = tabModel->createIndex(0, 0);
         QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), previousActiveUrl);
-        currentTabIdChangeSpy.clear();
+        activeTabChangedSpy.clear();
     }
 
     QString previousActiveUrl = tabModel->activeTab().url();
     // Activate by url
     tabModel->activateTab(originalTabOrder.at(3).url);
-    QCOMPARE(currentTabIdChangeSpy.count(), 1);
+    QCOMPARE(activeTabChangedSpy.count(), 1);
     // Previous active url should be pushed to the first model data index
     QModelIndex modelIndex = tabModel->createIndex(0, 0);
     QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), previousActiveUrl);
@@ -214,13 +205,13 @@ void tst_declarativetabmodel::activateTabs()
 
 void tst_declarativetabmodel::remove()
 {
-    QSignalSpy currentTabIdChangeSpy(tabModel, SIGNAL(currentTabIdChanged()));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,int)));
     QSignalSpy tabCountSpy(tabModel, SIGNAL(countChanged()));
     QCOMPARE(tabModel->count(), originalTabOrder.count());
     QCOMPARE(tabModel->activeTab().url(), originalTabOrder.at(3).url);
     tabModel->remove(1);
 
-    QCOMPARE(currentTabIdChangeSpy.count(), 0);
+    QCOMPARE(activeTabChangedSpy.count(), 0);
     QCOMPARE(tabCountSpy.count(), 1);
     QStringList currentOrder = modelToStringList(tabModel);
     QCOMPARE(tabModel->count(), 3);
@@ -232,7 +223,7 @@ void tst_declarativetabmodel::remove()
 
 void tst_declarativetabmodel::closeActiveTab()
 {
-    QSignalSpy currentTabIdChangeSpy(tabModel, SIGNAL(currentTabIdChanged()));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,int)));
     QSignalSpy tabCountSpy(tabModel, SIGNAL(countChanged()));
 
     QModelIndex modelIndex = tabModel->createIndex(0, 0);
@@ -242,7 +233,7 @@ void tst_declarativetabmodel::closeActiveTab()
     QCOMPARE(tabModel->activeTab().url(), originalTabOrder.at(3).url);
     tabModel->closeActiveTab();
 
-    QCOMPARE(currentTabIdChangeSpy.count(), 1);
+    QCOMPARE(activeTabChangedSpy.count(), 1);
     QCOMPARE(tabCountSpy.count(), 1);
     QStringList currentOrder = modelToStringList(tabModel);
     QCOMPARE(tabModel->count(), 2);
@@ -258,7 +249,7 @@ void tst_declarativetabmodel::forwardBackwardNavigation()
     QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,int)));
 
     QString url = "http://www.foobar.com/page2";
-    tabModel->updateUrl(tabModel->currentTabId(), true, url);
+    tabModel->updateUrl(currentTabId(), true, url);
     activeTabChangedSpy.wait();
 
     QVERIFY(canGoBack());
@@ -286,14 +277,14 @@ void tst_declarativetabmodel::forwardBackwardNavigation()
     // Mimic load that started from link clicking.
     tabModel->setBackForwardNavigation(false);
     url = "http://www.foobar.com/page3";
-    tabModel->updateUrl(tabModel->currentTabId(), true, url);
+    tabModel->updateUrl(currentTabId(), true, url);
     activeTabChangedSpy.wait();
 
     QVERIFY(canGoBack());
     QVERIFY(!canGoForward());
 
     url = "http://www.foobar.com/page4";
-    tabModel->updateUrl(tabModel->currentTabId(), true, url);
+    tabModel->updateUrl(currentTabId(), true, url);
     activeTabChangedSpy.wait();
     QVERIFY(canGoBack());
     QVERIFY(!canGoForward());
@@ -315,7 +306,7 @@ void tst_declarativetabmodel::forwardBackwardNavigation()
     QTest::qWait(1000);
 
     int expectedCount = tabModel->count() - 1;
-    tabModel->removeTabById(tabModel->currentTabId(), true);
+    tabModel->removeTabById(currentTabId(), true);
     QVERIFY(tabModel->count() == expectedCount);
     tabModel->setBackForwardNavigation(false);
     activeTabChangedSpy.wait();
@@ -329,7 +320,7 @@ void tst_declarativetabmodel::multipleTabsWithSameUrls()
     QString page1Tab1Title = "First Page";
     // tab1: page1 ("First Page") and page2 ("")
     tabModel->addTab(page1Tab1Url, page1Tab1Title);
-    int tab1 = tabModel->currentTabId();
+    int tab1 = currentTabId();
     QCOMPARE(tabModel->activeTab().url(), page1Tab1Url);
     QCOMPARE(tabModel->activeTab().title(), page1Tab1Title);
 
@@ -347,7 +338,7 @@ void tst_declarativetabmodel::multipleTabsWithSameUrls()
     QString page1Tab2Url = page1Tab1Url;
     QString page1Tab2Title = "First Page Too";
     tabModel->addTab(page1Tab2Url, page1Tab2Title);
-    int tab2 = tabModel->currentTabId();
+    int tab2 = currentTabId();
     QCOMPARE(tabModel->activeTab().url(), page1Tab2Url);
     QCOMPARE(tabModel->activeTab().title(), page1Tab2Title);
 
@@ -411,7 +402,7 @@ void tst_declarativetabmodel::updateInvalidUrls()
 {
     QString expectedUrl = "http://foobar/invalid";
 
-    int tabId = tabModel->currentTabId();
+    int tabId = currentTabId();
     tabModel->updateUrl(tabId, true, expectedUrl);
 
     QFETCH(QString, url);
@@ -433,7 +424,7 @@ void tst_declarativetabmodel::updateValidUrls()
 {
     QFETCH(QString, url);
 
-    int tabId = tabModel->currentTabId();
+    int tabId = currentTabId();
     tabModel->updateUrl(tabId, true, url);
     QCOMPARE(tabModel->activeTab().url(), url);
 }
@@ -451,7 +442,7 @@ void tst_declarativetabmodel::invalidTabs_data()
 void tst_declarativetabmodel::invalidTabs()
 {
     QSignalSpy countChangeSpy(tabModel, SIGNAL(countChanged()));
-    QSignalSpy currentTabIdChangeSpy(tabModel, SIGNAL(currentTabIdChanged()));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,int)));
 
     QFETCH(QString, url);
     QFETCH(QString, title);
@@ -460,12 +451,12 @@ void tst_declarativetabmodel::invalidTabs()
 
     QCOMPARE(tabModel->count(), originalCount);
     QCOMPARE(countChangeSpy.count(), 0);
-    QCOMPARE(currentTabIdChangeSpy.count(), 0);
+    QCOMPARE(activeTabChangedSpy.count(), 0);
 }
 
 void tst_declarativetabmodel::updateTitle()
 {
-    int tabId = tabModel->currentTabId();
+    int tabId = currentTabId();
     QString title = "A title something";
     tabModel->updateTitle(tabId, true, title);
 
@@ -473,7 +464,7 @@ void tst_declarativetabmodel::updateTitle()
 
     QString url = "http://foobar";
     tabModel->addTab(url, "");
-    int tab1 = tabModel->currentTabId();
+    int tab1 = currentTabId();
     QVERIFY(tabModel->activeTab().title().isEmpty());
     QCOMPARE(tabModel->activeTab().url(), url);
 
@@ -487,8 +478,8 @@ void tst_declarativetabmodel::updateTitle()
     // Add a new tab with same url and change title "" -> "FooBar"
     title = "FooBar";
     tabModel->addTab(url, title);
-    int tab2 = tabModel->currentTabId();
-    QCOMPARE(tab2, tabModel->currentTabId());
+    int tab2 = currentTabId();
+    QCOMPARE(tab2, currentTabId());
     QCOMPARE(tabModel->activeTab().title(), title);
     QCOMPARE(tabModel->activeTab().url(), url);
 
@@ -576,12 +567,12 @@ QStringList tst_declarativetabmodel::modelToStringList(const DeclarativeTabModel
 
 void tst_declarativetabmodel::goBack()
 {
-    DBManager::instance()->goBack(tabModel->currentTabId());
+    DBManager::instance()->goBack(currentTabId());
 }
 
 void tst_declarativetabmodel::goForward()
 {
-    DBManager::instance()->goForward(tabModel->currentTabId());
+    DBManager::instance()->goForward(currentTabId());
 }
 
 bool tst_declarativetabmodel::canGoBack()
@@ -594,12 +585,20 @@ bool tst_declarativetabmodel::canGoForward()
     return tabModel->activeTab().nextLink() > 0;
 }
 
+int tst_declarativetabmodel::currentTabId()
+{
+    if (tabModel->m_activeTab.isValid()) {
+        return tabModel->m_activeTab.tabId();
+    }
+    return 0;
+}
+
 int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
     app.setAttribute(Qt::AA_Use96Dpi, true);
-    tst_declarativetabmodel testcase;
     qmlRegisterType<DeclarativeTabModel>("Sailfish.Browser", 1, 0, "TabModel");
+    tst_declarativetabmodel testcase;
     return QTest::qExec(&testcase, argc, argv); \
 }
 #include "tst_declarativetabmodel.moc"
