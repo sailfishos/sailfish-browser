@@ -45,6 +45,9 @@ private slots:
     void addDuplicateHistoryEntries_data();
     void addDuplicateHistoryEntries();
 
+    void sortedHistoryEntries_data();
+    void sortedHistoryEntries();
+
     void cleanupTestCase();
 
 private:
@@ -131,6 +134,51 @@ void tst_declarativehistorymodel::addDuplicateHistoryEntries()
     historyModel->search(searchTerm);
     waitSignals(countChangeSpy, 2);
     QCOMPARE(historyModel->rowCount(), 1);
+}
+
+void tst_declarativehistorymodel::sortedHistoryEntries_data()
+{
+    QTest::addColumn<QString>("url");
+    QTest::addColumn<QString>("title");
+    QTest::addColumn<QString>("searchTerm");
+    QTest::addColumn<QStringList>("order");
+    QTest::addColumn<int>("expectedCount");
+    // Insert in reversed order
+    QTest::newRow("longestUrl") << "http://www.testurl.blah/thelongesturl/"
+                                << "The longest url" << "test"
+                              << (QStringList() << "http://www.testurl.blah/thelongesturl/") << 1;
+    QTest::newRow("longerUrl") << "http://www.testurl.blah/alongerurl/" << "A longer url" << "test"
+                               << (QStringList() << "http://www.testurl.blah/alongerurl/"
+                                   << "http://www.testurl.blah/thelongesturl/") << 2;
+    QTest::newRow("rootPage") << "http://www.testurl.blah/" << "A root page" << "test"
+                              << (QStringList() << "http://www.testurl.blah/" << "http://www.testurl.blah/alongerurl/"
+                                  << "http://www.testurl.blah/thelongesturl/") << 3;
+}
+
+void tst_declarativehistorymodel::sortedHistoryEntries()
+{
+    // Clear previous search term / history count.
+    QSignalSpy countChangeSpy(historyModel, SIGNAL(countChanged()));
+    historyModel->search("");
+    waitSignals(countChangeSpy, 1);
+
+    QFETCH(QString, url);
+    QFETCH(QString, title);
+    QFETCH(QString, searchTerm);
+    QFETCH(QStringList, order);
+    QFETCH(int, expectedCount);
+
+    tabModel->addTab(url, title);
+
+    historyModel->search(searchTerm);
+    waitSignals(countChangeSpy, 2);
+    QCOMPARE(historyModel->rowCount(), expectedCount);
+
+    for (int i = 0; i < expectedCount; ++i) {
+        QModelIndex modelIndex = historyModel->createIndex(i, 0);
+        QString url = historyModel->data(modelIndex, DeclarativeHistoryModel::UrlRole).toString();
+        QCOMPARE(url, order.at(i));
+    }
 }
 
 void tst_declarativehistorymodel::cleanupTestCase()

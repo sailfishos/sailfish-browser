@@ -564,7 +564,7 @@ void DBWorker::getHistory(const QString &filter)
                                   "FROM history INNER JOIN link "
                                   "ON history.link_id = link.link_id "
                                   "%1"
-                                  "ORDER BY history.date DESC;").arg(filterQuery);
+                                  "ORDER BY LENGTH(link.url), link.title, history.date ASC;").arg(filterQuery);
     QSqlQuery query = prepare(queryString.toLatin1().constData());
 
     if (!execute(query)) {

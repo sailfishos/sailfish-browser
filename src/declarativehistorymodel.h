@@ -55,5 +55,7 @@ private:
     void updateModel(QList<Link> linkList);
 
     QList<Link> m_links;
+
+    friend class tst_declarativehistorymodel;
 };
 #endif // DECLARATIVEHISTORYMODEL_H
