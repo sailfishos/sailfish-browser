@@ -129,7 +129,7 @@ void DeclarativeWebContainer::setTabModel(DeclarativeTabModel *model)
             connect(m_model, SIGNAL(tabClosed(int)), this, SLOT(releasePage(int)));
             // Try to make this to normal direct connection once we have removed QML_BAD_GUI_RENDER_LOOP.
             connect(m_model, SIGNAL(newTabRequested(QString,QString,int)), this, SLOT(onNewTabRequested(QString,QString,int)), Qt::QueuedConnection);
-            connect(m_model, SIGNAL(updateActiveTabThumbnail(QString)), this, SLOT(setThumbnailPath(QString)));
+            connect(m_model, SIGNAL(updateActiveThumbnail()), this, SLOT(updateThumbnail()));
         }
         emit tabModelChanged();
     }
@@ -372,6 +372,11 @@ void DeclarativeWebContainer::captureScreen()
     }
 }
 
+void DeclarativeWebContainer::dumpPages() const
+{
+    m_webPages->dumpPages();
+}
+
 void DeclarativeWebContainer::resetHeight(bool respectContentHeight)
 {
     if (!m_webPage || !m_webPage->state().isEmpty()) {
@@ -485,10 +490,10 @@ void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int activeTabId)
         setThumbnailPath("");
         return;
     }
+    const Tab &tab = m_model->activeTab();
 #ifdef DEBUG_LOGS
     qDebug() << "canGoBack = " << m_canGoBack << "canGoForward = " << m_canGoForward << &tab;
 #endif
-    const Tab &tab = m_model->activeTab();
 
     if (m_canGoForward != (tab.nextLink() > 0)) {
         m_canGoForward = tab.nextLink() > 0;
@@ -723,6 +728,14 @@ void DeclarativeWebContainer::onPageThumbnailChanged(QString url, QString path, 
 
     if (m_model) {
         m_model->updateThumbnailPath(tabId, isActiveTab(tabId), path);
+    }
+}
+
+void DeclarativeWebContainer::updateThumbnail()
+{
+    const Tab &tab = m_model->activeTab();
+    if (isActiveTab(tab.tabId()) && tab.isValid()) {
+        captureScreen();
     }
 }
 

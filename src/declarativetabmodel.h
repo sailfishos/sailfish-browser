@@ -108,7 +108,7 @@ signals:
     void hasNewTabDataChanged();
     void newTabUrlChanged();
     void newTabRequested(QString url, QString title, int parentId);
-    void updateActiveTabThumbnail(QString path);
+    void updateActiveThumbnail();
 
 private slots:
     void tabChanged(const Tab &tab);

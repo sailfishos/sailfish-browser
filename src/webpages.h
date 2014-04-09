@@ -45,6 +45,7 @@ public:
     WebPageActivationData page(int tabId, int parentId = 0);
     void release(int tabId, bool virtualize = false);
     int parentTabId(int tabId) const;
+    void dumpPages() const;
 
 private:
     struct WebPageEntry {
@@ -56,7 +57,6 @@ private:
     };
 
     void updateActivePage(WebPageEntry *webPageEntry, bool resurrect);
-    void dumpPages() const;
 
     QPointer<DeclarativeWebContainer> m_webContainer;
     QPointer<QQmlComponent> m_webPageComponent;
