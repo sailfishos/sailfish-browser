@@ -341,7 +341,7 @@ void DeclarativeTabModel::tabsAvailable(QList<Tab> tabs)
         }
         const Tab &activeTab = m_tabs.at(index);
         m_tabs.removeAt(index);
-        updateActiveTab(activeTab);
+        m_activeTab = activeTab;
     }
 
     qSort(m_tabs.begin(), m_tabs.end(), DeclarativeTabModel::tabSort);

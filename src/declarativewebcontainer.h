@@ -108,6 +108,7 @@ public:
     Q_INVOKABLE bool activatePage(int tabId, bool force = false);
 
     Q_INVOKABLE void captureScreen();
+    Q_INVOKABLE void dumpPages() const;
 
 signals:
     void contentItemChanged();

@@ -371,6 +371,11 @@ void DeclarativeWebContainer::captureScreen()
     }
 }
 
+void DeclarativeWebContainer::dumpPages() const
+{
+    m_webPages->dumpPages();
+}
+
 void DeclarativeWebContainer::resetHeight(bool respectContentHeight)
 {
     if (!m_webPage || !m_webPage->state().isEmpty()) {
@@ -484,10 +489,10 @@ void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int activeTabId)
         setThumbnailPath("");
         return;
     }
+    const Tab &tab = m_model->activeTab();
 #ifdef DEBUG_LOGS
     qDebug() << "canGoBack = " << m_canGoBack << "canGoForward = " << m_canGoForward << &tab;
 #endif
-    const Tab &tab = m_model->activeTab();
 
     if (m_canGoForward != (tab.nextLink() > 0)) {
         m_canGoForward = tab.nextLink() > 0;
