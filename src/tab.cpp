@@ -36,6 +36,11 @@ int Tab::currentLink() const
     return m_currentLink.linkId();
 }
 
+void Tab::setCurrentLink(int currentLinkId)
+{
+    m_currentLink.setLinkId(currentLinkId);
+}
+
 int Tab::nextLink() const
 {
     return m_nextLinkId;

@@ -68,14 +68,6 @@ void DeclarativeTabModel::addTab(const QString& url, const QString &title) {
     emit nextTabIdChanged();
 }
 
-int DeclarativeTabModel::currentTabId() const
-{
-    if (m_activeTab.isValid()) {
-        return m_activeTab.tabId();
-    }
-    return 0;
-}
-
 int DeclarativeTabModel::nextTabId() const
 {
     return m_nextTabId;
@@ -413,7 +405,7 @@ void DeclarativeTabModel::updateTitle(int tabId, bool activeTab, QString title)
 
     bool updateDb = false;
 
-    if (activeTab && m_activeTab.title() != title) {
+    if (activeTab) {
         m_activeTab.setTitle(title);
         updateDb = true;
     } else if (tabIndex >= 0 && m_tabs.at(tabIndex).title() != title) {
@@ -506,7 +498,6 @@ void DeclarativeTabModel::updateActiveTab(const Tab &activeTab)
     if (m_activeTab != activeTab) {
         int oldTabId = m_activeTab.tabId();
         m_activeTab = activeTab;
-        emit currentTabIdChanged();
         emit activeTabChanged(oldTabId, activeTab.tabId());
         saveTabOrder();
     }
@@ -540,6 +531,10 @@ void DeclarativeTabModel::updateTabUrl(int tabId, bool activeTab, const QString 
         if (!navigate) {
             DBManager::instance()->updateTab(tabId, url, "", "");
         } else {
+            m_activeTab.setNextLink(0);
+            int currentLinkId = m_activeTab.currentLink();
+            m_activeTab.setPreviousLink(currentLinkId);
+            m_activeTab.setCurrentLink(++currentLinkId);
             DBManager::instance()->navigateTo(tabId, url, "", "");
         }
     }

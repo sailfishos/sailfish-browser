@@ -286,13 +286,6 @@ bool DeclarativeWebContainer::isActiveTab(int tabId)
 void DeclarativeWebContainer::goForward()
 {
     if (m_canGoForward && m_webPage) {
-        if (m_webPage->canGoForward()) {
-            m_realNavigation = true;
-            m_webPage->goForward();
-        } else {
-            m_realNavigation = false;
-        }
-
         m_canGoForward = false;
         emit canGoForwardChanged();
 
@@ -300,21 +293,22 @@ void DeclarativeWebContainer::goForward()
             m_canGoBack = true;
             emit canGoBackChanged();
         }
+
         m_model->setBackForwardNavigation(true);
         DBManager::instance()->goForward(m_webPage->tabId());
+
+        if (m_webPage->canGoForward()) {
+            m_realNavigation = true;
+            m_webPage->goForward();
+        } else {
+            m_realNavigation = false;
+        }
     }
 }
 
 void DeclarativeWebContainer::goBack()
 {
     if (m_canGoBack && m_webPage) {
-        if (m_webPage->canGoBack()) {
-            m_realNavigation = true;
-            m_webPage->goBack();
-        } else {
-            m_realNavigation = false;
-        }
-
         m_canGoBack = false;
         emit canGoBackChanged();
 
@@ -325,6 +319,13 @@ void DeclarativeWebContainer::goBack()
 
         m_model->setBackForwardNavigation(true);
         DBManager::instance()->goBack(m_webPage->tabId());
+
+        if (m_webPage->canGoBack()) {
+            m_realNavigation = true;
+            m_webPage->goBack();
+        } else {
+            m_realNavigation = false;
+        }
     }
 }
 

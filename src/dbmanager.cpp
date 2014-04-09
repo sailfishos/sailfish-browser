@@ -93,13 +93,13 @@ void DBManager::updateTab(int tabId, QString url, QString title, QString path)
 
 void DBManager::goForward(int tabId)
 {
-    QMetaObject::invokeMethod(worker, "goForward", Qt::QueuedConnection,
+    QMetaObject::invokeMethod(worker, "goForward", Qt::BlockingQueuedConnection,
                               Q_ARG(int, tabId));
 }
 
 void DBManager::goBack(int tabId)
 {
-    QMetaObject::invokeMethod(worker, "goBack", Qt::QueuedConnection,
+    QMetaObject::invokeMethod(worker, "goBack", Qt::BlockingQueuedConnection,
                               Q_ARG(int, tabId));
 }
 
