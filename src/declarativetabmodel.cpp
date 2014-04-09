@@ -258,17 +258,10 @@ bool DeclarativeTabModel::browsing() const
 void DeclarativeTabModel::setBrowsing(bool browsing)
 {
     if (browsing != m_browsing) {
-        if (browsing && m_activeTab.isValid()) {
-            QFile f(m_activeTab.thumbnailPath());
-            if (f.exists()) {
-                f.remove();
-            }
-            f.close();
-            emit updateActiveTabThumbnail("");
-            m_activeTab.setThumbnailPath("");
-        }
-
         m_browsing = browsing;
+        if (m_browsing) {
+            emit updateActiveThumbnail();
+        }
         emit browsingChanged();
     }
 }

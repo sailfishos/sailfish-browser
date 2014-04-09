@@ -165,7 +165,7 @@ private slots:
     void onPageUrlChanged();
     void onPageTitleChanged();
     void onPageThumbnailChanged(QString url, QString path, int tabId);
-    void setThumbnailPath(QString thumbnailPath);
+    void updateThumbnail();
 
     // These are here to inform embedlite-components that keyboard is open or close
     // matching composition metrics.
@@ -176,6 +176,7 @@ protected:
 
 private:
     void setWebPage(DeclarativeWebPage *webPage);
+    void setThumbnailPath(QString thumbnailPath);
     qreal contentHeight() const;
     void captureScreen(QString url, int size, qreal rotate);
     int parentTabId(int tabId) const;
