@@ -60,6 +60,11 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 #endif
     app->setQuitOnLastWindowClosed(false);
 
+    // GRE_HOME must be set before QMozContext is initialized.
+    // With invoker PWD is empty.
+    QByteArray binaryPath = QCoreApplication::applicationDirPath().toLocal8Bit();
+    setenv("GRE_HOME", binaryPath.constData(), 1);
+
     // TODO : Remove this and set custom user agent always
     // Don't set custom user agent string when arguments contains -developerMode, give url as last argument
     if (!app->arguments().contains("-developerMode")) {
