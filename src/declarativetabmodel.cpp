@@ -315,21 +315,13 @@ void DeclarativeTabModel::tabsAvailable(QList<Tab> tabs)
     m_tabs.clear();
     m_tabs = tabs;
 
-    int activeTabId = loadTabOrder();
     if (m_tabs.count() > 0) {
-        Tab tab;
-        tab.setTabId(activeTabId);
-
-        int index = m_tabs.indexOf(tab);
-        if (index == -1) {
-            index = 0;
-        }
-        const Tab &activeTab = m_tabs.at(index);
-        m_tabs.removeAt(index);
-        m_activeTab = activeTab;
+        loadTabOrder();
+        qSort(m_tabs.begin(), m_tabs.end(), DeclarativeTabModel::tabSort);
+        m_activeTab = m_tabs.at(0);
+        m_tabs.removeAt(0);
     }
 
-    qSort(m_tabs.begin(), m_tabs.end(), DeclarativeTabModel::tabSort);
     endResetModel();
 
     if (count() != oldCount) {
@@ -446,6 +438,10 @@ int DeclarativeTabModel::findTabIndex(int tabId) const
 void DeclarativeTabModel::saveTabOrder()
 {
     QString tabOrder = "";
+    if (m_activeTab.isValid()) {
+        tabOrder = QString("%1,").arg(m_activeTab.tabId());
+    }
+
     for (int i = 0; i < m_tabs.count(); ++i) {
         const Tab &tab = m_tabs.at(i);
         tabOrder.append(QString("%1,").arg(tab.tabId()));
@@ -454,10 +450,9 @@ void DeclarativeTabModel::saveTabOrder()
 #endif
     }
     DBManager::instance()->saveSetting("tabOrder", tabOrder);
-    DBManager::instance()->saveSetting("activeTab", QString("%1").arg(m_activeTab.tabId()));
 }
 
-int DeclarativeTabModel::loadTabOrder()
+void DeclarativeTabModel::loadTabOrder()
 {
     QString tabOrder = DBManager::instance()->getSetting("tabOrder");
     QStringList tmpList = tabOrder.split(",");
@@ -468,17 +463,6 @@ int DeclarativeTabModel::loadTabOrder()
         if (ok) {
             s_tabOrder << tabId;
         }
-    }
-
-    QString activeTab = DBManager::instance()->getSetting("activeTab");
-    int activeTabId = activeTab.toInt(&ok);
-#ifdef DEBUG_LOGS
-    qDebug() << "loaded tab order:" << s_tabOrder << "active tab: " << activeTabId;
-#endif
-    if (ok) {
-        return activeTabId;
-    } else {
-        return 0;
     }
 }
 

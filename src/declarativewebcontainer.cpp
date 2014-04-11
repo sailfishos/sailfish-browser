@@ -527,7 +527,7 @@ void DeclarativeWebContainer::screenCaptureReady()
 {
     ScreenCapture capture = m_screenCapturer.result();
 #ifdef DEBUG_LOGS
-    qDebug() << capture.tabId << capture.path << capture.url;
+    qDebug() << capture.tabId << capture.path << capture.url << isActiveTab(capture.tabId);
 #endif
     if (capture.tabId != -1) {
         // Update immediately without dbworker round trip.
@@ -554,10 +554,13 @@ void DeclarativeWebContainer::triggerLoad()
 
 void DeclarativeWebContainer::onModelLoaded()
 {
-    // Load placeholder when no pages exist. If a page exists,
-    // it gets initialized by onActiveTabChanged.
-    if (!webPage()) {
+    // This signal handler is responsible for activating
+    // the first page.
+    if (m_model->hasNewTabData() || m_model->count() == 0) {
         activatePage(m_model->nextTabId(), true);
+    } else {
+        const Tab &tab = m_model->activeTab();
+        activatePage(tab.tabId(), true);
     }
 }
 
