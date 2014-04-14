@@ -132,7 +132,7 @@ private:
     void removeTab(int tabId, const QString &thumbnail, int index = -1);
     int findTabIndex(int tabId) const;
     void saveTabOrder();
-    int loadTabOrder();
+    void loadTabOrder();
     void updateActiveTab(const Tab &activeTab);
     void updateTabUrl(int tabId, bool activeTab, const QString &url, bool navigate);
 
