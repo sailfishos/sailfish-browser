@@ -21,10 +21,7 @@
 
 TestObject::TestObject(QByteArray qmlData)
 {
-    QQmlComponent component(mView.engine());
-    component.setData(qmlData, QUrl());
-    mRootObject = component.create(mView.engine()->rootContext());
-    mView.setContent(QUrl(""), 0, mRootObject);
+    setTestData(qmlData);
     mView.show();
     QTest::qWaitForWindowExposed(&mView);
 }
@@ -40,4 +37,12 @@ void TestObject::waitSignals(QSignalSpy &spy, int expectedSignalCount) const
     while (spy.count() < expectedSignalCount) {
         spy.wait();
     }
+}
+
+void TestObject::setTestData(QByteArray qmlData)
+{
+    QQmlComponent component(mView.engine());
+    component.setData(qmlData, QUrl());
+    mRootObject = component.create(mView.engine()->rootContext());
+    mView.setContent(QUrl(""), 0, mRootObject);
 }
