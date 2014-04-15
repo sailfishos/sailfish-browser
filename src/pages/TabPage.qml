@@ -64,6 +64,7 @@ Page {
                     PropertyAction { target: commonHeader; property: "parent"; value: page }
                     FadeAnimation { target: favoriteList; from: 0.0; to: 1.0}
                     PropertyAction { target: commonHeader; property: "parent"; value: page.favoriteHeader }
+                    ScriptAction { script: favoriteList.positionViewAtBeginning() }
                 }
                 FadeAnimation { target: historyList; from: 1.0; to: 0.0 }
             }
@@ -75,6 +76,7 @@ Page {
                     PropertyAction { target: commonHeader; property: "parent"; value: page }
                     FadeAnimation { target: historyList; from: 0.0; to: 1.0}
                     PropertyAction { target: commonHeader; property: "parent"; value: page.historyHeader }
+                    ScriptAction { script: historyList.positionViewAtBeginning() }
                     ScriptAction { script: { focusTimer.running = true; page.initialSearchFocus = false } }
                 }
                 FadeAnimation { target: favoriteList; from: 1.0; to: 0.0 }
@@ -91,9 +93,6 @@ Page {
             id: historyHeader
             width: commonHeader.width
             height: commonHeader.height + historySectionHeader.height
-
-            // common header parented
-            onChildrenChanged: historyList.contentY = -historyHeader.height
 
             SectionHeader {
                 id: historySectionHeader
@@ -126,8 +125,6 @@ Page {
             id: favoriteHeader
             width: commonHeader.width
             height: (page.newTab ? commonHeader.height : commonHeader.height + tabsGrid.height) + favoriteSectionHeader.height
-
-            Component.onCompleted: page.favoriteHeader = favoriteHeader
 
             VisibilityCull {
                 target: tabsGrid
@@ -166,6 +163,8 @@ Page {
                 text: qsTrId("sailfish_browser-he-favorites")
                 anchors.bottom: favoriteHeader.bottom
             }
+
+            Component.onCompleted: page.favoriteHeader = favoriteHeader
         }
         model: browserPage.favorites
         hasContextMenu: !page.newTab
@@ -199,7 +198,7 @@ Page {
                                                                              //% "Tabs"
                                                                            : qsTrId("sailfish_browser-he-tabs"))
             visible: page.isPortrait
-            height: visible ? Theme.itemSizeLarge : 0
+            height: Theme.itemSizeLarge
         }
 
         Rectangle {
