@@ -390,19 +390,22 @@ void DeclarativeTabModel::updateTitle(int tabId, bool activeTab, QString title)
 
     bool updateDb = false;
 
+    int linkId = 0;
     if (activeTab) {
         m_activeTab.setTitle(title);
         updateDb = true;
+        linkId = m_activeTab.currentLink();
     } else if (tabIndex >= 0 && m_tabs.at(tabIndex).title() != title) {
         QVector<int> roles;
         roles << TitleRole;
         m_tabs[tabIndex].setTitle(title);
+        linkId = m_tabs.at(tabIndex).currentLink();
         emit dataChanged(index(tabIndex, 0), index(tabIndex, 0), roles);
         updateDb = true;
     }
 
     if (updateDb) {
-        DBManager::instance()->updateTitle(m_activeTab.currentLink(), title);
+        DBManager::instance()->updateTitle(linkId, title);
     }
 }
 
