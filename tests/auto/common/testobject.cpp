@@ -10,8 +10,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "testobject.h"
-#include "declarativehistorymodel.h"
-#include "declarativetabmodel.h"
 
 #include <QQmlComponent>
 #include <QQmlEngine>
@@ -20,6 +18,7 @@
 #include <QtTest>
 
 TestObject::TestObject(QByteArray qmlData)
+    : QObject()
 {
     setTestData(qmlData);
     mView.show();

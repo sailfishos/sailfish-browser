@@ -19,7 +19,7 @@ class QSignalSpy;
 
 static const QByteArray EMPTY_QML = \
         "import QtQuick 2.0\n" \
-        "Item {}\n";
+        "Item { width: 100; height: 100 }\n";
 
 class TestObject : public QObject
 {
