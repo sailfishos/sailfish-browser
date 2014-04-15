@@ -15,6 +15,7 @@
 #include <QObject>
 #include <QMap>
 #include <QSqlDatabase>
+#include <QSqlQuery>
 
 #include "link.h"
 #include "tab.h"
@@ -84,6 +85,7 @@ private:
     QSqlQuery prepare(const char* statement);
     bool execute(QSqlQuery &query);
     QSqlDatabase m_database;
+    QSqlQuery m_updateThumbPathQuery;
 };
 
 #endif // DBWORKER_H
