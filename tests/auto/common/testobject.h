@@ -17,6 +17,10 @@ class DeclarativeTabModel;
 class DeclarativeHistoryModel;
 class QSignalSpy;
 
+static const QByteArray EMPTY_QML = \
+        "import QtQuick 2.0\n" \
+        "Item {}\n";
+
 class TestObject : public QObject
 {
     Q_OBJECT
@@ -25,6 +29,7 @@ public:
     explicit TestObject(QByteArray qmlData);
 
     void waitSignals(QSignalSpy &spy, int expectedSignalCount) const;
+    void setTestData(QByteArray qmlData);
 
     template <typename T> T *model(const char *propertyName) {
         QVariant var = mRootObject->property(propertyName);

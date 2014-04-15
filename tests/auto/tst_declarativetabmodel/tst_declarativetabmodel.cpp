@@ -69,6 +69,8 @@ private slots:
 
     void updateTitle();
 
+    void reloadModel();
+
     void newTabData();
     void resetNewTabData();
 
@@ -85,7 +87,6 @@ private:
     int currentTabId();
 
     DeclarativeTabModel *tabModel;
-    QQuickView view;
     QList<TestTab> originalTabOrder;
 };
 
@@ -389,25 +390,22 @@ void tst_declarativetabmodel::multipleTabsWithSameUrls()
 
 void tst_declarativetabmodel::updateInvalidUrls_data()
 {
+    QString expectedUrl = tabModel->activeTab().url();
     QTest::addColumn<QString>("url");
-    QTest::newRow("tel") << "tel:+123456798";
-    QTest::newRow("sms") << "sms:+123456798";
-    QTest::newRow("mailto") << "mailto:joe@example.com";
-    QTest::newRow("mailto query does not count") << "mailto:joe@example.com?cc=bob@example.com&body=hello1";
-    QTest::newRow("geo") << "geo:61.49464,23.77513";
-    QTest::newRow("geo://") << "geo://61.49464,23.77513";
+    QTest::addColumn<QString>("expectedUrl");
+    QTest::newRow("tel") << "tel:+123456798" << expectedUrl;
+    QTest::newRow("sms") << "sms:+123456798" << expectedUrl;
+    QTest::newRow("mailto") << "mailto:joe@example.com" << expectedUrl;
+    QTest::newRow("mailto query does not count") << "mailto:joe@example.com?cc=bob@example.com&body=hello1" << expectedUrl;
+    QTest::newRow("geo") << "geo:61.49464,23.77513" << expectedUrl;
+    QTest::newRow("geo://") << "geo://61.49464,23.77513" << expectedUrl;
 }
 
 void tst_declarativetabmodel::updateInvalidUrls()
 {
-    QString expectedUrl = "http://foobar/invalid";
-
-    int tabId = currentTabId();
-    tabModel->updateUrl(tabId, true, expectedUrl);
-
+    QFETCH(QString, expectedUrl);
     QFETCH(QString, url);
-    tabModel->updateUrl(tabId, true, url);
-
+    tabModel->updateUrl(currentTabId(), true, url);
     QCOMPARE(tabModel->activeTab().url(), expectedUrl);
 }
 
@@ -425,7 +423,9 @@ void tst_declarativetabmodel::updateValidUrls()
     QFETCH(QString, url);
 
     int tabId = currentTabId();
+    QSignalSpy tabChangeSpy(DBManager::instance(), SIGNAL(tabChanged(Tab)));
     tabModel->updateUrl(tabId, true, url);
+    waitSignals(tabChangeSpy, 1);
     QCOMPARE(tabModel->activeTab().url(), url);
 }
 
@@ -456,9 +456,11 @@ void tst_declarativetabmodel::invalidTabs()
 
 void tst_declarativetabmodel::updateTitle()
 {
+    QSignalSpy titleChangeSpy(DBManager::instance(), SIGNAL(titleChanged(QString,QString)));
     int tabId = currentTabId();
     QString title = "A title something";
     tabModel->updateTitle(tabId, true, title);
+    waitSignals(titleChangeSpy, 1);
 
     QCOMPARE(tabModel->activeTab().title(), title);
 
@@ -470,9 +472,11 @@ void tst_declarativetabmodel::updateTitle()
 
     title = "FooBar Title";
     tabModel->updateTitle(tab1, true, title);
+    waitSignals(titleChangeSpy, 2);
     QCOMPARE(tabModel->activeTab().title(), title);
 
     tabModel->updateTitle(tab1, true, "");
+    waitSignals(titleChangeSpy, 3);
     QVERIFY(tabModel->activeTab().title().isEmpty());
 
     // Add a new tab with same url and change title "" -> "FooBar"
@@ -490,6 +494,7 @@ void tst_declarativetabmodel::updateTitle()
 
     title = "FooBar Two";
     tabModel->updateTitle(tab2, true, title);
+    waitSignals(titleChangeSpy, 4);
     QCOMPARE(tabModel->activeTab().title(), title);
 
     // Tab1 in model should not be changed after title changed for tab2.
@@ -497,15 +502,49 @@ void tst_declarativetabmodel::updateTitle()
     QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), url);
     QVERIFY(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString().isEmpty());
 
-
     QString activeTabTitle = tabModel->activeTab().title();
 
     title = "FooBar non active tab";
     tabModel->updateTitle(tab1, false, title);
+    waitSignals(titleChangeSpy, 5);
     QCOMPARE(tabModel->activeTab().title(), activeTabTitle);
     modelIndex = tabModel->createIndex(0, 0);
     QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), url);
     QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), title);
+}
+
+void tst_declarativetabmodel::reloadModel()
+{
+    setTestData(EMPTY_QML);
+    setTestData(QML_SNIPPET);
+
+    tabModel = TestObject::model<DeclarativeTabModel>("tabModel");
+    QSignalSpy loadedSpy(tabModel, SIGNAL(loadedChanged()));
+    QVERIFY(tabModel);
+    waitSignals(loadedSpy, 1);
+
+    QCOMPARE(tabModel->count(), 4);
+    QCOMPARE(tabModel->activeTab().tabId(), 9);
+    QCOMPARE(tabModel->activeTab().currentLink(), 18);
+    QCOMPARE(tabModel->activeTab().previousLink(), 0);
+    QCOMPARE(tabModel->activeTab().nextLink(), 0);
+    QCOMPARE(tabModel->activeTab().url(), QString("http://foobar"));
+    QCOMPARE(tabModel->activeTab().title(), QString("FooBar Two"));
+
+    QModelIndex modelIndex = tabModel->createIndex(0, 0);
+    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), QString("http://foobar"));
+    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), QString("FooBar non active tab"));
+    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt(), 8);
+
+    modelIndex = tabModel->createIndex(1, 0);
+    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), QString("foo/bar/index.html"));
+    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), QString("A title something"));
+    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt(), 3);
+
+    modelIndex = tabModel->createIndex(2, 0);
+    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), QString("http://sailfishos.org"));
+    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), QString("SailfishOS.org"));
+    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt(), 1);
 }
 
 void tst_declarativetabmodel::newTabData()
