@@ -608,13 +608,15 @@ void DBWorker::getTabHistory(int tabId)
     emit tabHistoryAvailable(tabId, linkList);
 }
 
-void DBWorker::updateThumbPath(QString url, QString path, int tabId)
+void DBWorker::updateThumbPath(int tabId, QString path)
 {
-    QSqlQuery query = prepare("UPDATE link SET thumb_path = ? WHERE url = ?;");
+    QSqlQuery query = prepare("UPDATE link SET thumb_path = ? "
+                              "WHERE link_id IN (SELECT link.link_id "
+                              "FROM tab_history INNER JOIN link ON tab_history.link_id=link.link_id WHERE tab_history.tab_id = ?);");
     query.bindValue(0, path);
-    query.bindValue(1, url);
+    query.bindValue(1, tabId);
     if (execute(query)) {
-        emit thumbPathChanged(url, path, tabId);
+        emit thumbPathChanged(tabId, path);
     }
 }
 

@@ -164,7 +164,7 @@ private slots:
     void closeWindow();
     void onPageUrlChanged();
     void onPageTitleChanged();
-    void onPageThumbnailChanged(QString url, QString path, int tabId);
+    void onPageThumbnailChanged(int tabId, QString path);
     void updateThumbnail();
 
     // These are here to inform embedlite-components that keyboard is open or close
@@ -178,19 +178,16 @@ private:
     void setWebPage(DeclarativeWebPage *webPage);
     void setThumbnailPath(QString thumbnailPath);
     qreal contentHeight() const;
-    void captureScreen(QString url, int size, qreal rotate);
+    void captureScreen(int size, qreal rotate);
     int parentTabId(int tabId) const;
     void updateVkbHeight();
 
     struct ScreenCapture {
         int tabId;
         QString path;
-        QString url;
     };
 
-    // Grep following todos
-    // TODO: Remove url parameter from this, worker, and manager.
-    ScreenCapture saveToFile(QString url, QImage image, QRect cropBounds, int tabId, qreal rotate);
+    ScreenCapture saveToFile(QImage image, QRect cropBounds, int tabId, qreal rotate);
 
     QPointer<DeclarativeWebPage> m_webPage;
     QPointer<DeclarativeTabModel> m_model;

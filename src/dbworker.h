@@ -42,7 +42,7 @@ public slots:
     int getMaxTabId();
 
     void updateTitle(int linkId, QString title);
-    void updateThumbPath(QString url, QString path, int tabId);
+    void updateThumbPath(int tabId, QString path);
 
     void goForward(int tabId);
     void goBack(int tabId);
@@ -59,7 +59,7 @@ signals:
     void tabAvailable(Tab tab);
     void tabChanged(Tab tab);
     void tabsAvailable(QList<Tab> tabs);
-    void thumbPathChanged(QString url, QString path, int tabId);
+    void thumbPathChanged(int tabId, QString path);
     void titleChanged(QString url, QString title);
     void tabHistoryAvailable(int tabId, QList<Link>);
     void historyAvailable(QList<Link>);

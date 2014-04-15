@@ -38,7 +38,7 @@ public:
     void goForward(int tabId);
     void goBack(int tabId);
 
-    void updateThumbPath(QString url, QString path, int tabId);
+    void updateThumbPath(int tabId, QString path);
     void updateTitle(int linkId, QString title);
 
     void clearHistory();
@@ -61,7 +61,7 @@ signals:
     void tabsAvailable(QList<Tab> tab);
     void historyAvailable(QList<Link> links);
     void tabHistoryAvailable(int tabId, QList<Link> links);
-    void thumbPathChanged(QString url, QString path, int tabId);
+    void thumbPathChanged(int tabId, QString path);
     void titleChanged(QString url, QString title);
     void settingsChanged();
 
