@@ -149,7 +149,8 @@ function openContextMenu(data) {
                                                             "linkTitle": linkTitle.trim(),
                                                             "contentType": contentType,
                                                             "tabModel": tabModel,
-                                                            "viewId": webView.contentItem.uniqueID()
+                                                            "viewId": webView.contentItem.uniqueID(),
+                                                            "pageStack": pageStack
                                                         })
                 _hideVirtualKeyboard()
 
