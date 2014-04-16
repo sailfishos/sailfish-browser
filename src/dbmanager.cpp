@@ -41,7 +41,7 @@ DBManager::DBManager(QObject *parent)
     connect(worker, SIGNAL(tabChanged(Tab)), this, SIGNAL(tabChanged(Tab)));
     connect(worker, SIGNAL(tabAvailable(Tab)), this, SIGNAL(tabAvailable(Tab)));
     connect(worker, SIGNAL(titleChanged(QString,QString)), this, SIGNAL(titleChanged(QString,QString)));
-    connect(worker, SIGNAL(thumbPathChanged(QString,QString,int)), this, SIGNAL(thumbPathChanged(QString,QString,int)));
+    connect(worker, SIGNAL(thumbPathChanged(int,QString)), this, SIGNAL(thumbPathChanged(int,QString)));
     workerThread.start();
 
     QMetaObject::invokeMethod(worker, "init", Qt::BlockingQueuedConnection);
@@ -125,10 +125,10 @@ void DBManager::updateTitle(int linkId, QString title)
                               Q_ARG(int, linkId), Q_ARG(QString, title));
 }
 
-void DBManager::updateThumbPath(QString url, QString path, int tabId)
+void DBManager::updateThumbPath(int tabId, QString path)
 {
     QMetaObject::invokeMethod(worker, "updateThumbPath", Qt::QueuedConnection,
-                              Q_ARG(QString, url), Q_ARG(QString, path), Q_ARG(int, tabId));
+                              Q_ARG(int, tabId), Q_ARG(QString, path));
 }
 
 void DBManager::clearHistory()

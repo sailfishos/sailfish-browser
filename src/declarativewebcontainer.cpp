@@ -66,8 +66,8 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
 
     connect(&m_screenCapturer, SIGNAL(finished()), this, SLOT(screenCaptureReady()));
     connect(DownloadManager::instance(), SIGNAL(downloadStarted()), this, SLOT(onDownloadStarted()));
-    connect(DBManager::instance(), SIGNAL(thumbPathChanged(QString,QString,int)),
-            this, SLOT(onPageThumbnailChanged(QString,QString,int)));
+    connect(DBManager::instance(), SIGNAL(thumbPathChanged(int,QString)),
+            this, SLOT(onPageThumbnailChanged(int,QString)));
     connect(this, SIGNAL(maxLiveTabCountChanged()), this, SLOT(manageMaxTabCount()));
     connect(this, SIGNAL(_readyToLoadChanged()), this, SLOT(onReadyToLoad()));
     connect(this, SIGNAL(heightChanged()), this, SLOT(resetHeight()));
@@ -368,7 +368,7 @@ void DeclarativeWebContainer::captureScreen()
         }
 
         qreal rotation = parentItem() ? parentItem()->rotation() : 0;
-        captureScreen(url(), size, rotation);
+        captureScreen(size, rotation);
     }
 }
 
@@ -432,7 +432,7 @@ qreal DeclarativeWebContainer::contentHeight() const
     }
 }
 
-DeclarativeWebContainer::ScreenCapture DeclarativeWebContainer::saveToFile(QString url, QImage image, QRect cropBounds, int tabId, qreal rotate)
+DeclarativeWebContainer::ScreenCapture DeclarativeWebContainer::saveToFile(QImage image, QRect cropBounds, int tabId, qreal rotate)
 {
     QString path = QString("%1/tab-%2-thumb.png").arg(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)).arg(tabId);
     QTransform transform;
@@ -444,7 +444,6 @@ DeclarativeWebContainer::ScreenCapture DeclarativeWebContainer::saveToFile(QStri
     if(image.save(path)) {
         capture.tabId = tabId;
         capture.path = path;
-        capture.url = url;
     } else {
         capture.tabId = -1;
         qWarning() << Q_FUNC_INFO << "failed to save image" << path;
@@ -527,15 +526,14 @@ void DeclarativeWebContainer::screenCaptureReady()
 {
     ScreenCapture capture = m_screenCapturer.result();
 #ifdef DEBUG_LOGS
-    qDebug() << capture.tabId << capture.path << capture.url << isActiveTab(capture.tabId);
+    qDebug() << capture.tabId << capture.path << isActiveTab(capture.tabId);
 #endif
     if (capture.tabId != -1) {
         // Update immediately without dbworker round trip.
         if (isActiveTab(capture.tabId)) {
             setThumbnailPath(capture.path);
         }
-        // TODO: Cleanup url.
-        DBManager::instance()->updateThumbPath(capture.url, capture.path, capture.tabId);
+        DBManager::instance()->updateThumbPath(capture.tabId, capture.path);
     }
 }
 
@@ -633,11 +631,10 @@ void DeclarativeWebContainer::onReadyToLoad()
 /**
  * @brief DeclarativeTab::captureScreen
  * Rotation transformation is applied first, then geometry values on top of it.
- * @param url
  * @param size
  * @param rotate clockwise rotation of the image in degrees
  */
-void DeclarativeWebContainer::captureScreen(QString url, int size, qreal rotate)
+void DeclarativeWebContainer::captureScreen(int size, qreal rotate)
 {
     if (!window() || !window()->isActive() || !m_webPage) {
         return;
@@ -653,7 +650,7 @@ void DeclarativeWebContainer::captureScreen(QString url, int size, qreal rotate)
     qDebug() << "about to set future";
 #endif
     // asynchronous save to avoid the slow I/O
-    m_screenCapturer.setFuture(QtConcurrent::run(this, &DeclarativeWebContainer::saveToFile, url, image, cropBounds, m_webPage->tabId(), rotate));
+    m_screenCapturer.setFuture(QtConcurrent::run(this, &DeclarativeWebContainer::saveToFile, image, cropBounds, m_webPage->tabId(), rotate));
 }
 
 int DeclarativeWebContainer::parentTabId(int tabId) const
@@ -722,9 +719,8 @@ void DeclarativeWebContainer::onPageTitleChanged()
     }
 }
 
-void DeclarativeWebContainer::onPageThumbnailChanged(QString url, QString path, int tabId)
+void DeclarativeWebContainer::onPageThumbnailChanged(int tabId, QString path)
 {
-    Q_UNUSED(url);
     if (isActiveTab(tabId)) {
         setThumbnailPath(path);
     }
