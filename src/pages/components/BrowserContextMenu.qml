@@ -21,6 +21,7 @@ Rectangle {
     property string imageSrc
     property string contentType
     property TabModel tabModel
+    property PageStack pageStack
 
     property int viewId
     readonly property bool active: visible
