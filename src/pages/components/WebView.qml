@@ -109,7 +109,8 @@ WebContainer {
 
     WebViewCreator {
         activeWebView: contentItem
-        onNewWindowRequested: tabModel.newTab(url, "", parentId)
+        // onNewWindowRequested is always handled as synchronous operation (not through newTab).
+        onNewWindowRequested: webView.loadNewTab(url, "", parentId)
     }
 
     Rectangle {

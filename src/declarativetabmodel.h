@@ -49,7 +49,8 @@ public:
     Q_INVOKABLE bool activateTab(int index);
     Q_INVOKABLE void closeActiveTab();
 
-    Q_INVOKABLE void newTab(const QString &url, const QString &title, int parentId = 0);
+    Q_INVOKABLE void newTab(const QString &url, const QString &title);
+    // This should be only for C++ side. But there is one depending move to QML side (see WebView::load())
     Q_INVOKABLE void newTabData(const QString &url, const QString &title, QObject *contentItem = 0, int parentId = 0);
     Q_INVOKABLE void resetNewTabData();
 
@@ -107,7 +108,7 @@ signals:
     void browsingChanged();
     void hasNewTabDataChanged();
     void newTabUrlChanged();
-    void newTabRequested(QString url, QString title, int parentId);
+    void newTabRequested(QString url, QString title);
     void updateActiveThumbnail();
 
 private slots:
