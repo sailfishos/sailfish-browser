@@ -219,6 +219,12 @@ WebContainer {
                         resurrectedContentRect = null
                     }
                 }
+
+                // Refresh timers (if any) keep working even for suspended views. Hence
+                // suspend the view again explicitly if app window is in background.
+                if (loaded && webView.background) {
+                    suspendView();
+                }
             }
 
             onLoadingChanged: {
