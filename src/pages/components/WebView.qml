@@ -301,7 +301,7 @@ WebContainer {
             // TextSelectionController {}
             states: State {
                 name: "boundHeightControl"
-                when: container.inputPanelVisible || !container.foreground || !visible
+                when: container.inputPanelVisible || !container.foreground
                 PropertyChanges {
                     target: webPage
                     height: container.parent.height
