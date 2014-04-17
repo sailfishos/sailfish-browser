@@ -177,9 +177,10 @@ void DeclarativeTabModel::closeActiveTab()
     }
 }
 
-void DeclarativeTabModel::newTab(const QString &url, const QString &title, int parentId)
+void DeclarativeTabModel::newTab(const QString &url, const QString &title)
 {
-    emit newTabRequested(url, title, parentId);
+    // TODO: This doesn't really fit in here. We should consider adding of custom event for new tab creation.
+    emit newTabRequested(url, title);
 }
 
 void DeclarativeTabModel::newTabData(const QString &url, const QString &title, QObject *contentItem, int parentId)
@@ -376,7 +377,7 @@ void DeclarativeTabModel::updateUrl(int tabId, bool activeTab, QString url)
     if (m_backForwardNavigation && activeTab)
     {
         updateTabUrl(tabId, activeTab, url, false);
-    } else if (!hasNewTabData() && activeTab) {
+    } else if (!hasNewTabData()) {
         updateTabUrl(tabId, activeTab, url, true);
     } else {
         addTab(url, newTabTitle());

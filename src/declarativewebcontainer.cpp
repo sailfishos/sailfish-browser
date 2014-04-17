@@ -128,7 +128,7 @@ void DeclarativeWebContainer::setTabModel(DeclarativeTabModel *model)
             connect(m_model, SIGNAL(tabAdded(int)), this, SLOT(manageMaxTabCount()));
             connect(m_model, SIGNAL(tabClosed(int)), this, SLOT(releasePage(int)));
             // Try to make this to normal direct connection once we have removed QML_BAD_GUI_RENDER_LOOP.
-            connect(m_model, SIGNAL(newTabRequested(QString,QString,int)), this, SLOT(onNewTabRequested(QString,QString,int)), Qt::QueuedConnection);
+            connect(m_model, SIGNAL(newTabRequested(QString,QString)), this, SLOT(onNewTabRequested(QString,QString)), Qt::QueuedConnection);
             connect(m_model, SIGNAL(updateActiveThumbnail()), this, SLOT(updateThumbnail()));
         }
         emit tabModelChanged();
@@ -353,6 +353,14 @@ bool DeclarativeWebContainer::activatePage(int tabId, bool force)
         return activationData.activated;
     }
     return false;
+}
+
+void DeclarativeWebContainer::loadNewTab(QString url, QString title, int parentId)
+{
+    m_model->newTabData(url, title, webPage(), parentId);
+    // This could handle new page creation directly if/
+    // when connection helper is accessible from QML.
+    emit triggerLoad(url, title);
 }
 
 void DeclarativeWebContainer::captureScreen()
@@ -583,13 +591,10 @@ void DeclarativeWebContainer::onDownloadStarted()
     }
 }
 
-void DeclarativeWebContainer::onNewTabRequested(QString url, QString title, int parentId)
+void DeclarativeWebContainer::onNewTabRequested(QString url, QString title)
 {
     if (m_active) {
-        m_model->newTabData(url, title, webPage(), parentId);
-        // This could handle new page creation directly if/
-        // when connection helper is accessible from QML.
-        emit triggerLoad(url, title);
+        loadNewTab(url, title, 0);
     } else {
         if (m_webPage) {
             m_webPage->setVisible(false);
@@ -597,8 +602,7 @@ void DeclarativeWebContainer::onNewTabRequested(QString url, QString title, int 
         }
         QMetaObject::invokeMethod(this, "onNewTabRequested", Qt::QueuedConnection,
                                   Q_ARG(QString, url),
-                                  Q_ARG(QString, title),
-                                  Q_ARG(int, parentId));
+                                  Q_ARG(QString, title));
     }
 }
 
@@ -694,12 +698,13 @@ void DeclarativeWebContainer::onPageUrlChanged()
     DeclarativeWebPage *webPage = qobject_cast<DeclarativeWebPage *>(sender());
     if (webPage && m_model) {
         QString url = webPage->url().toString();
-        int tabId = webPage->tabId();
-        bool activeTab = isActiveTab(tabId);
-        m_model->updateUrl(tabId, activeTab, url);
-
-        if (activeTab && webPage == m_webPage) {
-            emit urlChanged();
+        if (url != "about:blank") {
+            int tabId = webPage->tabId();
+            bool activeTab = isActiveTab(tabId);
+            m_model->updateUrl(tabId, activeTab, url);
+            if (activeTab && webPage == m_webPage) {
+                emit urlChanged();
+            }
         }
     }
 }

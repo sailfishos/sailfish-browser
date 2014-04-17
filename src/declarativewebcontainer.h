@@ -106,6 +106,7 @@ public:
     Q_INVOKABLE void goForward();
     Q_INVOKABLE void goBack();
     Q_INVOKABLE bool activatePage(int tabId, bool force = false);
+    Q_INVOKABLE void loadNewTab(QString url, QString title, int parentId);
 
     Q_INVOKABLE void captureScreen();
     Q_INVOKABLE void dumpPages() const;
@@ -157,7 +158,7 @@ private slots:
     void onActiveTabChanged(int oldTabId, int activeTabId);
     void onModelLoaded();
     void onDownloadStarted();
-    void onNewTabRequested(QString url, QString title, int parentId);
+    void onNewTabRequested(QString url, QString title);
     void onReadyToLoad();
     void manageMaxTabCount();
     void releasePage(int tabId, bool virtualize = false);
