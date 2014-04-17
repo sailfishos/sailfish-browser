@@ -11,9 +11,13 @@
 
 #include "downloadmanager.h"
 #include "qmozcontext.h"
+#include "declarativewebutils.h"
 
 #include <transferengineinterface.h>
 #include <transfertypes.h>
+#include <QDir>
+#include <QFile>
+#include <QDebug>
 
 static DownloadManager *gSingleton = 0;
 
@@ -85,6 +89,20 @@ void DownloadManager::recvObserve(const QString message, const QVariant data)
                                          QString("success"));
         m_statusCache.insert(downloadId, DownloadDone);
         checkAllTransfers();
+
+        QString targetPath = dataMap.value("targetPath").toString();
+        QFileInfo fileInfo(targetPath);
+        if (fileInfo.completeSuffix() == QLatin1Literal("myapp")) {
+            QString aptoideDownloadPath = QString("%1/aptoide/").arg(DeclarativeWebUtils::instance()->downloadDir());
+            QDir dir(aptoideDownloadPath);
+            if (!dir.exists() && !dir.mkpath(aptoideDownloadPath)) {
+                qWarning() << "Failed to create path for myapp download, aborting";
+                return;
+            }
+
+            QFile file(targetPath);
+            file.rename(aptoideDownloadPath + fileInfo.fileName());
+        }
     } else if (msg == "dl-fail") {
         m_transferClient->finishTransfer(m_download2transferMap.value(downloadId),
                                          TransferEngineData::TransferInterrupted,
