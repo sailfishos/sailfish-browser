@@ -48,6 +48,9 @@ private slots:
     void sortedHistoryEntries_data();
     void sortedHistoryEntries();
 
+    void emptyTitles_data();
+    void emptyTitles();
+
     void cleanupTestCase();
 
 private:
@@ -178,6 +181,39 @@ void tst_declarativehistorymodel::sortedHistoryEntries()
         QModelIndex modelIndex = historyModel->createIndex(i, 0);
         QString url = historyModel->data(modelIndex, DeclarativeHistoryModel::UrlRole).toString();
         QCOMPARE(url, order.at(i));
+    }
+}
+
+void tst_declarativehistorymodel::emptyTitles_data()
+{
+    QTest::addColumn<QString>("url");
+    QTest::addColumn<QString>("searchTerm");
+    QTest::addColumn<int>("expectedCount");
+
+    QTest::newRow("duplicate_longestUrl") << "http://www.testurl.blah/thelongesturl/" << "test" << 3;
+    QTest::newRow("random_url") << "http://quick/" << "quick" << 0;
+}
+
+void tst_declarativehistorymodel::emptyTitles()
+{
+    // Clear previous search term / history count.
+    QSignalSpy countChangeSpy(historyModel, SIGNAL(countChanged()));
+    historyModel->search("");
+    waitSignals(countChangeSpy, 1);
+
+    QFETCH(QString, url);
+    QFETCH(QString, searchTerm);
+    QFETCH(int, expectedCount);
+    tabModel->addTab(url, "");
+
+    historyModel->search(searchTerm);
+    waitSignals(countChangeSpy, 2);
+    QCOMPARE(historyModel->rowCount(), expectedCount);
+
+    for (int i = 0; i < expectedCount; ++i) {
+        QModelIndex modelIndex = historyModel->createIndex(i, 0);
+        QString title = historyModel->data(modelIndex, DeclarativeHistoryModel::TitleRole).toString();
+        QVERIFY(!title.isEmpty());
     }
 }
 
