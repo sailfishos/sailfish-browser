@@ -559,9 +559,12 @@ int DBWorker::createLink(QString url, QString title, QString thumbPath)
 
 void DBWorker::getHistory(const QString &filter)
 {
-    QString filterQuery;
-    if (filter != "") {
-        filterQuery = QString("WHERE (link.url LIKE '%%1%' OR link.title LIKE '%%1%') ").arg(filter);
+    // Skip empty titles always
+    QString filterQuery("WHERE (NULLIF(link.title, '') IS NOT NULL AND %1) ");
+    if (!filter.isEmpty()) {
+        filterQuery = filterQuery.arg(QString("(link.url LIKE '%%1%' OR link.title LIKE '%%1%')").arg(filter));
+    } else {
+        filterQuery = filterQuery.arg(1);
     }
 
     QString queryString = QString("SELECT DISTINCT link.url, link.title "
