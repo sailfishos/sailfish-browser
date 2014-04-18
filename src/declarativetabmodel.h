@@ -89,7 +89,7 @@ public:
     const QList<Tab>& tabs() const;
     const Tab& activeTab() const;
 
-    void updateUrl(int tabId, bool activeTab, QString url);
+    void updateUrl(int tabId, bool activeTab, QString url, bool initialLoad = false);
     void updateTitle(int tabId, bool activeTab, QString title);
     void updateThumbnailPath(int tabId, bool activeTab, QString path);
 

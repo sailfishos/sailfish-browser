@@ -701,7 +701,8 @@ void DeclarativeWebContainer::onPageUrlChanged()
         if (url != "about:blank") {
             int tabId = webPage->tabId();
             bool activeTab = isActiveTab(tabId);
-            m_model->updateUrl(tabId, activeTab, url);
+            m_model->updateUrl(tabId, activeTab, url, !webPage->urlHasChanged());
+            webPage->setUrlHasChanged(true);
             if (activeTab && webPage == m_webPage) {
                 emit urlChanged();
             }

@@ -372,13 +372,13 @@ void DeclarativeTabModel::tabChanged(const Tab &tab)
     }
 }
 
-void DeclarativeTabModel::updateUrl(int tabId, bool activeTab, QString url)
+void DeclarativeTabModel::updateUrl(int tabId, bool activeTab, QString url, bool initialLoad)
 {
     if (m_backForwardNavigation && activeTab)
     {
         updateTabUrl(tabId, activeTab, url, false);
     } else if (!hasNewTabData()) {
-        updateTabUrl(tabId, activeTab, url, true);
+        updateTabUrl(tabId, activeTab, url, !initialLoad);
     } else {
         addTab(url, newTabTitle());
     }
@@ -469,7 +469,6 @@ void DeclarativeTabModel::loadTabOrder()
         }
     }
 }
-
 void DeclarativeTabModel::updateActiveTab(const Tab &activeTab)
 {
 #ifdef DEBUG_LOGS

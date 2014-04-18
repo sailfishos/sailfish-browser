@@ -45,6 +45,9 @@ public:
     bool fullscreen() const;
     bool domContentLoaded() const;
 
+    bool urlHasChanged() const;
+    void setUrlHasChanged(bool urlHasChanged);
+
     Q_INVOKABLE void loadTab(QString newUrl, bool force);
 
 signals:
@@ -73,6 +76,7 @@ private:
     bool m_userHasDraggedWhileLoading;
     bool m_fullscreen;
     bool m_domContentLoaded;
+    bool m_urlHasChanged;
     QString m_favicon;
     QVariant m_resurrectedContentRect;
 };
