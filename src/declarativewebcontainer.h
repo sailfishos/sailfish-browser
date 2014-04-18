@@ -154,7 +154,6 @@ private slots:
     void windowVisibleChanged(bool visible);
     void handleWindowChanged(QQuickWindow *window);
     void screenCaptureReady();
-    void triggerLoad();
     void onActiveTabChanged(int oldTabId, int activeTabId);
     void onModelLoaded();
     void onDownloadStarted();
@@ -181,6 +180,7 @@ private:
     qreal contentHeight() const;
     void captureScreen(int size, qreal rotate);
     int parentTabId(int tabId) const;
+    void updateNavigationStatus(const Tab &tab);
     void updateVkbHeight();
 
     struct ScreenCapture {
