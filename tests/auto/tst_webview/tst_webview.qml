@@ -18,6 +18,7 @@ ApplicationWindow {
     id: window
 
     property alias webView: webView
+    property alias tabModel: webView.tabModel
 
     allowedOrientations: Orientation.Portrait
     _defaultPageOrientations: allowedOrientations

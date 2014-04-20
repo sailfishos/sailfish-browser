@@ -12,15 +12,30 @@
 #include "testobject.h"
 
 #include <QQmlComponent>
+#include <QQmlContext>
 #include <QQmlEngine>
 #include <QQuickView>
+#include <QQuickItem>
 #include <QSignalSpy>
 #include <QtTest>
+
+TestObject::TestObject()
+    : QObject()
+{
+}
 
 TestObject::TestObject(QByteArray qmlData)
     : QObject()
 {
     setTestData(qmlData);
+    mView.show();
+    QTest::qWaitForWindowExposed(&mView);
+}
+
+void TestObject::init(const QUrl &url)
+{
+    mView.setSource(url);
+    mRootObject = mView.rootObject();
     mView.show();
     QTest::qWaitForWindowExposed(&mView);
 }
@@ -44,4 +59,9 @@ void TestObject::setTestData(QByteArray qmlData)
     component.setData(qmlData, QUrl());
     mRootObject = component.create(mView.engine()->rootContext());
     mView.setContent(QUrl(""), 0, mRootObject);
+}
+
+void TestObject::setContextProperty(const QString &name, QObject *value)
+{
+    mView.rootContext()->setContextProperty(name, value);
 }

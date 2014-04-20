@@ -10,7 +10,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include <QtTest>
-#include <QQmlContext>
 #include <QQuickView>
 #include <qmozcontext.h>
 
@@ -19,13 +18,14 @@
 #include "declarativewebpage.h"
 #include "declarativewebviewcreator.h"
 #include "declarativewebutils.h"
+#include "testobject.h"
 
-class tst_webview : public QObject
+class tst_webview : public TestObject
 {
     Q_OBJECT
 
 public:
-    tst_webview(QQuickView * view, QObject *parent = 0);
+    tst_webview();
 
 private slots:
     void initTestCase();
@@ -42,36 +42,28 @@ private slots:
 
 private:
     QString formatUrl(QString fileName) const;
-    void waitSignals(QSignalSpy &spy, int expectedSignalCount) const;
 
     DeclarativeTabModel *tabModel;
     DeclarativeWebContainer *webContainer;
-    QQuickView *view;
     QString baseUrl;
 };
 
 
-tst_webview::tst_webview(QQuickView *view, QObject *parent)
-    : QObject(parent)
+tst_webview::tst_webview()
+    : TestObject()
     , tabModel(0)
-    , view(view)
+    , webContainer(0)
 {
 }
 
 void tst_webview::initTestCase()
 {
-    view->setSource(QUrl("qrc:///tst_webview.qml"));
-    view->showFullScreen();
-    QTest::qWaitForWindowExposed(view);
-
-    QQuickItem *appWindow = view->rootObject();
-    QVariant var = appWindow->property("webView");
-    webContainer = qobject_cast<DeclarativeWebContainer *>(qvariant_cast<QObject*>(var));
+    init(QUrl("qrc:///tst_webview.qml"));
+    webContainer = TestObject::qmlObject<DeclarativeWebContainer>("webView");
     QVERIFY(webContainer);
     QSignalSpy loadingChanged(webContainer, SIGNAL(loadingChanged()));
 
-    var = webContainer->property("tabModel");
-    tabModel = qobject_cast<DeclarativeTabModel *>(qvariant_cast<QObject*>(var));
+    tabModel = TestObject::qmlObject<DeclarativeTabModel>("tabModel");
     QVERIFY(tabModel);
     QSignalSpy tabAddedSpy(tabModel, SIGNAL(tabAdded(int)));
 
@@ -553,35 +545,21 @@ QString tst_webview::formatUrl(QString fileName) const
     return QUrl::fromLocalFile(baseUrl + "/" + fileName).toString();
 }
 
-/*!
-    Wait signal of \a spy to be emitted \a expectedSignalCount.
-
-    Note: this might cause indefinite loop, if not used cautiously. Check
-    that \a spy is initialized before expected emits can happen.
- */
-void tst_webview::waitSignals(QSignalSpy &spy, int expectedSignalCount) const
-{
-    while (spy.count() < expectedSignalCount) {
-        spy.wait();
-    }
-}
-
 int main(int argc, char *argv[])
 {
     setenv("USE_ASYNC", "1", 1);
     setenv("QML_BAD_GUI_RENDER_LOOP", "1", 1);
 
     QGuiApplication app(argc, argv);
-    QQuickView view;
     app.setAttribute(Qt::AA_Use96Dpi, true);
-    tst_webview testcase(&view);
+    tst_webview testcase;
+    testcase.setContextProperty("WebUtils", DeclarativeWebUtils::instance());
+    testcase.setContextProperty("MozContext", QMozContext::GetInstance());
 
     qmlRegisterType<DeclarativeTabModel>("Sailfish.Browser", 1, 0, "TabModel");
     qmlRegisterType<DeclarativeWebContainer>("Sailfish.Browser", 1, 0, "WebContainer");
     qmlRegisterType<DeclarativeWebPage>("Sailfish.Browser", 1, 0, "WebPage");
     qmlRegisterType<DeclarativeWebViewCreator>("Sailfish.Browser", 1, 0, "WebViewCreator");
-    view.rootContext()->setContextProperty("WebUtils", DeclarativeWebUtils::instance());
-    view.rootContext()->setContextProperty("MozContext", QMozContext::GetInstance());
 
     QString componentPath(DEFAULT_COMPONENTS_PATH);
     QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/components/EmbedLiteBinComponents.manifest"));

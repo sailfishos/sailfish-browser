@@ -93,7 +93,7 @@ private:
 tst_declarativetabmodel::tst_declarativetabmodel()
     : TestObject(QML_SNIPPET)
 {
-    tabModel = TestObject::model<DeclarativeTabModel>("tabModel");
+    tabModel = TestObject::qmlObject<DeclarativeTabModel>("tabModel");
     originalTabOrder.append(TestTab("http://sailfishos.org", "SailfishOS.org"));
     originalTabOrder.append(TestTab("file:///opt/tests/sailfish-browser/manual/testpage.html", "Test Page"));
     originalTabOrder.append(TestTab("https://sailfishos.org/sailfish-silica/index.html", "Creating applications with Sailfish Silica | Sailfish Silica 1.0"));
@@ -518,7 +518,7 @@ void tst_declarativetabmodel::reloadModel()
     setTestData(EMPTY_QML);
     setTestData(QML_SNIPPET);
 
-    tabModel = TestObject::model<DeclarativeTabModel>("tabModel");
+    tabModel = TestObject::qmlObject<DeclarativeTabModel>("tabModel");
     QSignalSpy loadedSpy(tabModel, SIGNAL(loadedChanged()));
     QVERIFY(tabModel);
     waitSignals(loadedSpy, 1);

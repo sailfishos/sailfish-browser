@@ -62,8 +62,8 @@ private:
 tst_declarativehistorymodel::tst_declarativehistorymodel()
     : TestObject(QML_SNIPPET)
 {
-    tabModel = TestObject::model<DeclarativeTabModel>("tabModel");
-    historyModel = TestObject::model<DeclarativeHistoryModel>("historyModel");
+    tabModel = TestObject::qmlObject<DeclarativeTabModel>("tabModel");
+    historyModel = TestObject::qmlObject<DeclarativeHistoryModel>("historyModel");
 }
 
 void tst_declarativehistorymodel::initTestCase()
