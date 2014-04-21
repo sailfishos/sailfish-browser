@@ -32,6 +32,7 @@ public:
     void init(const QUrl &url);
     void waitSignals(QSignalSpy &spy, int expectedSignalCount) const;
     void setTestData(QByteArray qmlData);
+    void setTestUrl(const QUrl &url);
     void setContextProperty(const QString &name, QObject *value);
 
     template <typename T> T *qmlObject(const char *propertyName) {

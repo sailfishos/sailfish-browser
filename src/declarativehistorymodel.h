@@ -57,5 +57,6 @@ private:
     QList<Link> m_links;
 
     friend class tst_declarativehistorymodel;
+    friend class tst_webview;
 };
 #endif // DECLARATIVEHISTORYMODEL_H

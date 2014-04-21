@@ -19,6 +19,7 @@ ApplicationWindow {
 
     property alias webView: webView
     property alias tabModel: webView.tabModel
+    property alias historyModel: historyModel
 
     allowedOrientations: Orientation.Portrait
     _defaultPageOrientations: allowedOrientations
@@ -31,8 +32,9 @@ ApplicationWindow {
             toolbarHeight: 50
             portrait: true
 
-            // Mimic onOpenUrlRequested handler of BrowserPage
-            Component.onCompleted: tabModel.newTab(WebUtils.homePage, "")
+            HistoryModel {
+                id: historyModel
+            }
         }
     }
 

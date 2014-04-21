@@ -13,6 +13,7 @@
 #include <QQuickView>
 #include <qmozcontext.h>
 
+#include "declarativehistorymodel.h"
 #include "declarativetabmodel.h"
 #include "declarativewebcontainer.h"
 #include "declarativewebpage.h"
@@ -38,11 +39,14 @@ private slots:
     void testLiveTabCount_data();
     void testLiveTabCount();
     void forwardBackwardNavigation();
+    void restart();
     void cleanupTestCase();
 
 private:
     QString formatUrl(QString fileName) const;
+    void verifyHistory();
 
+    DeclarativeHistoryModel *historyModel;
     DeclarativeTabModel *tabModel;
     DeclarativeWebContainer *webContainer;
     QString baseUrl;
@@ -51,6 +55,7 @@ private:
 
 tst_webview::tst_webview()
     : TestObject()
+    , historyModel(0)
     , tabModel(0)
     , webContainer(0)
 {
@@ -66,6 +71,9 @@ void tst_webview::initTestCase()
     tabModel = TestObject::qmlObject<DeclarativeTabModel>("tabModel");
     QVERIFY(tabModel);
     QSignalSpy tabAddedSpy(tabModel, SIGNAL(tabAdded(int)));
+
+    historyModel = TestObject::qmlObject<DeclarativeHistoryModel>("historyModel");
+    QVERIFY(historyModel);
 
     waitSignals(loadingChanged, 2);
 
@@ -518,6 +526,79 @@ void tst_webview::forwardBackwardNavigation()
     QVERIFY(webContainer->canGoForward());
 }
 
+void tst_webview::restart()
+{
+    historyModel->search("");
+    QTest::qWait(1000);
+    historyModel->clear();
+    QTest::qWait(1000);
+    tabModel->clear();
+    QTest::qWait(1000);
+
+    QVERIFY(historyModel->rowCount() == 0);
+    QVERIFY(tabModel->count() == 0);
+
+    // Title "TestPage"
+    QString testPageUrl = formatUrl("testpage.html");
+    tabModel->newTab(testPageUrl, "");
+    QTest::qWait(1000);
+
+    QCOMPARE(tabModel->activeTab().url(), testPageUrl);
+    QCOMPARE(webContainer->url(), testPageUrl);
+
+    // Title "TestUserAgent"
+    QString testUserAgentUrl = formatUrl("testuseragent.html");
+    webContainer->webPage()->loadTab(testUserAgentUrl, false);
+    QTest::qWait(1000);
+
+    QCOMPARE(tabModel->activeTab().url(), testUserAgentUrl);
+    QCOMPARE(webContainer->url(), testUserAgentUrl);
+    QVERIFY(tabModel->count() == 1);
+
+    QVERIFY(webContainer->canGoBack());
+    QVERIFY(!webContainer->canGoForward());
+
+    // Before restart
+    verifyHistory();
+
+    delete tabModel;
+    tabModel = 0;
+    delete historyModel;
+    historyModel = 0;
+    delete webContainer;
+    webContainer = 0;
+
+    setTestData(EMPTY_QML);
+    setTestUrl(QUrl("qrc:///tst_webview.qml"));
+    QTest::qWait(1000);
+
+    webContainer = TestObject::qmlObject<DeclarativeWebContainer>("webView");
+    historyModel = TestObject::qmlObject<DeclarativeHistoryModel>("historyModel");
+    tabModel = TestObject::qmlObject<DeclarativeTabModel>("tabModel");
+    QVERIFY(tabModel->count() == 1);
+    QCOMPARE(tabModel->activeTab().url(), testUserAgentUrl);
+    QCOMPARE(webContainer->url(), testUserAgentUrl);
+
+    QVERIFY(webContainer->canGoBack());
+    QVERIFY(!webContainer->canGoForward());
+
+    // After restart
+    verifyHistory();
+
+    webContainer->goBack();
+    QTest::qWait(1000);
+
+    // After back navigation
+    verifyHistory();
+
+    QVERIFY(!webContainer->canGoBack());
+    QVERIFY(webContainer->canGoForward());
+
+    QCOMPARE(tabModel->activeTab().url(), testPageUrl);
+    QCOMPARE(webContainer->url(), testPageUrl);
+    QVERIFY(tabModel->count() == 1);
+}
+
 void tst_webview::cleanupTestCase()
 {
     QTest::qWait(1000);
@@ -545,6 +626,27 @@ QString tst_webview::formatUrl(QString fileName) const
     return QUrl::fromLocalFile(baseUrl + "/" + fileName).toString();
 }
 
+void tst_webview::verifyHistory()
+{
+    QString testPageUrl = formatUrl("testpage.html");
+    QString testUserAgentUrl = formatUrl("testuseragent.html");
+    historyModel->search("");
+    QTest::qWait(1000);
+    QCOMPARE(historyModel->rowCount(), 2);
+    QModelIndex modelIndex = historyModel->createIndex(0, 0);
+    QCOMPARE(historyModel->data(modelIndex, DeclarativeHistoryModel::TitleRole).toString(),
+             QString("TestPage"));
+    QCOMPARE(historyModel->data(modelIndex, DeclarativeHistoryModel::UrlRole).toString(),
+             testPageUrl);
+
+    modelIndex = historyModel->createIndex(1, 0);
+    QCOMPARE(historyModel->data(modelIndex, DeclarativeHistoryModel::TitleRole).toString(),
+             QString("TestUserAgent"));
+    QCOMPARE(historyModel->data(modelIndex, DeclarativeHistoryModel::UrlRole).toString(),
+             testUserAgentUrl);
+
+}
+
 int main(int argc, char *argv[])
 {
     setenv("USE_ASYNC", "1", 1);
@@ -556,6 +658,7 @@ int main(int argc, char *argv[])
     testcase.setContextProperty("WebUtils", DeclarativeWebUtils::instance());
     testcase.setContextProperty("MozContext", QMozContext::GetInstance());
 
+    qmlRegisterType<DeclarativeHistoryModel>("Sailfish.Browser", 1, 0, "HistoryModel");
     qmlRegisterType<DeclarativeTabModel>("Sailfish.Browser", 1, 0, "TabModel");
     qmlRegisterType<DeclarativeWebContainer>("Sailfish.Browser", 1, 0, "WebContainer");
     qmlRegisterType<DeclarativeWebPage>("Sailfish.Browser", 1, 0, "WebPage");

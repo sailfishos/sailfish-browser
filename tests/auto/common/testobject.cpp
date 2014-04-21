@@ -34,8 +34,7 @@ TestObject::TestObject(QByteArray qmlData)
 
 void TestObject::init(const QUrl &url)
 {
-    mView.setSource(url);
-    mRootObject = mView.rootObject();
+    setTestUrl(url);
     mView.show();
     QTest::qWaitForWindowExposed(&mView);
 }
@@ -48,8 +47,11 @@ void TestObject::init(const QUrl &url)
 */
 void TestObject::waitSignals(QSignalSpy &spy, int expectedSignalCount) const
 {
-    while (spy.count() < expectedSignalCount) {
+    int i = 0;
+    int maxWaits = 10;
+    while (spy.count() < expectedSignalCount && i < maxWaits) {
         spy.wait();
+        ++i;
     }
 }
 
@@ -59,6 +61,12 @@ void TestObject::setTestData(QByteArray qmlData)
     component.setData(qmlData, QUrl());
     mRootObject = component.create(mView.engine()->rootContext());
     mView.setContent(QUrl(""), 0, mRootObject);
+}
+
+void TestObject::setTestUrl(const QUrl &url)
+{
+    mView.setSource(url);
+    mRootObject = mView.rootObject();
 }
 
 void TestObject::setContextProperty(const QString &name, QObject *value)
