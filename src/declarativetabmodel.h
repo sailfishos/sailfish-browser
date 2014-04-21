@@ -103,6 +103,7 @@ signals:
     void activeTabChanged(int oldTabId, int activeTabId);
     void tabAdded(int tabId);
     void tabClosed(int tabId);
+    void tabsCleared();
     void nextTabIdChanged();
     void loadedChanged();
     void browsingChanged();

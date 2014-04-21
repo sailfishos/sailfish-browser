@@ -127,6 +127,7 @@ void DeclarativeWebContainer::setTabModel(DeclarativeTabModel *model)
             connect(m_model, SIGNAL(loadedChanged()), this, SLOT(onModelLoaded()));
             connect(m_model, SIGNAL(tabAdded(int)), this, SLOT(manageMaxTabCount()));
             connect(m_model, SIGNAL(tabClosed(int)), this, SLOT(releasePage(int)));
+            connect(m_model, SIGNAL(tabsCleared()), this, SLOT(onTabsCleared()));
             // Try to make this to normal direct connection once we have removed QML_BAD_GUI_RENDER_LOOP.
             connect(m_model, SIGNAL(newTabRequested(QString,QString)), this, SLOT(onNewTabRequested(QString,QString)), Qt::QueuedConnection);
             connect(m_model, SIGNAL(updateActiveThumbnail()), this, SLOT(updateThumbnail()));
@@ -499,7 +500,7 @@ void DeclarativeWebContainer::handleWindowChanged(QQuickWindow *window)
 
 void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int activeTabId)
 {
-    if (activeTabId == 0) {
+    if (activeTabId <= 0) {
         setThumbnailPath("");
         return;
     }
@@ -621,6 +622,15 @@ void DeclarativeWebContainer::onReadyToLoad()
         // This can happen only during startup.
         emit triggerLoad(DeclarativeWebUtils::instance()->homePage(), "");
     }
+}
+
+void DeclarativeWebContainer::onTabsCleared()
+{
+    m_webPages->clear();
+    setThumbnailPath("");
+    emit contentItemChanged();
+    emit titleChanged();
+    emit urlChanged();
 }
 
 /**

@@ -107,6 +107,8 @@ void DeclarativeTabModel::clear()
     }
     closeActiveTab();
     endResetModel();
+    resetNewTabData();
+    emit tabsCleared();
 }
 
 
@@ -321,6 +323,9 @@ void DeclarativeTabModel::tabsAvailable(QList<Tab> tabs)
         qSort(m_tabs.begin(), m_tabs.end(), DeclarativeTabModel::tabSort);
         m_activeTab = m_tabs.at(0);
         m_tabs.removeAt(0);
+    } else {
+        m_activeTab = Tab();
+        emit tabsCleared();
     }
 
     endResetModel();

@@ -39,6 +39,7 @@ private slots:
     void testLiveTabCount_data();
     void testLiveTabCount();
     void forwardBackwardNavigation();
+    void clear();
     void restart();
     void cleanupTestCase();
 
@@ -82,6 +83,8 @@ void tst_webview::initTestCase()
     QCOMPARE(webPage->url().toString(), DeclarativeWebUtils::instance()->homePage());
     QCOMPARE(webPage->title(), QString("TestPage"));
     QCOMPARE(tabModel->count(), 1);
+    QCOMPARE(webContainer->m_webPages->count(), 1);
+    QCOMPARE(webContainer->m_webPages->m_activePages.count(), 1);
 
     baseUrl = QUrl(DeclarativeWebUtils::instance()->homePage()).toLocalFile();
     baseUrl = QFileInfo(baseUrl).canonicalPath();
@@ -182,6 +185,8 @@ void tst_webview::testNewTab()
     QCOMPARE(addedTabId, webContainer->webPage()->tabId());
 
     QFETCH(QStringList, activeTabs);
+    QCOMPARE(webContainer->m_webPages->count(), activeTabs.count());
+    QCOMPARE(webContainer->m_webPages->m_activePages.count(), activeTabs.count());
     QCOMPARE(webContainer->webPage()->url().toString(), activeTabs.at(0));
     activeTabs.removeFirst();
     for (int i = 0; i < activeTabs.count(); ++i) {
@@ -203,6 +208,8 @@ void tst_webview::testActivateTab()
     // "testselect.html", "TestSelect" (1)
     // "testpage.html", "TestPage" (2)
     QCOMPARE(tabModel->count(), 4);
+    QCOMPARE(webContainer->m_webPages->count(), 4);
+    QCOMPARE(webContainer->m_webPages->m_activePages.count(), 4);
 
     // "testpage.html", "TestPage"
     QModelIndex modelIndex = tabModel->createIndex(2, 0);
@@ -265,6 +272,8 @@ void tst_webview::testCloseActiveTab()
     int closedTabId = arguments.at(0).toInt();
     QCOMPARE(closedTabId, previousTabId);
     QCOMPARE(tabModel->count(), 3);
+    QCOMPARE(webContainer->m_webPages->count(), 3);
+    QCOMPARE(webContainer->m_webPages->m_activePages.count(), 3);
     // Two signals: closeActiveTab causes contentItem to be destroyed and second signal comes
     // when the first item from model is made as active tab.
     QCOMPARE(contentItemSpy.count(), 2);
@@ -312,6 +321,8 @@ void tst_webview::testRemoveTab()
     int closedTabId = arguments.at(0).toInt();
     QCOMPARE(closedTabId, tabIdOfIndexZero);
     QCOMPARE(tabModel->count(), 2);
+    QCOMPARE(webContainer->m_webPages->count(), 2);
+    QCOMPARE(webContainer->m_webPages->m_activePages.count(), 2);
 
     QVERIFY(activeTabChangedSpy.count() == 0);
     QVERIFY(urlChangedSpy.count() == 0);
@@ -338,12 +349,8 @@ void tst_webview::testUrlLoading()
     QString newUrl = formatUrl("testurlscheme.html");
     QString newTitle = "TestUrlScheme";
 
-    // Mimic favorite opening to a new tab. Favorites can have both url and title and when entering
-    // url through virtual keyboard only url is provided.
-    QMetaObject::invokeMethod(webContainer, "load", Qt::DirectConnection,
-                              Q_ARG(QVariant, newUrl),
-                              Q_ARG(QVariant, newTitle),
-                              Q_ARG(QVariant, false));
+    // Mimic favorite opening to already opened tab.
+    emit webContainer->triggerLoad(newUrl, newTitle);
     waitSignals(loadingChanged, 2);
 
     QCOMPARE(contentItemSpy.count(), 0);
@@ -365,6 +372,8 @@ void tst_webview::testUrlLoading()
     QVERIFY(webContainer->canGoBack());
     QVERIFY(!webContainer->canGoForward());
     QCOMPARE(tabModel->count(), 2);
+    QCOMPARE(webContainer->m_webPages->count(), 2);
+    QCOMPARE(webContainer->m_webPages->m_activePages.count(), 2);
 }
 
 void tst_webview::testLiveTabCount_data()
@@ -402,6 +411,7 @@ void tst_webview::testLiveTabCount()
     QCOMPARE(activeTabChangedSpy.count(), 1);
 
     QCOMPARE(webContainer->m_webPages->count(), liveTabCount);
+    QCOMPARE(webContainer->m_webPages->m_activePages.count(), expectedTabCount);
 }
 
 void tst_webview::forwardBackwardNavigation()
@@ -524,20 +534,29 @@ void tst_webview::forwardBackwardNavigation()
     QCOMPARE(webContainer->title(), QString("Test Web Prompts"));
     QVERIFY(!webContainer->canGoBack());
     QVERIFY(webContainer->canGoForward());
+
+    // Same as in previous case
+    QCOMPARE(tabModel->count(), 7);
+    QCOMPARE(webContainer->m_webPages->count(), webContainer->m_maxLiveTabCount);
+    QCOMPARE(webContainer->m_webPages->m_activePages.count(), 7);
+}
+
+void tst_webview::clear()
+{
+    QSignalSpy tabsCleared(tabModel, SIGNAL(tabsCleared()));
+    historyModel->clear();
+    tabModel->clear();
+    QTest::qWait(1000);
+    waitSignals(tabsCleared, 1);
+    QVERIFY(historyModel->rowCount() == 0);
+    QVERIFY(webContainer->m_webPages->count() == 0);
+    QVERIFY(webContainer->m_webPages->m_activePages.count() == 0);
+    QVERIFY(!webContainer->m_webPages->m_activePage);
+    QVERIFY(!webContainer->m_webPage);
 }
 
 void tst_webview::restart()
 {
-    historyModel->search("");
-    QTest::qWait(1000);
-    historyModel->clear();
-    QTest::qWait(1000);
-    tabModel->clear();
-    QTest::qWait(1000);
-
-    QVERIFY(historyModel->rowCount() == 0);
-    QVERIFY(tabModel->count() == 0);
-
     // Title "TestPage"
     QString testPageUrl = formatUrl("testpage.html");
     tabModel->newTab(testPageUrl, "");
@@ -553,7 +572,9 @@ void tst_webview::restart()
 
     QCOMPARE(tabModel->activeTab().url(), testUserAgentUrl);
     QCOMPARE(webContainer->url(), testUserAgentUrl);
-    QVERIFY(tabModel->count() == 1);
+    QCOMPARE(tabModel->count(), 1);
+    QCOMPARE(webContainer->m_webPages->count(), 1);
+    QCOMPARE(webContainer->m_webPages->m_activePages.count(), 1);
 
     QVERIFY(webContainer->canGoBack());
     QVERIFY(!webContainer->canGoForward());
@@ -596,7 +617,9 @@ void tst_webview::restart()
 
     QCOMPARE(tabModel->activeTab().url(), testPageUrl);
     QCOMPARE(webContainer->url(), testPageUrl);
-    QVERIFY(tabModel->count() == 1);
+    QCOMPARE(tabModel->count(), 1);
+    QCOMPARE(webContainer->m_webPages->count(), 1);
+    QCOMPARE(webContainer->m_webPages->m_activePages.count(), 1);
 }
 
 void tst_webview::cleanupTestCase()

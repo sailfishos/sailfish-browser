@@ -32,12 +32,9 @@ QHash<int, QByteArray> DeclarativeHistoryModel::roleNames() const
 
 void DeclarativeHistoryModel::clear()
 {
-    if (m_links.count() == 0)
-        return;
-
-    beginRemoveRows(QModelIndex(), 0, m_links.count() - 1);
+    beginResetModel();
     m_links.clear();
-    endRemoveRows();
+    endResetModel();
     DBManager::instance()->clearHistory();
     emit countChanged();
 }

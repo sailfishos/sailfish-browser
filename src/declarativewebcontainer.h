@@ -159,6 +159,7 @@ private slots:
     void onDownloadStarted();
     void onNewTabRequested(QString url, QString title);
     void onReadyToLoad();
+    void onTabsCleared();
     void manageMaxTabCount();
     void releasePage(int tabId, bool virtualize = false);
     void closeWindow();
