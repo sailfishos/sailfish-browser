@@ -365,7 +365,7 @@ void DeclarativeWebContainer::loadNewTab(QString url, QString title, int parentI
 
 void DeclarativeWebContainer::captureScreen()
 {
-    if (!m_webPage) {
+    if (!m_webPage || !isVisible()) {
         return;
     }
 
@@ -562,9 +562,10 @@ void DeclarativeWebContainer::onModelLoaded()
 {
     // This signal handler is responsible for activating
     // the first page.
-    if (m_model->hasNewTabData() || m_model->count() == 0) {
+    bool firstUseDone = DeclarativeWebUtils::instance()->firstUseDone();
+    if (m_model->hasNewTabData() || (m_model->count() == 0 && firstUseDone)) {
         activatePage(m_model->nextTabId(), true);
-    } else {
+    } else if (m_model->count() > 0) {
         const Tab &tab = m_model->activeTab();
         activatePage(tab.tabId(), true);
     }

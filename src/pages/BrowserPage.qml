@@ -137,7 +137,7 @@ Page {
         Browser.StatusBar {
             width: parent.width
             height: visible ? toolBarContainer.height * 3 : 0
-            visible: isPortrait
+            visible: isPortrait && !firstUseOverlay
             opacity: progressBar.opacity
             title: webView.title
             url: webView.url
@@ -153,6 +153,7 @@ Page {
             Browser.ProgressBar {
                 id: progressBar
                 anchors.fill: parent
+                visible: !firstUseOverlay
                 opacity: webView.loading ? 1.0 : 0.0
                 progress: webView.loadProgress / 100.0
             }
@@ -220,6 +221,10 @@ Page {
                     id: tabPageButton
                     source: "image://theme/icon-m-tabs"
                     onClicked: {
+                        if (firstUseOverlay) {
+                            firstUseOverlay.visible = false
+                            firstUseOverlay.destroy()
+                        }
                         if (!WebUtils.firstUseDone) WebUtils.firstUseDone = true
                         controlArea.openTabPage(false, false, PageStackAction.Animated)
                     }
@@ -295,11 +300,6 @@ Page {
             }
             if (browserPage.status !== PageStatus.Active) {
                 pageStack.pop(browserPage, PageStackAction.Immediate)
-            }
-        }
-        onFirstUseDoneChanged: {
-            if (WebUtils.firstUseDone && firstUseOverlay) {
-                firstUseOverlay.destroy()
             }
         }
     }
