@@ -116,6 +116,7 @@ void DBManager::removeTab(int tabId)
 
 void DBManager::removeAllTabs()
 {
+    m_maxTabId = 0;
     QMetaObject::invokeMethod(worker, "removeAllTabs", Qt::QueuedConnection);
 }
 
@@ -133,6 +134,7 @@ void DBManager::updateThumbPath(int tabId, QString path)
 
 void DBManager::clearHistory()
 {
+    m_maxTabId = 0;
     QMetaObject::invokeMethod(worker, "clearHistory", Qt::QueuedConnection);
 }
 
@@ -180,5 +182,8 @@ void DBManager::deleteSetting(QString name)
 
 void DBManager::tabListAvailable(QList<Tab> tabs)
 {
+    if (tabs.isEmpty()) {
+        m_maxTabId = 0;
+    }
     emit tabsAvailable(tabs);
 }

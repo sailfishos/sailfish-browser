@@ -1,5 +1,6 @@
 TARGET = tst_webview
 include(../test_common.pri)
+include(../common/testobject.pri)
 
 CONFIG += link_pkgconfig
 

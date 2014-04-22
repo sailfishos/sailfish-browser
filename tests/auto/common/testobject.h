@@ -26,12 +26,16 @@ class TestObject : public QObject
     Q_OBJECT
 
 public:
+    explicit TestObject();
     explicit TestObject(QByteArray qmlData);
 
+    void init(const QUrl &url);
     void waitSignals(QSignalSpy &spy, int expectedSignalCount) const;
     void setTestData(QByteArray qmlData);
+    void setTestUrl(const QUrl &url);
+    void setContextProperty(const QString &name, QObject *value);
 
-    template <typename T> T *model(const char *propertyName) {
+    template <typename T> T *qmlObject(const char *propertyName) {
         QVariant var = mRootObject->property(propertyName);
         return qobject_cast<T *>(qvariant_cast<QObject*>(var));
     }

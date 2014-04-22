@@ -89,7 +89,7 @@ public:
     const QList<Tab>& tabs() const;
     const Tab& activeTab() const;
 
-    void updateUrl(int tabId, bool activeTab, QString url);
+    void updateUrl(int tabId, bool activeTab, QString url, bool initialLoad = false);
     void updateTitle(int tabId, bool activeTab, QString title);
     void updateThumbnailPath(int tabId, bool activeTab, QString path);
 
@@ -103,6 +103,7 @@ signals:
     void activeTabChanged(int oldTabId, int activeTabId);
     void tabAdded(int tabId);
     void tabClosed(int tabId);
+    void tabsCleared();
     void nextTabIdChanged();
     void loadedChanged();
     void browsingChanged();

@@ -44,6 +44,7 @@ public:
 
     WebPageActivationData page(int tabId, int parentId = 0);
     void release(int tabId, bool virtualize = false);
+    void clear();
     int parentTabId(int tabId) const;
     void dumpPages() const;
 
@@ -64,6 +65,8 @@ private:
     QMap<int, WebPageEntry*> m_activePages;
     WebPageEntry *m_activePage;
     int m_count;
+
+    friend class tst_webview;
 };
 
 #endif

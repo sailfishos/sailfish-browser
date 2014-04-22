@@ -217,7 +217,8 @@ void DBWorker::removeTab(int tabId)
 
     // Check last tab closed
     if (!tabCount()) {
-        emit tabAvailable(Tab(-1, Link(), -1, -1));
+        QList<Tab> tabList;
+        emit tabsAvailable(tabList);
     }
 }
 
@@ -236,7 +237,8 @@ void DBWorker::removeAllTabs()
     query = prepare("DELETE FROM tab_history;");
     execute(query);
 
-    emit tabAvailable(Tab(-1, Link(), -1, -1));
+    QList<Tab> tabList;
+    emit tabsAvailable(tabList);
 }
 
 void DBWorker::getTab(int tabId)

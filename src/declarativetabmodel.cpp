@@ -107,6 +107,8 @@ void DeclarativeTabModel::clear()
     }
     closeActiveTab();
     endResetModel();
+    resetNewTabData();
+    emit tabsCleared();
 }
 
 
@@ -321,6 +323,9 @@ void DeclarativeTabModel::tabsAvailable(QList<Tab> tabs)
         qSort(m_tabs.begin(), m_tabs.end(), DeclarativeTabModel::tabSort);
         m_activeTab = m_tabs.at(0);
         m_tabs.removeAt(0);
+    } else {
+        m_activeTab = Tab();
+        emit tabsCleared();
     }
 
     endResetModel();
@@ -372,13 +377,13 @@ void DeclarativeTabModel::tabChanged(const Tab &tab)
     }
 }
 
-void DeclarativeTabModel::updateUrl(int tabId, bool activeTab, QString url)
+void DeclarativeTabModel::updateUrl(int tabId, bool activeTab, QString url, bool initialLoad)
 {
     if (m_backForwardNavigation && activeTab)
     {
         updateTabUrl(tabId, activeTab, url, false);
     } else if (!hasNewTabData()) {
-        updateTabUrl(tabId, activeTab, url, true);
+        updateTabUrl(tabId, activeTab, url, !initialLoad);
     } else {
         addTab(url, newTabTitle());
     }
@@ -469,7 +474,6 @@ void DeclarativeTabModel::loadTabOrder()
         }
     }
 }
-
 void DeclarativeTabModel::updateActiveTab(const Tab &activeTab)
 {
 #ifdef DEBUG_LOGS
