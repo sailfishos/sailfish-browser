@@ -21,15 +21,23 @@ class SettingManager : public QObject
 public:
     explicit SettingManager(QObject *parent = 0);
 
-    bool clearPrivateDataRequested() const;
+    bool clearHistoryRequested() const;
     void initialize();
 
 private slots:
-    void clearPrivateData();
+    bool clearPrivateData();
+    void clearHistory();
+    void clearCookies();
+    void clearPasswords();
+    void clearCache();
     void setSearchEngine();
 
 private:
     MGConfItem *m_clearPrivateDataConfItem;
+    MGConfItem *m_clearHistoryConfItem;
+    MGConfItem *m_clearCookiesConfItem;
+    MGConfItem *m_clearPasswordsConfItem;
+    MGConfItem *m_clearCacheConfItem;
     MGConfItem *m_searchEngineConfItem;
 };
 

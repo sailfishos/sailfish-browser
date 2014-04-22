@@ -25,12 +25,7 @@ Page {
         }
     }
 
-    RemorsePopup {
-        id: clearDataRemorse
-    }
-
     SilicaFlickable {
-        id: flickable
         anchors.fill: parent
         contentHeight: contentColumn.height
 
@@ -47,15 +42,12 @@ Page {
 
             Button {
                 anchors.horizontalCenter: parent.horizontalCenter
-                //% "Clear private data"
-                text: qsTrId("settings_browser-bt-clear_private_data")
-
-                onClicked: {
-                    //: Remorse item for clearing private date
-                    //% "Clearing"
-                    clearDataRemorse.execute(qsTrId("settings_browser-la-clearing_private_data"), function() { clearPrivateDataConfig.value = true});
-                }
+                //: Button for opening privacy settings page.
+                //% "Privacy"
+                text: qsTrId("settings_browser-bt-privacy")
+                onClicked: pageStack.push(Qt.resolvedUrl("Privacy.qml"))
             }
+
 
             ComboBox {
                 id: searchEngine
@@ -85,13 +77,6 @@ Page {
                 }
             }
         }
-    }
-
-    ConfigurationValue {
-        id: clearPrivateDataConfig
-
-        key: "/apps/sailfish-browser/actions/clear_private_data"
-        defaultValue: false
     }
 
     ConfigurationValue {
