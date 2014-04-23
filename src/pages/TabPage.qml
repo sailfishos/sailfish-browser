@@ -27,6 +27,7 @@ Page {
 
     property Item historyHeader
     property Item favoriteHeader
+    property Item tabsRepeater
 
     property string _search
 
@@ -53,6 +54,9 @@ Page {
     backNavigation: browserPage.tabs.count > 0 && browserPage.url != ""
     states: [
         State {
+            when: page.status < PageStatus.Active
+        },
+        State {
             name: "historylist"
             when: historyVisible
         },
@@ -70,7 +74,18 @@ Page {
                     PropertyAction { target: commonHeader; property: "parent"; value: page }
                     FadeAnimation { target: favoriteList; from: 0.0; to: 1.0}
                     PropertyAction { target: commonHeader; property: "parent"; value: page.favoriteHeader }
-                    ScriptAction { script: favoriteList.positionViewAtBeginning() }
+                    ScriptAction { script: {
+                            if (!tabsRepeater.model && !page.newTab) {
+                                tabsRepeater.model = browserPage.tabs
+                            }
+
+                            if (!favoriteList.model) {
+                                favoriteList.model = browserPage.favorites
+                            }
+
+                            favoriteList.positionViewAtBeginning()
+                        }
+                    }
                 }
                 FadeAnimation { target: historyList; from: 1.0; to: 0.0 }
             }
@@ -82,8 +97,16 @@ Page {
                     PropertyAction { target: commonHeader; property: "parent"; value: page }
                     FadeAnimation { target: historyList; from: 0.0; to: 1.0}
                     PropertyAction { target: commonHeader; property: "parent"; value: page.historyHeader }
-                    ScriptAction { script: historyList.positionViewAtBeginning() }
-                    ScriptAction { script: { focusTimer.restart() } }
+                    PropertyAction { target: page.historyHeader; property: "opacity"; value: 1.0 }
+                    ScriptAction { script: {
+                            if (!historyList.model) {
+                                historyList.model = browserPage.history
+                            }
+
+                            historyList.positionViewAtBeginning()
+                            focusTimer.restart()
+                        }
+                    }
                 }
                 FadeAnimation { target: favoriteList; from: 1.0; to: 0.0 }
             }
@@ -99,6 +122,9 @@ Page {
             id: historyHeader
             width: commonHeader.width
             height: commonHeader.height + historySectionHeader.height
+            opacity: 0.0
+
+            Behavior on opacity { FadeAnimation {} }
 
             SectionHeader {
                 id: historySectionHeader
@@ -110,7 +136,6 @@ Page {
 
             Component.onCompleted: page.historyHeader = historyHeader
         }
-        model: browserPage.history
         search: _search
 
         onLoad: page.load(url, title)
@@ -148,9 +173,15 @@ Page {
                 move: Transition {
                     NumberAnimation { properties: "x,y"; easing.type: Easing.InOutQuad; duration: 200 }
                 }
+                add: Transition {
+                    AddAnimation {}
+                }
 
                 Repeater {
-                    model: browserPage.tabs
+                    id: tabsRepeater
+
+                    onModelChanged: favoriteSectionHeader.opacity = 1.0
+
                     Browser.TabItem {
                         width: page.width/tabsGrid.columns
                         height: width
@@ -158,6 +189,7 @@ Page {
                         // from the model and old active tab pushed to first.
                         onClicked: activateTab(model.index)
                     }
+                    Component.onCompleted: page.tabsRepeater = tabsRepeater
                 }
                 Behavior on height {
                     NumberAnimation { easing.type: Easing.InOutQuad; duration: 200 }
@@ -170,11 +202,13 @@ Page {
                 //% "Favorites"
                 text: qsTrId("sailfish_browser-he-favorites")
                 anchors.bottom: favoriteHeader.bottom
+                opacity: 0.0
+
+                Behavior on opacity { FadeAnimation {} }
             }
 
             Component.onCompleted: page.favoriteHeader = favoriteHeader
         }
-        model: browserPage.favorites
         hasContextMenu: !page.newTab
 
         onLoad: {
