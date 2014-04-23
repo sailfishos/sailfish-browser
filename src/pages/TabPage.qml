@@ -110,9 +110,11 @@ Page {
         onLoad: page.load(url, title)
 
         Browser.TabPageMenu {
+            active: page.status === PageStatus.Active
             visible: browserPage.tabs.count > 0 && !page.newTab
             shareEnabled: browserPage.url == _search
             browserPage: page.browserPage
+            flickable: historyList
         }
     }
 
@@ -177,12 +179,13 @@ Page {
         onRemoveBookmark: browserPage.favorites.removeBookmark(url)
 
         Browser.TabPageMenu {
+            active: page.status === PageStatus.Active
             visible: browserPage.tabs.count > 0 && !page.newTab
             shareEnabled: browserPage.url == _search
             browserPage: page.browserPage
+            flickable: favoriteList
         }
     }
-
 
     Column {
         id: commonHeader
