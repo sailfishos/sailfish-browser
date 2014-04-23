@@ -54,23 +54,23 @@ Rectangle {
         source: thumbnailPath
         sourceSize.width: Screen.width / 2
         visible: status !== Image.Error && thumbnailPath !== ""
+    }
 
-        RadialGradient {
-            source: thumb
-            width: thumb.width
-            height: thumb.height
-            anchors.centerIn: parent
-            horizontalOffset: - width/2
-            verticalOffset: - width/2
-            verticalRadius: Theme.itemSizeExtraLarge * 3
-            horizontalRadius: Theme.itemSizeExtraLarge * 3
-            clip: true
+    Image {
+        id: mask
+        source: "graphic-radial-mask.png"
+        width: thumb.width
+        height: thumb.height
+        visible: false
+        smooth: true
+        anchors.centerIn: thumb
+    }
 
-            gradient: Gradient {
-                GradientStop { position: 0.0; color: "transparent"}
-                GradientStop { position: 1.0; color: Theme.highlightDimmerColor}
-            }
-        }
+    ColorOverlay {
+        anchors.fill: mask
+        source: mask
+        color: Theme.highlightDimmerColor
+        cached: true
     }
 
     BackgroundItem {
