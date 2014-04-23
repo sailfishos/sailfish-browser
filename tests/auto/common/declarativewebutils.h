@@ -31,12 +31,15 @@ public:
     static DeclarativeWebUtils *instance();
 
     QString homePage() const;
+    bool firstUseDone() const;
+    void setFirstUseDone(bool firstUseDone);
 
 signals:
     void homePageChanged();
 
 private:
     QString m_homePage;
+    bool m_firstUseDone;
 };
 
 QML_DECLARE_TYPE(DeclarativeWebUtils)
