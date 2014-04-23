@@ -132,6 +132,9 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     mozContext->setPref(QString("ui.click_hold_context_menus.delay"), QVariant(800));
     mozContext->setPref(QString("apz.fling_stopped_threshold"), QString("0.13f"));
 
+    // Don't force 16bit color depth
+    mozContext->setPref(QString("gfx.qt.rgb16.force"), QVariant(false));
+
     // subscribe to gecko messages
     mozContext->addObservers(QStringList()
                              << "clipboard:setdata"
