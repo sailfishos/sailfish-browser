@@ -23,11 +23,13 @@ Page {
     // focus to input field on opening
     property bool initialSearchFocus
     property bool newTab
-    property bool historyVisible: _editing || initialSearchFocus
+    property bool historyVisible: initialSearchFocus
+
     property Item historyHeader
     property Item favoriteHeader
+    property Item tabsRepeater
 
-    property bool _editing
+    property bool initialized: false
     property string _search
 
     function load(url, title) {
@@ -44,8 +46,17 @@ Page {
         pageStack.pop(browserPage)
     }
 
+    onStatusChanged: {
+        if (status === PageStatus.Active) {
+            initialized = true
+        }
+    }
+
     backNavigation: browserPage.tabs.count > 0 && browserPage.url != ""
     states: [
+        State {
+            when: page.status < PageStatus.Active && !initialized
+        },
         State {
             name: "historylist"
             when: historyVisible
@@ -64,7 +75,18 @@ Page {
                     PropertyAction { target: commonHeader; property: "parent"; value: page }
                     FadeAnimation { target: favoriteList; from: 0.0; to: 1.0}
                     PropertyAction { target: commonHeader; property: "parent"; value: page.favoriteHeader }
-                    ScriptAction { script: favoriteList.positionViewAtBeginning() }
+                    ScriptAction { script: {
+                            if (!tabsRepeater.model && !page.newTab) {
+                                tabsRepeater.model = browserPage.tabs
+                            }
+
+                            if (!favoriteList.model) {
+                                favoriteList.model = browserPage.favorites
+                            }
+
+                            favoriteList.positionViewAtBeginning()
+                        }
+                    }
                 }
                 FadeAnimation { target: historyList; from: 1.0; to: 0.0 }
             }
@@ -76,13 +98,32 @@ Page {
                     PropertyAction { target: commonHeader; property: "parent"; value: page }
                     FadeAnimation { target: historyList; from: 0.0; to: 1.0}
                     PropertyAction { target: commonHeader; property: "parent"; value: page.historyHeader }
-                    ScriptAction { script: historyList.positionViewAtBeginning() }
-                    ScriptAction { script: { focusTimer.running = true; page.initialSearchFocus = false } }
+                    PropertyAction { target: page.historyHeader; property: "opacity"; value: 1.0 }
+                    ScriptAction { script: {
+                            if (!historyList.model) {
+                                historyList.model = browserPage.history
+                            }
+
+                            historyList.positionViewAtBeginning()
+                            focusTimer.restart()
+                        }
+                    }
                 }
                 FadeAnimation { target: favoriteList; from: 1.0; to: 0.0 }
             }
         }
     ]
+
+    BusyIndicator {
+        anchors {
+            horizontalCenter: parent.horizontalCenter
+            verticalCenter: parent.bottom
+            verticalCenterOffset: browserPage.isPortrait ? -Screen.width / 2 - Theme.paddingLarge : -Screen.width / 4
+        }
+
+        size: BusyIndicatorSize.Large
+        running: !initialized
+    }
 
     Browser.HistoryList {
         id: historyList
@@ -93,6 +134,9 @@ Page {
             id: historyHeader
             width: commonHeader.width
             height: commonHeader.height + historySectionHeader.height
+            opacity: 0.0
+
+            Behavior on opacity { FadeAnimation {} }
 
             SectionHeader {
                 id: historySectionHeader
@@ -104,15 +148,16 @@ Page {
 
             Component.onCompleted: page.historyHeader = historyHeader
         }
-        model: browserPage.history
         search: _search
 
         onLoad: page.load(url, title)
 
         Browser.TabPageMenu {
+            active: initialized
             visible: browserPage.tabs.count > 0 && !page.newTab
             shareEnabled: browserPage.url == _search
             browserPage: page.browserPage
+            flickable: historyList
         }
     }
 
@@ -140,9 +185,15 @@ Page {
                 move: Transition {
                     NumberAnimation { properties: "x,y"; easing.type: Easing.InOutQuad; duration: 200 }
                 }
+                add: Transition {
+                    AddAnimation {}
+                }
 
                 Repeater {
-                    model: browserPage.tabs
+                    id: tabsRepeater
+
+                    onModelChanged: favoriteSectionHeader.opacity = 1.0
+
                     Browser.TabItem {
                         width: page.width/tabsGrid.columns
                         height: width
@@ -150,6 +201,7 @@ Page {
                         // from the model and old active tab pushed to first.
                         onClicked: activateTab(model.index)
                     }
+                    Component.onCompleted: page.tabsRepeater = tabsRepeater
                 }
                 Behavior on height {
                     NumberAnimation { easing.type: Easing.InOutQuad; duration: 200 }
@@ -162,11 +214,13 @@ Page {
                 //% "Favorites"
                 text: qsTrId("sailfish_browser-he-favorites")
                 anchors.bottom: favoriteHeader.bottom
+                opacity: 0.0
+
+                Behavior on opacity { FadeAnimation {} }
             }
 
             Component.onCompleted: page.favoriteHeader = favoriteHeader
         }
-        model: browserPage.favorites
         hasContextMenu: !page.newTab
 
         onLoad: {
@@ -177,12 +231,13 @@ Page {
         onRemoveBookmark: browserPage.favorites.removeBookmark(url)
 
         Browser.TabPageMenu {
+            active: initialized
             visible: browserPage.tabs.count > 0 && !page.newTab
             shareEnabled: browserPage.url == _search
             browserPage: page.browserPage
+            flickable: favoriteList
         }
     }
-
 
     Column {
         id: commonHeader
@@ -261,68 +316,103 @@ Page {
                     text: (browserPage.tabs.count == 0 || newTab) ? qsTrId("sailfish_browser-la-new_tab") : (browserPage.url == _search ? browserPage.title : "")
                     color: Theme.highlightColor
                     font.pixelSize: Theme.fontSizeSmall
-                    width: searchField.width - x - Theme.paddingMedium
+                    width: textFieldLoader.width - x - Theme.paddingMedium
                     truncationMode: TruncationMode.Fade
-                }
-                TextField {
-                    id: searchField
+                    opacity: 0.0
 
+                    Behavior on opacity { FadeAnimation {} }
+                }
+
+                Loader {
+                    id: textFieldLoader
+
+                    property bool searchFieldFocused: item ? item.focus : false
+                    property bool focusOnceLoaded
+
+                    asynchronous: true
                     width: page.isPortrait ? page.width - (closeActiveTabButton.visible ? closeActiveTabButton.width : 0)
                                            : page.width - urlColumn.x - Theme.paddingMedium
-                    // Handle initially newTab state. Currently newTab initially
-                    // true when triggering new tab cover action.
-                    text: newTab ? "" : browserPage.url
+                    height: Theme.itemSizeMedium
+                    active: initialized
 
-                    //: Placeholder for the search/address field
-                    //% "Search or Address"
-                    placeholderText: qsTrId("sailfish_browser-ph-search_or_url")
-                    color: searchField.focus ? Theme.highlightColor : Theme.primaryColor
-                    focusOutBehavior: FocusBehavior.KeepFocus
-                    inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase | Qt.ImhUrlCharactersOnly
+                    sourceComponent: TextField {
+                        id: searchField
 
-
-                    label: {
-                        if (text.length === 0) return ""
-
-                        if (searchField.activeFocus || text !== browserPage.url) {
-                            // Reuse search label
-                            return qsTrId("sailfish_browser-la-search")
+                        function focusAndSelect() {
+                            forceActiveFocus()
+                            selectAll()
+                            _updateFlickables()
                         }
 
-                        //: Active browser tab.
-                        //% "Active Tab"
-                        var activeTab = qsTrId("sailfish_browser-la-active-tab")
+                        width: parent.width
+                        // Handle initially newTab state. Currently newTab initially
+                        // true when triggering new tab cover action.
+                        text: newTab ? "" : browserPage.url
 
-                        if (text === browserPage.url && browserPage.viewLoading) {
-                            //: Current browser page loading.
-                            //% "Loading"
-                            return activeTab + " • " + qsTrId("sailfish_browser-la-loading")
-                        } else {
-                            //: Current browser page loaded.
-                            //% "Done"
-                            return activeTab + " • " + qsTrId("sailfish_browser-la-done")
+                        //: Placeholder for the search/address field
+                        //% "Search or Address"
+                        placeholderText: qsTrId("sailfish_browser-ph-search_or_url")
+                        color: searchField.focus ? Theme.highlightColor : Theme.primaryColor
+                        focusOutBehavior: FocusBehavior.KeepFocus
+                        inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase | Qt.ImhUrlCharactersOnly
+                        opacity: 0.0
+
+                        label: {
+                            if (text.length === 0) return ""
+
+                            if (searchField.activeFocus || text !== browserPage.url) {
+                                // Reuse search label
+                                return qsTrId("sailfish_browser-la-search")
+                            }
+
+                            //: Active browser tab.
+                            //% "Active Tab"
+                            var activeTab = qsTrId("sailfish_browser-la-active-tab")
+
+                            if (text === browserPage.url && browserPage.viewLoading) {
+                                //: Current browser page loading.
+                                //% "Loading"
+                                return activeTab + " • " + qsTrId("sailfish_browser-la-loading")
+                            } else {
+                                //: Current browser page loaded.
+                                //% "Done"
+                                return activeTab + " • " + qsTrId("sailfish_browser-la-done")
+                            }
+                        }
+
+                        EnterKey.iconSource: "image://theme/icon-m-enter-accept"
+                        EnterKey.onClicked: {
+                            Qt.inputMethod.hide()
+                            // let gecko figure out how to handle malformed URLs
+                            page.load(searchField.text)
+                        }
+
+                        onTextChanged: if (text != browserPage.url) browserPage.history.search(text)
+                        onFocusChanged: historyVisible = focus
+
+                        Behavior on opacity { FadeAnimation {} }
+                        Binding { target: page; property: "_search"; value: searchField.text }
+                    }
+
+                    // These steps cannot be done in TextField's Component.onCompleted as
+                    // item of the Loader might be still null.
+                    onLoaded: {
+                        item.opacity = 1.0
+                        titleLabel.opacity = 1.0
+                        if (textFieldLoader.focusOnceLoaded) {
+                            focusTimer.restart()
                         }
                     }
-
-                    EnterKey.iconSource: "image://theme/icon-m-enter-accept"
-                    EnterKey.onClicked: {
-                        Qt.inputMethod.hide()
-                        // let gecko figure out how to handle malformed URLs
-                        page.load(searchField.text)
-                    }
-
-                    onTextChanged: if (text != browserPage.url) browserPage.history.search(text)
-
-                    Binding { target: page; property: "_search"; value: searchField.text }
-                    Binding { target: page; property: "_editing"; value: searchField.focus }
 
                     Timer {
                         id: focusTimer
                         interval: 1
                         onTriggered: {
-                            searchField.forceActiveFocus()
-                            searchField.selectAll()
-                            searchField._updateFlickables()
+                            if (textFieldLoader.item) {
+                                textFieldLoader.item.focusAndSelect()
+                            } else {
+                                textFieldLoader.focusOnceLoaded = true
+                            }
                         }
                     }
                 }
@@ -339,7 +429,7 @@ Page {
 
             Browser.CloseTabButton {
                 id: closeActiveTabButton
-                visible: browserPage.tabs.count > 0 && !page.newTab && !searchField.focus
+                visible: browserPage.tabs.count > 0 && !page.newTab && !textFieldLoader.searchFieldFocus
                 closeActiveTab: true
             }
         }

@@ -13,25 +13,37 @@ import QtQuick 2.1
 import Sailfish.Silica 1.0
 import ".."
 
-PullDownMenu {
-    property bool shareEnabled
+Loader {
+    id: tabPageMenuLoader
     property BrowserPage browserPage
+    property Item flickable
+    property bool shareEnabled
 
-    MenuItem {
-        //% "Close all tabs"
-        text: qsTrId("sailfish_browser-me-close_all")
-        onClicked: browserPage.tabs.clear()
-    }
-    MenuItem {
-        enabled: shareEnabled
-        //: Share link from browser pulley menu
-        //% "Share"
-        text: qsTrId("sailfish_browser-me-share_link")
-        onClicked: pageStack.push(Qt.resolvedUrl("../ShareLinkPage.qml"), {"link" : browserPage.url, "linkTitle": browserPage.title})
-    }
-    MenuItem {
-        //% "New tab"
-        text: qsTrId("sailfish_browser-me-new_tab")
-        onClicked: pageStack.push(Qt.resolvedUrl("../TabPage.qml"), {"newTab": true, "browserPage": browserPage})
+    asynchronous: true
+    sourceComponent: PullDownMenu {
+        opacity: 0.0
+        flickable: tabPageMenuLoader.flickable
+
+        Behavior on opacity { FadeAnimation {} }
+
+        MenuItem {
+            //% "Close all tabs"
+            text: qsTrId("sailfish_browser-me-close_all")
+            onClicked: browserPage.tabs.clear()
+        }
+        MenuItem {
+            enabled: shareEnabled
+            //: Share link from browser pulley menu
+            //% "Share"
+            text: qsTrId("sailfish_browser-me-share_link")
+            onClicked: pageStack.push(Qt.resolvedUrl("../ShareLinkPage.qml"), {"link" : browserPage.url, "linkTitle": browserPage.title})
+        }
+        MenuItem {
+            //% "New tab"
+            text: qsTrId("sailfish_browser-me-new_tab")
+            onClicked: pageStack.push(Qt.resolvedUrl("../TabPage.qml"), {"newTab": true, "browserPage": browserPage})
+        }
+
+        Component.onCompleted: opacity = 1.0
     }
 }

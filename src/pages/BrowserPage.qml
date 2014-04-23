@@ -21,6 +21,7 @@ Page {
 
     property Item firstUseOverlay
     property alias firstUseFullscreen: webView.firstUseFullscreen
+    property Component tabPageComponent
 
     property alias tabs: webView.tabModel
     property alias favorites: favoriteModel
@@ -107,7 +108,7 @@ Page {
 
         tabModel.onCountChanged: {
             if (tabModel.count === 0 && browserPage.status === PageStatus.Active) {
-                pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage, "initialSearchFocus": true })
+                pageStack.push(tabPageComponent ? tabPageComponent : Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage, "initialSearchFocus": true })
             }
         }
     }
@@ -125,12 +126,12 @@ Page {
         function openTabPage(focus, newTab, operationType) {
             if (browserPage.status === PageStatus.Active) {
                 webView.captureScreen()
-                pageStack.push(Qt.resolvedUrl("TabPage.qml"),
-                               {
-                                   "browserPage" : browserPage,
-                                   "initialSearchFocus": focus,
-                                   "newTab": newTab
-                               }, operationType)
+                pageStack.push(tabPageComponent ? tabPageComponent : Qt.resolvedUrl("TabPage.qml"),
+                                                  {
+                                                      "browserPage" : browserPage,
+                                                      "initialSearchFocus": focus,
+                                                      "newTab": newTab
+                                                  }, operationType)
             }
         }
 
@@ -321,5 +322,14 @@ Page {
 
     Browser.BrowserNotification {
         id: notification
+    }
+
+    // Compile TabPage
+    Loader {
+        id: tabPageCompiler
+        asynchronous: true
+        sourceComponent: Item {
+            Component.onCompleted: tabPageComponent = Qt.createComponent(Qt.resolvedUrl("TabPage.qml"))
+        }
     }
 }
