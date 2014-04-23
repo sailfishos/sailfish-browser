@@ -29,6 +29,7 @@ Page {
     property Item favoriteHeader
     property Item tabsRepeater
 
+    property bool initialized: false
     property string _search
 
     function load(url, title) {
@@ -47,14 +48,14 @@ Page {
 
     onStatusChanged: {
         if (status === PageStatus.Active) {
-            textFieldLoader.active = true
+            initialized = true
         }
     }
 
     backNavigation: browserPage.tabs.count > 0 && browserPage.url != ""
     states: [
         State {
-            when: page.status < PageStatus.Active
+            when: page.status < PageStatus.Active && !initialized
         },
         State {
             name: "historylist"
@@ -113,6 +114,17 @@ Page {
         }
     ]
 
+    BusyIndicator {
+        anchors {
+            horizontalCenter: parent.horizontalCenter
+            verticalCenter: parent.bottom
+            verticalCenterOffset: browserPage.isPortrait ? -Screen.width / 2 - Theme.paddingLarge : -Screen.width / 4
+        }
+
+        size: BusyIndicatorSize.Large
+        running: !initialized
+    }
+
     Browser.HistoryList {
         id: historyList
 
@@ -141,7 +153,7 @@ Page {
         onLoad: page.load(url, title)
 
         Browser.TabPageMenu {
-            active: page.status === PageStatus.Active
+            active: initialized
             visible: browserPage.tabs.count > 0 && !page.newTab
             shareEnabled: browserPage.url == _search
             browserPage: page.browserPage
@@ -219,7 +231,7 @@ Page {
         onRemoveBookmark: browserPage.favorites.removeBookmark(url)
 
         Browser.TabPageMenu {
-            active: page.status === PageStatus.Active
+            active: initialized
             visible: browserPage.tabs.count > 0 && !page.newTab
             shareEnabled: browserPage.url == _search
             browserPage: page.browserPage
@@ -321,6 +333,7 @@ Page {
                     width: page.isPortrait ? page.width - (closeActiveTabButton.visible ? closeActiveTabButton.width : 0)
                                            : page.width - urlColumn.x - Theme.paddingMedium
                     height: Theme.itemSizeMedium
+                    active: initialized
 
                     sourceComponent: TextField {
                         id: searchField
