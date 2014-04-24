@@ -21,6 +21,13 @@ static const QByteArray EMPTY_QML = \
         "import QtQuick 2.0\n" \
         "Item { width: 100; height: 100 }\n";
 
+struct TestTab {
+    TestTab(QString url, QString title) : url(url), title(title) {}
+
+    QString url;
+    QString title;
+};
+
 class TestObject : public QObject
 {
     Q_OBJECT

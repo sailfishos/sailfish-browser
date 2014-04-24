@@ -97,7 +97,7 @@ void DBWorker::init()
                                      "FROM tab_history INNER JOIN link ON tab_history.link_id=link.link_id WHERE tab_history.tab_id = ?);");
 }
 
-QSqlQuery DBWorker::prepare(const char *statement)
+QSqlQuery DBWorker::prepare(const QString &statement)
 {
     QSqlQuery query(m_database);
     query.setForwardOnly(true);
@@ -274,24 +274,22 @@ void DBWorker::getAllTabs()
 
 int DBWorker::getMaxTabId()
 {
-    QSqlQuery query = prepare("SELECT MAX(tab_id) FROM tab");
-    if (execute(query)) {
-        if (query.first()) {
-#ifdef DEBUG_LOGS
-            qDebug() << "read from db: " << query.value(0).toInt();
-#endif
-            return query.value(0).toInt();
-        }
-    }
-#ifdef DEBUG_LOGS
-    qDebug() << "query failed";
-#endif
-    return 0;
+    return integerQuery("SELECT MAX(tab_id) FROM tab;");
+}
+
+int DBWorker::getMaxLinkId()
+{
+    return integerQuery("SELECT MAX(link_id) FROM link;");
 }
 
 int DBWorker::tabCount()
 {
-    QSqlQuery query = prepare("SELECT COUNT(*) FROM tab;");
+    return integerQuery("SELECT COUNT(*) FROM tab;");
+}
+
+int DBWorker::integerQuery(const QString &statement)
+{
+    QSqlQuery query = prepare(statement);
     if (execute(query)) {
         if (query.first()) {
             return query.value(0).toInt();
@@ -556,7 +554,10 @@ int DBWorker::createLink(QString url, QString title, QString thumbPath)
 #ifdef DEBUG_LOGS
     qDebug() << title << url << thumbPath << lastId.toInt();
 #endif
-    return lastId.toInt();
+    int linkId = lastId.toInt();
+
+    emit nextLinkId(linkId + 1);
+    return linkId;
 }
 
 void DBWorker::getHistory(const QString &filter)
@@ -626,7 +627,7 @@ void DBWorker::updateThumbPath(int tabId, QString path)
     }
 }
 
-void DBWorker::updateTitle(int linkId, QString title)
+void DBWorker::updateTitle(int tabId, int linkId, QString title)
 {
     Link link = getLink(linkId);
     QSqlQuery query = prepare("UPDATE link SET title = ? WHERE link_id = ?;");
@@ -635,7 +636,7 @@ void DBWorker::updateTitle(int linkId, QString title)
     if (execute(query)) {
         if (link.isValid() && link.title() != title) {
             // For browsing history
-            emit titleChanged(link.url(), title);
+            emit titleChanged(tabId, linkId, link.url(), title);
         }
     }
 }

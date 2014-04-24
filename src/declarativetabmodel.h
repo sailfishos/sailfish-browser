@@ -114,6 +114,7 @@ signals:
 
 private slots:
     void tabChanged(const Tab &tab);
+    void updateTitle(int tabId, int linkId, QString url, QString title);
 
 private:
     struct NewTabData {

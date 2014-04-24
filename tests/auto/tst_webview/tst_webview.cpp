@@ -41,18 +41,18 @@ private slots:
     void forwardBackwardNavigation();
     void clear();
     void restart();
+    void changeTabAndLoad();
     void cleanupTestCase();
 
 private:
     QString formatUrl(QString fileName) const;
-    void verifyHistory();
+    void verifyHistory(QList<TestTab> &historyOrder);
 
     DeclarativeHistoryModel *historyModel;
     DeclarativeTabModel *tabModel;
     DeclarativeWebContainer *webContainer;
     QString baseUrl;
 };
-
 
 tst_webview::tst_webview()
     : TestObject()
@@ -579,8 +579,12 @@ void tst_webview::restart()
     QVERIFY(webContainer->canGoBack());
     QVERIFY(!webContainer->canGoForward());
 
+    QList<TestTab> historyOrder;
+    historyOrder.append(TestTab(formatUrl("testpage.html"), QString("TestPage")));
+    historyOrder.append(TestTab(formatUrl("testuseragent.html"), QString("TestUserAgent")));
+
     // Before restart
-    verifyHistory();
+    verifyHistory(historyOrder);
 
     delete tabModel;
     tabModel = 0;
@@ -604,13 +608,13 @@ void tst_webview::restart()
     QVERIFY(!webContainer->canGoForward());
 
     // After restart
-    verifyHistory();
+    verifyHistory(historyOrder);
 
     webContainer->goBack();
     QTest::qWait(1000);
 
     // After back navigation
-    verifyHistory();
+    verifyHistory(historyOrder);
 
     QVERIFY(!webContainer->canGoBack());
     QVERIFY(webContainer->canGoForward());
@@ -620,6 +624,38 @@ void tst_webview::restart()
     QCOMPARE(tabModel->count(), 1);
     QCOMPARE(webContainer->m_webPages->count(), 1);
     QCOMPARE(webContainer->m_webPages->m_activePages.count(), 1);
+}
+
+void tst_webview::changeTabAndLoad()
+{
+    int previousTab = tabModel->activeTab().tabId();
+    tabModel->newTab(formatUrl("testwindowopen.html"), "");
+    QTest::qWait(1000);
+
+    QList<TestTab> historyOrder;
+    historyOrder.append(TestTab(formatUrl("testpage.html"), QString("TestPage")));
+    historyOrder.append(TestTab(formatUrl("testuseragent.html"), QString("TestUserAgent")));
+    historyOrder.append(TestTab(formatUrl("testwindowopen.html"), QString("Test window opening")));
+
+    verifyHistory(historyOrder);
+
+    // Active previous tab and an load url.
+    tabModel->activateTabById(previousTab);
+    QString testSelect(formatUrl("testselect.html"));
+    webContainer->webPage()->loadTab(testSelect, false);
+    QTest::qWait(1000);
+
+    // Should be after "testpage.html"
+    historyOrder.insert(1, TestTab(formatUrl("testselect.html"), QString("TestSelect")));
+    verifyHistory(historyOrder);
+
+    QCOMPARE(webContainer->url(), testSelect);
+    QCOMPARE(webContainer->title(), QString("TestSelect"));
+    QCOMPARE(tabModel->activeTab().url(), testSelect);
+    QCOMPARE(tabModel->activeTab().title(), QString("TestSelect"));
+    QCOMPARE(tabModel->count(), 2);
+    QCOMPARE(webContainer->m_webPages->count(), 2);
+    QCOMPARE(webContainer->m_webPages->m_activePages.count(), 2);
 }
 
 void tst_webview::cleanupTestCase()
@@ -649,25 +685,18 @@ QString tst_webview::formatUrl(QString fileName) const
     return QUrl::fromLocalFile(baseUrl + "/" + fileName).toString();
 }
 
-void tst_webview::verifyHistory()
+void tst_webview::verifyHistory(QList<TestTab> &historyOrder)
 {
-    QString testPageUrl = formatUrl("testpage.html");
-    QString testUserAgentUrl = formatUrl("testuseragent.html");
     historyModel->search("");
     QTest::qWait(1000);
-    QCOMPARE(historyModel->rowCount(), 2);
-    QModelIndex modelIndex = historyModel->createIndex(0, 0);
-    QCOMPARE(historyModel->data(modelIndex, DeclarativeHistoryModel::TitleRole).toString(),
-             QString("TestPage"));
-    QCOMPARE(historyModel->data(modelIndex, DeclarativeHistoryModel::UrlRole).toString(),
-             testPageUrl);
-
-    modelIndex = historyModel->createIndex(1, 0);
-    QCOMPARE(historyModel->data(modelIndex, DeclarativeHistoryModel::TitleRole).toString(),
-             QString("TestUserAgent"));
-    QCOMPARE(historyModel->data(modelIndex, DeclarativeHistoryModel::UrlRole).toString(),
-             testUserAgentUrl);
-
+    QCOMPARE(historyModel->rowCount(), historyOrder.count());
+    for (int i = 0; i < historyOrder.count(); ++i) {
+        QModelIndex modelIndex = historyModel->createIndex(i, 0);
+        QCOMPARE(historyModel->data(modelIndex, DeclarativeHistoryModel::TitleRole).toString(),
+                 historyOrder.at(i).title);
+        QCOMPARE(historyModel->data(modelIndex, DeclarativeHistoryModel::UrlRole).toString(),
+                 historyOrder.at(i).url);
+    }
 }
 
 int main(int argc, char *argv[])
