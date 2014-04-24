@@ -342,6 +342,7 @@ Page {
                             forceActiveFocus()
                             selectAll()
                             _updateFlickables()
+                            historyList.currentIndex = -1
                         }
 
                         width: parent.width
