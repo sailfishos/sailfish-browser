@@ -25,7 +25,6 @@ DeclarativeTabModel::DeclarativeTabModel(QObject *parent)
     , m_loaded(false)
     , m_browsing(false)
     , m_nextTabId(DBManager::instance()->getMaxTabId() + 1)
-    , m_backForwardNavigation(false)
 {
     connect(DBManager::instance(), SIGNAL(tabsAvailable(QList<Tab>)),
             this, SLOT(tabsAvailable(QList<Tab>)));
@@ -298,16 +297,6 @@ int DeclarativeTabModel::newTabParentId() const
     return hasNewTabData() ? m_newTabData->parentId : 0;
 }
 
-bool DeclarativeTabModel::backForwardNavigation() const
-{
-    return m_backForwardNavigation;
-}
-
-void DeclarativeTabModel::setBackForwardNavigation(bool backForwardNavigation)
-{
-    m_backForwardNavigation = backForwardNavigation;
-}
-
 void DeclarativeTabModel::classBegin()
 {
     DBManager::instance()->getAllTabs();
@@ -400,9 +389,9 @@ void DeclarativeTabModel::updateTitle(int tabId, int linkId, QString url, QStrin
     }
 }
 
-void DeclarativeTabModel::updateUrl(int tabId, bool activeTab, QString url, bool initialLoad)
+void DeclarativeTabModel::updateUrl(int tabId, bool activeTab, QString url, bool backForwardNavigation, bool initialLoad)
 {
-    if (m_backForwardNavigation && activeTab)
+    if (backForwardNavigation)
     {
         updateTabUrl(tabId, activeTab, url, false);
     } else if (!hasNewTabData()) {
@@ -548,8 +537,6 @@ void DeclarativeTabModel::updateTabUrl(int tabId, bool activeTab, const QString 
             DBManager::instance()->navigateTo(tabId, url, "", "");
         }
     }
-
-    setBackForwardNavigation(false);
 }
 
 void DeclarativeTabModel::updateNewTabData(NewTabData *newTabData)

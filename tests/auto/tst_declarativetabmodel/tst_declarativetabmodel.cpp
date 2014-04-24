@@ -244,7 +244,7 @@ void tst_declarativetabmodel::forwardBackwardNavigation()
     QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,int)));
 
     QString url = "http://www.foobar.com/page2";
-    tabModel->updateUrl(currentTabId(), true, url);
+    tabModel->updateUrl(currentTabId(), true, url, false);
     activeTabChangedSpy.wait();
 
     QVERIFY(canGoBack());
@@ -270,16 +270,15 @@ void tst_declarativetabmodel::forwardBackwardNavigation()
     QVERIFY(canGoForward());
 
     // Mimic load that started from link clicking.
-    tabModel->setBackForwardNavigation(false);
     url = "http://www.foobar.com/page3";
-    tabModel->updateUrl(currentTabId(), true, url);
+    tabModel->updateUrl(currentTabId(), true, url, false);
     activeTabChangedSpy.wait();
 
     QVERIFY(canGoBack());
     QVERIFY(!canGoForward());
 
     url = "http://www.foobar.com/page4";
-    tabModel->updateUrl(currentTabId(), true, url);
+    tabModel->updateUrl(currentTabId(), true, url, false);
     activeTabChangedSpy.wait();
     QVERIFY(canGoBack());
     QVERIFY(!canGoForward());
@@ -303,7 +302,6 @@ void tst_declarativetabmodel::forwardBackwardNavigation()
     int expectedCount = tabModel->count() - 1;
     tabModel->removeTabById(currentTabId(), true);
     QVERIFY(tabModel->count() == expectedCount);
-    tabModel->setBackForwardNavigation(false);
     activeTabChangedSpy.wait();
 }
 
@@ -320,7 +318,7 @@ void tst_declarativetabmodel::multipleTabsWithSameUrls()
     QCOMPARE(tabModel->activeTab().title(), page1Tab1Title);
 
     QString page2Tab1Url = "http://www.foobar.com/page2";
-    tabModel->updateUrl(tab1, true, page2Tab1Url);
+    tabModel->updateUrl(tab1, true, page2Tab1Url, false);
     tabUpdatedFromDb.wait();
     QCOMPARE(tabModel->activeTab().url(), page2Tab1Url);
     // This is a bit problematic. From model point of view only url has changed.
@@ -339,7 +337,7 @@ void tst_declarativetabmodel::multipleTabsWithSameUrls()
 
     QString page2Tab2Url = page2Tab1Url;
     QString page2Tab2Title = "Second Page Too";
-    tabModel->updateUrl(tab2, true, page2Tab2Url);
+    tabModel->updateUrl(tab2, true, page2Tab2Url, false);
     tabUpdatedFromDb.wait();
     QCOMPARE(tabModel->activeTab().url(), page2Tab2Url);
     QVERIFY(tabModel->activeTab().title().isEmpty());
@@ -379,7 +377,6 @@ void tst_declarativetabmodel::multipleTabsWithSameUrls()
     tabModel->removeTabById(tab2, true);
     activeTabChangedSpy.wait();
     QVERIFY(tabModel->count() == expectedCount);
-    tabModel->setBackForwardNavigation(false);
 }
 
 void tst_declarativetabmodel::updateInvalidUrls_data()
@@ -399,7 +396,7 @@ void tst_declarativetabmodel::updateInvalidUrls()
 {
     QFETCH(QString, expectedUrl);
     QFETCH(QString, url);
-    tabModel->updateUrl(currentTabId(), true, url);
+    tabModel->updateUrl(currentTabId(), true, url, false);
     QCOMPARE(tabModel->activeTab().url(), expectedUrl);
 }
 
@@ -418,7 +415,7 @@ void tst_declarativetabmodel::updateValidUrls()
 
     int tabId = currentTabId();
     QSignalSpy tabChangeSpy(DBManager::instance(), SIGNAL(tabChanged(Tab)));
-    tabModel->updateUrl(tabId, true, url);
+    tabModel->updateUrl(tabId, true, url, false);
     waitSignals(tabChangeSpy, 1);
     QCOMPARE(tabModel->activeTab().url(), url);
 }
@@ -565,7 +562,7 @@ void tst_declarativetabmodel::changeTabAndLoad()
     int previousLink = tabModel->activeTab().currentLink();
     QCOMPARE(previousLink, 16);
     QString url = "http://www.foobar.com/something";
-    tabModel->updateUrl(currentTabId(), true, url);
+    tabModel->updateUrl(currentTabId(), true, url, false);
     waitSignals(activeTabChangedSpy, 1);
 
     QCOMPARE(tabModel->activeTab().tabId(), 3);

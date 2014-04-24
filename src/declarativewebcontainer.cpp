@@ -295,7 +295,7 @@ void DeclarativeWebContainer::goForward()
             emit canGoBackChanged();
         }
 
-        m_model->setBackForwardNavigation(true);
+        m_webPage->setBackForwardNavigation(true);
         m_realNavigation = m_webPage->canGoForward();
         DBManager::instance()->goForward(m_webPage->tabId());
         if (m_realNavigation) {
@@ -315,7 +315,7 @@ void DeclarativeWebContainer::goBack()
             emit canGoForwardChanged();
         }
 
-        m_model->setBackForwardNavigation(true);
+        m_webPage->setBackForwardNavigation(true);
         m_realNavigation = m_webPage->canGoBack();
         // When executing non real back navigation, we're adding
         // an entry to forward history of the engine. For instance, in sequence like
@@ -526,7 +526,7 @@ void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int activeTabId)
             emit triggerLoad(tabUrl, tab.title());
         }
         manageMaxTabCount();
-    } else if (!m_realNavigation && isActiveTab(activeTabId) && m_model->backForwardNavigation()) {
+    } else if (!m_realNavigation && isActiveTab(activeTabId) && m_webPage->backForwardNavigation()) {
         emit triggerLoad(tab.url(), tab.title());
     }
 }
@@ -709,8 +709,9 @@ void DeclarativeWebContainer::onPageUrlChanged()
                 updateNavigationStatus(tab);
             }
 
-            m_model->updateUrl(tabId, activeTab, url, !webPage->urlHasChanged());
+            m_model->updateUrl(tabId, activeTab, url, webPage->backForwardNavigation(), !webPage->urlHasChanged());
             webPage->setUrlHasChanged(true);
+            webPage->setBackForwardNavigation(false);
             if (activeTab && webPage == m_webPage) {
                 emit urlChanged();
             }
