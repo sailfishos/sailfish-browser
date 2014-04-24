@@ -49,7 +49,7 @@ signals:
 
 private slots:
     void historyAvailable(QList<Link> linkList);
-    void updateTitle(QString url, QString title);
+    void updateTitle(int tabId, int linkId, QString url, QString title);
 
 private:
     void updateModel(QList<Link> linkList);

@@ -82,14 +82,11 @@ public:
 
     int newTabParentId() const;
 
-    bool backForwardNavigation() const;
-    void setBackForwardNavigation(bool backForwardNavigation);
-
     QObject* newTabPreviousPage() const;
     const QList<Tab>& tabs() const;
     const Tab& activeTab() const;
 
-    void updateUrl(int tabId, bool activeTab, QString url, bool initialLoad = false);
+    void updateUrl(int tabId, bool activeTab, QString url, bool backForwardNavigation, bool initialLoad = false);
     void updateTitle(int tabId, bool activeTab, QString title);
     void updateThumbnailPath(int tabId, bool activeTab, QString path);
 
@@ -114,6 +111,7 @@ signals:
 
 private slots:
     void tabChanged(const Tab &tab);
+    void updateTitle(int tabId, int linkId, QString url, QString title);
 
 private:
     struct NewTabData {
@@ -146,7 +144,6 @@ private:
     bool m_loaded;
     bool m_browsing;
     int m_nextTabId;
-    bool m_backForwardNavigation;
 
     QScopedPointer<NewTabData> m_newTabData;
 

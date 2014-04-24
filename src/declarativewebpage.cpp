@@ -25,6 +25,7 @@ DeclarativeWebPage::DeclarativeWebPage(QQuickItem *parent)
     , m_fullscreen(false)
     , m_domContentLoaded(false)
     , m_urlHasChanged(false)
+    , m_backForwardNavigation(false)
 {
     connect(this, SIGNAL(viewInitialized()), this, SLOT(onViewInitialized()));
     connect(this, SIGNAL(recvAsyncMessage(const QString, const QVariant)),
@@ -72,6 +73,16 @@ bool DeclarativeWebPage::urlHasChanged() const
 void DeclarativeWebPage::setUrlHasChanged(bool urlHasChanged)
 {
     m_urlHasChanged = urlHasChanged;
+}
+
+bool DeclarativeWebPage::backForwardNavigation() const
+{
+    return m_backForwardNavigation;
+}
+
+void DeclarativeWebPage::setBackForwardNavigation(bool backForwardNavigation)
+{
+    m_backForwardNavigation = backForwardNavigation;
 }
 
 QVariant DeclarativeWebPage::resurrectedContentRect() const

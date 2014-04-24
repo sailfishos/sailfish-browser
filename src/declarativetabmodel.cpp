@@ -25,12 +25,13 @@ DeclarativeTabModel::DeclarativeTabModel(QObject *parent)
     , m_loaded(false)
     , m_browsing(false)
     , m_nextTabId(DBManager::instance()->getMaxTabId() + 1)
-    , m_backForwardNavigation(false)
 {
     connect(DBManager::instance(), SIGNAL(tabsAvailable(QList<Tab>)),
             this, SLOT(tabsAvailable(QList<Tab>)));
     connect(DBManager::instance(), SIGNAL(tabChanged(Tab)),
             this, SLOT(tabChanged(Tab)));
+    connect(DBManager::instance(), SIGNAL(titleChanged(int,int,QString,QString)),
+            this, SLOT(updateTitle(int,int,QString,QString)));
 }
 
 QHash<int, QByteArray> DeclarativeTabModel::roleNames() const
@@ -296,16 +297,6 @@ int DeclarativeTabModel::newTabParentId() const
     return hasNewTabData() ? m_newTabData->parentId : 0;
 }
 
-bool DeclarativeTabModel::backForwardNavigation() const
-{
-    return m_backForwardNavigation;
-}
-
-void DeclarativeTabModel::setBackForwardNavigation(bool backForwardNavigation)
-{
-    m_backForwardNavigation = backForwardNavigation;
-}
-
 void DeclarativeTabModel::classBegin()
 {
     DBManager::instance()->getAllTabs();
@@ -377,9 +368,30 @@ void DeclarativeTabModel::tabChanged(const Tab &tab)
     }
 }
 
-void DeclarativeTabModel::updateUrl(int tabId, bool activeTab, QString url, bool initialLoad)
+void DeclarativeTabModel::updateTitle(int tabId, int linkId, QString url, QString title)
 {
-    if (m_backForwardNavigation && activeTab)
+    if (m_activeTab.tabId() == tabId && m_activeTab.currentLink() == linkId &&
+            m_activeTab.url() == url) {
+        m_activeTab.setTitle(title);
+    } else {
+        for (int i = 0; i < m_tabs.count(); ++i) {
+            const Tab &tab = m_tabs.at(i);
+            if (tab.tabId() == tabId && tab.currentLink() == linkId && tab.url() == url) {
+                m_tabs[i].setTitle(title);
+                QVector<int> roles;
+                roles << TitleRole;
+                QModelIndex start = index(i, 0);
+                QModelIndex end = index(i, 0);
+                emit dataChanged(start, end, roles);
+                break;
+            }
+        }
+    }
+}
+
+void DeclarativeTabModel::updateUrl(int tabId, bool activeTab, QString url, bool backForwardNavigation, bool initialLoad)
+{
+    if (backForwardNavigation)
     {
         updateTabUrl(tabId, activeTab, url, false);
     } else if (!hasNewTabData()) {
@@ -411,7 +423,7 @@ void DeclarativeTabModel::updateTitle(int tabId, bool activeTab, QString title)
     }
 
     if (updateDb) {
-        DBManager::instance()->updateTitle(linkId, title);
+        DBManager::instance()->updateTitle(tabId, linkId, title);
     }
 }
 
@@ -502,6 +514,12 @@ void DeclarativeTabModel::updateTabUrl(int tabId, bool activeTab, const QString 
     if (activeTab) {
         m_activeTab.setUrl(url);
         updateDb = true;
+        if (navigate) {
+            m_activeTab.setNextLink(0);
+            int currentLinkId = m_activeTab.currentLink();
+            m_activeTab.setPreviousLink(currentLinkId);
+            m_activeTab.setCurrentLink(DBManager::instance()->nextLinkId());
+        }
     } else if (tabIndex >= 0 && m_tabs.at(tabIndex).url() != url) {
         QVector<int> roles;
         roles << UrlRole << TitleRole << ThumbPathRole;
@@ -516,15 +534,9 @@ void DeclarativeTabModel::updateTabUrl(int tabId, bool activeTab, const QString 
         if (!navigate) {
             DBManager::instance()->updateTab(tabId, url, "", "");
         } else {
-            m_activeTab.setNextLink(0);
-            int currentLinkId = m_activeTab.currentLink();
-            m_activeTab.setPreviousLink(currentLinkId);
-            m_activeTab.setCurrentLink(++currentLinkId);
             DBManager::instance()->navigateTo(tabId, url, "", "");
         }
     }
-
-    setBackForwardNavigation(false);
 }
 
 void DeclarativeTabModel::updateNewTabData(NewTabData *newTabData)
