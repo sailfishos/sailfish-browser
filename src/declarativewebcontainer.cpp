@@ -57,6 +57,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     , m_deferredReload(false)
 {
     m_webPages.reset(new WebPages(this));
+    m_settingManager.reset(new SettingManager(this));
     setFlag(QQuickItem::ItemHasContents, true);
     if (!window()) {
         connect(this, SIGNAL(windowChanged(QQuickWindow*)), this, SLOT(handleWindowChanged(QQuickWindow*)));
@@ -273,6 +274,17 @@ bool DeclarativeWebContainer::readyToLoad() const
 
 void DeclarativeWebContainer::setReadyToLoad(bool readyToLoad)
 {
+    static bool browserReady = false;
+    if (!browserReady && readyToLoad) {
+        bool wasClearPrivateDataRequested = m_settingManager->clearPrivateDataRequested();
+        browserReady = true;
+        m_settingManager->initialize();
+        if (m_model && wasClearPrivateDataRequested) {
+            readyToLoad = false;
+            emit m_model->countChanged();
+        }
+    }
+
     if (m_readyToLoad != readyToLoad) {
         m_readyToLoad = readyToLoad;
         emit _readyToLoadChanged();

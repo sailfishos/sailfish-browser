@@ -9,16 +9,22 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include <QVariant>
-#include "qmozcontext.h"
 #include "settingmanager.h"
 #include "dbmanager.h"
+
+#include <qmozcontext.h>
+#include <QVariant>
 
 SettingManager::SettingManager(QObject *parent)
     : QObject(parent)
 {
     m_clearPrivateDataConfItem = new MGConfItem("/apps/sailfish-browser/actions/clear_private_data", this);
     m_searchEngineConfItem = new MGConfItem("/apps/sailfish-browser/settings/search_engine", this);
+}
+
+bool SettingManager::clearPrivateDataRequested() const
+{
+    return m_clearPrivateDataConfItem->value(QVariant(false)).toBool();
 }
 
 void SettingManager::initialize()
@@ -34,9 +40,7 @@ void SettingManager::initialize()
 
 void SettingManager::clearPrivateData()
 {
-    bool actionNeeded = m_clearPrivateDataConfItem->value(QVariant(false)).toBool();
-
-    if (actionNeeded) {
+    if (clearPrivateDataRequested()) {
         QMozContext::GetInstance()->sendObserve(QString("clear-private-data"), QString("passwords"));
         QMozContext::GetInstance()->sendObserve(QString("clear-private-data"), QString("cookies"));
         QMozContext::GetInstance()->sendObserve(QString("clear-private-data"), QString("cache"));

@@ -28,7 +28,6 @@
 #include "declarativewebutils.h"
 #include "browserservice.h"
 #include "downloadmanager.h"
-#include "settingmanager.h"
 #include "closeeventfilter.h"
 #include "declarativetabmodel.h"
 #include "declarativehistorymodel.h"
@@ -137,10 +136,6 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     view->installEventFilter(clsEventFilter);
     QObject::connect(service, SIGNAL(openUrlRequested(QString)),
                      clsEventFilter, SLOT(cancelStopApplication()));
-
-    SettingManager * settingMgr = new SettingManager(app.data());
-    QObject::connect(QMozContext::GetInstance(), SIGNAL(onInitialized()),
-                     settingMgr, SLOT(initialize()));
 
 #ifdef USE_RESOURCES
     view->setSource(QUrl("qrc:///browser.qml"));

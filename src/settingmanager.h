@@ -21,7 +21,7 @@ class SettingManager : public QObject
 public:
     explicit SettingManager(QObject *parent = 0);
 
-public slots:
+    bool clearPrivateDataRequested() const;
     void initialize();
 
 private slots:
