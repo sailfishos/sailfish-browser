@@ -51,6 +51,8 @@ public:
     bool backForwardNavigation() const;
     void setBackForwardNavigation(bool backForwardNavigation);
 
+    bool viewReady() const;
+
     Q_INVOKABLE void loadTab(QString newUrl, bool force);
 
 signals:

@@ -134,7 +134,16 @@ void WebPages::release(int tabId, bool virtualize)
         if (m_count == 0 || (activeWebPage && activeWebPage->tabId() == tabId)) {
             m_activePage = 0;
         }
-        delete pageEntry->webPage;
+
+        if (pageEntry->webPage) {
+            if (pageEntry->webPage->viewReady()) {
+                pageEntry->webPage->setParent(0);
+                delete pageEntry->webPage;
+            } else {
+                connect(pageEntry->webPage, SIGNAL(viewReadyChanged()), pageEntry->webPage, SLOT(deleteLater()));
+            }
+        }
+
         pageEntry->webPage = 0;
         if (virtualize) {
             m_activePages.insert(tabId, pageEntry);
@@ -160,6 +169,7 @@ void WebPages::clear()
     int count = pages.count();
     for (int i = 0; i < count; ++i) {
         WebPageEntry *pageEntry = pages.at(i);
+        pageEntry->allowPageDelete = true;
         delete pageEntry;
     }
     m_activePages.clear();
@@ -232,6 +242,7 @@ void WebPages::dumpPages() const
 WebPages::WebPageEntry::WebPageEntry(DeclarativeWebPage *webPage, QRectF *cssContentRect)
     : webPage(webPage)
     , cssContentRect(cssContentRect)
+    , allowPageDelete(false)
 {
 }
 
@@ -241,7 +252,7 @@ WebPages::WebPageEntry::~WebPageEntry()
         delete cssContentRect;
     }
 
-    if (webPage) {
+    if (webPage && (webPage->viewReady() || allowPageDelete)) {
         webPage->setParent(0);
         delete webPage;
     }

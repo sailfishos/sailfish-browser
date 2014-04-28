@@ -85,6 +85,11 @@ void DeclarativeWebPage::setBackForwardNavigation(bool backForwardNavigation)
     m_backForwardNavigation = backForwardNavigation;
 }
 
+bool DeclarativeWebPage::viewReady() const
+{
+    return m_viewReady;
+}
+
 QVariant DeclarativeWebPage::resurrectedContentRect() const
 {
     return m_resurrectedContentRect;

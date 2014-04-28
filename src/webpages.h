@@ -55,6 +55,7 @@ private:
 
         DeclarativeWebPage *webPage;
         QRectF *cssContentRect;
+        bool allowPageDelete;
     };
 
     void updateActivePage(WebPageEntry *webPageEntry, bool resurrect);
