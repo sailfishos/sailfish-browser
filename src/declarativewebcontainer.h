@@ -12,6 +12,7 @@
 #ifndef DECLARATIVEWEBCONTAINER_H
 #define DECLARATIVEWEBCONTAINER_H
 
+#include "settingmanager.h"
 #include "tab.h"
 #include "webpages.h"
 
@@ -195,6 +196,7 @@ private:
     QPointer<DeclarativeTabModel> m_model;
     QPointer<QQmlComponent> m_webPageComponent;
     QScopedPointer<WebPages> m_webPages;
+    QScopedPointer<SettingManager> m_settingManager;
     bool m_foreground;
     bool m_background;
     bool m_windowVisible;
