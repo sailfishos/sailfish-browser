@@ -27,9 +27,8 @@ Page {
 
     property Item historyHeader
     property Item favoriteHeader
-    property Item tabsRepeater
 
-    property bool initialized: false
+    property bool initialized
     property string _search
 
     function load(url, title) {
@@ -73,22 +72,17 @@ Page {
             ParallelAnimation {
                 SequentialAnimation {
                     PropertyAction { target: commonHeader; property: "parent"; value: page }
-                    FadeAnimation { target: favoriteList; from: 0.0; to: 1.0}
+                    FadeAnimation { target: favoriteList; to: 1.0 }
                     PropertyAction { target: commonHeader; property: "parent"; value: page.favoriteHeader }
                     ScriptAction { script: {
-                            if (!tabsRepeater.model && !page.newTab) {
-                                tabsRepeater.model = browserPage.tabs
-                            }
-
                             if (!favoriteList.model) {
                                 favoriteList.model = browserPage.favorites
                             }
-
                             favoriteList.positionViewAtBeginning()
                         }
                     }
                 }
-                FadeAnimation { target: historyList; from: 1.0; to: 0.0 }
+                FadeAnimation { target: historyList; to: 0.0 }
             }
         },
         Transition {
@@ -96,7 +90,7 @@ Page {
             ParallelAnimation {
                 SequentialAnimation {
                     PropertyAction { target: commonHeader; property: "parent"; value: page }
-                    FadeAnimation { target: historyList; from: 0.0; to: 1.0}
+                    FadeAnimation { target: historyList; to: 1.0 }
                     PropertyAction { target: commonHeader; property: "parent"; value: page.historyHeader }
                     PropertyAction { target: page.historyHeader; property: "opacity"; value: 1.0 }
                     ScriptAction { script: {
@@ -109,21 +103,10 @@ Page {
                         }
                     }
                 }
-                FadeAnimation { target: favoriteList; from: 1.0; to: 0.0 }
+                FadeAnimation { target: favoriteList; to: 0.0 }
             }
         }
     ]
-
-    BusyIndicator {
-        anchors {
-            horizontalCenter: parent.horizontalCenter
-            verticalCenter: parent.bottom
-            verticalCenterOffset: browserPage.isPortrait ? -Screen.width / 2 - Theme.paddingLarge : -Screen.width / 4
-        }
-
-        size: BusyIndicatorSize.Large
-        running: !initialized
-    }
 
     Browser.HistoryList {
         id: historyList
@@ -165,6 +148,7 @@ Page {
         id: favoriteList
 
         visible: opacity > 0.0
+        opacity: initialSearchFocus ? 0.0 : 1.0
 
         header: Item {
             id: favoriteHeader
@@ -177,6 +161,10 @@ Page {
 
             Grid {
                 id: tabsGrid
+
+                // Fill initial view immediately
+                property int loadIndex: columns * Math.round(page.height / (page.width / columns))
+
                 visible: !page.newTab
                 columns: page.isPortrait ? 2 : 4
                 rows: Math.ceil((browserPage.tabs.count - 1) / columns)
@@ -190,18 +178,17 @@ Page {
                 }
 
                 Repeater {
-                    id: tabsRepeater
-
-                    onModelChanged: favoriteSectionHeader.opacity = 1.0
+                    model: browserPage.tabs
 
                     Browser.TabItem {
                         width: page.width/tabsGrid.columns
                         height: width
+                        active: index < tabsGrid.loadIndex || initialized
+                        asynchronous: index >= tabsGrid.loadIndex
                         // activateTab doesn't work inside delagate because this tab is removed (deleted)
                         // from the model and old active tab pushed to first.
                         onClicked: activateTab(model.index)
                     }
-                    Component.onCompleted: page.tabsRepeater = tabsRepeater
                 }
                 Behavior on height {
                     NumberAnimation { easing.type: Easing.InOutQuad; duration: 200 }
@@ -214,9 +201,6 @@ Page {
                 //% "Favorites"
                 text: qsTrId("sailfish_browser-he-favorites")
                 anchors.bottom: favoriteHeader.bottom
-                opacity: 0.0
-
-                Behavior on opacity { FadeAnimation {} }
             }
 
             Component.onCompleted: page.favoriteHeader = favoriteHeader
