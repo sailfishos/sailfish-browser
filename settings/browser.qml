@@ -40,15 +40,6 @@ Page {
                 title: qsTrId("settings_browser-ph-browser")
             }
 
-            Button {
-                anchors.horizontalCenter: parent.horizontalCenter
-                //: Button for opening privacy settings page.
-                //% "Privacy"
-                text: qsTrId("settings_browser-bt-privacy")
-                onClicked: pageStack.push(Qt.resolvedUrl("Privacy.qml"))
-            }
-
-
             ComboBox {
                 id: searchEngine
 
@@ -75,6 +66,14 @@ Page {
                         searchEngineConfig.value = currentItem.text
                     }
                 }
+            }
+
+            Button {
+                anchors.horizontalCenter: parent.horizontalCenter
+                //: Button for opening privacy settings page.
+                //% "Privacy"
+                text: qsTrId("settings_browser-bt-privacy")
+                onClicked: pageStack.push(Qt.resolvedUrl("Privacy.qml"))
             }
         }
     }
