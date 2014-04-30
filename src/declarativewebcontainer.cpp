@@ -359,6 +359,8 @@ bool DeclarativeWebContainer::activatePage(int tabId, bool force)
         WebPageActivationData activationData = m_webPages->page(tabId, m_model->newTabParentId());
         setWebPage(activationData.webPage);
         m_webPage->setChrome(true);
+        // Reset always height so that orentation change is taken into account.
+        resetHeight();
         setLoadProgress(m_webPage->loadProgress());
 
         connect(m_webPage, SIGNAL(imeNotification(int,bool,int,int,QString)),
