@@ -13,71 +13,74 @@ import QtQuick 2.1
 import QtGraphicalEffects 1.0
 import Sailfish.Silica 1.0
 
-Rectangle {
+Loader {
     id: tabItem
 
     signal clicked
 
-    color: Theme.rgba(Theme.highlightColor, 0.1)
-
-    Column {
-        visible: !thumb.visible
-        anchors {
-            topMargin: Theme.paddingMedium
-            top: parent.top
-        }
-        width: parent.width
-        spacing: Theme.paddingSmall
-        Label {
-            anchors.horizontalCenter: parent.horizontalCenter
-            width: parent.width - Theme.paddingMedium * 2
-            text: title
-            font.pixelSize: Theme.fontSizeExtraSmall
-            color: highlight._showPress ? Theme.highlightColor : Theme.primaryColor
-            truncationMode: TruncationMode.Fade
-        }
-        Label {
-            anchors.horizontalCenter: parent.horizontalCenter
-            width: parent.width - Theme.paddingMedium * 2
-            text: url
-            font.pixelSize: Theme.fontSizeExtraSmall
-            color: highlight._showPress ? Theme.rgba(Theme.secondaryHighlightColor, 0.6) : Theme.rgba(Theme.secondaryColor, 0.6)
-            wrapMode: Text.WrapAnywhere
-            maximumLineCount: 3
-        }
-    }
-
-    Image {
-        id: thumb
+    sourceComponent: Rectangle {
         anchors.fill: parent
-        asynchronous: true
-        source: thumbnailPath
-        sourceSize.width: Screen.width / 2
-        visible: status !== Image.Error && thumbnailPath !== ""
-    }
+        color: Theme.rgba(Theme.highlightColor, 0.1)
 
-    Image {
-        id: mask
-        source: "graphic-radial-mask.png"
-        width: thumb.width
-        height: thumb.height
-        visible: false
-        smooth: true
-        anchors.centerIn: thumb
-    }
+        Column {
+            visible: !thumb.visible
+            anchors {
+                topMargin: Theme.paddingMedium
+                top: parent.top
+            }
+            width: parent.width
+            spacing: Theme.paddingSmall
+            Label {
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: parent.width - Theme.paddingMedium * 2
+                text: title
+                font.pixelSize: Theme.fontSizeExtraSmall
+                color: highlight._showPress ? Theme.highlightColor : Theme.primaryColor
+                truncationMode: TruncationMode.Fade
+            }
+            Label {
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: parent.width - Theme.paddingMedium * 2
+                text: url
+                font.pixelSize: Theme.fontSizeExtraSmall
+                color: highlight._showPress ? Theme.rgba(Theme.secondaryHighlightColor, 0.6) : Theme.rgba(Theme.secondaryColor, 0.6)
+                wrapMode: Text.WrapAnywhere
+                maximumLineCount: 3
+            }
+        }
 
-    ColorOverlay {
-        anchors.fill: mask
-        source: mask
-        color: Theme.highlightDimmerColor
-        cached: true
-    }
+        Image {
+            id: thumb
+            anchors.fill: parent
+            asynchronous: true
+            source: thumbnailPath
+            sourceSize.width: Screen.width / 2
+            visible: status !== Image.Error && thumbnailPath !== ""
+        }
 
-    BackgroundItem {
-        id: highlight
-        anchors.fill: parent
-        onClicked: tabItem.clicked()
-    }
+        Image {
+            id: mask
+            source: "graphic-radial-mask.png"
+            width: thumb.width
+            height: thumb.height
+            visible: false
+            smooth: true
+            anchors.centerIn: thumb
+        }
 
-    CloseTabButton {}
+        ColorOverlay {
+            anchors.fill: mask
+            source: mask
+            color: Theme.highlightDimmerColor
+            cached: true
+        }
+
+        BackgroundItem {
+            id: highlight
+            anchors.fill: parent
+            onClicked: tabItem.clicked()
+        }
+
+        CloseTabButton {}
+    }
 }
