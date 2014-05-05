@@ -7,6 +7,9 @@
                <step>/usr/sbin/mcetool -jdisabled -Doff -B1 -jenabled -U -B1 -kunlocked</step>
            </pre_steps>
            <description>Sailfish Browser UI unit tests</description>
+           <case manual="false" name="declarativebookmarkmodel">
+               <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_declarativebookmarkmodel -platform wayland-egl</step>
+           </case>
            <case manual="false" name="declarativetabmodel">
                <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_declarativetabmodel -platform wayland-egl</step>
            </case>

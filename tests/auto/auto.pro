@@ -2,6 +2,7 @@
 TEMPLATE = subdirs
 
 SUBDIRS += tst_dbmanager \
+    tst_declarativebookmarkmodel \
     tst_declarativehistorymodel \
     tst_declarativetabmodel \
     tst_linkvalidator \
