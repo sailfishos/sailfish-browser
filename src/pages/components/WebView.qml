@@ -124,6 +124,9 @@ WebContainer {
         WebPage {
             id: webPage
 
+            property int iconSize
+            property string iconType
+
             loaded: loadProgress === 100 && !loading
             enabled: container.active
             // There needs to be enough content for enabling chrome gesture
@@ -240,8 +243,36 @@ WebContainer {
             onRecvAsyncMessage: {
                 switch (message) {
                 case "chrome:linkadded": {
-                    if (data.rel === "shortcut icon") {
+                    var parsedFavicon = false
+                    if (data.href && data.rel === "icon"
+                            && iconType !== "apple-touch-icon"
+                            && iconType !== "apple-touch-icon-precomposed") {
+                        var sizes = []
+                        if (data.sizes) {
+                            var digits = data.sizes.split("x")
+                            var size = digits && digits.length > 0 && digits[0]
+                            if (size) {
+                                sizes.push(size)
+                            }
+                        } else {
+                            sizes = data.href.match(/\d+/)
+                        }
+                        for (var i in sizes) {
+                            var faviconSize = parseInt(sizes[i])
+                            // Accept largest icon but one that is still smaller than icon size large.
+                            if (faviconSize && faviconSize > iconSize && faviconSize <= Theme.iconSizeLarge) {
+                                iconSize = faviconSize
+                                parsedFavicon = true
+                            }
+                        }
+                    }
+
+                    if (data.rel === "shortcut icon"
+                            || data.rel === "apple-touch-icon"
+                            || data.rel === "apple-touch-icon-precomposed"
+                            || parsedFavicon) {
                         favicon = data.href
+                        iconType = data.rel
                     }
                     break
                 }
