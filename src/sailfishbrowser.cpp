@@ -150,6 +150,9 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     }
     view->setSource(QUrl::fromLocalFile(path+"browser.qml"));
 #endif
+    // ### Temporary solution, the rendering engine should handle QQuickWindow::sceneGraphInvalidated()
+    view->setPersistentOpenGLContext(true);
+    view->setPersistentSceneGraph(true);
 
     view->showFullScreen();
 
