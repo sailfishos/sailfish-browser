@@ -10,22 +10,23 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include <QtTest>
-#include <QQmlContext>
 #include <QQuickView>
 #include <qmozcontext.h>
 
+#include "declarativehistorymodel.h"
 #include "declarativetabmodel.h"
 #include "declarativewebcontainer.h"
 #include "declarativewebpage.h"
 #include "declarativewebviewcreator.h"
 #include "declarativewebutils.h"
+#include "testobject.h"
 
-class tst_webview : public QObject
+class tst_webview : public TestObject
 {
     Q_OBJECT
 
 public:
-    tst_webview(QQuickView * view, QObject *parent = 0);
+    tst_webview();
 
 private slots:
     void initTestCase();
@@ -38,42 +39,42 @@ private slots:
     void testLiveTabCount_data();
     void testLiveTabCount();
     void forwardBackwardNavigation();
+    void clear();
+    void restart();
+    void changeTabAndLoad();
     void cleanupTestCase();
 
 private:
     QString formatUrl(QString fileName) const;
-    void waitSignals(QSignalSpy &spy, int expectedSignalCount) const;
+    void verifyHistory(QList<TestTab> &historyOrder);
 
+    DeclarativeHistoryModel *historyModel;
     DeclarativeTabModel *tabModel;
     DeclarativeWebContainer *webContainer;
-    QQuickView *view;
     QString baseUrl;
 };
 
-
-tst_webview::tst_webview(QQuickView *view, QObject *parent)
-    : QObject(parent)
+tst_webview::tst_webview()
+    : TestObject()
+    , historyModel(0)
     , tabModel(0)
-    , view(view)
+    , webContainer(0)
 {
 }
 
 void tst_webview::initTestCase()
 {
-    view->setSource(QUrl("qrc:///tst_webview.qml"));
-    view->showFullScreen();
-    QTest::qWaitForWindowExposed(view);
-
-    QQuickItem *appWindow = view->rootObject();
-    QVariant var = appWindow->property("webView");
-    webContainer = qobject_cast<DeclarativeWebContainer *>(qvariant_cast<QObject*>(var));
+    init(QUrl("qrc:///tst_webview.qml"));
+    webContainer = TestObject::qmlObject<DeclarativeWebContainer>("webView");
     QVERIFY(webContainer);
     QSignalSpy loadingChanged(webContainer, SIGNAL(loadingChanged()));
 
-    var = webContainer->property("tabModel");
-    tabModel = qobject_cast<DeclarativeTabModel *>(qvariant_cast<QObject*>(var));
+    tabModel = TestObject::qmlObject<DeclarativeTabModel>("tabModel");
     QVERIFY(tabModel);
     QSignalSpy tabAddedSpy(tabModel, SIGNAL(tabAdded(int)));
+
+    historyModel = TestObject::qmlObject<DeclarativeHistoryModel>("historyModel");
+    QVERIFY(historyModel);
 
     waitSignals(loadingChanged, 2);
 
@@ -82,6 +83,8 @@ void tst_webview::initTestCase()
     QCOMPARE(webPage->url().toString(), DeclarativeWebUtils::instance()->homePage());
     QCOMPARE(webPage->title(), QString("TestPage"));
     QCOMPARE(tabModel->count(), 1);
+    QCOMPARE(webContainer->m_webPages->count(), 1);
+    QCOMPARE(webContainer->m_webPages->m_activePages.count(), 1);
 
     baseUrl = QUrl(DeclarativeWebUtils::instance()->homePage()).toLocalFile();
     baseUrl = QFileInfo(baseUrl).canonicalPath();
@@ -182,6 +185,8 @@ void tst_webview::testNewTab()
     QCOMPARE(addedTabId, webContainer->webPage()->tabId());
 
     QFETCH(QStringList, activeTabs);
+    QCOMPARE(webContainer->m_webPages->count(), activeTabs.count());
+    QCOMPARE(webContainer->m_webPages->m_activePages.count(), activeTabs.count());
     QCOMPARE(webContainer->webPage()->url().toString(), activeTabs.at(0));
     activeTabs.removeFirst();
     for (int i = 0; i < activeTabs.count(); ++i) {
@@ -203,6 +208,8 @@ void tst_webview::testActivateTab()
     // "testselect.html", "TestSelect" (1)
     // "testpage.html", "TestPage" (2)
     QCOMPARE(tabModel->count(), 4);
+    QCOMPARE(webContainer->m_webPages->count(), 4);
+    QCOMPARE(webContainer->m_webPages->m_activePages.count(), 4);
 
     // "testpage.html", "TestPage"
     QModelIndex modelIndex = tabModel->createIndex(2, 0);
@@ -265,6 +272,8 @@ void tst_webview::testCloseActiveTab()
     int closedTabId = arguments.at(0).toInt();
     QCOMPARE(closedTabId, previousTabId);
     QCOMPARE(tabModel->count(), 3);
+    QCOMPARE(webContainer->m_webPages->count(), 3);
+    QCOMPARE(webContainer->m_webPages->m_activePages.count(), 3);
     // Two signals: closeActiveTab causes contentItem to be destroyed and second signal comes
     // when the first item from model is made as active tab.
     QCOMPARE(contentItemSpy.count(), 2);
@@ -312,6 +321,8 @@ void tst_webview::testRemoveTab()
     int closedTabId = arguments.at(0).toInt();
     QCOMPARE(closedTabId, tabIdOfIndexZero);
     QCOMPARE(tabModel->count(), 2);
+    QCOMPARE(webContainer->m_webPages->count(), 2);
+    QCOMPARE(webContainer->m_webPages->m_activePages.count(), 2);
 
     QVERIFY(activeTabChangedSpy.count() == 0);
     QVERIFY(urlChangedSpy.count() == 0);
@@ -338,12 +349,8 @@ void tst_webview::testUrlLoading()
     QString newUrl = formatUrl("testurlscheme.html");
     QString newTitle = "TestUrlScheme";
 
-    // Mimic favorite opening to a new tab. Favorites can have both url and title and when entering
-    // url through virtual keyboard only url is provided.
-    QMetaObject::invokeMethod(webContainer, "load", Qt::DirectConnection,
-                              Q_ARG(QVariant, newUrl),
-                              Q_ARG(QVariant, newTitle),
-                              Q_ARG(QVariant, false));
+    // Mimic favorite opening to already opened tab.
+    emit webContainer->triggerLoad(newUrl, newTitle);
     waitSignals(loadingChanged, 2);
 
     QCOMPARE(contentItemSpy.count(), 0);
@@ -365,6 +372,8 @@ void tst_webview::testUrlLoading()
     QVERIFY(webContainer->canGoBack());
     QVERIFY(!webContainer->canGoForward());
     QCOMPARE(tabModel->count(), 2);
+    QCOMPARE(webContainer->m_webPages->count(), 2);
+    QCOMPARE(webContainer->m_webPages->m_activePages.count(), 2);
 }
 
 void tst_webview::testLiveTabCount_data()
@@ -402,6 +411,7 @@ void tst_webview::testLiveTabCount()
     QCOMPARE(activeTabChangedSpy.count(), 1);
 
     QCOMPARE(webContainer->m_webPages->count(), liveTabCount);
+    QCOMPARE(webContainer->m_webPages->m_activePages.count(), expectedTabCount);
 }
 
 void tst_webview::forwardBackwardNavigation()
@@ -524,6 +534,128 @@ void tst_webview::forwardBackwardNavigation()
     QCOMPARE(webContainer->title(), QString("Test Web Prompts"));
     QVERIFY(!webContainer->canGoBack());
     QVERIFY(webContainer->canGoForward());
+
+    // Same as in previous case
+    QCOMPARE(tabModel->count(), 7);
+    QCOMPARE(webContainer->m_webPages->count(), webContainer->m_maxLiveTabCount);
+    QCOMPARE(webContainer->m_webPages->m_activePages.count(), 7);
+}
+
+void tst_webview::clear()
+{
+    QSignalSpy tabsCleared(tabModel, SIGNAL(tabsCleared()));
+    historyModel->clear();
+    tabModel->clear();
+    QTest::qWait(1000);
+    waitSignals(tabsCleared, 1);
+    QVERIFY(historyModel->rowCount() == 0);
+    QVERIFY(webContainer->m_webPages->count() == 0);
+    QVERIFY(webContainer->m_webPages->m_activePages.count() == 0);
+    QVERIFY(!webContainer->m_webPages->m_activePage);
+    QVERIFY(!webContainer->m_webPage);
+}
+
+void tst_webview::restart()
+{
+    // Title "TestPage"
+    QString testPageUrl = formatUrl("testpage.html");
+    tabModel->newTab(testPageUrl, "");
+    QTest::qWait(1000);
+
+    QCOMPARE(tabModel->activeTab().url(), testPageUrl);
+    QCOMPARE(webContainer->url(), testPageUrl);
+
+    // Title "TestUserAgent"
+    QString testUserAgentUrl = formatUrl("testuseragent.html");
+    webContainer->webPage()->loadTab(testUserAgentUrl, false);
+    QTest::qWait(1000);
+
+    QCOMPARE(tabModel->activeTab().url(), testUserAgentUrl);
+    QCOMPARE(webContainer->url(), testUserAgentUrl);
+    QCOMPARE(tabModel->count(), 1);
+    QCOMPARE(webContainer->m_webPages->count(), 1);
+    QCOMPARE(webContainer->m_webPages->m_activePages.count(), 1);
+
+    QVERIFY(webContainer->canGoBack());
+    QVERIFY(!webContainer->canGoForward());
+
+    QList<TestTab> historyOrder;
+    historyOrder.append(TestTab(formatUrl("testpage.html"), QString("TestPage")));
+    historyOrder.append(TestTab(formatUrl("testuseragent.html"), QString("TestUserAgent")));
+
+    // Before restart
+    verifyHistory(historyOrder);
+
+    delete tabModel;
+    tabModel = 0;
+    delete historyModel;
+    historyModel = 0;
+    delete webContainer;
+    webContainer = 0;
+
+    setTestData(EMPTY_QML);
+    setTestUrl(QUrl("qrc:///tst_webview.qml"));
+    QTest::qWait(1000);
+
+    webContainer = TestObject::qmlObject<DeclarativeWebContainer>("webView");
+    historyModel = TestObject::qmlObject<DeclarativeHistoryModel>("historyModel");
+    tabModel = TestObject::qmlObject<DeclarativeTabModel>("tabModel");
+    QVERIFY(tabModel->count() == 1);
+    QCOMPARE(tabModel->activeTab().url(), testUserAgentUrl);
+    QCOMPARE(webContainer->url(), testUserAgentUrl);
+
+    QVERIFY(webContainer->canGoBack());
+    QVERIFY(!webContainer->canGoForward());
+
+    // After restart
+    verifyHistory(historyOrder);
+
+    webContainer->goBack();
+    QTest::qWait(1000);
+
+    // After back navigation
+    verifyHistory(historyOrder);
+
+    QVERIFY(!webContainer->canGoBack());
+    QVERIFY(webContainer->canGoForward());
+
+    QCOMPARE(tabModel->activeTab().url(), testPageUrl);
+    QCOMPARE(webContainer->url(), testPageUrl);
+    QCOMPARE(tabModel->count(), 1);
+    QCOMPARE(webContainer->m_webPages->count(), 1);
+    QCOMPARE(webContainer->m_webPages->m_activePages.count(), 1);
+}
+
+void tst_webview::changeTabAndLoad()
+{
+    int previousTab = tabModel->activeTab().tabId();
+    tabModel->newTab(formatUrl("testwindowopen.html"), "");
+    QTest::qWait(1000);
+
+    QList<TestTab> historyOrder;
+    historyOrder.append(TestTab(formatUrl("testpage.html"), QString("TestPage")));
+    historyOrder.append(TestTab(formatUrl("testuseragent.html"), QString("TestUserAgent")));
+    historyOrder.append(TestTab(formatUrl("testwindowopen.html"), QString("Test window opening")));
+
+    verifyHistory(historyOrder);
+
+    // Active previous tab and an load url.
+    tabModel->activateTabById(previousTab);
+    QString testSelect(formatUrl("testselect.html"));
+    webContainer->webPage()->loadTab(testSelect, false);
+    QTest::qWait(1000);
+
+    // Should be after "testpage.html"
+    historyOrder.insert(1, TestTab(formatUrl("testselect.html"), QString("TestSelect")));
+    verifyHistory(historyOrder);
+
+    QCOMPARE(webContainer->url(), testSelect);
+    QCOMPARE(webContainer->title(), QString("TestSelect"));
+    QCOMPARE(tabModel->activeTab().url(), testSelect);
+    QCOMPARE(tabModel->activeTab().title(), QString("TestSelect"));
+    QCOMPARE(tabModel->count(), 2);
+    QCOMPARE(webContainer->m_webPages->count(), 2);
+    QCOMPARE(webContainer->m_webPages->m_activePages.count(), 2);
 }
 
 void tst_webview::cleanupTestCase()
@@ -553,16 +685,17 @@ QString tst_webview::formatUrl(QString fileName) const
     return QUrl::fromLocalFile(baseUrl + "/" + fileName).toString();
 }
 
-/*!
-    Wait signal of \a spy to be emitted \a expectedSignalCount.
-
-    Note: this might cause indefinite loop, if not used cautiously. Check
-    that \a spy is initialized before expected emits can happen.
- */
-void tst_webview::waitSignals(QSignalSpy &spy, int expectedSignalCount) const
+void tst_webview::verifyHistory(QList<TestTab> &historyOrder)
 {
-    while (spy.count() < expectedSignalCount) {
-        spy.wait();
+    historyModel->search("");
+    QTest::qWait(1000);
+    QCOMPARE(historyModel->rowCount(), historyOrder.count());
+    for (int i = 0; i < historyOrder.count(); ++i) {
+        QModelIndex modelIndex = historyModel->createIndex(i, 0);
+        QCOMPARE(historyModel->data(modelIndex, DeclarativeHistoryModel::TitleRole).toString(),
+                 historyOrder.at(i).title);
+        QCOMPARE(historyModel->data(modelIndex, DeclarativeHistoryModel::UrlRole).toString(),
+                 historyOrder.at(i).url);
     }
 }
 
@@ -572,16 +705,16 @@ int main(int argc, char *argv[])
     setenv("QML_BAD_GUI_RENDER_LOOP", "1", 1);
 
     QGuiApplication app(argc, argv);
-    QQuickView view;
     app.setAttribute(Qt::AA_Use96Dpi, true);
-    tst_webview testcase(&view);
+    tst_webview testcase;
+    testcase.setContextProperty("WebUtils", DeclarativeWebUtils::instance());
+    testcase.setContextProperty("MozContext", QMozContext::GetInstance());
 
+    qmlRegisterType<DeclarativeHistoryModel>("Sailfish.Browser", 1, 0, "HistoryModel");
     qmlRegisterType<DeclarativeTabModel>("Sailfish.Browser", 1, 0, "TabModel");
     qmlRegisterType<DeclarativeWebContainer>("Sailfish.Browser", 1, 0, "WebContainer");
     qmlRegisterType<DeclarativeWebPage>("Sailfish.Browser", 1, 0, "WebPage");
     qmlRegisterType<DeclarativeWebViewCreator>("Sailfish.Browser", 1, 0, "WebViewCreator");
-    view.rootContext()->setContextProperty("WebUtils", DeclarativeWebUtils::instance());
-    view.rootContext()->setContextProperty("MozContext", QMozContext::GetInstance());
 
     QString componentPath(DEFAULT_COMPONENTS_PATH);
     QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/components/EmbedLiteBinComponents.manifest"));

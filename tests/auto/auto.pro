@@ -1,7 +1,10 @@
 # TODO: Change this to subdirs once we get first C++ test
 TEMPLATE = subdirs
 
-SUBDIRS += tst_declarativetabmodel \
+SUBDIRS += tst_dbmanager \
+    tst_declarativebookmarkmodel \
+    tst_declarativehistorymodel \
+    tst_declarativetabmodel \
     tst_linkvalidator \
     tst_webview
 

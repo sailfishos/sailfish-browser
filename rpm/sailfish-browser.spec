@@ -1,7 +1,7 @@
 Name:       sailfish-browser
 
 Summary:    Sailfish Browser
-Version:    0.9.10
+Version:    0.9.21
 Release:    1
 Group:      Applications/Internet
 License:    MPLv2
@@ -11,7 +11,7 @@ BuildRequires:  pkgconfig(Qt5Core)
 BuildRequires:  pkgconfig(Qt5Qml)
 BuildRequires:  pkgconfig(Qt5Gui)
 BuildRequires:  pkgconfig(Qt5Quick)
-BuildRequires:  pkgconfig(qt5embedwidget) >= 1.8.6
+BuildRequires:  pkgconfig(qt5embedwidget) >= 1.8.9
 BuildRequires:  pkgconfig(Qt5DBus)
 BuildRequires:  pkgconfig(Qt5Concurrent)
 BuildRequires:  pkgconfig(Qt5Sql)
@@ -23,7 +23,7 @@ BuildRequires:  qt5-qttools-linguist
 BuildRequires:  gdb
 Requires: sailfishsilica-qt5 >= 0.11.8
 Requires: jolla-ambient >= 0.3.24
-Requires: xulrunner-qt5 >= 29.0.1.4
+Requires: xulrunner-qt5 >= 29.0.1.9
 Requires: embedlite-components-qt5 >= 1.5.5
 Requires: sailfish-browser-settings = %{version}
 Requires: qt5-plugin-imageformat-ico

@@ -27,6 +27,7 @@ public:
     void setTabId(int tabId);
 
     int currentLink() const;
+    void setCurrentLink(int currentLinkId);
 
     int previousLink() const;
     void setPreviousLink(int previousLinkId);

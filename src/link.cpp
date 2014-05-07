@@ -31,6 +31,11 @@ int Link::linkId() const
     return m_linkId;
 }
 
+void Link::setLinkId(int linkId)
+{
+    m_linkId = linkId;
+}
+
 QString Link::url() const
 {
     return m_url;

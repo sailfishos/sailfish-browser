@@ -28,7 +28,6 @@
 #include "declarativewebutils.h"
 #include "browserservice.h"
 #include "downloadmanager.h"
-#include "settingmanager.h"
 #include "closeeventfilter.h"
 #include "declarativetabmodel.h"
 #include "declarativehistorymodel.h"
@@ -59,6 +58,11 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     QScopedPointer<QQuickView> view(new QQuickView);
 #endif
     app->setQuitOnLastWindowClosed(false);
+
+    // GRE_HOME must be set before QMozContext is initialized.
+    // With invoker PWD is empty.
+    QByteArray binaryPath = QCoreApplication::applicationDirPath().toLocal8Bit();
+    setenv("GRE_HOME", binaryPath.constData(), 1);
 
     // TODO : Remove this and set custom user agent always
     // Don't set custom user agent string when arguments contains -developerMode, give url as last argument
@@ -133,10 +137,6 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     QObject::connect(service, SIGNAL(openUrlRequested(QString)),
                      clsEventFilter, SLOT(cancelStopApplication()));
 
-    SettingManager * settingMgr = new SettingManager(app.data());
-    QObject::connect(QMozContext::GetInstance(), SIGNAL(onInitialized()),
-                     settingMgr, SLOT(initialize()));
-
 #ifdef USE_RESOURCES
     view->setSource(QUrl("qrc:///browser.qml"));
 #else
@@ -150,6 +150,9 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     }
     view->setSource(QUrl::fromLocalFile(path+"browser.qml"));
 #endif
+    // ### Temporary solution, the rendering engine should handle QQuickWindow::sceneGraphInvalidated()
+    view->setPersistentOpenGLContext(true);
+    view->setPersistentSceneGraph(true);
 
     view->showFullScreen();
 

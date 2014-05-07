@@ -54,8 +54,10 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     , m_realNavigation(false)
     , m_readyToLoad(false)
     , m_maxLiveTabCount(5)
+    , m_deferredReload(false)
 {
     m_webPages.reset(new WebPages(this));
+    m_settingManager.reset(new SettingManager(this));
     setFlag(QQuickItem::ItemHasContents, true);
     if (!window()) {
         connect(this, SIGNAL(windowChanged(QQuickWindow*)), this, SLOT(handleWindowChanged(QQuickWindow*)));
@@ -65,8 +67,8 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
 
     connect(&m_screenCapturer, SIGNAL(finished()), this, SLOT(screenCaptureReady()));
     connect(DownloadManager::instance(), SIGNAL(downloadStarted()), this, SLOT(onDownloadStarted()));
-    connect(DBManager::instance(), SIGNAL(thumbPathChanged(QString,QString,int)),
-            this, SLOT(onPageThumbnailChanged(QString,QString,int)));
+    connect(DBManager::instance(), SIGNAL(thumbPathChanged(int,QString)),
+            this, SLOT(onPageThumbnailChanged(int,QString)));
     connect(this, SIGNAL(maxLiveTabCountChanged()), this, SLOT(manageMaxTabCount()));
     connect(this, SIGNAL(_readyToLoadChanged()), this, SLOT(onReadyToLoad()));
     connect(this, SIGNAL(heightChanged()), this, SLOT(resetHeight()));
@@ -126,9 +128,10 @@ void DeclarativeWebContainer::setTabModel(DeclarativeTabModel *model)
             connect(m_model, SIGNAL(loadedChanged()), this, SLOT(onModelLoaded()));
             connect(m_model, SIGNAL(tabAdded(int)), this, SLOT(manageMaxTabCount()));
             connect(m_model, SIGNAL(tabClosed(int)), this, SLOT(releasePage(int)));
+            connect(m_model, SIGNAL(tabsCleared()), this, SLOT(onTabsCleared()));
             // Try to make this to normal direct connection once we have removed QML_BAD_GUI_RENDER_LOOP.
-            connect(m_model, SIGNAL(newTabRequested(QString,QString,int)), this, SLOT(onNewTabRequested(QString,QString,int)), Qt::QueuedConnection);
-            connect(m_model, SIGNAL(updateActiveTabThumbnail(QString)), this, SLOT(setThumbnailPath(QString)));
+            connect(m_model, SIGNAL(newTabRequested(QString,QString)), this, SLOT(onNewTabRequested(QString,QString)), Qt::QueuedConnection);
+            connect(m_model, SIGNAL(updateActiveThumbnail()), this, SLOT(updateThumbnail()));
         }
         emit tabModelChanged();
     }
@@ -271,6 +274,17 @@ bool DeclarativeWebContainer::readyToLoad() const
 
 void DeclarativeWebContainer::setReadyToLoad(bool readyToLoad)
 {
+    static bool browserReady = false;
+    if (!browserReady && readyToLoad) {
+        bool wasClearHistoryRequested = m_settingManager->clearHistoryRequested();
+        browserReady = true;
+        m_settingManager->initialize();
+        if (m_model && wasClearHistoryRequested) {
+            readyToLoad = false;
+            emit m_model->countChanged();
+        }
+    }
+
     if (m_readyToLoad != readyToLoad) {
         m_readyToLoad = readyToLoad;
         emit _readyToLoadChanged();
@@ -285,13 +299,6 @@ bool DeclarativeWebContainer::isActiveTab(int tabId)
 void DeclarativeWebContainer::goForward()
 {
     if (m_canGoForward && m_webPage) {
-        if (m_webPage->canGoForward()) {
-            m_realNavigation = true;
-            m_webPage->goForward();
-        } else {
-            m_realNavigation = false;
-        }
-
         m_canGoForward = false;
         emit canGoForwardChanged();
 
@@ -299,21 +306,19 @@ void DeclarativeWebContainer::goForward()
             m_canGoBack = true;
             emit canGoBackChanged();
         }
-        m_model->setBackForwardNavigation(true);
+
+        m_webPage->setBackForwardNavigation(true);
+        m_realNavigation = m_webPage->canGoForward();
         DBManager::instance()->goForward(m_webPage->tabId());
+        if (m_realNavigation) {
+            m_webPage->goForward();
+        }
     }
 }
 
 void DeclarativeWebContainer::goBack()
 {
     if (m_canGoBack && m_webPage) {
-        if (m_webPage->canGoBack()) {
-            m_realNavigation = true;
-            m_webPage->goBack();
-        } else {
-            m_realNavigation = false;
-        }
-
         m_canGoBack = false;
         emit canGoBackChanged();
 
@@ -322,8 +327,24 @@ void DeclarativeWebContainer::goBack()
             emit canGoForwardChanged();
         }
 
-        m_model->setBackForwardNavigation(true);
+        m_webPage->setBackForwardNavigation(true);
+        m_realNavigation = m_webPage->canGoBack();
+        // When executing non real back navigation, we're adding
+        // an entry to forward history of the engine. For instance, in sequence like
+        // link X, link Y, restart browser, and navigate back. This sequence triggers
+        // an url loading when going back. This means that there is a clean
+        // back history in engine. If you now navigate forward, we load the url and not
+        // use engine's forward.
+        // After this back/forward starts working correctly. As loading indicator can
+        // be visible also when using engine navigation it makes this error to hard to spot.
+        // In addition, as history is based on browser side database, user cannot navigate
+        // beyond back history from user interface. However, JavaScript functions maybe do harm.
+        // TODO: We should resurrect the back forward history for page instance
+        // when a new tab is created.
         DBManager::instance()->goBack(m_webPage->tabId());
+        if (m_realNavigation) {
+            m_webPage->goBack();
+        }
     }
 }
 
@@ -338,6 +359,8 @@ bool DeclarativeWebContainer::activatePage(int tabId, bool force)
         WebPageActivationData activationData = m_webPages->page(tabId, m_model->newTabParentId());
         setWebPage(activationData.webPage);
         m_webPage->setChrome(true);
+        // Reset always height so that orentation change is taken into account.
+        resetHeight();
         setLoadProgress(m_webPage->loadProgress());
 
         connect(m_webPage, SIGNAL(imeNotification(int,bool,int,int,QString)),
@@ -353,9 +376,17 @@ bool DeclarativeWebContainer::activatePage(int tabId, bool force)
     return false;
 }
 
+void DeclarativeWebContainer::loadNewTab(QString url, QString title, int parentId)
+{
+    m_model->newTabData(url, title, webPage(), parentId);
+    // This could handle new page creation directly if/
+    // when connection helper is accessible from QML.
+    emit triggerLoad(url, title);
+}
+
 void DeclarativeWebContainer::captureScreen()
 {
-    if (!m_webPage) {
+    if (!m_webPage || !isVisible()) {
         return;
     }
 
@@ -366,8 +397,13 @@ void DeclarativeWebContainer::captureScreen()
         }
 
         qreal rotation = parentItem() ? parentItem()->rotation() : 0;
-        captureScreen(url(), size, rotation);
+        captureScreen(size, rotation);
     }
+}
+
+void DeclarativeWebContainer::dumpPages() const
+{
+    m_webPages->dumpPages();
 }
 
 void DeclarativeWebContainer::resetHeight(bool respectContentHeight)
@@ -425,7 +461,7 @@ qreal DeclarativeWebContainer::contentHeight() const
     }
 }
 
-DeclarativeWebContainer::ScreenCapture DeclarativeWebContainer::saveToFile(QString url, QImage image, QRect cropBounds, int tabId, qreal rotate)
+DeclarativeWebContainer::ScreenCapture DeclarativeWebContainer::saveToFile(QImage image, QRect cropBounds, int tabId, qreal rotate)
 {
     QString path = QString("%1/tab-%2-thumb.png").arg(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)).arg(tabId);
     QTransform transform;
@@ -437,7 +473,6 @@ DeclarativeWebContainer::ScreenCapture DeclarativeWebContainer::saveToFile(QStri
     if(image.save(path)) {
         capture.tabId = tabId;
         capture.path = path;
-        capture.url = url;
     } else {
         capture.tabId = -1;
         qWarning() << Q_FUNC_INFO << "failed to save image" << path;
@@ -479,33 +514,25 @@ void DeclarativeWebContainer::handleWindowChanged(QQuickWindow *window)
 
 void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int activeTabId)
 {
-    if (activeTabId == 0) {
+    if (activeTabId <= 0) {
         setThumbnailPath("");
         return;
     }
+    const Tab &tab = m_model->activeTab();
 #ifdef DEBUG_LOGS
     qDebug() << "canGoBack = " << m_canGoBack << "canGoForward = " << m_canGoForward << &tab;
 #endif
-    const Tab &tab = m_model->activeTab();
 
-    if (m_canGoForward != (tab.nextLink() > 0)) {
-        m_canGoForward = tab.nextLink() > 0;
-        emit canGoForwardChanged();
-    }
-
-    if (m_canGoBack != (tab.previousLink() > 0)) {
-        m_canGoBack = tab.previousLink() > 0;
-        emit canGoBackChanged();
-    }
+    updateNavigationStatus(tab);
 
     setThumbnailPath(tab.thumbnailPath());
 
+    if (m_model->hasNewTabData()) {
+        return;
+    }
+
     // Switch to different tab.
     if (oldTabId != activeTabId) {
-        if (m_model->hasNewTabData()) {
-            return;
-        }
-
         QString tabUrl = tab.url();
 
         if (activatePage(activeTabId, true) && m_readyToLoad
@@ -513,6 +540,8 @@ void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int activeTabId)
             emit triggerLoad(tabUrl, tab.title());
         }
         manageMaxTabCount();
+    } else if (!m_realNavigation && isActiveTab(activeTabId) && m_webPage->backForwardNavigation()) {
+        emit triggerLoad(tab.url(), tab.title());
     }
 }
 
@@ -520,37 +549,27 @@ void DeclarativeWebContainer::screenCaptureReady()
 {
     ScreenCapture capture = m_screenCapturer.result();
 #ifdef DEBUG_LOGS
-    qDebug() << capture.tabId << capture.path << capture.url;
+    qDebug() << capture.tabId << capture.path << isActiveTab(capture.tabId);
 #endif
     if (capture.tabId != -1) {
         // Update immediately without dbworker round trip.
         if (isActiveTab(capture.tabId)) {
             setThumbnailPath(capture.path);
         }
-        // TODO: Cleanup url.
-        DBManager::instance()->updateThumbPath(capture.url, capture.path, capture.tabId);
-    }
-}
-
-void DeclarativeWebContainer::triggerLoad()
-{
-    bool realNavigation = m_realNavigation;
-    m_realNavigation = false;
-    // Back / forward navigation activated and MozView instance cannot be used.
-    if (m_webPage && m_model->backForwardNavigation() && !realNavigation && url() != "about:blank") {
-        QMetaObject::invokeMethod(this, "load", Qt::DirectConnection,
-                                  Q_ARG(QVariant, url()),
-                                  Q_ARG(QVariant, title()),
-                                  Q_ARG(QVariant, false));
+        DBManager::instance()->updateThumbPath(capture.tabId, capture.path);
     }
 }
 
 void DeclarativeWebContainer::onModelLoaded()
 {
-    // Load placeholder when no pages exist. If a page exists,
-    // it gets initialized by onActiveTabChanged.
-    if (!webPage()) {
+    // This signal handler is responsible for activating
+    // the first page.
+    bool firstUseDone = DeclarativeWebUtils::instance()->firstUseDone();
+    if (m_model->hasNewTabData() || (m_model->count() == 0 && firstUseDone)) {
         activatePage(m_model->nextTabId(), true);
+    } else if (m_model->count() > 0) {
+        const Tab &tab = m_model->activeTab();
+        activatePage(tab.tabId(), true);
     }
 }
 
@@ -575,13 +594,14 @@ void DeclarativeWebContainer::onDownloadStarted()
     }
 }
 
-void DeclarativeWebContainer::onNewTabRequested(QString url, QString title, int parentId)
+void DeclarativeWebContainer::onNewTabRequested(QString url, QString title)
 {
+    // An empty tab for cleaning previous navigation status.
+    Tab tab;
+    updateNavigationStatus(tab);
+
     if (m_active) {
-        m_model->newTabData(url, title, webPage(), parentId);
-        // This could handle new page creation directly if/
-        // when connection helper is accessible from QML.
-        emit triggerLoad(url, title);
+        loadNewTab(url, title, 0);
     } else {
         if (m_webPage) {
             m_webPage->setVisible(false);
@@ -589,8 +609,7 @@ void DeclarativeWebContainer::onNewTabRequested(QString url, QString title, int 
         }
         QMetaObject::invokeMethod(this, "onNewTabRequested", Qt::QueuedConnection,
                                   Q_ARG(QString, url),
-                                  Q_ARG(QString, title),
-                                  Q_ARG(int, parentId));
+                                  Q_ARG(QString, title));
     }
 }
 
@@ -620,14 +639,22 @@ void DeclarativeWebContainer::onReadyToLoad()
     }
 }
 
+void DeclarativeWebContainer::onTabsCleared()
+{
+    m_webPages->clear();
+    setThumbnailPath("");
+    emit contentItemChanged();
+    emit titleChanged();
+    emit urlChanged();
+}
+
 /**
  * @brief DeclarativeTab::captureScreen
  * Rotation transformation is applied first, then geometry values on top of it.
- * @param url
  * @param size
  * @param rotate clockwise rotation of the image in degrees
  */
-void DeclarativeWebContainer::captureScreen(QString url, int size, qreal rotate)
+void DeclarativeWebContainer::captureScreen(int size, qreal rotate)
 {
     if (!window() || !window()->isActive() || !m_webPage) {
         return;
@@ -643,7 +670,7 @@ void DeclarativeWebContainer::captureScreen(QString url, int size, qreal rotate)
     qDebug() << "about to set future";
 #endif
     // asynchronous save to avoid the slow I/O
-    m_screenCapturer.setFuture(QtConcurrent::run(this, &DeclarativeWebContainer::saveToFile, url, image, cropBounds, m_webPage->tabId(), rotate));
+    m_screenCapturer.setFuture(QtConcurrent::run(this, &DeclarativeWebContainer::saveToFile, image, cropBounds, m_webPage->tabId(), rotate));
 }
 
 int DeclarativeWebContainer::parentTabId(int tabId) const
@@ -687,12 +714,21 @@ void DeclarativeWebContainer::onPageUrlChanged()
     DeclarativeWebPage *webPage = qobject_cast<DeclarativeWebPage *>(sender());
     if (webPage && m_model) {
         QString url = webPage->url().toString();
-        int tabId = webPage->tabId();
-        bool activeTab = isActiveTab(tabId);
-        m_model->updateUrl(tabId, activeTab, url);
+        if (url != "about:blank") {
+            int tabId = webPage->tabId();
+            bool activeTab = isActiveTab(tabId);
+            // Update initial back / forward navigation state
+            if (activeTab && !webPage->urlHasChanged()) {
+                const Tab &tab = m_model->activeTab();
+                updateNavigationStatus(tab);
+            }
 
-        if (activeTab && webPage == m_webPage) {
-            emit urlChanged();
+            m_model->updateUrl(tabId, activeTab, url, webPage->backForwardNavigation(), !webPage->urlHasChanged());
+            webPage->setUrlHasChanged(true);
+            webPage->setBackForwardNavigation(false);
+            if (activeTab && webPage == m_webPage) {
+                emit urlChanged();
+            }
         }
     }
 }
@@ -712,15 +748,22 @@ void DeclarativeWebContainer::onPageTitleChanged()
     }
 }
 
-void DeclarativeWebContainer::onPageThumbnailChanged(QString url, QString path, int tabId)
+void DeclarativeWebContainer::onPageThumbnailChanged(int tabId, QString path)
 {
-    Q_UNUSED(url);
     if (isActiveTab(tabId)) {
         setThumbnailPath(path);
     }
 
     if (m_model) {
         m_model->updateThumbnailPath(tabId, isActiveTab(tabId), path);
+    }
+}
+
+void DeclarativeWebContainer::updateThumbnail()
+{
+    const Tab &tab = m_model->activeTab();
+    if (isActiveTab(tab.tabId()) && tab.isValid()) {
+        captureScreen();
     }
 }
 
@@ -736,6 +779,19 @@ void DeclarativeWebContainer::manageMaxTabCount()
     // ActiveTab + m_maxLiveTabCount -1 == m_maxLiveTabCount
     for (int i = m_maxLiveTabCount - 1; i < tabs.count() && m_webPages && m_webPages->count() > m_maxLiveTabCount; ++i) {
         releasePage(tabs.at(i).tabId(), true);
+    }
+}
+
+void DeclarativeWebContainer::updateNavigationStatus(const Tab &tab)
+{
+    if (m_canGoForward != (tab.nextLink() > 0)) {
+        m_canGoForward = tab.nextLink() > 0;
+        emit canGoForwardChanged();
+    }
+
+    if (m_canGoBack != (tab.previousLink() > 0)) {
+        m_canGoBack = tab.previousLink() > 0;
+        emit canGoBackChanged();
     }
 }
 

@@ -25,7 +25,6 @@ class DeclarativeTabModel : public QAbstractListModel, public QQmlParserStatus
     Q_INTERFACES(QQmlParserStatus)
 
     Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
-    Q_PROPERTY(int currentTabId READ currentTabId NOTIFY currentTabIdChanged FINAL)
     Q_PROPERTY(int nextTabId READ nextTabId NOTIFY nextTabIdChanged FINAL)
     Q_PROPERTY(bool loaded READ loaded NOTIFY loadedChanged FINAL)
     Q_PROPERTY(bool browsing READ browsing WRITE setBrowsing NOTIFY browsingChanged FINAL)
@@ -50,7 +49,8 @@ public:
     Q_INVOKABLE bool activateTab(int index);
     Q_INVOKABLE void closeActiveTab();
 
-    Q_INVOKABLE void newTab(const QString &url, const QString &title, int parentId = 0);
+    Q_INVOKABLE void newTab(const QString &url, const QString &title);
+    // This should be only for C++ side. But there is one depending move to QML side (see WebView::load())
     Q_INVOKABLE void newTabData(const QString &url, const QString &title, QObject *contentItem = 0, int parentId = 0);
     Q_INVOKABLE void resetNewTabData();
 
@@ -70,7 +70,6 @@ public:
     void classBegin();
     void componentComplete();
 
-    int currentTabId() const;
     int nextTabId() const;
 
     bool loaded() const;
@@ -83,14 +82,11 @@ public:
 
     int newTabParentId() const;
 
-    bool backForwardNavigation() const;
-    void setBackForwardNavigation(bool backForwardNavigation);
-
     QObject* newTabPreviousPage() const;
     const QList<Tab>& tabs() const;
     const Tab& activeTab() const;
 
-    void updateUrl(int tabId, bool activeTab, QString url);
+    void updateUrl(int tabId, bool activeTab, QString url, bool backForwardNavigation, bool initialLoad = false);
     void updateTitle(int tabId, bool activeTab, QString title);
     void updateThumbnailPath(int tabId, bool activeTab, QString path);
 
@@ -104,17 +100,18 @@ signals:
     void activeTabChanged(int oldTabId, int activeTabId);
     void tabAdded(int tabId);
     void tabClosed(int tabId);
-    void currentTabIdChanged();
+    void tabsCleared();
     void nextTabIdChanged();
     void loadedChanged();
     void browsingChanged();
     void hasNewTabDataChanged();
     void newTabUrlChanged();
-    void newTabRequested(QString url, QString title, int parentId);
-    void updateActiveTabThumbnail(QString path);
+    void newTabRequested(QString url, QString title);
+    void updateActiveThumbnail();
 
 private slots:
     void tabChanged(const Tab &tab);
+    void updateTitle(int tabId, int linkId, QString url, QString title);
 
 private:
     struct NewTabData {
@@ -135,7 +132,7 @@ private:
     void removeTab(int tabId, const QString &thumbnail, int index = -1);
     int findTabIndex(int tabId) const;
     void saveTabOrder();
-    int loadTabOrder();
+    void loadTabOrder();
     void updateActiveTab(const Tab &activeTab);
     void updateTabUrl(int tabId, bool activeTab, const QString &url, bool navigate);
 
@@ -147,7 +144,6 @@ private:
     bool m_loaded;
     bool m_browsing;
     int m_nextTabId;
-    bool m_backForwardNavigation;
 
     QScopedPointer<NewTabData> m_newTabData;
 

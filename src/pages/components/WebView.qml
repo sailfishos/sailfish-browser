@@ -20,7 +20,6 @@ import "." as Browser
 WebContainer {
     id: webView
 
-    property color _decoratorColor: Theme.highlightDimmerColor
     property bool firstUseFullscreen
 
     function stop() {
@@ -32,18 +31,18 @@ WebContainer {
     // force property only used by WebView itself for deferred loading when
     // network connectivity is established or when loading initial web page.
     function load(url, title, force) {
-        if (url.substring(0, 6) !== "about:" && url.substring(0, 5) !== "file:"
-            && !connectionHelper.haveNetworkConnectivity()
-            && !contentItem._deferredLoad) {
+//        if (url.substring(0, 6) !== "about:" && url.substring(0, 5) !== "file:"
+//            && !connectionHelper.haveNetworkConnectivity()
+//            && !deferredLoad) {
 
-            contentItem._deferredReload = false
-            contentItem._deferredLoad = {
-                "url": url,
-                "title": title
-            }
-            connectionHelper.attemptToConnectNetwork()
-            return
-        }
+//            deferredReload = false
+//            deferredLoad = {
+//                "url": url,
+//                "title": title
+//            }
+//            connectionHelper.attemptToConnectNetwork()
+//            return
+//        }
 
         // Modify url and title to string
         title = title ? "" + title : ""
@@ -66,15 +65,15 @@ WebContainer {
         }
 
         var url = contentItem.url.toString()
-        if (url.substring(0, 6) !== "about:" && url.substring(0, 5) !== "file:"
-            && !contentItem._deferredReload
-            && !connectionHelper.haveNetworkConnectivity()) {
+//        if (url.substring(0, 6) !== "about:" && url.substring(0, 5) !== "file:"
+//            && !deferredReload
+//            && !connectionHelper.haveNetworkConnectivity()) {
 
-            contentItem._deferredReload = true
-            contentItem._deferredLoad = null
-            connectionHelper.attemptToConnectNetwork()
-            return
-        }
+//            deferredReload = true
+//            deferredLoad = null
+//            connectionHelper.attemptToConnectNetwork()
+//            return
+//        }
 
         contentItem.reload()
     }
@@ -94,6 +93,7 @@ WebContainer {
     inputPanelOpenHeight: window.pageStack.imSize
     fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) || webView.inputPanelVisible || !webView.foreground || (contentItem && contentItem.fullscreen) || firstUseFullscreen
     _readyToLoad: contentItem && contentItem.viewReady && tabModel.loaded
+    decoratorColor: Theme.highlightDimmerColor
 
     loading: contentItem ? contentItem.loading : false
     favicon: contentItem ? contentItem.favicon : ""
@@ -103,14 +103,14 @@ WebContainer {
     tabModel: TabModel {
         // Enable browsing after new tab actually created or it was not even requested
         browsing: webView.active && !hasNewTabData && contentItem && contentItem.loaded
-        onBrowsingChanged: if (browsing) captureScreen()
     }
 
     onTriggerLoad: webView.load(url, title)
 
     WebViewCreator {
         activeWebView: contentItem
-        onNewWindowRequested: tabModel.newTab(url, "", parentId)
+        // onNewWindowRequested is always handled as synchronous operation (not through newTab).
+        onNewWindowRequested: webView.loadNewTab(url, "", parentId)
     }
 
     Rectangle {
@@ -123,6 +123,9 @@ WebContainer {
         id: webPageComponent
         WebPage {
             id: webPage
+
+            property int iconSize
+            property string iconType
 
             loaded: loadProgress === 100 && !loading
             enabled: container.active
@@ -169,9 +172,9 @@ WebContainer {
                     var highBgLightness = WebUtils.getLightness(Theme.highlightBackgroundColor)
 
                     if (Math.abs(bgLightness - dimmerLightness) > Math.abs(bgLightness - highBgLightness)) {
-                        container._decoratorColor = Theme.highlightDimmerColor
+                        container.decoratorColor = Theme.highlightDimmerColor
                     } else {
-                        container._decoratorColor =  Theme.highlightBackgroundColor
+                        container.decoratorColor =  Theme.highlightBackgroundColor
                     }
 
                     sendAsyncMessage("Browser:SelectionColorUpdate",
@@ -219,6 +222,12 @@ WebContainer {
                         resurrectedContentRect = null
                     }
                 }
+
+                // Refresh timers (if any) keep working even for suspended views. Hence
+                // suspend the view again explicitly if app window is in background.
+                if (loaded && webView.background) {
+                    suspendView();
+                }
             }
 
             onLoadingChanged: {
@@ -234,8 +243,36 @@ WebContainer {
             onRecvAsyncMessage: {
                 switch (message) {
                 case "chrome:linkadded": {
-                    if (data.rel === "shortcut icon") {
+                    var parsedFavicon = false
+                    if (data.href && data.rel === "icon"
+                            && iconType !== "apple-touch-icon"
+                            && iconType !== "apple-touch-icon-precomposed") {
+                        var sizes = []
+                        if (data.sizes) {
+                            var digits = data.sizes.split("x")
+                            var size = digits && digits.length > 0 && digits[0]
+                            if (size) {
+                                sizes.push(size)
+                            }
+                        } else {
+                            sizes = data.href.match(/\d+/)
+                        }
+                        for (var i in sizes) {
+                            var faviconSize = parseInt(sizes[i])
+                            // Accept largest icon but one that is still smaller than icon size large.
+                            if (faviconSize && faviconSize > iconSize && faviconSize <= Theme.iconSizeLarge) {
+                                iconSize = faviconSize
+                                parsedFavicon = true
+                            }
+                        }
+                    }
+
+                    if (data.rel === "shortcut icon"
+                            || data.rel === "apple-touch-icon"
+                            || data.rel === "apple-touch-icon-precomposed"
+                            || parsedFavicon) {
                         favicon = data.href
+                        iconType = data.rel
                     }
                     break
                 }
@@ -296,12 +333,11 @@ WebContainer {
                 }
             }
 
-            // We decided to disable "text selection" until we understand how it
-            // should look like in Sailfish.
-            // TextSelectionController {}
+            TextSelectionController { color: decoratorColor }
+
             states: State {
                 name: "boundHeightControl"
-                when: container.inputPanelVisible || !container.foreground || !visible
+                when: container.inputPanelVisible || !container.foreground
                 PropertyChanges {
                     target: webPage
                     height: container.parent.height
@@ -318,7 +354,7 @@ WebContainer {
         y: contentItem ? contentItem.verticalScrollDecorator.position : 0
         z: 1
         anchors.right: contentItem ? contentItem.right: undefined
-        color: _decoratorColor
+        color: decoratorColor
         smooth: true
         radius: 2.5
         visible: contentItem && contentItem.contentHeight > contentItem.height && !contentItem.pinching && !popupActive
@@ -334,7 +370,7 @@ WebContainer {
         x: contentItem ? contentItem.horizontalScrollDecorator.position : 0
         y: webView.parent.height - (fullscreenMode ? 0 : toolbarHeight) - height
         z: 1
-        color: _decoratorColor
+        color: decoratorColor
         smooth: true
         radius: 2.5
         visible: contentItem && contentItem.contentWidth > contentItem.width && !contentItem.pinching && !popupActive
@@ -342,39 +378,38 @@ WebContainer {
         Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
     }
 
-    ConnectionHelper {
-        id: connectionHelper
+//    ConnectionHelper {
+//        id: connectionHelper
 
-        onNetworkConnectivityEstablished: {
-            var url
-            var title
+//        onNetworkConnectivityEstablished: {
+//            var url
+//            var title
 
-            // TODO: this should be deferred till view created.
-            if (contentItem && contentItem._deferredLoad) {
-                url = contentItem._deferredLoad["url"]
-                title = contentItem._deferredLoad["title"]
-                contentItem._deferredLoad = null
-                webView.load(url, title, true)
-            } else if (contentItem && contentItem._deferredReload) {
-                contentItem._deferredReload = false
-                contentItem.reload()
-            }
-        }
+//            if (deferredLoad) {
+//                url = deferredLoad["url"]
+//                title = deferredLoad["title"]
+//                deferredLoad = null
+//                webView.load(url, title, true)
+//            } else if (deferredReload) {
+//                deferredReload = false
+//                contentItem.reload()
+//            }
+//        }
 
-        onNetworkConnectivityUnavailable: {
-            if (contentItem) {
-                contentItem._deferredLoad = null
-                contentItem._deferredReload = false
-            }
-        }
-    }
+//        onNetworkConnectivityUnavailable: {
+//            if (contentItem) {
+//                deferredLoad = null
+//                deferredReload = false
+//            }
+//        }
+//    }
 
     ResourceController {
         id: resourceController
         webView: contentItem
         background: webView.background
 
-        onWebViewSuspended: connectionHelper.closeNetworkSession()
+        //onWebViewSuspended: connectionHelper.closeNetworkSession()
     }
 
     Timer {
@@ -383,7 +418,7 @@ WebContainer {
         interval: 1000
     }
 
-    Component.onDestruction: connectionHelper.closeNetworkSession()
+    //Component.onDestruction: connectionHelper.closeNetworkSession()
     Component.onCompleted: {
         PopupHandler.auxTimer = auxTimer
         PopupHandler.pageStack = pageStack

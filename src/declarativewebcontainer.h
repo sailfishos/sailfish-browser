@@ -12,6 +12,7 @@
 #ifndef DECLARATIVEWEBCONTAINER_H
 #define DECLARATIVEWEBCONTAINER_H
 
+#include "settingmanager.h"
 #include "tab.h"
 #include "webpages.h"
 
@@ -19,6 +20,7 @@
 #include <QPointer>
 #include <QImage>
 #include <QFutureWatcher>
+#include <QColor>
 
 class QTimerEvent;
 class DeclarativeTabModel;
@@ -41,6 +43,7 @@ class DeclarativeWebContainer : public QQuickItem {
     Q_PROPERTY(qreal inputPanelOpenHeight MEMBER m_inputPanelOpenHeight NOTIFY inputPanelOpenHeightChanged FINAL)
     Q_PROPERTY(qreal toolbarHeight MEMBER m_toolbarHeight NOTIFY toolbarHeightChanged FINAL)
     Q_PROPERTY(bool background READ background NOTIFY backgroundChanged FINAL)
+    Q_PROPERTY(QColor decoratorColor MEMBER m_decoratorColor NOTIFY decoratorColorChanged FINAL)
 
     Q_PROPERTY(QString favicon MEMBER m_favicon NOTIFY faviconChanged)
 
@@ -56,6 +59,9 @@ class DeclarativeWebContainer : public QQuickItem {
     Q_PROPERTY(QString thumbnailPath READ thumbnailPath NOTIFY thumbnailPathChanged FINAL)
 
     Q_PROPERTY(QQmlComponent* webPageComponent MEMBER m_webPageComponent NOTIFY webPageComponentChanged FINAL)
+
+    Q_PROPERTY(bool deferredReload MEMBER m_deferredReload NOTIFY deferredReloadChanged FINAL)
+    Q_PROPERTY(QVariant deferredLoad MEMBER m_deferredLoad NOTIFY deferredLoadChanged FINAL)
 
     // "private" properties.
     Q_PROPERTY(bool _readyToLoad READ readyToLoad WRITE setReadyToLoad NOTIFY _readyToLoadChanged FINAL)
@@ -103,8 +109,10 @@ public:
     Q_INVOKABLE void goForward();
     Q_INVOKABLE void goBack();
     Q_INVOKABLE bool activatePage(int tabId, bool force = false);
+    Q_INVOKABLE void loadNewTab(QString url, QString title, int parentId);
 
     Q_INVOKABLE void captureScreen();
+    Q_INVOKABLE void dumpPages() const;
 
 signals:
     void contentItemChanged();
@@ -121,6 +129,7 @@ signals:
     void inputPanelHeightChanged();
     void inputPanelOpenHeightChanged();
     void toolbarHeightChanged();
+    void decoratorColorChanged();
 
     void faviconChanged();
     void loadingChanged();
@@ -132,6 +141,9 @@ signals:
     void titleChanged();
     void urlChanged();
     void thumbnailPathChanged();
+
+    void deferredReloadChanged();
+    void deferredLoadChanged();
 
     void _readyToLoadChanged();
 
@@ -146,19 +158,19 @@ private slots:
     void windowVisibleChanged(bool visible);
     void handleWindowChanged(QQuickWindow *window);
     void screenCaptureReady();
-    void triggerLoad();
     void onActiveTabChanged(int oldTabId, int activeTabId);
     void onModelLoaded();
     void onDownloadStarted();
-    void onNewTabRequested(QString url, QString title, int parentId);
+    void onNewTabRequested(QString url, QString title);
     void onReadyToLoad();
+    void onTabsCleared();
     void manageMaxTabCount();
     void releasePage(int tabId, bool virtualize = false);
     void closeWindow();
     void onPageUrlChanged();
     void onPageTitleChanged();
-    void onPageThumbnailChanged(QString url, QString path, int tabId);
-    void setThumbnailPath(QString thumbnailPath);
+    void onPageThumbnailChanged(int tabId, QString path);
+    void updateThumbnail();
 
     // These are here to inform embedlite-components that keyboard is open or close
     // matching composition metrics.
@@ -169,25 +181,25 @@ protected:
 
 private:
     void setWebPage(DeclarativeWebPage *webPage);
+    void setThumbnailPath(QString thumbnailPath);
     qreal contentHeight() const;
-    void captureScreen(QString url, int size, qreal rotate);
+    void captureScreen(int size, qreal rotate);
     int parentTabId(int tabId) const;
+    void updateNavigationStatus(const Tab &tab);
     void updateVkbHeight();
 
     struct ScreenCapture {
         int tabId;
         QString path;
-        QString url;
     };
 
-    // Grep following todos
-    // TODO: Remove url parameter from this, worker, and manager.
-    ScreenCapture saveToFile(QString url, QImage image, QRect cropBounds, int tabId, qreal rotate);
+    ScreenCapture saveToFile(QImage image, QRect cropBounds, int tabId, qreal rotate);
 
     QPointer<DeclarativeWebPage> m_webPage;
     QPointer<DeclarativeTabModel> m_model;
     QPointer<QQmlComponent> m_webPageComponent;
     QScopedPointer<WebPages> m_webPages;
+    QScopedPointer<SettingManager> m_settingManager;
     bool m_foreground;
     bool m_background;
     bool m_windowVisible;
@@ -200,6 +212,7 @@ private:
     qreal m_inputPanelHeight;
     qreal m_inputPanelOpenHeight;
     qreal m_toolbarHeight;
+    QColor m_decoratorColor;
 
     QString m_favicon;
     QString m_thumbnailPath;
@@ -213,6 +226,9 @@ private:
     int m_maxLiveTabCount;
 
     QFutureWatcher<ScreenCapture> m_screenCapturer;
+
+    bool m_deferredReload;
+    QVariant m_deferredLoad;
 
     friend class tst_webview;
 };

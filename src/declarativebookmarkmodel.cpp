@@ -46,7 +46,7 @@ void DeclarativeBookmarkModel::addBookmark(const QString& url, const QString& ti
 }
 
 void DeclarativeBookmarkModel::removeBookmark(const QString& url) {
-    if(!contains(url)) {
+    if (!contains(url)) {
         return;
     }
 

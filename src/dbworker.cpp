@@ -91,9 +91,13 @@ void DBWorker::init()
             execute(query);
         }
     }
+
+    m_updateThumbPathQuery = prepare("UPDATE link SET thumb_path = ? "
+                                     "WHERE link_id IN (SELECT link.link_id "
+                                     "FROM tab_history INNER JOIN link ON tab_history.link_id=link.link_id WHERE tab_history.tab_id = ?);");
 }
 
-QSqlQuery DBWorker::prepare(const char *statement)
+QSqlQuery DBWorker::prepare(const QString &statement)
 {
     QSqlQuery query(m_database);
     query.setForwardOnly(true);
@@ -213,7 +217,8 @@ void DBWorker::removeTab(int tabId)
 
     // Check last tab closed
     if (!tabCount()) {
-        emit tabAvailable(Tab(-1, Link(), -1, -1));
+        QList<Tab> tabList;
+        emit tabsAvailable(tabList);
     }
 }
 
@@ -232,7 +237,8 @@ void DBWorker::removeAllTabs()
     query = prepare("DELETE FROM tab_history;");
     execute(query);
 
-    emit tabAvailable(Tab(-1, Link(), -1, -1));
+    QList<Tab> tabList;
+    emit tabsAvailable(tabList);
 }
 
 void DBWorker::getTab(int tabId)
@@ -268,24 +274,22 @@ void DBWorker::getAllTabs()
 
 int DBWorker::getMaxTabId()
 {
-    QSqlQuery query = prepare("SELECT MAX(tab_id) FROM tab");
-    if (execute(query)) {
-        if (query.first()) {
-#ifdef DEBUG_LOGS
-            qDebug() << "read from db: " << query.value(0).toInt();
-#endif
-            return query.value(0).toInt();
-        }
-    }
-#ifdef DEBUG_LOGS
-    qDebug() << "query failed";
-#endif
-    return 0;
+    return integerQuery("SELECT MAX(tab_id) FROM tab;");
+}
+
+int DBWorker::getMaxLinkId()
+{
+    return integerQuery("SELECT MAX(link_id) FROM link;");
 }
 
 int DBWorker::tabCount()
 {
-    QSqlQuery query = prepare("SELECT COUNT(*) FROM tab;");
+    return integerQuery("SELECT COUNT(*) FROM tab;");
+}
+
+int DBWorker::integerQuery(const QString &statement)
+{
+    QSqlQuery query = prepare(statement);
     if (execute(query)) {
         if (query.first()) {
             return query.value(0).toInt();
@@ -550,21 +554,27 @@ int DBWorker::createLink(QString url, QString title, QString thumbPath)
 #ifdef DEBUG_LOGS
     qDebug() << title << url << thumbPath << lastId.toInt();
 #endif
-    return lastId.toInt();
+    int linkId = lastId.toInt();
+
+    emit nextLinkId(linkId + 1);
+    return linkId;
 }
 
 void DBWorker::getHistory(const QString &filter)
 {
-    QString filterQuery;
-    if (filter != "") {
-        filterQuery = QString("WHERE (link.url LIKE '%%1%' OR link.title LIKE '%%1%') ").arg(filter);
+    // Skip empty titles always
+    QString filterQuery("WHERE (NULLIF(link.title, '') IS NOT NULL AND %1) ");
+    if (!filter.isEmpty()) {
+        filterQuery = filterQuery.arg(QString("(link.url LIKE '%%1%' OR link.title LIKE '%%1%')").arg(filter));
+    } else {
+        filterQuery = filterQuery.arg(1);
     }
 
-    QString queryString = QString("SELECT history.link_id, link.url, link.thumb_path, link.title "
+    QString queryString = QString("SELECT DISTINCT link.url, link.title "
                                   "FROM history INNER JOIN link "
                                   "ON history.link_id = link.link_id "
                                   "%1"
-                                  "ORDER BY history.date DESC;").arg(filterQuery);
+                                  "ORDER BY LENGTH(link.url), link.title, history.date ASC;").arg(filterQuery);
     QSqlQuery query = prepare(queryString.toLatin1().constData());
 
     if (!execute(query)) {
@@ -573,10 +583,10 @@ void DBWorker::getHistory(const QString &filter)
 
     QList<Link> linkList;
     while (query.next()) {
-        Link url(query.value(0).toInt(),
-                           query.value(1).toString(),
-                           query.value(2).toString(),
-                           query.value(3).toString());
+        Link url(0,
+                 query.value(0).toString(),
+                 "",
+                 query.value(1).toString());
         linkList.append(url);
     }
 
@@ -608,17 +618,16 @@ void DBWorker::getTabHistory(int tabId)
     emit tabHistoryAvailable(tabId, linkList);
 }
 
-void DBWorker::updateThumbPath(QString url, QString path, int tabId)
+void DBWorker::updateThumbPath(int tabId, QString path)
 {
-    QSqlQuery query = prepare("UPDATE link SET thumb_path = ? WHERE url = ?;");
-    query.bindValue(0, path);
-    query.bindValue(1, url);
-    if (execute(query)) {
-        emit thumbPathChanged(url, path, tabId);
+    m_updateThumbPathQuery.bindValue(0, path);
+    m_updateThumbPathQuery.bindValue(1, tabId);
+    if (execute(m_updateThumbPathQuery)) {
+        emit thumbPathChanged(tabId, path);
     }
 }
 
-void DBWorker::updateTitle(int linkId, QString title)
+void DBWorker::updateTitle(int tabId, int linkId, QString title)
 {
     Link link = getLink(linkId);
     QSqlQuery query = prepare("UPDATE link SET title = ? WHERE link_id = ?;");
@@ -627,7 +636,7 @@ void DBWorker::updateTitle(int linkId, QString title)
     if (execute(query)) {
         if (link.isValid() && link.title() != title) {
             // For browsing history
-            emit titleChanged(link.url(), title);
+            emit titleChanged(tabId, linkId, link.url(), title);
         }
     }
 }

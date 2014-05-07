@@ -24,7 +24,8 @@ DeclarativeWebPage::DeclarativeWebPage(QQuickItem *parent)
     , m_userHasDraggedWhileLoading(false)
     , m_fullscreen(false)
     , m_domContentLoaded(false)
-    , m_deferredReload(false)
+    , m_urlHasChanged(false)
+    , m_backForwardNavigation(false)
 {
     connect(this, SIGNAL(viewInitialized()), this, SLOT(onViewInitialized()));
     connect(this, SIGNAL(recvAsyncMessage(const QString, const QVariant)),
@@ -62,6 +63,31 @@ void DeclarativeWebPage::setTabId(int tabId)
 bool DeclarativeWebPage::domContentLoaded() const
 {
     return m_domContentLoaded;
+}
+
+bool DeclarativeWebPage::urlHasChanged() const
+{
+    return m_urlHasChanged;
+}
+
+void DeclarativeWebPage::setUrlHasChanged(bool urlHasChanged)
+{
+    m_urlHasChanged = urlHasChanged;
+}
+
+bool DeclarativeWebPage::backForwardNavigation() const
+{
+    return m_backForwardNavigation;
+}
+
+void DeclarativeWebPage::setBackForwardNavigation(bool backForwardNavigation)
+{
+    m_backForwardNavigation = backForwardNavigation;
+}
+
+bool DeclarativeWebPage::viewReady() const
+{
+    return m_viewReady;
 }
 
 QVariant DeclarativeWebPage::resurrectedContentRect() const

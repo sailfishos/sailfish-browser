@@ -44,7 +44,9 @@ public:
 
     WebPageActivationData page(int tabId, int parentId = 0);
     void release(int tabId, bool virtualize = false);
+    void clear();
     int parentTabId(int tabId) const;
+    void dumpPages() const;
 
 private:
     struct WebPageEntry {
@@ -53,10 +55,10 @@ private:
 
         DeclarativeWebPage *webPage;
         QRectF *cssContentRect;
+        bool allowPageDelete;
     };
 
     void updateActivePage(WebPageEntry *webPageEntry, bool resurrect);
-    void dumpPages() const;
 
     QPointer<DeclarativeWebContainer> m_webContainer;
     QPointer<QQmlComponent> m_webPageComponent;
@@ -64,6 +66,8 @@ private:
     QMap<int, WebPageEntry*> m_activePages;
     WebPageEntry *m_activePage;
     int m_count;
+
+    friend class tst_webview;
 };
 
 #endif

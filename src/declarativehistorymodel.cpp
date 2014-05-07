@@ -13,17 +13,13 @@
 
 #include "dbmanager.h"
 
-DeclarativeHistoryModel::DeclarativeHistoryModel(QObject *parent) :
-    QAbstractListModel(parent), m_tabId(-1)
+DeclarativeHistoryModel::DeclarativeHistoryModel(QObject *parent)
+    : QAbstractListModel(parent)
 {
-    connect(DBManager::instance(), SIGNAL(tabChanged(Tab)),
-            this, SLOT(tabChanged(Tab)));
     connect(DBManager::instance(), SIGNAL(historyAvailable(QList<Link>)),
             this, SLOT(historyAvailable(QList<Link>)));
-    connect(DBManager::instance(), SIGNAL(tabHistoryAvailable(int,QList<Link>)),
-            this, SLOT(tabHistoryAvailable(int, QList<Link>)));
-    connect(DBManager::instance(), SIGNAL(titleChanged(QString,QString)),
-            this, SLOT(updateTitle(QString,QString)));
+    connect(DBManager::instance(), SIGNAL(titleChanged(int,int,QString,QString)),
+            this, SLOT(updateTitle(int,int,QString,QString)));
 }
 
 QHash<int, QByteArray> DeclarativeHistoryModel::roleNames() const
@@ -36,41 +32,16 @@ QHash<int, QByteArray> DeclarativeHistoryModel::roleNames() const
 
 void DeclarativeHistoryModel::clear()
 {
-    if (m_links.count() == 0)
-        return;
-
-    beginRemoveRows(QModelIndex(), 0, m_links.count() - 1);
+    beginResetModel();
     m_links.clear();
-    endRemoveRows();
-    if (m_tabId <= 0) {
-        DBManager::instance()->clearHistory();
-    } else {
-        DBManager::instance()->clearTabHistory(m_tabId);
-    }
+    endResetModel();
+    DBManager::instance()->clearHistory();
     emit countChanged();
-}
-
-int DeclarativeHistoryModel::tabId() const
-{
-    return m_tabId;
-}
-
-void DeclarativeHistoryModel::setTabId(int tabId)
-{
-    if (m_tabId != tabId) {
-        m_tabId = tabId;
-        emit tabIdChanged();
-        load();
-    }
 }
 
 void DeclarativeHistoryModel::search(const QString &filter)
 {
-    if (filter != "") {
-        DBManager::instance()->getHistory(filter);
-    } else {
-        load();
-    }
+    DBManager::instance()->getHistory(filter);
 }
 
 int DeclarativeHistoryModel::rowCount(const QModelIndex & parent) const {
@@ -93,31 +64,17 @@ QVariant DeclarativeHistoryModel::data(const QModelIndex & index, int role) cons
 
 void DeclarativeHistoryModel::componentComplete()
 {
-    load();
+    search("");
 }
 
 void DeclarativeHistoryModel::classBegin()
 {
 }
 
-void DeclarativeHistoryModel::load()
-{
-    if (m_tabId > 0) {
-        DBManager::instance()->getTabHistory(m_tabId);
-    } else {
-        DBManager::instance()->getHistory();
-    }
-}
-
-void DeclarativeHistoryModel::tabHistoryAvailable(int tabId, QList<Link> linkList)
-{
-    if (tabId == m_tabId) {
-        updateModel(linkList);
-    }
-}
-
 void DeclarativeHistoryModel::historyAvailable(QList<Link> linkList)
 {
+    // DBWorker suppresses history (distinct select). Thus, id and thumbnailPath of
+    // every link is the same.
     updateModel(linkList);
 }
 
@@ -157,15 +114,10 @@ void DeclarativeHistoryModel::updateModel(QList<Link> linkList)
     }
 }
 
-void DeclarativeHistoryModel::tabChanged(Tab tab)
+void DeclarativeHistoryModel::updateTitle(int tabId, int linkId, QString url, QString title)
 {
-    if (m_tabId == tab.tabId()) {
-        load();
-    }
-}
-
-void DeclarativeHistoryModel::updateTitle(QString url, QString title)
-{
+    Q_UNUSED(tabId);
+    Q_UNUSED(linkId);
     QVector<int> roles;
     roles << TitleRole;
     for (int i = 0; i < m_links.count(); i++) {

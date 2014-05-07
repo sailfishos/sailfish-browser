@@ -24,8 +24,11 @@ SilicaListView {
     currentIndex: -1
 
     delegate: BackgroundItem {
+        id: historyDelegate
         width: view.width
         height: Theme.itemSizeLarge
+
+        ListView.onAdd: AddAnimation { target: historyDelegate }
 
         Column {
             width: view.width - Theme.paddingLarge * 2
@@ -54,5 +57,8 @@ SilicaListView {
         }
     }
 
-    VerticalScrollDecorator {}
+    VerticalScrollDecorator {
+        parent: view
+        flickable: view
+    }
 }

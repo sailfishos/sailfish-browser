@@ -22,10 +22,13 @@ Image {
     asynchronous: true
     smooth: true
     fillMode: Image.PreserveAspectCrop
+    sourceSize.width: Theme.iconSizeMedium
     clip: true
 
     onStatusChanged: {
         if (status == Image.Error) {
+            // Invalidate source size. Image provider doesn't handle sourceSize properly.
+            sourceSize.width = -1
             source = "image://theme/icon-m-region"
         }
     }

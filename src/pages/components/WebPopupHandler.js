@@ -149,7 +149,8 @@ function openContextMenu(data) {
                                                             "linkTitle": linkTitle.trim(),
                                                             "contentType": contentType,
                                                             "tabModel": tabModel,
-                                                            "viewId": webView.contentItem.uniqueID()
+                                                            "viewId": webView.contentItem.uniqueID(),
+                                                            "pageStack": pageStack
                                                         })
                 _hideVirtualKeyboard()
 
@@ -249,6 +250,6 @@ function openFilePicker(data) {
     pageStack.push(_uploadFilePickerComponentUrl,
                    {
                        "winid": data.winid,
-                       "webView": webViewContainer
+                       "webView": webView.contentItem
                    })
 }

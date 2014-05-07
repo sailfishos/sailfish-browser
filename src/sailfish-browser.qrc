@@ -34,5 +34,6 @@
     <file>pages/components/HistoryList.qml</file>
     <file>pages/components/ResourceController.qml</file>
     <file>pages/components/UploadFilePicker.qml</file>
+    <file>pages/components/graphic-radial-mask.png</file>
 </qresource>
 </RCC>

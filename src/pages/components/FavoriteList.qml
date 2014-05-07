@@ -35,8 +35,9 @@ SilicaListView {
         width: view.width
         menu: hasContextMenu ? favoriteContextMenuComponent : null
         showMenuOnPressAndHold: menu !== null
-        ListView.onRemove: animateRemoval()
         onClicked: view.load(model.url, model.title, false)
+        ListView.onAdd: AddAnimation { target: favoriteDelegate }
+        ListView.onRemove: animateRemoval()
 
         Row {
             height: parent.height
@@ -86,5 +87,8 @@ SilicaListView {
         }
     }
 
-    VerticalScrollDecorator {}
+    VerticalScrollDecorator {
+        parent: view
+        flickable: view
+    }
 }

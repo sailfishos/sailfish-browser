@@ -21,6 +21,7 @@ Page {
 
     property Item firstUseOverlay
     property alias firstUseFullscreen: webView.firstUseFullscreen
+    property Component tabPageComponent
 
     property alias tabs: webView.tabModel
     property alias favorites: favoriteModel
@@ -94,8 +95,6 @@ Page {
 
     HistoryModel {
         id: historyModel
-
-        tabId: webView.tabModel.currentTabId
     }
 
     Browser.DownloadRemorsePopup { id: downloadPopup }
@@ -109,7 +108,7 @@ Page {
 
         tabModel.onCountChanged: {
             if (tabModel.count === 0 && browserPage.status === PageStatus.Active) {
-                pageStack.push(Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage, "initialSearchFocus": true })
+                pageStack.push(tabPageComponent ? tabPageComponent : Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage, "initialSearchFocus": true })
             }
         }
     }
@@ -127,19 +126,19 @@ Page {
         function openTabPage(focus, newTab, operationType) {
             if (browserPage.status === PageStatus.Active) {
                 webView.captureScreen()
-                pageStack.push(Qt.resolvedUrl("TabPage.qml"),
-                               {
-                                   "browserPage" : browserPage,
-                                   "initialSearchFocus": focus,
-                                   "newTab": newTab
-                               }, operationType)
+                pageStack.push(tabPageComponent ? tabPageComponent : Qt.resolvedUrl("TabPage.qml"),
+                                                  {
+                                                      "browserPage" : browserPage,
+                                                      "initialSearchFocus": focus,
+                                                      "newTab": newTab
+                                                  }, operationType)
             }
         }
 
         Browser.StatusBar {
             width: parent.width
             height: visible ? toolBarContainer.height * 3 : 0
-            visible: isPortrait
+            visible: isPortrait && !firstUseOverlay
             opacity: progressBar.opacity
             title: webView.title
             url: webView.url
@@ -155,6 +154,7 @@ Page {
             Browser.ProgressBar {
                 id: progressBar
                 anchors.fill: parent
+                visible: !firstUseOverlay
                 opacity: webView.loading ? 1.0 : 0.0
                 progress: webView.loadProgress / 100.0
             }
@@ -222,6 +222,10 @@ Page {
                     id: tabPageButton
                     source: "image://theme/icon-m-tabs"
                     onClicked: {
+                        if (firstUseOverlay) {
+                            firstUseOverlay.visible = false
+                            firstUseOverlay.destroy()
+                        }
                         if (!WebUtils.firstUseDone) WebUtils.firstUseDone = true
                         controlArea.openTabPage(false, false, PageStackAction.Animated)
                     }
@@ -299,11 +303,6 @@ Page {
                 pageStack.pop(browserPage, PageStackAction.Immediate)
             }
         }
-        onFirstUseDoneChanged: {
-            if (WebUtils.firstUseDone && firstUseOverlay) {
-                firstUseOverlay.destroy()
-            }
-        }
     }
 
     Component.onCompleted: {
@@ -323,5 +322,14 @@ Page {
 
     Browser.BrowserNotification {
         id: notification
+    }
+
+    // Compile TabPage
+    Loader {
+        id: tabPageCompiler
+        asynchronous: true
+        sourceComponent: Item {
+            Component.onCompleted: tabPageComponent = Qt.createComponent(Qt.resolvedUrl("TabPage.qml"))
+        }
     }
 }

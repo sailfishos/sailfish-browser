@@ -125,7 +125,7 @@ void WebPages::release(int tabId, bool virtualize)
 {
     WebPageEntry *pageEntry = m_activePages.value(tabId, 0);
 #ifdef DEBUG_LOGS
-    qDebug() << "--- beginning: " << tabId << (pageEntry ? pageEntry->webPage : 0);
+    qDebug() << "--- beginning: " << tabId << virtualize << pageEntry << (pageEntry ? pageEntry->webPage : 0);
     dumpPages();
 #endif
     if (pageEntry) {
@@ -135,7 +135,15 @@ void WebPages::release(int tabId, bool virtualize)
             m_activePage = 0;
         }
 
-        delete pageEntry->webPage;
+        if (pageEntry->webPage) {
+            if (pageEntry->webPage->viewReady()) {
+                pageEntry->webPage->setParent(0);
+                delete pageEntry->webPage;
+            } else {
+                connect(pageEntry->webPage, SIGNAL(viewReadyChanged()), pageEntry->webPage, SLOT(deleteLater()));
+            }
+        }
+
         pageEntry->webPage = 0;
         if (virtualize) {
             m_activePages.insert(tabId, pageEntry);
@@ -143,12 +151,30 @@ void WebPages::release(int tabId, bool virtualize)
             delete pageEntry;
             m_activePages.remove(tabId);
         }
+        if (m_activePages.isEmpty() || m_count < 0) {
+            m_count = 0;
+            m_activePage = 0;
+        }
     }
 
 #ifdef DEBUG_LOGS
     qDebug() << "--- end ---";
     dumpPages();
 #endif
+}
+
+void WebPages::clear()
+{
+    QList<WebPageEntry *> pages = m_activePages.values();
+    int count = pages.count();
+    for (int i = 0; i < count; ++i) {
+        WebPageEntry *pageEntry = pages.at(i);
+        pageEntry->allowPageDelete = true;
+        delete pageEntry;
+    }
+    m_activePages.clear();
+    m_count = 0;
+    m_activePage = 0;
 }
 
 int WebPages::parentTabId(int tabId) const
@@ -213,10 +239,10 @@ void WebPages::dumpPages() const
     qDebug() << "---- end ------";
 }
 
-
 WebPages::WebPageEntry::WebPageEntry(DeclarativeWebPage *webPage, QRectF *cssContentRect)
     : webPage(webPage)
     , cssContentRect(cssContentRect)
+    , allowPageDelete(false)
 {
 }
 
@@ -226,7 +252,7 @@ WebPages::WebPageEntry::~WebPageEntry()
         delete cssContentRect;
     }
 
-    if (webPage) {
+    if (webPage && (webPage->viewReady() || allowPageDelete)) {
         webPage->setParent(0);
         delete webPage;
     }

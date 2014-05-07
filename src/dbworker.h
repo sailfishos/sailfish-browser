@@ -15,6 +15,7 @@
 #include <QObject>
 #include <QMap>
 #include <QSqlDatabase>
+#include <QSqlQuery>
 
 #include "link.h"
 #include "tab.h"
@@ -40,9 +41,10 @@ public slots:
     void navigateTo(int tabId, QString url, QString title, QString path);
     void updateTab(int tabId, QString url, QString title, QString path);
     int getMaxTabId();
+    int getMaxLinkId();
 
-    void updateTitle(int linkId, QString title);
-    void updateThumbPath(QString url, QString path, int tabId);
+    void updateTitle(int tabId, int linkId, QString title);
+    void updateThumbPath(int tabId, QString path);
 
     void goForward(int tabId);
     void goBack(int tabId);
@@ -59,11 +61,12 @@ signals:
     void tabAvailable(Tab tab);
     void tabChanged(Tab tab);
     void tabsAvailable(QList<Tab> tabs);
-    void thumbPathChanged(QString url, QString path, int tabId);
-    void titleChanged(QString url, QString title);
+    void thumbPathChanged(int tabId, QString path);
+    void titleChanged(int tabId, int linkId, QString url, QString title);
     void tabHistoryAvailable(int tabId, QList<Link>);
     void historyAvailable(QList<Link>);
     void error(QString query);
+    void nextLinkId(int linkId);
 
 private:
     Link getLink(int linkId);
@@ -80,10 +83,12 @@ private:
     bool updateTab(int tabId, int tabHistoryId);
     Tab getTabData(int tabId, int historyId = 0);
     int tabCount();
+    int integerQuery(const QString &statement);
 
-    QSqlQuery prepare(const char* statement);
+    QSqlQuery prepare(const QString &statement);
     bool execute(QSqlQuery &query);
     QSqlDatabase m_database;
+    QSqlQuery m_updateThumbPathQuery;
 };
 
 #endif // DBWORKER_H
