@@ -276,10 +276,10 @@ void DeclarativeWebContainer::setReadyToLoad(bool readyToLoad)
 {
     static bool browserReady = false;
     if (!browserReady && readyToLoad) {
-        bool wasClearPrivateDataRequested = m_settingManager->clearPrivateDataRequested();
+        bool wasClearHistoryRequested = m_settingManager->clearHistoryRequested();
         browserReady = true;
         m_settingManager->initialize();
-        if (m_model && wasClearPrivateDataRequested) {
+        if (m_model && wasClearHistoryRequested) {
             readyToLoad = false;
             emit m_model->countChanged();
         }
