@@ -17,18 +17,15 @@ import org.freedesktop.contextkit 1.0
 // QtObject cannot have children
 Item {
     property Item webView
-
     property bool videoActive
     property bool audioActive
     property bool background
 
-    property bool _suspendable
     property string _mediaState: "pause"
     property string _lastStateOwner
     property string _lastMetaOwner
     property bool _isAudioStream
     property bool _isVideoStream
-    property bool _suspendIntention
 
     signal webViewSuspended
 
@@ -53,34 +50,32 @@ Item {
         }
     }
 
+    function resumeView() {
+        if (webView) {
+            webView.resumeView()
+        }
+    }
+
+    function suspendView() {
+        if (webView) {
+            webView.suspendView()
+        }
+        webViewSuspended()
+    }
+
     onAudioActiveChanged: {
         if (!audioActive && screenBlanked.value) {
-            _suspendIntention = true
+            delayedSuspend.suspendIntention = true
         }
     }
 
     // This is behind 1000ms timer
     onBackgroundChanged: {
         if (!audioActive && !videoActive && background) {
-            _suspendable = true
+            suspendView()
         } else {
-            _suspendable = false
+            resumeView()
         }
-    }
-
-    on_SuspendableChanged: {
-        if (_suspendable) {
-            if (webView) {
-                webView.suspendView()
-            }
-            webViewSuspended()
-        } else if (webView) {
-            webView.resumeView()
-        }
-    }
-
-    on_SuspendIntentionChanged: {
-        delayedSuspend.startSuspendTimer();
     }
 
     Connections {
@@ -100,7 +95,6 @@ Item {
         }
     }
 
-
     ContextProperty {
         id: screenBlanked
         key: "Screen.Blanked"
@@ -108,12 +102,12 @@ Item {
 
         onValueChanged: {
             if (value && !audioActive) {
-                _suspendIntention = true
+                delayedSuspend.suspendIntention = true
             } else {
                 // Return immediately from suspend.
-                _suspendable = false
-                // We want also reset _suspendIntention to false.
-                _suspendIntention = false
+                resumeView()
+                // We want also reset suspendIntention to false.
+                delayedSuspend.suspendIntention = false
             }
         }
     }
@@ -125,19 +119,21 @@ Item {
 
     Timer {
         id: delayedSuspend
+        property bool suspendIntention
 
-        function startSuspendTimer() {
-            if (!delayedSuspend.running && _suspendIntention) {
-                delayedSuspend.running = true
+        // 1000ms was not enough to always allow buffering start of next song via 3G
+        interval: 5000
+        onTriggered: {
+            if (!videoActive && !audioActive && suspendIntention) {
+                suspendView()
+            } else {
+                resumeView()
             }
         }
 
-        interval: 1000
-        onTriggered: {
-            if (!videoActive && !audioActive && _suspendIntention) {
-                _suspendable = true
-            } else {
-                _suspendable = false
+        onSuspendIntentionChanged: {
+            if (suspendIntention) {
+                start()
             }
         }
     }
