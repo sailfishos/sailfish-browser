@@ -20,6 +20,7 @@
 #include <QPointer>
 #include <QImage>
 #include <QFutureWatcher>
+#include <QColor>
 
 class QTimerEvent;
 class DeclarativeTabModel;
@@ -43,6 +44,7 @@ class DeclarativeWebContainer : public QQuickItem {
     Q_PROPERTY(qreal inputPanelOpenHeight MEMBER m_inputPanelOpenHeight NOTIFY inputPanelOpenHeightChanged FINAL)
     Q_PROPERTY(qreal toolbarHeight MEMBER m_toolbarHeight NOTIFY toolbarHeightChanged FINAL)
     Q_PROPERTY(bool background READ background NOTIFY backgroundChanged FINAL)
+    Q_PROPERTY(QColor decoratorColor MEMBER m_decoratorColor NOTIFY decoratorColorChanged FINAL)
 
     Q_PROPERTY(QString favicon MEMBER m_favicon NOTIFY faviconChanged)
 
@@ -130,6 +132,7 @@ signals:
     void inputPanelHeightChanged();
     void inputPanelOpenHeightChanged();
     void toolbarHeightChanged();
+    void decoratorColorChanged();
 
     void faviconChanged();
     void loadingChanged();
@@ -214,6 +217,7 @@ private:
     qreal m_inputPanelHeight;
     qreal m_inputPanelOpenHeight;
     qreal m_toolbarHeight;
+    QColor m_decoratorColor;
 
     QString m_favicon;
     QString m_thumbnailPath;

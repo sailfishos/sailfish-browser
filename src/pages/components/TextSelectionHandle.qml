@@ -9,7 +9,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import QtQuick 2.0
+import QtQuick 2.1
 import Sailfish.Silica 1.0
 
 Item {
@@ -20,6 +20,7 @@ Item {
 
     property string type
     property Item content
+    property alias color: handleRect.color
 
     // the moving property is updated upon dragActive change to make sure
     // that Browser:SelectionMoveStart is sent out before Browser:SelectionMove
@@ -38,14 +39,6 @@ Item {
         return json
     }
 
-    // Property binding doesn't work for content.width and content.height in qt5 -> resort to assignment
-    onVisibleChanged: {
-        if (visible) {
-            mouseArea.drag.maximumX = content.width - handle.width
-            mouseArea.drag.maximumY = content.height - handle.height
-        }
-    }
-
     onDragActiveChanged: {
         if (dragActive) {
             content.child.sendAsyncMessage("Browser:SelectionMoveStart", handle.getJson())
@@ -56,12 +49,33 @@ Item {
         }
     }
 
-    Image {
-        anchors.top: parent.top
-        anchors.left: type === "end" ? parent.left : undefined
-        anchors.right: type === "start" ? parent.right : undefined
-        source: type === "start" ? "image://theme/icon-browser-dragger-start?" + Theme.highlightBackgroundColor :
-                                   "image://theme/icon-browser-dragger-end?" + Theme.highlightBackgroundColor
+    Rectangle {
+        id: handleRect
+
+        width: Math.round(Theme.iconSizeSmall / 4) * 2 // ensure even number
+        height: width
+        radius: width / 2
+        smooth: true
+        anchors {
+            bottom: parent.top
+            bottomMargin: -radius
+            left: type === "end" ? parent.left : undefined
+            right: type === "start" ? parent.right : undefined
+            leftMargin: type === "end" ? -1 * (width / 2) : 0
+            rightMargin: type === "start" ? -1 * (width / 2) : 0
+        }
+
+        Rectangle {
+            color: Theme.primaryColor
+            width: {
+                var wdth = parent.width - (Theme.paddingSmall * 2)
+                return width > 0 ? width : Theme.paddingSmall
+            }
+            height: width
+            radius: width / 2
+            smooth: true
+            anchors.centerIn: parent
+        }
     }
 
     MouseArea {
@@ -80,10 +94,6 @@ Item {
 
         drag.target: parent
         drag.axis: Drag.XandYAxis
-        drag.minimumX: 0
-        drag.maximumX: content.width - handle.width
-        drag.minimumY: 0
-        drag.maximumY: content.height - handle.height
 
         onPositionChanged: {
             if (timer.running || !handle.moving) {
