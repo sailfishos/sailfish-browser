@@ -27,6 +27,8 @@ Item {
     property bool moving
     property bool dragActive: mouseArea.drag.active
 
+    property int xAnimationLength: Theme.itemSizeExtraLarge
+
     function getJson() {
         var resolution = content.child.resolution
         var json = {
@@ -46,6 +48,12 @@ Item {
         } else {
             content.child.sendAsyncMessage("Browser:SelectionMoveEnd", handle.getJson())
             moving = false
+        }
+    }
+
+    onVisibleChanged: {
+        if (visible) {
+            showAnimationId.restart()
         }
     }
 
@@ -109,5 +117,22 @@ Item {
         id: timer
 
         interval: 200
+    }
+
+    ParallelAnimation {
+        id: showAnimationId
+        FadeAnimation {
+            target: handle
+            from: 0
+            to: 1
+        }
+        NumberAnimation {
+            target: handle
+            property: "x"
+            from: handle.type === "start" ? handle.x - xAnimationLength : handle.x + xAnimationLength
+            to: handle.x
+            duration: 200
+            easing.type: Easing.InOutQuad
+        }
     }
 }
