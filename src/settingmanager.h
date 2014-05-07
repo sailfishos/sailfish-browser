@@ -12,7 +12,9 @@
 #ifndef SETTINGMANAGER_H
 #define SETTINGMANAGER_H
 
-#include <MGConfItem>
+#include <QObject>
+
+class MGConfItem;
 
 class SettingManager : public QObject
 {
@@ -31,6 +33,7 @@ private slots:
     void clearPasswords();
     void clearCache();
     void setSearchEngine();
+    void doNotTrack();
 
 private:
     MGConfItem *m_clearPrivateDataConfItem;
@@ -39,6 +42,7 @@ private:
     MGConfItem *m_clearPasswordsConfItem;
     MGConfItem *m_clearCacheConfItem;
     MGConfItem *m_searchEngineConfItem;
+    MGConfItem *m_doNotTrackConfItem;
 };
 
 #endif

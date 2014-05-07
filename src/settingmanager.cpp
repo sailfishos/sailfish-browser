@@ -12,6 +12,7 @@
 #include "settingmanager.h"
 #include "dbmanager.h"
 
+#include <MGConfItem>
 #include <qmozcontext.h>
 #include <QVariant>
 
@@ -24,6 +25,7 @@ SettingManager::SettingManager(QObject *parent)
     m_clearPasswordsConfItem = new MGConfItem("/apps/sailfish-browser/actions/clear_passwords", this);
     m_clearCacheConfItem = new MGConfItem("/apps/sailfish-browser/actions/clear_cache", this);
     m_searchEngineConfItem = new MGConfItem("/apps/sailfish-browser/settings/search_engine", this);
+    m_doNotTrackConfItem = new MGConfItem("/apps/sailfish-browser/settings/do_not_track", this);
 }
 
 bool SettingManager::clearHistoryRequested() const
@@ -41,6 +43,7 @@ void SettingManager::initialize()
         clearCache();
     }
     setSearchEngine();
+    doNotTrack();
 
     connect(m_clearPrivateDataConfItem, SIGNAL(valueChanged()),
             this, SLOT(clearPrivateData()));
@@ -54,6 +57,8 @@ void SettingManager::initialize()
             this, SLOT(clearCache()));
     connect(m_searchEngineConfItem, SIGNAL(valueChanged()),
             this, SLOT(setSearchEngine()));
+    connect(m_doNotTrackConfItem, SIGNAL(valueChanged()),
+            this, SLOT(doNotTrack()));
 }
 
 bool SettingManager::clearPrivateData()
@@ -109,4 +114,10 @@ void SettingManager::setSearchEngine()
 {
     QVariant searchEngine = m_searchEngineConfItem->value(QVariant(QString("Google")));
     QMozContext::GetInstance()->setPref(QString("browser.search.defaultenginename"), searchEngine);
+}
+
+void SettingManager::doNotTrack()
+{
+    QMozContext::GetInstance()->setPref(QString("privacy.donottrackheader.enabled"),
+                                        m_doNotTrackConfItem->value(false));
 }
