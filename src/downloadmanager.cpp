@@ -19,6 +19,10 @@
 #include <QFile>
 #include <QDebug>
 
+#include <pwd.h>
+#include <grp.h>
+#include <unistd.h>
+
 static DownloadManager *gSingleton = 0;
 
 DownloadManager::DownloadManager()
@@ -93,15 +97,30 @@ void DownloadManager::recvObserve(const QString message, const QVariant data)
         QString targetPath = dataMap.value("targetPath").toString();
         QFileInfo fileInfo(targetPath);
         if (fileInfo.completeSuffix() == QLatin1Literal("myapp")) {
-            QString aptoideDownloadPath = QString("%1/aptoide/").arg(DeclarativeWebUtils::instance()->downloadDir());
+            QString aptoideDownloadPath = QString("%1/.aptoide/").arg(DeclarativeWebUtils::instance()->downloadDir());
             QDir dir(aptoideDownloadPath);
-            if (!dir.exists() && !dir.mkpath(aptoideDownloadPath)) {
-                qWarning() << "Failed to create path for myapp download, aborting";
-                return;
+
+            if (!dir.exists()) {
+                if (!dir.mkpath(aptoideDownloadPath)) {
+                    qWarning() << "Failed to create path for myapp download, aborting";
+                    return;
+                }
+                uid_t uid = getuid();
+                // assumes that correct groupname is same as username (e.g. nemo:nemo)
+                int gid = getgrnam(getpwuid(uid)->pw_name)->gr_gid;
+                chown(aptoideDownloadPath.toLatin1().data(), uid, gid);
+                QFile::Permissions permissions(QFile::ExeOwner | QFile::ExeGroup | QFile::ReadOwner | QFile::WriteOwner | QFile::ReadGroup | QFile::WriteGroup);
+                QFile::setPermissions(aptoideDownloadPath, permissions);
             }
 
             QFile file(targetPath);
-            file.rename(aptoideDownloadPath + fileInfo.fileName());
+            if (file.rename(aptoideDownloadPath + fileInfo.fileName())) {
+                // Check if we have aptoide installed
+                QString aptoideApk("/data/app/com.aptoide.partners.apk");
+                if (QFile(aptoideApk).exists()) {
+                    QProcess::execute("/usr/bin/apkd-launcher", QStringList() << aptoideApk << "com.aptoide.partners/com.aptoide.partners.AptoideJollaSupport");
+                }
+            }
         }
     } else if (msg == "dl-fail") {
         m_transferClient->finishTransfer(m_download2transferMap.value(downloadId),
