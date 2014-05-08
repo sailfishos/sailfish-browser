@@ -16,6 +16,8 @@
 #include <qmozcontext.h>
 #include <QVariant>
 
+static SettingManager *gSingleton = 0;
+
 SettingManager::SettingManager(QObject *parent)
     : QObject(parent)
 {
@@ -26,6 +28,12 @@ SettingManager::SettingManager(QObject *parent)
     m_clearCacheConfItem = new MGConfItem("/apps/sailfish-browser/actions/clear_cache", this);
     m_searchEngineConfItem = new MGConfItem("/apps/sailfish-browser/settings/search_engine", this);
     m_doNotTrackConfItem = new MGConfItem("/apps/sailfish-browser/settings/do_not_track", this);
+
+    // Look and feel related settings
+    m_toolbarSmall = new MGConfItem("/apps/sailfish-browser/settings/toolbar_small", this);
+    m_toolbarLarge = new MGConfItem("/apps/sailfish-browser/settings/toolbar_large", this);
+    connect(m_toolbarSmall, SIGNAL(valueChanged()), this, SIGNAL(toolbarSmallChanged()));
+    connect(m_toolbarLarge, SIGNAL(valueChanged()), this, SIGNAL(toolbarLargeChanged()));
 }
 
 bool SettingManager::clearHistoryRequested() const
@@ -59,6 +67,24 @@ void SettingManager::initialize()
             this, SLOT(setSearchEngine()));
     connect(m_doNotTrackConfItem, SIGNAL(valueChanged()),
             this, SLOT(doNotTrack()));
+}
+
+int SettingManager::toolbarSmall()
+{
+    return m_toolbarSmall->value(72).value<int>();
+}
+
+int SettingManager::toolbarLarge()
+{
+    return m_toolbarLarge->value(108).value<int>();
+}
+
+SettingManager *SettingManager::instance()
+{
+    if (!gSingleton) {
+        gSingleton = new SettingManager();
+    }
+    return gSingleton;
 }
 
 bool SettingManager::clearPrivateData()

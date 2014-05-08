@@ -30,7 +30,7 @@ BackgroundItem {
         Label {
             id: titleLabel
             width: parent.width
-            color: backgroundItem.highlighted ? Theme.highlightColor : Theme.highlightDimmerColor
+            color: backgroundItem.highlighted ? Theme.highlightColor : Theme.primaryColor
             font.pixelSize: Theme.fontSizeExtraSmall
             font.weight: Font.Normal
             truncationMode: TruncationMode.Fade
@@ -38,7 +38,7 @@ BackgroundItem {
         Label {
             id: urlLabel
             width: parent.width
-            color: backgroundItem.highlighted ? Theme.highlightColor : Theme.highlightDimmerColor
+            color: backgroundItem.highlighted ? Theme.highlightColor : Theme.primaryColor
             font.pixelSize: Theme.fontSizeTiny
             font.weight: Font.Normal
             truncationMode: TruncationMode.Fade

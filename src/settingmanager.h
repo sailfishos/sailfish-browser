@@ -19,12 +19,21 @@ class MGConfItem;
 class SettingManager : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(int toolbarSmall READ toolbarSmall NOTIFY toolbarSmallChanged FINAL)
+    Q_PROPERTY(int toolbarLarge READ toolbarLarge NOTIFY toolbarLargeChanged FINAL)
 
 public:
-    explicit SettingManager(QObject *parent = 0);
-
     bool clearHistoryRequested() const;
     void initialize();
+
+    int toolbarSmall();
+    int toolbarLarge();
+
+    static SettingManager *instance();
+
+signals:
+    void toolbarSmallChanged();
+    void toolbarLargeChanged();
 
 private slots:
     bool clearPrivateData();
@@ -36,6 +45,8 @@ private slots:
     void doNotTrack();
 
 private:
+    explicit SettingManager(QObject *parent = 0);
+
     MGConfItem *m_clearPrivateDataConfItem;
     MGConfItem *m_clearHistoryConfItem;
     MGConfItem *m_clearCookiesConfItem;
@@ -43,6 +54,9 @@ private:
     MGConfItem *m_clearCacheConfItem;
     MGConfItem *m_searchEngineConfItem;
     MGConfItem *m_doNotTrackConfItem;
+
+    MGConfItem *m_toolbarSmall;
+    MGConfItem *m_toolbarLarge;
 };
 
 #endif

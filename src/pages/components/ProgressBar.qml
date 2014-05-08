@@ -18,15 +18,12 @@ Item {
     // From 0 to 1.0
     property real progress: 0.0
 
-    visible: opacity > 0.0
-
     Rectangle {
         id: progressRect
         height: parent.height
-        anchors.right: parent.right
-        width: parent.width - (progressBar.progress * parent.width)
-        color: Theme.highlightDimmerColor
-        opacity: 0.2
+        width: progressBar.progress * parent.width
+        color: Theme.highlightBackgroundColor
+        opacity: 0.3
 
         Behavior on width {
             enabled: progressBar.opacity == 1.0
@@ -35,6 +32,5 @@ Item {
             }
         }
     }
-
     Behavior on opacity { FadeAnimation {} }
 }

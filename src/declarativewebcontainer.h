@@ -37,6 +37,7 @@ class DeclarativeWebContainer : public QQuickItem {
     Q_PROPERTY(bool popupActive MEMBER m_popupActive NOTIFY popupActiveChanged FINAL)
     Q_PROPERTY(bool portrait MEMBER m_portrait NOTIFY portraitChanged FINAL)
     Q_PROPERTY(bool fullscreenMode MEMBER m_fullScreenMode NOTIFY fullscreenModeChanged FINAL)
+    Q_PROPERTY(qreal fullscreenHeight MEMBER m_fullScreenHeight NOTIFY fullscreenHeightChanged FINAL)
     Q_PROPERTY(bool inputPanelVisible READ inputPanelVisible NOTIFY inputPanelVisibleChanged FINAL)
     Q_PROPERTY(qreal inputPanelHeight READ inputPanelHeight WRITE setInputPanelHeight NOTIFY inputPanelHeightChanged FINAL)
     Q_PROPERTY(qreal inputPanelOpenHeight MEMBER m_inputPanelOpenHeight NOTIFY inputPanelOpenHeightChanged FINAL)
@@ -123,6 +124,7 @@ signals:
     void popupActiveChanged();
     void portraitChanged();
     void fullscreenModeChanged();
+    void fullscreenHeightChanged();
     void inputPanelVisibleChanged();
     void inputPanelHeightChanged();
     void inputPanelOpenHeightChanged();
@@ -195,8 +197,8 @@ private:
     QPointer<DeclarativeWebPage> m_webPage;
     QPointer<DeclarativeTabModel> m_model;
     QPointer<QQmlComponent> m_webPageComponent;
+    QPointer<SettingManager> m_settingManager;
     QScopedPointer<WebPages> m_webPages;
-    QScopedPointer<SettingManager> m_settingManager;
     bool m_foreground;
     bool m_background;
     bool m_windowVisible;
@@ -205,6 +207,7 @@ private:
     bool m_popupActive;
     bool m_portrait;
     bool m_fullScreenMode;
+    qreal m_fullScreenHeight;
     bool m_inputPanelVisible;
     qreal m_inputPanelHeight;
     qreal m_inputPanelOpenHeight;
