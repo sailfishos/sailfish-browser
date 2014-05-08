@@ -136,6 +136,7 @@ WebContainer {
 
             property int iconSize
             property string iconType
+            property Item textSelectionController: null
 
             loaded: loadProgress === 100 && !loading
             enabled: container.active
@@ -328,11 +329,15 @@ WebContainer {
                     break
                 }
                 case "Content:SelectionRange": {
+                    if (textSelectionController === null) {
+                        textSelectionController = textSelectionControllerComponent.createObject(webPage)
+                    }
                     webPage.selectionRangeUpdated(data)
                     break
                 }
                 }
             }
+
             onRecvSyncMessage: {
                 // sender expects that this handler will update `response` argument
                 switch (message) {
@@ -348,7 +353,13 @@ WebContainer {
                 }
             }
 
-            TextSelectionController { color: decoratorColor }
+            onContextMenuRequested: {
+                if (data.types.indexOf("content-text") !== -1 ||
+                     (data.types.indexOf("input-text") !== -1 && data.string)) {
+                   // we want to select some content text
+                   webPage.sendAsyncMessage("Browser:SelectionStart", {"xPos": data.xPos, "yPos": data.yPos})
+                }
+            }
 
             states: State {
                 name: "boundHeightControl"
@@ -359,6 +370,12 @@ WebContainer {
                 }
             }
         }
+    }
+
+    Component {
+        id: textSelectionControllerComponent
+
+        TextSelectionController { color: decoratorColor }
     }
 
     Rectangle {

@@ -78,14 +78,6 @@ Item {
                                  })
     }
 
-    function onContextMenuRequested(data) {
-        if (data.types.indexOf("content-text") !== -1 ||
-            (data.types.indexOf("input-text") !== -1 && data.string)) {
-            // we want to select some content text
-            _webPage.sendAsyncMessage("Browser:SelectionStart", {"xPos": data.xPos, "yPos": data.yPos})
-        }
-    }
-
     onSelectionVisibleChanged: {
         if (selectionVisible) {
             _webPage.scrollableOffsetChanged.connect(onScrollableOffsetChanged)
@@ -115,7 +107,6 @@ Item {
     Component.onCompleted: {
         _webPage.selectionRangeUpdated.connect(onSelectionRangeUpdated)
         _webPage.selectionCopied.connect(onSelectionCopied)
-        _webPage.contextMenuRequested.connect(onContextMenuRequested)
     }
 
     Timer {
