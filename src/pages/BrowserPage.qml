@@ -70,7 +70,7 @@ Page {
                 script: {
                     // Restores the Bindings to width, height and rotation
                     _defaultTransition = false
-                    webView.resetHeight(true)
+                    webView.resetHeight()
                     _defaultTransition = true
                 }
             }
@@ -111,6 +111,7 @@ Page {
         visible: WebUtils.firstUseDone
         active: browserPage.status === PageStatus.Active
         toolbarHeight: toolBarContainer.height
+        fullscreenHeight: portrait ? Screen.height : Screen.width
         portrait: browserPage.isPortrait
         maxLiveTabCount: 3
 
@@ -119,17 +120,27 @@ Page {
                 pageStack.push(tabPageComponent ? tabPageComponent : Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage, "initialSearchFocus": true })
             }
         }
+
+        clip: true
+        // TODO: once we get rid of bad rendering loop, check if we could use here parent.height
+        // instead of fullscreenHeight. Currently with parent.height binding we skip
+        // frames when returning back from tab page so that virtual keyboard was open.
+        height: fullscreenHeight - (fullscreenMode ? 0 : toolBarContainer.height)
+
+        Behavior on height {
+            enabled: !browserPage.orientationTransitionRunning
+            NumberAnimation { duration: 200; easing.type: Easing.InOutQuad }
+        }
     }
 
+    // TODO: This will change once toolbar can be pulled up.
     Column {
         id: controlArea
-        z:1
 
-        anchors.bottom: webView.bottom
+        z: 1
+        y: webView.height
         width: parent.width
         visible: !webView.popupActive
-        opacity: webView.fullscreenMode ? 0.0 : 1.0
-        Behavior on opacity { FadeAnimation { duration: webView.foreground ? 300 : 0 } }
 
         function openTabPage(focus, newTab, operationType) {
             if (browserPage.status === PageStatus.Active) {
@@ -141,17 +152,6 @@ Page {
                                                       "newTab": newTab
                                                   }, operationType)
             }
-        }
-
-        Browser.StatusBar {
-            width: parent.width
-            height: visible ? toolBarContainer.height * 3 : 0
-            visible: isPortrait && !firstUseOverlay
-            opacity: progressBar.opacity
-            title: webView.title
-            url: webView.url
-            onSearchClicked: controlArea.openTabPage(true, false, PageStackAction.Animated)
-            onCloseClicked: webView.tabModel.closeActiveTab()
         }
 
         Browser.ToolBarContainer {
@@ -172,24 +172,24 @@ Page {
                 id: toolbarRow
 
                 anchors {
-                    left: parent.left; leftMargin: Theme.paddingMedium
-                    right: parent.right; rightMargin: Theme.paddingMedium
-                    verticalCenter: parent.verticalCenter
+                    left: parent.left; leftMargin: isPortrait ? 0 : Theme.paddingMedium
+                    right: parent.right; rightMargin: isPortrait ? 0 : Theme.paddingMedium
                 }
+                height: parent.height
 
                 // 5 icons, 4 spaces between
                 spacing: isPortrait ? (width - (backIcon.width * 5)) / 4 : Theme.paddingSmall
 
                 Browser.IconButton {
                     visible: isLandscape
-                    source: "image://theme/icon-m-close"
+                    icon.source: "image://theme/icon-m-close"
                     onClicked: webView.tabModel.closeActiveTab()
                 }
 
                 // Spacer
                 Item {
                     visible: isLandscape
-                    height: Theme.itemSizeSmall
+                    height: parent.height
                     width: browserPage.width
                            - toolbarRow.spacing * (toolbarRow.children.length - 1)
                            - backIcon.width * (toolbarRow.children.length - 1)
@@ -208,15 +208,15 @@ Page {
 
                 Browser.IconButton {
                     id:backIcon
-                    source: "image://theme/icon-m-back"
+                    icon.source: "image://theme/icon-m-back"
                     enabled: webView.canGoBack
                     onClicked: webView.goBack()
                 }
 
                 Browser.IconButton {
-                    enabled: webView.visible
                     property bool favorited: favorites.count > 0 && favorites.contains(webView.url)
-                    source: favorited ? "image://theme/icon-m-favorite-selected" : "image://theme/icon-m-favorite"
+                    enabled: webView.visible
+                    icon.source: favorited ? "image://theme/icon-m-favorite-selected" : "image://theme/icon-m-favorite"
                     onClicked: {
                         if (favorited) {
                             favorites.removeBookmark(webView.url)
@@ -228,7 +228,7 @@ Page {
 
                 Browser.IconButton {
                     id: tabPageButton
-                    source: "image://theme/icon-m-tabs"
+                    icon.source: "image://theme/icon-m-tabs"
                     onClicked: {
                         if (firstUseOverlay) {
                             firstUseOverlay.visible = false
@@ -244,19 +244,19 @@ Page {
                         y: (parent.height - contentHeight) / 2 - 5
                         font.pixelSize: Theme.fontSizeExtraSmall
                         font.bold: true
-                        color: tabPageButton.down ? Theme.highlightDimmerColor : Theme.highlightColor
+                        color: tabPageButton.down ?  Theme.primaryColor : Theme.highlightDimmerColor
                         horizontalAlignment: Text.AlignHCenter
                     }
                 }
 
                 Browser.IconButton {
                     enabled: webView.visible
-                    source: webView.loading ? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
+                    icon.source: webView.loading ? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
                     onClicked: webView.loading ? webView.stop() : webView.reload()
                 }
 
                 Browser.IconButton {
-                    source: "image://theme/icon-m-forward"
+                    icon.source: "image://theme/icon-m-forward"
                     enabled: webView.canGoForward
                     onClicked: webView.goForward()
                 }

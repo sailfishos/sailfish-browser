@@ -144,8 +144,8 @@ WebContainer {
             active: visible
 
             // There needs to be enough content for enabling chrome gesture
-            chromeGestureThreshold: container.toolbarHeight
-            chromeGestureEnabled: contentHeight > container.height + chromeGestureThreshold
+            chromeGestureThreshold: container.toolbarHeight / 2
+            chromeGestureEnabled: contentHeight > container.height + container.toolbarHeight
 
             signal selectionRangeUpdated(variant data)
             signal selectionCopied(variant data)
@@ -384,7 +384,7 @@ WebContainer {
         width: contentItem ? contentItem.horizontalScrollDecorator.size : 0
         height: 5
         x: contentItem ? contentItem.horizontalScrollDecorator.position : 0
-        y: webView.parent.height - (fullscreenMode ? 0 : toolbarHeight) - height
+        y: webView.height - height
         z: 1
         color: _decoratorColor
         smooth: true

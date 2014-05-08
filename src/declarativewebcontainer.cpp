@@ -35,6 +35,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     , m_webPage(0)
     , m_model(0)
     , m_webPageComponent(0)
+    , m_settingManager(SettingManager::instance())
     , m_foreground(true)
     , m_background(false)
     , m_windowVisible(false)
@@ -43,6 +44,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     , m_popupActive(false)
     , m_portrait(true)
     , m_fullScreenMode(false)
+    , m_fullScreenHeight(0.0)
     , m_inputPanelVisible(false)
     , m_inputPanelHeight(0.0)
     , m_inputPanelOpenHeight(0.0)
@@ -57,7 +59,6 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     , m_deferredReload(false)
 {
     m_webPages.reset(new WebPages(this));
-    m_settingManager.reset(new SettingManager(this));
     setFlag(QQuickItem::ItemHasContents, true);
     if (!window()) {
         connect(this, SIGNAL(windowChanged(QQuickWindow*)), this, SLOT(handleWindowChanged(QQuickWindow*)));
@@ -71,7 +72,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
             this, SLOT(onPageThumbnailChanged(int,QString)));
     connect(this, SIGNAL(maxLiveTabCountChanged()), this, SLOT(manageMaxTabCount()));
     connect(this, SIGNAL(_readyToLoadChanged()), this, SLOT(onReadyToLoad()));
-    connect(this, SIGNAL(heightChanged()), this, SLOT(resetHeight()));
+    connect(this, SIGNAL(portraitChanged()), this, SLOT(resetHeight()));
 
     QString cacheLocation = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
     QDir dir(cacheLocation);
@@ -412,8 +413,6 @@ void DeclarativeWebContainer::resetHeight(bool respectContentHeight)
         return;
     }
 
-    qreal fullHeight = height();
-
     // Application active
     if (respectContentHeight) {
         // Handle webPage height over here, BrowserPage.qml loading
@@ -422,13 +421,13 @@ void DeclarativeWebContainer::resetHeight(bool respectContentHeight)
         // We need to reset height always back to short height when loading starts
         // so that after tab change there is always initial short composited height.
         // Height may expand when content is moved.
-        if (contentHeight() > (fullHeight + m_toolbarHeight) || m_webPage->fullscreen()) {
-            m_webPage->setHeight(fullHeight);
+        if (contentHeight() > (m_fullScreenHeight + m_toolbarHeight) || m_webPage->fullscreen()) {
+            m_webPage->setHeight(m_fullScreenHeight);
         } else {
-            m_webPage->setHeight(fullHeight - m_toolbarHeight);
+            m_webPage->setHeight(m_fullScreenHeight - m_toolbarHeight);
         }
     } else {
-        m_webPage->setHeight(fullHeight - m_toolbarHeight);
+        m_webPage->setHeight(m_fullScreenHeight - m_toolbarHeight);
     }
 }
 
