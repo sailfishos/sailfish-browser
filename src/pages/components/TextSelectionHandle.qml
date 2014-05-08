@@ -76,8 +76,8 @@ Item {
         Rectangle {
             color: Theme.primaryColor
             width: {
-                var wdth = parent.width - (Theme.paddingSmall * 2)
-                return width > 0 ? width : Theme.paddingSmall
+                var _width = parent.width - (Theme.paddingSmall * 2)
+                return _width > 0 ? _width : Theme.paddingSmall
             }
             height: width
             radius: width / 2
