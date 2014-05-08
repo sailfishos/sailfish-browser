@@ -354,8 +354,7 @@ WebContainer {
             }
 
             onContextMenuRequested: {
-                if (data.types.indexOf("content-text") !== -1 ||
-                     (data.types.indexOf("input-text") !== -1 && data.string)) {
+                if (data.types.indexOf("content-text") !== -1) {
                    // we want to select some content text
                    webPage.sendAsyncMessage("Browser:SelectionStart", {"xPos": data.xPos, "yPos": data.yPos})
                 }
