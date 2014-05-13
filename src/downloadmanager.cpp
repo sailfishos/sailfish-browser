@@ -97,29 +97,14 @@ void DownloadManager::recvObserve(const QString message, const QVariant data)
         QString targetPath = dataMap.value("targetPath").toString();
         QFileInfo fileInfo(targetPath);
         if (fileInfo.completeSuffix() == QLatin1Literal("myapp")) {
-            QString aptoideDownloadPath = QString("%1/.aptoide/").arg(DeclarativeWebUtils::instance()->downloadDir());
-            QDir dir(aptoideDownloadPath);
-
-            if (!dir.exists()) {
-                if (!dir.mkpath(aptoideDownloadPath)) {
-                    qWarning() << "Failed to create path for myapp download, aborting";
-                    return;
-                }
-                uid_t uid = getuid();
-                // assumes that correct groupname is same as username (e.g. nemo:nemo)
-                int gid = getgrnam(getpwuid(uid)->pw_name)->gr_gid;
-                chown(aptoideDownloadPath.toLatin1().data(), uid, gid);
-                QFile::Permissions permissions(QFile::ExeOwner | QFile::ExeGroup | QFile::ReadOwner | QFile::WriteOwner | QFile::ReadGroup | QFile::WriteGroup);
-                QFile::setPermissions(aptoideDownloadPath, permissions);
+            QString packageName("com.aptoide.partners");
+            QString apkName = aptoideApk(packageName);
+            if (apkName.isEmpty()) {
+                qWarning() << "No aptoide client installed to handle package: " + targetPath;
+                return;
             }
-
-            QFile file(targetPath);
-            if (file.rename(aptoideDownloadPath + fileInfo.fileName())) {
-                // Check if we have aptoide installed
-                QString aptoideApk("/data/app/com.aptoide.partners.apk");
-                if (QFile(aptoideApk).exists()) {
-                    QProcess::execute("/usr/bin/apkd-launcher", QStringList() << aptoideApk << "com.aptoide.partners/com.aptoide.partners.AptoideJollaSupport");
-                }
+            if (moveMyAppPackage(targetPath)) {
+                QProcess::execute("/usr/bin/apkd-launcher", QStringList() << apkName << QString("%1/%1.AptoideJollaSupport").arg(packageName));
             }
         }
     } else if (msg == "dl-fail") {
@@ -135,6 +120,44 @@ void DownloadManager::recvObserve(const QString message, const QVariant data)
         m_statusCache.insert(downloadId, DownloadCanceled);
         checkAllTransfers();
     }
+}
+
+bool DownloadManager::moveMyAppPackage(QString path)
+{
+    QString aptoideDownloadPath = QString("%1/.aptoide/").arg(DeclarativeWebUtils::instance()->downloadDir());
+    QDir dir(aptoideDownloadPath);
+
+    if (!dir.exists()) {
+        if (!dir.mkpath(aptoideDownloadPath)) {
+            qWarning() << "Failed to create path for myapp download, aborting";
+            return false;
+        }
+        uid_t uid = getuid();
+        // assumes that correct groupname is same as username (e.g. nemo:nemo)
+        int gid = getgrnam(getpwuid(uid)->pw_name)->gr_gid;
+        chown(aptoideDownloadPath.toLatin1().data(), uid, gid);
+        QFile::Permissions permissions(QFile::ExeOwner | QFile::ExeGroup | QFile::ReadOwner | QFile::WriteOwner | QFile::ReadGroup | QFile::WriteGroup);
+        QFile::setPermissions(aptoideDownloadPath, permissions);
+    }
+
+    QFile file(path);
+    QFileInfo fileInfo(file);
+    return file.rename(aptoideDownloadPath + fileInfo.fileName());
+}
+
+QString DownloadManager::aptoideApk(QString packageName)
+{
+    QString apkPath("/data/app/");
+    QString aptoideApk = QString("%1/%2.apk").arg(apkPath, packageName);
+    if (!QFile(aptoideApk).exists()) {
+        QDir apkDir(apkPath, QString("%1*.apk").arg(packageName));
+        if (apkDir.count() > 0) {
+            aptoideApk = QString("%1/%2").arg(apkPath, apkDir.entryList().last());
+        } else {
+            return QString();
+        }
+    }
+    return aptoideApk;
 }
 
 void DownloadManager::cancelActiveTransfers()
