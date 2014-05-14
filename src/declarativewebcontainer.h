@@ -41,7 +41,7 @@ class DeclarativeWebContainer : public QQuickItem {
     Q_PROPERTY(bool inputPanelVisible READ inputPanelVisible NOTIFY inputPanelVisibleChanged FINAL)
     Q_PROPERTY(qreal inputPanelHeight READ inputPanelHeight WRITE setInputPanelHeight NOTIFY inputPanelHeightChanged FINAL)
     Q_PROPERTY(qreal inputPanelOpenHeight MEMBER m_inputPanelOpenHeight NOTIFY inputPanelOpenHeightChanged FINAL)
-    Q_PROPERTY(qreal toolbarHeight MEMBER m_toolbarHeight NOTIFY toolbarHeightChanged FINAL)
+    Q_PROPERTY(qreal toolBarHeight MEMBER m_toolBarHeight NOTIFY toolBarHeightChanged FINAL)
     Q_PROPERTY(bool background READ background NOTIFY backgroundChanged FINAL)
 
     Q_PROPERTY(QString favicon MEMBER m_favicon NOTIFY faviconChanged)
@@ -128,7 +128,7 @@ signals:
     void inputPanelVisibleChanged();
     void inputPanelHeightChanged();
     void inputPanelOpenHeightChanged();
-    void toolbarHeightChanged();
+    void toolBarHeightChanged();
 
     void faviconChanged();
     void loadingChanged();
@@ -211,7 +211,7 @@ private:
     bool m_inputPanelVisible;
     qreal m_inputPanelHeight;
     qreal m_inputPanelOpenHeight;
-    qreal m_toolbarHeight;
+    qreal m_toolBarHeight;
 
     QString m_favicon;
     QString m_thumbnailPath;

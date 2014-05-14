@@ -48,7 +48,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     , m_inputPanelVisible(false)
     , m_inputPanelHeight(0.0)
     , m_inputPanelOpenHeight(0.0)
-    , m_toolbarHeight(0.0)
+    , m_toolBarHeight(0.0)
     , m_loading(false)
     , m_loadProgress(0)
     , m_canGoForward(false)
@@ -394,7 +394,7 @@ void DeclarativeWebContainer::captureScreen()
     if (m_active && m_webPage->domContentLoaded() && !m_popupActive) {
         int size = QGuiApplication::primaryScreen()->size().width();
         if (!m_portrait && !m_fullScreenMode) {
-            size -= m_toolbarHeight;
+            size -= m_toolBarHeight;
         }
 
         qreal rotation = parentItem() ? parentItem()->rotation() : 0;
@@ -421,13 +421,13 @@ void DeclarativeWebContainer::resetHeight(bool respectContentHeight)
         // We need to reset height always back to short height when loading starts
         // so that after tab change there is always initial short composited height.
         // Height may expand when content is moved.
-        if (contentHeight() > (m_fullScreenHeight + m_toolbarHeight) || m_webPage->fullscreen()) {
+        if (contentHeight() > (m_fullScreenHeight + m_toolBarHeight) || m_webPage->fullscreen()) {
             m_webPage->setHeight(m_fullScreenHeight);
         } else {
-            m_webPage->setHeight(m_fullScreenHeight - m_toolbarHeight);
+            m_webPage->setHeight(m_fullScreenHeight - m_toolBarHeight);
         }
     } else {
-        m_webPage->setHeight(m_fullScreenHeight - m_toolbarHeight);
+        m_webPage->setHeight(m_fullScreenHeight - m_toolBarHeight);
     }
 }
 

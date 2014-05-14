@@ -56,7 +56,7 @@ Page {
                     duration: 150
                 }
                 FadeAnimation {
-                    target: !webView.fullscreenMode ? controlArea : null
+                    target: !webView.fullscreenMode ? overlay : null
                     to: 0
                     duration: 150
                 }
@@ -74,7 +74,7 @@ Page {
                 }
             }
             FadeAnimation {
-                target: !webView.fullscreenMode ? controlArea : null
+                target: !webView.fullscreenMode ? overlay : null
                 to: 1
                 duration: 150
             }
@@ -93,6 +93,8 @@ Page {
         }
     }
 
+//    onHeightChanged: console.log("Page height:", height)
+
     HistoryModel {
         id: historyModel
     }
@@ -101,12 +103,15 @@ Page {
     Browser.WebView {
         id: webView
 
-        visible: WebUtils.firstUseDone
+        readonly property bool moving: contentItem ? contentItem.moving : false
+
+        enabled: overlayAnimator.allowContentUse
+        visible: WebUtils.firstUseDone && height > 0
         active: browserPage.status === PageStatus.Active
-        toolbarHeight: toolBarContainer.height
         fullscreenHeight: portrait ? Screen.height : Screen.width
         portrait: browserPage.isPortrait
         maxLiveTabCount: 3
+        toolBarHeight: overlay.toolBar.height
 
         tabModel.onCountChanged: {
             if (tabModel.count === 0 && browserPage.status === PageStatus.Active) {
@@ -114,148 +119,48 @@ Page {
             }
         }
 
+//        onHeightChanged: console.log("WebView HEIGHT:", height)
+
         clip: true
-        // TODO: once we get rid of bad rendering loop, check if we could use here parent.height
-        // instead of fullscreenHeight. Currently with parent.height binding we skip
-        // frames when returning back from tab page so that virtual keyboard was open.
-        height: fullscreenHeight - (fullscreenMode ? 0 : toolBarContainer.height)
+    }
 
-        Behavior on height {
-            enabled: !browserPage.orientationTransitionRunning
-            NumberAnimation { duration: 200; easing.type: Easing.InOutQuad }
+    Rectangle {
+        width: webView.width
+        height: Math.ceil(webView.height)
+        opacity: 0.9 - (overlay.y / (webView.fullscreenHeight - overlay.toolBar.height)) * 0.9
+        color: Theme.highlightDimmerColor
+
+//        onYChanged: console.log("DIMMER Y :", y)
+//        onHeightChanged: console.log("DIMMER HEIGHT:", height)
+
+        MouseArea {
+            anchors.fill: parent
+            enabled: overlayAnimator.atTop
+            onClicked: overlayAnimator.hide()
         }
     }
 
-    // TODO: This will change once toolbar can be pulled up.
-    Column {
-        id: controlArea
+    Browser.OverlayAnimator {
+        id: overlayAnimator
 
-        z: 1
-        y: webView.height
-        width: parent.width
-        visible: !webView.popupActive
-
-        function openTabPage(focus, newTab, operationType) {
-            if (browserPage.status === PageStatus.Active) {
-                webView.captureScreen()
-                pageStack.push(tabPageComponent ? tabPageComponent : Qt.resolvedUrl("TabPage.qml"),
-                                                  {
-                                                      "browserPage" : browserPage,
-                                                      "initialSearchFocus": focus,
-                                                      "newTab": newTab
-                                                  }, operationType)
-            }
-        }
-
-        Browser.ToolBarContainer {
-            id: toolBarContainer
-            width: parent.width
-            enabled: !webView.fullscreenMode
-
-            Browser.ProgressBar {
-                id: progressBar
-                anchors.fill: parent
-                visible: !firstUseOverlay
-                opacity: webView.loading ? 1.0 : 0.0
-                progress: webView.loadProgress / 100.0
-            }
-
-            // ToolBar
-            Row {
-                id: toolbarRow
-
-                anchors {
-                    left: parent.left; leftMargin: isPortrait ? 0 : Theme.paddingMedium
-                    right: parent.right; rightMargin: isPortrait ? 0 : Theme.paddingMedium
-                }
-                height: parent.height
-
-                // 5 icons, 4 spaces between
-                spacing: isPortrait ? (width - (backIcon.width * 5)) / 4 : Theme.paddingSmall
-
-                Browser.IconButton {
-                    visible: isLandscape
-                    icon.source: "image://theme/icon-m-close"
-                    onClicked: webView.tabModel.closeActiveTab()
-                }
-
-                // Spacer
-                Item {
-                    visible: isLandscape
-                    height: parent.height
-                    width: browserPage.width
-                           - toolbarRow.spacing * (toolbarRow.children.length - 1)
-                           - backIcon.width * (toolbarRow.children.length - 1)
-                           - parent.anchors.leftMargin
-                           - parent.anchors.rightMargin
-
-                    Browser.TitleBar {
-                        url: webView.url
-                        title: webView.title
-                        height: parent.height
-                        onClicked: controlArea.openTabPage(true, false, PageStackAction.Animated)
-                        // Workaround for binding loop jb#15182
-                        clip: true
-                    }
-                }
-
-                Browser.IconButton {
-                    id:backIcon
-                    icon.source: "image://theme/icon-m-back"
-                    enabled: webView.canGoBack
-                    onClicked: webView.goBack()
-                }
-
-                Browser.IconButton {
-                    property bool favorited: favorites.count > 0 && favorites.contains(webView.url)
-                    enabled: webView.visible
-                    icon.source: favorited ? "image://theme/icon-m-favorite-selected" : "image://theme/icon-m-favorite"
-                    onClicked: {
-                        if (favorited) {
-                            favorites.removeBookmark(webView.url)
-                        } else {
-                            favorites.addBookmark(webView.url, webView.title, webView.favicon)
-                        }
-                    }
-                }
-
-                Browser.IconButton {
-                    id: tabPageButton
-                    icon.source: "image://theme/icon-m-tabs"
-                    onClicked: {
-                        if (firstUseOverlay) {
-                            firstUseOverlay.visible = false
-                            firstUseOverlay.destroy()
-                        }
-                        if (!WebUtils.firstUseDone) WebUtils.firstUseDone = true
-                        controlArea.openTabPage(false, false, PageStackAction.Animated)
-                    }
-                    Label {
-                        visible: webView.tabModel.count > 0
-                        text: webView.tabModel.count
-                        x: (parent.width - contentWidth) / 2 - 5
-                        y: (parent.height - contentHeight) / 2 - 5
-                        font.pixelSize: Theme.fontSizeExtraSmall
-                        font.bold: true
-                        color: tabPageButton.down ?  Theme.primaryColor : Theme.highlightDimmerColor
-                        horizontalAlignment: Text.AlignHCenter
-                    }
-                }
-
-                Browser.IconButton {
-                    enabled: webView.visible
-                    icon.source: webView.loading ? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
-                    onClicked: webView.loading ? webView.stop() : webView.reload()
-                }
-
-                Browser.IconButton {
-                    icon.source: "image://theme/icon-m-forward"
-                    enabled: webView.canGoForward
-                    onClicked: webView.goForward()
-                }
-            }
-        }
+        overlay: overlay
+        webView: webView
+        portrait: browserPage.isPortrait
     }
+
+    Browser.Overlay {
+        id: overlay
+
+        enabled: !webView.fullscreenMode && !webView.moving
+        webView: webView
+        historyModel: historyModel
+        browserPage: browserPage
+        overlayAnimator: overlayAnimator
+
+//        onYChanged: console.log("Overlay Y :", y)
+//        onHeightChanged: console.log("Overlay HEIGHT:", height)
+    }
+
 
     CoverActionList {
         enabled: browserPage.status === PageStatus.Active
@@ -264,7 +169,7 @@ Page {
         CoverAction {
             iconSource: "image://theme/icon-cover-new"
             onTriggered: {
-                controlArea.openTabPage(true, true, PageStackAction.Immediate)
+                overlay.openTabPage(true, true, PageStackAction.Immediate)
                 activate()
             }
         }
@@ -310,7 +215,7 @@ Page {
         if (!WebUtils.firstUseDone) {
             var component = Qt.createComponent(Qt.resolvedUrl("components/FirstUseOverlay.qml"))
             if (component.status == Component.Ready) {
-                firstUseOverlay = component.createObject(browserPage, {"width":browserPage.width, "height":browserPage.heigh, "gestureThreshold" : toolBarContainer.height});
+                firstUseOverlay = component.createObject(browserPage, {"width":browserPage.width, "height":browserPage.heigh, "gestureThreshold" : toolBar.height});
             } else {
                 console.log("FirstUseOverlay create failed " + component.errorString())
             }

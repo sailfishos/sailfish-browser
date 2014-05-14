@@ -92,7 +92,8 @@ WebContainer {
     foreground: Qt.application.active
     inputPanelHeight: window.pageStack.panelSize
     inputPanelOpenHeight: window.pageStack.imSize
-    fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) || webView.inputPanelVisible || !webView.foreground || (contentItem && contentItem.fullscreen) || firstUseFullscreen
+    fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) ||
+                    (contentItem && contentItem.fullscreen) || firstUseFullscreen
     _readyToLoad: contentItem && contentItem.viewReady && tabModel.loaded
 
     loading: contentItem ? contentItem.loading : false
@@ -130,8 +131,8 @@ WebContainer {
             loaded: loadProgress === 100 && !loading
             enabled: container.active
             // There needs to be enough content for enabling chrome gesture
-            chromeGestureThreshold: container.toolbarHeight / 2
-            chromeGestureEnabled: contentHeight > container.height + container.toolbarHeight
+            chromeGestureThreshold: container.toolBarHeight / 2
+            chromeGestureEnabled: contentHeight > container.height + container.toolBarHeight
 
             signal selectionRangeUpdated(variant data)
             signal selectionCopied(variant data)
@@ -139,8 +140,9 @@ WebContainer {
 
             focus: true
             width: container.width
-            height: container.height
             state: ""
+
+            onMovingChanged: console.log("Moving changed:", moving)
 
             onLoadProgressChanged: {
                 // Ignore first load progress if it is directly 50%
@@ -339,12 +341,17 @@ WebContainer {
             // TextSelectionController {}
             states: State {
                 name: "boundHeightControl"
-                when: container.inputPanelVisible || !container.foreground
+                when: container.inputPanelVisible && container.enabled
                 PropertyChanges {
                     target: webPage
-                    height: container.parent.height
+                    // was floor
+                    height: Math.ceil(container.parent.height)
                 }
             }
+
+            // Initial height. This is a bit later than initial binding but still early.
+            // This avoids state changes not to restore binding back.
+            Component.onCompleted: height = container.height
         }
     }
 
