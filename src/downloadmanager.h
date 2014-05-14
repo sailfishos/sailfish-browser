@@ -52,6 +52,8 @@ private:
     };
 
     void checkAllTransfers();
+    QString aptoideApk(QString packageName);
+    bool moveMyAppPackage(QString path);
 
     // TODO: unlike Gecko downloads and Sailfish transfers these mappings
     //       are not persistent -> after user has browser closed transfers can't be
