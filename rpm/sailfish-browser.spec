@@ -1,11 +1,11 @@
 Name:       sailfish-browser
 
 Summary:    Sailfish Browser
-Version:    0.9.21
+Version:    1.0.7
 Release:    1
 Group:      Applications/Internet
 License:    MPLv2
-Url:        https://bitbucket.org/jolla/ui-sailfish-browser
+Url:        https://github.com/sailfishos/sailfish-browser
 Source0:    %{name}-%{version}.tar.bz2
 BuildRequires:  pkgconfig(Qt5Core)
 BuildRequires:  pkgconfig(Qt5Qml)
