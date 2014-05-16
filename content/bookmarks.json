@@ -1,22 +1,27 @@
-[
+[    
     {
-        "favicon": "http://jolla.com/favicon.ico",
+        "favicon": "image://theme/icon-m-service-jolla",
+        "title": "User Guide",
+        "url": "http://jolla.com/guide/"
+    },
+    {
+        "favicon": "image://theme/icon-m-service-jolla",
         "title": "How-to tutorial videos",
         "url": "http://m.youtube.com/playlist?list=PLQgR2jhO_J0y8YSSvVd-Mg9LM88W0aIpD&desktop_uri=%2Fplaylist%3Flist%3DPLQgR2jh
 O_J0y8YSSvVd-Mg9LM88W0aIpD"
     },
     {
-        "favicon": "https://together.jolla.com/m/jolla/media/images/favicon.gif?v=2",
+        "favicon": "image://theme/icon-m-service-jolla",
         "title": "Jolla Questions & Answers",
         "url": "https://together.jolla.com/questions/"
     },
     {
-        "favicon": "http://jolla.com/favicon.ico",
+        "favicon": "image://theme/icon-m-service-jolla",
         "title": "Service and Support",
         "url": "http://jolla.com/care"
     },
     {
-        "favicon": "http://jolla.com/favicon.ico",
+        "favicon": "image://theme/icon-m-service-jolla",
         "title": "Jolla",
         "url": "http://jolla.com/"
     }
