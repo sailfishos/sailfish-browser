@@ -18,6 +18,7 @@
 #include <QDesktopServices>
 #include <QDir>
 #include <QFile>
+#include <QRegularExpression>
 #include <QTextStream>
 
 DeclarativeBookmarkModel::DeclarativeBookmarkModel(QObject *parent) :
@@ -81,13 +82,19 @@ void DeclarativeBookmarkModel::componentComplete() {
     if (doc.isArray()) {
         QJsonArray array = doc.array();
         QJsonArray::iterator i;
+        QRegularExpression re("^http[s]?://(together.)?jolla.com");
         for(i=array.begin(); i != array.end(); ++i) {
             if((*i).isObject()) {
                 QJsonObject obj = (*i).toObject();
                 QString url = obj.value("url").toString();
+                QString favicon = obj.value("favicon").toString();
+                if (url.contains(re)) {
+                    favicon = "image://theme/icon-m-service-jolla";
+                }
+
                 Bookmark* m = new Bookmark(obj.value("title").toString(),
                                            url,
-                                           obj.value("favicon").toString());
+                                           favicon);
                 bookmarks.insert(url, m);
                 bookmarkUrls.append(url);
             }
