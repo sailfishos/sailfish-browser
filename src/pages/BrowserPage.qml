@@ -105,6 +105,7 @@ Page {
         active: browserPage.status === PageStatus.Active
         toolbarHeight: toolBarContainer.height
         portrait: browserPage.isPortrait
+        maxLiveTabCount: 3
 
         tabModel.onCountChanged: {
             if (tabModel.count === 0 && browserPage.status === PageStatus.Active) {
@@ -297,7 +298,7 @@ Page {
             webView.captureScreen()
             if (!webView.tabModel.activateTab(url)) {
                 // Not found in tabs list, create newtab and load
-                webView.tabModel.newTab(url, "")
+                webView.load(url)
             }
             if (browserPage.status !== PageStatus.Active) {
                 pageStack.pop(browserPage, PageStackAction.Immediate)
