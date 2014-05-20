@@ -19,6 +19,7 @@ SilicaListView {
 
     signal load(string url, string title, bool newTab)
     signal removeBookmark(string url)
+    signal edit(int index, string url, string title)
 
     anchors.fill: parent
 
@@ -60,7 +61,7 @@ SilicaListView {
                 id: titleLabel
                 anchors.verticalCenter: parent.verticalCenter
                 width: parent.width - faviconImage.width
-                text: title
+                text: title !== "" ? title : url
                 color: highlighted ? Theme.highlightColor : Theme.primaryColor
                 truncationMode: TruncationMode.Fade
             }
@@ -82,6 +83,12 @@ SilicaListView {
                     //% "Remove favorite"
                     text: qsTrId("sailfish_browser-me-remove_favorite")
                     onClicked: favoriteDelegate.remove()
+                }
+
+                MenuItem {
+                    //% "Edit favorite"
+                    text: qsTrId("sailfish_browser-me-edit_favorite")
+                    onClicked: edit(index, url, title)
                 }
             }
         }
