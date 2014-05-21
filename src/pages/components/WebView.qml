@@ -56,7 +56,11 @@ WebContainer {
 
         if (!tabModel.hasNewTabData || force || !webView.activatePage(tabModel.nextTabId)) {
             // First contentItem will be created once tab activated.
-            if (contentItem) contentItem.loadTab(url, force)
+            if (contentItem && contentItem.viewReady) {
+                contentItem.loadTab(url, force)
+            } else {
+                webView.initialUrl = url
+            }
         }
     }
 
