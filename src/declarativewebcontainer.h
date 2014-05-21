@@ -54,6 +54,7 @@ class DeclarativeWebContainer : public QQuickItem {
 
     Q_PROPERTY(QString title READ title NOTIFY titleChanged FINAL)
     Q_PROPERTY(QString url READ url NOTIFY urlChanged FINAL)
+    Q_PROPERTY(QString initialUrl MEMBER m_initialUrl NOTIFY initialUrlChanged FINAL)
     Q_PROPERTY(QString thumbnailPath READ thumbnailPath NOTIFY thumbnailPathChanged FINAL)
 
     Q_PROPERTY(QQmlComponent* webPageComponent MEMBER m_webPageComponent NOTIFY webPageComponentChanged FINAL)
@@ -137,6 +138,7 @@ signals:
 
     void titleChanged();
     void urlChanged();
+    void initialUrlChanged();
     void thumbnailPathChanged();
 
     void deferredReloadChanged();
@@ -212,6 +214,7 @@ private:
 
     QString m_favicon;
     QString m_thumbnailPath;
+    QString m_initialUrl;
 
     bool m_loading;
     int m_loadProgress;

@@ -618,8 +618,9 @@ void DeclarativeWebContainer::onReadyToLoad()
     // Triggered when tabs of tab model are available and QmlMozView is ready to load.
     // Load test
     // 1) tabModel.hasNewTabData -> loadTab (already activated view)
-    // 2) model has tabs, load active tab -> load (activate view when needed)
-    // 3) load home page -> load (activate view when needed)
+    // 2) browser starting and initial url given
+    // 3) model has tabs, load active tab -> load (activate view when needed)
+    // 4) load home page -> load (activate view when needed)
 
     // visible could be possible delay property for _readyToLoad if so wanted.
     if (!m_readyToLoad || !m_model) {
@@ -628,6 +629,8 @@ void DeclarativeWebContainer::onReadyToLoad()
 
     if (m_model->hasNewTabData()) {
         m_webPage->loadTab(m_model->newTabUrl(), false);
+    } else if (!m_initialUrl.isEmpty()) {
+        emit triggerLoad(m_initialUrl, "");
     } else if (m_model->count() > 0) {
         // First tab is actived when tabs are loaded to the tabs tabModel.
         m_model->resetNewTabData();
@@ -723,7 +726,11 @@ void DeclarativeWebContainer::onPageUrlChanged()
                 updateNavigationStatus(tab);
             }
 
-            m_model->updateUrl(tabId, activeTab, url, webPage->backForwardNavigation(), !webPage->urlHasChanged());
+            // Initial url should be considered as navigation request that increases navigation history.
+            bool initialLoad = m_initialUrl.isEmpty() && !webPage->urlHasChanged();
+            m_model->updateUrl(tabId, activeTab, url, webPage->backForwardNavigation(), initialLoad);
+            m_initialUrl = "";
+
             webPage->setUrlHasChanged(true);
             webPage->setBackForwardNavigation(false);
             if (activeTab && webPage == m_webPage) {
