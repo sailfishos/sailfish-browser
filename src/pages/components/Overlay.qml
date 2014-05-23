@@ -30,7 +30,6 @@ PanelBackground {
                                                           Qt.resolvedUrl("TabPage.qml"),
                                                           {
                                                               "browserPage" : browserPage,
-                                                              "initialSearchFocus": focus,
                                                               "newTab": newTab
                                                           }, operationType)
         }

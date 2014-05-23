@@ -16,6 +16,10 @@ import Sailfish.Silica 1.0
 Loader {
     id: tabItem
 
+    property string url
+    property string title
+    property string thumbnailPath
+    property bool activeTab
     signal clicked
 
     sourceComponent: Rectangle {
@@ -81,6 +85,8 @@ Loader {
             onClicked: tabItem.clicked()
         }
 
-        CloseTabButton {}
+        CloseTabButton {
+            closeActiveTab: tabItem.activeTab
+        }
     }
 }

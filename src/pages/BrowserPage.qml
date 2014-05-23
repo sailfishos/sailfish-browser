@@ -115,7 +115,7 @@ Page {
 
         tabModel.onCountChanged: {
             if (tabModel.count === 0 && browserPage.status === PageStatus.Active) {
-                pageStack.push(tabPageComponent ? tabPageComponent : Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage, "initialSearchFocus": true })
+                pageStack.push(tabPageComponent ? tabPageComponent : Qt.resolvedUrl("TabPage.qml"), {"browserPage" : browserPage })
             }
         }
 
