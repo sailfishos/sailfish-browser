@@ -21,6 +21,7 @@ Page {
             case "Google": return 0
             case "Bing": return 1
             case "Yahoo": return 2
+            case "DuckDuckGo": return 3
             default: return 0
         }
     }
@@ -59,6 +60,10 @@ Page {
                     MenuItem {
                         text: "Yahoo"
                     }
+                    MenuItem {
+                        text: "DuckDuckGo"
+                    }
+
                 }
 
                 onCurrentItemChanged: {
