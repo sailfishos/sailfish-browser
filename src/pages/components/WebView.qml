@@ -111,6 +111,12 @@ WebContainer {
 
     onTriggerLoad: webView.load(url, title)
 
+    onBackgroundChanged: {
+        if (background) {
+            MozContext.sendObserve("memory-pressure", "heap-minimize")
+        }
+    }
+
     WebViewCreator {
         activeWebView: contentItem
         // onNewWindowRequested is always handled as synchronous operation (not through newTab).
@@ -133,6 +139,10 @@ WebContainer {
 
             loaded: loadProgress === 100 && !loading
             enabled: container.active
+            // Active could pause e.g. video in cover by anding
+            // Qt.application.active to visible
+            active: visible
+
             // There needs to be enough content for enabling chrome gesture
             chromeGestureThreshold: container.toolbarHeight
             chromeGestureEnabled: contentHeight > container.height + chromeGestureThreshold
