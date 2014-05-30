@@ -151,6 +151,11 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     // Theme.fontSizeSmall
     mozContext->setPref(QString("embedlite.inputItemSize"), QVariant(28));
     mozContext->setPref(QString("embedlite.zoomMargin"), QVariant(14));
+
+    // Memory management related preferences.
+    // We're sending "memory-pressure" when browser is on background (cover by another application)
+    // and when the browser page is inactivated.
+    mozContext->setPref(QString("javascript.options.gc_on_memory_pressure"), true);
 }
 
 void DeclarativeWebUtils::setFirstUseDone(bool firstUseDone) {
