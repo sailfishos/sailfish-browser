@@ -35,8 +35,8 @@ QHash<int, QByteArray> DeclarativeBookmarkModel::roleNames() const
     return roles;
 }
 
-// TODO cleanup
-void DeclarativeBookmarkModel::addBookmark(const QString& url, const QString& title, const QString& favicon) {
+void DeclarativeBookmarkModel::addBookmark(const QString& url, const QString& title, const QString& favicon)
+{
     beginInsertRows(QModelIndex(), rowCount(), rowCount());
     bookmarks.insert(url, new Bookmark(title, url, favicon));
     bookmarkUrls.append(url);
@@ -46,7 +46,8 @@ void DeclarativeBookmarkModel::addBookmark(const QString& url, const QString& ti
     save();
 }
 
-void DeclarativeBookmarkModel::removeBookmark(const QString& url) {
+void DeclarativeBookmarkModel::removeBookmark(const QString& url)
+{
     if (!contains(url)) {
         return;
     }
@@ -64,7 +65,33 @@ void DeclarativeBookmarkModel::removeBookmark(const QString& url) {
     }
 }
 
-void DeclarativeBookmarkModel::componentComplete() {
+void DeclarativeBookmarkModel::editBookmark(int index, const QString& url, const QString& title)
+{
+    if (index < 0 || index > bookmarkUrls.count())
+        return;
+
+    Bookmark * bookmark = bookmarks.value(bookmarkUrls[index]);
+    QVector<int> roles;
+    if (url != bookmark->url()) {
+        bookmark->setUrl(url);
+        bookmarks.remove(bookmarkUrls[index]);
+        bookmarks.insert(url, bookmark);
+        bookmarkUrls[index] = url;
+        roles << UrlRole;
+    }
+    if (title != bookmark->title()) {
+        bookmark->setTitle(title);
+        roles << TitleRole;
+    }
+    if (roles.count() > 0) {
+        QModelIndex modelIndex = QAbstractListModel::index(index);
+        emit dataChanged(modelIndex, modelIndex, roles);
+        save();
+    }
+}
+
+void DeclarativeBookmarkModel::componentComplete()
+{
     QString settingsLocation = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/bookmarks.json";
     QScopedPointer<QFile> file(new QFile(settingsLocation));
 
@@ -108,7 +135,8 @@ void DeclarativeBookmarkModel::componentComplete() {
 
 void DeclarativeBookmarkModel::classBegin() {}
 
-void DeclarativeBookmarkModel::save() {
+void DeclarativeBookmarkModel::save()
+{
     QString settingsLocation = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
     QDir dir(settingsLocation);
     if(!dir.exists()) {
@@ -142,12 +170,14 @@ void DeclarativeBookmarkModel::save() {
     file.close();
 }
 
-int DeclarativeBookmarkModel::rowCount(const QModelIndex & parent) const {
+int DeclarativeBookmarkModel::rowCount(const QModelIndex & parent) const
+{
     Q_UNUSED(parent)
     return bookmarks.count();
 }
 
-QVariant DeclarativeBookmarkModel::data(const QModelIndex & index, int role) const {
+QVariant DeclarativeBookmarkModel::data(const QModelIndex & index, int role) const
+{
     if (index.row() < 0 || index.row() > bookmarkUrls.count())
         return QVariant();
 
@@ -162,6 +192,7 @@ QVariant DeclarativeBookmarkModel::data(const QModelIndex & index, int role) con
     return QVariant();
 }
 
-bool DeclarativeBookmarkModel::contains(const QString& url) const {
+bool DeclarativeBookmarkModel::contains(const QString& url) const
+{
     return bookmarks.contains(url);
 }

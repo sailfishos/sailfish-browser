@@ -212,6 +212,16 @@ Page {
             page.load(url, title)
         }
 
+        onEdit: {
+            pageStack.push(Qt.resolvedUrl("components/BookmarkEditDialog.qml"),
+                           {
+                               "url": url,
+                               "title": title,
+                               "index": index,
+                               "model": favoriteList.model
+                           })
+        }
+
         onRemoveBookmark: browserPage.favorites.removeBookmark(url)
 
         Browser.TabPageMenu {

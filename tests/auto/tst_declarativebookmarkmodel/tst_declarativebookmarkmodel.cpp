@@ -43,6 +43,7 @@ private slots:
     void addBookmark();
     void removeBookmark();
     void contains();
+    void editBookmark();
 
 private:
     DeclarativeBookmarkModel *bookmarkModel;
@@ -88,7 +89,6 @@ void tst_declarativebookmarkmodel::removeBookmark()
     QCOMPARE(bookmarkModel->rowCount(), count-1);
 }
 
-
 void tst_declarativebookmarkmodel::contains()
 {
     bookmarkModel->addBookmark("http://www.test4.contains.jolla.com", "jolla", "");
@@ -97,6 +97,46 @@ void tst_declarativebookmarkmodel::contains()
     QVERIFY(!bookmarkModel->contains("http://www.test4.that.is.not.there.jolla.com"));
 }
 
+void tst_declarativebookmarkmodel::editBookmark()
+{
+    bookmarkModel->addBookmark("http://www.test5.jolla.com", "jolla", "");
+    bookmarkModel->addBookmark("http://www.test5.jolla.com/2", "jolla2", "");
+    int count = bookmarkModel->rowCount();
+
+    QModelIndex index = bookmarkModel->index(0);
+    // Let's make sure that first bookmark stays normal.
+    QString constUrl = bookmarkModel->data(index, DeclarativeBookmarkModel::UrlRole).toString();
+    QString constTitle = bookmarkModel->data(index, DeclarativeBookmarkModel::TitleRole).toString();
+
+    // Edit only the last entry
+    index = bookmarkModel->index(count-1);
+    QString originalUrl = bookmarkModel->data(index, DeclarativeBookmarkModel::UrlRole).toString();
+    QString newTitle("New title");
+    QString newUrl("http://www.test5.jolla.com/edited");
+
+    bookmarkModel->editBookmark(index.row(), originalUrl, newTitle);
+    QString title = bookmarkModel->data(index, DeclarativeBookmarkModel::TitleRole).toString();
+    QString url = bookmarkModel->data(index, DeclarativeBookmarkModel::UrlRole).toString();
+
+    QCOMPARE(title, newTitle);
+    QCOMPARE(url, originalUrl);
+
+    bookmarkModel->editBookmark(index.row(), newUrl, title);
+    title = bookmarkModel->data(index, DeclarativeBookmarkModel::TitleRole).toString();
+    url = bookmarkModel->data(index, DeclarativeBookmarkModel::UrlRole).toString();
+
+    QCOMPARE(title, newTitle);
+    QCOMPARE(url, newUrl);
+
+    index = bookmarkModel->index(0);
+    url = bookmarkModel->data(index, DeclarativeBookmarkModel::UrlRole).toString();
+    title = bookmarkModel->data(index, DeclarativeBookmarkModel::TitleRole).toString();
+
+    QCOMPARE(title, constTitle);
+    QCOMPARE(url, constUrl);
+
+    QCOMPARE(count, bookmarkModel->rowCount());
+}
 
 void tst_declarativebookmarkmodel::cleanupTestCase()
 {

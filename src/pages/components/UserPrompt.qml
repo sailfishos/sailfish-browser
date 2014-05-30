@@ -15,6 +15,7 @@ import Sailfish.Silica 1.0
 Dialog {
     id: dialog
     property alias acceptText: header.acceptText
+    property alias title: header.title
     default property alias defaultContent: promptContent.children
 
     SilicaFlickable {
