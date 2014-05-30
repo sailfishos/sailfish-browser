@@ -21,6 +21,7 @@ UserPrompt {
     property bool passwordOnly
     property alias username: username.text
     property alias password: password.text
+    property alias dontsave: dontsaveCheck.checked
 
     canAccept: username.text.length > 0
     //: Text on the Accept dialog button that accepts browser's auth request
@@ -75,6 +76,20 @@ UserPrompt {
                     username.focus = true
                 }
             }
+        }
+
+        TextSwitch {
+            id: dontsaveCheck
+
+            checked: false
+
+            //: Do not save the entered credentials for later use
+            //% "Do not save"
+            text: qsTrId("sailfish_browser-la-dont_save")
+
+            //: Explain to the user that checking the switch will prevent entered credentials from saving
+            //% "The credentials you enter won't be stored for later use"
+            description: qsTrId("sailfish_browser-la-dont_save_description")
         }
     }
 }
