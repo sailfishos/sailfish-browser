@@ -134,7 +134,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 
     DeclarativeWebUtils *utils = DeclarativeWebUtils::instance();
     utils->connect(service, SIGNAL(openUrlRequested(QString)),
-            utils, SIGNAL(openUrlRequested(QString)));
+                   utils, SIGNAL(openUrlRequested(QString)));
     utils->connect(service, SIGNAL(dumpMemoryInfoRequested(QString)),
                    utils, SLOT(handleDumpMemoryInfoRequest(QString)));
 
