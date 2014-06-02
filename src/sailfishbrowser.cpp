@@ -73,14 +73,28 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     BrowserService *service = new BrowserService(app.data());
     // Handle command line launch
     if (!service->registered()) {
-        QDBusMessage message = QDBusMessage::createMethodCall(service->serviceName(), "/",
-                                                              service->serviceName(), "openUrl");
-        QStringList args;
-        // Pass url argument if given
-        if (app->arguments().count() > 1) {
-            args << app->arguments().at(1);
+
+        QDBusMessage message;
+        if (app->arguments().contains("-dumpMemory")) {
+            int index = app->arguments().indexOf("-dumpMemory");
+            QString fileName;
+            if (index + 1 < app->arguments().size()) {
+                fileName = app->arguments().at(index + 1);
+            }
+
+            message = QDBusMessage::createMethodCall(service->serviceName(), "/",
+                                                     service->serviceName(), "dumpMemoryInfo");
+            message.setArguments(QVariantList() << fileName);
+        } else {
+            message = QDBusMessage::createMethodCall(service->serviceName(), "/",
+                                                     service->serviceName(), "openUrl");
+            QStringList args;
+            // Pass url argument if given
+            if (app->arguments().count() > 1) {
+                args << app->arguments().at(1);
+            }
+            message.setArguments(QVariantList() << args);
         }
-        message.setArguments(QVariantList() << args);
 
         QDBusConnection::sessionBus().asyncCall(message);
         if (QCoreApplication::hasPendingEvents()) {
@@ -121,6 +135,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     DeclarativeWebUtils *utils = DeclarativeWebUtils::instance();
     utils->connect(service, SIGNAL(openUrlRequested(QString)),
             utils, SIGNAL(openUrlRequested(QString)));
+    utils->connect(service, SIGNAL(dumpMemoryInfoRequested(QString)),
+                   utils, SLOT(handleDumpMemoryInfoRequest(QString)));
 
     utils->clearStartupCacheIfNeeded();
     view->rootContext()->setContextProperty("WebUtils", utils);

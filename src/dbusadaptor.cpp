@@ -28,3 +28,8 @@ void DBusAdaptor::cancelTransfer(int transferId) {
 void DBusAdaptor::restartTransfer(int transferId) {
     m_BrowserService->restartTransfer(transferId);
 }
+
+void DBusAdaptor::dumpMemoryInfo(QString fileName)
+{
+    m_BrowserService->dumpMemoryInfo(fileName);
+}

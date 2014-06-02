@@ -55,3 +55,8 @@ void BrowserService::restartTransfer(int transferId)
 {
     emit restartTransferRequested(transferId);
 }
+
+void BrowserService::dumpMemoryInfo(QString fileName)
+{
+    emit dumpMemoryInfoRequested(fileName);
+}

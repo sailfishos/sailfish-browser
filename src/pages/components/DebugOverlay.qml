@@ -98,4 +98,9 @@ Item {
         interval: 2000
         onTriggered: console.log("MEMORY DUMPPED")
     }
+
+    Connections {
+        target: WebUtils
+        onDumpMemoryInfo: debugOverlay.dump(fileName)
+    }
 }

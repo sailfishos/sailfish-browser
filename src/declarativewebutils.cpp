@@ -79,6 +79,13 @@ void DeclarativeWebUtils::clearStartupCacheIfNeeded()
     }
 }
 
+void DeclarativeWebUtils::handleDumpMemoryInfoRequest(QString fileName)
+{
+    if (m_debugMode) {
+        emit dumpMemoryInfo(fileName);
+    }
+}
+
 void DeclarativeWebUtils::updateWebEngineSettings()
 {
     // Infer and set Accept-Language header from the current system locale

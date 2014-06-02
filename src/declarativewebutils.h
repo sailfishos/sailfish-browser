@@ -46,11 +46,13 @@ public:
 public slots:
     QString homePage() const;
     void clearStartupCacheIfNeeded();
+    void handleDumpMemoryInfoRequest(QString fileName);
 
 signals:
     void homePageChanged();
     void openUrlRequested(QString url);
     void firstUseDoneChanged();
+    void dumpMemoryInfo(QString fileName);
 
 private slots:
     void updateWebEngineSettings();
