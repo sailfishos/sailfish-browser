@@ -30,7 +30,6 @@ UserPrompt {
 
     Column {
         width: parent.width
-        spacing: Theme.paddingMedium
 
         Label {
             x: Theme.paddingLarge
@@ -47,7 +46,6 @@ UserPrompt {
 
             width: parent.width
             visible: !passwordOnly
-            focus: !passwordOnly
             //% "Enter your user name"
             placeholderText: qsTrId("sailfish_browser-la-enter_username")
             //% "User name"
@@ -61,7 +59,6 @@ UserPrompt {
             id: password
 
             width: parent.width
-            focus: passwordOnly
             echoMode: TextInput.Password
             //% "Enter password"
             placeholderText: qsTrId("sailfish_browser-la-enter_password")
