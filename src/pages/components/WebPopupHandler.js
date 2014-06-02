@@ -85,7 +85,8 @@ function openAuthDialog(input) {
                                     {
                                         "hostname": data.text,
                                         "realm": data.title,
-                                        "username": data.defaultValue,
+                                        "username": data.storedUsername,
+                                        "password": data.storedPassword,
                                         "passwordOnly": data.passwordOnly
                                     })
         dialog.accepted.connect(function () {
@@ -94,7 +95,8 @@ function openAuthDialog(input) {
                                                "winid": winid,
                                                "accepted": true,
                                                "username": dialog.username,
-                                               "password": dialog.password
+                                               "password": dialog.password,
+                                               "dontsave": dialog.dontsave
                                            })
         })
         dialog.rejected.connect(function() {

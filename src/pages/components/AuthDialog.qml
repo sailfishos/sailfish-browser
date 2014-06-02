@@ -21,6 +21,7 @@ UserPrompt {
     property bool passwordOnly
     property alias username: username.text
     property alias password: password.text
+    property alias dontsave: dontsaveCheck.checked
 
     canAccept: username.text.length > 0
     //: Text on the Accept dialog button that accepts browser's auth request
@@ -29,7 +30,6 @@ UserPrompt {
 
     Column {
         width: parent.width
-        spacing: Theme.paddingMedium
 
         Label {
             x: Theme.paddingLarge
@@ -46,7 +46,6 @@ UserPrompt {
 
             width: parent.width
             visible: !passwordOnly
-            focus: !passwordOnly
             //% "Enter your user name"
             placeholderText: qsTrId("sailfish_browser-la-enter_username")
             //% "User name"
@@ -60,7 +59,6 @@ UserPrompt {
             id: password
 
             width: parent.width
-            focus: passwordOnly
             echoMode: TextInput.Password
             //% "Enter password"
             placeholderText: qsTrId("sailfish_browser-la-enter_password")
@@ -75,6 +73,20 @@ UserPrompt {
                     username.focus = true
                 }
             }
+        }
+
+        TextSwitch {
+            id: dontsaveCheck
+
+            checked: false
+
+            //: Do not save the entered credentials for later use
+            //% "Do not save"
+            text: qsTrId("sailfish_browser-la-dont_save")
+
+            //: Explain to the user that checking the switch will prevent entered credentials from saving
+            //% "The credentials you enter won't be stored for later use"
+            description: qsTrId("sailfish_browser-la-dont_save_description")
         }
     }
 }
