@@ -27,9 +27,10 @@ static const QString system_components_time_stamp("/var/lib/_MOZEMBED_CACHE_CLEA
 static const QString profilePath("/.mozilla/mozembed");
 static DeclarativeWebUtils *gSingleton = 0;
 
-DeclarativeWebUtils::DeclarativeWebUtils() :
-    QObject(),
-    m_homePage("http://www.jolla.com")
+DeclarativeWebUtils::DeclarativeWebUtils()
+    : QObject()
+    , m_homePage("http://www.jolla.com")
+    , m_debugMode(qApp->arguments().contains("-debugMode"))
 {
     connect(QMozContext::GetInstance(), SIGNAL(onInitialized()),
             this, SLOT(updateWebEngineSettings()));
@@ -171,6 +172,11 @@ void DeclarativeWebUtils::setFirstUseDone(bool firstUseDone) {
         }
         emit firstUseDoneChanged();
     }
+}
+
+bool DeclarativeWebUtils::debugMode() const
+{
+    return m_debugMode;
 }
 
 bool DeclarativeWebUtils::firstUseDone() const {

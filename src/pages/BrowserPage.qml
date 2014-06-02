@@ -20,6 +20,7 @@ Page {
     id: browserPage
 
     property Item firstUseOverlay
+    property Item debug
     property alias firstUseFullscreen: webView.firstUseFullscreen
     property Component tabPageComponent
 
@@ -319,6 +320,15 @@ Page {
                 firstUseOverlay = component.createObject(browserPage, {"width":browserPage.width, "height":browserPage.heigh, "gestureThreshold" : toolBarContainer.height});
             } else {
                 console.log("FirstUseOverlay create failed " + component.errorString())
+            }
+        }
+
+        if (WebUtils.debugMode) {
+            component = Qt.createComponent(Qt.resolvedUrl("components/DebugOverlay.qml"))
+            if (component.status === Component.Ready) {
+                debug = component.createObject(browserPage)
+            } else {
+                console.warn("Failed to create DebugOverlay " + component.errorString())
             }
         }
     }

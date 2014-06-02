@@ -10,6 +10,7 @@
     <file>pages/components/BrowserNotification.qml</file>
     <file>pages/components/CloseTabButton.qml</file>
     <file>pages/components/ConfirmDialog.qml</file>
+    <file>pages/components/DebugOverlay.qml</file>
     <file>pages/components/DownloadRemorsePopup.qml</file>
     <file>pages/components/FaviconImage.qml</file>
     <file>pages/components/FirstUseOverlay.qml</file>
