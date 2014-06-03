@@ -24,7 +24,8 @@ isEmpty(USE_RESOURCES) {
   RESOURCES = sailfish-browser.qrc
 }
 
-PKGCONFIG +=  nemotransferengine-qt5 mlite5
+QMAKE_CXXFLAGS += -std=c++0x
+PKGCONFIG +=  nemotransferengine-qt5 mlite5 libxul-embedding
 
 packagesExist(qdeclarative5-boostable) {
     message("Building with qdeclarative-boostable support")
@@ -79,7 +80,8 @@ HEADERS += \
     downloadmanager.h \
     settingmanager.h \
     closeeventfilter.h \
-    webpages.h
+    webpages.h \
+    declarativefileuploadoptions.h
 
 OTHER_FILES = *.qml \
               pages/*.qml \

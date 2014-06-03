@@ -11,6 +11,7 @@
 
 .pragma library
 .import QtQuick 2.1 as QtQuick
+.import Sailfish.Browser 1.0 as Browser
 
 var webView
 var popups
@@ -244,14 +245,13 @@ function openPrompt(data) {
 }
 
 function openFilePicker(data) {
-    if (data.mode !== 0) {
-        console.log("Gecko file picker requested unsupported mode")
-        return
+    if (data.mode == Browser.FileUploadOptions.Open || data.mode == Browser.FileUploadOptions.OpenMultiple ) {
+        pageStack.push(_uploadFilePickerComponentUrl,
+                       {
+                           "winid": data.winid,
+                           "webView": webView.contentItem
+                       })
+    } else {
+        console.log("Gecko file picker requested unsupported mode" + data.mode)
     }
-
-    pageStack.push(_uploadFilePickerComponentUrl,
-                   {
-                       "winid": data.winid,
-                       "webView": webView.contentItem
-                   })
 }
