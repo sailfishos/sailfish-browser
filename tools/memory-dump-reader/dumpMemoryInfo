@@ -1,0 +1,22 @@
+#!/bin/bash
+if [ "$#" -ne 2 ]; then
+    echo "Usage: dumpMemoryInfo fileNameFor IPAddressOfTheDevice"
+    exit 1
+fi
+
+path=$1
+file=$(basename $path)
+result=results/`echo $file | cut -d\. -f1`
+
+ssh nemo@$2 "sailfish-browser -dumpMemory $path" &
+
+sleep 3
+
+if [ ! -d "results" ]; then
+    mkdir results
+fi
+
+scp nemo@$2:$path results/.
+gzip -d -c results/$file > $result
+./memory-dump-reader $result &
+echo "Memory info dump saved to file results/$file and extracted to $result"
