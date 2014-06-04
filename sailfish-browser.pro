@@ -17,4 +17,5 @@ content.path = /usr/share/sailfish-browser/content
 INSTALLS += desktop dbus_service chrome_scripts content
 
 OTHER_FILES += \
-    rpm/*.spec
+    rpm/*.spec \
+    content/*.json
