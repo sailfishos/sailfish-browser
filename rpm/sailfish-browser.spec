@@ -24,7 +24,7 @@ BuildRequires:  gdb
 Requires: sailfishsilica-qt5 >= 0.11.8
 Requires: jolla-ambient >= 0.3.24
 Requires: xulrunner-qt5 >= 29.0.1.9
-Requires: embedlite-components-qt5 >= 1.6.3
+Requires: embedlite-components-qt5 >= 1.6.4
 Requires: sailfish-browser-settings = %{version}
 Requires: qt5-plugin-imageformat-ico
 Requires: qt5-plugin-imageformat-gif
