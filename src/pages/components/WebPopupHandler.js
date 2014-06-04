@@ -246,11 +246,17 @@ function openPrompt(data) {
 
 function openFilePicker(data) {
     if (data.mode == Browser.FileUploadMode.Open || data.mode == Browser.FileUploadMode.OpenMultiple ) {
-        pageStack.push(_uploadFilePickerComponentUrl,
-                       {
-                           "winid": data.winid,
-                           "webView": webView.contentItem
-                       })
+        var component = Qt.createComponent("PickerCreator.qml")
+        if (component.status == QtQuick.Component.Ready) {
+            component.createObject(pageStack, {
+                                       "pageStack": pageStack,
+                                       "winid": data.winid,
+                                       "webView": webView.contentItem,
+                                       "filter": data.filter,
+                                       "mode": data.mode});
+        } else {
+            console.log("Loading PickerCreator.qml failed" + component.errorString())
+        }
     } else {
         console.log("Gecko file picker requested unsupported mode" + data.mode)
     }
