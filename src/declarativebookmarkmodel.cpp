@@ -109,13 +109,14 @@ void DeclarativeBookmarkModel::componentComplete()
     if (doc.isArray()) {
         QJsonArray array = doc.array();
         QJsonArray::iterator i;
-        QRegularExpression re("^http[s]?://(together.)?jolla.com");
+        QRegularExpression jollaUrl("^http[s]?://(together.)?jolla.com");
         for(i=array.begin(); i != array.end(); ++i) {
             if((*i).isObject()) {
                 QJsonObject obj = (*i).toObject();
                 QString url = obj.value("url").toString();
                 QString favicon = obj.value("favicon").toString();
-                if (url.contains(re)) {
+                if (url.contains(jollaUrl) ||
+                        url.startsWith("http://m.youtube.com/playlist?list=PLQgR2jhO_J0y8YSSvVd-Mg9LM88W0aIpD")) {
                     favicon = "image://theme/icon-m-service-jolla";
                 }
 
