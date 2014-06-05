@@ -213,12 +213,11 @@ Page {
         }
 
         onEdit: {
-            pageStack.push(Qt.resolvedUrl("components/BookmarkEditDialog.qml"),
+            pageStack.push(editDialog,
                            {
                                "url": url,
                                "title": title,
                                "index": index,
-                               "model": favoriteList.model
                            })
         }
 
@@ -230,6 +229,16 @@ Page {
             shareEnabled: browserPage.url == _search
             browserPage: page.browserPage
             flickable: favoriteList
+
+            onAddToLauncher: {
+                browserPage.desktopBookmarkWriter.clear()
+                pageStack.push(addToLauncher,
+                               {
+                                   "url": browserPage.url,
+                                   "title": browserPage.title
+                               })
+                browserPage.imageLoader.source = browserPage.webView.favicon
+            }
         }
     }
 
@@ -426,6 +435,39 @@ Page {
                 id: closeActiveTabButton
                 visible: browserPage.tabs.count > 0 && !page.newTab && !textFieldLoader.searchFieldFocus
                 closeActiveTab: true
+            }
+        }
+    }
+
+    Component {
+        id: editDialog
+        Browser.BookmarkEditDialog {
+            onAccepted: favoriteList.model.editBookmark(index, editedUrl, editedTitle)
+        }
+    }
+
+    Component {
+        id: addToLauncher
+        Browser.BookmarkEditDialog {
+            //: Title of the "Add to launcher" dialog.
+            //% "Add to launcher"
+            title: qsTrId("sailfish_browser-he-add_bookmark_to_launcher")
+            canAccept: editedUrl !== "" && editedTitle !== ""
+            onAccepted: {
+                var icon = browserPage.imageLoader.source
+                var minimumIconSize = browserPage.desktopBookmarkWriter.minimumIconSize
+                if (browserPage.imageLoader.width < minimumIconSize || browserPage.imageLoader.height < minimumIconSize) {
+                    if (!browserPage.desktopBookmarkWriter.exists(browserPage.thumbnailPath)) {
+                        icon = ""
+                    } else {
+                        icon = browserPage.thumbnailPath
+                    }
+                }
+                browserPage.desktopBookmarkWriter.link = editedUrl
+                browserPage.desktopBookmarkWriter.title = editedTitle
+                browserPage.desktopBookmarkWriter.icon = icon
+                browserPage.desktopBookmarkWriter.save()
+                browserPage.imageLoader.source = ""
             }
         }
     }

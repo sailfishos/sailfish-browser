@@ -5,10 +5,12 @@ QT += quick testlib qml quick concurrent sql
 
 INCLUDEPATH += ../../../src
 
-include(../../src/common.pri)
-include(../../src/history.pri)
-include(common/downloadmanager_mock.pri)
-include(common/declarativewebutils_mock.pri)
+isEmpty(NO_COMMON_INCLUDES) {
+    include(../../src/common.pri)
+    include(../../src/history.pri)
+    include(common/downloadmanager_mock.pri)
+    include(common/declarativewebutils_mock.pri)
+}
 
 # install the test
 target.path = /opt/tests/sailfish-browser/auto

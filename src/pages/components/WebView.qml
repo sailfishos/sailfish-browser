@@ -274,8 +274,8 @@ WebContainer {
                         }
                         for (var i in sizes) {
                             var faviconSize = parseInt(sizes[i])
-                            // Accept largest icon but one that is still smaller than icon size large.
-                            if (faviconSize && faviconSize > iconSize && faviconSize <= Theme.iconSizeLarge) {
+                            // Accept largest icon but one that is still smaller than Theme.itemSizeExtraLarge.
+                            if (faviconSize && faviconSize > iconSize && faviconSize <= Theme.itemSizeExtraLarge) {
                                 iconSize = faviconSize
                                 parsedFavicon = true
                             }

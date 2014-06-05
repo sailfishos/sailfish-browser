@@ -32,6 +32,10 @@ Page {
     property alias title: webView.title
     property alias thumbnailPath: webView.thumbnailPath
 
+    property alias imageLoader: imageLoader
+    property alias desktopBookmarkWriter: desktopBookmarkWriter
+    property alias webView: webView
+
     function load(url, title) {
         webView.load(url, title)
     }
@@ -348,5 +352,16 @@ Page {
         sourceComponent: Item {
             Component.onCompleted: tabPageComponent = Qt.createComponent(Qt.resolvedUrl("TabPage.qml"))
         }
+    }
+
+    DesktopBookmarkWriter {
+        id: desktopBookmarkWriter
+        minimumIconSize: Theme.iconSizeMedium
+    }
+
+    Image {
+        id: imageLoader
+        x: Screen.height * 2
+        sourceSize.width: Theme.iconSizeLauncher
     }
 }

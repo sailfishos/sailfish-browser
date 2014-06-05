@@ -17,7 +17,9 @@ UserPrompt {
     property string url
     property string title
     property int index
-    property BookmarkModel model
+
+    property alias editedUrl: urlField.text
+    property alias editedTitle: titleField.text
 
     canAccept: urlField.text !== "" && (urlField.text !== url || titleField.text !== title)
 
@@ -73,6 +75,4 @@ UserPrompt {
             }
         }
     }
-
-    onAccepted: model.editBookmark(index, urlField.text, titleField.text)
 }

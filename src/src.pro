@@ -49,12 +49,11 @@ TS_FILE = $$OUT_PWD/sailfish-browser.ts
 EE_QM = $$OUT_PWD/sailfish-browser_eng_en.qm
 include(../translations/translations.pri)
 include(history.pri)
+include(bookmarks.pri)
 
 # C++ sources
 SOURCES += \
     sailfishbrowser.cpp \
-    declarativebookmarkmodel.cpp \
-    bookmark.cpp \
     declarativewebcontainer.cpp \
     declarativewebpage.cpp \
     declarativewebutils.cpp \
@@ -68,8 +67,6 @@ SOURCES += \
 
 # C++ headers
 HEADERS += \
-    declarativebookmarkmodel.h \
-    bookmark.h \
     declarativewebcontainer.h \
     declarativewebpage.h \
     declarativewebutils.h \
