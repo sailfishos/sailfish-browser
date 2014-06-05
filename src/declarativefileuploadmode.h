@@ -13,7 +13,6 @@
 #define DECLARATIVEFILEUPLOADMODE_H
 
 #include <QObject>
-#include "nsIFilePicker.h"
 
 class DeclarativeFileUploadMode : public QObject
 {
@@ -22,10 +21,8 @@ class DeclarativeFileUploadMode : public QObject
 
 public:
     enum UploadMode {
-        Open = nsIFilePicker::modeOpen,
-        Save = nsIFilePicker::modeSave,
-        GetFolder = nsIFilePicker::modeGetFolder,
-        OpenMultiple = nsIFilePicker::modeOpenMultiple
+        Open = 0,        // nsIFilePicker::modeOpen,
+        OpenMultiple = 3 // nsIFilePicker::modeOpenMultiple
     };
 };
 

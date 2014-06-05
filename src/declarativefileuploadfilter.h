@@ -13,7 +13,6 @@
 #define DECLARATIVEFILEUPLOADFILTER_H
 
 #include <QObject>
-#include "nsIFilePicker.h"
 
 class DeclarativeFileUploadFilter : public QObject
 {
@@ -22,11 +21,10 @@ class DeclarativeFileUploadFilter : public QObject
 
 public:
     enum UploadFilter {
-        FilterAll = nsIFilePicker::filterAll,
-        FilterImages = nsIFilePicker::filterImages,
-        FilterAudio = nsIFilePicker::filterAudio,
-        FilterVideo = nsIFilePicker::filterVideo
+        FilterAll = 0x001,    // nsIFilePicker::filterAll,
+        FilterImages = 0x008, // nsIFilePicker::filterImages,
+        FilterAudio = 0x100,  // nsIFilePicker::filterAudio,
+        FilterVideo = 0x200   // nsIFilePicker::filterVideo
     };
 };
-
 #endif // DECLARATIVEFILEUPLOADFILTER_H
