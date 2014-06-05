@@ -81,7 +81,7 @@ HEADERS += \
     settingmanager.h \
     closeeventfilter.h \
     webpages.h \
-    declarativefileuploadoptions.h
+    declarativefileuploadmode.h
 
 OTHER_FILES = *.qml \
               pages/*.qml \

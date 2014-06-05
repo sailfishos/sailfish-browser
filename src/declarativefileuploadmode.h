@@ -15,7 +15,7 @@
 #include <QObject>
 #include "nsIFilePicker.h"
 
-class DeclarativeFileUploadOptions : public QObject
+class DeclarativeFileUploadMode : public QObject
 {
     Q_OBJECT
 

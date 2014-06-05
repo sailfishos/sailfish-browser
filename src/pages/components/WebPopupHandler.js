@@ -245,7 +245,7 @@ function openPrompt(data) {
 }
 
 function openFilePicker(data) {
-    if (data.mode == Browser.FileUploadOptions.Open || data.mode == Browser.FileUploadOptions.OpenMultiple ) {
+    if (data.mode == Browser.FileUploadMode.Open || data.mode == Browser.FileUploadMode.OpenMultiple ) {
         pageStack.push(_uploadFilePickerComponentUrl,
                        {
                            "winid": data.winid,
