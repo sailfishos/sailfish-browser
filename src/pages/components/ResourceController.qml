@@ -71,7 +71,7 @@ Item {
 
     // This is behind 1000ms timer
     onBackgroundChanged: {
-        if (!audioActive && !videoActive && background) {
+        if (((audioActive && videoActive) || !audioActive) && background) {
             suspendView()
         } else {
             resumeView()
