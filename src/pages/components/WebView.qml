@@ -434,6 +434,11 @@ WebContainer {
         interval: 1000
     }
 
+    Component {
+        id: pickerCreator
+        PickerCreator {}
+    }
+
     //Component.onDestruction: connectionHelper.closeNetworkSession()
     Component.onCompleted: {
         PopupHandler.auxTimer = auxTimer
@@ -442,5 +447,6 @@ WebContainer {
         PopupHandler.resourceController = resourceController
         PopupHandler.WebUtils = WebUtils
         PopupHandler.tabModel = tabModel
+        PopupHandler.pickerCreator = pickerCreator
     }
 }

@@ -25,7 +25,6 @@ isEmpty(USE_RESOURCES) {
 }
 
 PKGCONFIG +=  nemotransferengine-qt5 mlite5
-QMAKE_CXXFLAGS += -std=c++0x $$system(pkg-config --cflags libxul-embedding)
 
 packagesExist(qdeclarative5-boostable) {
     message("Building with qdeclarative-boostable support")
@@ -81,7 +80,8 @@ HEADERS += \
     settingmanager.h \
     closeeventfilter.h \
     webpages.h \
-    declarativefileuploadmode.h
+    declarativefileuploadmode.h \
+    declarativefileuploadfilter.h
 
 OTHER_FILES = *.qml \
               pages/*.qml \

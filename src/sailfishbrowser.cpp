@@ -35,6 +35,7 @@
 #include "declarativewebpage.h"
 #include "declarativewebviewcreator.h"
 #include "declarativefileuploadmode.h"
+#include "declarativefileuploadfilter.h"
 
 #ifdef HAS_BOOSTER
 #include <MDeclarativeCache>
@@ -124,6 +125,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     qmlRegisterType<DeclarativeWebPage>("Sailfish.Browser", 1, 0, "WebPage");
     qmlRegisterType<DeclarativeWebViewCreator>("Sailfish.Browser", 1, 0, "WebViewCreator");
     qmlRegisterType<DeclarativeFileUploadMode>("Sailfish.Browser", 1, 0, "FileUploadMode");
+    qmlRegisterType<DeclarativeFileUploadFilter>("Sailfish.Browser", 1, 0, "FileUploadFilter");
 
     QString componentPath(DEFAULT_COMPONENTS_PATH);
     QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/components/EmbedLiteBinComponents.manifest"));

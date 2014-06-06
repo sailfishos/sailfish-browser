@@ -9,21 +9,22 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef DECLARATIVEFILEUPLOADMODE_H
-#define DECLARATIVEFILEUPLOADMODE_H
+#ifndef DECLARATIVEFILEUPLOADFILTER_H
+#define DECLARATIVEFILEUPLOADFILTER_H
 
 #include <QObject>
 
-class DeclarativeFileUploadMode : public QObject
+class DeclarativeFileUploadFilter : public QObject
 {
     Q_OBJECT
-    Q_ENUMS(UploadMode)
+    Q_ENUMS(UploadFilter)
 
 public:
-    enum UploadMode {
-        Open = 0,        // nsIFilePicker::modeOpen,
-        OpenMultiple = 3 // nsIFilePicker::modeOpenMultiple
+    enum UploadFilter {
+        All = 0x001,    // nsIFilePicker::filterAll,
+        Image = 0x008, // nsIFilePicker::filterImages,
+        Audio = 0x100,  // nsIFilePicker::filterAudio,
+        Video = 0x200   // nsIFilePicker::filterVideo
     };
 };
-
-#endif // DECLARATIVEFILEUPLOADMODE_H
+#endif // DECLARATIVEFILEUPLOADFILTER_H
