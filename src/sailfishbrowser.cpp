@@ -143,6 +143,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     utils->clearStartupCacheIfNeeded();
     view->rootContext()->setContextProperty("WebUtils", utils);
     view->rootContext()->setContextProperty("MozContext", QMozContext::GetInstance());
+    view->rootContext()->setContextProperty("Settings", SettingManager::instance());
 
     DownloadManager *dlMgr = DownloadManager::instance();
     dlMgr->connect(service, SIGNAL(cancelTransferRequested(int)),

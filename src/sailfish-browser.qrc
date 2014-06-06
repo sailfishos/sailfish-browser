@@ -21,7 +21,6 @@
     <file>pages/components/PromptDialog.qml</file>
     <file>pages/components/PromptLabel.qml</file>
     <file>pages/components/SelectDialog.qml</file>
-    <file>pages/components/StatusBar.qml</file>
     <file>pages/components/TextSelectionController.qml</file>
     <file>pages/components/TextSelectionHandle.qml</file>
     <file>pages/components/ToolBarContainer.qml</file>
