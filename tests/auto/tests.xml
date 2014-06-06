@@ -25,6 +25,9 @@
            <case manual="false" name="webview">
                <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_webview -platform wayland-egl</step>
            </case>
+           <case manual="false" name="desktopbookmarkwriter">
+               <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_desktopbookmarkwriter</step>
+           </case>
            <post_steps>
                <step>/usr/sbin/mcetool -jdisabled -Doff</step>
            </post_steps>

@@ -19,6 +19,8 @@ Loader {
     property Item flickable
     property bool shareEnabled
 
+    signal addToLauncher
+
     asynchronous: true
     sourceComponent: PullDownMenu {
         opacity: 0.0
@@ -42,6 +44,14 @@ Loader {
             //% "New tab"
             text: qsTrId("sailfish_browser-me-new_tab")
             onClicked: pageStack.push(Qt.resolvedUrl("../TabPage.qml"), {"newTab": true, "browserPage": browserPage})
+        }
+
+        MenuItem {
+            enabled: shareEnabled
+            //: Add bookmark to launcher menu item. This should be relatively short to fit to the menu.
+            //% "Add to launcher"
+            text: qsTrId("sailfish_browser-me-add_to_launcher")
+            onClicked: tabPageMenuLoader.addToLauncher()
         }
 
         Component.onCompleted: opacity = 1.0

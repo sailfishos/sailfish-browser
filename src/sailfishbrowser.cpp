@@ -25,6 +25,7 @@
 #include "qmozcontext.h"
 
 #include "declarativebookmarkmodel.h"
+#include "desktopbookmarkwriter.h"
 #include "declarativewebutils.h"
 #include "browserservice.h"
 #include "downloadmanager.h"
@@ -126,6 +127,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     qmlRegisterType<DeclarativeWebViewCreator>("Sailfish.Browser", 1, 0, "WebViewCreator");
     qmlRegisterType<DeclarativeFileUploadMode>("Sailfish.Browser", 1, 0, "FileUploadMode");
     qmlRegisterType<DeclarativeFileUploadFilter>("Sailfish.Browser", 1, 0, "FileUploadFilter");
+    qmlRegisterType<DesktopBookmarkWriter>("Sailfish.Browser", 1, 0, "DesktopBookmarkWriter");
 
     QString componentPath(DEFAULT_COMPONENTS_PATH);
     QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/components/EmbedLiteBinComponents.manifest"));
