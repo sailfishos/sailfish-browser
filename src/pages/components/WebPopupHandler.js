@@ -22,6 +22,7 @@ var resourceController
 var tabModel
 // TODO: WebUtils context property. Should be singleton.
 var WebUtils
+var pickerCreator
 
 // TODO: Handle these per QmlMozView (map of webviews + accepted/rejectedGeolocationUrl)
 var acceptedGeolocationUrl = ""
@@ -246,17 +247,12 @@ function openPrompt(data) {
 
 function openFilePicker(data) {
     if (data.mode == Browser.FileUploadMode.Open || data.mode == Browser.FileUploadMode.OpenMultiple ) {
-        var component = Qt.createComponent("PickerCreator.qml")
-        if (component.status == QtQuick.Component.Ready) {
-            component.createObject(pageStack, {
+        pickerCreator.createObject(pageStack, {
                                        "pageStack": pageStack,
                                        "winid": data.winid,
-                                       "webView": webView.contentItem,
+                                       "webView": webView,
                                        "filter": data.filter,
                                        "mode": data.mode});
-        } else {
-            console.log("Loading PickerCreator.qml failed" + component.errorString())
-        }
     } else {
         console.log("Gecko file picker requested unsupported mode" + data.mode)
     }

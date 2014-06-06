@@ -21,10 +21,10 @@ class DeclarativeFileUploadFilter : public QObject
 
 public:
     enum UploadFilter {
-        FilterAll = 0x001,    // nsIFilePicker::filterAll,
-        FilterImages = 0x008, // nsIFilePicker::filterImages,
-        FilterAudio = 0x100,  // nsIFilePicker::filterAudio,
-        FilterVideo = 0x200   // nsIFilePicker::filterVideo
+        All = 0x001,    // nsIFilePicker::filterAll,
+        Image = 0x008, // nsIFilePicker::filterImages,
+        Audio = 0x100,  // nsIFilePicker::filterAudio,
+        Video = 0x200   // nsIFilePicker::filterVideo
     };
 };
 #endif // DECLARATIVEFILEUPLOADFILTER_H

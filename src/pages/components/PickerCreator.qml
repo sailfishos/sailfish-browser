@@ -41,7 +41,7 @@ Item {
     function sendResponseList(selectedContent) {
         var scheme = "file://"
         var result = []
-        for (var i = 0; i < selectedContent.count; i++) {
+        for (var i = 0; selectedContent && i < selectedContent.count; i++) {
             var filePath = selectedContent.get(i).filePath
             if (filePath.indexOf(scheme) === 0) {
                 filePath = filePath.slice(scheme.length, filePath.length)
@@ -61,13 +61,13 @@ Item {
     Component.onCompleted: {
         if (mode == FileUploadMode.OpenMultiple) {
             switch (filter) {
-            case FileUploadFilter.FilterImages:
+            case FileUploadFilter.Image:
                 pageStack.push(multiImagePickerComponent)
                 break
-            case FileUploadFilter.FilterAudio:
+            case FileUploadFilter.Audio:
                 pageStack.push(multiMusicPickerComponent)
                 break
-            case FileUploadFilter.FilterVideo:
+            case FileUploadFilter.Video:
                 pageStack.push(multiVideoPickerComponent)
                 break
             default:
@@ -75,13 +75,13 @@ Item {
             }
         } else {
             switch (filter) {
-            case FileUploadFilter.FilterImages:
+            case FileUploadFilter.Image:
                 pageStack.push(imagePickerComponent)
                 break
-            case FileUploadFilter.FilterAudio:
+            case FileUploadFilter.Audio:
                 pageStack.push(musicPickerComponent)
                 break
-            case FileUploadFilter.FilterVideo:
+            case FileUploadFilter.Video:
                 pageStack.push(videoPickerComponent)
                 break
             default:
@@ -94,6 +94,7 @@ Item {
     Component  {
         id: imagePickerComponent
         ImagePickerPage {
+            //: For choosing image to send to the website from the device
             //% "Upload image"
             title: qsTrId("sailfish_browser-he-upload_image")
             Component.onDestruction: sendResponse(selectedContent)
@@ -103,6 +104,7 @@ Item {
     Component  {
         id: multiImagePickerComponent
         MultiImagePickerDialog {
+            //: For choosing images to send to the website from the device
             //% "Upload images"
             title: qsTrId("sailfish_browser-he-upload_images")
             Component.onDestruction: sendResponseList(selectedContent)
@@ -113,6 +115,7 @@ Item {
     Component  {
         id: contentPickerComponent
         ContentPickerPage {
+            //: For choosing any file (document/image/video/audio) to send to the website from the device
             //% "Upload file"
             title: qsTrId("sailfish_browser-he-upload_file")
             Component.onDestruction: sendResponse(selectedContent)
@@ -122,6 +125,7 @@ Item {
     Component  {
         id: multiContentPickerComponent
         MultiContentPickerDialog {
+            //: For choosing files (document/image/video/audio) to send to the website from the device
             //% "Upload files"
             title: qsTrId("sailfish_browser-he-upload_files")
             Component.onDestruction: sendResponseList(selectedContent)
@@ -131,6 +135,7 @@ Item {
     Component  {
         id: videoPickerComponent
         VideoPickerPage {
+            //: For choosing video to send to the website from the device
             //% "Upload video"
             title: qsTrId("sailfish_browser-he-upload_video")
             Component.onDestruction: sendResponse(selectedContent)
@@ -140,6 +145,7 @@ Item {
     Component  {
         id: multiVideoPickerComponent
         MultiVideoPickerDialog {
+            //: For choosing videos to send to the website from the device
             //% "Upload videos"
             title: qsTrId("sailfish_browser-he-upload_videos")
             Component.onDestruction: sendResponseList(selectedContent)
@@ -149,6 +155,7 @@ Item {
     Component  {
         id: musicPickerComponent
         MusicPickerPage {
+            //: For choosing audio file to send to the website from the device
             //% "Upload audio file"
             title: qsTrId("sailfish_browser-he-upload_audio")
             Component.onDestruction: sendResponse(selectedContent)
@@ -158,6 +165,7 @@ Item {
     Component  {
         id: multiMusicPickerComponent
         MultiMusicPickerDialog {
+            //: For choosing audio files to send to the website from the device
             //% "Upload audio files"
             title: qsTrId("sailfish_browser-he-upload_audio_files")
             Component.onDestruction: sendResponseList(selectedContent)
