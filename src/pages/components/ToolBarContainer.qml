@@ -11,6 +11,7 @@
 
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import Sailfish.Browser 1.0
 
 PanelBackground {
     // Height of toolbar should be such that viewport height is
@@ -27,6 +28,13 @@ PanelBackground {
         anchors.fill: parent
         fillMode: Image.PreserveAspectFit
         source: "image://theme/graphic-gradient-edge"
+    }
+
+    Rectangle {
+        anchors.fill: parent
+        opacity: 0.3
+        color: Theme.highlightBackgroundColor
+        visible: !WebUtils.firstUseDone
     }
 
     MouseArea {
