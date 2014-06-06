@@ -251,6 +251,7 @@ WebContainer {
                     container.loadProgress = 0
                     webPage.chrome = true
                     favicon = ""
+                    iconType = ""
                     container.resetHeight(false)
                 }
             }
@@ -259,9 +260,8 @@ WebContainer {
                 switch (message) {
                 case "chrome:linkadded": {
                     var parsedFavicon = false
-                    if (data.href && data.rel === "icon"
-                            && iconType !== "apple-touch-icon"
-                            && iconType !== "apple-touch-icon-precomposed") {
+                    var acceptableTouchIcon = (iconType === "apple-touch-icon" || iconType === "apple-touch-icon-precomposed")
+                    if (data.href && data.rel === "icon" && !acceptableTouchIcon) {
                         var sizes = []
                         if (data.sizes) {
                             var digits = data.sizes.split("x")
@@ -272,6 +272,7 @@ WebContainer {
                         } else {
                             sizes = data.href.match(/\d+/)
                         }
+
                         for (var i in sizes) {
                             var faviconSize = parseInt(sizes[i])
                             // Accept largest icon but one that is still smaller than Theme.itemSizeExtraLarge.
@@ -282,10 +283,11 @@ WebContainer {
                         }
                     }
 
-                    if (data.rel === "shortcut icon"
+                    if (!acceptableTouchIcon && (
+                                data.rel === "shortcut icon"
                             || data.rel === "apple-touch-icon"
                             || data.rel === "apple-touch-icon-precomposed"
-                            || parsedFavicon) {
+                            || parsedFavicon)) {
                         favicon = data.href
                         iconType = data.rel
                     }

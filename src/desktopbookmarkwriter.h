@@ -40,7 +40,6 @@ signals:
 public slots:
     bool save();
     bool exists(const QString &file);
-    void clear();
 
 private slots:
     void iconReady();
@@ -50,6 +49,7 @@ private:
     QString defaultIcon();
     QString uniqueDesktopFileName(QString title);
     void write();
+    void clear();
 
     QString m_title;
     QString m_link;

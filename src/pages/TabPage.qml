@@ -231,7 +231,6 @@ Page {
             flickable: favoriteList
 
             onAddToLauncher: {
-                browserPage.desktopBookmarkWriter.clear()
                 pageStack.push(addToLauncher,
                                {
                                    "url": browserPage.url,

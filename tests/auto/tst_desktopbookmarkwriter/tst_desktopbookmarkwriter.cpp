@@ -143,10 +143,9 @@ void tst_desktopbookmarkwriter::writeDesktopFile()
 
 void tst_desktopbookmarkwriter::clear()
 {
-    QVERIFY(!writer.property("title").toString().isEmpty());
-    QVERIFY(!writer.property("icon").toString().isEmpty());
-    QVERIFY(!writer.property("link").toString().isEmpty());
-
+    writer.setProperty("title", "Foo");
+    writer.setProperty("link", "Bar");
+    writer.setProperty("icon", "FooBar");
     writer.clear();
 
     QVERIFY(writer.property("title").toString().isEmpty());

@@ -18,7 +18,6 @@ Loader {
     property BrowserPage browserPage
     property Item flickable
     property bool shareEnabled
-    property bool homeBookmarkingEnabled
 
     signal addToLauncher
 

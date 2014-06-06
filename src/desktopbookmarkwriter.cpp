@@ -55,9 +55,15 @@ bool DesktopBookmarkWriter::save()
         write();
     } else if (!QUrl(icon).isLocalFile()){
         QUrl url(icon);
-        QNetworkRequest request(url);
-        QNetworkReply *reply = m_networkAccessManager.get(request);
-        connect(reply, SIGNAL(finished()), this, SLOT(iconReady()));
+        QString path = url.path();
+        if (path.endsWith(".ico")) {
+            m_iconData = defaultIcon();
+            write();
+        } else {
+            QNetworkRequest request(url);
+            QNetworkReply *reply = m_networkAccessManager.get(request);
+            connect(reply, SIGNAL(finished()), this, SLOT(iconReady()));
+        }
     } else {
         QFile localIcon(QUrl(icon).toLocalFile());
         QByteArray iconData;
@@ -141,7 +147,7 @@ QString DesktopBookmarkWriter::uniqueDesktopFileName(QString title)
     int count = similarlyNamedFiles.count();
 
     QString fileName = QString(DESKTOP_FILE).arg(title).arg(count);
-    while(similarlyNamedFiles.contains(fileName)) {
+    while (similarlyNamedFiles.contains(fileName)) {
         ++count;
         fileName = QString(DESKTOP_FILE).arg(title).arg(count);
     }
@@ -158,12 +164,13 @@ void DesktopBookmarkWriter::write()
                                       "Icon=%2\n" \
                                       "URL=%3\n" \
                                       "Comment=%4\n").arg(m_title.trimmed(), m_iconData,
-                                                                     m_link.trimmed(), m_title.trimmed());
+                                                          m_link.trimmed(), m_title.trimmed());
     QFile desktopFile(fileName);
     if (desktopFile.open(QFile::WriteOnly)) {
         desktopFile.write(desktopFileData.toUtf8());
         desktopFile.flush();
         desktopFile.close();
+        clear();
         emit saved(fileName);
     }
 }
