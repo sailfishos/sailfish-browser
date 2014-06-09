@@ -7,6 +7,7 @@
     <file alias="ConfirmDialog.qml">../../../src/pages/components/ConfirmDialog.qml</file>
     <file alias="LocationDialog.qml">../../../src/pages/components/LocationDialog.qml</file>
     <file alias="PasswordManagerDialog.qml">../../../src/pages/components/PasswordManagerDialog.qml</file>
+    <file alias="PickerCreator.qml">../../../src/pages/components/PickerCreator.qml</file>
     <file alias="PromptDialog.qml">../../../src/pages/components/PromptDialog.qml</file>
     <file alias="PromptLabel.qml">../../../src/pages/components/PromptLabel.qml</file>
     <file alias="ResourceController.qml">../../../src/pages/components/ResourceController.qml</file>
