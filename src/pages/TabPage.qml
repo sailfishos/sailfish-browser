@@ -387,7 +387,13 @@ Page {
                         EnterKey.onClicked: {
                             Qt.inputMethod.hide()
                             // let gecko figure out how to handle malformed URLs
-                            page.load(searchField.text)
+
+                            // Non number
+                            if (isNaN(searchField.text)) {
+                                page.load(searchField.text)
+                            } else {
+                                page.load("\"" + searchField.text + "\"")
+                            }
                         }
 
                         onTextChanged: if (text != browserPage.url) browserPage.history.search(text)
