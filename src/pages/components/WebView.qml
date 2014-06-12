@@ -145,7 +145,7 @@ WebContainer {
 
             // There needs to be enough content for enabling chrome gesture
             chromeGestureThreshold: container.toolbarHeight / 2
-            chromeGestureEnabled: contentHeight > container.height + container.toolbarHeight
+            chromeGestureEnabled: contentHeight > container.fullscreenHeight + container.toolbarHeight
 
             signal selectionRangeUpdated(variant data)
             signal selectionCopied(variant data)
