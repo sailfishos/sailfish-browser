@@ -18,6 +18,7 @@
 #include <QVariant>
 #include "browserservice.h"
 #include <QProcess>
+#include <MGConfItem>
 
 class DeclarativeWebUtils : public QObject
 {
@@ -62,7 +63,7 @@ private:
     explicit DeclarativeWebUtils();
     ~DeclarativeWebUtils();
 
-    QString m_homePage;
+    MGConfItem m_homePage;
     bool m_firstUseDone;
     bool m_debugMode;
 };
