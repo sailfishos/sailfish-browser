@@ -29,7 +29,7 @@ static DeclarativeWebUtils *gSingleton = 0;
 
 DeclarativeWebUtils::DeclarativeWebUtils()
     : QObject()
-    , m_homePage("http://www.jolla.com")
+    , m_homePage("/apps/sailfish-browser/settings/home_page", this)
     , m_debugMode(qApp->arguments().contains("-debugMode"))
 {
     connect(QMozContext::GetInstance(), SIGNAL(onInitialized()),
@@ -39,6 +39,8 @@ DeclarativeWebUtils::DeclarativeWebUtils()
 
     QString path = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + QStringLiteral("/.firstUseDone");
     m_firstUseDone = fileExists(path);
+
+    connect(&m_homePage, SIGNAL(valueChanged()), this, SIGNAL(homePageChanged()));
 }
 
 DeclarativeWebUtils::~DeclarativeWebUtils()
@@ -192,7 +194,7 @@ bool DeclarativeWebUtils::firstUseDone() const {
 
 QString DeclarativeWebUtils::homePage() const
 {
-    return m_homePage;
+    return m_homePage.value("http://jolla.com").value<QString>();
 }
 
 DeclarativeWebUtils *DeclarativeWebUtils::instance()
