@@ -17,6 +17,7 @@
     <file>pages/components/IconButton.qml</file>
     <file>pages/components/LocationDialog.qml</file>
     <file>pages/components/PasswordManagerDialog.qml</file>
+    <file>pages/components/PickerCreator.qml</file>
     <file>pages/components/ProgressBar.qml</file>
     <file>pages/components/PromptDialog.qml</file>
     <file>pages/components/PromptLabel.qml</file>
