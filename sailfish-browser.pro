@@ -14,7 +14,10 @@ chrome_scripts.path = /usr/lib/mozembedlite/chrome/embedlite/content
 content.files = content/*
 content.path = /usr/share/sailfish-browser/content
 
-INSTALLS += desktop dbus_service chrome_scripts content
+oneshots.files = cleanup-browser-startup-cache
+oneshots.path  = /usr/lib/oneshot.d
+
+INSTALLS += desktop dbus_service chrome_scripts content oneshots
 
 OTHER_FILES += \
     rpm/*.spec \
