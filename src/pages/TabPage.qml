@@ -385,14 +385,15 @@ Page {
 
                         EnterKey.iconSource: "image://theme/icon-m-enter-accept"
                         EnterKey.onClicked: {
-                            Qt.inputMethod.hide()
                             // let gecko figure out how to handle malformed URLs
-
                             // Non number
-                            if (isNaN(searchField.text)) {
-                                page.load(searchField.text)
-                            } else {
-                                page.load("\"" + searchField.text + "\"")
+                            var searchString = searchField.text
+                            if (isNaN(searchString)) {
+                                Qt.inputMethod.hide()
+                                page.load(searchString)
+                            } else if (searchString.trim()){
+                                Qt.inputMethod.hide()
+                                page.load("\"" + searchString.trim() + "\"")
                             }
                         }
 
