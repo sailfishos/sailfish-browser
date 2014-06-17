@@ -36,7 +36,6 @@ var _locationComponentUrl = Qt.resolvedUrl("LocationDialog.qml")
 var _alertComponentUrl = Qt.resolvedUrl("AlertDialog.qml")
 var _confirmComponentUrl = Qt.resolvedUrl("ConfirmDialog.qml")
 var _queryComponentUrl = Qt.resolvedUrl("PromptDialog.qml")
-var _uploadFilePickerComponentUrl = Qt.resolvedUrl("UploadFilePicker.qml")
 
 
 // Singleton
