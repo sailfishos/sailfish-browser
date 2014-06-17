@@ -21,6 +21,8 @@ BuildRequires:  pkgconfig(qdeclarative5-boostable)
 BuildRequires:  qt5-qttools
 BuildRequires:  qt5-qttools-linguist
 BuildRequires:  gdb
+BuildRequires:  oneshot
+
 Requires: sailfishsilica-qt5 >= 0.11.8
 Requires: jolla-ambient >= 0.3.24
 Requires: xulrunner-qt5 >= 29.0.1.9
@@ -35,6 +37,8 @@ Requires: qt5-qtgraphicaleffects
 Requires: nemo-qml-plugin-contextkit-qt5
 Requires: nemo-qml-plugin-connectivity
 Requires: sailfish-components-media-qt5
+
+%{_oneshot_requires_post}
 
 %description
 Sailfish Web Browser
@@ -91,6 +95,7 @@ rm -rf %{buildroot}
 # >> install pre
 # << install pre
 %qmake5_install
+chmod +x %{buildroot}/%{_oneshotdir}/*
 
 # >> install post
 # << install post
@@ -98,6 +103,11 @@ rm -rf %{buildroot}
 %post
 # >> post
 /usr/bin/update-desktop-database -q
+
+# Upgrade, count is 2 or higher (depending on the number of versions installed)
+if [ "$1" -ge 2 ]; then
+%{_bindir}/add-oneshot --user --now cleanup-browser-startup-cache
+fi
 # << post
 
 %files
@@ -109,6 +119,7 @@ rm -rf %{buildroot}
 %{_datadir}/%{name}/*
 %{_datadir}/translations/sailfish-browser_eng_en.qm
 %{_datadir}/dbus-1/services/*.service
+%{_oneshotdir}/cleanup-browser-startup-cache
 # << files
 
 %files settings
