@@ -252,6 +252,7 @@ WebContainer {
                     webPage.chrome = true
                     favicon = ""
                     iconType = ""
+                    iconSize = 0
                     container.resetHeight(false)
                 }
             }
@@ -260,8 +261,9 @@ WebContainer {
                 switch (message) {
                 case "chrome:linkadded": {
                     var parsedFavicon = false
-                    var acceptableTouchIcon = (iconType === "apple-touch-icon" || iconType === "apple-touch-icon-precomposed")
-                    if (data.href && data.rel === "icon" && !acceptableTouchIcon) {
+                    var acceptedTouchIcon = (iconType === "apple-touch-icon" || iconType === "apple-touch-icon-precomposed")
+                    var acceptableTouchIcon = (data.rel === "apple-touch-icon" || data.rel === "apple-touch-icon-precomposed")
+                    if (data.href && (data.rel === "icon" || acceptableTouchIcon)) {
                         var sizes = []
                         if (data.sizes) {
                             var digits = data.sizes.split("x")
@@ -283,13 +285,9 @@ WebContainer {
                         }
                     }
 
-                    if (!acceptableTouchIcon && (
-                                data.rel === "shortcut icon"
-                            || data.rel === "apple-touch-icon"
-                            || data.rel === "apple-touch-icon-precomposed"
-                            || parsedFavicon)) {
+                    if (!acceptedTouchIcon && (data.rel === "shortcut icon" || acceptableTouchIcon || parsedFavicon)) {
                         favicon = data.href
-                        iconType = data.rel
+                        iconType = iconSize >= Theme.iconSizeMedium ? data.rel : ""
                     }
                     break
                 }
