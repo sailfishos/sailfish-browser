@@ -36,6 +36,7 @@ Requires: desktop-file-utils
 Requires: qt5-qtgraphicaleffects
 Requires: nemo-qml-plugin-contextkit-qt5
 Requires: nemo-qml-plugin-connectivity
+Requires: nemo-qml-plugin-policy-qt5 >= 0.0.4
 Requires: sailfish-components-media-qt5
 
 %{_oneshot_requires_post}
