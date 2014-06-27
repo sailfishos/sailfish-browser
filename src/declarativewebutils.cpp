@@ -145,6 +145,8 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     // Don't force 16bit color depth
     mozContext->setPref(QString("gfx.qt.rgb16.force"), QVariant(false));
 
+    mozContext->setPref(QString("media.resource_handler_disabled"), QVariant(true));
+
     // subscribe to gecko messages
     mozContext->addObservers(QStringList()
                              << "clipboard:setdata"
