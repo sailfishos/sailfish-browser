@@ -287,9 +287,6 @@ Page {
             Column {
                 id: urlColumn
 
-                property int indicatorWidth: window.indicatorParentItem.childrenRect.width
-
-                x: page.isPortrait ?  0 : indicatorWidth + Theme.paddingLarge
                 anchors.topMargin: Theme.itemSizeLarge / 2 - titleLabel.height / 2
 
                 states: [
@@ -333,7 +330,7 @@ Page {
 
                     asynchronous: true
                     width: page.isPortrait ? page.width - (closeActiveTabButton.visible ? closeActiveTabButton.width : 0)
-                                           : page.width - urlColumn.x - Theme.paddingMedium
+                                           : page.width
                     height: Theme.itemSizeMedium
                     active: initialized
 
@@ -424,15 +421,6 @@ Page {
                                 textFieldLoader.focusOnceLoaded = true
                             }
                         }
-                    }
-                }
-
-                Connections {
-                    target: page
-                    onStatusChanged: {
-                        // break binding when pushed to stick with proper value for this depth of pagestack
-                        if (status === PageStatus.Active && window.indicatorParentItem.childrenRect.width == urlColumn.indicatorWidth)
-                            urlColumn.indicatorWidth = window.indicatorParentItem.childrenRect.width
                     }
                 }
             }
