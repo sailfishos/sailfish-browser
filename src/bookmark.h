@@ -22,7 +22,7 @@ class Bookmark : public QObject {
     Q_PROPERTY(QString favicon READ favicon WRITE setFavicon NOTIFY faviconChanged)
 
 public:
-    Bookmark(QString title, QString url, QString favicon, QObject* parent = 0);
+    Bookmark(QString title, QString url, QString favicon, QString originalUrl, QObject* parent = 0);
 
     QString title() const;
     void setTitle(QString title);
@@ -33,6 +33,8 @@ public:
     QString favicon() const;
     void setFavicon(QString favicon);
 
+    QString originalUrl() const;
+
 signals:
     void titleChanged();
     void urlChanged();
@@ -42,6 +44,7 @@ private:
     QString m_title;
     QString m_url;
     QString m_favicon;
+    QString m_originalUrl;
 };
 
 #endif // BOOKMARK_H

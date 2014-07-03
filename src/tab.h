@@ -44,6 +44,12 @@ public:
     QString title() const;
     void setTitle(const QString &title);
 
+    QString favoriteIcon() const;
+    void setFavoriteIcon(const QString &icon);
+
+    bool bookmarked() const;
+    void setBookmarked(bool bookmarked);
+
     bool isValid() const;
 
     bool operator==(const Tab &other) const;
@@ -54,6 +60,9 @@ private:
     Link m_currentLink;
     int m_nextLinkId;
     int m_previousLinkId;
+
+    QString m_favoriteIcon;
+    bool m_bookmarked;
 };
 
 QDebug operator<<(QDebug, const Tab *);

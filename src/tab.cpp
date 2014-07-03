@@ -11,8 +11,12 @@
 
 #include "tab.h"
 
-Tab::Tab(int tabId, Link currentLink, int nextLinkId, int previousLinkId) :
-    m_tabId(tabId), m_currentLink(currentLink), m_nextLinkId(nextLinkId), m_previousLinkId(previousLinkId)
+Tab::Tab(int tabId, Link currentLink, int nextLinkId, int previousLinkId)
+    : m_tabId(tabId)
+    , m_currentLink(currentLink)
+    , m_nextLinkId(nextLinkId)
+    , m_previousLinkId(previousLinkId)
+    , m_bookmarked(false)
 {
 }
 
@@ -79,6 +83,26 @@ QString Tab::title() const
 void Tab::setTitle(const QString &title)
 {
     m_currentLink.setTitle(title);
+}
+
+QString Tab::favoriteIcon() const
+{
+    return m_favoriteIcon;
+}
+
+void Tab::setFavoriteIcon(const QString &icon)
+{
+    m_favoriteIcon = icon;
+}
+
+bool Tab::bookmarked() const
+{
+    return m_bookmarked;
+}
+
+void Tab::setBookmarked(bool bookmarked)
+{
+    m_bookmarked = bookmarked;
 }
 
 bool Tab::isValid() const

@@ -38,29 +38,52 @@ QHash<int, QByteArray> DeclarativeBookmarkModel::roleNames() const
 void DeclarativeBookmarkModel::addBookmark(const QString& url, const QString& title, const QString& favicon)
 {
     beginInsertRows(QModelIndex(), rowCount(), rowCount());
-    bookmarks.insert(url, new Bookmark(title, url, favicon));
+    bookmarks.insert(url, new Bookmark(title, url, favicon, url));
     bookmarkUrls.append(url);
     endInsertRows();
 
     emit countChanged();
+    emit bookmarkAdded(url);
     save();
 }
 
 void DeclarativeBookmarkModel::removeBookmark(const QString& url)
 {
-    if (!contains(url)) {
-        return;
+    removeBookmark(url, true);
+}
+
+bool DeclarativeBookmarkModel::removeBookmark(const QString &url, bool canSave)
+{
+    if (!bookmarks.contains(url)) {
+        return false;
     }
 
-    if (bookmarks.contains(url)) {
-        int index = bookmarkUrls.indexOf(url);
-        beginRemoveRows(QModelIndex(), index, index);
-        Bookmark* bookmark = bookmarks.take(url);
-        delete bookmark;
-        bookmarkUrls.removeAt(index);
-        endRemoveRows();
+    int index = bookmarkUrls.indexOf(url);
+    beginRemoveRows(QModelIndex(), index, index);
+    Bookmark* bookmark = bookmarks.take(url);
+    qDebug() << bookmark->url() << bookmark->originalUrl();
+    delete bookmark;
+    bookmarkUrls.removeAt(index);
+    endRemoveRows();
 
-        emit countChanged();
+    emit countChanged();
+    // Last instance removed.
+    if (!bookmarks.contains(url)) {
+        emit bookmarkRemoved(url);
+    }
+
+    if (canSave) {
+        save();
+    }
+    return true;
+}
+
+void DeclarativeBookmarkModel::removeBookmarks(const QString &url)
+{
+    int count = rowCount();
+    while (removeBookmark(url, false)) {}
+
+    if (count != rowCount()) {
         save();
     }
 }
@@ -86,6 +109,10 @@ void DeclarativeBookmarkModel::editBookmark(int index, const QString& url, const
     if (roles.count() > 0) {
         QModelIndex modelIndex = QAbstractListModel::index(index);
         emit dataChanged(modelIndex, modelIndex, roles);
+
+        if (!bookmarks.contains(bookmark->originalUrl())) {
+            emit bookmarkRemoved(bookmark->originalUrl());
+        }
         save();
     }
 }
@@ -110,6 +137,7 @@ void DeclarativeBookmarkModel::componentComplete()
         QJsonArray array = doc.array();
         QJsonArray::iterator i;
         QRegularExpression jollaUrl("^http[s]?://(together.)?jolla.com");
+        beginResetModel();
         for(i=array.begin(); i != array.end(); ++i) {
             if((*i).isObject()) {
                 QJsonObject obj = (*i).toObject();
@@ -122,10 +150,13 @@ void DeclarativeBookmarkModel::componentComplete()
 
                 Bookmark* m = new Bookmark(obj.value("title").toString(),
                                            url,
-                                           favicon);
+                                           favicon,
+                                           obj.value("originalUrl").toString());
                 bookmarks.insert(url, m);
                 bookmarkUrls.append(url);
+                emit bookmarkAdded(url);
             }
+            endResetModel();
         }
     } else {
         qWarning() << "Bookmarks.json should be an array of items";
@@ -163,6 +194,7 @@ void DeclarativeBookmarkModel::save()
         title.insert("url", QJsonValue(bookmark->url()));
         title.insert("title", QJsonValue(bookmark->title()));
         title.insert("favicon", QJsonValue(bookmark->favicon()));
+        title.insert("originalUrl", QJsonValue(bookmark->originalUrl()));
         items.append(QJsonValue(title));
     }
     QJsonDocument doc(items);

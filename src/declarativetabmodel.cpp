@@ -41,6 +41,8 @@ QHash<int, QByteArray> DeclarativeTabModel::roleNames() const
     roles[TitleRole] = "title";
     roles[UrlRole] = "url";
     roles[TabIdRole] = "tabId";
+    roles[FaviconRole] = "favicon";
+    roles[FavoritedRole] = "favorited";
     return roles;
 }
 
@@ -52,6 +54,9 @@ void DeclarativeTabModel::addTab(const QString& url, const QString &title) {
     int linkId = DBManager::instance()->createLink(tabId, url, title);
 
     Tab tab(tabId, Link(linkId, url, "", title), 0, 0);
+    if (m_bookmarkModel) {
+        tab.setBookmarked(m_bookmarkModel->contains(url));
+    }
 #ifdef DEBUG_LOGS
     qDebug() << "new tab data:" << &tab;
 #endif
@@ -175,6 +180,22 @@ void DeclarativeTabModel::closeActiveTab()
     }
 }
 
+void DeclarativeTabModel::addFavoriteIcon(int tabId, const QString &icon)
+{
+    for (int i = 0; i < m_tabs.count(); ++i) {
+        const Tab &tab = m_tabs.at(i);
+        if (tab.tabId() == tabId && tab.favoriteIcon() != icon) {
+            m_tabs[i].setFavoriteIcon(icon);
+            QVector<int> roles;
+            roles << FaviconRole;
+
+            QModelIndex start = index(i, 0);
+            QModelIndex end = index(i, 0);
+            emit dataChanged(start, end, roles);
+        }
+    }
+}
+
 void DeclarativeTabModel::newTab(const QString &url, const QString &title)
 {
     // TODO: This doesn't really fit in here. We should consider adding of custom event for new tab creation.
@@ -221,6 +242,10 @@ QVariant DeclarativeTabModel::data(const QModelIndex & index, int role) const {
         return tab.url();
     } else if (role == TabIdRole) {
         return tab.tabId();
+    } else if (role == FaviconRole) {
+        return tab.favoriteIcon();
+    } else if (role == FavoritedRole) {
+        return tab.bookmarked();
     }
     return QVariant();
 }
@@ -258,6 +283,25 @@ bool DeclarativeTabModel::hasNewTabData() const
 QString DeclarativeTabModel::newTabUrl() const
 {
     return hasNewTabData() ? m_newTabData->url : "";
+}
+
+DeclarativeBookmarkModel *DeclarativeTabModel::bookmarkModel() const
+{
+    return m_bookmarkModel;
+}
+
+void DeclarativeTabModel::setBookmarkModel(DeclarativeBookmarkModel *bookmarkModel)
+{
+    if (bookmarkModel != m_bookmarkModel) {
+        if (m_bookmarkModel) {
+            disconnect(m_bookmarkModel, 0, this, 0);
+        }
+
+        m_bookmarkModel = bookmarkModel;
+        connect(m_bookmarkModel, SIGNAL(bookmarkAdded(QString)), this, SLOT(handleBookmarkAdded(QString)));
+        connect(m_bookmarkModel, SIGNAL(bookmarkRemoved(QString)), this, SLOT(handleBookmarkRemoved(QString)));
+        emit bookmarkModelChanged();
+    }
 }
 
 QString DeclarativeTabModel::newTabTitle() const
@@ -377,7 +421,14 @@ void DeclarativeTabModel::updateTitle(int tabId, int linkId, QString url, QStrin
     }
 }
 
+void DeclarativeTabModel::handleBookmarkAdded(QString url)
 {
+    updateBookmarkedStatus(url, true);
+}
+
+void DeclarativeTabModel::handleBookmarkRemoved(QString url)
+{
+    updateBookmarkedStatus(url, false);
 }
 
 void DeclarativeTabModel::updateUrl(int tabId, bool activeTab, QString url, bool backForwardNavigation, bool initialLoad)
@@ -391,6 +442,11 @@ void DeclarativeTabModel::updateUrl(int tabId, bool activeTab, QString url, bool
         addTab(url, newTabTitle());
     }
     resetNewTabData();
+
+    if (m_bookmarkModel) {
+        updateBookmarkedStatus(url, m_bookmarkModel->contains(url));
+        addFavoriteIcon(tabId, "");
+    }
 }
 
 void DeclarativeTabModel::updateTitle(int tabId, bool activeTab, QString title)
@@ -517,6 +573,27 @@ void DeclarativeTabModel::updateTabUrl(int tabId, bool activeTab, const QString 
             DBManager::instance()->updateTab(tabId, url, "", "");
         } else {
             DBManager::instance()->navigateTo(tabId, url, "", "");
+        }
+    }
+}
+
+void DeclarativeTabModel::updateBookmarkedStatus(const QString &url, bool bookmarked)
+{
+    for (int i = 0; i < m_tabs.count(); ++i) {
+        const Tab &tab = m_tabs.at(i);
+        if (tab.url() == url && bookmarked != tab.bookmarked()) {
+            QVector<int> roles;
+            m_tabs[i].setBookmarked(bookmarked);
+            roles << FavoritedRole;
+
+            if (!bookmarked && !tab.favoriteIcon().isEmpty()) {
+                roles << FaviconRole;
+                m_tabs[i].setFavoriteIcon("");
+            }
+
+            QModelIndex start = index(i, 0);
+            QModelIndex end = index(i, 0);
+            emit dataChanged(start, end, roles);
         }
     }
 }
