@@ -44,10 +44,6 @@
 
 Q_DECL_EXPORT int main(int argc, char *argv[])
 {
-    // EGL FPS are lower with threaded render loop
-    // that's why this workaround.
-    // See JB#7358
-    setenv("QML_BAD_GUI_RENDER_LOOP", "1", 1);
     setenv("USE_ASYNC", "1", 1);
 
     // Workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=929879
