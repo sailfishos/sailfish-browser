@@ -48,13 +48,6 @@ DeclarativeWebUtils::~DeclarativeWebUtils()
     gSingleton = 0;
 }
 
-QUrl DeclarativeWebUtils::getFaviconForUrl(QUrl url)
-{
-    QUrl faviconUrl(url);
-    faviconUrl.setPath("/favicon.ico");
-    return faviconUrl;
-}
-
 int DeclarativeWebUtils::getLightness(QColor color) const
 {
     return color.lightness();
