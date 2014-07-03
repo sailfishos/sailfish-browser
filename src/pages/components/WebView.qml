@@ -107,7 +107,7 @@ WebContainer {
 
     tabModel: TabModel {
         // Enable browsing after new tab actually created or it was not even requested
-        browsing: webView.active && !hasNewTabData && contentItem && contentItem.loaded
+        browsing: webView.enabled && !hasNewTabData && contentItem && contentItem.loaded
     }
 
     onTriggerLoad: webView.load(url, title)
@@ -145,7 +145,7 @@ WebContainer {
             property string iconType
 
             loaded: loadProgress === 100 && !loading
-            enabled: container.active
+            enabled: webView.enabled
             // Active could pause e.g. video in cover by anding
             // Qt.application.active to visible
             active: visible
@@ -359,7 +359,7 @@ WebContainer {
             // TextSelectionController {}
             states: State {
                 name: "boundHeightControl"
-                when: container.inputPanelVisible || !container.foreground
+                when: container.inputPanelVisible && container.enabled
                 PropertyChanges {
                     target: webPage
                     height: container.parent.height

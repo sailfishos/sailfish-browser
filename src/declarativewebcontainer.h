@@ -31,7 +31,6 @@ class DeclarativeWebContainer : public QQuickItem {
     Q_PROPERTY(DeclarativeWebPage *contentItem READ webPage NOTIFY contentItemChanged FINAL)
     Q_PROPERTY(DeclarativeTabModel *tabModel READ tabModel WRITE setTabModel NOTIFY tabModelChanged FINAL)
     Q_PROPERTY(bool foreground READ foreground WRITE setForeground NOTIFY foregroundChanged FINAL)
-    Q_PROPERTY(bool active READ active WRITE setActive NOTIFY activeChanged FINAL)
     Q_PROPERTY(int maxLiveTabCount MEMBER m_maxLiveTabCount NOTIFY maxLiveTabCountChanged FINAL)
     // This property should cover all possible popus
     Q_PROPERTY(bool popupActive MEMBER m_popupActive NOTIFY popupActiveChanged FINAL)
@@ -83,9 +82,6 @@ public:
 
     int loadProgress() const;
     void setLoadProgress(int loadProgress);
-
-    bool active() const;
-    void setActive(bool active);
 
     bool inputPanelVisible() const;
 
@@ -159,6 +155,7 @@ public slots:
 
 private slots:
     void imeNotificationChanged(int state, bool open, int cause, int focusChange, const QString& type);
+    void handleEnabledChanged();
     void screenCaptureReady();
     void onActiveTabChanged(int oldTabId, int activeTabId, bool loadActiveTab);
     void onModelLoaded();
@@ -180,9 +177,9 @@ private slots:
 
 private:
     void setWebPage(DeclarativeWebPage *webPage);
-    void setThumbnailPath(QString thumbnailPath);
+    void setThumbnailPath(QString thumbnailPath, int tabId);
     qreal contentHeight() const;
-    void captureScreen(int size, qreal rotate);
+    void captureScreen(int width, int height, qreal rotate);
     int parentTabId(int tabId) const;
     void updateNavigationStatus(const Tab &tab);
     void updateVkbHeight();
@@ -200,7 +197,6 @@ private:
     QPointer<SettingManager> m_settingManager;
     QScopedPointer<WebPages> m_webPages;
     bool m_foreground;
-    bool m_active;
     bool m_popupActive;
     bool m_portrait;
     bool m_fullScreenMode;
