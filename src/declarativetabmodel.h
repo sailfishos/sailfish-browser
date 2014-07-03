@@ -88,7 +88,7 @@ public:
 
     void updateUrl(int tabId, bool activeTab, QString url, bool backForwardNavigation, bool initialLoad = false);
     void updateTitle(int tabId, bool activeTab, QString title);
-    void updateThumbnailPath(int tabId, bool activeTab, QString path);
+    void updateThumbnailPath(int tabId, QString path);
 
     static bool tabSort(const Tab &t1, const Tab &t2);
 
@@ -129,7 +129,7 @@ private:
     };
 
     void load();
-    void removeTab(int tabId, const QString &thumbnail, int index = -1);
+    void removeTab(int tabId, const QString &thumbnail, int index);
     int findTabIndex(int tabId) const;
     void saveTabOrder();
     void loadTabOrder();
@@ -139,8 +139,9 @@ private:
     void updateNewTabData(NewTabData *newTabData);
     QString newTabTitle() const;
 
-    Tab m_activeTab;
     QList<Tab> m_tabs;
+    // All tabs closed. Let's keep reference at the model.
+    Tab m_dummyTab;
     bool m_loaded;
     bool m_browsing;
     int m_nextTabId;
