@@ -23,6 +23,8 @@ WebContainer {
     property color _decoratorColor: Theme.highlightDimmerColor
     property bool firstUseFullscreen
     property alias permissionsEnabled: resourceController.permissionsEnabled
+    property alias bookmarkModel: tabs.bookmarkModel
+    readonly property bool moving: contentItem ? contentItem.moving : false
 
     function stop() {
         if (contentItem) {
@@ -97,7 +99,8 @@ WebContainer {
     foreground: Qt.application.active
     inputPanelHeight: window.pageStack.panelSize
     inputPanelOpenHeight: window.pageStack.imSize
-    fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) || webView.inputPanelVisible || !webView.foreground || (contentItem && contentItem.fullscreen) || firstUseFullscreen
+    fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) ||
+                    (contentItem && contentItem.fullscreen) || firstUseFullscreen
     _readyToLoad: contentItem && contentItem.viewReady && tabModel.loaded
 
     loading: contentItem ? contentItem.loading : tabModel.count > 0
@@ -106,6 +109,8 @@ WebContainer {
     webPageComponent: webPageComponent
 
     tabModel: TabModel {
+        id: tabs
+
         // Enable browsing after new tab actually created or it was not even requested
         browsing: webView.enabled && !hasNewTabData && contentItem && contentItem.loaded
     }
@@ -123,6 +128,9 @@ WebContainer {
             MozContext.sendObserve("memory-pressure", "heap-minimize")
         }
     }
+
+    visible: opacity > 0.0 && WebUtils.firstUseDone
+    Behavior on opacity { Browser.FadeAnimation {} }
 
     WebViewCreator {
         activeWebView: contentItem
@@ -294,6 +302,9 @@ WebContainer {
                     if (!acceptedTouchIcon && (data.rel === "shortcut icon" || acceptableTouchIcon || parsedFavicon)) {
                         favicon = data.href
                         iconType = iconSize >= Theme.iconSizeMedium ? data.rel : ""
+                        if (iconType) {
+                            tabModel.addFavoriteIcon(tabId, favicon)
+                        }
                     }
                     break
                 }
@@ -362,7 +373,8 @@ WebContainer {
                 when: container.inputPanelVisible && container.enabled
                 PropertyChanges {
                     target: webPage
-                    height: container.parent.height
+                    // was floor
+                    height: Math.ceil(container.parent.height)
                 }
             }
         }

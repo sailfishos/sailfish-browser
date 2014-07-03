@@ -18,37 +18,55 @@ SilicaListView {
 
     signal load(string url, string title)
 
-    anchors.fill: parent
-
     // To prevent model to steal focus
     currentIndex: -1
 
+    clip: true
+    pressDelay: 0
     delegate: BackgroundItem {
         id: historyDelegate
         width: view.width
-        height: Theme.itemSizeLarge
+        height: Theme.itemSizeSmall
 
         ListView.onAdd: AddAnimation { target: historyDelegate }
 
-        Column {
+        Row {
+            id: row
             width: view.width - Theme.paddingLarge * 2
             x: Theme.paddingLarge
             anchors.verticalCenter: parent.verticalCenter
 
-            Label {
+            Text {
+                id: titleText
                 text: Theme.highlightText(title, search, Theme.highlightColor)
-                truncationMode: TruncationMode.Fade
-                width: parent.width
                 color: highlighted ? Theme.highlightColor : Theme.primaryColor
+                font.pixelSize: Theme.fontSizeMedium
             }
-            Label {
+
+            Text {
+                id: separator
+                // Should this be localized e.g. for Chinese user?
+                text: " • "
+                color: highlighted ? Theme.highlightColor : Theme.primaryColor
+                font.pixelSize: Theme.fontSizeMedium
+            }
+
+            Text {
+                id: urlText
                 text: Theme.highlightText(url, search, Theme.highlightColor)
-                width: parent.width
-                font.pixelSize: Theme.fontSizeSmall
                 opacity: 0.6
                 color: highlighted ? Theme.highlightColor : Theme.primaryColor
-                truncationMode: TruncationMode.Elide
+                font.pixelSize: Theme.fontSizeMedium
             }
+        }
+
+        // TODO: Remove this and change above labels to use truncationMode: TruncationMode.Fade
+        // once bug #8173 is fixed.
+        OpacityRampEffect {
+            slope: 1 + 6 * row.width / Screen.width
+            offset: 1 - 1 / slope
+            sourceItem: row
+            enabled: (titleText.implicitWidth + separator.implicitWidth + urlText.implicitWidth) > row.width
         }
 
         onClicked: {

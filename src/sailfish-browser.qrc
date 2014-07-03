@@ -3,20 +3,23 @@
     <file>browser.qml</file>
     <file>pages/BrowserPage.qml</file>
     <file>pages/ShareLinkPage.qml</file>
-    <file>pages/TabPage.qml</file>
     <file>pages/components/AlertDialog.qml</file>
     <file>pages/components/AuthDialog.qml</file>
     <file>pages/components/BookmarkEditDialog.qml</file>
     <file>pages/components/BrowserContextMenu.qml</file>
     <file>pages/components/BrowserNotification.qml</file>
-    <file>pages/components/CloseTabButton.qml</file>
     <file>pages/components/ConfirmDialog.qml</file>
     <file>pages/components/DebugOverlay.qml</file>
     <file>pages/components/DownloadRemorsePopup.qml</file>
-    <file>pages/components/FaviconImage.qml</file>
+    <file>pages/components/FavoriteContextMenu.qml</file>
+    <file>pages/components/FavoriteGrid.qml</file>
+    <file>pages/components/FavoriteIcon.qml</file>
+    <file>pages/components/FavoriteItem.qml</file>
     <file>pages/components/FirstUseOverlay.qml</file>
     <file>pages/components/IconButton.qml</file>
     <file>pages/components/LocationDialog.qml</file>
+    <file>pages/components/Overlay.qml</file>
+    <file>pages/components/OverlayAnimator.qml</file>
     <file>pages/components/PasswordManagerDialog.qml</file>
     <file>pages/components/PickerCreator.qml</file>
     <file>pages/components/ProgressBar.qml</file>
@@ -26,14 +29,11 @@
     <file>pages/components/SingleSelectPage.qml</file>
     <file>pages/components/TextSelectionController.qml</file>
     <file>pages/components/TextSelectionHandle.qml</file>
-    <file>pages/components/ToolBarContainer.qml</file>
+    <file>pages/components/ToolBar.qml</file>
     <file>pages/components/UserPrompt.qml</file>
-    <file>pages/components/TitleBar.qml</file>
     <file>pages/components/TabItem.qml</file>
-    <file>pages/components/TabPageMenu.qml</file>
     <file>pages/components/WebView.qml</file>
     <file>pages/components/WebPopupHandler.js</file>
-    <file>pages/components/FavoriteList.qml</file>
     <file>pages/components/HistoryList.qml</file>
     <file>pages/components/ResourceController.qml</file>
     <file>pages/components/graphic-radial-mask.png</file>
