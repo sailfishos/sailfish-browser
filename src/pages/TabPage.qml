@@ -369,14 +369,18 @@ Page {
                             //% "Active Tab"
                             var activeTab = qsTrId("sailfish_browser-la-active-tab")
 
+                            //: Separator symbol after Active Tab string to avoid the Dot in Chinese l10n
+                            //% "•"
+                            activeTab = activeTab + " " + qsTrId("sailfish_browser-la-separator_symbol");
+
                             if (text === browserPage.url && browserPage.viewLoading) {
                                 //: Current browser page loading.
                                 //% "Loading"
-                                return activeTab + " • " + qsTrId("sailfish_browser-la-loading")
+                                return activeTab + " " + qsTrId("sailfish_browser-la-loading")
                             } else {
                                 //: Current browser page loaded.
                                 //% "Done"
-                                return activeTab + " • " + qsTrId("sailfish_browser-la-done")
+                                return activeTab + " " + qsTrId("sailfish_browser-la-done")
                             }
                         }
 
