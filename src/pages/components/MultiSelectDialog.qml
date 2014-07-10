@@ -18,15 +18,11 @@ Dialog {
 
     // input data
     property var options
-    property bool multiple
     property QtObject webview
 
     onOpened: {
         for (var i=0; i < options.length; i++) {
             selectModel.append(options[i])
-            if (!selectDialog.multiple && options[i]["selected"]) {
-                selectModel.selectedIndex = options[i]["index"]
-            }
         }
     }
 
@@ -75,18 +71,7 @@ Dialog {
 
             enabled: !disabled
 
-            onClicked: {
-                if (selectDialog.multiple) {
-                    selectModel.setProperty(index, "selected", !selected)
-                } else {
-                    if (selectModel.selectedIndex !== index) {
-                        selectModel.setProperty(index, "selected", true)
-                        selectModel.setProperty(selectModel.selectedIndex, "selected", false)
-                        selectModel.selectedIndex = index
-                    }
-                    selectDialog.accept()
-                }
-            }
+            onClicked: selectModel.setProperty(index, "selected", !selected)
 
             Label {
                 x: Theme.paddingLarge

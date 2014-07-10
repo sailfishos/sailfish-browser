@@ -31,7 +31,8 @@ var rejectedGeolocationUrl = ""
 var _authenticationComponentUrl = Qt.resolvedUrl("AuthDialog.qml")
 var _passwordManagerComponentUrl = Qt.resolvedUrl("PasswordManagerDialog.qml")
 var _contextMenuComponentUrl = Qt.resolvedUrl("BrowserContextMenu.qml")
-var _selectComponentUrl = Qt.resolvedUrl("SelectDialog.qml")
+var _multiSelectComponent = Qt.resolvedUrl("MultiSelectDialog.qml")
+var _singleSelectComponentUrl = Qt.resolvedUrl("SingleSelectPage.qml")
 var _locationComponentUrl = Qt.resolvedUrl("LocationDialog.qml")
 var _alertComponentUrl = Qt.resolvedUrl("AlertDialog.qml")
 var _confirmComponentUrl = Qt.resolvedUrl("ConfirmDialog.qml")
@@ -108,12 +109,19 @@ function openAuthDialog(input) {
 }
 
 function openSelectDialog(data) {
-    var dialog = pageStack.push(_selectComponentUrl,
-                                {
-                                    "options": data.options,
-                                    "multiple": data.multiple,
-                                    "webview": webView.contentItem
-                                })
+    if (data.multiple) {
+        pageStack.push(_multiSelectComponent,
+                        {
+                            "options": data.options,
+                            "webview": webView.contentItem
+                        })
+    } else {
+        pageStack.push(_singleSelectComponentUrl,
+                        {
+                            "options": data.options,
+                            "webview": webView.contentItem
+                        })
+    }
 }
 
 function openPasswordManagerDialog(data) {

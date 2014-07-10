@@ -22,7 +22,8 @@
     <file>pages/components/ProgressBar.qml</file>
     <file>pages/components/PromptDialog.qml</file>
     <file>pages/components/PromptLabel.qml</file>
-    <file>pages/components/SelectDialog.qml</file>
+    <file>pages/components/MultiSelectDialog.qml</file>
+    <file>pages/components/SingleSelectPage.qml</file>
     <file>pages/components/TextSelectionController.qml</file>
     <file>pages/components/TextSelectionHandle.qml</file>
     <file>pages/components/ToolBarContainer.qml</file>
