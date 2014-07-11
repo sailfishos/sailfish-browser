@@ -142,7 +142,22 @@ bool DownloadManager::moveMyAppPackage(QString path)
 
     QFile file(path);
     QFileInfo fileInfo(file);
-    return file.rename(aptoideDownloadPath + fileInfo.fileName());
+    QString newPath(aptoideDownloadPath + fileInfo.fileName());
+    QFile obsoleteFile(newPath);
+
+    if (obsoleteFile.exists() && !obsoleteFile.remove()) {
+        qWarning() << "Failed to remove obsolete myapp file, aborting";
+        return false;
+    }
+
+    if (!file.rename(newPath)) {
+        qWarning() << "Failed to move myapp file to aptoide's folder, aborting";
+        // Avoid generating ~/Downloads/<name>(2).myapp file in case user downloads the same file again
+        file.remove();
+        return false;
+    }
+
+    return true;
 }
 
 QString DownloadManager::aptoideApk(QString packageName)
