@@ -20,12 +20,47 @@
 #include <QDir>
 #include <QDateTime>
 #include <QStandardPaths>
+#include <QXmlStreamReader>
 #include "declarativewebutils.h"
 #include "qmozcontext.h"
 
 static const QString system_components_time_stamp("/var/lib/_MOZEMBED_CACHE_CLEAN_");
 static const QString profilePath("/.mozilla/mozembed");
+static const QString opensearchPath("/usr/lib/mozembedlite/chrome/embedlite/content/");
 static DeclarativeWebUtils *gSingleton = 0;
+
+typedef QMap<QString, QString> StringMap;
+
+const StringMap getAvailableOpenSearchConfigs()
+{
+    StringMap configs;
+    QDir configDir(opensearchPath);
+
+    foreach (QString fileName, configDir.entryList(QStringList("*.xml"))) {
+        QFile xmlFile(opensearchPath + fileName);
+        xmlFile.open(QIODevice::ReadOnly | QIODevice::Text);
+        QXmlStreamReader xml(&xmlFile);
+        QString searchEngine;
+
+        while (!xml.atEnd()) {
+            xml.readNext();
+            if (xml.isStartElement() && xml.name() == "ShortName") {
+                xml.readNext();
+                if (xml.isCharacters()) {
+                    searchEngine = xml.text().toString();
+                }
+            }
+        }
+
+        if (!xml.hasError()) {
+            configs.insert(searchEngine, fileName);
+        }
+
+        xmlFile.close();
+    }
+
+    return configs;
+}
 
 DeclarativeWebUtils::DeclarativeWebUtils()
     : QObject()
@@ -242,19 +277,32 @@ void DeclarativeWebUtils::handleObserve(const QString message, const QVariant da
     } else if (message == "embed:search") {
         QString msg = dataMap.value("msg").toString();
         if (msg == "init") {
-            if (!dataMap.value("defaultEngine").isValid()) {
-                QMozContext *mozContext = QMozContext::GetInstance();
-                QVariantMap loadsearch;
+            const StringMap configs(getAvailableOpenSearchConfigs());
+            QStringList registeredSearches(dataMap.value("engines").toStringList());
+            QMozContext *mozContext = QMozContext::GetInstance();
 
-                // load opensearch descriptions
-                loadsearch.insert(QString("msg"), QVariant(QString("loadxml")));
-                loadsearch.insert(QString("uri"), QVariant(QString("chrome://embedlite/content/google.xml")));
-                loadsearch.insert(QString("confirm"), QVariant(false));
-                mozContext->sendObserve("embedui:search", QVariant(loadsearch));
-                loadsearch.insert(QString("uri"), QVariant(QString("chrome://embedlite/content/bing.xml")));
-                mozContext->sendObserve("embedui:search", QVariant(loadsearch));
-                loadsearch.insert(QString("uri"), QVariant(QString("chrome://embedlite/content/yahoo.xml")));
-                mozContext->sendObserve("embedui:search", QVariant(loadsearch));
+            // Add newly installed configs
+            foreach (QString searchName, configs.keys()) {
+                if (registeredSearches.contains(searchName)) {
+                    registeredSearches.removeAll(searchName);
+                } else {
+                    QVariantMap loadsearch;
+
+                    // load opensearch descriptions
+                    loadsearch.insert(QString("msg"), QVariant(QString("loadxml")));
+                    loadsearch.insert(QString("uri"), QVariant(QString("chrome://embedlite/content/") +
+                                                               configs.value(searchName)));
+                    loadsearch.insert(QString("confirm"), QVariant(false));
+                    mozContext->sendObserve("embedui:search", QVariant(loadsearch));
+                }
+            }
+
+            // Remove uninstalled OpenSearch configs
+            foreach(QString searchName, registeredSearches) {
+                QVariantMap removeMsg;
+                removeMsg.insert(QString("msg"), QVariant(QString("remove")));
+                removeMsg.insert(QString("name"), QVariant(searchName));
+                mozContext->sendObserve("embedui:search", QVariant(removeMsg));
             }
         }
     }

@@ -13,19 +13,19 @@
 #define BROWSERSETTINGS_H
 
 #include <QObject>
-#include <QString>
+#include <QStringList>
 
 class BrowserSettings: public QObject
 {
     Q_OBJECT
 
-    Q_PROPERTY(QString testProp READ testProp CONSTANT)
+    Q_PROPERTY(QStringList searchEngineList READ getSearchEngineList CONSTANT)
 
 public:
     explicit BrowserSettings(QObject *parent = 0);
     virtual ~BrowserSettings();
 
-    const QString testProp() const;
+    const QStringList getSearchEngineList() const;
 };
 
 #endif
