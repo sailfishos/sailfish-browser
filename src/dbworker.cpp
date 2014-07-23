@@ -565,7 +565,7 @@ void DBWorker::getHistory(const QString &filter)
     // Skip empty titles always
     QString filterQuery("WHERE (NULLIF(link.title, '') IS NOT NULL AND %1) ");
     if (!filter.isEmpty()) {
-        filterQuery = filterQuery.arg(QString("(link.url LIKE '%%1%' OR link.title LIKE '%%1%')").arg(filter));
+        filterQuery = filterQuery.arg(QString("(link.url LIKE :search OR link.title LIKE :search)"));
     } else {
         filterQuery = filterQuery.arg(1);
     }
@@ -575,7 +575,10 @@ void DBWorker::getHistory(const QString &filter)
                                   "ON history.link_id = link.link_id "
                                   "%1"
                                   "ORDER BY LENGTH(link.url), link.title, history.date ASC;").arg(filterQuery);
-    QSqlQuery query = prepare(queryString.toLatin1().constData());
+    QSqlQuery query = prepare(queryString);
+    if (!filter.isEmpty()) {
+        query.bindValue(QString(":search"), QString("%%1%").arg(filter));
+    }
 
     if (!execute(query)) {
         return;
