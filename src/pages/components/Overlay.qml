@@ -23,7 +23,7 @@ PanelBackground {
     property alias progressBar: progressBar
     property alias animator: overlayAnimator
 
-    property bool showTabs
+    property bool tabsVisible
 
     function loadPage(url, title)  {
         // let gecko figure out how to handle malformed URLs
@@ -41,14 +41,12 @@ PanelBackground {
             webView.load(searchString, title)
         }
         webView.focus = true
-        toolBar.reset("")
         overlayAnimator.showChrome()
         console.log("LOOSING AT TOP BY CLICKING!")
     }
 
     function openNewTabView(action) {
-        showTabs = false
-        toolBar.reset("", true)
+        tabsVisible = false
         overlayAnimator.showOverlay(action === PageStackAction.Immediate)
     }
 
@@ -61,19 +59,10 @@ PanelBackground {
         GradientStop { position: 1.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.0) }
     }
 
-    onYChanged: {
-        //console.log("Y:", y, height, (y/height))
-        if (y < (height * 0.7)) {
-            toolBar.hideControls()
-        } else if (y > (height * 0.85)) {
-            toolBar.showControls()
-        }
-    }
-
     // This is ugly
-    onShowTabsChanged: {
-        console.log("#PEREKEL: ", showTabs)
-        if (showTabs) {
+    onTabsVisibleChanged: {
+        console.log("#PEREKEL: ", tabsVisible)
+        if (tabsVisible) {
             webView.captureScreen()
             webView.opacity = 0.0
             overlayAnimator.hide()
@@ -113,7 +102,7 @@ PanelBackground {
         width: parent.width
         height: historyContainer.height
 
-        opacity: !overlay.showTabs ? 1.0 : 0.0
+        opacity: !overlay.tabsVisible ? 1.0 : 0.0
         visible: opacity > 0.0
         enabled: !webView.fullscreenMode
         drag.target: overlay
@@ -135,10 +124,10 @@ PanelBackground {
                     state = overlayAnimator.state
                 }
 
-//                if (overlayAnimator.atTop && webView.inputPanelVisible) {
-//                    Qt.inputMethod.hide()
-//                    webView.focus = true
-//                }
+                //                if (overlayAnimator.atTop && webView.inputPanelVisible) {
+                //                    Qt.inputMethod.hide()
+                //                    webView.focus = true
+                //                }
 
                 overlayAnimator.state = "draggingOverlay"
                 console.log("Previous dragging state:", state)
@@ -148,108 +137,205 @@ PanelBackground {
 
         Behavior on opacity { Browser.FadeAnimation {} }
 
-        Item {
-            id: historyContainer
+        SlideshowView {
+            id: overlayTabs
             width: parent.width
             height: toolBar.height + historyList.height
 
-            Browser.ToolBar {
-                id: toolBar
+            highlightRangeMode: ListView.StrictlyEnforceRange
+            snapMode: ListView.SnapOneItem
+           // orientation: ListView.Horizontal
 
-                title: overlay.webView.title
-                url: overlay.webView.url
+            currentIndex: 1
 
-                atTop: overlayAnimator.atTop
-                atBottom: overlayAnimator.atBottom
-                onShowChrome: overlayAnimator.showChrome()
-                onShowOverlay: overlayAnimator.showOverlay()
-                onShowTabs: overlay.showTabs = true
-                onLoad: overlay.loadPage(text)
+            onCurrentIndexChanged: {
+                if (currentIndex == 0) {
+                    historyModel.search("")
+                } else if (currentIndex == 1 && searchField.text !== webView.url) {
+                    historyModel.search(searchField.text)
+                }
             }
 
-            Browser.HistoryList {
-                id: historyList
+            model: VisualItemModel {
 
-                width: parent.width
-                height: browserPage.height - toolBar.height - dragArea.drag.minimumY
-                search: toolBar.text
-                opacity: toolBar.edited && toolBar.text ? 1.0 : 0.0
-                visible: !overlayAnimator.atBottom && opacity > 0.0
-                anchors.top: toolBar.bottom
 
-                onSearchChanged: if (search !== webView.url) historyModel.search(search)
-                onLoad: overlay.loadPage(url, title)
-
-                Behavior on opacity { Browser.FadeAnimation {} }
-            }
-
-            Browser.FavoriteGrid {
-                id: favoriteGrid
-                anchors {
-                    top: toolBar.bottom
-                    horizontalCenter: parent.horizontalCenter
+                Browser.HistoryList {
+                    width: parent.width
+                    height: parent.height
+                    model: historyModel
                 }
 
-                height: historyList.height
-                opacity: !toolBar.edited || !toolBar.text ? 1.0 : 0.0
-                visible: !overlayAnimator.atBottom && opacity > 0.0
-                model: webView.bookmarkModel
+                Item {
+                    id: historyContainer
+                    width: parent.width
+                    height: toolBar.height + historyList.height
 
-                onLoad: overlay.loadPage(url, title)
+                    Browser.ToolBar {
+                        id: toolBar
+                        visible: overlayAnimator.atBottom
 
-                // Do we need this one???
-                onNewTab: {
-                    toolBar.reset("", true)
-                    overlay.loadPage(url, title)
+                        title: overlay.webView.url
+
+                        onShowChrome: overlayAnimator.showChrome()
+                        onShowOverlay: overlayAnimator.showOverlay()
+                        onShowTabs: overlay.tabsVisible = true
+                    }
+
+                    TextField {
+                        id: searchField
+                        width: parent.width
+                        visible: !toolBar.visible
+                        onVisibleChanged: {
+                            text = webView.url
+
+                            if(visible)
+                                focus = true
+                            else
+                                focus = false
+                        }
+                        label: "Search or enter URL"
+
+                        EnterKey.onClicked: overlay.loadPage(text)
+                    }
+
+                    Browser.HistoryList {
+                        id: historyList
+
+                        width: parent.width
+                        height: browserPage.height - toolBar.height - dragArea.drag.minimumY
+                        search: searchField.text
+                        opacity: searchField.text !== webView.url && searchField.text ? 1.0 : 0.0
+                        visible: !overlayAnimator.atBottom && opacity > 0.0
+                        anchors.top: searchField.bottom
+
+                        onSearchChanged: if (search !== webView.url) historyModel.search(search)
+                        onLoad: overlay.loadPage(url, title)
+
+                        Behavior on opacity { Browser.FadeAnimation {} }
+                    }
+
+                    Browser.FavoriteGrid {
+                        id: favoriteGrid
+                        anchors {
+                            top: searchField.bottom
+                            horizontalCenter: parent.horizontalCenter
+                        }
+
+                        height: historyList.height
+                        opacity: searchField.text == webView.url || searchField.text == "" ? 1.0 : 0.0
+                        visible: !overlayAnimator.atBottom && opacity > 0.0
+                        model: webView.bookmarkModel
+
+                        onLoad: overlay.loadPage(url, title)
+
+                        // Do we need this one???
+                        onNewTab: {
+                            toolBar.reset("", true)
+                            overlay.loadPage(url, title)
+                        }
+
+                        onRemoveBookmark: webView.bookmarkModel.removeBookmark(url)
+                        onEditBookmark: {
+                            // index, url, title
+                            pageStack.push(editDialog,
+                                           {
+                                               "url": url,
+                                               "title": title,
+                                               "index": index,
+                                           })
+                        }
+
+                        onAddToLauncher: {
+                            // url, title, favicon
+                            pageStack.push(addToLauncher,
+                                           {
+                                               "url": url,
+                                               "title": title
+                                           })
+                            browserPage.imageLoader.source = favicon
+                        }
+
+                        onShare: pageStack.push(Qt.resolvedUrl("../ShareLinkPage.qml"), {"link" : url, "linkTitle": title})
+
+                        Behavior on opacity { Browser.FadeAnimation {} }
+                    }
                 }
 
-                onRemoveBookmark: webView.bookmarkModel.removeBookmark(url)
-                onEditBookmark: {
-                    // index, url, title
-                    pageStack.push(editDialog,
-                                   {
-                                       "url": url,
-                                       "title": title,
-                                       "index": index,
-                                   })
+
+                Item {
+                    height: parent.height
+                    width: parent.width
+
+                    Column {
+                        width: parent.width
+
+                        TextField {
+                            id: searchInPage
+                            placeholderText: "Search in page"
+                            width: parent.width
+                        }
+
+                        Label {
+                            visible: searchInPage.text
+                            text: "Show found matches: 3"
+                            color: Theme.primaryColor
+                        }
+
+                        Label {
+                            visible: searchInPage.text
+                            text: "Search again"
+                            color: Theme.primaryColor
+                        }
+                    }
                 }
 
-                onAddToLauncher: {
-                    // url, title, favicon
-                    pageStack.push(addToLauncher,
-                                   {
-                                       "url": url,
-                                       "title": title
-                                   })
-                    browserPage.imageLoader.source = favicon
+                Item {
+                    height: parent.height
+                    width: parent.width
+
+                   /* Label {
+                        text: "No current downloads"
+                        anchors.centerIn: parent
+                        font.pixelSize: Theme.fontSizeExtraLarge
+                    } */
+                    Browser.TabButton {
+                        width: Theme.itemSizeSmall
+                        anchors.centerIn: parent
+                        icon.source: "image://theme/icon-m-search"
+                        label: "Search in page"
+                    }
                 }
-
-                onShare: pageStack.push(Qt.resolvedUrl("../ShareLinkPage.qml"), {"link" : url, "linkTitle": title})
-
-                Behavior on opacity { Browser.FadeAnimation {} }
             }
         }
+    }
+
+    Browser.OverlayTabBar {
+        visible: !tabsVisible && !overlayAnimator.atBottom
+        anchors.bottom: overlay.top
+        height: toolBar.height
+        currentIndex: overlayTabs.currentIndex
+        onSelectTab: overlayTabs.currentIndex = index
     }
 
     // TODO: Test if Loader would be make sense here.
     Browser.TabView {
         id: tabView
-        opacity: showTabs ? 1.0 : 0.0
+        opacity: tabsVisible ? 1.0 : 0.0
         visible: opacity > 0.0
         model: webView.tabModel
         parent: browserPage
 
         Behavior on opacity { Browser.FadeAnimation {} }
 
-        onHide: showTabs = false
+        onHide: tabsVisible = false
         // rename this signal. To showOverlay or similar
         onNewTab: openNewTabView()
         onActivateTab: {
-            showTabs = false
+            tabsVisible = false
             webView.tabModel.activateTab(index)
         }
         onCloseTab: {
-            //showTabs = false
+            //tabsVisible = false
             console.log("All tabs closed what to do!!")
             webView.tabModel.remove(index)
         }

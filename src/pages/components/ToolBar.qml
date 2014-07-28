@@ -12,190 +12,127 @@
 
 import QtQuick 2.2
 import Sailfish.Silica 1.0
+import Sailfish.Browser 1.0
 import "." as Browser
 
 Item {
     id: toolBarRow
 
-    property bool edited
-    property bool mayRestoreTitle
     property string title
-    property string url
-    property alias textField: textField
-    property alias text: textField.text
-    property bool hasTitle: title === text
-    property bool controlsVisible: true
-    property bool enteringNewTabUrl
-    property bool atTop
-    property bool atBottom
-
-    property bool _onlyUrlField
-
-    function reset(url, newTab) {
-        enteringNewTabUrl = newTab || false
-        textField.text = url
-        edited = false
-        mayRestoreTitle = false
-    }
-
-    function showTitle() {
-        if (!enteringNewTabUrl && (!atTop || atBottom && mayRestoreTitle)) {
-            textField.text = title
-            edited = false
-        }
-    }
-
-    function showControls() {
-        controlsVisible = true
-    }
-
-    function hideControls() {
-        controlsVisible = false
-    }
 
     signal showTabs
     signal showChrome
     signal showOverlay
-    signal load(string text)
+    signal load(string search)
 
     width: parent.width
     height: isPortrait ? Settings.toolbarLarge : Settings.toolbarSmall
 
-    onTitleChanged: showTitle()
 
-    onAtTopChanged: {
-        if (atTop) {
-            textField.forceActiveFocus()
-            mayRestoreTitle = true
-        } else {
-            textField.focus = false
-        }
-    }
-
-    onAtBottomChanged: showTitle()
-
-    Browser.IconButton {
-        id: backIcon
-        visible: active && !_onlyUrlField
-        active: webView.canGoBack
-        width: visible ? Theme.itemSizeSmall : 0
-        height: parent.height
-        icon.source: "image://theme/icon-m-back"
-        onTapped: webView.goBack()
-    }
-
-    TextField {
-        id: textField
-
-        // Translation!
-        placeholderText: "Search or type URL"
-        labelVisible: false
-        textLeftMargin: controlsVisible && backIcon.visible ? Theme.paddingSmall : Theme.paddingLarge
-        textRightMargin: controlsVisible ? Theme.paddingSmall : Theme.paddingLarge
-
-        anchors {
-            left: backIcon.right
-            right: reload.left
-            verticalCenter: parent.verticalCenter
+    Row {
+        anchors.centerIn: parent
+        spacing: (parent.width - (7 * Theme.itemSizeSmall)) / 6
+        Browser.IconButton {
+            id: backIcon
+            active: webView.canGoBack
+            width: Theme.itemSizeSmall
+            height: toolBarRow.height
+            icon.source: "image://theme/icon-m-back"
+            onTapped: webView.goBack()
         }
 
-        onTextChanged: {
-            if ((!hasTitle || enteringNewTabUrl) && text !== webView.url && !edited) {
-                edited = true
-            }
+        Browser.IconButton {
+            id: shareIcon
+            icon.source: "image://theme/icon-m-share"
+            width: Theme.itemSizeSmall
+            height: toolBarRow.height
         }
 
-        onActiveFocusChanged: {
-            if (activeFocus) {
-                showOverlay()
-                if (hasTitle && !enteringNewTabUrl) {
-                    reset(overlay.webView.url)
-                }
-            }
-        }
+        /*
+        Browser.IconButton {
+            id: overlayIcon
+            icon.source: "image://theme/icon-m-keyboard"
+            width: Theme.itemSizeSmall
+            height: toolBarRow.height
+            onTapped: toolBarRow.showOverlay()
+        }*/
 
-        EnterKey.iconSource: "image://theme/icon-m-enter-accept"
-        EnterKey.onClicked: toolBarRow.load(text)
-    }
+        MouseArea {
+            id: touchArea
+            height: parent.height
+            width: domainBox.width
 
-    Browser.IconButton {
-        id: reload
-        visible: !_onlyUrlField
-        active: webView.visible && visible
-        width: visible ? Theme.itemSizeSmall : 0
-        height: parent.height
-        anchors.right: tabs.left
-        icon.source: webView.loading ? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
-        onTapped: webView.loading ? webView.stop() : webView.reload()
-    }
+            property bool down: pressed && containsMouse
 
-    Browser.IconButton {
-        id: tabs
-        visible: !_onlyUrlField
-        width: visible ? Theme.itemSizeSmall : 0
-        height: parent.height
-        anchors.right: parent.right
-        icon.source: "image://theme/icon-m-tabs"
-        onTapped: {
-            if (firstUseOverlay) {
-                firstUseOverlay.visible = false
-                firstUseOverlay.destroy()
-            }
-            if (!WebUtils.firstUseDone) WebUtils.firstUseDone = true
-            toolBarRow.showTabs()
-        }
-        Label {
-            visible: webView.tabModel.count > 0
-            text: webView.tabModel.count
-            x: (parent.width - contentWidth) / 2 - 5
-            y: (parent.height - contentHeight) / 2 - 5
-            font.pixelSize: Theme.fontSizeExtraSmall
-            font.bold: true
-            color: tabs.down ?  Theme.primaryColor : Theme.highlightDimmerColor
-            horizontalAlignment: Text.AlignHCenter
-        }
-    }
+            Rectangle {
+                id: domainBox
+                height: label.height + 2 * Theme.paddingSmall
+                width: Theme.itemSizeSmall * 3
+                radius: 4.0
+                anchors.verticalCenter: parent.verticalCenter
+                color: "transparent"
 
-    states: [
-        State {
-            name: "onlyUrlField"
-            when: !controlsVisible
-        },
-        State {
-            name: "controlsVisible"
-            when: controlsVisible
-        }
-    ]
+                Label {
+                    id: label
+                    anchors.top: parent.top
+                    anchors.topMargin: Theme.paddingSmall
+                    anchors.left: parent.left
+                    anchors.leftMargin: Theme.paddingSmall
+                    width: parent.width - Theme.paddingSmall * 2
+                    color: touchArea.down ? Theme.highlightColor : Theme.primaryColor
+                    font.pixelSize: Theme.fontSizeExtraSmall
+                    text: parseDisplayableUrl(title)
+                    horizontalAlignment: Text.AlignHCenter
 
-    transitions: [
-        Transition {
-            from: "controlsVisible"
-            to: "onlyUrlField"
-
-            SequentialAnimation {
-                Browser.FadeAnimation { target: toolBarRow; to: 0.0; duration: 150 }
-                PropertyAction { target: toolBarRow; property: "_onlyUrlField"; value: true }
-                ScriptAction {
-                    script: {
-                        console.log("onlu url field: ", url, textField.text)
-                        // Opening to new tab url input.
-                        if (!enteringNewTabUrl) {
-                            reset(url)
-                            textField.selectAll()
+                    function parseDisplayableUrl(url) {
+                        var returnUrl = WebUtils.displayableUrl(url)
+                        returnUrl = returnUrl.substring(returnUrl.lastIndexOf("/") + 1) // Strip protocol
+                        if(returnUrl.indexOf("www.")===0) {
+                            returnUrl = returnUrl.substring(4)
                         }
+                        return returnUrl
                     }
+
                 }
-                Browser.FadeAnimation { target: toolBarRow; to: 1.0; duration: 150 }
+                border.color: label.color
+                border.width: 1
             }
-        },
-        Transition {
-            from: "onlyUrlField"
-            to: "controlsVisible"
-            SequentialAnimation {
-                Browser.FadeAnimation { target: toolBarRow; to: 0.0; duration: 150 }
-                PropertyAction { target: toolBarRow; property: "_onlyUrlField"; value: false }
-                Browser.FadeAnimation { target: toolBarRow; to: 1.0; duration: 150 }
-             }
+
+            onClicked: toolBarRow.showOverlay()
         }
-    ]
+
+
+        Browser.IconButton {
+            id: tabs
+            width: Theme.itemSizeSmall
+            height: toolBarRow.height
+            icon.source: "image://theme/icon-m-tabs"
+            onTapped: {
+                if (firstUseOverlay) {
+                    firstUseOverlay.visible = false
+                    firstUseOverlay.destroy()
+                }
+                if (!WebUtils.firstUseDone) WebUtils.firstUseDone = true
+                toolBarRow.showTabs()
+            }
+            Label {
+                visible: webView.tabModel.count > 0
+                text: webView.tabModel.count
+                x: (parent.width - contentWidth) / 2 - 5
+                y: (parent.height - contentHeight) / 2 - 5
+                font.pixelSize: Theme.fontSizeExtraSmall
+                font.bold: true
+                color: tabs.down ?  Theme.primaryColor : Theme.highlightDimmerColor
+                horizontalAlignment: Text.AlignHCenter
+            }
+        }
+
+        Browser.IconButton {
+            id: reload
+            width: Theme.itemSizeSmall
+            height: toolBarRow.height
+            icon.source: webView.loading ? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
+            onTapped: webView.loading ? webView.stop() : webView.reload()
+        }
+    }
 }
