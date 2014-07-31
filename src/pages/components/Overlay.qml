@@ -78,6 +78,13 @@ PanelBackground {
         overlay: overlay
         portrait: browserPage.isPortrait
         active: Qt.application.active && browserPage.status === PageStatus.Active
+
+        onAtTopChanged: {
+            if (overlayTabs.currentIndex == 1 && atTop) {
+                searchField.forceActiveFocus()
+                searchField.selectAll()
+            }
+        }
     }
 
     Image {
@@ -137,10 +144,27 @@ PanelBackground {
 
         Behavior on opacity { Browser.FadeAnimation {} }
 
+        Browser.ToolBar {
+            id: toolBar
+            visible: !overlayTabs.visible
+            opacity: (overlay.y - webView.fullscreenHeight/2)  / (webView.fullscreenHeight/2 - toolBar.height)
+
+            title: webView.url
+            onShowChrome: overlayAnimator.showChrome()
+            onShowOverlay: {
+                overlayAnimator.showOverlay()
+                overlayTabs.currentIndex = 1 // On tap switch automatically to url input
+            }
+            onShowShare: pageStack.push(Qt.resolvedUrl("../ShareLinkPage.qml"), {"link" : webView.url, "linkTitle": webView.title})
+            onShowTabs: overlay.tabsVisible = true
+        }
+
         SlideshowView {
             id: overlayTabs
             width: parent.width
             height: toolBar.height + historyList.height
+            visible: overlay.y < webView.fullscreenHeight/2
+            opacity: (webView.fullscreenHeight/2 - overlay.y ) / (webView.fullscreenHeight/2 - toolBar.height)
 
             highlightRangeMode: ListView.StrictlyEnforceRange
             snapMode: ListView.SnapOneItem
@@ -153,6 +177,12 @@ PanelBackground {
                     historyModel.search("")
                 } else if (currentIndex == 1 && searchField.text !== webView.url) {
                     historyModel.search(searchField.text)
+
+                } else if(currentIndex == 1 && overlayAnimator.atTop) {
+                    searchField.forceActiveFocus()
+                    searchField.selectAll()
+                } else if(currentIndex == 2) {
+                    searchInPage.forceActiveFocus()
                 }
             }
 
@@ -161,8 +191,11 @@ PanelBackground {
 
                 Browser.HistoryList {
                     width: parent.width
-                    height: parent.height
+                    height: browserPage.height - toolBar.height - Theme.paddingMedium
+                    y: Theme.paddingMedium
                     model: historyModel
+
+                    onLoad: overlay.loadPage(url, title)
                 }
 
                 Item {
@@ -170,15 +203,21 @@ PanelBackground {
                     width: parent.width
                     height: toolBar.height + historyList.height
 
-                    Browser.ToolBar {
-                        id: toolBar
-                        visible: overlayAnimator.atBottom
+                    Label {
+                        id: titleLabel
+                        anchors.top: parent.top
+                        anchors.topMargin: Theme.paddingSmall
+                        x: Theme.paddingLarge
 
-                        title: overlay.webView.url
+                        // Reuse new tab label (la-new_tab)
+                        text: (browserPage.tabs.count == 0) ? qsTrId("sailfish_browser-la-new_tab") : (webView.url == searchField.text ? webView.title : "")
+                        color: Theme.highlightColor
+                        font.pixelSize: Theme.fontSizeSmall
+                        width: parent.width - x - Theme.paddingMedium
+                        truncationMode: TruncationMode.Fade
+                        opacity: 1.0
 
-                        onShowChrome: overlayAnimator.showChrome()
-                        onShowOverlay: overlayAnimator.showOverlay()
-                        onShowTabs: overlay.tabsVisible = true
+                        Behavior on opacity { FadeAnimation {} }
                     }
 
                     TextField {
@@ -196,6 +235,7 @@ PanelBackground {
                         label: "Search or enter URL"
 
                         EnterKey.onClicked: overlay.loadPage(text)
+                        anchors.top: titleLabel.bottom
                     }
 
                     Browser.HistoryList {
@@ -269,7 +309,7 @@ PanelBackground {
                     Column {
                         width: parent.width
 
-                        TextField {
+                        SearchField {
                             id: searchInPage
                             placeholderText: "Search in page"
                             width: parent.width
@@ -311,8 +351,9 @@ PanelBackground {
 
     Browser.OverlayTabBar {
         visible: !tabsVisible && !overlayAnimator.atBottom
+        opacity: overlayTabs.opacity
         anchors.bottom: overlay.top
-        height: toolBar.height
+        anchors.bottomMargin: Theme.paddingSmall
         currentIndex: overlayTabs.currentIndex
         onSelectTab: overlayTabs.currentIndex = index
     }

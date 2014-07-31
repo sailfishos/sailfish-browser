@@ -23,6 +23,8 @@ Item {
     signal showTabs
     signal showChrome
     signal showOverlay
+    signal showShare
+
     signal load(string search)
 
     width: parent.width
@@ -31,21 +33,23 @@ Item {
 
     Row {
         anchors.centerIn: parent
-        spacing: (parent.width - (7 * Theme.itemSizeSmall)) / 6
+        height: parent.height
+
         Browser.IconButton {
-            id: backIcon
-            active: webView.canGoBack
-            width: Theme.itemSizeSmall
+            id: reload
+            width: Theme.iconSizeMedium + 2 * Theme.paddingMedium
             height: toolBarRow.height
-            icon.source: "image://theme/icon-m-back"
-            onTapped: webView.goBack()
+            icon.source: webView.loading ? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
+            onTapped: webView.loading ? webView.stop() : webView.reload()
         }
 
         Browser.IconButton {
-            id: shareIcon
-            icon.source: "image://theme/icon-m-share"
-            width: Theme.itemSizeSmall
+            id: backIcon
+            active: webView.canGoBack
+            width: Theme.iconSizeMedium + 2 * Theme.paddingMedium
             height: toolBarRow.height
+            icon.source: "image://theme/icon-m-back"
+            onTapped: webView.goBack()
         }
 
         /*
@@ -60,51 +64,53 @@ Item {
         MouseArea {
             id: touchArea
             height: parent.height
-            width: domainBox.width
+            width: domainBox.width - 2 * Theme.paddingSmall
 
             property bool down: pressed && containsMouse
 
             Rectangle {
                 id: domainBox
-                height: label.height + 2 * Theme.paddingSmall
-                width: Theme.itemSizeSmall * 3
+                height: label.height + Theme.paddingSmall
+                x: -Theme.paddingSmall
+                width: toolBarRow.width - 4 * Theme.iconSizeMedium - 6 * Theme.paddingMedium - 4 * Theme.paddingSmall
                 radius: 4.0
                 anchors.verticalCenter: parent.verticalCenter
                 color: "transparent"
 
-                Label {
-                    id: label
-                    anchors.top: parent.top
-                    anchors.topMargin: Theme.paddingSmall
-                    anchors.left: parent.left
-                    anchors.leftMargin: Theme.paddingSmall
-                    width: parent.width - Theme.paddingSmall * 2
-                    color: touchArea.down ? Theme.highlightColor : Theme.primaryColor
-                    font.pixelSize: Theme.fontSizeExtraSmall
-                    text: parseDisplayableUrl(title)
-                    horizontalAlignment: Text.AlignHCenter
 
-                    function parseDisplayableUrl(url) {
-                        var returnUrl = WebUtils.displayableUrl(url)
-                        returnUrl = returnUrl.substring(returnUrl.lastIndexOf("/") + 1) // Strip protocol
-                        if(returnUrl.indexOf("www.")===0) {
-                            returnUrl = returnUrl.substring(4)
-                        }
-                        return returnUrl
-                    }
-
-                }
                 border.color: label.color
-                border.width: 1
+                border.width: 2
+                opacity: 0.5
             }
 
+            Label {
+                id: label
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.left: touchArea.left
+                width: parent.width
+                color: touchArea.down ? Theme.highlightColor : Theme.primaryColor
+                font.pixelSize: Theme.fontSizeExtraSmall
+                font.bold: true
+                text: parseDisplayableUrl(title)
+                horizontalAlignment: Text.AlignHCenter
+                truncationMode: TruncationMode.Fade
+
+                function parseDisplayableUrl(url) {
+                    var returnUrl = WebUtils.displayableUrl(url)
+                    returnUrl = returnUrl.substring(returnUrl.lastIndexOf("/") + 1) // Strip protocol
+                    if(returnUrl.indexOf("www.")===0) {
+                        returnUrl = returnUrl.substring(4)
+                    }
+                    return returnUrl
+                }
+            }
             onClicked: toolBarRow.showOverlay()
         }
 
 
         Browser.IconButton {
             id: tabs
-            width: Theme.itemSizeSmall
+            width: Theme.iconSizeMedium + 2 * Theme.paddingMedium
             height: toolBarRow.height
             icon.source: "image://theme/icon-m-tabs"
             onTapped: {
@@ -118,21 +124,21 @@ Item {
             Label {
                 visible: webView.tabModel.count > 0
                 text: webView.tabModel.count
-                x: (parent.width - contentWidth) / 2 - 5
-                y: (parent.height - contentHeight) / 2 - 5
+                x: (parent.width - contentWidth) / 2
+                y: (parent.height - contentHeight) / 2
                 font.pixelSize: Theme.fontSizeExtraSmall
                 font.bold: true
-                color: tabs.down ?  Theme.primaryColor : Theme.highlightDimmerColor
+                color: tabs.down ?   Theme.highlightColor : Theme.primaryColor
                 horizontalAlignment: Text.AlignHCenter
             }
         }
 
         Browser.IconButton {
-            id: reload
-            width: Theme.itemSizeSmall
+            id: shareIcon
+            icon.source: "image://theme/icon-m-share"
+            width: Theme.iconSizeMedium + 2 * Theme.paddingMedium
             height: toolBarRow.height
-            icon.source: webView.loading ? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
-            onTapped: webView.loading ? webView.stop() : webView.reload()
+            onTapped: toolBarRow.showShare()
         }
     }
 }
