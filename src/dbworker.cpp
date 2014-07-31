@@ -564,17 +564,21 @@ void DBWorker::getHistory(const QString &filter)
 {
     // Skip empty titles always
     QString filterQuery("WHERE (NULLIF(link.title, '') IS NOT NULL AND %1) ");
+    QString order;
+
     if (!filter.isEmpty()) {
         filterQuery = filterQuery.arg(QString("(link.url LIKE '%%1%' OR link.title LIKE '%%1%')").arg(filter));
+        order = QString("LENGTH(link.url), link.title, history.date ASC");
     } else {
         filterQuery = filterQuery.arg(1);
+        order = QString("history.date DESC");
     }
 
     QString queryString = QString("SELECT DISTINCT link.url, link.title "
                                   "FROM history INNER JOIN link "
                                   "ON history.link_id = link.link_id "
                                   "%1"
-                                  "ORDER BY LENGTH(link.url), link.title, history.date ASC;").arg(filterQuery);
+                                  "ORDER BY %2;").arg(filterQuery).arg(order);
     QSqlQuery query = prepare(queryString.toLatin1().constData());
 
     if (!execute(query)) {
