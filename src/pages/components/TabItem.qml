@@ -66,13 +66,30 @@ MouseArea {
             leftMargin: Theme.paddingMedium
             right: close.left
             rightMargin: Theme.paddingMedium
-            verticalCenter: favorite.verticalCenter
+            bottom: urlLabel.top
         }
 
         text: title
         horizontalAlignment: Text.AlignHCenter
         elide: Text.ElideRight
         color: down ? Theme.highlightColor : Theme.primaryColor
+    }
+
+    Text {
+        id: urlLabel
+        anchors {
+            bottom: parent.bottom
+            bottomMargin: Theme.paddingSmall
+            left: favorite.right
+            leftMargin: Theme.paddingMedium
+            right: close.left
+            rightMargin: Theme.paddingMedium
+        }
+        text: url
+        horizontalAlignment: Text.AlignHCenter
+        elide: Text.ElideRight
+        color: down ? Theme.highlightColor : Theme.primaryColor
+        font.pixelSize: Theme.fontSizeExtraSmall
     }
 
     IconButton {

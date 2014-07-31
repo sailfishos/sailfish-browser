@@ -26,47 +26,33 @@ SilicaListView {
     delegate: BackgroundItem {
         id: historyDelegate
         width: view.width
-        height: Theme.itemSizeSmall
-
+        height: titleText.height * 2 + Theme.paddingMedium
         ListView.onAdd: AddAnimation { target: historyDelegate }
 
-        Row {
+        Column {
             id: row
             width: view.width - Theme.paddingLarge * 2
             x: Theme.paddingLarge
             anchors.verticalCenter: parent.verticalCenter
 
-            Text {
+            Label {
                 id: titleText
                 text: Theme.highlightText(title, search, Theme.highlightColor)
                 color: highlighted ? Theme.highlightColor : Theme.primaryColor
-                font.pixelSize: Theme.fontSizeMedium
+                font.pixelSize: Theme.fontSizeSmall
+                truncationMode: TruncationMode.Fade
+                width: parent.width
             }
 
-            Text {
-                id: separator
-                // Should this be localized e.g. for Chinese user?
-                text: " • "
-                color: highlighted ? Theme.highlightColor : Theme.primaryColor
-                font.pixelSize: Theme.fontSizeMedium
-            }
-
-            Text {
+            Label {
                 id: urlText
                 text: Theme.highlightText(url, search, Theme.highlightColor)
                 opacity: 0.6
                 color: highlighted ? Theme.highlightColor : Theme.primaryColor
-                font.pixelSize: Theme.fontSizeMedium
+                font.pixelSize: Theme.fontSizeSmall
+                truncationMode: TruncationMode.Fade
+                width: parent.width
             }
-        }
-
-        // TODO: Remove this and change above labels to use truncationMode: TruncationMode.Fade
-        // once bug #8173 is fixed.
-        OpacityRampEffect {
-            slope: 1 + 6 * row.width / Screen.width
-            offset: 1 - 1 / slope
-            sourceItem: row
-            enabled: (titleText.implicitWidth + separator.implicitWidth + urlText.implicitWidth) > row.width
         }
 
         onClicked: {

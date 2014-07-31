@@ -18,10 +18,13 @@ Item {
     // By default url entry tab is active
     property int currentIndex: 1
     width: parent.width
+    height: iconRow.height
 
     signal selectTab(int index)
 
     Row {
+        id: iconRow
+        height: childrenRect.height
         anchors.centerIn: parent
 
         spacing: (parent.width - (4 * Theme.iconSizeSmall)) / 4
