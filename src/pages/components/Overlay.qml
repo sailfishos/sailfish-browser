@@ -24,6 +24,7 @@ PanelBackground {
     property alias animator: overlayAnimator
 
     property bool tabsVisible
+    property bool loadInNewTab
 
     function loadPage(url, title)  {
         // let gecko figure out how to handle malformed URLs
@@ -35,8 +36,9 @@ PanelBackground {
         }
 
         console.log("LOAD ON ENTRER:", searchString)
-        if (toolBar.enteringNewTabUrl) {
+        if (loadInNewTab) {
             webView.tabModel.newTab(searchString, title)
+            loadInNewTab = false
         } else {
             webView.load(searchString, title)
         }
@@ -47,6 +49,8 @@ PanelBackground {
 
     function openNewTabView(action) {
         tabsVisible = false
+        overlayTabs.currentIndex = 1 // Url entry
+        loadInNewTab = true
         overlayAnimator.showOverlay(action === PageStackAction.Immediate)
     }
 
@@ -157,6 +161,7 @@ PanelBackground {
             }
             onShowShare: pageStack.push(Qt.resolvedUrl("../ShareLinkPage.qml"), {"link" : webView.url, "linkTitle": webView.title})
             onShowTabs: overlay.tabsVisible = true
+            busy: webView.loading
         }
 
         SlideshowView {
@@ -174,6 +179,7 @@ PanelBackground {
 
             onCurrentIndexChanged: {
                 if (currentIndex == 0) {
+                    searchField.focus = false
                     historyModel.search("")
                 } else if (currentIndex == 1 && searchField.text !== webView.url) {
                     historyModel.search(searchField.text)
@@ -183,6 +189,8 @@ PanelBackground {
                     searchField.selectAll()
                 } else if(currentIndex == 2) {
                     searchInPage.forceActiveFocus()
+                } else {
+                    searchField.focus = false
                 }
             }
 

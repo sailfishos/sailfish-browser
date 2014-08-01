@@ -19,6 +19,7 @@ Item {
     id: toolBarRow
 
     property string title
+    property bool busy
 
     signal showTabs
     signal showChrome
@@ -88,10 +89,10 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.left: touchArea.left
                 width: parent.width
-                color: touchArea.down ? Theme.highlightColor : Theme.primaryColor
+                color: touchArea.down || toolBarRow.busy ? Theme.highlightColor : Theme.primaryColor
                 font.pixelSize: Theme.fontSizeExtraSmall
                 font.bold: true
-                text: parseDisplayableUrl(title)
+                text: title ? parseDisplayableUrl(title) : "Loading.."
                 horizontalAlignment: Text.AlignHCenter
                 truncationMode: TruncationMode.Fade
 
