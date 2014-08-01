@@ -36,6 +36,7 @@ public:
 
     Q_INVOKABLE void addBookmark(const QString& url, const QString& title, const QString& favicon);
     Q_INVOKABLE void removeBookmark(const QString& url);
+    Q_INVOKABLE void removeBookmarks(const QString& url);
     Q_INVOKABLE bool contains(const QString& url) const;
     Q_INVOKABLE void editBookmark(int index, const QString& url, const QString& title);
 
@@ -50,9 +51,12 @@ public:
 
 signals:
     void countChanged();
+    void bookmarkAdded(QString url);
+    void bookmarkRemoved(QString url);
 
 private:
     void save();
+    bool removeBookmark(const QString &url, bool canSave);
 
     QMap<QString, Bookmark*> bookmarks;
     QStringList bookmarkUrls;

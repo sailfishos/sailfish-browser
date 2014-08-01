@@ -18,36 +18,40 @@ SilicaListView {
 
     signal load(string url, string title)
 
-    anchors.fill: parent
-
     // To prevent model to steal focus
     currentIndex: -1
 
+    clip: true
+    pressDelay: 0
     delegate: BackgroundItem {
         id: historyDelegate
         width: view.width
-        height: Theme.itemSizeLarge
-
+        height: titleText.height * 2 + Theme.paddingMedium
         ListView.onAdd: AddAnimation { target: historyDelegate }
 
         Column {
+            id: row
             width: view.width - Theme.paddingLarge * 2
             x: Theme.paddingLarge
             anchors.verticalCenter: parent.verticalCenter
 
             Label {
+                id: titleText
                 text: Theme.highlightText(title, search, Theme.highlightColor)
+                color: highlighted ? Theme.highlightColor : Theme.primaryColor
+                font.pixelSize: Theme.fontSizeSmall
                 truncationMode: TruncationMode.Fade
                 width: parent.width
-                color: highlighted ? Theme.highlightColor : Theme.primaryColor
             }
+
             Label {
+                id: urlText
                 text: Theme.highlightText(url, search, Theme.highlightColor)
-                width: parent.width
-                font.pixelSize: Theme.fontSizeSmall
                 opacity: 0.6
                 color: highlighted ? Theme.highlightColor : Theme.primaryColor
-                truncationMode: TruncationMode.Elide
+                font.pixelSize: Theme.fontSizeSmall
+                truncationMode: TruncationMode.Fade
+                width: parent.width
             }
         }
 

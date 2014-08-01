@@ -18,6 +18,7 @@
 #include <QScopedPointer>
 
 #include "tab.h"
+#include "declarativebookmarkmodel.h"
 
 class DeclarativeTabModel : public QAbstractListModel, public QQmlParserStatus
 {
@@ -32,6 +33,7 @@ class DeclarativeTabModel : public QAbstractListModel, public QQmlParserStatus
     Q_PROPERTY(bool hasNewTabData READ hasNewTabData NOTIFY hasNewTabDataChanged FINAL)
     // TODO: Only needed by on_ReadyToLoadChanged handler of WebView
     Q_PROPERTY(QString newTabUrl READ newTabUrl NOTIFY newTabUrlChanged FINAL)
+    Q_PROPERTY(DeclarativeBookmarkModel* bookmarkModel READ bookmarkModel WRITE setBookmarkModel NOTIFY bookmarkModelChanged FINAL)
 
 public:
     DeclarativeTabModel(QObject *parent = 0);
@@ -40,6 +42,8 @@ public:
         ThumbPathRole = Qt::UserRole + 1,
         TitleRole,
         UrlRole,
+        FaviconRole,
+        FavoritedRole,
         TabIdRole
     };
 
@@ -48,6 +52,11 @@ public:
     Q_INVOKABLE bool activateTab(const QString &url);
     Q_INVOKABLE bool activateTab(int index);
     Q_INVOKABLE void closeActiveTab();
+
+    // TODO: This does not handle browser restarts. Icon should be available
+    // when browser is restarted and tab is bookmarked from tabview without
+    // actual webpage instance.
+    Q_INVOKABLE void addFavoriteIcon(int tabId, const QString &icon);
 
     Q_INVOKABLE void newTab(const QString &url, const QString &title);
     // This should be only for C++ side. But there is one depending move to QML side (see WebView::load())
@@ -80,6 +89,9 @@ public:
     bool hasNewTabData() const;
     QString newTabUrl() const;
 
+    DeclarativeBookmarkModel* bookmarkModel() const;
+    void setBookmarkModel(DeclarativeBookmarkModel* bookmarkModel);
+
     int newTabParentId() const;
 
     QObject* newTabPreviousPage() const;
@@ -88,7 +100,7 @@ public:
 
     void updateUrl(int tabId, bool activeTab, QString url, bool backForwardNavigation, bool initialLoad = false);
     void updateTitle(int tabId, bool activeTab, QString title);
-    void updateThumbnailPath(int tabId, bool activeTab, QString path);
+    void updateThumbnailPath(int tabId, QString path);
 
     static bool tabSort(const Tab &t1, const Tab &t2);
 
@@ -106,12 +118,15 @@ signals:
     void browsingChanged();
     void hasNewTabDataChanged();
     void newTabUrlChanged();
+    void bookmarkModelChanged();
     void newTabRequested(QString url, QString title);
     void updateActiveThumbnail();
 
 private slots:
     void tabChanged(const Tab &tab);
     void updateTitle(int tabId, int linkId, QString url, QString title);
+    void handleBookmarkAdded(QString url);
+    void handleBookmarkRemoved(QString url);
 
 private:
     struct NewTabData {
@@ -129,23 +144,26 @@ private:
     };
 
     void load();
-    void removeTab(int tabId, const QString &thumbnail, int index = -1);
+    void removeTab(int tabId, const QString &thumbnail, int index);
     int findTabIndex(int tabId) const;
     void saveTabOrder();
     void loadTabOrder();
-    void updateActiveTab(const Tab &activeTab);
+    void updateActiveTab(int oldActiveTabId, int activeTabId);
     void updateTabUrl(int tabId, bool activeTab, const QString &url, bool navigate);
+    void updateBookmarkedStatus(const QString &url, bool bookmarked);
 
     void updateNewTabData(NewTabData *newTabData);
     QString newTabTitle() const;
 
-    Tab m_activeTab;
     QList<Tab> m_tabs;
+    // All tabs closed. Let's keep reference at the model.
+    Tab m_dummyTab;
     bool m_loaded;
     bool m_browsing;
     int m_nextTabId;
 
     QScopedPointer<NewTabData> m_newTabData;
+    QPointer<DeclarativeBookmarkModel> m_bookmarkModel;
 
     friend class tst_declarativetabmodel;
     friend class tst_webview;

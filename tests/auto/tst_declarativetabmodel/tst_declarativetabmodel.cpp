@@ -652,8 +652,8 @@ bool tst_declarativetabmodel::canGoForward()
 
 int tst_declarativetabmodel::currentTabId()
 {
-    if (tabModel->m_activeTab.isValid()) {
-        return tabModel->m_activeTab.tabId();
+    if (tabModel->activeTab().isValid()) {
+        return tabModel->activeTab().tabId();
     }
     return 0;
 }

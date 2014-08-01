@@ -13,6 +13,7 @@
 import QtQuick 2.0
 import Sailfish.Media 1.0
 import org.freedesktop.contextkit 1.0
+import org.nemomobile.policy 1.0
 
 // QtObject cannot have children
 Item {
@@ -135,6 +136,20 @@ Item {
             if (suspendIntention) {
                 start()
             }
+        }
+    }
+
+    Permissions {
+        enabled: audioActive || videoActive
+        applicationClass: "player"
+        autoRelease: true
+
+        Resource {
+            type: Resource.AudioPlayback
+        }
+
+        Resource {
+            type: Resource.VideoPlayback
         }
     }
 }

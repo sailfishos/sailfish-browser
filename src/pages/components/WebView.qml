@@ -22,6 +22,8 @@ WebContainer {
 
     property color _decoratorColor: Theme.highlightDimmerColor
     property bool firstUseFullscreen
+    property alias bookmarkModel: tabs.bookmarkModel
+    readonly property bool moving: contentItem ? contentItem.moving : false
 
     function stop() {
         if (contentItem) {
@@ -96,7 +98,8 @@ WebContainer {
     foreground: Qt.application.active
     inputPanelHeight: window.pageStack.panelSize
     inputPanelOpenHeight: window.pageStack.imSize
-    fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) || webView.inputPanelVisible || !webView.foreground || (contentItem && contentItem.fullscreen) || firstUseFullscreen
+    fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) ||
+                    (contentItem && contentItem.fullscreen) || firstUseFullscreen
     _readyToLoad: contentItem && contentItem.viewReady && tabModel.loaded
 
     loading: contentItem ? contentItem.loading : false
@@ -105,8 +108,10 @@ WebContainer {
     webPageComponent: webPageComponent
 
     tabModel: TabModel {
+        id: tabs
+
         // Enable browsing after new tab actually created or it was not even requested
-        browsing: webView.active && !hasNewTabData && contentItem && contentItem.loaded
+        browsing: webView.enabled && !hasNewTabData && contentItem && contentItem.loaded
     }
 
     onTriggerLoad: webView.load(url, title)
@@ -116,6 +121,9 @@ WebContainer {
             MozContext.sendObserve("memory-pressure", "heap-minimize")
         }
     }
+
+    visible: opacity > 0.0 && WebUtils.firstUseDone
+    Behavior on opacity { Browser.FadeAnimation {} }
 
     WebViewCreator {
         activeWebView: contentItem
@@ -138,7 +146,7 @@ WebContainer {
             property string iconType
 
             loaded: loadProgress === 100 && !loading
-            enabled: container.active
+            enabled: webView.enabled
             // Active could pause e.g. video in cover by anding
             // Qt.application.active to visible
             active: visible
@@ -153,7 +161,6 @@ WebContainer {
 
             focus: true
             width: container.width
-            height: container.height
             state: ""
 
             onLoadProgressChanged: {
@@ -252,6 +259,7 @@ WebContainer {
                     webPage.chrome = true
                     favicon = ""
                     iconType = ""
+                    iconSize = 0
                     container.resetHeight(false)
                 }
             }
@@ -260,8 +268,9 @@ WebContainer {
                 switch (message) {
                 case "chrome:linkadded": {
                     var parsedFavicon = false
-                    var acceptableTouchIcon = (iconType === "apple-touch-icon" || iconType === "apple-touch-icon-precomposed")
-                    if (data.href && data.rel === "icon" && !acceptableTouchIcon) {
+                    var acceptedTouchIcon = (iconType === "apple-touch-icon" || iconType === "apple-touch-icon-precomposed")
+                    var acceptableTouchIcon = (data.rel === "apple-touch-icon" || data.rel === "apple-touch-icon-precomposed")
+                    if (data.href && (data.rel === "icon" || acceptableTouchIcon)) {
                         var sizes = []
                         if (data.sizes) {
                             var digits = data.sizes.split("x")
@@ -283,13 +292,12 @@ WebContainer {
                         }
                     }
 
-                    if (!acceptableTouchIcon && (
-                                data.rel === "shortcut icon"
-                            || data.rel === "apple-touch-icon"
-                            || data.rel === "apple-touch-icon-precomposed"
-                            || parsedFavicon)) {
+                    if (!acceptedTouchIcon && (data.rel === "shortcut icon" || acceptableTouchIcon || parsedFavicon)) {
                         favicon = data.href
-                        iconType = data.rel
+                        iconType = iconSize >= Theme.iconSizeMedium ? data.rel : ""
+                        if (iconType) {
+                            tabModel.addFavoriteIcon(tabId, favicon)
+                        }
                     }
                     break
                 }
@@ -355,12 +363,17 @@ WebContainer {
             // TextSelectionController {}
             states: State {
                 name: "boundHeightControl"
-                when: container.inputPanelVisible || !container.foreground
+                when: container.inputPanelVisible && container.enabled
                 PropertyChanges {
                     target: webPage
-                    height: container.parent.height
+                    // was floor
+                    height: Math.ceil(container.parent.height)
                 }
             }
+
+            // Initial height. This is a bit later than initial binding but still early.
+            // This avoids state changes not to restore binding back.
+            Component.onCompleted: height = container.height
         }
     }
 

@@ -11,8 +11,8 @@
 
 #include "bookmark.h"
 
-Bookmark::Bookmark(QString title, QString url, QString favicon, QObject* parent) :
-    QObject(parent), m_title(title), m_url(url), m_favicon(favicon)
+Bookmark::Bookmark(QString title, QString url, QString favicon, QString originalUrl, QObject* parent) :
+    QObject(parent), m_title(title), m_url(url), m_favicon(favicon), m_originalUrl(originalUrl)
 {
 }
 
@@ -47,4 +47,9 @@ void Bookmark::setFavicon(QString favicon) {
         m_favicon = favicon;
         emit faviconChanged();
     }
+}
+
+QString Bookmark::originalUrl() const
+{
+    return m_originalUrl;
 }

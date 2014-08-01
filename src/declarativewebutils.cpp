@@ -48,13 +48,6 @@ DeclarativeWebUtils::~DeclarativeWebUtils()
     gSingleton = 0;
 }
 
-QUrl DeclarativeWebUtils::getFaviconForUrl(QUrl url)
-{
-    QUrl faviconUrl(url);
-    faviconUrl.setPath("/favicon.ico");
-    return faviconUrl;
-}
-
 int DeclarativeWebUtils::getLightness(QColor color) const
 {
     return color.lightness();
@@ -144,6 +137,8 @@ void DeclarativeWebUtils::updateWebEngineSettings()
 
     // Don't force 16bit color depth
     mozContext->setPref(QString("gfx.qt.rgb16.force"), QVariant(false));
+
+    mozContext->setPref(QString("media.resource_handler_disabled"), QVariant(true));
 
     // subscribe to gecko messages
     mozContext->addObservers(QStringList()

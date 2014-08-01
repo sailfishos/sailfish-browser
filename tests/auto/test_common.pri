@@ -8,6 +8,7 @@ INCLUDEPATH += ../../../src
 isEmpty(NO_COMMON_INCLUDES) {
     include(../../src/common.pri)
     include(../../src/history.pri)
+    include(../../src/bookmarks.pri)
     include(common/downloadmanager_mock.pri)
     include(common/declarativewebutils_mock.pri)
 }
