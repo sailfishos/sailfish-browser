@@ -23,12 +23,12 @@ MouseArea {
     signal tapped
 
     width: icon.width
-    height: icon.height + label.height + Theme.paddingSmall
+    height: icon.height + label.height
 
     IconButton {
         id: icon
         anchors.horizontalCenter: parent.horizontalCenter
-        width: Theme.iconSizeSmall
+        width: Theme.iconSizeMedium
         height: width
 
         highlighted: selected || down || (mouseArea.pressed && mouseArea.containsMouse)
@@ -40,7 +40,6 @@ MouseArea {
         id: label
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: icon.bottom
-        anchors.topMargin: Theme.paddingSmall
         font.pixelSize: Theme.fontSizeExtraSmall
         color: highlighted ? Theme.highlightColor : Theme.primaryColor
         opacity: selected ? 1.0 : 0.0

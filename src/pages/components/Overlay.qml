@@ -123,13 +123,19 @@ PanelBackground {
         drag.maximumY: browserPage.isPortrait ? webView.fullscreenHeight - toolBar.height : webView.fullscreenHeight
 
         drag.onActiveChanged: {
+            console.log("Drag active changed")
             if (!drag.active) {
+                searchField.visible = true
                 if (overlay.y < dragThreshold) {
                     overlayAnimator.state = "fullscreenOverlay"
                 } else {
                     overlayAnimator.state = "chromeVisible"
                 }
             } else {
+                // Hack to make sure VKB does not come up when swiping down from history/download tabs
+                if (overlayTabs.currentIndex !== 1) {
+                    searchField.visible = false
+                }
                 // Store previous end state
                 if (overlayAnimator.state !== "draggingOverlay") {
                     state = overlayAnimator.state
@@ -150,7 +156,7 @@ PanelBackground {
 
         Browser.ToolBar {
             id: toolBar
-            visible: !overlayTabs.visible
+            visible: !overlayTabs.visible && !searchBar.visible
             opacity: (overlay.y - webView.fullscreenHeight/2)  / (webView.fullscreenHeight/2 - toolBar.height)
 
             title: webView.url
@@ -162,6 +168,12 @@ PanelBackground {
             onShowShare: pageStack.push(Qt.resolvedUrl("../ShareLinkPage.qml"), {"link" : webView.url, "linkTitle": webView.title})
             onShowTabs: overlay.tabsVisible = true
             busy: webView.loading
+        }
+
+        Browser.SearchBar {
+            id: searchBar
+            opacity: toolBar.opacity
+            visible: false
         }
 
         SlideshowView {
@@ -244,6 +256,9 @@ PanelBackground {
 
                         EnterKey.onClicked: overlay.loadPage(text)
                         anchors.top: titleLabel.bottom
+
+                        onFocusChanged: console.log("searchfield focus " +focus)
+                        onActiveFocusChanged: console.log("searchfield activefocus" + activeFocus)
                     }
 
                     Browser.HistoryList {
@@ -316,23 +331,51 @@ PanelBackground {
 
                     Column {
                         width: parent.width
+                        spacing: Theme.paddingMedium
 
                         SearchField {
                             id: searchInPage
                             placeholderText: "Search in page"
                             width: parent.width
+
+
+                            onTextChanged: {
+                                searchBar.search = text
+                                webView.sendAsyncMessage("embedui:find", { text: text, backwards: false, again: false })
+                            }
                         }
 
                         Label {
                             visible: searchInPage.text
-                            text: "Show found matches: 3"
-                            color: Theme.primaryColor
+                            text: webView.findInPageHasResult? "Show found matches" : "No results"
+                            color: webView.findInPageHasResult? Theme.primaryColor : Theme.highlightColor
+                            anchors.horizontalCenter: parent.horizontalCenter
+
+                            MouseArea {
+                                anchors.fill: parent
+                                enabled: visible && webView.findInPageHasResult
+
+                                onClicked: {
+                                    searchBar.visible = true
+                                    webView.focus = true
+                                    overlayAnimator.showChrome()
+                                }
+                            }
                         }
 
                         Label {
                             visible: searchInPage.text
                             text: "Search again"
                             color: Theme.primaryColor
+                            anchors.horizontalCenter: parent.horizontalCenter
+
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: {
+                                    searchBar.search = searchInPage.text
+                                    webView.sendAsyncMessage("embedui:find", { text: text, backwards: false, again: false })
+                                }
+                            }
                         }
                     }
                 }
@@ -341,16 +384,11 @@ PanelBackground {
                     height: parent.height
                     width: parent.width
 
-                   /* Label {
+                    Label {
                         text: "No current downloads"
                         anchors.centerIn: parent
                         font.pixelSize: Theme.fontSizeExtraLarge
-                    } */
-                    Browser.TabButton {
-                        width: Theme.itemSizeSmall
-                        anchors.centerIn: parent
-                        icon.source: "image://theme/icon-m-search"
-                        label: "Search in page"
+                        color: Theme.highlightColor
                     }
                 }
             }
@@ -425,4 +463,6 @@ PanelBackground {
             }
         }
     }
+
+    PathView {}
 }

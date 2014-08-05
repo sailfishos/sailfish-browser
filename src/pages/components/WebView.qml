@@ -26,6 +26,8 @@ WebContainer {
     property alias bookmarkModel: tabs.bookmarkModel
     readonly property bool moving: contentItem ? contentItem.moving : false
 
+    property bool findInPageHasResult
+
     function stop() {
         if (contentItem) {
             contentItem.stop()
@@ -220,6 +222,7 @@ WebContainer {
                 addMessageListener("embed:prompt")
                 addMessageListener("embed:auth")
                 addMessageListener("embed:login")
+                addMessageListener("embed:find")
                 addMessageListener("embed:permissions")
                 addMessageListener("Content:ContextMenu")
                 addMessageListener("Content:SelectionRange");
@@ -347,6 +350,14 @@ WebContainer {
                 case "Content:SelectionRange": {
                     webPage.selectionRangeUpdated(data)
                     break
+                }
+                case "embed:find": {
+                    // Found, or found wrapped
+                    if( data.r == 0 || data.r == 2) {
+                        webView.findInPageHasResult = true
+                    } else {
+                        webView.findInPageHasResult = false
+                    }
                 }
                 }
             }

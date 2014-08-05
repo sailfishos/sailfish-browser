@@ -27,7 +27,7 @@ Item {
         height: childrenRect.height
         anchors.centerIn: parent
 
-        spacing: (parent.width - (4 * Theme.iconSizeSmall)) / 4
+        spacing: (parent.width - (4 * Theme.iconSizeMedium)) / 4
 
         Browser.TabButton {
             selected: currentIndex == 0
