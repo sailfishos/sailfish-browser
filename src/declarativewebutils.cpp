@@ -26,7 +26,7 @@
 
 static const QString system_components_time_stamp("/var/lib/_MOZEMBED_CACHE_CLEAN_");
 static const QString profilePath("/.mozilla/mozembed");
-static const QString opensearchPath("/usr/lib/mozembedlite/chrome/embedlite/content/");
+static const QString openSearchPath("/usr/lib/mozembedlite/chrome/embedlite/content/");
 static DeclarativeWebUtils *gSingleton = 0;
 
 typedef QMap<QString, QString> StringMap;
@@ -38,7 +38,7 @@ const StringMap getAvailableOpenSearchConfigs()
     configDir.setSorting(QDir::Name);
 
     foreach (QString fileName, configDir.entryList(QStringList("*.xml"))) {
-        QFile xmlFile(opensearchPath + fileName);
+        QFile xmlFile(openSearchPath + fileName);
         xmlFile.open(QIODevice::ReadOnly | QIODevice::Text);
         QXmlStreamReader xml(&xmlFile);
         QString searchEngine;

@@ -13,7 +13,7 @@
 #include <QXmlStreamReader>
 #include "browsersettings.h"
 
-static const QString gOpensearchPath("/usr/lib/mozembedlite/chrome/embedlite/content/");
+static const QString openSearchPath("/usr/lib/mozembedlite/chrome/embedlite/content/");
 
 BrowserSettings::BrowserSettings(QObject *parent)
     : QObject(parent)
@@ -31,7 +31,7 @@ const QStringList BrowserSettings::getSearchEngineList() const
     configDir.setSorting(QDir::Name);
 
     foreach (QString fileName, configDir.entryList(QStringList("*.xml"))) {
-        QFile xmlFile(gOpensearchPath + fileName);
+        QFile xmlFile(openSearchPath + fileName);
         xmlFile.open(QIODevice::ReadOnly | QIODevice::Text);
         QXmlStreamReader xml(&xmlFile);
         QString searchEngine;
