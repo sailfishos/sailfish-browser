@@ -255,6 +255,8 @@ void DeclarativeWebUtils::handleObserve(const QString message, const QVariant da
                 mozContext->sendObserve("embedui:search", QVariant(loadsearch));
                 loadsearch.insert(QString("uri"), QVariant(QString("chrome://embedlite/content/yahoo.xml")));
                 mozContext->sendObserve("embedui:search", QVariant(loadsearch));
+                loadsearch.insert(QString("uri"), QVariant(QString("chrome://embedlite/content/duckduckgo.xml")));
+                mozContext->sendObserve("embedui:search", QVariant(loadsearch));
             }
         }
     }
