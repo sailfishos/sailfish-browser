@@ -27,7 +27,8 @@ BrowserSettings::~BrowserSettings()
 const QStringList BrowserSettings::getSearchEngineList() const
 {
     QStringList engineList;
-    QDir configDir(gOpensearchPath);
+    QDir configDir(openSearchPath);
+    configDir.setSorting(QDir::Name);
 
     foreach (QString fileName, configDir.entryList(QStringList("*.xml"))) {
         QFile xmlFile(gOpensearchPath + fileName);

@@ -34,7 +34,8 @@ typedef QMap<QString, QString> StringMap;
 const StringMap getAvailableOpenSearchConfigs()
 {
     StringMap configs;
-    QDir configDir(opensearchPath);
+    QDir configDir(openSearchPath);
+    configDir.setSorting(QDir::Name);
 
     foreach (QString fileName, configDir.entryList(QStringList("*.xml"))) {
         QFile xmlFile(opensearchPath + fileName);
