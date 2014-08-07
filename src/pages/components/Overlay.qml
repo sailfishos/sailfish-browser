@@ -195,11 +195,10 @@ PanelBackground {
                     historyModel.search("")
                 } else if (currentIndex == 1 && searchField.text !== webView.url) {
                     historyModel.search(searchField.text)
-
-                } else if(currentIndex == 1 && overlayAnimator.atTop) {
+                } else if (currentIndex == 1 && overlayAnimator.atTop) {
                     searchField.forceActiveFocus()
                     searchField.selectAll()
-                } else if(currentIndex == 2) {
+                } else if (currentIndex == 2) {
                     searchInPage.forceActiveFocus()
                 } else {
                     searchField.focus = false
@@ -207,8 +206,6 @@ PanelBackground {
             }
 
             model: VisualItemModel {
-
-
                 Browser.HistoryList {
                     width: parent.width
                     height: browserPage.height - toolBar.height - Theme.paddingMedium
@@ -247,10 +244,11 @@ PanelBackground {
                         onVisibleChanged: {
                             text = webView.url
 
-                            if(visible)
+                            if (visible) {
                                 focus = true
-                            else
+                            } else {
                                 focus = false
+                            }
                         }
                         label: "Search or enter URL"
 
@@ -517,6 +515,4 @@ PanelBackground {
             }
         }
     }
-
-    PathView {}
 }
