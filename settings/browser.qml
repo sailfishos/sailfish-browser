@@ -15,14 +15,12 @@ import org.nemomobile.configuration 1.0
 import org.sailfishos.browser.settings 1.0
 
 Page {
+    id: page
+
+    property var _nameMap: ({})
 
     function name2index(name) {
-        switch (name) {
-            case "Google": return 0
-            case "Bing": return 1
-            case "Yahoo": return 2
-            default: return 0
-        }
+        return _nameMap[name] !== undefined ? _nameMap[name] : 0
     }
 
     SilicaFlickable {
@@ -50,14 +48,24 @@ Page {
                 currentIndex: name2index(searchEngineConfig.value)
 
                 menu: ContextMenu {
-                    MenuItem {
-                        text: "Google"
+                    id: searchEngineMenu
+
+                    Component {
+                        id: menuItemComp
+
+                        MenuItem {}
                     }
-                    MenuItem {
-                        text: "Bing"
-                    }
-                    MenuItem {
-                        text: "Yahoo"
+
+                    Component.onCompleted: {
+                        var index = 0
+                        settings.searchEngineList.forEach(function(name) {
+                            var map = page._nameMap
+                            // FIXME: _contentColumn should not be used to add items dynamicly
+                            menuItemComp.createObject(searchEngineMenu._contentColumn, {"text": name})
+                            map[name] = index
+                            page._nameMap = map
+                            index++
+                        })
                     }
                 }
 
@@ -89,5 +97,9 @@ Page {
                 searchEngine.currentIndex = name2index(value)
             }
         }
+    }
+
+    BrowserSettings {
+        id: settings
     }
 }
