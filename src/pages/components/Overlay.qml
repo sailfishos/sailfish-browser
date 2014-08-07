@@ -249,7 +249,7 @@ PanelBackground {
                         visible: !toolBar.visible
                         onVisibleChanged: text = webView.url
 
-                        label: "Search or enter URL"
+                        label: "Search or type URL"
 
                         EnterKey.onClicked: overlay.loadPage(text)
                         anchors.top: titleLabel.bottom
