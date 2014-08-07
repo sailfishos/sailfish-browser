@@ -18,7 +18,8 @@ Page {
     property bool clearPrivateData: clearHistory.checked &&
                                     clearCookies.checked &&
                                     clearSavedPasswords.checked &&
-                                    clearCache.checked
+                                    clearCache.checked &&
+                                    clearBookmarks.checked
 
     RemorsePopup {
         id: clearDataRemorse
@@ -92,6 +93,13 @@ Page {
                 checked: true
             }
 
+            TextSwitch {
+                id: clearBookmarks
+                //% "Favorites"
+                text: qsTrId("settings_browser-la-clear_favorites")
+                checked: true
+            }
+
             // Spacer between Button and switches
             Item {
                 width: parent.width
@@ -123,6 +131,9 @@ Page {
                                                      }
                                                      if (clearCache.checked) {
                                                          clearCacheConfig.value = true
+                                                     }
+                                                     if (clearBookmarks.checked) {
+                                                         clearBookmarksConfig.value = true
                                                      }
                                                  }
                                              }
@@ -173,4 +184,12 @@ Page {
         key: "/apps/sailfish-browser/actions/clear_cache"
         defaultValue: false
     }
+
+    ConfigurationValue {
+        id: clearBookmarksConfig
+
+        key: "/apps/sailfish-browser/actions/clear_bookmarks"
+        defaultValue: false
+    }
+
 }

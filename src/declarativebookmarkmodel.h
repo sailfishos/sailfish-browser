@@ -48,11 +48,17 @@ public:
     void classBegin();
     void componentComplete();
 
+private slots:
+    void clearBookmarks();
+
 signals:
     void countChanged();
 
+
 private:
     void save();
+
+    static DeclarativeBookmarkModel* masterModel;
 
     QMap<QString, Bookmark*> bookmarks;
     QStringList bookmarkUrls;

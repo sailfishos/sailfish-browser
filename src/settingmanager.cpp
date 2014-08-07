@@ -15,6 +15,7 @@
 #include <MGConfItem>
 #include <qmozcontext.h>
 #include <QVariant>
+#include "bookmarkmanager.h"
 
 static SettingManager *gSingleton = 0;
 
@@ -26,6 +27,7 @@ SettingManager::SettingManager(QObject *parent)
     m_clearCookiesConfItem = new MGConfItem("/apps/sailfish-browser/actions/clear_cookies", this);
     m_clearPasswordsConfItem = new MGConfItem("/apps/sailfish-browser/actions/clear_passwords", this);
     m_clearCacheConfItem = new MGConfItem("/apps/sailfish-browser/actions/clear_cache", this);
+    m_clearBookmarksConfItem = new MGConfItem("/apps/sailfish-browser/actions/clear_bookmarks", this);
     m_searchEngineConfItem = new MGConfItem("/apps/sailfish-browser/settings/search_engine", this);
     m_doNotTrackConfItem = new MGConfItem("/apps/sailfish-browser/settings/do_not_track", this);
 
@@ -49,6 +51,7 @@ void SettingManager::initialize()
         clearCookies();
         clearPasswords();
         clearCache();
+        clearBookmarks();
     }
     setSearchEngine();
     doNotTrack();
@@ -63,6 +66,8 @@ void SettingManager::initialize()
             this, SLOT(clearPasswords()));
     connect(m_clearCacheConfItem, SIGNAL(valueChanged()),
             this, SLOT(clearCache()));
+    connect(m_clearBookmarksConfItem, SIGNAL(valueChanged()),
+            this, SLOT(clearBookmarks()));
     connect(m_searchEngineConfItem, SIGNAL(valueChanged()),
             this, SLOT(setSearchEngine()));
     connect(m_doNotTrackConfItem, SIGNAL(valueChanged()),
@@ -133,6 +138,16 @@ void SettingManager::clearCache()
     if (actionNeeded) {
         QMozContext::GetInstance()->sendObserve(QString("clear-private-data"), QString("cache"));
         m_clearCacheConfItem->set(false);
+    }
+}
+
+void SettingManager::clearBookmarks()
+{
+    bool actionNeeded = m_clearBookmarksConfItem->value(false).toBool();
+    if (actionNeeded) {
+        BookmarkManager* bookmarks = BookmarkManager::instance();
+        bookmarks->clear();
+        m_clearBookmarksConfItem->set(false);
     }
 }
 
