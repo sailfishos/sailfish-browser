@@ -82,13 +82,6 @@ PanelBackground {
         overlay: overlay
         portrait: browserPage.isPortrait
         active: Qt.application.active && browserPage.status === PageStatus.Active
-
-        onAtTopChanged: {
-            if (overlayTabs.currentIndex == 1 && atTop) {
-                searchField.forceActiveFocus()
-                searchField.selectAll()
-            }
-        }
     }
 
     Image {
@@ -178,6 +171,10 @@ PanelBackground {
 
         SlideshowView {
             id: overlayTabs
+
+            readonly property bool focusSearchField: currentIndex == 1 && overlayAnimator.atTop
+            readonly property bool focusSearchInPage: currentIndex == 2 && overlayAnimator.atTop
+
             width: parent.width
             height: toolBar.height + historyList.height
             visible: overlay.y < webView.fullscreenHeight/2
@@ -191,17 +188,26 @@ PanelBackground {
 
             onCurrentIndexChanged: {
                 if (currentIndex == 0) {
-                    searchField.focus = false
                     historyModel.search("")
                 } else if (currentIndex == 1 && searchField.text !== webView.url) {
                     historyModel.search(searchField.text)
-                } else if (currentIndex == 1 && overlayAnimator.atTop) {
+                }
+            }
+
+            onFocusSearchFieldChanged: {
+                if (focusSearchField) {
                     searchField.forceActiveFocus()
                     searchField.selectAll()
-                } else if (currentIndex == 2) {
-                    searchInPage.forceActiveFocus()
                 } else {
                     searchField.focus = false
+                }
+            }
+
+            onFocusSearchInPageChanged: {
+                if (focusSearchInPage) {
+                    searchInPage.forceActiveFocus()
+                } else {
+                    searchInPage.focus = false
                 }
             }
 
@@ -241,22 +247,12 @@ PanelBackground {
                         id: searchField
                         width: parent.width
                         visible: !toolBar.visible
-                        onVisibleChanged: {
-                            text = webView.url
+                        onVisibleChanged: text = webView.url
 
-                            if (visible) {
-                                focus = true
-                            } else {
-                                focus = false
-                            }
-                        }
                         label: "Search or enter URL"
 
                         EnterKey.onClicked: overlay.loadPage(text)
                         anchors.top: titleLabel.bottom
-
-                        onFocusChanged: console.log("searchfield focus " +focus)
-                        onActiveFocusChanged: console.log("searchfield activefocus" + activeFocus)
                     }
 
                     Browser.HistoryList {
