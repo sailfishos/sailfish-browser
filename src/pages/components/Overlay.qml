@@ -384,11 +384,65 @@ PanelBackground {
                     height: parent.height
                     width: parent.width
 
-                    Label {
+                    /*Label {
                         text: "No current downloads"
                         anchors.centerIn: parent
                         font.pixelSize: Theme.fontSizeExtraLarge
                         color: Theme.highlightColor
+                    }*/
+
+                    ListModel {
+                        id: tranferList
+                        ListElement { fileName: "test.txt"; status: "active"; progress: 0.9 }
+                        ListElement { fileName: "xxx.mov"; status: "active"; progress: 0.7 }
+
+                        ListElement { fileName: "jotain.jpg"; status: "completed"; progress: 1.0 }
+
+                        ListElement { fileName: "cat_pic.jpg"; status: "completed"; progress: 1.0 }
+                    }
+
+                    SilicaListView {
+                        anchors.fill: parent
+
+                        model: tranferList
+
+                        section {
+                            property: 'status'
+                            delegate: SectionHeader {
+                                text: section == "active" ? "Active downloads" : "Finished downloads"
+                                height: Theme.itemSizeExtraSmall
+                            }
+                        }
+
+                        delegate: ListItem {
+                            width: parent.width
+                            height: Theme.itemSizeMedium
+
+                            Slider {
+                                id: progressBar
+                                handleVisible: false
+                                label: fileName
+                                value: progress
+                                visible: status == "active"
+                                width: parent.width
+                            }
+
+                            Label {
+                                visible: !progressBar.visible
+                                anchors.centerIn: parent
+                                text: fileName
+                            }
+                        }
+
+                        footer: Item {
+                            width: parent.width
+                            height: Theme.itemSizeMedium
+
+                            Button {
+                                anchors.centerIn: parent
+                                text: "Show all downloads"
+                            }
+                        }
                     }
                 }
             }

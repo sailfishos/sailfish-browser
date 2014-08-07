@@ -139,7 +139,7 @@ Page {
     Browser.Overlay {
         id: overlay
 
-        enabled: !webView.fullscreenMode && !webView.moving
+        enabled: !webView.fullscreenMode
         webView: webView
         historyModel: historyModel
         browserPage: browserPage

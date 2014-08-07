@@ -31,7 +31,6 @@ Item {
     width: parent.width
     height: isPortrait ? Settings.toolbarLarge : Settings.toolbarSmall
 
-
     Row {
         anchors.centerIn: parent
         height: parent.height
