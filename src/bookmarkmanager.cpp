@@ -1,3 +1,14 @@
+/****************************************************************************
+**
+** Copyright (C) 2014 Jolla Ltd.
+** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jollamobile.com>
+**
+****************************************************************************/
+
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 #include "bookmarkmanager.h"
 #include <QDebug>
 #include <QStandardPaths>
@@ -10,6 +21,10 @@
 #include <QRegularExpression>
 
 #include "bookmark.h"
+
+BookmarkManager::BookmarkManager()
+{
+}
 
 BookmarkManager* BookmarkManager::instance()
 {
@@ -25,16 +40,16 @@ void BookmarkManager::save(const QMap<QString, Bookmark*> & bookmarks)
 {
     QString settingsLocation = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
     QDir dir(settingsLocation);
-    if(!dir.exists()) {
-        if(!dir.mkpath(settingsLocation)) {
-            qWarning() << "Can't create directory "+ settingsLocation;
+    if (!dir.exists()) {
+        if (!dir.mkpath(settingsLocation)) {
+            qWarning() << "Can't create directory " << settingsLocation;
             return;
         }
     }
     QString path = settingsLocation + "/bookmarks.json";
     QFile file(path);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        qWarning() << "Can't create file "+ path;
+        qWarning() << "Can't create file " << path;
         return;
     }
     QTextStream out(&file);
@@ -68,7 +83,7 @@ QMap<QString, Bookmark*> BookmarkManager::load() {
     QScopedPointer<QFile> file(new QFile(settingsLocation));
 
     if (!file->open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qWarning() << "Unable to open bookmarks "+settingsLocation;
+        qWarning() << "Unable to open bookmarks " << settingsLocation;
 
         file.reset(new QFile(QLatin1Literal("/usr/share/sailfish-browser/content/bookmarks.json")));
         if (!file->open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -82,8 +97,8 @@ QMap<QString, Bookmark*> BookmarkManager::load() {
         QJsonArray array = doc.array();
         QJsonArray::iterator i;
         QRegularExpression jollaUrl("^http[s]?://(together.)?jolla.com");
-        for(i=array.begin(); i != array.end(); ++i) {
-            if((*i).isObject()) {
+        for (i=array.begin(); i != array.end(); ++i) {
+            if ((*i).isObject()) {
                 QJsonObject obj = (*i).toObject();
                 QString url = obj.value("url").toString();
                 QString favicon = obj.value("favicon").toString();

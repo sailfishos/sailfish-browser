@@ -54,11 +54,8 @@ private slots:
 signals:
     void countChanged();
 
-
 private:
     void save();
-
-    static DeclarativeBookmarkModel* masterModel;
 
     QMap<QString, Bookmark*> bookmarks;
     QStringList bookmarkUrls;
