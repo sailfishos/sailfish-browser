@@ -161,7 +161,8 @@ function openContextMenu(data) {
                                                             "contentType": contentType,
                                                             "tabModel": tabModel,
                                                             "viewId": webView.contentItem.uniqueID(),
-                                                            "pageStack": pageStack
+                                                            "pageStack": pageStack,
+                                                            "webView": webView
                                                         })
                 _hideVirtualKeyboard()
 

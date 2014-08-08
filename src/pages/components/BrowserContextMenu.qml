@@ -22,6 +22,7 @@ Rectangle {
     property string contentType
     property TabModel tabModel
     property PageStack pageStack
+    property WebView webView
 
     property int viewId
     readonly property bool active: visible
@@ -82,6 +83,19 @@ Rectangle {
         anchors.bottom: parent.bottom
         anchors.bottomMargin: landscape ? Theme.paddingLarge : Theme.itemSizeSmall
         width: parent.width
+
+        MenuItem {
+            visible: root.linkHref.length > 0 && root.imageSrc.length === 0
+            //: Open link in current tab
+            //% "Open link"
+            text: qsTrId("sailfish_browser-me-open_link")
+
+            onClicked: {
+                root._hide()
+                webView.load(root.linkHref, root.linkTitle)
+            }
+        }
+
 
         MenuItem {
             visible: root.linkHref.length > 0 && root.imageSrc.length === 0
