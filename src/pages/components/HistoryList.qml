@@ -21,6 +21,11 @@ SilicaListView {
     // To prevent model to steal focus
     currentIndex: -1
 
+    header: SectionHeader {
+        text: search ? "" : "Recent pages"
+        height: search ? 0 : Theme.itemSizeExtraSmall
+    }
+
     clip: true
     pressDelay: 0
     delegate: BackgroundItem {

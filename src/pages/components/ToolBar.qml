@@ -20,6 +20,7 @@ Item {
 
     property string title
     property bool busy
+    property bool doubleHeight
 
     signal showTabs
     signal showChrome
@@ -37,6 +38,9 @@ Item {
 
         Browser.IconButton {
             id: reload
+
+            active: !doubleHeight
+
             width: Theme.iconSizeMedium + 2 * Theme.paddingMedium
             height: toolBarRow.height
             icon.source: webView.loading ? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
@@ -45,7 +49,7 @@ Item {
 
         Browser.IconButton {
             id: backIcon
-            active: webView.canGoBack
+            active: webView.canGoBack && !doubleHeight
             width: Theme.iconSizeMedium + 2 * Theme.paddingMedium
             height: toolBarRow.height
             icon.source: "image://theme/icon-m-back"
@@ -64,33 +68,18 @@ Item {
         MouseArea {
             id: touchArea
             height: parent.height
-            width: domainBox.width - 2 * Theme.paddingSmall
+            width: label.width - 2 * Theme.paddingSmall
+
+            enabled: !doubleHeight
 
             property bool down: pressed && containsMouse
-
-            Rectangle {
-                id: domainBox
-                height: label.height + Theme.paddingSmall
-                x: -Theme.paddingSmall
-                width: toolBarRow.width - 4 * Theme.iconSizeMedium - 6 * Theme.paddingMedium - 4 * Theme.paddingSmall
-                radius: 4.0
-                anchors.verticalCenter: parent.verticalCenter
-                color: "transparent"
-
-
-                border.color: label.color
-                border.width: 2
-                opacity: 0.5
-            }
 
             Label {
                 id: label
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.left: touchArea.left
-                width: parent.width
+                width: toolBarRow.width - 4 * Theme.iconSizeMedium - 6 * Theme.paddingMedium - 4 * Theme.paddingSmall
                 color: touchArea.down || toolBarRow.busy ? Theme.highlightColor : Theme.primaryColor
-                font.pixelSize: Theme.fontSizeExtraSmall
-                font.bold: true
                 text: title ? parseDisplayableUrl(title) : "Loading.."
                 horizontalAlignment: Text.AlignHCenter
                 truncationMode: TruncationMode.Fade
@@ -110,6 +99,7 @@ Item {
 
         Browser.IconButton {
             id: tabs
+            active: !doubleHeight
             width: Theme.iconSizeMedium + 2 * Theme.paddingMedium
             height: toolBarRow.height
             icon.source: "image://theme/icon-m-tabs"
@@ -135,7 +125,8 @@ Item {
 
         Browser.IconButton {
             id: shareIcon
-            icon.source: "image://theme/icon-m-share"
+
+            icon.source: "image://theme/icon-lock-more"
             width: Theme.iconSizeMedium + 2 * Theme.paddingMedium
             height: toolBarRow.height
             onTapped: toolBarRow.showShare()

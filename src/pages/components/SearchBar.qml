@@ -38,9 +38,20 @@ Item {
             }
         }
 
-        Label {
-            anchors.verticalCenter: parent.verticalCenter
-            text: "Find: \"" + search + "\""
+        MouseArea {
+            id: touchArea
+            height: parent.height
+            width: textLabel.width
+            property bool down: pressed && containsMouse
+
+            Label {
+                id: textLabel
+                anchors.verticalCenter: parent.verticalCenter
+                text: "Find: \"" + search + "\""
+                color: touchArea.down ? Theme.highlightColor : Theme.primaryColor
+            }
+
+            onClicked: overlayAnimator.showOverlay()
         }
 
         Browser.IconButton {
@@ -56,9 +67,11 @@ Item {
     }
 
     Browser.IconButton {
-        anchors.right: parent.right
-        anchors.rightMargin: Theme.paddingMedium
-        anchors.verticalCenter: parent.verticalCenter
+        anchors {
+            right: parent.right
+            rightMargin: Theme.paddingMedium
+            verticalCenter: parent.verticalCenter
+        }
         width: Theme.iconSizeMedium
         height: searchBar.height
         icon.source: "image://theme/icon-m-reset"
@@ -67,5 +80,4 @@ Item {
             searchBar.visible = false
         }
     }
-
 }

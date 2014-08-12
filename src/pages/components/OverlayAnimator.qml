@@ -27,6 +27,10 @@ Item {
 
     property bool _immediate
 
+    function showSecondaryTools() {
+        state = "doubleToolBar"
+    }
+
     function showChrome() {
         state = "chromeVisible"
     }
@@ -131,12 +135,27 @@ Item {
                     y: portrait ? overlay.toolBar.height : -overlay.toolBar.height
                 }
             ]
+        },
+
+        State {
+            name: "doubleToolBar"
+            changes: [
+                PropertyChanges {
+                    target: webView
+                    height: overlay.y
+                },
+                PropertyChanges {
+                    target: overlay
+                    y: webView.fullscreenHeight - overlay.toolBar.height * 2
+                }
+            ]
         }
+
     ]
 
     transitions: Transition {
         id: overlayTransition
-        to: "fullscreenWebPage,chromeVisible,loadProgressOverlay,fullscreenOverlay,noOverlay"
+        to: "fullscreenWebPage,chromeVisible,loadProgressOverlay,fullscreenOverlay,noOverlay,doubleToolBar"
 
         SequentialAnimation {
             NumberAnimation { target: webView; property: "height"; duration: transitionDuration; easing.type: Easing.InOutQuad }
