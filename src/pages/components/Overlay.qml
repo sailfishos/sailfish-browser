@@ -246,8 +246,7 @@ PanelBackground {
                     TextField {
                         id: searchField
                         width: parent.width
-                        visible: !toolBar.visible
-                        onVisibleChanged: text = webView.url
+                        text: overlay.loadInNewTab ? "" : webView.url
 
                         label: "Search or type URL"
 
