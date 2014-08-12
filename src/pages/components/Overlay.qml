@@ -205,9 +205,9 @@ PanelBackground {
 
             onFocusSearchInPageChanged: {
                 if (focusSearchInPage) {
-                    searchInPage.forceActiveFocus()
+                    findInPage.findInPageField.forceActiveFocus()
                 } else {
-                    searchInPage.focus = false
+                    findInPage.findInPageField.focus = false
                 }
             }
 
@@ -317,60 +317,11 @@ PanelBackground {
                     }
                 }
 
+                FindInPageView {
+                    id: findInPage
+                    width: overlayTabs.width
+                    height: overlayTabs.height
 
-                Item {
-                    height: parent.height
-                    width: parent.width
-
-                    Column {
-                        width: parent.width
-                        spacing: Theme.paddingMedium
-
-                        SearchField {
-                            id: searchInPage
-                            placeholderText: "Search in page"
-                            width: parent.width
-
-
-                            onTextChanged: {
-                                searchBar.search = text
-                                webView.sendAsyncMessage("embedui:find", { text: text, backwards: false, again: false })
-                            }
-                        }
-
-                        Label {
-                            visible: searchInPage.text
-                            text: webView.findInPageHasResult? "Show found matches" : "No results"
-                            color: webView.findInPageHasResult? Theme.primaryColor : Theme.highlightColor
-                            anchors.horizontalCenter: parent.horizontalCenter
-
-                            MouseArea {
-                                anchors.fill: parent
-                                enabled: visible && webView.findInPageHasResult
-
-                                onClicked: {
-                                    searchBar.visible = true
-                                    webView.focus = true
-                                    overlayAnimator.showChrome()
-                                }
-                            }
-                        }
-
-                        Label {
-                            visible: searchInPage.text
-                            text: "Search again"
-                            color: Theme.primaryColor
-                            anchors.horizontalCenter: parent.horizontalCenter
-
-                            MouseArea {
-                                anchors.fill: parent
-                                onClicked: {
-                                    searchBar.search = searchInPage.text
-                                    webView.sendAsyncMessage("embedui:find", { text: text, backwards: false, again: false })
-                                }
-                            }
-                        }
-                    }
                 }
 
                 DownloadsView {
