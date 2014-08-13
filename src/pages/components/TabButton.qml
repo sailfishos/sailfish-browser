@@ -22,8 +22,10 @@ MouseArea {
 
     signal tapped
 
-    width: icon.width
+    width: icon.width + Theme.paddingLarge + Theme.paddingMedium
     height: icon.height + label.height
+
+    opacity: selected ? 1.0 : 0.7
 
     IconButton {
         id: icon
