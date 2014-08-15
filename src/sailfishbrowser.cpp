@@ -45,6 +45,7 @@
 Q_DECL_EXPORT int main(int argc, char *argv[])
 {
     setenv("USE_ASYNC", "1", 1);
+    setenv("USE_NEMO_GSTREAMER", "1", 1);
 
     // Workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=929879
     setenv("LC_NUMERIC", "C", 1);
