@@ -115,7 +115,7 @@ Page {
         fullscreenHeight: portrait ? Screen.height : Screen.width
         portrait: browserPage.isPortrait
         maxLiveTabCount: 3
-        toolbarHeight: overlay.toolBar.height
+        toolbarHeight: overlay.toolBar.toolsHeight
 
         bookmarkModel: BookmarkModel {}
 
@@ -126,7 +126,7 @@ Page {
     Rectangle {
         width: webView.width
         height: Math.ceil(webView.height)
-        opacity: 0.9 - (overlay.y / (webView.fullscreenHeight - overlay.toolBar.height)) * 0.9
+        opacity: 0.9 - (overlay.y / (webView.fullscreenHeight - overlay.toolBar.toolsHeight)) * 0.9
         color: Theme.highlightDimmerColor
 
         MouseArea {
@@ -200,7 +200,7 @@ Page {
         if (!WebUtils.firstUseDone) {
             var component = Qt.createComponent(Qt.resolvedUrl("components/FirstUseOverlay.qml"))
             if (component.status == Component.Ready) {
-                firstUseOverlay = component.createObject(browserPage, {"width":browserPage.width, "height":browserPage.heigh, "gestureThreshold" : toolBar.height});
+                firstUseOverlay = component.createObject(browserPage, {"width":browserPage.width, "height":browserPage.heigh, "gestureThreshold" : toolBar.toolsHeight});
             } else {
                 console.log("FirstUseOverlay create failed " + component.errorString())
             }

@@ -23,7 +23,9 @@ Item {
     property int transitionDuration: !_immediate ? 400 : 0
 
     property bool active
-    readonly property bool allowContentUse: "chromeVisible" || state === "fullscreenWebPage"
+    readonly property bool allowContentUse: state === "chromeVisible" || state === "fullscreenWebPage" || state === "doubleToolBar"
+    readonly property bool dragging: state === "draggingOverlay"
+    readonly property bool secondaryTools: state === "doubleToolBar"
 
     property bool _immediate
 
@@ -38,6 +40,10 @@ Item {
     function showOverlay(immediate) {
         _immediate = immediate || false
         state = "fullscreenOverlay"
+    }
+
+    function drag() {
+        state = "draggingOverlay"
     }
 
     function hide() {
@@ -109,7 +115,7 @@ Item {
                 },
                 PropertyChanges {
                     target: overlay
-                    y: webView.fullscreenHeight - overlay.toolBar.height
+                    y: webView.fullscreenHeight - overlay.toolBar.toolsHeight
                 }
             ]
         },
@@ -132,7 +138,7 @@ Item {
                 },
                 PropertyChanges {
                     target: overlay
-                    y: portrait ? overlay.toolBar.height : -overlay.toolBar.height
+                    y: portrait ? overlay.toolBar.toolsHeight : -overlay.toolBar.toolsHeight
                 }
             ]
         },
@@ -146,11 +152,10 @@ Item {
                 },
                 PropertyChanges {
                     target: overlay
-                    y: webView.fullscreenHeight - overlay.toolBar.height * 2
+                    y: webView.fullscreenHeight - overlay.toolBar.toolsHeight * 2
                 }
             ]
         }
-
     ]
 
     transitions: Transition {

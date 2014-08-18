@@ -15,12 +15,14 @@ import Sailfish.Silica 1.0
 import Sailfish.Browser 1.0
 import "." as Browser
 
-Item {
+Column {
     id: toolBarRow
 
     property string title
     property bool busy
-    property bool doubleHeight
+    property real secondaryToolsHeight
+    property bool secondaryToolsActive
+    readonly property alias toolsHeight: toolsRow.height
 
     signal showTabs
     signal showChrome
@@ -30,28 +32,38 @@ Item {
     signal load(string search)
 
     width: parent.width
-    height: isPortrait ? Settings.toolbarLarge : Settings.toolbarSmall
+
+    SecondaryBar {
+        id: secondaryBar
+        visible: opacity > 0.0 || height > 0.0
+        opacity: secondaryToolsActive ? 1.0 : 0.0
+        height: secondaryToolsHeight
+        clip: true
+
+        Behavior on opacity { FadeAnimation { } }
+    }
 
     Row {
-        anchors.centerIn: parent
-        height: parent.height
+        id: toolsRow
+        anchors.horizontalCenter: parent.horizontalCenter
+        height: isPortrait ? Settings.toolbarLarge : Settings.toolbarSmall
 
         Browser.IconButton {
             id: reload
 
-            active: !doubleHeight
+            active: !secondaryToolsActive
 
             width: Theme.iconSizeMedium + 2 * Theme.paddingMedium
-            height: toolBarRow.height
+            height: parent.height
             icon.source: webView.loading ? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
             onTapped: webView.loading ? webView.stop() : webView.reload()
         }
 
         Browser.IconButton {
             id: backIcon
-            active: webView.canGoBack && !doubleHeight
+            active: webView.canGoBack && !secondaryToolsActive
             width: Theme.iconSizeMedium + 2 * Theme.paddingMedium
-            height: toolBarRow.height
+            height: parent.height
             icon.source: "image://theme/icon-m-back"
             onTapped: webView.goBack()
         }
@@ -70,7 +82,7 @@ Item {
             height: parent.height
             width: label.width - 2 * Theme.paddingSmall
 
-            enabled: !doubleHeight
+            enabled: !secondaryToolsActive
 
             property bool down: pressed && containsMouse
 
@@ -99,9 +111,9 @@ Item {
 
         Browser.IconButton {
             id: tabs
-            active: !doubleHeight
+            active: !secondaryToolsActive
             width: Theme.iconSizeMedium + 2 * Theme.paddingMedium
-            height: toolBarRow.height
+            height: parent.height
             icon.source: "image://theme/icon-m-tabs"
             onTapped: {
                 if (firstUseOverlay) {
@@ -128,7 +140,7 @@ Item {
 
             icon.source: "image://theme/icon-lock-more"
             width: Theme.iconSizeMedium + 2 * Theme.paddingMedium
-            height: toolBarRow.height
+            height: parent.height
             onTapped: toolBarRow.showShare()
         }
     }

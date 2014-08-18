@@ -50,7 +50,8 @@ PanelBackground {
         overlayAnimator.showOverlay(action === PageStackAction.Immediate)
     }
 
-    y: webView.fullscreenHeight - toolBar.height
+    y: webView.fullscreenHeight - toolBar.toolsHeight
+
     width: parent.width
     height: historyContainer.height
 
@@ -88,7 +89,7 @@ PanelBackground {
     Browser.ProgressBar {
         id: progressBar
         width: parent.width
-        height: toolBar.height
+        height: toolBar.toolsHeight
         visible: !firstUseOverlay
         opacity: webView.loading ? 1.0 : 0.0
         progress: webView.loadProgress / 100.0
@@ -97,7 +98,7 @@ PanelBackground {
     MouseArea {
         id: dragArea
 
-        property int dragThreshold: state === "fullscreenOverlay" ? toolBar.height * 1.5 : (webView.fullscreenHeight - toolBar.height * 2)
+        property int dragThreshold: state === "fullscreenOverlay" ? toolBar.toolsHeight * 1.5 : (webView.fullscreenHeight - toolBar.toolsHeight * 2)
 
         width: parent.width
         height: historyContainer.height
@@ -108,28 +109,23 @@ PanelBackground {
         drag.target: overlay
         drag.filterChildren: true
         drag.axis: Drag.YAxis
-        drag.minimumY: browserPage.isPortrait ? toolBar.height : 0
-        drag.maximumY: browserPage.isPortrait ? webView.fullscreenHeight - toolBar.height : webView.fullscreenHeight
+        drag.minimumY: browserPage.isPortrait ? toolBar.toolsHeight : 0
+        drag.maximumY: browserPage.isPortrait ? webView.fullscreenHeight - toolBar.toolsHeight : webView.fullscreenHeight
 
         drag.onActiveChanged: {
             if (!drag.active) {
                 if (overlay.y < dragThreshold) {
-                    overlayAnimator.state = "fullscreenOverlay"
+                    overlayAnimator.showOverlay(false)
                 } else {
-                    overlayAnimator.state = "chromeVisible"
+                    overlayAnimator.showChrome()
                 }
             } else {
                 // Store previous end state
-                if (overlayAnimator.state !== "draggingOverlay") {
+                if (!overlayAnimator.dragging) {
                     state = overlayAnimator.state
                 }
 
-                //                if (overlayAnimator.atTop && webView.inputPanelVisible) {
-                //                    Qt.inputMethod.hide()
-                //                    webView.focus = true
-                //                }
-
-                overlayAnimator.state = "draggingOverlay"
+                overlayAnimator.drag()
                 console.log("Previous dragging state:", state)
 
             }
@@ -137,47 +133,32 @@ PanelBackground {
 
         Behavior on opacity { Browser.FadeAnimation {} }
 
-        SecondaryBar {
-            visible: opacity > 0.0
-            opacity: overlayAnimator.state == "doubleToolBar" ? 1.0 : 0.0
-
-            Behavior on opacity { FadeAnimation {} }
-
-            clip: true
-            height: dragArea.drag.maximumY - overlay.y
-        }
-
-
-
-
         Item {
             id: historyContainer
+
             width: parent.width
-            height: toolBar.height + historyList.height
+            height: toolBar.toolsHeight + historyList.height
             property bool favoritesVisible: !searchField.text || searchField.text == webView.url
 
             Browser.ToolBar {
                 id: toolBar
-
-                y: !doubleHeight ? 0 : dragArea.drag.maximumY - overlay.y
-
                 title: overlay.webView.url
                 onShowChrome: overlayAnimator.showChrome()
                 onShowOverlay: overlayAnimator.showOverlay()
                 onShowTabs: overlay.tabsViewVisible = true
-                onShowShare: doubleHeight = !doubleHeight
-                onLoad: overlay.loadPage(text)
-                opacity: (overlay.y - webView.fullscreenHeight/2)  / (webView.fullscreenHeight/2 - toolBar.height)
-                visible: opacity > 0
-
-                doubleHeight: overlayAnimator.state == "doubleToolBar"
-                onDoubleHeightChanged: {
-                    if (doubleHeight) {
-                        overlayAnimator.showSecondaryTools()
-                    } else {
+                onShowShare: {
+                    if (overlayAnimator.secondaryTools) {
                         overlayAnimator.showChrome()
+                    } else {
+                        overlayAnimator.showSecondaryTools()
                     }
                 }
+                onLoad: overlay.loadPage(text)
+                opacity: (overlay.y - webView.fullscreenHeight/2)  / (webView.fullscreenHeight/2 - toolBar.toolsHeight)
+                visible: opacity > 0
+
+                secondaryToolsActive: overlayAnimator.secondaryTools
+                secondaryToolsHeight: Math.max(dragArea.drag.maximumY - overlay.y, 0)
             }
 
             TextField {
@@ -190,7 +171,7 @@ PanelBackground {
 
                 readonly property bool focusSearchField: overlayAnimator.atTop
 
-                opacity: (webView.fullscreenHeight/2 - overlay.y ) / (webView.fullscreenHeight/2 - toolBar.height)
+                opacity: (webView.fullscreenHeight/2 - overlay.y ) / (webView.fullscreenHeight/2 - toolBar.toolsHeight)
                 visible: opacity > 0
 
 
@@ -208,7 +189,7 @@ PanelBackground {
                 id: historyList
 
                 width: parent.width
-                height: browserPage.height - toolBar.height - dragArea.drag.minimumY
+                height: browserPage.height - toolBar.toolsHeight - dragArea.drag.minimumY
                 search: searchField.text
                 opacity: historyContainer.favoritesVisible ? 0.0 : 1.0
                 visible: !overlayAnimator.atBottom && opacity > 0.0
