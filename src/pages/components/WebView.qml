@@ -22,6 +22,7 @@ WebContainer {
 
     property color _decoratorColor: Theme.highlightDimmerColor
     property bool firstUseFullscreen
+    property alias permissionsEnabled: resourceController.permissionsEnabled
 
     function stop() {
         if (contentItem) {

@@ -644,10 +644,8 @@ void DeclarativeWebContainer::onReadyToLoad()
 void DeclarativeWebContainer::onTabsCleared()
 {
     m_webPages->clear();
+    setWebPage(0);
     setThumbnailPath("");
-    emit contentItemChanged();
-    emit titleChanged();
-    emit urlChanged();
 }
 
 /**

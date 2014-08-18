@@ -91,6 +91,8 @@ void tst_webview::initTestCase()
 
     waitSignals(tabAddedSpy, 1);
     QCOMPARE(tabAddedSpy.count(), 1);
+
+    QMozContext::GetInstance()->setPref(QString("media.resource_handler_disabled"), QVariant(true));
 }
 
 void tst_webview::testNewTab_data()
@@ -600,6 +602,9 @@ void tst_webview::restart()
     webContainer = TestObject::qmlObject<DeclarativeWebContainer>("webView");
     historyModel = TestObject::qmlObject<DeclarativeHistoryModel>("historyModel");
     tabModel = TestObject::qmlObject<DeclarativeTabModel>("tabModel");
+
+    QTest::qWait(1000);
+
     QVERIFY(tabModel->count() == 1);
     QCOMPARE(tabModel->activeTab().url(), testUserAgentUrl);
     QCOMPARE(webContainer->url(), testUserAgentUrl);
@@ -702,7 +707,6 @@ void tst_webview::verifyHistory(QList<TestTab> &historyOrder)
 int main(int argc, char *argv[])
 {
     setenv("USE_ASYNC", "1", 1);
-    setenv("QML_BAD_GUI_RENDER_LOOP", "1", 1);
 
     QGuiApplication app(argc, argv);
     app.setAttribute(Qt::AA_Use96Dpi, true);
