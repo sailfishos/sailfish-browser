@@ -40,11 +40,6 @@ SilicaGridView {
     property int minOffsetIndex: contextMenu ? currentIndex - (currentIndex % columns) + columns : 0
     property int yOffset: contextMenu ? contextMenu.height : 0
 
-    header: SectionHeader {
-        // Add translation
-        text: "Favorites"
-    }
-
     delegate: ListItem {
         id: container
 
