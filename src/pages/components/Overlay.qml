@@ -158,7 +158,6 @@ PanelBackground {
                 visible: opacity > 0
 
                 secondaryToolsActive: overlayAnimator.secondaryTools
-                secondaryToolsHeight: Math.max(dragArea.drag.maximumY - overlay.y, 0)
             }
 
             TextField {

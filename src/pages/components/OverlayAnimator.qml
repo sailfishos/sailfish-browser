@@ -61,11 +61,10 @@ Item {
     }
 
     onStateChanged: {
-        console.log("OverlayAnimator State:", state)
         // Animation end changes to true state. Hence not like atTop = state !== "fullscreenOverlay"
         if (state !== "fullscreenOverlay") {
             atTop = false
-        } if (state !== "chromeVisible" && state !== "fullscreenWebPage") {
+        } if (state !== "chromeVisible" && state !== "fullscreenWebPage" && state !== "doubleToolBar") {
             atBottom = false
         } if (state !== "loadProgressOverlay") {
             atMiddle = false
@@ -94,7 +93,7 @@ Item {
                     // TODO: once we get rid of bad rendering loop, check if we could use here browserPage.height
                     // instead of webView.fullscreenHeight. Currently with browserPage.height binding we skip
                     // frames when returning back from tab page so that virtual keyboard was open.
-                    height: webView.fullscreenHeight
+                    height: overlay.y //webView.fullscreenHeight
                 },
                 PropertyChanges {
                     target: overlay
@@ -153,6 +152,11 @@ Item {
                 PropertyChanges {
                     target: overlay
                     y: webView.fullscreenHeight - overlay.toolBar.toolsHeight * 2
+                },
+                PropertyChanges {
+                    target: overlay.toolBar
+                    secondaryToolsHeight: overlay.toolBar.toolsHeight
+                        //Math.min(overlay.toolBar.toolsHeight, Math.max(dragArea.drag.maximumY - overlay.y, 0))
                 }
             ]
         }
@@ -166,7 +170,7 @@ Item {
             NumberAnimation { target: webView; property: "height"; duration: transitionDuration; easing.type: Easing.InOutQuad }
             ScriptAction {
                 script: {
-                    if (animator.state === "chromeVisible" || animator.state === "fullscreenWebPage") {
+                    if (animator.state === "chromeVisible" || animator.state === "fullscreenWebPage" || animator.state === "doubleToolBar") {
                         atBottom = true
                     } else if (animator.state === "fullscreenOverlay") {
                         atTop = true
@@ -180,5 +184,6 @@ Item {
             }
         }
         NumberAnimation { target: overlay; property: "y"; duration: transitionDuration; easing.type: Easing.InOutQuad }
+        NumberAnimation { target: overlay.toolBar; property: "secondaryToolsHeight"; duration: transitionDuration; easing.type: Easing.InOutQuad }
     }
 }
