@@ -147,7 +147,7 @@ PanelBackground {
         Item {
             id: historyContainer
 
-            readonly property bool showFavorites: !searchField.edited && searchField.text === webView.url
+            readonly property bool showFavorites: (!searchField.edited && searchField.text === webView.url || !searchField.text)
 
             width: parent.width
             height: toolBar.toolsHeight + historyList.height
