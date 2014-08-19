@@ -172,7 +172,7 @@ PanelBackground {
                 secondaryToolsActive: overlayAnimator.secondaryTools
             }
 
-            TextField {
+            SearchField {
                 id: searchField
 
                 readonly property bool focusSearchField: overlayAnimator.atTop
@@ -185,7 +185,12 @@ PanelBackground {
                 }
 
                 width: parent.width
-                placeholderText: "Type URL or search"
+                textLeftMargin: Theme.paddingLarge
+                textRightMargin: Theme.paddingLarge
+
+                //: Placeholder text for url typing and searching
+                //% "Type URL or search"
+                placeholderText: qsTrId("sailfish_browser-ph-type_url_or_search")
                 EnterKey.onClicked: overlay.loadPage(text)
 
                 background: null
