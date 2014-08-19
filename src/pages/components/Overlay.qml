@@ -116,7 +116,7 @@ PanelBackground {
 
         opacity: !overlay.tabsViewVisible ? 1.0 : 0.0
         visible: opacity > 0.0
-        enabled: !webView.fullscreenMode && overlayAnimator.state !== "doubleToolBar"
+        enabled: !webView.fullscreenMode && !overlayAnimator.secondaryTools
         drag.target: overlay
         drag.filterChildren: true
         drag.axis: Drag.YAxis
@@ -167,13 +167,15 @@ PanelBackground {
                 }
                 onLoad: overlay.loadPage(text)
                 opacity: (overlay.y - webView.fullscreenHeight/2)  / (webView.fullscreenHeight/2 - toolBar.toolsHeight)
-                visible: opacity > 0
+                visible: opacity > 0.0
 
                 secondaryToolsActive: overlayAnimator.secondaryTools
             }
 
             TextField {
                 id: searchField
+
+                readonly property bool focusSearchField: overlayAnimator.atTop
                 property bool edited
 
                 function resetUrl() {
@@ -185,14 +187,10 @@ PanelBackground {
                 width: parent.width
                 placeholderText: "Type URL or search"
                 EnterKey.onClicked: overlay.loadPage(text)
-                background: Item {}
 
-                readonly property bool focusSearchField: overlayAnimator.atTop
-
-                opacity: (webView.fullscreenHeight/2 - overlay.y ) / (webView.fullscreenHeight/2 - toolBar.toolsHeight)
-                visible: opacity > 0
-
-
+                background: null
+                opacity: toolBar.opacity * -1.0
+                visible: opacity > 0.0
                 onFocusSearchFieldChanged: {
                     if (focusSearchField) {
                         searchField.forceActiveFocus()
@@ -215,7 +213,7 @@ PanelBackground {
                 width: parent.width
                 height: browserPage.height - toolBar.toolsHeight - dragArea.drag.minimumY
                 search: searchField.text
-                opacity: historyContainer.favoritesVisible ? 0.0 : 1.0
+                opacity: historyContainer.showFavorites ? 0.0 : 1.0
                 visible: !overlayAnimator.atBottom && opacity > 0.0
                 anchors.top: searchField.bottom
 
@@ -233,7 +231,8 @@ PanelBackground {
                 }
 
                 height: historyList.height
-                opacity: historyContainer.favoritesVisible ? 1.0 : 0.0
+                opacity: historyContainer.showFavorites ? 1.0 : 0.0
+
                 visible: !overlayAnimator.atBottom && opacity > 0.0
                 model: webView.bookmarkModel
 
