@@ -79,6 +79,17 @@ PanelBackground {
         overlay: overlay
         portrait: browserPage.isPortrait
         active: Qt.application.active && browserPage.status === PageStatus.Active
+
+        onAtBottomChanged: {
+            if (!atBottom) {
+                searchField.resetUrl()
+            }
+        }
+    }
+
+    Connections {
+        target: webView
+        onUrlChanged: searchField.resetUrl()
     }
 
     Image {
@@ -136,9 +147,10 @@ PanelBackground {
         Item {
             id: historyContainer
 
+            readonly property bool showFavorites: !searchField.edited && searchField.text === webView.url
+
             width: parent.width
             height: toolBar.toolsHeight + historyList.height
-            property bool favoritesVisible: !searchField.text || searchField.text == webView.url
 
             Browser.ToolBar {
                 id: toolBar
@@ -162,8 +174,15 @@ PanelBackground {
 
             TextField {
                 id: searchField
+                property bool edited
+
+                function resetUrl() {
+                    // Reset first text and then mark as unedited.
+                    text = overlay.loadInNewTab ? "" : webView.url
+                    edited = false
+                }
+
                 width: parent.width
-                text: overlay.loadInNewTab ? "" : webView.url
                 placeholderText: "Type URL or search"
                 EnterKey.onClicked: overlay.loadPage(text)
                 background: Item {}
@@ -180,6 +199,12 @@ PanelBackground {
                         searchField.selectAll()
                     } else {
                         searchField.focus = false
+                    }
+                }
+
+                onTextChanged: {
+                    if (!edited && text !== webView.url) {
+                        edited = true
                     }
                 }
             }
