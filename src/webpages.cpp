@@ -103,6 +103,7 @@ WebPageActivationData WebPages::page(int tabId, int parentId)
 #endif
                 m_activePages.insert(tabId, pageEntry);
                 ++m_count;
+                QQmlEngine::setObjectOwnership(webPage, QQmlEngine::CppOwnership);
             } else {
                 qmlInfo(m_webContainer) << "webPage component must be a WebPage component";
             }
