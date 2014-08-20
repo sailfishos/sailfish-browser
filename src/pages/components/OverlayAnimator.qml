@@ -93,7 +93,7 @@ Item {
                     // TODO: once we get rid of bad rendering loop, check if we could use here browserPage.height
                     // instead of webView.fullscreenHeight. Currently with browserPage.height binding we skip
                     // frames when returning back from tab page so that virtual keyboard was open.
-                    height: overlay.y //webView.fullscreenHeight
+                    height: overlay.y
                 },
                 PropertyChanges {
                     target: overlay
@@ -120,11 +120,20 @@ Item {
         },
         State {
             name: "draggingOverlay"
-            PropertyChanges {
-                target: webView
-                // was floor
-                height: Math.ceil(overlay.y) > 0 ? Math.ceil(overlay.y) : 0
-            }
+            changes: [
+                PropertyChanges {
+                    target: webView
+                    height: overlay.y
+                },
+                PropertyChanges {
+                    target: overlay
+                    y: overlay.y
+                },
+                PropertyChanges {
+                    target: overlay.toolBar
+                    secondaryToolsHeight: 0
+                }
+            ]
         },
 
         State {
@@ -156,34 +165,40 @@ Item {
                 PropertyChanges {
                     target: overlay.toolBar
                     secondaryToolsHeight: overlay.toolBar.toolsHeight
-                        //Math.min(overlay.toolBar.toolsHeight, Math.max(dragArea.drag.maximumY - overlay.y, 0))
                 }
             ]
         }
     ]
 
-    transitions: Transition {
-        id: overlayTransition
-        to: "fullscreenWebPage,chromeVisible,loadProgressOverlay,fullscreenOverlay,noOverlay,doubleToolBar"
+    transitions: [
+        Transition {
+            id: overlayTransition
+            to: "fullscreenWebPage,chromeVisible,loadProgressOverlay,fullscreenOverlay,noOverlay,doubleToolBar"
 
-        SequentialAnimation {
-            NumberAnimation { target: webView; property: "height"; duration: transitionDuration; easing.type: Easing.InOutQuad }
-            ScriptAction {
-                script: {
-                    if (animator.state === "chromeVisible" || animator.state === "fullscreenWebPage" || animator.state === "doubleToolBar") {
-                        atBottom = true
-                    } else if (animator.state === "fullscreenOverlay") {
-                        atTop = true
-                    }
+            SequentialAnimation {
+                NumberAnimation { target: webView; property: "height"; duration: transitionDuration; easing.type: Easing.InOutQuad }
+                ScriptAction {
+                    script: {
+                        if (animator.state === "chromeVisible" || animator.state === "fullscreenWebPage" || animator.state === "doubleToolBar") {
+                            atBottom = true
+                        } else if (animator.state === "fullscreenOverlay") {
+                            atTop = true
+                        }
 
-                    if (webView.contentItem) {
-                        webView.contentItem.chrome = animator.state !== "fullscreenWebPage"
+                        if (webView.contentItem) {
+                            webView.contentItem.chrome = animator.state !== "fullscreenWebPage"
+                        }
+                        _immediate = false
                     }
-                    _immediate = false
                 }
             }
+            NumberAnimation { target: overlay; property: "y"; duration: transitionDuration; easing.type: Easing.InOutQuad }
+            NumberAnimation { target: overlay.toolBar; property: "secondaryToolsHeight"; duration: transitionDuration; easing.type: Easing.InOutQuad }
         }
-        NumberAnimation { target: overlay; property: "y"; duration: transitionDuration; easing.type: Easing.InOutQuad }
-        NumberAnimation { target: overlay.toolBar; property: "secondaryToolsHeight"; duration: transitionDuration; easing.type: Easing.InOutQuad }
-    }
+        ,
+        Transition {
+            to: "draggingOverlay"
+            NumberAnimation { target: overlay.toolBar; property: "secondaryToolsHeight"; duration: transitionDuration; easing.type: Easing.InOutQuad }
+        }
+    ]
 }

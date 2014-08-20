@@ -14,6 +14,7 @@ import Sailfish.Silica 1.0
 
 IconButton {
     // Keep icon enabled so that drag area can filter mouse events.
+    // TODO: Are we disabling somewhere IconButton? Can active be removed?
     property bool active: true
 
     signal tapped

@@ -40,7 +40,7 @@ Column {
         height: secondaryToolsHeight
         clip: true
 
-        Behavior on opacity { FadeAnimation { } }
+        Behavior on opacity { FadeAnimation {} }
     }
 
     Row {
@@ -51,8 +51,6 @@ Column {
         Browser.IconButton {
             id: reload
 
-            active: !secondaryToolsActive
-
             width: Theme.iconSizeMedium + 2 * Theme.paddingMedium
             height: parent.height
             icon.source: webView.loading ? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
@@ -61,7 +59,7 @@ Column {
 
         Browser.IconButton {
             id: backIcon
-            active: webView.canGoBack && !secondaryToolsActive
+            active: webView.canGoBack
             width: Theme.iconSizeMedium + 2 * Theme.paddingMedium
             height: parent.height
             icon.source: "image://theme/icon-m-back"
@@ -79,12 +77,10 @@ Column {
 
         MouseArea {
             id: touchArea
+            property bool down: pressed && containsMouse
+
             height: parent.height
             width: label.width - 2 * Theme.paddingSmall
-
-            enabled: !secondaryToolsActive
-
-            property bool down: pressed && containsMouse
 
             Label {
                 id: label
@@ -111,7 +107,7 @@ Column {
 
         Browser.IconButton {
             id: tabs
-            active: !secondaryToolsActive
+
             width: Theme.iconSizeMedium + 2 * Theme.paddingMedium
             height: parent.height
             icon.source: "image://theme/icon-m-tabs"

@@ -73,6 +73,17 @@ PanelBackground {
         }
     }
 
+    // Immediately active WebView height binding when dragging
+    // starts. If this binding is removed, state change to
+    // "draggingOverlay" at OverlayAnimator causes a visual glitch
+    // right after transition to "draggingOverlay" has finnished.
+    Binding {
+        target: webView
+        property: "height"
+        value: overlay.y
+        when: dragArea.drag.active
+    }
+
     Browser.OverlayAnimator {
         id: overlayAnimator
 
@@ -81,7 +92,7 @@ PanelBackground {
         active: Qt.application.active && browserPage.status === PageStatus.Active
 
         onAtBottomChanged: {
-            if (!atBottom) {
+            if (atBottom) {
                 searchField.resetUrl()
             }
         }
@@ -109,14 +120,15 @@ PanelBackground {
     MouseArea {
         id: dragArea
 
-        property int dragThreshold: state === "fullscreenOverlay" ? toolBar.toolsHeight * 1.5 : (webView.fullscreenHeight - toolBar.toolsHeight * 2)
+        property int dragThreshold: state === "fullscreenOverlay" ? toolBar.toolsHeight * 1.5 :
+                                                                    state === "doubleToolBar" ?
+                                                                        (webView.fullscreenHeight - toolBar.toolsHeight * 4) :
+                                                                        (webView.fullscreenHeight - toolBar.toolsHeight * 2)
 
         width: parent.width
         height: historyContainer.height
+        enabled: !webView.fullscreenMode
 
-        opacity: !overlay.tabsViewVisible ? 1.0 : 0.0
-        visible: opacity > 0.0
-        enabled: !webView.fullscreenMode && !overlayAnimator.secondaryTools
         drag.target: overlay
         drag.filterChildren: true
         drag.axis: Drag.YAxis
@@ -141,8 +153,6 @@ PanelBackground {
 
             }
         }
-
-        Behavior on opacity { Browser.FadeAnimation {} }
 
         Item {
             id: historyContainer
@@ -219,7 +229,7 @@ PanelBackground {
                 height: browserPage.height - toolBar.toolsHeight - dragArea.drag.minimumY
                 search: searchField.text
                 opacity: historyContainer.showFavorites ? 0.0 : 1.0
-                visible: !overlayAnimator.atBottom && opacity > 0.0
+                visible: !overlayAnimator.atBottom || opacity > 0.0
                 anchors.top: searchField.bottom
 
                 onSearchChanged: if (search !== webView.url) historyModel.search(search)
@@ -236,9 +246,8 @@ PanelBackground {
                 }
 
                 height: historyList.height
-                opacity: historyContainer.showFavorites ? 1.0 : 0.0
-
-                visible: !overlayAnimator.atBottom && opacity > 0.0
+                opacity: !overlayAnimator.atBottom && historyContainer.showFavorites ? 1.0 : 0.0
+                visible: !overlayAnimator.atBottom || opacity > 0.0
                 model: webView.bookmarkModel
 
                 onLoad: overlay.loadPage(url, title)
@@ -281,7 +290,10 @@ PanelBackground {
     Browser.TabView {
         id: tabView
         opacity: tabsViewVisible ? 1.0 : 0.0
-        visible: opacity > 0.0
+        // Animator updates only target values. Fading away set makes this invisible
+        // only after animation has ended (opacity == 0.0) and tabsViewVisible takes
+        // care of making this visible when animation starts.
+        visible: tabsViewVisible || opacity > 0.0
         model: webView.tabModel
         parent: browserPage
 

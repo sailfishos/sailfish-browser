@@ -132,7 +132,7 @@ WebContainer {
     }
 
     visible: opacity > 0.0 && WebUtils.firstUseDone
-    Behavior on opacity { Browser.FadeAnimation {} }
+    Behavior on opacity { FadeAnimation {} }
 
     WebViewCreator {
         activeWebView: contentItem
