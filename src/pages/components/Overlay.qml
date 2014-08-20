@@ -226,7 +226,7 @@ PanelBackground {
                 id: historyList
 
                 width: parent.width
-                height: browserPage.height - toolBar.toolsHeight - dragArea.drag.minimumY
+                height: browserPage.height - searchField.height - dragArea.drag.minimumY
                 search: searchField.text
                 opacity: historyContainer.showFavorites ? 0.0 : 1.0
                 visible: !overlayAnimator.atBottom && opacity > 0.0
