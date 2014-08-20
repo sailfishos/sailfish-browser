@@ -229,13 +229,13 @@ PanelBackground {
                 height: browserPage.height - toolBar.toolsHeight - dragArea.drag.minimumY
                 search: searchField.text
                 opacity: historyContainer.showFavorites ? 0.0 : 1.0
-                visible: !overlayAnimator.atBottom || opacity > 0.0
+                visible: !overlayAnimator.atBottom && opacity > 0.0
                 anchors.top: searchField.bottom
 
                 onSearchChanged: if (search !== webView.url) historyModel.search(search)
                 onLoad: overlay.loadPage(url, title)
 
-                Behavior on opacity { Browser.FadeAnimation {} }
+                Behavior on opacity { FadeAnimation {} }
             }
 
             Browser.FavoriteGrid {
@@ -246,8 +246,8 @@ PanelBackground {
                 }
 
                 height: historyList.height
-                opacity: !overlayAnimator.atBottom && historyContainer.showFavorites ? 1.0 : 0.0
-                visible: !overlayAnimator.atBottom || opacity > 0.0
+                opacity: historyContainer.showFavorites ? 1.0 : 0.0
+                visible: !overlayAnimator.atBottom && opacity > 0.0
                 model: webView.bookmarkModel
 
                 onLoad: overlay.loadPage(url, title)
@@ -281,7 +281,7 @@ PanelBackground {
 
                 onShare: pageStack.push(Qt.resolvedUrl("../ShareLinkPage.qml"), {"link" : url, "linkTitle": title})
 
-                Behavior on opacity { Browser.FadeAnimation {} }
+                Behavior on opacity { FadeAnimation {} }
             }
         }
     }
