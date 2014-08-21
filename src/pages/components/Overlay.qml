@@ -166,7 +166,7 @@ PanelBackground {
                 id: toolBar
 
                 function saveBookmark(data) {
-                    webView.bookmarkModel.addBookmark(webView.url, webView.title,
+                    webView.bookmarkModel.addBookmark(webView.url, webView.title || webView.url,
                                                       data, browserPage.favoriteImageLoader.acceptedTouchIcon)
                     browserPage.desktopBookmarkWriter.iconFetched.disconnect(toolBar.saveBookmark)
                 }
