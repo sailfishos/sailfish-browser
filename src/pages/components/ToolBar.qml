@@ -18,7 +18,7 @@ import "." as Browser
 Column {
     id: toolBarRow
 
-    property string title
+    property string url
     property bool busy
     property real secondaryToolsHeight
     property bool secondaryToolsActive
@@ -95,17 +95,22 @@ Column {
                 anchors.left: touchArea.left
                 width: toolBarRow.width - 4 * Theme.iconSizeMedium - 6 * Theme.paddingMedium - 4 * Theme.paddingSmall
                 color: touchArea.down || toolBarRow.busy ? Theme.highlightColor : Theme.primaryColor
-                text: title ? parseDisplayableUrl(title) : "Loading.."
+                text: url ? parseDisplayableUrl(url) : "Loading.."
                 horizontalAlignment: Text.AlignHCenter
                 truncationMode: TruncationMode.Fade
 
                 function parseDisplayableUrl(url) {
                     var returnUrl = WebUtils.displayableUrl(url)
                     returnUrl = returnUrl.substring(returnUrl.lastIndexOf("/") + 1) // Strip protocol
-                    if(returnUrl.indexOf("www.")===0) {
+                    if (returnUrl.indexOf("www.") === 0) {
                         returnUrl = returnUrl.substring(4)
+                    } else if (returnUrl.indexOf("m.") === 0 && returnUrl.length > 2) {
+                        returnUrl = returnUrl.substring(2)
+                    } else if (returnUrl.indexOf("mobile.") === 0 && returnUrl.length > 7) {
+                        returnUrl = returnUrl.substring(7)
                     }
-                    return returnUrl
+
+                    return returnUrl || url
                 }
             }
             onClicked: toolBarRow.showOverlay()

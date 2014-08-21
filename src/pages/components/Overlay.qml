@@ -179,7 +179,7 @@ PanelBackground {
                     browserPage.desktopBookmarkWriter.fetchIcon(browserPage.favoriteImageLoader.icon)
                 }
 
-                title: overlay.webView.url
+                url: overlay.webView.url
                 bookmarked: webView.bookmarkModel.count && webView.bookmarkModel.contains(webView.url)
                 onShowChrome: overlayAnimator.showChrome()
                 onShowOverlay: overlayAnimator.showOverlay()
