@@ -31,7 +31,7 @@ Page {
     property alias title: webView.title
     property alias thumbnailPath: webView.thumbnailPath
 
-    property alias imageLoader: imageLoader
+    property alias favoriteImageLoader: favoriteImageLoader
     property alias desktopBookmarkWriter: desktopBookmarkWriter
     property alias webView: webView
 
@@ -223,11 +223,35 @@ Page {
     DesktopBookmarkWriter {
         id: desktopBookmarkWriter
         minimumIconSize: Theme.iconSizeMedium
+        allowCapture: webView.opacity == 1.0 && webView.enabled &&
+                      webView.contentItem && webView.contentItem.domContentLoaded &&
+                      !webView.contentItem.popupActive
+
+        captureSize: {
+            var size = Screen.width
+            if (browserPage.isLandscape && !webView.fullscreenMode) {
+                size -= overlay.toolBar.height
+            }
+            return size
+        }
     }
 
     Image {
-        id: imageLoader
+        id: favoriteImageLoader
+
+        readonly property bool acceptedTouchIcon: icon == source
+        property string icon: {
+            var tmpIcon = source
+            var minimumIconSize = desktopBookmarkWriter.minimumIconSize
+            if (width < minimumIconSize || height < minimumIconSize) {
+                tmpIcon = ""
+            }
+
+            return tmpIcon
+        }
+
         x: Screen.height * 2
         sourceSize.width: Theme.iconSizeLauncher
+        source: webView.favicon
     }
 }

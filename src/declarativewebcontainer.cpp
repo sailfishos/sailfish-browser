@@ -376,7 +376,7 @@ void DeclarativeWebContainer::captureScreen()
         }
 
         qreal rotation = parentItem() ? parentItem()->rotation() : 0;
-        captureScreen(size, size / 2, rotation);
+        captureScreen(size, size, rotation);
     }
 }
 
@@ -531,6 +531,7 @@ void DeclarativeWebContainer::screenCaptureReady()
         setThumbnailPath(capture.path, capture.tabId);
         DBManager::instance()->updateThumbPath(capture.tabId, capture.path);
     }
+    emit screenCaptured();
 }
 
 void DeclarativeWebContainer::onModelLoaded()

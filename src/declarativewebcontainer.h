@@ -142,6 +142,8 @@ signals:
     void initialUrlChanged();
     void thumbnailPathChanged();
 
+    void screenCaptured();
+
     void deferredReloadChanged();
     void deferredLoadChanged();
 

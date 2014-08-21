@@ -31,10 +31,11 @@ public:
     enum BookmarkRoles {
            UrlRole = Qt::UserRole + 1,
            TitleRole,
-           FaviconRole
+           FaviconRole,
+           TouchIconRole,
     };
 
-    Q_INVOKABLE void addBookmark(const QString& url, const QString& title, const QString& favicon);
+    Q_INVOKABLE void addBookmark(const QString& url, const QString& title, const QString& favicon, bool touchIcon = false);
     Q_INVOKABLE void removeBookmark(const QString& url);
     Q_INVOKABLE bool contains(const QString& url) const;
     Q_INVOKABLE void editBookmark(int index, const QString& url, const QString& title);

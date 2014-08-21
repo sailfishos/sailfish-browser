@@ -22,12 +22,16 @@ Column {
     property bool busy
     property real secondaryToolsHeight
     property bool secondaryToolsActive
+    property alias bookmarked: secondaryBar.bookmarked
     readonly property alias toolsHeight: toolsRow.height
 
     signal showTabs
     signal showChrome
     signal showOverlay
     signal showShare
+
+    signal bookmarkActivePage
+    signal removeActivePageFromBookmarks
 
     signal load(string search)
 
@@ -39,6 +43,9 @@ Column {
         opacity: secondaryToolsActive ? 1.0 : 0.0
         height: secondaryToolsHeight
         clip: true
+
+        onBookmarkActivePage: toolBarRow.bookmarkActivePage()
+        onRemoveActivePageFromBookmarks: toolBarRow.removeActivePageFromBookmarks()
 
         Behavior on opacity { FadeAnimation {} }
     }

@@ -11,21 +11,25 @@
 
 #include "desktopbookmarkwriter.h"
 
+#include <QBuffer>
 #include <QDir>
 #include <QFileInfo>
 #include <QNetworkReply>
 #include <QImage>
 #include <QStandardPaths>
 #include <QUrl>
+#include <QQuickWindow>
 
 #define BASE64_IMAGE_PREFIX "data:image/png;base64,"
 #define BASE64_IMAGE "data:image/png;base64,%1"
 
 static bool dbw_testMode = false;
 
-DesktopBookmarkWriter::DesktopBookmarkWriter(QObject *parent)
-    : QObject(parent)
+DesktopBookmarkWriter::DesktopBookmarkWriter(QQuickItem *parent)
+    : QQuickItem(parent)
     , m_minimumIconSize(64) // Initial value that matches theme iconSizeMedium.
+    , m_allowCapture(false)
+    , m_captureSize(-1)
 {
 }
 
@@ -45,37 +49,14 @@ bool DesktopBookmarkWriter::save()
         return false;
     }
 
-    QString icon = m_icon;
-    if (icon.startsWith("/")) {
-        icon = "file://" + icon;
-    }
-
-    if (m_icon.isEmpty()) {
-        m_iconData = defaultIcon();
-        write();
-    } else if (!QUrl(icon).isLocalFile()){
-        QUrl url(icon);
-        QString path = url.path();
-        if (path.endsWith(".ico")) {
-            m_iconData = defaultIcon();
-            write();
-        } else {
-            QNetworkRequest request(url);
-            QNetworkReply *reply = m_networkAccessManager.get(request);
-            connect(reply, SIGNAL(finished()), this, SLOT(iconReady()));
-        }
-    } else {
-        QFile localIcon(QUrl(icon).toLocalFile());
-        QByteArray iconData;
-        if (localIcon.open(QFile::ReadOnly)) {
-            iconData = localIcon.readAll();
-        }
-        setIconData(iconData);
-        write();
-    }
+    fetchIcon(m_icon, true);
     return true;
 }
 
+void DesktopBookmarkWriter::fetchIcon(const QString &iconUrl)
+{
+    fetchIcon(iconUrl, false);
+}
 
 bool DesktopBookmarkWriter::exists(const QString &file)
 {
@@ -107,22 +88,90 @@ void DesktopBookmarkWriter::clear()
 void DesktopBookmarkWriter::iconReady()
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
-    if (reply) {
-        QByteArray iconData = reply->readAll();
-        setIconData(iconData);
-        reply->deleteLater();
-        write();
-    }
+    readIconData(reply, false);
 }
 
-void DesktopBookmarkWriter::setIconData(const QByteArray &data)
+void DesktopBookmarkWriter::writeWhenReadyIcon()
 {
-    QImage image;
-    image.loadFromData(data);
+    QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
+    readIconData(reply, true);
+}
+
+void DesktopBookmarkWriter::setIconData(const QByteArray &data, QImage &image)
+{
     if (image.width() < m_minimumIconSize || image.height() < m_minimumIconSize) {
         m_iconData = defaultIcon();
     } else {
         m_iconData = QString(BASE64_IMAGE).arg(QString(data.toBase64()));
+    }
+
+    emit iconFetched(m_iconData);
+}
+
+void DesktopBookmarkWriter::fetchIcon(const QString &iconUrl, bool allowWrite)
+{
+    if (!iconUrl.isEmpty()){
+        QUrl url(iconUrl);
+        QString path = url.path();
+        if (path.endsWith(".ico")) {
+            m_iconData = defaultIcon();
+            emit iconFetched(m_iconData);
+            if (allowWrite) {
+                write();
+            } else {
+                clear();
+            }
+        } else {
+            QNetworkRequest request(url);
+            QNetworkReply *reply = m_networkAccessManager.get(request);
+            if (allowWrite) {
+                connect(reply, SIGNAL(finished()), this, SLOT(writeWhenReadyIcon()));
+            } else {
+                connect(reply, SIGNAL(finished()), this, SLOT(iconReady()));
+            }
+        }
+    } else {
+        QImage image;
+        QByteArray iconData;
+        if (m_allowCapture && window() && window()->isActive()) {
+            // Avoid I/O.
+            image = window()->grabWindow();
+            qreal rotation = parentItem() ? parentItem()->rotation() : 0;
+            QRect cropBounds(0, 0, m_captureSize, m_captureSize);
+            QTransform transform;
+            transform.rotate(360 - rotation);
+            image = image.transformed(transform);
+            image = image.copy(cropBounds);
+            image = image.scaledToWidth(m_minimumIconSize * 2);
+
+            QBuffer buffer(&iconData);
+            buffer.open(QIODevice::WriteOnly);
+            image.save(&buffer, "PNG");
+            buffer.close();
+        }
+
+        setIconData(iconData, image);
+        if (allowWrite) {
+            write();
+        } else {
+            clear();
+        }
+    }
+}
+
+void DesktopBookmarkWriter::readIconData(QNetworkReply *reply, bool allowWrite)
+{
+    if (reply) {
+        QByteArray iconData = reply->readAll();
+        QImage image;
+        image.loadFromData(iconData);
+        setIconData(iconData, image);
+        reply->deleteLater();
+        if (allowWrite) {
+            write();
+        } else {
+            clear();
+        }
     }
 }
 

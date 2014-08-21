@@ -305,9 +305,10 @@ WebContainer {
                     if (!acceptedTouchIcon && (data.rel === "shortcut icon" || acceptableTouchIcon || parsedFavicon)) {
                         favicon = data.href
                         iconType = iconSize >= Theme.iconSizeMedium ? data.rel : ""
-                        if (iconType) {
-                            tabModel.addFavoriteIcon(tabId, favicon)
-                        }
+// TODO: cleanup. We don't want to save favicon to tabmodel.
+//                        if (iconType) {
+//                            tabModel.addFavoriteIcon(tabId, favicon)
+//                        }
                     }
                     break
                 }

@@ -164,7 +164,23 @@ PanelBackground {
 
             Browser.ToolBar {
                 id: toolBar
+
+                function saveBookmark(data) {
+                    webView.bookmarkModel.addBookmark(webView.url, webView.title,
+                                                      data, browserPage.favoriteImageLoader.acceptedTouchIcon)
+                    browserPage.desktopBookmarkWriter.iconFetched.disconnect(toolBar.saveBookmark)
+                }
+
+                function fetchIcon() {
+                    // Async operation when loading of touch icon is needed.
+                    browserPage.desktopBookmarkWriter.iconFetched.connect(toolBar.saveBookmark)
+                    // TODO: would be safer to pass here an object containing url, title, icon, and icon type (touch icon)
+                    // as this is async call in case we're fetching favicon.
+                    browserPage.desktopBookmarkWriter.fetchIcon(browserPage.favoriteImageLoader.icon)
+                }
+
                 title: overlay.webView.url
+                bookmarked: webView.bookmarkModel.count && webView.bookmarkModel.contains(webView.url)
                 onShowChrome: overlayAnimator.showChrome()
                 onShowOverlay: overlayAnimator.showOverlay()
                 onShowTabs: overlay.tabsViewVisible = true
@@ -176,6 +192,16 @@ PanelBackground {
                     }
                 }
                 onLoad: overlay.loadPage(text)
+
+                onBookmarkActivePage: {
+                    var webPage = webView && webView.contentItem
+                    if (webPage) {
+                        toolBar.fetchIcon()
+                    }
+                }
+
+                onRemoveActivePageFromBookmarks: webView.bookmarkModel.removeBookmark(webView.url)
+
                 opacity: (overlay.y - webView.fullscreenHeight/2)  / (webView.fullscreenHeight/2 - toolBar.toolsHeight)
                 visible: opacity > 0.0
 
@@ -276,7 +302,6 @@ PanelBackground {
                                        "url": url,
                                        "title": title
                                    })
-                    browserPage.imageLoader.source = favicon
                 }
 
                 onShare: pageStack.push(Qt.resolvedUrl("../ShareLinkPage.qml"), {"link" : url, "linkTitle": title})
@@ -312,8 +337,9 @@ PanelBackground {
             webView.tabModel.remove(index)
         }
 
-        onAddBookmark: webView.bookmarkModel.addBookmark(url, title, favicon)
-        onRemoveBookmark: webView.bookmarkModel.removeBookmarks(url)
+        // TODO: Remove these.
+        //onAddBookmark: webView.bookmarkModel.addBookmark(url, title, favicon)
+        //onRemoveBookmark: webView.bookmarkModel.removeBookmarks(url)
     }
 
     Component {
@@ -331,20 +357,12 @@ PanelBackground {
             title: qsTrId("sailfish_browser-he-add_bookmark_to_launcher")
             canAccept: editedUrl !== "" && editedTitle !== ""
             onAccepted: {
-                var icon = browserPage.imageLoader.source
-                var minimumIconSize = browserPage.desktopBookmarkWriter.minimumIconSize
-                if (browserPage.imageLoader.width < minimumIconSize || browserPage.imageLoader.height < minimumIconSize) {
-                    if (!browserPage.desktopBookmarkWriter.exists(browserPage.thumbnailPath)) {
-                        icon = ""
-                    } else {
-                        icon = browserPage.thumbnailPath
-                    }
-                }
+                // TODO: This should use directly the icon the the bookmark.
+                var icon = browserPage.favoriteImageLoader.icon
                 browserPage.desktopBookmarkWriter.link = editedUrl
                 browserPage.desktopBookmarkWriter.title = editedTitle
                 browserPage.desktopBookmarkWriter.icon = icon
                 browserPage.desktopBookmarkWriter.save()
-                browserPage.imageLoader.source = ""
             }
         }
     }

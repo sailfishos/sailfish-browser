@@ -35,7 +35,7 @@ BackgroundItem {
     FavoriteIcon {
         id: favoriteIcon
         icon: favicon
-        visible: false
+        visible: hasTouchIcon
         anchors {
             centerIn: parent
             verticalCenterOffset: Math.round(-launcherText.height/2)
@@ -55,6 +55,8 @@ BackgroundItem {
         property variant source: favoriteIcon
         property variant maskSource: mask
 
+        enabled: !hasTouchIcon
+        visible: !hasTouchIcon
         anchors.fill: favoriteIcon
         smooth: true
 

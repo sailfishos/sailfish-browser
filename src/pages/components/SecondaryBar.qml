@@ -17,6 +17,11 @@ import "." as Browser
 Item {
     id: toolBarRow
 
+    property bool bookmarked
+
+    signal bookmarkActivePage
+    signal removeActivePageFromBookmarks
+
     width: parent.width
     height: isPortrait ? Settings.toolbarLarge : Settings.toolbarSmall
 
@@ -26,7 +31,15 @@ Item {
 
         Browser.IconButton {
             width: Theme.iconSizeMedium +  Theme.paddingMedium * 2
-            icon.source: "image://theme/icon-m-favorite"
+            icon.source: bookmarked ? "image://theme/icon-m-favorite-selected" : "image://theme/icon-m-favorite"
+
+            onClicked: {
+                if (bookmarked) {
+                    removeActivePageFromBookmarks()
+                } else {
+                    bookmarkActivePage()
+                }
+            }
         }
 
         Browser.IconButton {

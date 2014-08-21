@@ -110,6 +110,7 @@ void DeclarativeWebPage::loadTab(QString newUrl, bool force)
     QString oldUrl = url().toString();
     if ((!newUrl.isEmpty() && oldUrl != newUrl) || force) {
         m_domContentLoaded = false;
+        emit domContentLoadedChanged();
         load(newUrl);
     }
 }
