@@ -23,7 +23,7 @@ PanelBackground {
     property alias progressBar: progressBar
     property alias animator: overlayAnimator
 
-    property bool tabsViewVisible
+//    property bool tabsViewVisible
 
     function loadPage(url, title)  {
         // let gecko figure out how to handle malformed URLs
@@ -35,8 +35,9 @@ PanelBackground {
         }
 
         console.log("LOAD ON ENTRER:", searchString)
-        if (toolBar.enteringNewTabUrl) {
+        if (searchField.enteringNewTabUrl) {
             webView.tabModel.newTab(searchString, title)
+            searchField.enteringNewTabUrl = false
         } else {
             webView.load(searchString, title)
         }
@@ -45,8 +46,9 @@ PanelBackground {
         console.log("LOOSING AT TOP BY CLICKING!")
     }
 
-    function openNewTabView(action) {
-        tabsViewVisible = false
+    function enterNewTabUrl(action) {
+        searchField.enteringNewTabUrl = true
+        searchField.resetUrl("")
         overlayAnimator.showOverlay(action === PageStackAction.Immediate)
     }
 
@@ -60,18 +62,17 @@ PanelBackground {
         GradientStop { position: 1.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.0) }
     }
 
-    // This is ugly
-    onTabsViewVisibleChanged: {
-        console.log("#PEREKEL: ", tabsViewVisible)
-        if (tabsViewVisible) {
-            webView.captureScreen()
-            webView.opacity = 0.0
-            overlayAnimator.hide()
-        } else {
-            webView.opacity = 1.0
-            overlayAnimator.showChrome()
-        }
-    }
+//    // This is ugly
+//    onTabsViewVisibleChanged: {
+//        if (tabsViewVisible) {
+//            webView.captureScreen()
+////            webView.opacity = 0.0
+//            overlayAnimator.hide()
+//        } else {
+////            webView.opacity = 1.0
+//            overlayAnimator.showChrome()
+//        }
+//    }
 
     // Immediately active WebView height binding when dragging
     // starts. If this binding is removed, state change to
@@ -89,18 +90,19 @@ PanelBackground {
 
         overlay: overlay
         portrait: browserPage.isPortrait
-        active: Qt.application.active && browserPage.status === PageStatus.Active
+        active: Qt.application.active
 
         onAtBottomChanged: {
             if (atBottom) {
-                searchField.resetUrl()
+                searchField.resetUrl(webView.url)
+                searchField.enteringNewTabUrl = false
             }
         }
     }
 
     Connections {
         target: webView
-        onUrlChanged: searchField.resetUrl()
+        onUrlChanged: searchField.resetUrl(webView.url)
     }
 
     Image {
@@ -183,7 +185,13 @@ PanelBackground {
                 bookmarked: webView.bookmarkModel.count && webView.bookmarkModel.contains(webView.url)
                 onShowChrome: overlayAnimator.showChrome()
                 onShowOverlay: overlayAnimator.showOverlay()
-                onShowTabs: overlay.tabsViewVisible = true
+                onShowTabs: {
+                    webView.captureScreen()
+                    overlayAnimator.showChrome()
+                    pageStack.push(tabView)
+                    //overlayAnimator.hide()
+                }
+                //overlay.tabsViewVisible = true
                 onShowShare: {
                     if (overlayAnimator.secondaryTools) {
                         overlayAnimator.showChrome()
@@ -204,7 +212,6 @@ PanelBackground {
 
                 opacity: (overlay.y - webView.fullscreenHeight/2)  / (webView.fullscreenHeight/2 - toolBar.height)
                 visible: opacity > 0.0
-
                 secondaryToolsActive: overlayAnimator.secondaryTools
             }
 
@@ -213,10 +220,11 @@ PanelBackground {
 
                 readonly property bool focusSearchField: overlayAnimator.atTop
                 property bool edited
+                property bool enteringNewTabUrl
 
-                function resetUrl() {
+                function resetUrl(url) {
                     // Reset first text and then mark as unedited.
-                    text = overlay.loadInNewTab ? "" : webView.url
+                    text = url
                     edited = false
                 }
 
@@ -312,34 +320,43 @@ PanelBackground {
     }
 
     // TODO: Test if Loader would be make sense here.
-    Browser.TabView {
+    Component {
         id: tabView
-        opacity: tabsViewVisible ? 1.0 : 0.0
-        // Animator updates only target values. Fading away set makes this invisible
-        // only after animation has ended (opacity == 0.0) and tabsViewVisible takes
-        // care of making this visible when animation starts.
-        visible: tabsViewVisible || opacity > 0.0
-        model: webView.tabModel
-        parent: browserPage
+        Page {
+            // TODO: Change to GridView
+            Browser.TabView {
+                //        opacity: tabsViewVisible ? 1.0 : 0.0
+                // Animator updates only target values. Fading away set makes this invisible
+                // only after animation has ended (opacity == 0.0) and tabsViewVisible takes
+                // care of making this visible when animation starts.
+                //        visible: tabsViewVisible || opacity > 0.0
+                model: webView.tabModel
+                //            parent: browserPage
+                //            Behavior on opacity { Browser.FadeAnimation {} }
 
-        Behavior on opacity { Browser.FadeAnimation {} }
+                onHide: pageStack.pop()
 
-        onHide: tabsViewVisible = false
-        // rename this signal. To showOverlay or similar
-        onNewTab: openNewTabView()
-        onActivateTab: {
-            tabsViewVisible = false
-            webView.tabModel.activateTab(index)
+                // rename this signal. To showOverlay or similar
+                onNewTab: {
+                    pageStack.pop()
+                    enterNewTabUrl()
+                }
+                onActivateTab: {
+                    pageStack.pop()
+                    webView.tabModel.activateTab(index)
+                }
+                onCloseTab: {
+                    //showTabs = false
+                    console.log("All tabs closed what to do!!")
+                    webView.tabModel.remove(index)
+                }
+
+                // TODO: Remove these.
+                //onAddBookmark: webView.bookmarkModel.addBookmark(url, title, favicon)
+                //onRemoveBookmark: webView.bookmarkModel.removeBookmarks(url)
+                Component.onCompleted: positionViewAtIndex(webView.tabModel.activeTabIndex, ListView.Center)
+            }
         }
-        onCloseTab: {
-            //showTabs = false
-            console.log("All tabs closed what to do!!")
-            webView.tabModel.remove(index)
-        }
-
-        // TODO: Remove these.
-        //onAddBookmark: webView.bookmarkModel.addBookmark(url, title, favicon)
-        //onRemoveBookmark: webView.bookmarkModel.removeBookmarks(url)
     }
 
     Component {

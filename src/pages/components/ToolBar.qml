@@ -146,7 +146,7 @@ Column {
         Browser.IconButton {
             id: shareIcon
 
-            icon.source: "image://theme/icon-lock-more"
+            icon.source: "image://theme/icon-m-menu"
             width: Theme.iconSizeMedium + 2 * Theme.paddingMedium
             height: parent.height
             onTapped: toolBarRow.showShare()

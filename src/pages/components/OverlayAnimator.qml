@@ -61,6 +61,8 @@ Item {
     }
 
     onStateChanged: {
+        console.log("State:", state)
+        console.trace()
         // Animation end changes to true state. Hence not like atTop = state !== "fullscreenOverlay"
         if (state !== "fullscreenOverlay") {
             atTop = false
@@ -142,7 +144,8 @@ Item {
                 PropertyChanges {
                     target: webView
                     // was floor
-                    height: Math.ceil(overlay.y) ? Math.ceil(overlay.y) : 0
+                    //height: Math.ceil(overlay.y) ? Math.ceil(overlay.y) : 0
+                    height: overlay.y
                 },
                 PropertyChanges {
                     target: overlay
