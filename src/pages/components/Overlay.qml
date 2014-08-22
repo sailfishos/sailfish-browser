@@ -202,7 +202,7 @@ PanelBackground {
 
                 onRemoveActivePageFromBookmarks: webView.bookmarkModel.removeBookmark(webView.url)
 
-                opacity: (overlay.y - webView.fullscreenHeight/2)  / (webView.fullscreenHeight/2 - toolBar.toolsHeight)
+                opacity: (overlay.y - webView.fullscreenHeight/2)  / (webView.fullscreenHeight/2 - toolBar.height)
                 visible: opacity > 0.0
 
                 secondaryToolsActive: overlayAnimator.secondaryTools
