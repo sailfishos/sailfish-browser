@@ -306,13 +306,15 @@ Page {
                 firstUseOverlay.destroy()
                 webView.visible = true
             }
+
+            if (browserPage.status !== PageStatus.Active) {
+                pageStack.pop(browserPage, PageStackAction.Immediate)
+            }
+
             webView.captureScreen()
             if (!webView.tabModel.activateTab(url)) {
                 // Not found in tabs list, create newtab and load
                 webView.load(url)
-            }
-            if (browserPage.status !== PageStatus.Active) {
-                pageStack.pop(browserPage, PageStackAction.Immediate)
             }
         }
     }
