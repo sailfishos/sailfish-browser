@@ -202,7 +202,7 @@ void WebPages::updateActivePage(WebPageEntry *webPageEntry, bool resurrect)
         m_activePage->cssContentRect = new QRectF(activeWebPage->contentRect());
         activeWebPage->setVisible(false);
 
-        // Allow subpending only current active is not creator (parent).
+        // Allow suspending only the current active page if it is not the creator (parent).
         if (webPageEntry->webPage->parentId() != (int)activeWebPage->uniqueID()) {
              if (activeWebPage->loading()) {
                  activeWebPage->stop();

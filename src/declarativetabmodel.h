@@ -46,7 +46,7 @@ public:
     Q_INVOKABLE void remove(int index);
     Q_INVOKABLE void clear();
     Q_INVOKABLE bool activateTab(const QString &url);
-    Q_INVOKABLE bool activateTab(int index);
+    Q_INVOKABLE bool activateTab(int index, bool loadActiveTab = true);
     Q_INVOKABLE void closeActiveTab();
 
     Q_INVOKABLE void newTab(const QString &url, const QString &title);
@@ -97,7 +97,7 @@ public slots:
 
 signals:
     void countChanged();
-    void activeTabChanged(int oldTabId, int activeTabId);
+    void activeTabChanged(int oldTabId, int activeTabId, bool loadActiveTab = true);
     void tabAdded(int tabId);
     void tabClosed(int tabId);
     void tabsCleared();
@@ -133,7 +133,7 @@ private:
     int findTabIndex(int tabId) const;
     void saveTabOrder();
     void loadTabOrder();
-    void updateActiveTab(const Tab &activeTab);
+    void updateActiveTab(const Tab &activeTab, bool loadActiveTab);
     void updateTabUrl(int tabId, bool activeTab, const QString &url, bool navigate);
 
     void updateNewTabData(NewTabData *newTabData);
