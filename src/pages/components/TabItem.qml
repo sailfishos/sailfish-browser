@@ -54,6 +54,7 @@ Loader {
             anchors.fill: parent
             asynchronous: true
             source: thumbnailPath
+            cache: false
             sourceSize.width: Screen.width / 2
             visible: status !== Image.Error && thumbnailPath !== ""
         }
