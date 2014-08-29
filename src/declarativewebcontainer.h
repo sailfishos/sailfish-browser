@@ -53,6 +53,7 @@ class DeclarativeWebContainer : public QQuickItem {
     Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY canGoForwardChanged FINAL)
     Q_PROPERTY(bool canGoBack READ canGoBack NOTIFY canGoBackChanged FINAL)
 
+    Q_PROPERTY(int tabId READ tabId NOTIFY tabIdChanged FINAL)
     Q_PROPERTY(QString title READ title NOTIFY titleChanged FINAL)
     Q_PROPERTY(QString url READ url NOTIFY urlChanged FINAL)
     Q_PROPERTY(QString initialUrl MEMBER m_initialUrl NOTIFY initialUrlChanged FINAL)
@@ -97,6 +98,7 @@ public:
     bool canGoBack() const;
     void setCanGoBack(bool canGoBack);
 
+    int tabId() const;
     QString title() const;
     QString url() const;
     QString thumbnailPath() const;
@@ -138,6 +140,7 @@ signals:
     void canGoForwardChanged();
     void canGoBackChanged();
 
+    void tabIdChanged();
     void titleChanged();
     void urlChanged();
     void initialUrlChanged();
@@ -159,7 +162,7 @@ private slots:
     void windowVisibleChanged(bool visible);
     void handleWindowChanged(QQuickWindow *window);
     void screenCaptureReady();
-    void onActiveTabChanged(int oldTabId, int activeTabId);
+    void onActiveTabChanged(int oldTabId, int activeTabId, bool loadActiveTab);
     void onModelLoaded();
     void onDownloadStarted();
     void onNewTabRequested(QString url, QString title);
@@ -218,6 +221,10 @@ private:
     QString m_favicon;
     QString m_thumbnailPath;
     QString m_initialUrl;
+
+    QString m_url;
+    QString m_title;
+    int m_tabId;
 
     bool m_loading;
     int m_loadProgress;

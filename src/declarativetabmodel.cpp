@@ -61,7 +61,7 @@ void DeclarativeTabModel::addTab(const QString& url, const QString &title) {
         endInsertRows();
     }
 
-    updateActiveTab(tab);
+    updateActiveTab(tab, true);
     emit countChanged();
     emit tabAdded(tabId);
 
@@ -126,7 +126,7 @@ bool DeclarativeTabModel::activateTab(const QString& url)
     return false;
 }
 
-bool DeclarativeTabModel::activateTab(int index)
+bool DeclarativeTabModel::activateTab(int index, bool loadActiveTab)
 {
     if (index >= 0 && index < m_tabs.count()) {
         Tab newActiveTab = m_tabs.at(index);
@@ -147,7 +147,7 @@ bool DeclarativeTabModel::activateTab(int index)
             endInsertRows();
         }
 
-        updateActiveTab(newActiveTab);
+        updateActiveTab(newActiveTab, loadActiveTab);
         return true;
     }
     return false;
@@ -170,12 +170,12 @@ void DeclarativeTabModel::closeActiveTab()
 #endif
         // Clear active tab data and try to active a tab from the first model index.
         int activeTabId = m_activeTab.tabId();
-        // Invalidate
+        // Invalidate so that it will not back to model.
         m_activeTab.setTabId(0);
         removeTab(activeTabId, m_activeTab.thumbnailPath());
-        if (!activateTab(0)) {
+        if (!activateTab(0, false)) {
             // Last active tab got closed.
-            emit activeTabChanged(activeTabId, 0);
+            emit activeTabChanged(activeTabId, 0, false);
         }
     }
 }
@@ -345,7 +345,7 @@ void DeclarativeTabModel::tabChanged(const Tab &tab)
     qDebug() << "new tab data:" << &tab;
 #endif
     if (m_activeTab.tabId() == tab.tabId()) {
-        updateActiveTab(tab);
+        updateActiveTab(tab, true);
     } else {
         int i = m_tabs.indexOf(tab); // match based on tab_id
         if (i > -1) {
@@ -486,7 +486,7 @@ void DeclarativeTabModel::loadTabOrder()
         }
     }
 }
-void DeclarativeTabModel::updateActiveTab(const Tab &activeTab)
+void DeclarativeTabModel::updateActiveTab(const Tab &activeTab, bool loadActiveTab)
 {
 #ifdef DEBUG_LOGS
     qDebug() << "old active tab: " << &m_activeTab << m_tabs.count();
@@ -495,7 +495,7 @@ void DeclarativeTabModel::updateActiveTab(const Tab &activeTab)
     if (m_activeTab != activeTab) {
         int oldTabId = m_activeTab.tabId();
         m_activeTab = activeTab;
-        emit activeTabChanged(oldTabId, activeTab.tabId());
+        emit activeTabChanged(oldTabId, activeTab.tabId(), loadActiveTab);
         saveTabOrder();
     }
 }

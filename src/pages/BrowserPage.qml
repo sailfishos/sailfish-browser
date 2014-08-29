@@ -186,8 +186,12 @@ Page {
 
                 Browser.IconButton {
                     visible: isLandscape
+                    enabled: webView.tabModel.count > 0
                     icon.source: "image://theme/icon-m-close"
-                    onClicked: webView.tabModel.closeActiveTab()
+                    onClicked: {
+                        webView.tabModel.closeActiveTab()
+                        webView.activatePage(webView.tabId, true)
+                    }
                 }
 
                 // Spacer

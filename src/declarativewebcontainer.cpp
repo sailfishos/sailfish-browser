@@ -49,6 +49,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     , m_inputPanelHeight(0.0)
     , m_inputPanelOpenHeight(0.0)
     , m_toolbarHeight(0.0)
+    , m_tabId(0)
     , m_loading(false)
     , m_loadProgress(0)
     , m_canGoForward(false)
@@ -125,7 +126,7 @@ void DeclarativeWebContainer::setTabModel(DeclarativeTabModel *model)
 
         m_model = model;
         if (m_model) {
-            connect(m_model, SIGNAL(activeTabChanged(int,int)), this, SLOT(onActiveTabChanged(int,int)));
+            connect(m_model, SIGNAL(activeTabChanged(int,int,bool)), this, SLOT(onActiveTabChanged(int,int,bool)));
             connect(m_model, SIGNAL(loadedChanged()), this, SLOT(onModelLoaded()));
             connect(m_model, SIGNAL(tabAdded(int)), this, SLOT(manageMaxTabCount()));
             connect(m_model, SIGNAL(tabClosed(int)), this, SLOT(releasePage(int)));
@@ -245,14 +246,19 @@ bool DeclarativeWebContainer::canGoBack() const
     return m_canGoBack;
 }
 
+int DeclarativeWebContainer::tabId() const
+{
+    return m_tabId;
+}
+
 QString DeclarativeWebContainer::title() const
 {
-    return m_webPage ? m_webPage->title() : "";
+    return m_webPage ? m_webPage->title() : m_title;
 }
 
 QString DeclarativeWebContainer::url() const
 {
-    return m_webPage ? m_webPage->url().toString() : "";
+    return m_webPage ? m_webPage->url().toString() : m_url;
 }
 
 QString DeclarativeWebContainer::thumbnailPath() const
@@ -511,7 +517,7 @@ void DeclarativeWebContainer::handleWindowChanged(QQuickWindow *window)
     }
 }
 
-void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int activeTabId)
+void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int activeTabId, bool loadActiveTab)
 {
     if (activeTabId <= 0) {
         setThumbnailPath("");
@@ -526,7 +532,23 @@ void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int activeTabId)
 
     setThumbnailPath(tab.thumbnailPath());
 
-    if (m_model->hasNewTabData()) {
+
+    if (m_title != tab.title()) {
+        m_title = tab.title();
+        emit titleChanged();
+    }
+
+    if (m_url != tab.url()) {
+        m_url = tab.url();
+        emit urlChanged();
+    }
+
+    if (m_tabId != activeTabId) {
+        m_tabId = activeTabId;
+        emit tabIdChanged();
+    }
+
+    if (m_model->hasNewTabData() || !loadActiveTab) {
         return;
     }
 
@@ -644,7 +666,13 @@ void DeclarativeWebContainer::onReadyToLoad()
 void DeclarativeWebContainer::onTabsCleared()
 {
     m_webPages->clear();
+    m_title = "";
+    m_url = "";
     setWebPage(0);
+    if (m_tabId != 0) {
+        m_tabId = 0;
+        emit tabIdChanged();
+    }
     setThumbnailPath("");
 }
 
@@ -687,9 +715,14 @@ void DeclarativeWebContainer::releasePage(int tabId, bool virtualize)
         m_webPages->release(tabId, virtualize);
         // Successfully destroyed. Emit relevant property changes.
         if (!m_webPage) {
+            m_title = "";
+            m_url = "";
+            m_tabId = 0;
+
             emit contentItemChanged();
             emit titleChanged();
             emit urlChanged();
+            emit tabIdChanged();
             setThumbnailPath("");
         }
         m_model->resetNewTabData();
