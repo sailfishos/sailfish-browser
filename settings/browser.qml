@@ -38,6 +38,23 @@ Page {
                 title: qsTrId("settings_browser-ph-browser")
             }
 
+            TextField {
+                id: homePage
+
+                width: parent.width
+                //: Label for home page text field
+                //% "Home Page"
+                label: qsTrId("settings_browser-la-home_page")
+                text: homePageConfig.value
+                placeholderText: homePageConfig.defaultValue
+                inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase | Qt.ImhUrlCharactersOnly
+
+                onTextChanged: homePageConfig.value = text || placeholderText
+
+                EnterKey.iconSource: "image://theme/icon-m-enter-close"
+                EnterKey.onClicked: focus = false
+            }
+
             ComboBox {
                 id: searchEngine
 
@@ -95,6 +112,23 @@ Page {
         onValueChanged: {
             if (searchEngine.currentItem.text !== value) {
                 searchEngine.currentIndex = name2index(value)
+            }
+        }
+    }
+
+    ConfigurationValue {
+        id: homePageConfig
+
+        property bool edited
+
+        key: "/apps/sailfish-browser/settings/home_page"
+        defaultValue: "http://jolla.com/"
+
+        // Set homePage TextField when text field first time edited
+        onValueChanged: {
+            if (!edited) {
+                homePage.text = value
+                edited = true
             }
         }
     }
