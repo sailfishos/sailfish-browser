@@ -20,4 +20,6 @@ INSTALLS += testdata testnavigationdata testdesktop
 OTHER_FILES += \
     *.html \
     *.css \
-    navigation/*.html
+    navigation/*.html \
+    *.sh \
+    *.txt
