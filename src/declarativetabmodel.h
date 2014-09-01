@@ -24,6 +24,7 @@ class DeclarativeTabModel : public QAbstractListModel, public QQmlParserStatus
     Q_OBJECT
     Q_INTERFACES(QQmlParserStatus)
 
+    Q_PROPERTY(int activeTabIndex READ activeTabIndex NOTIFY activeTabIndexChanged FINAL)
     Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
     Q_PROPERTY(int nextTabId READ nextTabId NOTIFY nextTabIdChanged FINAL)
     Q_PROPERTY(bool loaded READ loaded NOTIFY loadedChanged FINAL)
@@ -35,6 +36,7 @@ class DeclarativeTabModel : public QAbstractListModel, public QQmlParserStatus
 
 public:
     DeclarativeTabModel(QObject *parent = 0);
+    ~DeclarativeTabModel();
     
     enum TabRoles {
         ThumbPathRole = Qt::UserRole + 1,
@@ -56,6 +58,7 @@ public:
 
     Q_INVOKABLE void dumpTabs() const;
 
+    int activeTabIndex() const;
     int count() const;
     void addTab(const QString &url, const QString &title);
     bool activateTabById(int tabId);
@@ -90,12 +93,11 @@ public:
     void updateTitle(int tabId, bool activeTab, QString title);
     void updateThumbnailPath(int tabId, QString path);
 
-    static bool tabSort(const Tab &t1, const Tab &t2);
-
 public slots:
     void tabsAvailable(QList<Tab> tabs);
 
 signals:
+    void activeTabIndexChanged();
     void countChanged();
     void activeTabChanged(int oldTabId, int activeTabId, bool loadActiveTab = true);
     void tabAdded(int tabId);
@@ -131,17 +133,15 @@ private:
     void load();
     void removeTab(int tabId, const QString &thumbnail, int index);
     int findTabIndex(int tabId) const;
-    void saveTabOrder();
-    void loadTabOrder();
     void updateActiveTab(const Tab &activeTab, bool loadActiveTab);
     void updateTabUrl(int tabId, bool activeTab, const QString &url, bool navigate);
 
     void updateNewTabData(NewTabData *newTabData);
     QString newTabTitle() const;
 
+    Tab m_activeTab;
     QList<Tab> m_tabs;
-    // All tabs closed. Let's keep reference at the model.
-    Tab m_dummyTab;
+
     bool m_loaded;
     bool m_browsing;
     int m_nextTabId;

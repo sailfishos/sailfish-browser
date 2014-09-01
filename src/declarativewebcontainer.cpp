@@ -600,7 +600,7 @@ void DeclarativeWebContainer::onReadyToLoad()
     } else if (!m_initialUrl.isEmpty()) {
         emit triggerLoad(m_initialUrl, "");
     } else if (m_model->count() > 0) {
-        // First tab is actived when tabs are loaded to the tabs tabModel.
+        // Previous active tab is actived when tabs are loaded to the tabs tabModel.
         m_model->resetNewTabData();
         const Tab &tab = m_model->activeTab();
         emit triggerLoad(tab.url(), tab.title());
@@ -672,6 +672,16 @@ void DeclarativeWebContainer::releasePage(int tabId, bool virtualize)
             m_title = "";
             m_url = "";
             m_tabId = 0;
+
+            if (m_canGoBack) {
+                m_canGoBack = false;
+                emit canGoBackChanged();
+            }
+
+            if (m_canGoForward) {
+                m_canGoForward = false;
+                emit canGoForwardChanged();
+            }
 
             emit contentItemChanged();
             emit titleChanged();

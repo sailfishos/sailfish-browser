@@ -18,8 +18,6 @@
 #include <QStringList>
 #include <QUrl>
 
-static QList<int> s_tabOrder;
-
 DeclarativeTabModel::DeclarativeTabModel(QObject *parent)
     : QAbstractListModel(parent)
     , m_loaded(false)
@@ -32,6 +30,11 @@ DeclarativeTabModel::DeclarativeTabModel(QObject *parent)
             this, SLOT(tabChanged(Tab)));
     connect(DBManager::instance(), SIGNAL(titleChanged(int,int,QString,QString)),
             this, SLOT(updateTitle(int,int,QString,QString)));
+}
+
+DeclarativeTabModel::~DeclarativeTabModel()
+{
+    DBManager::instance()->saveSetting("activeTabId", QString("%1").arg(m_activeTab.tabId()));
 }
 
 QHash<int, QByteArray> DeclarativeTabModel::roleNames() const
@@ -55,14 +58,13 @@ void DeclarativeTabModel::addTab(const QString& url, const QString &title) {
 #ifdef DEBUG_LOGS
     qDebug() << "new tab data:" << &tab;
 #endif
-    beginInsertRows(QModelIndex(), 0, 0);
-    int oldActiveTab = -1;
-    if (!m_tabs.empty()) {
-        oldActiveTab = m_tabs.at(0).tabId();
-    }
-
-    m_tabs.insert(0, tab);
+    int index = m_tabs.count();
+    beginInsertRows(QModelIndex(), index, index);
+    m_tabs.append(tab);
     endInsertRows();
+    // We should trigger this when adding tab only when
+    // tab is added through new window request. In all other
+    // case we should keep the new tab in background.
     updateActiveTab(tab, true);
 
     emit countChanged();
@@ -78,11 +80,8 @@ int DeclarativeTabModel::nextTabId() const
 }
 
 void DeclarativeTabModel::remove(int index) {
-    if (index == 0) {
-        closeActiveTab();
-    } else if (!m_tabs.isEmpty() && index >= 0 && index < m_tabs.count()) {
+    if (!m_tabs.isEmpty() && index >= 0 && index < m_tabs.count()) {
         removeTab(m_tabs.at(index).tabId(), m_tabs.at(index).thumbnailPath(), index);
-        saveTabOrder();
     }
 }
 
@@ -126,26 +125,15 @@ bool DeclarativeTabModel::activateTab(const QString& url)
 bool DeclarativeTabModel::activateTab(int index, bool loadActiveTab)
 {
     if (index > 0 && index < m_tabs.count()) {
-        Tab newActiveTab = m_tabs.at(index);
+        const Tab &newActiveTab = m_tabs.at(index);
 #ifdef DEBUG_LOGS
         qDebug() << "activate tab: " << index << &newActiveTab;
 #endif
-        // Remove tab from index position.
-        beginRemoveRows(QModelIndex(), index, index);
-        m_tabs.removeAt(index);
-        endRemoveRows();
-
-        // Current active tab back to model data.
-        beginInsertRows(QModelIndex(), 0, 0);
-        m_tabs.insert(0, newActiveTab);
-        endInsertRows();
-
         updateActiveTab(newActiveTab, loadActiveTab);
         return true;
+    } else {
+        return false;
     }
-    // In case of activating the first tab, handle it here.
-    // No need to suffle model, but just return true.
-    return index == 0 && !m_tabs.isEmpty();
 }
 
 bool DeclarativeTabModel::activateTabById(int tabId)
@@ -162,13 +150,10 @@ void DeclarativeTabModel::closeActiveTab()
     if (!m_tabs.isEmpty()) {
         // Clear active tab data and try to active a tab from the first model index.
         int activeTabId = m_activeTab.tabId();
+        int index = findTabIndex(activeTabId);
         // Invalidate so that it will not back to model.
         m_activeTab.setTabId(0);
-        removeTab(activeTabId, m_activeTab.thumbnailPath());
-        if (!activateTab(0, false)) {
-            // Last active tab got closed.
-            emit activeTabChanged(activeTabId, 0, false);
-        }
+        removeTab(activeTabId, m_activeTab.thumbnailPath(), index);
     }
 }
 
@@ -193,6 +178,11 @@ void DeclarativeTabModel::dumpTabs() const
     for (int i = 0; i < m_tabs.size(); i++) {
         qDebug() << "tab[" << i << "]:" << &m_tabs.at(i);
     }
+}
+
+int DeclarativeTabModel::activeTabIndex() const
+{
+    return findTabIndex(m_activeTab.tabId());
 }
 
 int DeclarativeTabModel::count() const
@@ -274,12 +264,7 @@ const QList<Tab> &DeclarativeTabModel::tabs() const
 
 const Tab &DeclarativeTabModel::activeTab() const
 {
-    if (!m_tabs.isEmpty()) {
-        return m_tabs.at(0);
-    } else {
-        // This is an invalid tab.
-        return m_dummyTab;
-    }
+    return m_activeTab;
 }
 
 int DeclarativeTabModel::newTabParentId() const
@@ -300,8 +285,17 @@ void DeclarativeTabModel::tabsAvailable(QList<Tab> tabs)
     m_tabs = tabs;
 
     if (m_tabs.count() > 0) {
-        loadTabOrder();
-        qSort(m_tabs.begin(), m_tabs.end(), DeclarativeTabModel::tabSort);
+        QString activeTabId = DBManager::instance()->getSetting("activeTabId");
+        bool ok = false;
+        int tabId = activeTabId.toInt(&ok);
+        int index = findTabIndex(tabId);
+        if (index > 0) {
+            m_activeTab = m_tabs[index];
+        } else {
+            // Fallback for browser update as this "activeTabId" is a new setting.
+            m_activeTab = m_tabs[0];
+        }
+        emit activeTabIndexChanged();
     } else {
         emit tabsCleared();
     }
@@ -335,7 +329,6 @@ void DeclarativeTabModel::tabChanged(const Tab &tab)
         return;
     }
 
-    int oldActiveTabId = m_tabs.at(0).tabId();
     int i = m_tabs.indexOf(tab); // match based on tab_id
     if (i > -1) {
         QVector<int> roles;
@@ -355,7 +348,8 @@ void DeclarativeTabModel::tabChanged(const Tab &tab)
         emit dataChanged(start, end, roles);
     }
 
-    updateActiveTab(oldActiveTabId, tab.tabId());
+    // TabModel has correct data. Do not allow this to (re)load the page.
+    updateActiveTab(tab, false);
 }
 
 void DeclarativeTabModel::updateTitle(int tabId, int linkId, QString url, QString title)
@@ -437,36 +431,10 @@ int DeclarativeTabModel::findTabIndex(int tabId) const
     return -1;
 }
 
-void DeclarativeTabModel::saveTabOrder()
-{
-    QString tabOrder = "";
-    for (int i = 0; i < m_tabs.count(); ++i) {
-        const Tab &tab = m_tabs.at(i);
-        tabOrder.append(QString("%1,").arg(tab.tabId()));
-#ifdef DEBUG_LOGS
-        qDebug() << "append:" << &tab;
-#endif
-    }
-    DBManager::instance()->saveSetting("tabOrder", tabOrder);
-}
-
-void DeclarativeTabModel::loadTabOrder()
-{
-    QString tabOrder = DBManager::instance()->getSetting("tabOrder");
-    QStringList tmpList = tabOrder.split(",");
-    bool ok = false;
-    for (int i = 0; i < tmpList.count(); ++i) {
-        const QString &strTab = tmpList.at(i);
-        int tabId = strTab.toInt(&ok);
-        if (ok) {
-            s_tabOrder << tabId;
-        }
-    }
-}
 void DeclarativeTabModel::updateActiveTab(const Tab &activeTab, bool loadActiveTab)
 {
 #ifdef DEBUG_LOGS
-    qDebug() << "new active tab id:" << activeTabId << "old:" << oldActiveTabId << "count:" << m_tabs.count();
+    qDebug() << "new active tab:" << &activeTab << "old active tab:" << &m_activeTab << "count:" << m_tabs.count();
 #endif
     if (m_tabs.isEmpty()) {
         return;
@@ -475,8 +443,16 @@ void DeclarativeTabModel::updateActiveTab(const Tab &activeTab, bool loadActiveT
     if (m_activeTab != activeTab) {
         int oldTabId = m_activeTab.tabId();
         m_activeTab = activeTab;
+        // If tab has changed, update active tab role.
+        int tabIndex = activeTabIndex();
+        if (oldTabId != m_activeTab.tabId()) {
+            QVector<int> roles;
+            roles << ActiveTabRole;
+            emit dataChanged(index(tabIndex, 0), index(tabIndex, 0), roles);
+            emit activeTabIndexChanged();
+        }
+
         emit activeTabChanged(oldTabId, activeTab.tabId(), loadActiveTab);
-        saveTabOrder();
     }
 }
 
@@ -530,17 +506,6 @@ void DeclarativeTabModel::updateNewTabData(NewTabData *newTabData)
 
     if (hadNewTabData != hasNewTabData()) {
         emit hasNewTabDataChanged();
-    }
-}
-
-bool DeclarativeTabModel::tabSort(const Tab &t1, const Tab &t2)
-{
-    int i1 = s_tabOrder.indexOf(t1.tabId());
-    int i2 = s_tabOrder.indexOf(t2.tabId());
-    if (i2 == -1) {
-        return true;
-    } else {
-        return i1 < i2;
     }
 }
 
