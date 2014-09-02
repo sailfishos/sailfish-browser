@@ -188,7 +188,12 @@ PanelBackground {
                 onShowTabs: {
                     webView.captureScreen()
                     overlayAnimator.showChrome()
-                    pageStack.push(tabView)
+                    // Push the tab index and active page that were current at this moment.
+                    // Changing of active tab cannot cause blinking.
+                    pageStack.push(tabView, {
+                                       "activeTabIndex": webView.tabModel.activeTabIndex,
+                                       "activeWebPage": webView.contentItem
+                                   })
                     //overlayAnimator.hide()
                 }
                 //overlay.tabsViewVisible = true
@@ -323,6 +328,9 @@ PanelBackground {
     Component {
         id: tabView
         Page {
+            property int activeTabIndex
+            property Item activeWebPage
+
             // TODO: Change to GridView
             Browser.TabView {
                 //        opacity: tabsViewVisible ? 1.0 : 0.0

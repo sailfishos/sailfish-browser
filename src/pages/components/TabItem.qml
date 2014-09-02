@@ -14,6 +14,7 @@ import Sailfish.Silica 1.0
 
 MouseArea {
     readonly property bool down: pressed && containsMouse
+    readonly property bool activeTab: activeTabIndex === index
     // Expose ListView for all items
     property Item view: ListView.view
     layer.effect: PressEffect {}
@@ -21,13 +22,7 @@ MouseArea {
     width: parent.width
     height: Screen.width / 2
 
-    onClicked: {
-        if (active) {
-            view.hide()
-        } else {
-            view.activateTab(index)
-        }
-    }
+    onClicked: view.activateTab(index)
 
     Loader {
         id: tabTexture
@@ -42,7 +37,7 @@ MouseArea {
             rightMargin: Theme.paddingLarge
         }
 
-        sourceComponent: model.active ? liveSource : image
+        sourceComponent: activeTab ? liveSource : image
     }
 
     Component {
@@ -63,7 +58,7 @@ MouseArea {
         id: liveSource
         ShaderEffectSource {
             anchors.fill: parent
-            sourceItem: enabled ? webView && webView.contentItem : null
+            sourceItem: activeWebPage
             sourceRect: Qt.rect(0, 0, parent.width, parent.height)
         }
     }
@@ -74,7 +69,7 @@ MouseArea {
         hideSource: true
         visible: false
         sourceItem: Rectangle {
-            color: "blue"
+            color: "white"
             radius: 2/3 * Theme.paddingMedium
             x: tabTexture.x; y: tabTexture.y
             width: tabTexture.width
