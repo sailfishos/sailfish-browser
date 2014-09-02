@@ -52,7 +52,6 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     , m_canGoBack(false)
     , m_realNavigation(false)
     , m_readyToLoad(false)
-    , m_maxLiveTabCount(5)
     , m_deferredReload(false)
 {
     m_webPages.reset(new WebPages(this));
@@ -61,7 +60,6 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     connect(DownloadManager::instance(), SIGNAL(downloadStarted()), this, SLOT(onDownloadStarted()));
     connect(DBManager::instance(), SIGNAL(thumbPathChanged(int,QString)),
             this, SLOT(onPageThumbnailChanged(int,QString)));
-    connect(this, SIGNAL(maxLiveTabCountChanged()), this, SLOT(manageMaxTabCount()));
     connect(this, SIGNAL(_readyToLoadChanged()), this, SLOT(onReadyToLoad()));
     connect(this, SIGNAL(portraitChanged()), this, SLOT(resetHeight()));
     connect(this, SIGNAL(enabledChanged()), this, SLOT(handleEnabledChanged()));
@@ -119,7 +117,6 @@ void DeclarativeWebContainer::setTabModel(DeclarativeTabModel *model)
         if (m_model) {
             connect(m_model, SIGNAL(activeTabChanged(int,int,bool)), this, SLOT(onActiveTabChanged(int,int,bool)));
             connect(m_model, SIGNAL(loadedChanged()), this, SLOT(onModelLoaded()));
-            connect(m_model, SIGNAL(tabAdded(int)), this, SLOT(manageMaxTabCount()));
             connect(m_model, SIGNAL(tabClosed(int)), this, SLOT(releasePage(int)));
             connect(m_model, SIGNAL(tabsCleared()), this, SLOT(onTabsCleared()));
             connect(m_model, SIGNAL(newTabRequested(QString,QString)), this, SLOT(onNewTabRequested(QString,QString)));
@@ -144,6 +141,18 @@ void DeclarativeWebContainer::setForeground(bool active)
             resetHeight(true);
         }
         emit foregroundChanged();
+    }
+}
+
+int DeclarativeWebContainer::maxLiveTabCount() const
+{
+    return m_webPages->maxLivePages();
+}
+
+void DeclarativeWebContainer::setMaxLiveTabCount(int count)
+{
+    if (m_webPages->setMaxLivePages(count)) {
+        emit maxLiveTabCountChanged();
     }
 }
 
@@ -514,7 +523,6 @@ void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int activeTabId, 
                 && (m_webPage->tabId() != activeTabId || m_webPage->url().toString() != tabUrl)) {
             emit triggerLoad(tabUrl, tab.title());
         }
-        manageMaxTabCount();
     } else if (!m_realNavigation && isActiveTab(activeTabId) && m_webPage->backForwardNavigation()) {
         emit triggerLoad(tab.url(), tab.title());
     }
@@ -759,21 +767,6 @@ void DeclarativeWebContainer::updateThumbnail()
     const Tab &tab = m_model->activeTab();
     if (isActiveTab(tab.tabId()) && tab.isValid()) {
         captureScreen();
-    }
-}
-
-void DeclarativeWebContainer::manageMaxTabCount()
-{
-    // Minimum is 1 tab.
-    if (m_maxLiveTabCount < 1 || !m_model) {
-        return;
-    }
-
-    const QList<Tab> &tabs = m_model->tabs();
-
-    // ActiveTab + m_maxLiveTabCount -1 == m_maxLiveTabCount
-    for (int i = m_maxLiveTabCount - 1; i < tabs.count() && m_webPages && m_webPages->count() > m_maxLiveTabCount; ++i) {
-        releasePage(tabs.at(i).tabId(), true);
     }
 }
 

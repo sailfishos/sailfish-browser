@@ -31,7 +31,7 @@ class DeclarativeWebContainer : public QQuickItem {
     Q_PROPERTY(DeclarativeWebPage *contentItem READ webPage NOTIFY contentItemChanged FINAL)
     Q_PROPERTY(DeclarativeTabModel *tabModel READ tabModel WRITE setTabModel NOTIFY tabModelChanged FINAL)
     Q_PROPERTY(bool foreground READ foreground WRITE setForeground NOTIFY foregroundChanged FINAL)
-    Q_PROPERTY(int maxLiveTabCount MEMBER m_maxLiveTabCount NOTIFY maxLiveTabCountChanged FINAL)
+    Q_PROPERTY(int maxLiveTabCount READ maxLiveTabCount WRITE setMaxLiveTabCount NOTIFY maxLiveTabCountChanged FINAL)
     // This property should cover all possible popus
     Q_PROPERTY(bool popupActive MEMBER m_popupActive NOTIFY popupActiveChanged FINAL)
     Q_PROPERTY(bool portrait MEMBER m_portrait NOTIFY portraitChanged FINAL)
@@ -77,6 +77,9 @@ public:
 
     bool foreground() const;
     void setForeground(bool active);
+
+    int maxLiveTabCount() const;
+    void setMaxLiveTabCount(int count);
 
     bool background() const;
 
@@ -165,7 +168,6 @@ private slots:
     void onNewTabRequested(QString url, QString title);
     void onReadyToLoad();
     void onTabsCleared();
-    void manageMaxTabCount();
     void releasePage(int tabId, bool virtualize = false);
     void closeWindow();
     void onPageUrlChanged();
@@ -222,7 +224,6 @@ private:
     bool m_canGoBack;
     bool m_realNavigation;
     bool m_readyToLoad;
-    int m_maxLiveTabCount;
 
     QFutureWatcher<ScreenCapture> m_screenCapturer;
 
