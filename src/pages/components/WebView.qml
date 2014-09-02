@@ -155,7 +155,12 @@ WebContainer {
             enabled: webView.enabled
             // Active could pause e.g. video in cover by anding
             // Qt.application.active to visible
-            active: visible
+            // TODO: This should still be futher investigated.
+            // Guarding of suspend/resume & gc combo
+            // Page loading should finish even if it would be at background.
+            // Slow network (2G). Maybe we need something like
+            // suspend() { if (loaded) { suspendView() } } for suspend calls.
+            active: visible // || !loaded
 
             // There needs to be enough content for enabling chrome gesture
             chromeGestureThreshold: container.toolbarHeight / 2
