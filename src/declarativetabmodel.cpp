@@ -124,7 +124,7 @@ bool DeclarativeTabModel::activateTab(const QString& url)
 
 bool DeclarativeTabModel::activateTab(int index, bool loadActiveTab)
 {
-    if (index > 0 && index < m_tabs.count()) {
+    if (index >= 0 && index < m_tabs.count()) {
         const Tab &newActiveTab = m_tabs.at(index);
 #ifdef DEBUG_LOGS
         qDebug() << "activate tab: " << index << &newActiveTab;
@@ -289,7 +289,7 @@ void DeclarativeTabModel::tabsAvailable(QList<Tab> tabs)
         bool ok = false;
         int tabId = activeTabId.toInt(&ok);
         int index = findTabIndex(tabId);
-        if (index > 0) {
+        if (index >= 0) {
             m_activeTab = m_tabs[index];
         } else {
             // Fallback for browser update as this "activeTabId" is a new setting.
