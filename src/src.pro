@@ -63,6 +63,7 @@ SOURCES += \
     downloadmanager.cpp \
     settingmanager.cpp \
     closeeventfilter.cpp \
+    webpagequeue.cpp \
     webpages.cpp
 
 # C++ headers
@@ -76,6 +77,7 @@ HEADERS += \
     downloadmanager.h \
     settingmanager.h \
     closeeventfilter.h \
+    webpagequeue.h \
     webpages.h \
     declarativefileuploadmode.h \
     declarativefileuploadfilter.h

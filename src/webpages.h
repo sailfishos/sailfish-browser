@@ -12,8 +12,9 @@
 #ifndef WEBPAGES_H
 #define WEBPAGES_H
 
+#include "webpagequeue.h"
+
 #include <QObject>
-#include <QMap>
 #include <QPointer>
 
 class QQmlComponent;
@@ -42,6 +43,9 @@ public:
     bool initialized() const;
     int count() const;
 
+    bool setMaxLivePages(int count);
+    int maxLivePages() const;
+
     WebPageActivationData page(int tabId, int parentId = 0);
     void release(int tabId, bool virtualize = false);
     void clear();
@@ -49,23 +53,12 @@ public:
     void dumpPages() const;
 
 private:
-    struct WebPageEntry {
-        WebPageEntry(DeclarativeWebPage *webPage, QRectF *cssContentRect);
-        ~WebPageEntry();
-
-        DeclarativeWebPage *webPage;
-        QRectF *cssContentRect;
-        bool allowPageDelete;
-    };
-
-    void updateActivePage(WebPageEntry *webPageEntry, bool resurrect);
+    void updateStates(DeclarativeWebPage *oldActivePage, DeclarativeWebPage *newActivePage);
 
     QPointer<DeclarativeWebContainer> m_webContainer;
     QPointer<QQmlComponent> m_webPageComponent;
     // Contains both virtual and real
-    QMap<int, WebPageEntry*> m_activePages;
-    WebPageEntry *m_activePage;
-    int m_count;
+    WebPageQueue m_activePages;
 
     friend class tst_webview;
 };
