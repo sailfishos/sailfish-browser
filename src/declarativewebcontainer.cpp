@@ -120,7 +120,6 @@ void DeclarativeWebContainer::setTabModel(DeclarativeTabModel *model)
             connect(m_model, SIGNAL(tabClosed(int)), this, SLOT(releasePage(int)));
             connect(m_model, SIGNAL(tabsCleared()), this, SLOT(onTabsCleared()));
             connect(m_model, SIGNAL(newTabRequested(QString,QString)), this, SLOT(onNewTabRequested(QString,QString)));
-            connect(m_model, SIGNAL(updateActiveThumbnail()), this, SLOT(updateThumbnail()));
         }
         emit tabModelChanged();
     }
@@ -236,20 +235,10 @@ QString DeclarativeWebContainer::url() const
     return m_webPage ? m_webPage->url().toString() : m_url;
 }
 
-QString DeclarativeWebContainer::thumbnailPath() const
+void DeclarativeWebContainer::updateThumbnailPath(QString thumbnailPath, int tabId)
 {
-    return m_thumbnailPath;
-}
-
-void DeclarativeWebContainer::setThumbnailPath(QString thumbnailPath, int tabId)
-{
-    if (m_thumbnailPath != thumbnailPath) {
-        m_thumbnailPath = thumbnailPath;
-        emit thumbnailPathChanged();
-
-        if (tabId > 0) {
-            m_model->updateThumbnailPath(tabId, thumbnailPath);
-        }
+    if (tabId > 0) {
+        m_model->updateThumbnailPath(tabId, thumbnailPath);
     }
 }
 
@@ -483,7 +472,7 @@ void DeclarativeWebContainer::handleEnabledChanged()
 void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int activeTabId, bool loadActiveTab)
 {
     if (activeTabId <= 0) {
-        setThumbnailPath("", activeTabId);
+        updateThumbnailPath("", activeTabId);
         return;
     }
     const Tab &tab = m_model->activeTab();
@@ -492,9 +481,6 @@ void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int activeTabId, 
 #endif
 
     updateNavigationStatus(tab);
-
-    setThumbnailPath(tab.thumbnailPath(), tab.tabId());
-
 
     if (m_title != tab.title()) {
         m_title = tab.title();
@@ -536,7 +522,7 @@ void DeclarativeWebContainer::screenCaptureReady()
 #endif
     if (capture.tabId != -1) {
         // Update immediately without dbworker round trip.
-        setThumbnailPath(capture.path, capture.tabId);
+        updateThumbnailPath(capture.path, capture.tabId);
         DBManager::instance()->updateThumbPath(capture.tabId, capture.path);
     }
     emit screenCaptured();
@@ -634,7 +620,6 @@ void DeclarativeWebContainer::onTabsCleared()
         m_tabId = 0;
         emit tabIdChanged();
     }
-    setThumbnailPath("", 0);
 }
 
 /**
@@ -651,7 +636,7 @@ void DeclarativeWebContainer::captureScreen(int width, int height, qreal rotate)
     }
 
     // Cleanup old thumb.
-    setThumbnailPath("", m_webPage->tabId());
+    updateThumbnailPath("", m_webPage->tabId());
 
     QImage image = window()->grabWindow();
     QRect cropBounds(0, 0, width, height);
@@ -695,7 +680,7 @@ void DeclarativeWebContainer::releasePage(int tabId, bool virtualize)
             emit titleChanged();
             emit urlChanged();
             emit tabIdChanged();
-            setThumbnailPath("", 0);
+            updateThumbnailPath("", 0);
         }
         m_model->resetNewTabData();
     }
@@ -759,15 +744,7 @@ void DeclarativeWebContainer::onPageTitleChanged()
 
 void DeclarativeWebContainer::onPageThumbnailChanged(int tabId, QString path)
 {
-    setThumbnailPath(path, tabId);
-}
-
-void DeclarativeWebContainer::updateThumbnail()
-{
-    const Tab &tab = m_model->activeTab();
-    if (isActiveTab(tab.tabId()) && tab.isValid()) {
-        captureScreen();
-    }
+    updateThumbnailPath(path, tabId);
 }
 
 void DeclarativeWebContainer::updateNavigationStatus(const Tab &tab)

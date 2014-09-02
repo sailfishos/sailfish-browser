@@ -56,7 +56,6 @@ class DeclarativeWebContainer : public QQuickItem {
     Q_PROPERTY(QString title READ title NOTIFY titleChanged FINAL)
     Q_PROPERTY(QString url READ url NOTIFY urlChanged FINAL)
     Q_PROPERTY(QString initialUrl MEMBER m_initialUrl NOTIFY initialUrlChanged FINAL)
-    Q_PROPERTY(QString thumbnailPath READ thumbnailPath NOTIFY thumbnailPathChanged FINAL)
 
     Q_PROPERTY(QQmlComponent* webPageComponent MEMBER m_webPageComponent NOTIFY webPageComponentChanged FINAL)
 
@@ -173,7 +172,6 @@ private slots:
     void onPageUrlChanged();
     void onPageTitleChanged();
     void onPageThumbnailChanged(int tabId, QString path);
-    void updateThumbnail();
 
     // These are here to inform embedlite-components that keyboard is open or close
     // matching composition metrics.
@@ -181,7 +179,7 @@ private slots:
 
 private:
     void setWebPage(DeclarativeWebPage *webPage);
-    void setThumbnailPath(QString thumbnailPath, int tabId);
+    void updateThumbnailPath(QString thumbnailPath, int tabId);
     qreal contentHeight() const;
     void captureScreen(int width, int height, qreal rotate);
     int parentTabId(int tabId) const;
@@ -211,7 +209,6 @@ private:
     qreal m_toolbarHeight;
 
     QString m_favicon;
-    QString m_thumbnailPath;
     QString m_initialUrl;
 
     QString m_url;

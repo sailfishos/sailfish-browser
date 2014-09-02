@@ -112,9 +112,6 @@ WebContainer {
 
     tabModel: TabModel {
         id: tabs
-
-        // Enable browsing after new tab actually created or it was not even requested
-        browsing: webView.enabled && !hasNewTabData && contentItem && contentItem.loaded
     }
 
     onTriggerLoad: webView.load(url, title)

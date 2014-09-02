@@ -28,7 +28,6 @@ class DeclarativeTabModel : public QAbstractListModel, public QQmlParserStatus
     Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
     Q_PROPERTY(int nextTabId READ nextTabId NOTIFY nextTabIdChanged FINAL)
     Q_PROPERTY(bool loaded READ loaded NOTIFY loadedChanged FINAL)
-    Q_PROPERTY(bool browsing READ browsing WRITE setBrowsing NOTIFY browsingChanged FINAL)
     // TODO: Remove newTab related functions from WebContainer, WebPage, and TabModel pushed to C++ side.
     Q_PROPERTY(bool hasNewTabData READ hasNewTabData NOTIFY hasNewTabDataChanged FINAL)
     // TODO: Only needed by on_ReadyToLoadChanged handler of WebView
@@ -77,9 +76,6 @@ public:
 
     bool loaded() const;
 
-    bool browsing() const;
-    void setBrowsing(bool browsing);
-
     bool hasNewTabData() const;
     QString newTabUrl() const;
 
@@ -111,7 +107,6 @@ signals:
     void hasNewTabDataChanged();
     void newTabUrlChanged();
     void newTabRequested(QString url, QString title);
-    void updateActiveThumbnail();
 
 private slots:
     void tabChanged(const Tab &tab);
@@ -145,7 +140,6 @@ private:
     QList<Tab> m_tabs;
 
     bool m_loaded;
-    bool m_browsing;
     int m_nextTabId;
 
     QScopedPointer<NewTabData> m_newTabData;

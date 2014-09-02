@@ -21,7 +21,6 @@
 DeclarativeTabModel::DeclarativeTabModel(QObject *parent)
     : QAbstractListModel(parent)
     , m_loaded(false)
-    , m_browsing(false)
     , m_nextTabId(DBManager::instance()->getMaxTabId() + 1)
 {
     connect(DBManager::instance(), SIGNAL(tabsAvailable(QList<Tab>)),
@@ -219,22 +218,6 @@ void DeclarativeTabModel::componentComplete()
 bool DeclarativeTabModel::loaded() const
 {
     return m_loaded;
-}
-
-bool DeclarativeTabModel::browsing() const
-{
-    return m_browsing;
-}
-
-void DeclarativeTabModel::setBrowsing(bool browsing)
-{
-    if (browsing != m_browsing) {
-        m_browsing = browsing;
-        if (m_browsing) {
-            emit updateActiveThumbnail();
-        }
-        emit browsingChanged();
-    }
 }
 
 bool DeclarativeTabModel::hasNewTabData() const
@@ -518,7 +501,7 @@ void DeclarativeTabModel::updateThumbnailPath(int tabId, QString path)
     for (int i = 0; i < m_tabs.count(); i++) {
         if (m_tabs.at(i).tabId() == tabId) {
 #ifdef DEBUG_LOGS
-            qDebug() << "model tab thumbnail updated: " << path << tabId;
+            qDebug() << "model tab thumbnail updated: " << path << i << tabId;
 #endif
             m_tabs[i].setThumbnailPath(path);
             QModelIndex start = index(i, 0);

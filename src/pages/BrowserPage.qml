@@ -29,7 +29,6 @@ Page {
     property alias viewLoading: webView.loading
     property alias url: webView.url
     property alias title: webView.title
-    property alias thumbnailPath: webView.thumbnailPath
 
     property alias favoriteImageLoader: favoriteImageLoader
     property alias desktopBookmarkWriter: desktopBookmarkWriter
