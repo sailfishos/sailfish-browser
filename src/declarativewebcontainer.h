@@ -111,7 +111,7 @@ public:
     Q_INVOKABLE bool activatePage(int tabId, bool force = false);
     Q_INVOKABLE void loadNewTab(QString url, QString title, int parentId);
 
-    Q_INVOKABLE void captureScreen();
+    Q_INVOKABLE void captureScreen(int width, int height);
     Q_INVOKABLE void dumpPages() const;
 
 signals:

@@ -361,20 +361,19 @@ void DeclarativeWebContainer::loadNewTab(QString url, QString title, int parentI
     emit triggerLoad(url, title);
 }
 
-void DeclarativeWebContainer::captureScreen()
+void DeclarativeWebContainer::captureScreen(int width, int height)
 {
+    if (width <= 0 || height <= 0) {
+        qWarning() << "Cannot capture screen. Either width (" << width << ") or height (" << height << ") is less than zero.";
+    }
+
     if (!m_webPage || opacity() < 1.0 || !isEnabled()) {
         return;
     }
 
     if (m_webPage->domContentLoaded() && !m_popupActive) {
-        int size = QGuiApplication::primaryScreen()->size().width();
-        if (!m_portrait && !m_fullScreenMode) {
-            size -= m_toolbarHeight;
-        }
-
         qreal rotation = parentItem() ? parentItem()->rotation() : 0;
-        captureScreen(size, size, rotation);
+        captureScreen(width, height, rotation);
     }
 }
 

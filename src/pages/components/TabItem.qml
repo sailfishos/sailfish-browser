@@ -13,6 +13,8 @@ import QtQuick 2.1
 import Sailfish.Silica 1.0
 
 MouseArea {
+    id: root
+
     readonly property bool down: pressed && containsMouse
     readonly property bool activeTab: activeTabIndex === index
     // Expose ListView for all items
@@ -24,36 +26,33 @@ MouseArea {
 
     onClicked: view.activateTab(index)
 
+    // Keep this as square. Image streched incorrectly regardless of fillMode.
+    // ShaderEffectSource "texture" will take correct part of this.
     Loader {
         id: tabTexture
 
-        property real textureHeight: parent.height - Theme.paddingMedium
-
+        height: width
         anchors {
-            fill: parent
+            top: parent.top
+            left: parent.left
+            right: parent.right
             topMargin: index === 0 ? Theme.paddingLarge : Theme.paddingMedium
-            bottomMargin: Theme.paddingMedium
             leftMargin: Theme.paddingLarge
             rightMargin: Theme.paddingLarge
         }
-
         sourceComponent: activeTab ? liveSource : image
     }
 
     Component {
         id: image
         Image {
-            anchors.fill: parent
             source: thumbnailPath
-            fillMode: Image.PreserveAspectCrop
+            width: parent.width
+            height: width
             cache: false
-
-            Behavior on opacity { FadeAnimation {} }
         }
     }
 
-    // TODO: this should be the active tab. Current index 0 but order should be kept.
-    // Fix model order.
     Component {
         id: liveSource
         ShaderEffectSource {
@@ -65,26 +64,33 @@ MouseArea {
 
     ShaderEffectSource {
         id: mask
-        anchors.fill: tabTexture
+        anchors {
+            fill: root
+            topMargin: tabTexture.anchors.topMargin
+            leftMargin: tabTexture.anchors.leftMargin
+            rightMargin: tabTexture.anchors.rightMargin
+            bottomMargin: Theme.paddingMedium
+        }
+
         hideSource: true
         visible: false
         sourceItem: Rectangle {
             color: "white"
             radius: 2/3 * Theme.paddingMedium
-            x: tabTexture.x; y: tabTexture.y
-            width: tabTexture.width
-            height: tabTexture.height
-            visible: false
+            x: mask.x
+            y: mask.y
+            width: mask.width
+            height: mask.height
         }
     }
 
     ShaderEffectSource {
         id: texture
-        anchors.fill: tabTexture
+        anchors.fill: mask
         hideSource: true
         visible: false
         sourceItem: tabTexture
-
+        sourceRect: Qt.rect(0, 0, mask.width, mask.height)
     }
 
     ShaderEffect {
@@ -92,7 +98,7 @@ MouseArea {
         property variant source: texture
         property variant maskSource: mask
 
-        anchors.fill: tabTexture
+        anchors.fill: mask
         smooth: true
 
         fragmentShader: "
@@ -106,15 +112,12 @@ MouseArea {
     "
     }
 
-
     OpacityRampEffect {
-        id: effect
         slope: 2.6
         offset: 0.6
 //        slope: slope.value
 //        offset: offset.value
 
-        //sourceItem: roundingItem
         sourceItem: roundingItem
         direction: OpacityRamp.TopToBottom
     }
