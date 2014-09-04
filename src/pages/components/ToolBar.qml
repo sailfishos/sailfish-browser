@@ -19,17 +19,22 @@ Column {
     id: toolBarRow
 
     property string url
-    property bool busy
     property real secondaryToolsHeight
     property bool secondaryToolsActive
     property alias bookmarked: secondaryBar.bookmarked
     readonly property alias toolsHeight: toolsRow.height
 
     signal showTabs
-    signal showChrome
     signal showOverlay
-    signal showShare
+    signal showSecondaryTools
+    signal hideSecondaryTools
+    signal closeActiveTab
 
+    // Used from SecondaryBar
+    signal enterNewTabUrl
+    signal searchFromActivePage
+    signal shareActivePage
+    signal showDownloads
     signal bookmarkActivePage
     signal removeActivePageFromBookmarks
 
@@ -42,61 +47,92 @@ Column {
         visible: opacity > 0.0 || height > 0.0
         opacity: secondaryToolsActive ? 1.0 : 0.0
         height: secondaryToolsHeight
-        clip: true
-
-        onBookmarkActivePage: toolBarRow.bookmarkActivePage()
-        onRemoveActivePageFromBookmarks: toolBarRow.removeActivePageFromBookmarks()
+        horizontalOffset: toolsRow.horizontalOffset
+        iconWidth: toolsRow.iconWidth
 
         Behavior on opacity { FadeAnimation {} }
     }
 
     Row {
         id: toolsRow
-        anchors.horizontalCenter: parent.horizontalCenter
+        readonly property int horizontalOffset: Theme.paddingSmall
+        readonly property int iconWidth: Theme.iconSizeMedium + 2 * Theme.paddingMedium
+
+        width: parent.width
         height: isPortrait ? Settings.toolbarLarge : Settings.toolbarSmall
 
-        Browser.IconButton {
-            id: reload
+        // Container item for cross fading tabs and close button (and keep Row's width still).
+        Item {
+            id: tabButton
 
-            width: Theme.iconSizeMedium + 2 * Theme.paddingMedium
+            width: toolsRow.iconWidth + toolsRow.horizontalOffset
             height: parent.height
-            icon.source: webView.loading ? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
-            onTapped: webView.loading ? webView.stop() : webView.reload()
+
+            Browser.TabButton {
+                opacity: secondaryToolsActive ? 0.0 : 1.0
+                horizontalOffset: toolsRow.horizontalOffset
+                label.visible: webView.tabModel.count > 0
+                label.text: webView.tabModel.count
+
+                onTapped: {
+                    if (firstUseOverlay) {
+                        firstUseOverlay.visible = false
+                        firstUseOverlay.destroy()
+                    }
+                    if (!WebUtils.firstUseDone) WebUtils.firstUseDone = true
+                    toolBarRow.showTabs()
+                }
+                Behavior on opacity { FadeAnimation {} }
+            }
+
+            Browser.IconButton {
+                opacity: secondaryToolsActive ? 1.0 : 0.0
+                icon.source: "image://theme/icon-m-tab-close"
+                icon.anchors.horizontalCenterOffset: toolsRow.horizontalOffset
+                active: webView.tabModel.count > 0
+                onTapped: closeActiveTab()
+
+                // Don't pass touch events through in the middle FadeAnimation
+                enabled: opacity === 1.0
+
+                Behavior on opacity { FadeAnimation {} }
+            }
         }
 
-        Browser.IconButton {
+        Browser.NavigationButton {
             id: backIcon
-            active: webView.canGoBack
-            width: Theme.iconSizeMedium + 2 * Theme.paddingMedium
-            height: parent.height
+            buttonWidth: toolsRow.iconWidth
             icon.source: "image://theme/icon-m-back"
+            active: webView.canGoBack
             onTapped: webView.goBack()
         }
 
-        /*
-        Browser.IconButton {
-            id: overlayIcon
-            icon.source: "image://theme/icon-m-keyboard"
-            width: Theme.itemSizeSmall
-            height: toolBarRow.height
-            onTapped: toolBarRow.showOverlay()
-        }*/
-
         MouseArea {
             id: touchArea
-            property bool down: pressed && containsMouse
+            readonly property bool down: pressed && containsMouse
 
             height: parent.height
-            width: label.width - 2 * Theme.paddingSmall
+            width: toolBarRow.width - (tabButton.width + reloadButton.width + backIcon.width + menuButton.width)
 
             Label {
-                id: label
                 anchors.verticalCenter: parent.verticalCenter
-                anchors.left: touchArea.left
-                width: toolBarRow.width - 4 * Theme.iconSizeMedium - 6 * Theme.paddingMedium - 4 * Theme.paddingSmall
-                color: touchArea.down || toolBarRow.busy ? Theme.highlightColor : Theme.primaryColor
-                text: url ? parseDisplayableUrl(url) : "Loading.."
-                horizontalAlignment: Text.AlignHCenter
+                width: parent.width + Theme.paddingMedium
+                color: touchArea.down ? Theme.highlightColor : Theme.primaryColor
+
+                text: {
+                    if (url) {
+                        return parseDisplayableUrl(url)
+                    } else if (webView.contentItem) {
+                        //: Loading text that is visible when url is not yet resolved.
+                        //% "Loading"
+                        return qsTrId("sailfish_browser-la-loading")
+                    } else {
+                        //: All tabs have been closed.
+                        //% "No tabs"
+                        return qsTrId("sailfish_browser-la-no_tabs")
+                    }
+                }
+
                 truncationMode: TruncationMode.Fade
 
                 function parseDisplayableUrl(url) {
@@ -116,40 +152,26 @@ Column {
             onClicked: toolBarRow.showOverlay()
         }
 
-
         Browser.IconButton {
-            id: tabs
-
-            width: Theme.iconSizeMedium + 2 * Theme.paddingMedium
-            height: parent.height
-            icon.source: "image://theme/icon-m-tabs"
-            onTapped: {
-                if (firstUseOverlay) {
-                    firstUseOverlay.visible = false
-                    firstUseOverlay.destroy()
-                }
-                if (!WebUtils.firstUseDone) WebUtils.firstUseDone = true
-                toolBarRow.showTabs()
-            }
-            Label {
-                visible: webView.tabModel.count > 0
-                text: webView.tabModel.count
-                x: (parent.width - contentWidth) / 2
-                y: (parent.height - contentHeight) / 2
-                font.pixelSize: Theme.fontSizeExtraSmall
-                font.bold: true
-                color: tabs.down ?   Theme.highlightColor : Theme.primaryColor
-                horizontalAlignment: Text.AlignHCenter
-            }
+            id: reloadButton
+            width: toolsRow.iconWidth
+            icon.source: webView.loading ? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
+            active: webView.contentItem
+            onTapped: webView.loading ? webView.stop() : webView.reload()
         }
 
         Browser.IconButton {
-            id: shareIcon
-
+            id: menuButton
             icon.source: "image://theme/icon-m-menu"
-            width: Theme.iconSizeMedium + 2 * Theme.paddingMedium
-            height: parent.height
-            onTapped: toolBarRow.showShare()
+            icon.anchors.horizontalCenterOffset: -toolsRow.horizontalOffset
+            width: toolsRow.iconWidth + toolsRow.horizontalOffset
+            onTapped: {
+                if (secondaryToolsActive) {
+                    hideSecondaryTools()
+                } else {
+                    showSecondaryTools()
+                }
+            }
         }
     }
 }

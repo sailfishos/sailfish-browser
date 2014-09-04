@@ -140,7 +140,7 @@ Page {
 
         MouseArea {
             anchors.fill: parent
-            enabled: overlay.animator.atTop
+            enabled: overlay.animator.atTop && webView.contentItem
             onClicked: overlay.animator.showChrome()
         }
     }

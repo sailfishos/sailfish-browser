@@ -15,24 +15,46 @@ import Sailfish.Browser 1.0
 import "." as Browser
 
 Item {
-    id: toolBarRow
-
+    id: root
     property bool bookmarked
-
-    signal bookmarkActivePage
-    signal removeActivePageFromBookmarks
+    property int horizontalOffset
+    property int iconWidth
+    property real midIconWidth: iconWidth + (iconWidth - forwardButton.width) / 3
 
     width: parent.width
     height: isPortrait ? Settings.toolbarLarge : Settings.toolbarSmall
+    clip: true
 
     Row {
-        anchors.centerIn: parent
+        width: parent.width
         height: parent.height
 
-        Browser.IconButton {
-            width: Theme.iconSizeMedium +  Theme.paddingMedium * 2
-            icon.source: bookmarked ? "image://theme/icon-m-favorite-selected" : "image://theme/icon-m-favorite"
+        Browser.TabButton {
+            width: iconWidth + horizontalOffset
+            horizontalOffset: root.horizontalOffset
+            label.text: "+"
+            onTapped: enterNewTabUrl()
+        }
 
+        Browser.NavigationButton {
+            id: forwardButton
+            buttonWidth: iconWidth
+            icon.source: "image://theme/icon-m-forward"
+            active: webView.canGoForward
+            onTapped: webView.goForward()
+        }
+
+        Browser.IconButton {
+            width: midIconWidth
+            icon.source: "image://theme/icon-m-search"
+            active: webView.contentItem
+            onTapped: searchFromActivePage()
+        }
+
+        Browser.IconButton {
+            width: midIconWidth
+            icon.source: bookmarked ? "image://theme/icon-m-favorite-selected" : "image://theme/icon-m-favorite"
+            active: webView.contentItem
             onClicked: {
                 if (bookmarked) {
                     removeActivePageFromBookmarks()
@@ -43,30 +65,17 @@ Item {
         }
 
         Browser.IconButton {
-            width: Theme.iconSizeMedium +  Theme.paddingMedium
-            icon.source: "image://theme/icon-m-forward"
-        }
-
-        Browser.IconButton {
-            width: Theme.iconSizeMedium +  Theme.paddingMedium * 2
-
-            icon.source: "image://theme/icon-m-search"
-        }
-
-        Browser.IconButton {
-            width: Theme.iconSizeMedium +  Theme.paddingMedium * 2
-
-            icon.source: "image://theme/icon-m-mobile-network"
-        }
-
-        Browser.IconButton {
-            width: Theme.iconSizeMedium + Theme.paddingMedium * 2
-            icon.source: "image://theme/icon-m-add"
-        }
-
-        Browser.IconButton {
+            width: midIconWidth
             icon.source: "image://theme/icon-m-share"
-            width: Theme.iconSizeMedium + Theme.paddingMedium
+            active: webView.contentItem
+            onTapped: shareActivePage()
+        }
+
+        Browser.IconButton {
+            width: iconWidth + horizontalOffset
+            icon.source: "image://theme/icon-m-mobile-network"
+            icon.anchors.horizontalCenterOffset: -horizontalOffset
+            onTapped: showDownloads()
         }
     }
 }

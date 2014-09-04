@@ -129,7 +129,7 @@ PanelBackground {
 
         width: parent.width
         height: historyContainer.height
-        enabled: !webView.fullscreenMode
+        enabled: !webView.fullscreenMode && webView.contentItem
 
         drag.target: overlay
         drag.filterChildren: true
@@ -183,7 +183,10 @@ PanelBackground {
 
                 url: overlay.webView.url
                 bookmarked: webView.bookmarkModel.count && webView.bookmarkModel.contains(webView.url)
-                onShowChrome: overlayAnimator.showChrome()
+                opacity: (overlay.y - webView.fullscreenHeight/2)  / (webView.fullscreenHeight/2 - toolBar.height)
+                visible: opacity > 0.0
+                secondaryToolsActive: overlayAnimator.secondaryTools
+
                 onShowOverlay: overlayAnimator.showOverlay()
                 onShowTabs: {
                     var size = browserPage.screenCaptureSize()
@@ -195,17 +198,31 @@ PanelBackground {
                                        "activeTabIndex": webView.tabModel.activeTabIndex,
                                        "activeWebPage": webView.contentItem
                                    })
-                    //overlayAnimator.hide()
                 }
-                //overlay.tabsViewVisible = true
-                onShowShare: {
-                    if (overlayAnimator.secondaryTools) {
-                        overlayAnimator.showChrome()
-                    } else {
-                        overlayAnimator.showSecondaryTools()
+                onShowSecondaryTools: overlayAnimator.showSecondaryTools()
+                onHideSecondaryTools: overlayAnimator.showChrome()
+                onLoad: overlay.loadPage(text)
+
+                onCloseActiveTab: {
+                    console.log("Close active page")
+                    // Activates (loads) the tab next to the currect active.
+                    webView.tabModel.closeActiveTab()
+                    if (webView.tabModel.count == 0) {
+                        overlay.enterNewTabUrl()
                     }
                 }
-                onLoad: overlay.loadPage(text)
+
+                onEnterNewTabUrl: {
+                    console.log("Enter url for new tab")
+                    overlay.enterNewTabUrl()
+                }
+                onSearchFromActivePage: console.log("Search from active page")
+                onShareActivePage: {
+                    console.log("Share active page")
+
+                    pageStack.push(Qt.resolvedUrl("../ShareLinkPage.qml"), {"link" : webView.url, "linkTitle": webView.title})
+                }
+                onShowDownloads: console.log("Show downloads")
 
                 onBookmarkActivePage: {
                     var webPage = webView && webView.contentItem
@@ -215,10 +232,6 @@ PanelBackground {
                 }
 
                 onRemoveActivePageFromBookmarks: webView.bookmarkModel.removeBookmark(webView.url)
-
-                opacity: (overlay.y - webView.fullscreenHeight/2)  / (webView.fullscreenHeight/2 - toolBar.height)
-                visible: opacity > 0.0
-                secondaryToolsActive: overlayAnimator.secondaryTools
             }
 
             SearchField {
