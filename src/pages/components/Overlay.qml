@@ -25,7 +25,6 @@ PanelBackground {
 
     property var enteredPage
 
-//    property bool tabsViewVisible
     function loadPage(url, title)  {
         // let gecko figure out how to handle malformed URLs
 
@@ -75,18 +74,6 @@ PanelBackground {
         GradientStop { position: 0.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.3) }
         GradientStop { position: 1.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.0) }
     }
-
-//    // This is ugly
-//    onTabsViewVisibleChanged: {
-//        if (tabsViewVisible) {
-//            webView.captureScreen()
-////            webView.opacity = 0.0
-//            overlayAnimator.hide()
-//        } else {
-////            webView.opacity = 1.0
-//            overlayAnimator.showChrome()
-//        }
-//    }
 
     // Immediately active WebView height binding when dragging
     // starts. If this binding is removed, state change to
@@ -366,18 +353,9 @@ PanelBackground {
 
             // TODO: Change to GridView
             Browser.TabView {
-                //        opacity: tabsViewVisible ? 1.0 : 0.0
-                // Animator updates only target values. Fading away set makes this invisible
-                // only after animation has ended (opacity == 0.0) and tabsViewVisible takes
-                // care of making this visible when animation starts.
-                //        visible: tabsViewVisible || opacity > 0.0
                 model: webView.tabModel
-                //            parent: browserPage
-                //            Behavior on opacity { Browser.FadeAnimation {} }
 
                 onHide: pageStack.pop()
-
-                // rename this signal. To showOverlay or similar
                 onEnterNewTabUrl: {
                     pageStack.pop()
                     overlay.enterNewTabUrl(PageStackAction.Immediate)
