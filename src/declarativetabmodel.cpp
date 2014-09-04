@@ -144,15 +144,23 @@ bool DeclarativeTabModel::activateTabById(int tabId)
     return false;
 }
 
+/**
+ * @brief DeclarativeTabModel::closeActiveTab
+ * Closes the active tab and activates a tab next to the current tab. If possible
+ * tab that is after the current tab is activated, then falling back to previous tabs, or
+ * finally none (if all closed).
+ */
 void DeclarativeTabModel::closeActiveTab()
 {
     if (!m_tabs.isEmpty()) {
-        // Clear active tab data and try to active a tab from the first model index.
-        int activeTabId = m_activeTab.tabId();
-        int index = findTabIndex(activeTabId);
-        // Invalidate so that it will not back to model.
-        m_activeTab.setTabId(0);
-        removeTab(activeTabId, m_activeTab.thumbnailPath(), index);
+        int index = activeTabIndex();
+        removeTab(m_activeTab.tabId(), m_activeTab.thumbnailPath(), index);
+
+        if (index >= m_tabs.count()) {
+            --index;
+        }
+
+        activateTab(index);
     }
 }
 
