@@ -23,33 +23,47 @@ PanelBackground {
     property alias progressBar: progressBar
     property alias animator: overlayAnimator
 
-//    property bool tabsViewVisible
+    property var enteredPage
 
+//    property bool tabsViewVisible
     function loadPage(url, title)  {
         // let gecko figure out how to handle malformed URLs
 
-        var searchString = url
+        var pageUrl = url
         var pageTitle = title || ""
-        if (!isNaN(searchString) && searchString.trim()) {
-            searchString = "\"" + searchString.trim() + "\""
+        if (!isNaN(pageUrl) && pageUrl.trim()) {
+            pageUrl = "\"" + pageUrl.trim() + "\""
         }
 
-        console.log("LOAD ON ENTRER:", searchString)
-        if (searchField.enteringNewTabUrl) {
-            webView.tabModel.newTab(searchString, title)
-            searchField.enteringNewTabUrl = false
+        if (!searchField.enteringNewTabUrl) {
+            webView.load(pageUrl, pageTitle)
         } else {
-            webView.load(searchString, title)
+            // Loading will start once overlay animator has animated chrome visible.
+            enteredPage = {
+                "url": pageUrl,
+                "title": pageTitle
+            }
         }
+
         webView.focus = true
         overlayAnimator.showChrome()
-        console.log("LOOSING AT TOP BY CLICKING!")
     }
 
     function enterNewTabUrl(action) {
+        if (webView.contentItem) {
+            webView.contentItem.opacity = 0.0
+        }
+
         searchField.enteringNewTabUrl = true
         searchField.resetUrl("")
         overlayAnimator.showOverlay(action === PageStackAction.Immediate)
+    }
+
+    function cancelEnteringUrl() {
+        if (webView.contentItem) {
+            webView.contentItem.opacity = 1.0
+        }
+        overlay.animator.showChrome()
     }
 
     y: webView.fullscreenHeight - toolBar.toolsHeight
@@ -94,8 +108,14 @@ PanelBackground {
 
         onAtBottomChanged: {
             if (atBottom) {
-                searchField.resetUrl(webView.url)
-                searchField.enteringNewTabUrl = false
+                if (searchField.enteringNewTabUrl && enteredPage) {
+                    console.log("Load enter url at bottom:", enteredPage.url, enteredPage.title)
+                    webView.tabModel.newTab(enteredPage.url, enteredPage.title)
+                    searchField.enteringNewTabUrl = false
+                    enteredPage = null
+                } else {
+                    searchField.resetUrl(webView.url)
+                }
             }
         }
     }
@@ -142,7 +162,7 @@ PanelBackground {
                 if (overlay.y < dragThreshold) {
                     overlayAnimator.showOverlay(false)
                 } else {
-                    overlayAnimator.showChrome()
+                    cancelEnteringUrl()
                 }
             } else {
                 // Store previous end state
@@ -201,7 +221,6 @@ PanelBackground {
                 }
                 onShowSecondaryTools: overlayAnimator.showSecondaryTools()
                 onHideSecondaryTools: overlayAnimator.showChrome()
-                onLoad: overlay.loadPage(text)
 
                 onCloseActiveTab: {
                     console.log("Close active page")
@@ -359,18 +378,21 @@ PanelBackground {
                 onHide: pageStack.pop()
 
                 // rename this signal. To showOverlay or similar
-                onNewTab: {
+                onEnterNewTabUrl: {
                     pageStack.pop()
-                    enterNewTabUrl()
+                    overlay.enterNewTabUrl(PageStackAction.Immediate)
                 }
                 onActivateTab: {
                     pageStack.pop()
                     webView.tabModel.activateTab(index)
                 }
                 onCloseTab: {
-                    //showTabs = false
-                    console.log("All tabs closed what to do!!")
                     webView.tabModel.remove(index)
+                    if (webView.tabModel.count === 0) {
+                        console.log("All tabs closed open new tab view!!")
+                        // Call own slot.
+                        enterNewTabUrl()
+                    }
                 }
 
                 // TODO: Remove these.

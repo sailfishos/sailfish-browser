@@ -140,6 +140,7 @@ void WebPages::updateStates(DeclarativeWebPage *oldActivePage, DeclarativeWebPag
 {
     if (oldActivePage) {
         oldActivePage->setVisible(false);
+        oldActivePage->setOpacity(1.0);
 
         // Allow suspending only the current active page if it is not the creator (parent).
         if (newActivePage->parentId() != (int)oldActivePage->uniqueID()) {

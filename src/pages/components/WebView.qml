@@ -128,8 +128,7 @@ WebContainer {
         }
     }
 
-    visible: opacity > 0.0 && WebUtils.firstUseDone
-    Behavior on opacity { FadeAnimation {} }
+    visible: WebUtils.firstUseDone
 
     WebViewCreator {
         activeWebView: contentItem
@@ -378,6 +377,8 @@ WebContainer {
                 }
                 }
             }
+
+            Behavior on opacity { FadeAnimation {} }
 
             // We decided to disable "text selection" until we understand how it
             // should look like in Sailfish.

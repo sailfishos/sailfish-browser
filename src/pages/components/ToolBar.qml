@@ -38,8 +38,6 @@ Column {
     signal bookmarkActivePage
     signal removeActivePageFromBookmarks
 
-    signal load(string search)
-
     width: parent.width
 
     SecondaryBar {

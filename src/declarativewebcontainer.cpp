@@ -569,6 +569,7 @@ void DeclarativeWebContainer::onNewTabRequested(QString url, QString title)
 
     if (m_webPage) {
         m_webPage->setVisible(false);
+        m_webPage->setOpacity(1.0);
         setWebPage(0);
     }
     loadNewTab(url, title, 0);

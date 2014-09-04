@@ -19,7 +19,7 @@ SilicaListView {
     readonly property bool fillsPage: tabsHeight >= parent.height
 
     signal hide
-    signal newTab
+    signal enterNewTabUrl
     signal activateTab(int index)
     signal closeTab(int index)
     signal addBookmark(string url, string title, string favicon)
@@ -50,7 +50,7 @@ SilicaListView {
         MenuItem {
             //% "New tab"
             text: qsTrId("sailfish_browser-me-new_tab")
-            onClicked: tabView.newTab()
+            onClicked: tabView.enterNewTabUrl()
         }
     }
 
