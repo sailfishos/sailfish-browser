@@ -1,6 +1,7 @@
 TARGET = tst_webview
 include(../test_common.pri)
 include(../common/testobject.pri)
+include(../../../src/bookmarks.pri)
 
 CONFIG += link_pkgconfig
 

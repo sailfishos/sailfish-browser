@@ -41,6 +41,7 @@ private slots:
     void clearCookies();
     void clearPasswords();
     void clearCache();
+    void clearBookmarks();
     void setSearchEngine();
     void doNotTrack();
 
@@ -52,6 +53,7 @@ private:
     MGConfItem *m_clearCookiesConfItem;
     MGConfItem *m_clearPasswordsConfItem;
     MGConfItem *m_clearCacheConfItem;
+    MGConfItem *m_clearBookmarksConfItem;
     MGConfItem *m_searchEngineConfItem;
     MGConfItem *m_doNotTrackConfItem;
 

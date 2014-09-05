@@ -10,20 +10,13 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "declarativebookmarkmodel.h"
+#include "bookmarkmanager.h"
 
-#include <QJsonDocument>
-#include <QJsonArray>
-#include <QJsonObject>
-#include <QDebug>
-#include <QDesktopServices>
-#include <QDir>
-#include <QFile>
-#include <QRegularExpression>
-#include <QTextStream>
 
 DeclarativeBookmarkModel::DeclarativeBookmarkModel(QObject *parent) :
     QAbstractListModel(parent)
 {
+    connect(BookmarkManager::instance(), SIGNAL(cleared()), this, SLOT(clearBookmarks()));
 }
 
 QHash<int, QByteArray> DeclarativeBookmarkModel::roleNames() const
@@ -90,85 +83,27 @@ void DeclarativeBookmarkModel::editBookmark(int index, const QString& url, const
     }
 }
 
+void DeclarativeBookmarkModel::clearBookmarks()
+{
+    beginRemoveRows(QModelIndex(), 0, bookmarkUrls.count()-1);
+    bookmarks.clear();
+    bookmarkUrls.clear();
+    endRemoveRows();
+    emit countChanged();
+}
+
 void DeclarativeBookmarkModel::componentComplete()
 {
-    QString settingsLocation = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/bookmarks.json";
-    QScopedPointer<QFile> file(new QFile(settingsLocation));
-
-    if (!file->open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qWarning() << "Unable to open bookmarks "+settingsLocation;
-
-        file.reset(new QFile(QLatin1Literal("/usr/share/sailfish-browser/content/bookmarks.json")));
-        if (!file->open(QIODevice::ReadOnly | QIODevice::Text)) {
-            qWarning() << "Unable to open bookmarks defaults";
-            return;
-        }
-    }
-
-    QJsonDocument doc = QJsonDocument::fromJson(file->readAll());
-    if (doc.isArray()) {
-        QJsonArray array = doc.array();
-        QJsonArray::iterator i;
-        QRegularExpression jollaUrl("^http[s]?://(together.)?jolla.com");
-        for(i=array.begin(); i != array.end(); ++i) {
-            if((*i).isObject()) {
-                QJsonObject obj = (*i).toObject();
-                QString url = obj.value("url").toString();
-                QString favicon = obj.value("favicon").toString();
-                if (url.contains(jollaUrl) ||
-                        url.startsWith("http://m.youtube.com/playlist?list=PLQgR2jhO_J0y8YSSvVd-Mg9LM88W0aIpD")) {
-                    favicon = "image://theme/icon-m-service-jolla";
-                }
-
-                Bookmark* m = new Bookmark(obj.value("title").toString(),
-                                           url,
-                                           favicon);
-                bookmarks.insert(url, m);
-                bookmarkUrls.append(url);
-            }
-        }
-    } else {
-        qWarning() << "Bookmarks.json should be an array of items";
-    }
+    bookmarks = BookmarkManager::instance()->load();
+    bookmarkUrls = bookmarks.keys();
     emit countChanged();
-    file->close();
 }
 
 void DeclarativeBookmarkModel::classBegin() {}
 
 void DeclarativeBookmarkModel::save()
 {
-    QString settingsLocation = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
-    QDir dir(settingsLocation);
-    if(!dir.exists()) {
-        if(!dir.mkpath(settingsLocation)) {
-            qWarning() << "Can't create directory "+ settingsLocation;
-            return;
-        }
-    }
-    QString path = settingsLocation + "/bookmarks.json";
-    QFile file(path);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        qWarning() << "Can't create file "+ path;
-        return;
-    }
-    QTextStream out(&file);
-    QJsonArray items;
-
-    QMapIterator<QString, Bookmark*> bookmarkIterator(bookmarks);
-    while (bookmarkIterator.hasNext()) {
-        bookmarkIterator.next();
-        QJsonObject title;
-        Bookmark* bookmark = bookmarkIterator.value();
-        title.insert("url", QJsonValue(bookmark->url()));
-        title.insert("title", QJsonValue(bookmark->title()));
-        title.insert("favicon", QJsonValue(bookmark->favicon()));
-        items.append(QJsonValue(title));
-    }
-    QJsonDocument doc(items);
-    out.setCodec("UTF-8");
-    out << doc.toJson();
-    file.close();
+    BookmarkManager::instance()->save(bookmarks);
 }
 
 int DeclarativeBookmarkModel::rowCount(const QModelIndex & parent) const

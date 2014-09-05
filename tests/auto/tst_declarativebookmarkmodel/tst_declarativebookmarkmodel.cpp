@@ -17,7 +17,7 @@
 #include <QGuiApplication>
 #include "declarativebookmarkmodel.h"
 #include "testobject.h"
-
+#include "bookmarkmanager.h"
 
 static const QByteArray QML_SNIPPET = \
         "import QtQuick 2.0\n" \
@@ -44,6 +44,7 @@ private slots:
     void removeBookmark();
     void contains();
     void editBookmark();
+    void clearBookmarks();
 
 private:
     DeclarativeBookmarkModel *bookmarkModel;
@@ -143,6 +144,19 @@ void tst_declarativebookmarkmodel::cleanupTestCase()
     QFile file(QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/bookmarks.json");
     QVERIFY(file.remove());
 }
+
+void tst_declarativebookmarkmodel::clearBookmarks()
+{
+    bookmarkModel->addBookmark("http://www.test6.jolla.com", "jolla", "");
+
+    QSignalSpy countChangeSpy(bookmarkModel, SIGNAL(countChanged()));
+    BookmarkManager::instance()->clear();
+
+    waitSignals(countChangeSpy, 1);
+    QCOMPARE(bookmarkModel->rowCount(), 0);
+    QVERIFY(!bookmarkModel->contains("http://www.test6.jolla.com"));
+}
+
 
 int main(int argc, char *argv[])
 {

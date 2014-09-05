@@ -48,6 +48,9 @@ public:
     void classBegin();
     void componentComplete();
 
+private slots:
+    void clearBookmarks();
+
 signals:
     void countChanged();
 
