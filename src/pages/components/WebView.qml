@@ -20,7 +20,6 @@ import "." as Browser
 WebContainer {
     id: webView
 
-    property color _decoratorColor: Theme.highlightDimmerColor
     property bool firstUseFullscreen
     property alias permissionsEnabled: resourceController.permissionsEnabled
 
@@ -99,6 +98,7 @@ WebContainer {
     inputPanelOpenHeight: window.pageStack.imSize
     fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) || webView.inputPanelVisible || !webView.foreground || (contentItem && contentItem.fullscreen) || firstUseFullscreen
     _readyToLoad: contentItem && contentItem.viewReady && tabModel.loaded
+    decoratorColor: Theme.highlightDimmerColor
 
     loading: contentItem ? contentItem.loading : tabModel.count > 0
     favicon: contentItem ? contentItem.favicon : ""
@@ -143,6 +143,7 @@ WebContainer {
 
             property int iconSize
             property string iconType
+            property Item textSelectionController: null
 
             loaded: loadProgress === 100 && !loading
             enabled: container.active
@@ -194,15 +195,10 @@ WebContainer {
                     var highBgLightness = WebUtils.getLightness(Theme.highlightBackgroundColor)
 
                     if (Math.abs(bgLightness - dimmerLightness) > Math.abs(bgLightness - highBgLightness)) {
-                        container._decoratorColor = Theme.highlightDimmerColor
+                        container.decoratorColor = Theme.highlightDimmerColor
                     } else {
-                        container._decoratorColor =  Theme.highlightBackgroundColor
+                        container.decoratorColor =  Theme.highlightBackgroundColor
                     }
-
-                    sendAsyncMessage("Browser:SelectionColorUpdate",
-                                     {
-                                         "color": Theme.secondaryHighlightColor
-                                     })
                 }
             }
 
@@ -335,11 +331,15 @@ WebContainer {
                     break
                 }
                 case "Content:SelectionRange": {
+                    if (textSelectionController === null) {
+                        textSelectionController = textSelectionControllerComponent.createObject(webPage)
+                    }
                     webPage.selectionRangeUpdated(data)
                     break
                 }
                 }
             }
+
             onRecvSyncMessage: {
                 // sender expects that this handler will update `response` argument
                 switch (message) {
@@ -355,9 +355,15 @@ WebContainer {
                 }
             }
 
-            // We decided to disable "text selection" until we understand how it
-            // should look like in Sailfish.
-            // TextSelectionController {}
+            onContextMenuRequested: {
+                if (data.types.indexOf("content-text") !== -1) {
+                   // we want to select some content text
+
+                   MozContext.setPref("ui.textSelectBackground", Theme.secondaryHighlightColor + "")
+                   webPage.sendAsyncMessage("Browser:SelectionStart", {"xPos": data.xPos, "yPos": data.yPos})
+                }
+            }
+
             states: State {
                 name: "boundHeightControl"
                 when: container.inputPanelVisible || !container.foreground
@@ -369,6 +375,12 @@ WebContainer {
         }
     }
 
+    Component {
+        id: textSelectionControllerComponent
+
+        TextSelectionController { color: decoratorColor }
+    }
+
     Rectangle {
         id: verticalScrollDecorator
 
@@ -377,7 +389,7 @@ WebContainer {
         y: contentItem ? contentItem.verticalScrollDecorator.position : 0
         z: 1
         anchors.right: contentItem ? contentItem.right: undefined
-        color: _decoratorColor
+        color: decoratorColor
         smooth: true
         radius: 2.5
         visible: contentItem && contentItem.contentHeight > contentItem.height && !contentItem.pinching && !popupActive
@@ -393,7 +405,7 @@ WebContainer {
         x: contentItem ? contentItem.horizontalScrollDecorator.position : 0
         y: webView.height - height
         z: 1
-        color: _decoratorColor
+        color: decoratorColor
         smooth: true
         radius: 2.5
         visible: contentItem && contentItem.contentWidth > contentItem.width && !contentItem.pinching && !popupActive
