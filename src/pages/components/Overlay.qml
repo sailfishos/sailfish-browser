@@ -364,8 +364,8 @@ PanelBackground {
 
                 onHide: pageStack.pop()
                 onEnterNewTabUrl: {
-                    pageStack.pop()
                     overlay.enterNewTabUrl(PageStackAction.Immediate)
+                    pageStack.pop()
                 }
                 onActivateTab: {
                     pageStack.pop()
