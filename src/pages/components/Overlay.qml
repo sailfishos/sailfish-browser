@@ -203,8 +203,7 @@ PanelBackground {
 
                 onShowOverlay: overlayAnimator.showOverlay()
                 onShowTabs: {
-                    var size = browserPage.screenCaptureSize()
-                    webView.captureScreen(size, size)
+                    webView.captureScreen()
                     overlayAnimator.showChrome()
                     // Push the tab index and active page that were current at this moment.
                     // Changing of active tab cannot cause blinking.

@@ -52,6 +52,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     , m_canGoBack(false)
     , m_realNavigation(false)
     , m_readyToLoad(false)
+    , m_screenCaptureSize(0)
     , m_deferredReload(false)
 {
     m_webPages.reset(new WebPages(this));
@@ -361,10 +362,10 @@ void DeclarativeWebContainer::loadNewTab(QString url, QString title, int parentI
     emit triggerLoad(url, title);
 }
 
-void DeclarativeWebContainer::captureScreen(int width, int height)
+void DeclarativeWebContainer::captureScreen()
 {
-    if (width <= 0 || height <= 0) {
-        qWarning() << "Cannot capture screen. Either width (" << width << ") or height (" << height << ") is less than zero.";
+    if (m_screenCaptureSize <= 0) {
+        qWarning() << "Cannot capture screen. Property screenCaptureSize (" << m_screenCaptureSize << ") is zero or less.";
     }
 
     if (!m_webPage || opacity() < 1.0 || !isEnabled()) {
@@ -373,7 +374,7 @@ void DeclarativeWebContainer::captureScreen(int width, int height)
 
     if (m_webPage->domContentLoaded() && !m_popupActive) {
         qreal rotation = parentItem() ? parentItem()->rotation() : 0;
-        captureScreen(width, height, rotation);
+        captureScreen(m_screenCaptureSize, m_screenCaptureSize, rotation);
     }
 }
 

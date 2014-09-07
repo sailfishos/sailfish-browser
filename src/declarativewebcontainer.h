@@ -59,6 +59,8 @@ class DeclarativeWebContainer : public QQuickItem {
 
     Q_PROPERTY(QQmlComponent* webPageComponent MEMBER m_webPageComponent NOTIFY webPageComponentChanged FINAL)
 
+    Q_PROPERTY(int screenCaptureSize MEMBER m_screenCaptureSize NOTIFY screenCaptureSizeChanged FINAL)
+
     Q_PROPERTY(bool deferredReload MEMBER m_deferredReload NOTIFY deferredReloadChanged FINAL)
     Q_PROPERTY(QVariant deferredLoad MEMBER m_deferredLoad NOTIFY deferredLoadChanged FINAL)
 
@@ -111,7 +113,7 @@ public:
     Q_INVOKABLE bool activatePage(int tabId, bool force = false);
     Q_INVOKABLE void loadNewTab(QString url, QString title, int parentId);
 
-    Q_INVOKABLE void captureScreen(int width, int height);
+    Q_INVOKABLE void captureScreen();
     Q_INVOKABLE void dumpPages() const;
 
 signals:
@@ -144,6 +146,7 @@ signals:
     void thumbnailPathChanged();
 
     void screenCaptured();
+    void screenCaptureSizeChanged();
 
     void deferredReloadChanged();
     void deferredLoadChanged();
@@ -220,6 +223,7 @@ private:
     bool m_canGoBack;
     bool m_realNavigation;
     bool m_readyToLoad;
+    int m_screenCaptureSize;
 
     QFutureWatcher<ScreenCapture> m_screenCapturer;
 

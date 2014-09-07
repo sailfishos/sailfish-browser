@@ -38,16 +38,6 @@ Page {
         webView.load(url, title)
     }
 
-    function screenCaptureSize() {
-        // Default to the tab view's portrait mode's width.
-        // In landscape, capture is a square and smaller.
-        var size = Screen.width - Theme.paddingLarge * 2
-        if (isLandscape && !webView.fullscreenMode) {
-            size -= webView.toolbarHeight
-        }
-        return size
-    }
-
     // Safety clipping. There is clipping in ApplicationWindow that should react upon focus changes.
     // This clipping can handle also clipping of QmlMozView. When this page is active we do not need to clip
     // if input method is not visible.
@@ -125,6 +115,15 @@ Page {
         portrait: browserPage.isPortrait
         maxLiveTabCount: 3
         toolbarHeight: overlay.toolBar.toolsHeight
+        screenCaptureSize: {
+            // Default to the tab view's portrait mode's width.
+            // In landscape, capture is a square and smaller.
+            var size = Screen.width - Theme.paddingLarge * 2
+            if (isLandscape && !fullscreenMode) {
+                size -= toolbarHeight
+            }
+            return size
+        }
 
         bookmarkModel: BookmarkModel {}
 
@@ -198,8 +197,7 @@ Page {
                 pageStack.pop(browserPage, PageStackAction.Immediate)
             }
 
-            var size = browserPage.screenCaptureSize()
-            webView.captureScreen(size, size)
+            webView.captureScreen()
             if (!webView.tabModel.activateTab(url)) {
                 // Not found in tabs list, create newtab and load
                 webView.load(url)
