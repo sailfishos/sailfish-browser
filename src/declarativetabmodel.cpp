@@ -347,8 +347,10 @@ void DeclarativeTabModel::tabChanged(const Tab &tab)
         emit dataChanged(start, end, roles);
     }
 
-    // TabModel has correct data. Do not allow this to (re)load the page.
-    updateActiveTab(tab, false);
+    if (tab.tabId() == m_activeTab.tabId()) {
+        m_activeTab = tab;
+        emit activeTabChanged(tab.tabId(), tab.tabId(), true);
+    }
 }
 
 void DeclarativeTabModel::updateTitle(int tabId, int linkId, QString url, QString title)
@@ -484,6 +486,11 @@ void DeclarativeTabModel::updateTabUrl(int tabId, bool activeTab, const QString 
         }
         m_tabs[tabIndex].setTitle("");
         m_tabs[tabIndex].setThumbnailPath("");
+
+        if (tabId == m_activeTab.tabId()) {
+            m_activeTab = m_tabs[tabIndex];
+        }
+
         emit dataChanged(index(tabIndex, 0), index(tabIndex, 0), roles);
         updateDb = true;
     }
