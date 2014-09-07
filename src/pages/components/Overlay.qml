@@ -16,6 +16,7 @@ import "." as Browser
 PanelBackground {
     id: overlay
 
+    property bool active
     property alias webView: overlayAnimator.webView
     property Item browserPage
     property alias historyModel: historyList.model
@@ -69,6 +70,12 @@ PanelBackground {
 
     width: parent.width
     height: historyContainer.height
+
+    onActiveChanged: {
+        if (active && !webView.contentItem && !searchField.enteringNewTabUrl && webView.tabId > 0) {
+            webView.activatePage(webView.tabId, true)
+        }
+    }
 
     gradient: Gradient {
         GradientStop { position: 0.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.3) }

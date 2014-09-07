@@ -80,7 +80,15 @@ int DeclarativeTabModel::nextTabId() const
 
 void DeclarativeTabModel::remove(int index) {
     if (!m_tabs.isEmpty() && index >= 0 && index < m_tabs.count()) {
+        bool removingActiveTab = activeTabIndex() == index;
         removeTab(m_tabs.at(index).tabId(), m_tabs.at(index).thumbnailPath(), index);
+        if (removingActiveTab) {
+            if (index >= m_tabs.count()) {
+                --index;
+            }
+
+            activateTab(index, false);
+        }
     }
 }
 
@@ -403,6 +411,9 @@ void DeclarativeTabModel::removeTab(int tabId, const QString &thumbnail, int ind
     }
 
     if (index >= 0) {
+        if (activeTabIndex() == index) {
+            m_activeTab.setTabId(0);
+        }
         beginRemoveRows(QModelIndex(), index, index);
         m_tabs.removeAt(index);
         endRemoveRows();

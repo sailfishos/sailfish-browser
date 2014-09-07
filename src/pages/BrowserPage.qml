@@ -148,6 +148,7 @@ Page {
     Browser.Overlay {
         id: overlay
 
+        active: browserPage.status == PageStatus.Active
         enabled: !webView.fullscreenMode
         webView: webView
         historyModel: historyModel

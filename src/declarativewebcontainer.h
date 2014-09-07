@@ -120,7 +120,6 @@ signals:
     void pageStackChanged();
     void foregroundChanged();
     void backgroundChanged();
-    void activeChanged();
     void maxLiveTabCountChanged();
     void popupActiveChanged();
     void portraitChanged();

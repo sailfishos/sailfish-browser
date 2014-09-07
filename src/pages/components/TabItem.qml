@@ -156,7 +156,10 @@ MouseArea {
             bottomMargin: -Theme.paddingMedium
         }
         icon.source: "image://theme/icon-m-tab-close"
-        onClicked: view.closeTab(index)
+        onClicked: {
+            activeTabIndex = -1
+            view.closeTab(index)
+        }
     }
 
     Label {

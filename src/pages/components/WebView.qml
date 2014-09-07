@@ -116,12 +116,6 @@ WebContainer {
 
     onTriggerLoad: webView.load(url, title)
 
-    onActiveChanged: {
-        if (active && !contentItem && tabModel && !tabModel.hasNewTabData && tabId > 0) {
-            activatePage(tabId, true)
-        }
-    }
-
     onBackgroundChanged: {
         if (background) {
             MozContext.sendObserve("memory-pressure", "heap-minimize")
