@@ -30,6 +30,7 @@ Item {
         height: parent.height
 
         Browser.TabButton {
+            id: addTabButton
             width: iconWidth + horizontalOffset
             horizontalOffset: root.horizontalOffset
             label.text: "+"
@@ -42,6 +43,12 @@ Item {
             icon.source: "image://theme/icon-m-forward"
             active: webView.canGoForward
             onTapped: webView.goForward()
+        }
+
+        // Spacer for pushing Search, Favorite, Share, Downloads to the right hand side
+        Item {
+            height: parent.height
+            width: parent.width - addTabButton.width - forwardButton.width - midIconWidth * 3 - downloadsButton.width
         }
 
         Browser.IconButton {
@@ -72,6 +79,7 @@ Item {
         }
 
         Browser.IconButton {
+            id: downloadsButton
             width: iconWidth + horizontalOffset
             icon.source: "image://theme/icon-m-mobile-network"
             icon.anchors.horizontalCenterOffset: -horizontalOffset
