@@ -161,8 +161,8 @@ Page {
         CoverAction {
             iconSource: "image://theme/icon-cover-new"
             onTriggered: {
-                activate()
                 overlay.enterNewTabUrl(PageStackAction.Immediate)
+                activate()
             }
         }
 

@@ -52,10 +52,11 @@ Item {
 
     state: "chromeVisible"
 
+    // TODO: Fix real cover. Once that is fixed, we should remove this block.
     onActiveChanged: {
-        if (active) {
+        if (active && state !== "fullscreenOverlay") {
             state = "chromeVisible"
-        } else {
+        } else if (!active) {
             state = "fullscreenWebPage"
         }
     }
