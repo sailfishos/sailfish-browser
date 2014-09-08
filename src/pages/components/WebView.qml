@@ -160,7 +160,6 @@ WebContainer {
 
             focus: true
             width: container.width
-            height: container.height
             state: ""
 
             onLoadProgressChanged: {
