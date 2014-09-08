@@ -144,7 +144,7 @@ Page {
         z: 1
         y: webView.height
         width: parent.width
-        visible: !webView.popupActive
+        visible: !webView.popupActive && y < webView.fullscreenHeight
 
         function openTabPage(focus, newTab, operationType) {
             if (browserPage.status === PageStatus.Active) {
