@@ -27,7 +27,6 @@ SilicaListView {
     }
 
     clip: true
-    pressDelay: 0
     delegate: BackgroundItem {
         id: historyDelegate
         width: view.width

@@ -28,7 +28,6 @@ SilicaGridView {
     clip: true
     width: cellWidth * columns
     currentIndex: -1
-    pressDelay: 50
 
     cellWidth: Math.round(initialCellWidth + (initialCellWidth - Theme.iconSizeLauncher) / (columns - 1))
     cellHeight: Math.round(Screen.height / 6)

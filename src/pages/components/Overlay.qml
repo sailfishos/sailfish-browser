@@ -249,7 +249,7 @@ PanelBackground {
             SearchField {
                 id: searchField
 
-                readonly property bool focusSearchField: overlayAnimator.atTop
+                readonly property bool overlayAtTop: overlayAnimator.atTop
                 property bool edited
                 property bool enteringNewTabUrl
 
@@ -262,6 +262,7 @@ PanelBackground {
                 width: parent.width
                 textLeftMargin: Theme.paddingLarge
                 textRightMargin: Theme.paddingLarge
+                focusOutBehavior: FocusBehavior.ClearItemFocus
 
                 //: Placeholder text for url typing and searching
                 //% "Type URL or search"
@@ -271,12 +272,17 @@ PanelBackground {
                 background: null
                 opacity: toolBar.opacity * -1.0
                 visible: opacity > 0.0
-                onFocusSearchFieldChanged: {
-                    if (focusSearchField) {
-                        searchField.forceActiveFocus()
-                        searchField.selectAll()
+                onOverlayAtTopChanged: {
+                    if (overlayAtTop) {
+                        forceActiveFocus()
                     } else {
-                        searchField.focus = false
+                        focus = false
+                    }
+                }
+
+                onFocusChanged: {
+                    if (focus) {
+                        searchField.selectAll()
                     }
                 }
 
@@ -297,6 +303,7 @@ PanelBackground {
                 visible: !overlayAnimator.atBottom && opacity > 0.0
                 anchors.top: searchField.bottom
 
+                onMovingChanged: if (moving) searchField.focus = false
                 onSearchChanged: if (search !== webView.url) historyModel.search(search)
                 onLoad: overlay.loadPage(url, title)
 
@@ -306,7 +313,7 @@ PanelBackground {
             Browser.FavoriteGrid {
                 id: favoriteGrid
                 anchors {
-                    top: toolBar.bottom
+                    top: searchField.bottom
                     horizontalCenter: parent.horizontalCenter
                 }
 
@@ -314,7 +321,9 @@ PanelBackground {
                 opacity: historyContainer.showFavorites ? 1.0 : 0.0
                 visible: !overlayAnimator.atBottom && opacity > 0.0
                 model: webView.bookmarkModel
+                columns: browserPage.isPortrait ? 4 : 7
 
+                onMovingChanged: if (moving) searchField.focus = false
                 onLoad: overlay.loadPage(url, title)
 
                 // Do we need this one???

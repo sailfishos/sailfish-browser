@@ -150,7 +150,7 @@ Item {
                 },
                 PropertyChanges {
                     target: overlay
-                    y: portrait ? overlay.toolBar.toolsHeight : -overlay.toolBar.toolsHeight
+                    y: portrait ? overlay.toolBar.toolsHeight : 0
                 }
             ]
         },
