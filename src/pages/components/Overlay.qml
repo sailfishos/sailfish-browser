@@ -359,16 +359,16 @@ PanelBackground {
         }
     }
 
-    // TODO: Test if Loader would be make sense here.
     Component {
         id: tabView
         Page {
+            id: tabPage
             property int activeTabIndex
             property Item activeWebPage
 
-            // TODO: Change to GridView
             Browser.TabView {
                 model: webView.tabModel
+                portrait: tabPage.isPortrait
 
                 onHide: pageStack.pop()
                 onEnterNewTabUrl: {

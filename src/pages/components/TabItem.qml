@@ -18,11 +18,13 @@ MouseArea {
     readonly property bool down: pressed && containsMouse
     readonly property bool activeTab: activeTabIndex === index
     // Expose ListView for all items
-    property Item view: ListView.view
+    property Item view: GridView.view
+    property real topMargin
+    property real leftMargin
+    property real rightMargin
+
     layer.effect: PressEffect {}
     layer.enabled: down
-    width: parent.width
-    height: Screen.width / 2
 
     onClicked: view.activateTab(index)
 
@@ -36,9 +38,9 @@ MouseArea {
             top: parent.top
             left: parent.left
             right: parent.right
-            topMargin: index === 0 ? Theme.paddingLarge : Theme.paddingMedium
-            leftMargin: Theme.paddingLarge
-            rightMargin: Theme.paddingLarge
+            topMargin: root.topMargin
+            leftMargin: root.leftMargin
+            rightMargin: root.rightMargin
         }
         sourceComponent: activeTab ? liveSource : image
     }
@@ -66,9 +68,9 @@ MouseArea {
         id: mask
         anchors {
             fill: root
-            topMargin: tabTexture.anchors.topMargin
-            leftMargin: tabTexture.anchors.leftMargin
-            rightMargin: tabTexture.anchors.rightMargin
+            topMargin: root.topMargin
+            leftMargin: root.leftMargin
+            rightMargin: root.rightMargin
             bottomMargin: Theme.paddingMedium
         }
 

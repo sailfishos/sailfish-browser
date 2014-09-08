@@ -12,11 +12,10 @@
 import QtQuick 2.1
 import Sailfish.Silica 1.0
 
-SilicaListView {
+SilicaGridView {
     id: tabView
 
-    readonly property real tabsHeight: model.count * Screen.width / 2
-    readonly property bool fillsPage: tabsHeight >= parent.height
+    property bool portrait
 
     signal hide
     signal enterNewTabUrl
@@ -25,23 +24,36 @@ SilicaListView {
     signal addBookmark(string url, string title, string favicon)
     signal removeBookmark(string url)
 
+    cellWidth: portrait ? parent.width : parent.width / 3
+    cellHeight: portrait ? Screen.width / 2 : cellWidth
     width: parent.width
     height: parent.height
     clip: true
     currentIndex: -1
     displaced: Transition { NumberAnimation { properties: "x,y"; easing.type: Easing.InOutQuad; duration: 200 } }
 
+    Behavior on cellWidth { NumberAnimation { easing.type: Easing.InOutQuad; duration: 200 } }
+    Behavior on cellHeight { NumberAnimation { easing.type: Easing.InOutQuad; duration: 200 } }
+
     delegate: TabItem {
         id: tabItem
+
+        width: tabView.cellWidth
+        height: tabView.cellHeight
+
+        topMargin: (portrait ? index === 0 : index < 3) ? Theme.paddingLarge : Theme.paddingMedium
+        leftMargin: (portrait || index % 3 === 0) ? Theme.paddingLarge : Theme.paddingMedium
+        rightMargin: (portrait || index % 3 === 2) ? Theme.paddingLarge : Theme.paddingMedium
+
         ListView.onAdd: AddAnimation {}
         ListView.onRemove: RemoveAnimation { target: tabItem }
     }
 
-    footer: MouseArea {
-        visible: !fillsPage
-        enabled: visible
+    // Behind tab delegates
+    children: MouseArea {
+        z: -1
         width: tabView.width
-        height: visible ? tabView.parent.height - tabsHeight : 0
+        height: tabView.height
         onClicked: hide()
     }
 
