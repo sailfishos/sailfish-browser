@@ -2,5 +2,5 @@
 Type=Application
 Name=Test Web Browser
 Icon=/opt/tests/sailfish-browser/manual/icon-launcher-testbrowser.png
-Exec=/usr/bin/invoker --type=qt5 -G /usr/bin/sailfish-browser file:///opt/tests/sailfish-browser/manual/testpage.html
+Exec=/usr/bin/invoker -s --type=silica-qt5 -G /usr/bin/sailfish-browser file:///opt/tests/sailfish-browser/manual/testpage.html
 Comment=Test Sailfish UI application
