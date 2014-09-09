@@ -178,6 +178,7 @@ PanelBackground {
 
             width: parent.width
             height: toolBar.toolsHeight + historyList.height
+            clip: true
 
             Browser.ToolBar {
                 id: toolBar
@@ -260,10 +261,13 @@ PanelBackground {
                     edited = false
                 }
 
+                // Follow grid / list position.
+                y: -((historyContainer.showFavorites ? favoriteGrid.contentY : historyList.contentY) + height)
+                // On top of HistoryList and FavoriteGrid
+                z: 1
                 width: parent.width
                 textLeftMargin: Theme.paddingLarge
                 textRightMargin: Theme.paddingLarge
-                focusOutBehavior: FocusBehavior.ClearItemFocus
 
                 //: Placeholder text for url typing and searching
                 //% "Type URL or search"
@@ -298,13 +302,18 @@ PanelBackground {
                 id: historyList
 
                 width: parent.width
-                height: browserPage.height - searchField.height - dragArea.drag.minimumY
+                height: browserPage.height - dragArea.drag.minimumY
+
+                header: Item {
+                    width: parent.width
+                    height: searchField.height
+                }
+
                 search: searchField.text
                 opacity: historyContainer.showFavorites ? 0.0 : 1.0
                 visible: !overlayAnimator.atBottom && opacity > 0.0
-                anchors.top: searchField.bottom
 
-                onMovingChanged: if (moving) searchField.focus = false
+                onMovingChanged: if (moving) historyList.focus = true
                 onSearchChanged: if (search !== webView.url) historyModel.search(search)
                 onLoad: overlay.loadPage(url, title)
 
@@ -313,20 +322,23 @@ PanelBackground {
 
             Browser.FavoriteGrid {
                 id: favoriteGrid
-                anchors {
-                    top: searchField.bottom
-                    horizontalCenter: parent.horizontalCenter
-                }
 
                 height: historyList.height
+                anchors.horizontalCenter: parent.horizontalCenter
                 opacity: historyContainer.showFavorites ? 1.0 : 0.0
                 visible: !overlayAnimator.atBottom && opacity > 0.0
+                columns: browserPage.isPortrait ? 4 : 7
+
+                header: Item {
+                    width: parent.width
+                    height: searchField.height
+                }
+
                 model: BookmarkModel {
                     id: bookmarkModel
                 }
-                columns: browserPage.isPortrait ? 4 : 7
 
-                onMovingChanged: if (moving) searchField.focus = false
+                onMovingChanged: if (moving) favoriteGrid.focus = true
                 onLoad: overlay.loadPage(url, title)
 
                 // Do we need this one???

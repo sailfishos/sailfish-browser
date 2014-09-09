@@ -25,7 +25,6 @@ SilicaGridView {
     signal share(string url, string title)
     signal addToLauncher(string url, string title, string favicon)
 
-    clip: true
     width: cellWidth * columns
     currentIndex: -1
 
