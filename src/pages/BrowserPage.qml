@@ -125,8 +125,6 @@ Page {
             return size
         }
 
-        bookmarkModel: BookmarkModel {}
-
         onCanGoBackChanged: console.log("CAN GO BACK:", canGoBack)
         clip: true
     }

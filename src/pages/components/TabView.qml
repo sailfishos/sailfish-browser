@@ -21,8 +21,6 @@ SilicaGridView {
     signal enterNewTabUrl
     signal activateTab(int index)
     signal closeTab(int index)
-    signal addBookmark(string url, string title, string favicon)
-    signal removeBookmark(string url)
 
     cellWidth: portrait ? parent.width : parent.width / 3
     cellHeight: portrait ? Screen.width / 2 : cellWidth

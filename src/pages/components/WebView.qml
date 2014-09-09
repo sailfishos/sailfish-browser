@@ -23,7 +23,6 @@ WebContainer {
     property color _decoratorColor: Theme.highlightDimmerColor
     property bool firstUseFullscreen
     property alias permissionsEnabled: resourceController.permissionsEnabled
-    property alias bookmarkModel: tabs.bookmarkModel
     readonly property bool moving: contentItem ? contentItem.moving : false
 
     property bool findInPageHasResult

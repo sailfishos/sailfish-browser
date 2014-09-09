@@ -11,6 +11,7 @@
 
 import QtQuick 2.2
 import Sailfish.Silica 1.0
+import Sailfish.Browser 1.0
 import "." as Browser
 
 PanelBackground {
@@ -182,7 +183,7 @@ PanelBackground {
                 id: toolBar
 
                 function saveBookmark(data) {
-                    webView.bookmarkModel.addBookmark(webView.url, webView.title || webView.url,
+                    bookmarkModel.addBookmark(webView.url, webView.title || webView.url,
                                                       data, browserPage.favoriteImageLoader.acceptedTouchIcon)
                     browserPage.desktopBookmarkWriter.iconFetched.disconnect(toolBar.saveBookmark)
                 }
@@ -196,7 +197,7 @@ PanelBackground {
                 }
 
                 url: overlay.webView.url
-                bookmarked: webView.bookmarkModel.count && webView.bookmarkModel.contains(webView.url)
+                bookmarked: bookmarkModel.count && bookmarkModel.contains(webView.url)
                 opacity: (overlay.y - webView.fullscreenHeight/2)  / (webView.fullscreenHeight/2 - toolBar.height)
                 visible: opacity > 0.0
                 secondaryToolsActive: overlayAnimator.secondaryTools
@@ -243,7 +244,7 @@ PanelBackground {
                     }
                 }
 
-                onRemoveActivePageFromBookmarks: webView.bookmarkModel.removeBookmark(webView.url)
+                onRemoveActivePageFromBookmarks: bookmarkModel.removeBookmark(webView.url)
             }
 
             SearchField {
@@ -320,7 +321,9 @@ PanelBackground {
                 height: historyList.height
                 opacity: historyContainer.showFavorites ? 1.0 : 0.0
                 visible: !overlayAnimator.atBottom && opacity > 0.0
-                model: webView.bookmarkModel
+                model: BookmarkModel {
+                    id: bookmarkModel
+                }
                 columns: browserPage.isPortrait ? 4 : 7
 
                 onMovingChanged: if (moving) searchField.focus = false
@@ -332,7 +335,7 @@ PanelBackground {
                     overlay.loadPage(url, title)
                 }
 
-                onRemoveBookmark: webView.bookmarkModel.removeBookmark(url)
+                onRemoveBookmark: bookmarkModel.removeBookmark(url)
                 onEditBookmark: {
                     // index, url, title
                     pageStack.push(editDialog,
@@ -388,9 +391,6 @@ PanelBackground {
                     }
                 }
 
-                // TODO: Remove these.
-                //onAddBookmark: webView.bookmarkModel.addBookmark(url, title, favicon)
-                //onRemoveBookmark: webView.bookmarkModel.removeBookmarks(url)
                 Component.onCompleted: positionViewAtIndex(webView.tabModel.activeTabIndex, ListView.Center)
             }
         }
@@ -399,7 +399,7 @@ PanelBackground {
     Component {
         id: editDialog
         Browser.BookmarkEditDialog {
-            onAccepted: webView.bookmarkModel.editBookmark(index, editedUrl, editedTitle)
+            onAccepted: bookmarkModel.editBookmark(index, editedUrl, editedTitle)
         }
     }
 
