@@ -4,5 +4,5 @@ Name=Web Browser
 X-MeeGo-Logical-Id=sailfish-browser-ap-name
 X-MeeGo-Translation-Catalog=sailfish-browser
 Icon=icon-launcher-browser
-Exec=invoker --type=qt5 -G /usr/bin/sailfish-browser %U
+Exec=invoker -s --type=silica-qt5 -G /usr/bin/sailfish-browser %U
 Comment=Sailfish UI application
