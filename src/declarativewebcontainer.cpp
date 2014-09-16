@@ -37,6 +37,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     , m_webPageComponent(0)
     , m_settingManager(SettingManager::instance())
     , m_foreground(true)
+    , m_allowHiding(true)
     , m_active(false)
     , m_popupActive(false)
     , m_portrait(true)
@@ -75,6 +76,8 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
 
     connect(this, SIGNAL(heightChanged()), this, SLOT(sendVkbOpenCompositionMetrics()));
     connect(this, SIGNAL(widthChanged()), this, SLOT(sendVkbOpenCompositionMetrics()));
+
+    qApp->installEventFilter(this);
 }
 
 DeclarativeWebContainer::~DeclarativeWebContainer()
@@ -404,6 +407,15 @@ void DeclarativeWebContainer::captureScreen()
 void DeclarativeWebContainer::dumpPages() const
 {
     m_webPages->dumpPages();
+}
+
+bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
+{
+    // Hiding stops rendering. Don't pass it through if hiding is not allowed.
+    if (event->type() == QEvent::Expose && window() && !window()->isExposed() && !m_allowHiding) {
+        return true;
+    }
+    return QObject::eventFilter(obj, event);
 }
 
 void DeclarativeWebContainer::resetHeight(bool respectContentHeight)

@@ -43,6 +43,7 @@ class DeclarativeWebContainer : public QQuickItem {
     Q_PROPERTY(qreal inputPanelOpenHeight MEMBER m_inputPanelOpenHeight NOTIFY inputPanelOpenHeightChanged FINAL)
     Q_PROPERTY(qreal toolbarHeight MEMBER m_toolbarHeight NOTIFY toolbarHeightChanged FINAL)
     Q_PROPERTY(bool background READ background NOTIFY backgroundChanged FINAL)
+    Q_PROPERTY(bool allowHiding MEMBER m_allowHiding NOTIFY allowHidingChanged FINAL)
 
     Q_PROPERTY(QString favicon MEMBER m_favicon NOTIFY faviconChanged)
 
@@ -122,6 +123,7 @@ signals:
     void pageStackChanged();
     void foregroundChanged();
     void backgroundChanged();
+    void allowHidingChanged();
     void activeChanged();
     void maxLiveTabCountChanged();
     void popupActiveChanged();
@@ -153,6 +155,9 @@ signals:
 
     void webPageComponentChanged();
     void triggerLoad(QString url, QString title);
+
+protected:
+    bool eventFilter(QObject *obj, QEvent *event);
 
 public slots:
     void resetHeight(bool respectContentHeight = true);
@@ -200,6 +205,7 @@ private:
     QPointer<SettingManager> m_settingManager;
     QScopedPointer<WebPages> m_webPages;
     bool m_foreground;
+    bool m_allowHiding;
     bool m_active;
     bool m_popupActive;
     bool m_portrait;
