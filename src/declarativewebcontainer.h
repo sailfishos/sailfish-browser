@@ -159,8 +159,6 @@ public slots:
 
 private slots:
     void imeNotificationChanged(int state, bool open, int cause, int focusChange, const QString& type);
-    void windowVisibleChanged(bool visible);
-    void handleWindowChanged(QQuickWindow *window);
     void screenCaptureReady();
     void onActiveTabChanged(int oldTabId, int activeTabId, bool loadActiveTab);
     void onModelLoaded();
@@ -179,9 +177,6 @@ private slots:
     // These are here to inform embedlite-components that keyboard is open or close
     // matching composition metrics.
     void sendVkbOpenCompositionMetrics();
-
-protected:
-    void timerEvent(QTimerEvent *event);
 
 private:
     void setWebPage(DeclarativeWebPage *webPage);
@@ -205,9 +200,6 @@ private:
     QPointer<SettingManager> m_settingManager;
     QScopedPointer<WebPages> m_webPages;
     bool m_foreground;
-    bool m_background;
-    bool m_windowVisible;
-    int m_backgroundTimer;
     bool m_active;
     bool m_popupActive;
     bool m_portrait;

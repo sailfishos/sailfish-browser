@@ -37,9 +37,6 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     , m_webPageComponent(0)
     , m_settingManager(SettingManager::instance())
     , m_foreground(true)
-    , m_background(false)
-    , m_windowVisible(false)
-    , m_backgroundTimer(0)
     , m_active(false)
     , m_popupActive(false)
     , m_portrait(true)
@@ -61,12 +58,6 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
 {
     m_webPages.reset(new WebPages(this));
     setFlag(QQuickItem::ItemHasContents, true);
-    if (!window()) {
-        connect(this, SIGNAL(windowChanged(QQuickWindow*)), this, SLOT(handleWindowChanged(QQuickWindow*)));
-    } else {
-        connect(window(), SIGNAL(visibleChanged(bool)), this, SLOT(windowVisibleChanged(bool)));
-    }
-
     connect(&m_screenCapturer, SIGNAL(finished()), this, SLOT(screenCaptureReady()));
     connect(DownloadManager::instance(), SIGNAL(downloadStarted()), this, SLOT(onDownloadStarted()));
     connect(DBManager::instance(), SIGNAL(thumbPathChanged(int,QString)),
@@ -159,7 +150,7 @@ void DeclarativeWebContainer::setForeground(bool active)
 
 bool DeclarativeWebContainer::background() const
 {
-    return m_background;
+    return m_webPage ? m_webPage->background() : false;
 }
 
 int DeclarativeWebContainer::loadProgress() const
@@ -364,6 +355,7 @@ bool DeclarativeWebContainer::activatePage(int tabId, bool force)
     m_webPages->initialize(this, m_webPageComponent.data());
     if ((m_model->loaded() || force) && tabId > 0 && m_webPages->initialized()) {
         WebPageActivationData activationData = m_webPages->page(tabId, m_model->newTabParentId());
+        activationData.webPage->disconnect(this);
         setWebPage(activationData.webPage);
         m_webPage->setChrome(true);
         // Reset always height so that orentation change is taken into account.
@@ -378,6 +370,7 @@ bool DeclarativeWebContainer::activatePage(int tabId, bool force)
         connect(m_webPage, SIGNAL(urlChanged()), this, SLOT(onPageUrlChanged()), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(titleChanged()), this, SLOT(onPageTitleChanged()), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(domContentLoadedChanged()), this, SLOT(sendVkbOpenCompositionMetrics()), Qt::UniqueConnection);
+        connect(m_webPage, SIGNAL(backgroundChanged()), this, SIGNAL(backgroundChanged()), Qt::UniqueConnection);
         return activationData.activated;
     }
     return false;
@@ -483,38 +476,6 @@ DeclarativeWebContainer::ScreenCapture DeclarativeWebContainer::saveToFile(QImag
         qWarning() << Q_FUNC_INFO << "failed to save image" << path;
     }
     return capture;
-}
-
-void DeclarativeWebContainer::timerEvent(QTimerEvent *event)
-{
-    if (m_backgroundTimer == event->timerId()) {
-        if (window()) {
-            // Guard window visibility change was not cancelled after timer triggered.
-            bool tmpVisible = window()->isVisible();
-            // m_windowVisible == m_background visibility changed
-            if (tmpVisible == m_windowVisible && m_windowVisible == m_background) {
-                m_background = !m_windowVisible;
-                emit backgroundChanged();
-            }
-        }
-        killTimer(m_backgroundTimer);
-    }
-}
-
-void DeclarativeWebContainer::windowVisibleChanged(bool visible)
-{
-    Q_UNUSED(visible);
-    if (window()) {
-        m_windowVisible = window()->isVisible();
-        m_backgroundTimer = startTimer(1000);
-    }
-}
-
-void DeclarativeWebContainer::handleWindowChanged(QQuickWindow *window)
-{
-    if (window) {
-        connect(window, SIGNAL(visibleChanged(bool)), this, SLOT(windowVisibleChanged(bool)));
-    }
 }
 
 void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int activeTabId, bool loadActiveTab)
