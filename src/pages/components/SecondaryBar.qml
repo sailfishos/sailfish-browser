@@ -37,9 +37,9 @@ Item {
             onTapped: enterNewTabUrl()
         }
 
-        Browser.NavigationButton {
+        Browser.ExpandingButton {
             id: forwardButton
-            buttonWidth: iconWidth
+            expandedWidth: iconWidth
             icon.source: "image://theme/icon-m-forward"
             active: webView.canGoForward
             onTapped: webView.goForward()

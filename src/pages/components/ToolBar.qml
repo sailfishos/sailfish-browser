@@ -97,9 +97,9 @@ Column {
             }
         }
 
-        Browser.NavigationButton {
+        Browser.ExpandingButton {
             id: backIcon
-            buttonWidth: toolsRow.iconWidth
+            expandedWidth: toolsRow.iconWidth
             icon.source: "image://theme/icon-m-back"
             active: webView.canGoBack
             onTapped: webView.goBack()

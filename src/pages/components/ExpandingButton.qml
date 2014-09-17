@@ -14,14 +14,11 @@ import Sailfish.Silica 1.0
 import "." as Browser
 
 Browser.IconButton {
-    id: backIcon
-
-    property int buttonWidth
+    property int expandedWidth
 
     clip: true
-    width: opacity * buttonWidth
+    width: opacity * expandedWidth
     opacity: active ? 1.0 : 0.0
-    icon.source: "image://theme/icon-m-back"
 
     // Don't pass touch events through in the middle FadeAnimation
     enabled: opacity === 1.0
