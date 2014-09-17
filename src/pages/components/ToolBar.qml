@@ -101,7 +101,7 @@ Column {
             id: backIcon
             expandedWidth: toolsRow.iconWidth
             icon.source: "image://theme/icon-m-back"
-            active: webView.canGoBack
+            active: webView.canGoBack && !toolBarRow.secondaryToolsActive
             onTapped: webView.goBack()
         }
 
@@ -150,11 +150,11 @@ Column {
             onClicked: toolBarRow.showOverlay()
         }
 
-        Browser.IconButton {
+        Browser.ExpandingButton {
             id: reloadButton
-            width: toolsRow.iconWidth
+            expandedWidth: toolsRow.iconWidth
             icon.source: webView.loading ? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
-            active: webView.contentItem
+            active: webView.contentItem && !toolBarRow.secondaryToolsActive
             onTapped: webView.loading ? webView.stop() : webView.reload()
         }
 
