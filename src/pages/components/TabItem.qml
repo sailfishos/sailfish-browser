@@ -28,12 +28,21 @@ MouseArea {
 
     onClicked: view.activateTab(index)
 
-    // Keep this as square. Image streched incorrectly regardless of fillMode.
-    // ShaderEffectSource "texture" will take correct part of this.
-    Loader {
-        id: tabTexture
+    Image {
+        id: image
+        source: !activeTab ? thumbnailPath : ""
+        cache: false
+        visible: false
+        anchors.fill: parent
+        fillMode: Image.PreserveAspectCrop
+        asynchronous: true
+        smooth: true
+    }
 
-        height: width
+    ShaderEffectSource {
+        id: textureSource
+        anchors.fill: mask
+        visible: false
         anchors {
             top: parent.top
             left: parent.left
@@ -42,26 +51,9 @@ MouseArea {
             leftMargin: root.leftMargin
             rightMargin: root.rightMargin
         }
-        sourceComponent: activeTab ? liveSource : image
-    }
-
-    Component {
-        id: image
-        Image {
-            source: thumbnailPath
-            width: parent.width
-            height: width
-            cache: false
-        }
-    }
-
-    Component {
-        id: liveSource
-        ShaderEffectSource {
-            anchors.fill: parent
-            sourceItem: activeWebPage
-            sourceRect: Qt.rect(0, 0, parent.width, parent.height)
-        }
+        height: mask.height
+        sourceItem: activeTab ? activeWebPage : image
+        sourceRect: Qt.rect(0, 0, mask.width, mask.height)
     }
 
     ShaderEffectSource {
@@ -86,18 +78,9 @@ MouseArea {
         }
     }
 
-    ShaderEffectSource {
-        id: texture
-        anchors.fill: mask
-        hideSource: true
-        visible: false
-        sourceItem: tabTexture
-        sourceRect: Qt.rect(0, 0, mask.width, mask.height)
-    }
-
     ShaderEffect {
         id: roundingItem
-        property variant source: texture
+        property variant source: textureSource
         property variant maskSource: mask
 
         anchors.fill: mask
@@ -117,10 +100,11 @@ MouseArea {
     OpacityRampEffect {
         slope: 2.6
         offset: 0.6
-//        slope: slope.value
-//        offset: offset.value
+        //        slope: slope.value
+        //        offset: offset.value
 
         sourceItem: roundingItem
+        anchors.fill: mask
         direction: OpacityRamp.TopToBottom
     }
 
@@ -153,7 +137,7 @@ MouseArea {
         id: close
 
         anchors {
-            left: tabTexture.left
+            left: mask.left
             bottom: parent.bottom
             bottomMargin: -Theme.paddingMedium
         }
@@ -167,7 +151,7 @@ MouseArea {
     Label {
         anchors {
             left: close.right
-            right: tabTexture.right
+            right: mask.right
             rightMargin: Theme.paddingMedium
             verticalCenter: close.verticalCenter
         }
