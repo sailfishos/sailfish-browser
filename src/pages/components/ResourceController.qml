@@ -73,9 +73,9 @@ Item {
 
     // This is behind 1000ms timer
     onBackgroundChanged: {
-        if (!audioActive && !videoActive && background) {
+        if (!audioActive && background) {
             suspendView()
-        } else {
+        } else if (!background) {
             resumeView()
         }
     }
@@ -126,7 +126,7 @@ Item {
         // 1000ms was not enough to always allow buffering start of next song via 3G
         interval: 5000
         onTriggered: {
-            if (!videoActive && !audioActive && suspendIntention) {
+            if (!audioActive && suspendIntention) {
                 suspendView()
             } else {
                 resumeView()

@@ -95,6 +95,7 @@ WebContainer {
     width: parent.width
     height: portrait ? Screen.height : Screen.width
     foreground: Qt.application.active
+    allowHiding: !resourceController.videoActive && !resourceController.audioActive
     inputPanelHeight: window.pageStack.panelSize
     inputPanelOpenHeight: window.pageStack.imSize
     fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) || webView.inputPanelVisible || !webView.foreground || (contentItem && contentItem.fullscreen) || firstUseFullscreen
