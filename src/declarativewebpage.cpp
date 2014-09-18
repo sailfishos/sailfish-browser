@@ -190,3 +190,14 @@ void DeclarativeWebPage::setFullscreen(const bool fullscreen)
         emit fullscreenChanged();
     }
 }
+
+QDebug operator<<(QDebug dbg, const DeclarativeWebPage *page) {
+    if (!page) {
+        return dbg << "DeclarativeWebPage (this = 0x0)";
+    }
+
+    dbg.nospace() << "DeclarativeWebPage(url = " << page->url() << ", title = " << page->title() << ", width = " << page->width()
+                  << ", height = " << page->height() << ", opacity = " << page->opacity()
+                  << ", visible = " << page->isVisible() << ", enabled = " << page->isEnabled() << ")";
+    return dbg.space();
+}

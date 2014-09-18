@@ -99,6 +99,8 @@ private:
     QFutureWatcher<QString> m_grabWritter;
 };
 
+QDebug operator<<(QDebug, const DeclarativeWebPage *);
+
 QML_DECLARE_TYPE(DeclarativeWebPage)
 
 #endif
