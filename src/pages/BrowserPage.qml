@@ -260,5 +260,6 @@ Page {
         x: Screen.height * 2
         sourceSize.width: Theme.iconSizeLauncher
         source: webView.favicon
+        visible: false
     }
 }
