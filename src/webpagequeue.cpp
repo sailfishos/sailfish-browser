@@ -205,9 +205,9 @@ void WebPageQueue::dumpPages() const
     qDebug() << "---- start ----";
     for (int i = 0; i < m_queue.count(); ++i) {
         WebPageEntry *pageEntry = m_queue.at(i);
-        qDebug() << "tabId: " << pageEntry->tabId << "page: " << pageEntry->webPage
-                 << "title:" << (pageEntry->webPage ? pageEntry->webPage->title() : "VIEW NOT ALIVE!")
-                 << "cssContentRect:" << pageEntry->cssContentRect;
+        qDebug() << "tabId: " << pageEntry->tabId;
+        qDebug() << "    page: " << pageEntry->webPage;
+        qDebug() << "    cssContentRect:" << pageEntry->cssContentRect;
     }
     qDebug() << "---- end ------";
 }
