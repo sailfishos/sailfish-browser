@@ -59,8 +59,6 @@ class DeclarativeWebContainer : public QQuickItem {
 
     Q_PROPERTY(QQmlComponent* webPageComponent MEMBER m_webPageComponent NOTIFY webPageComponentChanged FINAL)
 
-    Q_PROPERTY(int screenCaptureSize MEMBER m_screenCaptureSize NOTIFY screenCaptureSizeChanged FINAL)
-
     Q_PROPERTY(bool deferredReload MEMBER m_deferredReload NOTIFY deferredReloadChanged FINAL)
     Q_PROPERTY(QVariant deferredLoad MEMBER m_deferredLoad NOTIFY deferredLoadChanged FINAL)
 
@@ -113,7 +111,6 @@ public:
     Q_INVOKABLE bool activatePage(int tabId, bool force = false);
     Q_INVOKABLE void loadNewTab(QString url, QString title, int parentId);
 
-    Q_INVOKABLE void captureScreen();
     Q_INVOKABLE void dumpPages() const;
 
 signals:
@@ -145,9 +142,6 @@ signals:
     void initialUrlChanged();
     void thumbnailPathChanged();
 
-    void screenCaptured();
-    void screenCaptureSizeChanged();
-
     void deferredReloadChanged();
     void deferredLoadChanged();
 
@@ -162,7 +156,6 @@ public slots:
 private slots:
     void imeNotificationChanged(int state, bool open, int cause, int focusChange, const QString& type);
     void handleEnabledChanged();
-    void screenCaptureReady();
     void onActiveTabChanged(int oldTabId, int activeTabId, bool loadActiveTab);
     void onModelLoaded();
     void onDownloadStarted();
@@ -173,7 +166,6 @@ private slots:
     void closeWindow();
     void onPageUrlChanged();
     void onPageTitleChanged();
-    void onPageThumbnailChanged(int tabId, QString path);
 
     // These are here to inform embedlite-components that keyboard is open or close
     // matching composition metrics.
@@ -181,19 +173,10 @@ private slots:
 
 private:
     void setWebPage(DeclarativeWebPage *webPage);
-    void updateThumbnailPath(QString thumbnailPath, int tabId);
     qreal contentHeight() const;
-    void captureScreen(int width, int height, qreal rotate);
     int parentTabId(int tabId) const;
     void updateNavigationStatus(const Tab &tab);
     void updateVkbHeight();
-
-    struct ScreenCapture {
-        int tabId;
-        QString path;
-    };
-
-    ScreenCapture saveToFile(QImage image, QRect cropBounds, int tabId, qreal rotate);
 
     QPointer<DeclarativeWebPage> m_webPage;
     QPointer<DeclarativeTabModel> m_model;
@@ -223,9 +206,6 @@ private:
     bool m_canGoBack;
     bool m_realNavigation;
     bool m_readyToLoad;
-    int m_screenCaptureSize;
-
-    QFutureWatcher<ScreenCapture> m_screenCapturer;
 
     bool m_deferredReload;
     QVariant m_deferredLoad;

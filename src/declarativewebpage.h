@@ -13,6 +13,8 @@
 #define DECLARATIVEWEBPAGE_H
 
 #include <qqml.h>
+#include <QFutureWatcher>
+#include <QQuickItemGrabResult>
 #include <QPointer>
 #include <quickmozview.h>
 
@@ -55,6 +57,7 @@ public:
     bool viewReady() const;
 
     Q_INVOKABLE void loadTab(QString newUrl, bool force);
+    Q_INVOKABLE void grabToFile();
 
 signals:
     void containerChanged();
@@ -65,6 +68,8 @@ signals:
     void domContentLoadedChanged();
     void faviconChanged();
     void resurrectedContentRectChanged();
+    void clearGrabResult();
+    void grabResult(QString fileName);
 
 protected:
     void componentComplete();
@@ -73,8 +78,12 @@ private slots:
     void setFullscreen(const bool fullscreen);
     void onRecvAsyncMessage(const QString& message, const QVariant& data);
     void onViewInitialized();
+    void grabResultReady();
+    void grabWritten();
 
 private:
+    QString saveToFile(QImage image, QRect cropBounds);
+
     QPointer<DeclarativeWebContainer> m_container;
     int m_tabId;
     bool m_viewReady;
@@ -86,6 +95,8 @@ private:
     bool m_backForwardNavigation;
     QString m_favicon;
     QVariant m_resurrectedContentRect;
+    QSharedPointer<QQuickItemGrabResult> m_grabResult;
+    QFutureWatcher<QString> m_grabWritter;
 };
 
 QML_DECLARE_TYPE(DeclarativeWebPage)

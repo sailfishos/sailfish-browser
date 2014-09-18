@@ -29,6 +29,8 @@ DeclarativeTabModel::DeclarativeTabModel(QObject *parent)
             this, SLOT(tabChanged(Tab)));
     connect(DBManager::instance(), SIGNAL(titleChanged(int,int,QString,QString)),
             this, SLOT(updateTitle(int,int,QString,QString)));
+    connect(DBManager::instance(), SIGNAL(thumbPathChanged(int,QString)),
+            this, SLOT(updateThumbnailPath(int,QString)));
 }
 
 DeclarativeTabModel::~DeclarativeTabModel()
@@ -522,10 +524,13 @@ void DeclarativeTabModel::updateNewTabData(NewTabData *newTabData)
 
 void DeclarativeTabModel::updateThumbnailPath(int tabId, QString path)
 {
+    if (tabId <= 0)
+        return;
+
     QVector<int> roles;
     roles << ThumbPathRole;
     for (int i = 0; i < m_tabs.count(); i++) {
-        if (m_tabs.at(i).tabId() == tabId) {
+        if (m_tabs.at(i).tabId() == tabId && m_tabs.at(i).thumbnailPath() != path) {
 #ifdef DEBUG_LOGS
             qDebug() << "model tab thumbnail updated: " << path << i << tabId;
 #endif
@@ -533,6 +538,7 @@ void DeclarativeTabModel::updateThumbnailPath(int tabId, QString path)
             QModelIndex start = index(i, 0);
             QModelIndex end = index(i, 0);
             emit dataChanged(start, end, roles);
+            DBManager::instance()->updateThumbPath(tabId, path);
         }
     }
 }

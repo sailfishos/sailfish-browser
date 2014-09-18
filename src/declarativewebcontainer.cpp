@@ -52,15 +52,11 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     , m_canGoBack(false)
     , m_realNavigation(false)
     , m_readyToLoad(false)
-    , m_screenCaptureSize(0)
     , m_deferredReload(false)
 {
     m_webPages.reset(new WebPages(this));
     setFlag(QQuickItem::ItemHasContents, true);
-    connect(&m_screenCapturer, SIGNAL(finished()), this, SLOT(screenCaptureReady()));
     connect(DownloadManager::instance(), SIGNAL(downloadStarted()), this, SLOT(onDownloadStarted()));
-    connect(DBManager::instance(), SIGNAL(thumbPathChanged(int,QString)),
-            this, SLOT(onPageThumbnailChanged(int,QString)));
     connect(this, SIGNAL(_readyToLoadChanged()), this, SLOT(onReadyToLoad()));
     connect(this, SIGNAL(portraitChanged()), this, SLOT(resetHeight()));
     connect(this, SIGNAL(enabledChanged()), this, SLOT(handleEnabledChanged()));
@@ -82,9 +78,6 @@ DeclarativeWebContainer::~DeclarativeWebContainer()
     if (m_webPage) {
         disconnect(m_webPage, 0, 0, 0);
     }
-
-    m_screenCapturer.cancel();
-    m_screenCapturer.waitForFinished();
 }
 
 DeclarativeWebPage *DeclarativeWebContainer::webPage() const
@@ -236,13 +229,6 @@ QString DeclarativeWebContainer::url() const
     return m_webPage ? m_webPage->url().toString() : m_url;
 }
 
-void DeclarativeWebContainer::updateThumbnailPath(QString thumbnailPath, int tabId)
-{
-    if (tabId > 0) {
-        m_model->updateThumbnailPath(tabId, thumbnailPath);
-    }
-}
-
 bool DeclarativeWebContainer::readyToLoad() const
 {
     return m_readyToLoad;
@@ -362,22 +348,6 @@ void DeclarativeWebContainer::loadNewTab(QString url, QString title, int parentI
     emit triggerLoad(url, title);
 }
 
-void DeclarativeWebContainer::captureScreen()
-{
-    if (m_screenCaptureSize <= 0) {
-        qWarning() << "Cannot capture screen. Property screenCaptureSize (" << m_screenCaptureSize << ") is zero or less.";
-    }
-
-    if (!m_webPage || opacity() < 1.0 || !isEnabled()) {
-        return;
-    }
-
-    if (m_webPage->domContentLoaded() && !m_popupActive) {
-        qreal rotation = parentItem() ? parentItem()->rotation() : 0;
-        captureScreen(m_screenCaptureSize, m_screenCaptureSize, rotation);
-    }
-}
-
 void DeclarativeWebContainer::dumpPages() const
 {
     m_webPages->dumpPages();
@@ -436,25 +406,6 @@ qreal DeclarativeWebContainer::contentHeight() const
     }
 }
 
-DeclarativeWebContainer::ScreenCapture DeclarativeWebContainer::saveToFile(QImage image, QRect cropBounds, int tabId, qreal rotate)
-{
-    QString path = QString("%1/tab-%2-thumb.png").arg(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)).arg(tabId);
-    QTransform transform;
-    transform.rotate(360 - rotate);
-    image = image.transformed(transform);
-    image = image.copy(cropBounds);
-
-    ScreenCapture capture;
-    if(image.save(path)) {
-        capture.tabId = tabId;
-        capture.path = path;
-    } else {
-        capture.tabId = -1;
-        qWarning() << Q_FUNC_INFO << "failed to save image" << path;
-    }
-    return capture;
-}
-
 void DeclarativeWebContainer::handleEnabledChanged()
 {
     // If dialog has been opened, we need to verify that input panel is not visible.
@@ -472,7 +423,6 @@ void DeclarativeWebContainer::handleEnabledChanged()
 void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int activeTabId, bool loadActiveTab)
 {
     if (activeTabId <= 0) {
-        updateThumbnailPath("", activeTabId);
         return;
     }
     const Tab &tab = m_model->activeTab();
@@ -512,20 +462,6 @@ void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int activeTabId, 
     } else if (!m_realNavigation && isActiveTab(activeTabId) && m_webPage->backForwardNavigation()) {
         emit triggerLoad(tab.url(), tab.title());
     }
-}
-
-void DeclarativeWebContainer::screenCaptureReady()
-{
-    ScreenCapture capture = m_screenCapturer.result();
-#ifdef DEBUG_LOGS
-    qDebug() << capture.tabId << capture.path << isActiveTab(capture.tabId);
-#endif
-    if (capture.tabId != -1) {
-        // Update immediately without dbworker round trip.
-        updateThumbnailPath(capture.path, capture.tabId);
-        DBManager::instance()->updateThumbPath(capture.tabId, capture.path);
-    }
-    emit screenCaptured();
 }
 
 void DeclarativeWebContainer::onModelLoaded()
@@ -623,32 +559,6 @@ void DeclarativeWebContainer::onTabsCleared()
     }
 }
 
-/**
- * @brief DeclarativeTab::captureScreen
- * Rotation transformation is applied first, then geometry values on top of it.
- * @param width
- * @param height
- * @param rotate clockwise rotation of the image in degrees
- */
-void DeclarativeWebContainer::captureScreen(int width, int height, qreal rotate)
-{
-    if (!window() || !window()->isActive() || !m_webPage) {
-        return;
-    }
-
-    // Cleanup old thumb.
-    updateThumbnailPath("", m_webPage->tabId());
-
-    QImage image = window()->grabWindow();
-    QRect cropBounds(0, 0, width, height);
-
-#ifdef DEBUG_LOGS
-    qDebug() << "about to set future";
-#endif
-    // asynchronous save to avoid the slow I/O
-    m_screenCapturer.setFuture(QtConcurrent::run(this, &DeclarativeWebContainer::saveToFile, image, cropBounds, m_webPage->tabId(), rotate));
-}
-
 int DeclarativeWebContainer::parentTabId(int tabId) const
 {
     if (m_webPages) {
@@ -681,7 +591,6 @@ void DeclarativeWebContainer::releasePage(int tabId, bool virtualize)
             emit titleChanged();
             emit urlChanged();
             emit tabIdChanged();
-            updateThumbnailPath("", 0);
         }
         m_model->resetNewTabData();
     }
@@ -741,11 +650,6 @@ void DeclarativeWebContainer::onPageTitleChanged()
             emit titleChanged();
         }
     }
-}
-
-void DeclarativeWebContainer::onPageThumbnailChanged(int tabId, QString path)
-{
-    updateThumbnailPath(path, tabId);
 }
 
 void DeclarativeWebContainer::updateNavigationStatus(const Tab &tab)

@@ -205,7 +205,6 @@ PanelBackground {
 
                 onShowOverlay: overlayAnimator.showOverlay()
                 onShowTabs: {
-                    webView.captureScreen()
                     overlayAnimator.showChrome()
                     // Push the tab index and active page that were current at this moment.
                     // Changing of active tab cannot cause blinking.
@@ -380,6 +379,12 @@ PanelBackground {
             id: tabPage
             property int activeTabIndex
             property Item activeWebPage
+
+            onStatusChanged: {
+                if (status == PageStatus.Active) {
+                    activeWebPage.grabToFile()
+                }
+            }
 
             Browser.TabView {
                 model: webView.tabModel

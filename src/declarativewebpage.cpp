@@ -12,6 +12,9 @@
 #include "declarativewebpage.h"
 #include "declarativewebcontainer.h"
 
+#include <QtConcurrent>
+#include <QStandardPaths>
+
 static const QString gFullScreenMessage("embed:fullscreenchanged");
 static const QString gDomContentLoadedMessage("embed:domcontentloaded");
 
@@ -30,11 +33,14 @@ DeclarativeWebPage::DeclarativeWebPage(QQuickItem *parent)
     connect(this, SIGNAL(viewInitialized()), this, SLOT(onViewInitialized()));
     connect(this, SIGNAL(recvAsyncMessage(const QString, const QVariant)),
             this, SLOT(onRecvAsyncMessage(const QString&, const QVariant&)));
+    connect(&m_grabWritter, SIGNAL(finished()), this, SLOT(grabWritten()));
 }
 
 DeclarativeWebPage::~DeclarativeWebPage()
 {
-
+    m_grabWritter.cancel();
+    m_grabWritter.waitForFinished();
+    m_grabResult.clear();
 }
 
 DeclarativeWebContainer *DeclarativeWebPage::container() const
@@ -115,6 +121,13 @@ void DeclarativeWebPage::loadTab(QString newUrl, bool force)
     }
 }
 
+void DeclarativeWebPage::grabToFile()
+{
+    emit clearGrabResult();
+    m_grabResult = grabToImage();
+    connect(m_grabResult.data(), SIGNAL(ready()), this, SLOT(grabResultReady()));
+}
+
 void DeclarativeWebPage::componentComplete()
 {
     QuickMozView::componentComplete();
@@ -124,6 +137,34 @@ void DeclarativeWebPage::onViewInitialized()
 {
     addMessageListener(gFullScreenMessage);
     addMessageListener(gDomContentLoadedMessage);
+}
+
+void DeclarativeWebPage::grabResultReady()
+{
+    QImage image = m_grabResult->image();
+    m_grabResult.clear();
+    int size = qMin(width(), height());
+    QRect cropBounds(0, 0, size, size/2);
+
+    m_grabWritter.setFuture(QtConcurrent::run(this, &DeclarativeWebPage::saveToFile, image, cropBounds));
+}
+
+void DeclarativeWebPage::grabWritten()
+{
+    QString path = m_grabWritter.result();
+    emit grabResult(path);
+}
+
+QString DeclarativeWebPage::saveToFile(QImage image, QRect cropBounds)
+{
+    if (image.isNull()) {
+        return "";
+    }
+
+    // 75% quality jpg produces small and good enough capture.
+    QString path = QString("%1/tab-%2-thumb.jpg").arg(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)).arg(m_tabId);
+    image = image.copy(cropBounds);
+    return image.save(path, "jpg", 75) ? path : "";
 }
 
 void DeclarativeWebPage::onRecvAsyncMessage(const QString& message, const QVariant& data)

@@ -137,7 +137,7 @@ function openPasswordManagerDialog(data) {
 function openContextMenu(data) {
     // Possible path that leads to a new tab. Thus, capturing current
     // view before opening context menu.
-    webView.captureScreen()
+    webView.grabActivePage()
     webView.contentItem.contextMenuRequested(data)
     if (data.types.indexOf("image") !== -1 || data.types.indexOf("link") !== -1) {
         var linkHref = data.linkURL

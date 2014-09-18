@@ -87,10 +87,11 @@ public:
 
     void updateUrl(int tabId, bool activeTab, QString url, bool backForwardNavigation, bool initialLoad = false);
     void updateTitle(int tabId, bool activeTab, QString title);
-    void updateThumbnailPath(int tabId, QString path);
 
 public slots:
+    // TODO: Move to be private
     void tabsAvailable(QList<Tab> tabs);
+    void updateThumbnailPath(int tabId, QString path);
 
 signals:
     void activeTabIndexChanged();

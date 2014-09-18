@@ -115,16 +115,6 @@ Page {
         portrait: browserPage.isPortrait
         maxLiveTabCount: 3
         toolbarHeight: overlay.toolBar.toolsHeight
-        screenCaptureSize: {
-            // Default to the tab view's portrait mode's width.
-            // In landscape, capture is a square and smaller.
-            var size = Screen.width - Theme.paddingLarge * 2
-            if (isLandscape && !fullscreenMode) {
-                size -= toolbarHeight
-            }
-            return size
-        }
-
         onCanGoBackChanged: console.log("CAN GO BACK:", canGoBack)
         clip: true
     }
@@ -195,7 +185,7 @@ Page {
                 pageStack.pop(browserPage, PageStackAction.Immediate)
             }
 
-            webView.captureScreen()
+            webView.grabActivePage()
             if (!webView.tabModel.activateTab(url)) {
                 // Not found in tabs list, create newtab and load
                 webView.load(url)

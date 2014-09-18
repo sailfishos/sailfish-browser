@@ -95,6 +95,12 @@ WebContainer {
         contentItem.sendAsyncMessage(name, data)
     }
 
+    function grabActivePage() {
+        if (webView.contentItem) {
+            webView.contentItem.grabToFile()
+        }
+    }
+
     width: parent.width
     height: portrait ? Screen.height : Screen.width
     foreground: Qt.application.active
@@ -165,6 +171,9 @@ WebContainer {
             focus: true
             width: container.width
             state: ""
+
+            onClearGrabResult: tabs.updateThumbnailPath(tabId, "");
+            onGrabResult: tabs.updateThumbnailPath(tabId, fileName);
 
             onLoadProgressChanged: {
                 // Ignore first load progress if it is directly 50%
