@@ -10,7 +10,7 @@
     <file alias="PickerCreator.qml">../../../src/pages/components/PickerCreator.qml</file>
     <file alias="PromptDialog.qml">../../../src/pages/components/PromptDialog.qml</file>
     <file alias="PromptLabel.qml">../../../src/pages/components/PromptLabel.qml</file>
-    <file alias="ResourceController.qml">../../../src/pages/components/ResourceController.qml</file>
+    <file alias="ResourceController.qml">ResourceControllerMock.qml</file>
     <file alias="MultiSelectDialog.qml">../../../src/pages/components/MultiSelectDialog.qml</file>
     <file alias="SingleSelectPage.qml">../../../src/pages/components/SingleSelectPage.qml</file>
     <file alias="WebView.qml">../../../src/pages/components/WebView.qml</file>
