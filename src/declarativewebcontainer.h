@@ -192,6 +192,9 @@ private:
     void updateNavigationStatus(const Tab &tab);
     void updateVkbHeight();
 
+    void updateUrl(const QString &newUrl);
+    void updateTitle(const QString &newTitle);
+
     struct ScreenCapture {
         int tabId;
         QString path;

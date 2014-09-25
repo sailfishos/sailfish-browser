@@ -101,8 +101,8 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
     if (m_webPage != webPage) {
         m_webPage = webPage;
         emit contentItemChanged();
-        emit titleChanged();
-        emit urlChanged();
+        updateUrl(url());
+        updateTitle(title());
     }
 }
 
@@ -505,16 +505,33 @@ void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int activeTabId, 
 
     setThumbnailPath(tab.thumbnailPath());
 
+    updateUrl(tab.url());
 
-    if (m_title != tab.title()) {
-        m_title = tab.title();
-        emit titleChanged();
-    }
-
-    if (m_url != tab.url()) {
-        m_url = tab.url();
-        emit urlChanged();
-    }
+    /**
+     * TODO: We should update title here as well.
+     * Reason not to do so yet is the way how database writes are synchronized to model and
+     * webcontainer states. Currently DeclarativeTabModel do not ignore callbacks from database
+     * worker if another operation made call obsolete.
+     *
+     * For example:
+     * DeclarativeWebPage::loadTab loads an url when the url changes onPageUrlChanged
+     * slot gets called and update url of webcontainer and initiates async write to database without title.
+     * After a while db replies that tab has changed including data.
+     * Right after onPageUrlChanged slot is called, onPageTitleChanged slot is called. The onPageTitleChanged
+     * triggers async write to database with title.
+     * Due to async nature, order of operations might look like (loadTab):
+     *   1) onPageUrlChanged
+     *   2) onPageTitleChanged (so far all would be good)
+     *   3) DB call from to DeclarativeTabModel::tabChanged (with url, callback from 1)
+     *   4) DB call from to DeclarativeTabModel::tabChanged (with url & title, callback from 2)
+     *
+     * Callbacks should be bound to triggered operation allowing other operations
+     * to ignore callback that are not needed anymore. E.g. in above case
+     * 2th step should mark for model that callback coming from onPageUrlChanged 3rd can be
+     * ignored as we know at that moment there is another callback soon coming.
+     */
+    // updateTitle(tab.title());
+    // Reverts title change handling that was introduced in commit ad85e79d.
 
     if (m_tabId != activeTabId) {
         m_tabId = activeTabId;
@@ -688,13 +705,10 @@ void DeclarativeWebContainer::releasePage(int tabId, bool virtualize)
         m_webPages->release(tabId, virtualize);
         // Successfully destroyed. Emit relevant property changes.
         if (!m_webPage) {
-            m_title = "";
-            m_url = "";
             m_tabId = 0;
-
             emit contentItemChanged();
-            emit titleChanged();
-            emit urlChanged();
+            updateUrl("");
+            updateTitle("");
             emit tabIdChanged();
             setThumbnailPath("");
         }
@@ -737,7 +751,7 @@ void DeclarativeWebContainer::onPageUrlChanged()
             webPage->setUrlHasChanged(true);
             webPage->setBackForwardNavigation(false);
             if (activeTab && webPage == m_webPage) {
-                emit urlChanged();
+                updateUrl(url);
             }
         }
     }
@@ -753,7 +767,7 @@ void DeclarativeWebContainer::onPageTitleChanged()
         m_model->updateTitle(tabId, activeTab, title);
 
         if (activeTab && webPage == m_webPage) {
-            emit titleChanged();
+            updateTitle(title);
         }
     }
 }
@@ -823,6 +837,42 @@ void DeclarativeWebContainer::updateVkbHeight()
     }
 #endif
     m_inputPanelOpenHeight = vkbHeight;
+}
+
+/**
+ * Pass the newUrl. This should be used everywhere when
+ * url is about to change. E.g. when updating current contentItem.
+ * When both url and title are about to change call updateUrl first
+ * as it is more natural that way.
+ * @brief DeclarativeWebContainer::updateUrl
+ * @param newUrl
+ *
+ * See also updateTitle
+ */
+void DeclarativeWebContainer::updateUrl(const QString &newUrl)
+{
+    if (m_url != newUrl) {
+        m_url = newUrl;
+        emit urlChanged();
+    }
+}
+
+/**
+ * Pass the newTitle. This should be used everywhere when
+ * title is about to change. E.g. when updating current contentItem.
+ * When both url and title are about to change call updateUrl first
+ * as it is more natural that way.
+ * @brief DeclarativeWebContainer::updateTitle
+ * @param newTitle
+ *
+ * See also updateUrl
+ */
+void DeclarativeWebContainer::updateTitle(const QString &newTitle)
+{
+    if (m_title != newTitle) {
+        m_title = newTitle;
+        emit titleChanged();
+    }
 }
 
 void DeclarativeWebContainer::sendVkbOpenCompositionMetrics()
