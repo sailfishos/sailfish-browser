@@ -191,6 +191,7 @@ void DeclarativeWebUtils::updateWebEngineSettings()
                              << "clipboard:setdata"
                              << "media-decoder-info"
                              << "embed:download"
+                             << "embed:allprefs"
                              << "embed:search");
 
     // Enable internet search
