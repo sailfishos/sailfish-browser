@@ -6,3 +6,6 @@ X-MeeGo-Translation-Catalog=sailfish-browser
 Icon=icon-launcher-browser
 Exec=invoker -s --type=silica-qt5 -G /usr/bin/sailfish-browser %U
 Comment=Sailfish UI application
+MimeType=text/html;x-maemo-urischeme/http;x-maemo-urischeme/https;
+X-Maemo-Service=org.sailfishos.browser
+X-Maemo-Method=org.sailfishos.browser.openUrl
