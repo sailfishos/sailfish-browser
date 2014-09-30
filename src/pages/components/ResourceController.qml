@@ -21,7 +21,6 @@ Item {
     property bool videoActive
     property bool audioActive
     property bool background
-    property bool permissionsEnabled: true
 
     property string _mediaState: "pause"
     property string _lastStateOwner
@@ -140,20 +139,17 @@ Item {
         }
     }
 
-    Loader {
-        active: permissionsEnabled
-        sourceComponent: Permissions {
-            enabled: audioActive || videoActive
-            applicationClass: "player"
-            autoRelease: false
+    Permissions {
+        enabled: audioActive || videoActive
+        applicationClass: "player"
+        autoRelease: true
 
-            Resource {
-                type: Resource.AudioPlayback
-            }
+        Resource {
+            type: Resource.AudioPlayback
+        }
 
-            Resource {
-                type: Resource.VideoPlayback
-            }
+        Resource {
+            type: Resource.VideoPlayback
         }
     }
 }

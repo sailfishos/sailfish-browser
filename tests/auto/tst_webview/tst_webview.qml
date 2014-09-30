@@ -31,7 +31,6 @@ ApplicationWindow {
             active: true
             toolbarHeight: 50
             portrait: true
-            permissionsEnabled: false
 
             HistoryModel {
                 id: historyModel
