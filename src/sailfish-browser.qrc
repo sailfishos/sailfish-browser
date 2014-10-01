@@ -4,6 +4,7 @@
     <file>pages/BrowserPage.qml</file>
     <file>pages/ShareLinkPage.qml</file>
     <file>pages/TabPage.qml</file>
+    <file>pages/ConfigDialog.qml</file>
     <file>pages/components/AlertDialog.qml</file>
     <file>pages/components/AuthDialog.qml</file>
     <file>pages/components/BookmarkEditDialog.qml</file>

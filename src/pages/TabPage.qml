@@ -32,6 +32,17 @@ Page {
     property string _search
 
     function load(url, title) {
+        if (url === "about:config") {
+            //: Warning of changing browser configurations.
+            //% "Changing these advanced settings can cause issues with stability, security and performance of Sailfish Browser. Continue ?"
+            var warning = qsTrId("sailfish_browser-la-config-warning");
+            var dialog = pageStack.push(Qt.resolvedUrl("components/ConfirmDialog.qml"), { text: warning });
+            dialog.accepted.connect(function() {
+                pageStack.replace(Qt.resolvedUrl("ConfigDialog.qml"), {});
+            });
+            return;
+        }
+
         if (page.newTab) {
             browserPage.tabs.newTab(url, title)
         } else {
