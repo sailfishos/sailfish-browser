@@ -12,6 +12,7 @@
 import QtQuick 2.2
 import Sailfish.Silica 1.0
 import Sailfish.Browser 1.0
+import org.nemomobile.dbus 2.0
 import "." as Browser
 
 Item {
@@ -83,7 +84,14 @@ Item {
             width: iconWidth + horizontalOffset
             icon.source: "image://theme/icon-m-mobile-network"
             icon.anchors.horizontalCenterOffset: -horizontalOffset
-            onTapped: showDownloads()
+            onTapped: settingsApp.call("showTransfers", [])
         }
+    }
+
+    DBusInterface {
+        id: settingsApp
+        service: "com.jolla.settings"
+        iface: "com.jolla.settings.ui"
+        path: "/com/jolla/settings/ui"
     }
 }

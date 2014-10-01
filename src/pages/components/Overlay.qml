@@ -235,8 +235,6 @@ PanelBackground {
 
                     pageStack.push(Qt.resolvedUrl("../ShareLinkPage.qml"), {"link" : webView.url, "linkTitle": webView.title})
                 }
-                onShowDownloads: console.log("Show downloads")
-
                 onBookmarkActivePage: {
                     var webPage = webView && webView.contentItem
                     if (webPage) {

@@ -34,7 +34,6 @@ Column {
     signal enterNewTabUrl
     signal searchFromActivePage
     signal shareActivePage
-    signal showDownloads
     signal bookmarkActivePage
     signal removeActivePageFromBookmarks
 
