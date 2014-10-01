@@ -44,8 +44,7 @@ BackgroundItem {
 
     Image {
         id: mask
-        // Or icon-launcher-folder-09 or the real mask icon
-        source: "image://theme/icon-launcher-calendar"
+        source: "icon_browser_favorites_mask00.png"
         anchors.fill: favoriteIcon
         visible: false
     }
