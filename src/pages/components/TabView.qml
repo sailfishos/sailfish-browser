@@ -21,6 +21,7 @@ SilicaGridView {
     signal enterNewTabUrl
     signal activateTab(int index)
     signal closeTab(int index)
+    signal closeAll
 
     cellWidth: portrait ? parent.width : parent.width / 3
     cellHeight: portrait ? Screen.width / 2 : cellWidth
@@ -57,6 +58,12 @@ SilicaGridView {
 
     PullDownMenu {
         flickable: tabView
+
+        MenuItem {
+            //% "Close all tabs"
+            text: qsTrId("sailfish_browser-me-close_all")
+            onClicked: tabView.closeAll()
+        }
         MenuItem {
             //% "New tab"
             text: qsTrId("sailfish_browser-me-new_tab")

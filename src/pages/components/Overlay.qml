@@ -406,6 +406,11 @@ PanelBackground {
                     }
                 }
 
+                onCloseAll: {
+                    webView.tabModel.clear()
+                    enterNewTabUrl()
+                }
+
                 Component.onCompleted: positionViewAtIndex(webView.tabModel.activeTabIndex, ListView.Center)
             }
         }
