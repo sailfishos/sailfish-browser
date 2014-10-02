@@ -17,10 +17,8 @@ Component {
     ContextMenu {
         property Item view
         property Item delegate
-        property int index
         property string title
         property string url
-        property string favicon
 
         // Do we want this one?
 //        MenuItem {
@@ -40,13 +38,13 @@ Component {
             //: Add bookmark to launcher menu item. This should be relatively short to fit to the menu.
             //% "Add to launcher"
             text: qsTrId("sailfish_browser-me-add_to_launcher")
-            onClicked: view.addToLauncher(url, title, favicon)
+            onClicked: delegate.addToLauncher()
         }
 
         MenuItem {
             //% "Edit favorite"
             text: qsTrId("sailfish_browser-me-edit_favorite")
-            onClicked: view.editBookmark(index, url, title)
+            onClicked: delegate.editBookmark()
         }
 
         MenuItem {

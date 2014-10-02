@@ -61,6 +61,7 @@ SOURCES += \
     browserservice.cpp \
     dbusadaptor.cpp \
     downloadmanager.cpp \
+    iconfetcher.cpp \
     settingmanager.cpp \
     closeeventfilter.cpp \
     webpagequeue.cpp \
@@ -75,6 +76,7 @@ HEADERS += \
     browserservice.h \
     dbusadaptor.h \
     downloadmanager.h \
+    iconfetcher.h \
     settingmanager.h \
     closeeventfilter.h \
     webpagequeue.h \

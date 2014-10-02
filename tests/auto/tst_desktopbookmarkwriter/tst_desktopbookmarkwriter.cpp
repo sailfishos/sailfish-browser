@@ -22,13 +22,13 @@ class tst_desktopbookmarkwriter : public QObject
 public:
     tst_desktopbookmarkwriter(QObject *parent = 0);
 
+    QString writtenDesktopFile(QSignalSpy &spy);
+
 private slots:
     void invalidInput_data();
     void invalidInput();
     void writeDesktopFile_data();
     void writeDesktopFile();
-    void clear();
-    void exists();
     void cleanupTestCase();
 
 private:
@@ -41,6 +41,20 @@ tst_desktopbookmarkwriter::tst_desktopbookmarkwriter(QObject *parent)
     : QObject(parent)
 {
     DesktopBookmarkWriter::setTestModeEnabled(true);
+}
+
+QString tst_desktopbookmarkwriter::writtenDesktopFile(QSignalSpy &spy)
+{
+    if (spy.count() == 0) {
+        spy.wait();
+    }
+
+    if (spy.count() == 1) {
+        QList<QVariant> arguments = spy.takeFirst();
+        return arguments.at(0).toString();
+    } else {
+        return "";
+    }
 }
 
 void tst_desktopbookmarkwriter::invalidInput_data()
@@ -56,13 +70,10 @@ void tst_desktopbookmarkwriter::invalidInput()
 {
     QFETCH(QString, title);
     QFETCH(QString, link);
-    writer.setProperty("title", title);
-    writer.setProperty("link", link);
-    QVERIFY(!writer.save());
-
-    writer.clear();
-    QVERIFY(writer.property("title").toString().isEmpty());
-    QVERIFY(writer.property("link").toString().isEmpty());
+    QSignalSpy savedSpy(&writer, SIGNAL(saved(QString)));
+    writer.save(link, title, "hello.png");
+    QString desktopFile = writtenDesktopFile(savedSpy);
+    QVERIFY(desktopFile.isEmpty());
 }
 
 void tst_desktopbookmarkwriter::writeDesktopFile_data()
@@ -96,14 +107,6 @@ void tst_desktopbookmarkwriter::writeDesktopFile_data()
                             << "   http://www.test1.jolla.com    " << "http://www.test1.jolla.com"
                             << "" << QString(DEFAULT_DESKTOP_BOOKMARK_ICON)
                             << QString(DESKTOP_FILE_PATTERN).arg(testPath, "World", "0");
-    QTest::newRow("too small icon")  << "Test" << "Test"
-                            << "http://www.test1.jolla.com" << "http://www.test1.jolla.com"
-                            << QString("%1/%2").arg(TEST_DATA, "too-small-icon-size.png") << QString(DEFAULT_DESKTOP_BOOKMARK_ICON)
-                            << QString(DESKTOP_FILE_PATTERN).arg(testPath, "Test", "0");
-    QTest::newRow("large icon")  << "Test2" << "Test2"
-                            << "http://www.test1.jolla.com" << "http://www.test1.jolla.com"
-                            << QString("%1/%2").arg(TEST_DATA, "graphic-browsertutorial.png") << QString("data:image/png;base64")
-                            << QString(DESKTOP_FILE_PATTERN).arg(testPath, "Test2", "0");
 }
 
 void tst_desktopbookmarkwriter::writeDesktopFile()
@@ -116,21 +119,10 @@ void tst_desktopbookmarkwriter::writeDesktopFile()
     QFETCH(QString, outputIcon);
     QFETCH(QString, savedDesktopFile);
 
-    writer.setProperty("title", inputTitle);
-    writer.setProperty("link", inputLink);
-    writer.setProperty("icon", inputIcon);
-
     QSignalSpy savedSpy(&writer, SIGNAL(saved(QString)));
-    QVERIFY(writer.save());
+    writer.save(inputLink, inputTitle, inputIcon);
+    QString desktopFile = writtenDesktopFile(savedSpy);
 
-    if (savedSpy.count() == 0) {
-        savedSpy.wait();
-    }
-
-    QVERIFY(savedSpy.count() == 1);
-
-    QList<QVariant> arguments = savedSpy.takeFirst();
-    QString desktopFile = arguments.at(0).toString();
     desktopFiles << desktopFile;
     QCOMPARE(savedDesktopFile, desktopFile);
 
@@ -141,23 +133,6 @@ void tst_desktopbookmarkwriter::writeDesktopFile()
     QCOMPARE(desktopEntry.comment(), outputTitle);
 }
 
-void tst_desktopbookmarkwriter::clear()
-{
-    writer.setProperty("title", "Foo");
-    writer.setProperty("link", "Bar");
-    writer.setProperty("icon", "FooBar");
-    writer.clear();
-
-    QVERIFY(writer.property("title").toString().isEmpty());
-    QVERIFY(writer.property("icon").toString().isEmpty());
-    QVERIFY(writer.property("link").toString().isEmpty());
-}
-
-void tst_desktopbookmarkwriter::exists()
-{
-    QVERIFY(writer.exists(QString("%1/%2").arg(TEST_DATA, "graphic-browsertutorial.png")));
-}
-
 void tst_desktopbookmarkwriter::cleanupTestCase()
 {
     foreach (QString desktopFile, desktopFiles) {
@@ -166,6 +141,6 @@ void tst_desktopbookmarkwriter::cleanupTestCase()
     }
 }
 
-QTEST_APPLESS_MAIN(tst_desktopbookmarkwriter)
+QTEST_GUILESS_MAIN(tst_desktopbookmarkwriter)
 
 #include "tst_desktopbookmarkwriter.moc"

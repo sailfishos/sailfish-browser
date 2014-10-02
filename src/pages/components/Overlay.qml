@@ -183,20 +183,6 @@ PanelBackground {
             Browser.ToolBar {
                 id: toolBar
 
-                function saveBookmark(data) {
-                    bookmarkModel.addBookmark(webView.url, webView.title || webView.url,
-                                                      data, browserPage.favoriteImageLoader.acceptedTouchIcon)
-                    browserPage.desktopBookmarkWriter.iconFetched.disconnect(toolBar.saveBookmark)
-                }
-
-                function fetchIcon() {
-                    // Async operation when loading of touch icon is needed.
-                    browserPage.desktopBookmarkWriter.iconFetched.connect(toolBar.saveBookmark)
-                    // TODO: would be safer to pass here an object containing url, title, icon, and icon type (touch icon)
-                    // as this is async call in case we're fetching favicon.
-                    browserPage.desktopBookmarkWriter.fetchIcon(browserPage.favoriteImageLoader.icon)
-                }
-
                 url: overlay.webView.url
                 bookmarked: bookmarkModel.count && bookmarkModel.contains(webView.url)
                 opacity: (overlay.y - webView.fullscreenHeight/2)  / (webView.fullscreenHeight/2 - toolBar.height)
@@ -235,13 +221,7 @@ PanelBackground {
 
                     pageStack.push(Qt.resolvedUrl("../ShareLinkPage.qml"), {"link" : webView.url, "linkTitle": webView.title})
                 }
-                onBookmarkActivePage: {
-                    var webPage = webView && webView.contentItem
-                    if (webPage) {
-                        toolBar.fetchIcon()
-                    }
-                }
-
+                onBookmarkActivePage: favoriteGrid.fetchAndSaveBookmark()
                 onRemoveActivePageFromBookmarks: bookmarkModel.removeBookmark(webView.url)
             }
 
@@ -344,26 +324,6 @@ PanelBackground {
                     overlay.loadPage(url, title)
                 }
 
-                onRemoveBookmark: bookmarkModel.removeBookmark(url)
-                onEditBookmark: {
-                    // index, url, title
-                    pageStack.push(editDialog,
-                                   {
-                                       "url": url,
-                                       "title": title,
-                                       "index": index,
-                                   })
-                }
-
-                onAddToLauncher: {
-                    // url, title, favicon
-                    pageStack.push(addToLauncher,
-                                   {
-                                       "url": url,
-                                       "title": title
-                                   })
-                }
-
                 onShare: pageStack.push(Qt.resolvedUrl("../ShareLinkPage.qml"), {"link" : url, "linkTitle": title})
 
                 Behavior on opacity { FadeAnimation {} }
@@ -412,31 +372,6 @@ PanelBackground {
                 }
 
                 Component.onCompleted: positionViewAtIndex(webView.tabModel.activeTabIndex, ListView.Center)
-            }
-        }
-    }
-
-    Component {
-        id: editDialog
-        Browser.BookmarkEditDialog {
-            onAccepted: bookmarkModel.editBookmark(index, editedUrl, editedTitle)
-        }
-    }
-
-    Component {
-        id: addToLauncher
-        Browser.BookmarkEditDialog {
-            //: Title of the "Add to launcher" dialog.
-            //% "Add to launcher"
-            title: qsTrId("sailfish_browser-he-add_bookmark_to_launcher")
-            canAccept: editedUrl !== "" && editedTitle !== ""
-            onAccepted: {
-                // TODO: This should use directly the icon the the bookmark.
-                var icon = browserPage.favoriteImageLoader.icon
-                browserPage.desktopBookmarkWriter.link = editedUrl
-                browserPage.desktopBookmarkWriter.title = editedTitle
-                browserPage.desktopBookmarkWriter.icon = icon
-                browserPage.desktopBookmarkWriter.save()
             }
         }
     }

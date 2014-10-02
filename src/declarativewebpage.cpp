@@ -41,6 +41,7 @@ DeclarativeWebPage::~DeclarativeWebPage()
     m_grabWritter.cancel();
     m_grabWritter.waitForFinished();
     m_grabResult.clear();
+    m_thumbnailResult.clear();
 }
 
 DeclarativeWebContainer *DeclarativeWebPage::container() const
@@ -128,6 +129,12 @@ void DeclarativeWebPage::grabToFile()
     connect(m_grabResult.data(), SIGNAL(ready()), this, SLOT(grabResultReady()));
 }
 
+void DeclarativeWebPage::grabThumbnail()
+{
+    m_thumbnailResult = grabToImage();
+    connect(m_thumbnailResult.data(), SIGNAL(ready()), this, SLOT(thumbnailReady()));
+}
+
 void DeclarativeWebPage::componentComplete()
 {
     QuickMozView::componentComplete();
@@ -153,6 +160,25 @@ void DeclarativeWebPage::grabWritten()
 {
     QString path = m_grabWritter.result();
     emit grabResult(path);
+}
+
+void DeclarativeWebPage::thumbnailReady()
+{
+    QImage image = m_thumbnailResult->image();
+    m_thumbnailResult.clear();
+    int size = qMin(width(), height());
+    QRect cropBounds(0, 0, size, size);
+
+    image = image.copy(cropBounds);
+    QByteArray iconData;
+    QBuffer buffer(&iconData);
+    buffer.open(QIODevice::WriteOnly);
+    if (image.save(&buffer, "jpg", 75)) {
+        buffer.close();
+        emit thumbnailResult(QString(BASE64_IMAGE).arg(QString(iconData.toBase64())));
+    } else {
+        emit thumbnailResult(DEFAULT_DESKTOP_BOOKMARK_ICON);
+    }
 }
 
 QString DeclarativeWebPage::saveToFile(QImage image, QRect cropBounds)

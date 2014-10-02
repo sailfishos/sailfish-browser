@@ -58,6 +58,7 @@ public:
 
     Q_INVOKABLE void loadTab(QString newUrl, bool force);
     Q_INVOKABLE void grabToFile();
+    Q_INVOKABLE void grabThumbnail();
 
 signals:
     void containerChanged();
@@ -70,6 +71,7 @@ signals:
     void resurrectedContentRectChanged();
     void clearGrabResult();
     void grabResult(QString fileName);
+    void thumbnailResult(QString data);
 
 protected:
     void componentComplete();
@@ -80,6 +82,7 @@ private slots:
     void onViewInitialized();
     void grabResultReady();
     void grabWritten();
+    void thumbnailReady();
 
 private:
     QString saveToFile(QImage image, QRect cropBounds);
@@ -96,6 +99,7 @@ private:
     QString m_favicon;
     QVariant m_resurrectedContentRect;
     QSharedPointer<QQuickItemGrabResult> m_grabResult;
+    QSharedPointer<QQuickItemGrabResult> m_thumbnailResult;
     QFutureWatcher<QString> m_grabWritter;
 };
 

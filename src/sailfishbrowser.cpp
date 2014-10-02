@@ -37,6 +37,7 @@
 #include "declarativewebviewcreator.h"
 #include "declarativefileuploadmode.h"
 #include "declarativefileuploadfilter.h"
+#include "iconfetcher.h"
 
 #ifdef HAS_BOOSTER
 #include <MDeclarativeCache>
@@ -124,6 +125,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     qmlRegisterType<DeclarativeFileUploadMode>("Sailfish.Browser", 1, 0, "FileUploadMode");
     qmlRegisterType<DeclarativeFileUploadFilter>("Sailfish.Browser", 1, 0, "FileUploadFilter");
     qmlRegisterType<DesktopBookmarkWriter>("Sailfish.Browser", 1, 0, "DesktopBookmarkWriter");
+    qmlRegisterType<IconFetcher>("Sailfish.Browser", 1, 0, "IconFetcher");
 
     QString componentPath(DEFAULT_COMPONENTS_PATH);
     QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/components/EmbedLiteBinComponents.manifest"));
