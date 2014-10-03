@@ -21,7 +21,6 @@ Item {
     property bool videoActive
     property bool audioActive
     property bool background
-    property bool permissionsEnabled: true
 
     property string _mediaState: "pause"
     property string _lastStateOwner
@@ -73,9 +72,9 @@ Item {
 
     // This is behind 1000ms timer
     onBackgroundChanged: {
-        if (!audioActive && !videoActive && background) {
+        if (!audioActive && background) {
             suspendView()
-        } else {
+        } else if (!background) {
             resumeView()
         }
     }
@@ -126,7 +125,7 @@ Item {
         // 1000ms was not enough to always allow buffering start of next song via 3G
         interval: 5000
         onTriggered: {
-            if (!videoActive && !audioActive && suspendIntention) {
+            if (!audioActive && suspendIntention) {
                 suspendView()
             } else {
                 resumeView()
@@ -140,20 +139,17 @@ Item {
         }
     }
 
-    Loader {
-        active: permissionsEnabled
-        sourceComponent: Permissions {
-            enabled: audioActive || videoActive
-            applicationClass: "player"
-            autoRelease: false
+    Permissions {
+        enabled: audioActive || videoActive
+        applicationClass: "player"
+        autoRelease: true
 
-            Resource {
-                type: Resource.AudioPlayback
-            }
+        Resource {
+            type: Resource.AudioPlayback
+        }
 
-            Resource {
-                type: Resource.VideoPlayback
-            }
+        Resource {
+            type: Resource.VideoPlayback
         }
     }
 }

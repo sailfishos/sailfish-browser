@@ -22,7 +22,6 @@ WebContainer {
 
     property color _decoratorColor: Theme.highlightDimmerColor
     property bool firstUseFullscreen
-    property alias permissionsEnabled: resourceController.permissionsEnabled
     readonly property bool moving: contentItem ? contentItem.moving : false
 
     property bool findInPageHasResult
@@ -104,6 +103,7 @@ WebContainer {
     width: parent.width
     height: portrait ? Screen.height : Screen.width
     foreground: Qt.application.active
+    allowHiding: !resourceController.videoActive && !resourceController.audioActive
     inputPanelHeight: window.pageStack.panelSize
     inputPanelOpenHeight: window.pageStack.imSize
     fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) ||

@@ -13,6 +13,7 @@ import QtQuick 2.2
 import Sailfish.Silica 1.0
 import Sailfish.Browser 1.0
 import "." as Browser
+import ".." as Pages
 
 PanelBackground {
     id: overlay
@@ -28,25 +29,28 @@ PanelBackground {
     property var enteredPage
 
     function loadPage(url, title)  {
-        // let gecko figure out how to handle malformed URLs
-
-        var pageUrl = url
-        var pageTitle = title || ""
-        if (!isNaN(pageUrl) && pageUrl.trim()) {
-            pageUrl = "\"" + pageUrl.trim() + "\""
-        }
-
-        if (!searchField.enteringNewTabUrl) {
-            webView.load(pageUrl, pageTitle)
+        if (url == "about:config") {
+            pageStack.push(configWarningDialog);
         } else {
-            // Loading will start once overlay animator has animated chrome visible.
-            enteredPage = {
-                "url": pageUrl,
-                "title": pageTitle
+            // let gecko figure out how to handle malformed URLs
+            var pageUrl = url
+            var pageTitle = title || ""
+            if (!isNaN(pageUrl) && pageUrl.trim()) {
+                pageUrl = "\"" + pageUrl.trim() + "\""
             }
+
+            if (!searchField.enteringNewTabUrl) {
+                webView.load(pageUrl, pageTitle)
+            } else {
+                // Loading will start once overlay animator has animated chrome visible.
+                enteredPage = {
+                    "url": pageUrl,
+                    "title": pageTitle
+                }
+            }
+            webView.focus = true
         }
 
-        webView.focus = true
         overlayAnimator.showChrome()
     }
 
@@ -373,6 +377,25 @@ PanelBackground {
 
                 Component.onCompleted: positionViewAtIndex(webView.tabModel.activeTabIndex, ListView.Center)
             }
+        }
+    }
+
+    Component {
+        id: configWarningDialog
+        ConfirmDialog {
+            //: Warning of changing browser configurations.
+            //% "Changing these advanced settings can cause issues with stability, security and performance of Sailfish Browser. Continue ?"
+            text: qsTrId("sailfish_browser-la-config-warning");
+            acceptDestination: configDialog
+        }
+    }
+
+    Component {
+        id: configDialog
+        Pages.ConfigDialog {
+            // On accept pop back to browserPage
+            acceptDestination: browserPage
+            acceptDestinationAction: PageStackAction.Pop
         }
     }
 }
