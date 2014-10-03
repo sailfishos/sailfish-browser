@@ -140,7 +140,7 @@ int DBWorker::createLink(int tabId, QString url, QString title)
 
     int linkId = createLink(url, title, "");
 
-    if (!addToHistory(linkId)) {
+    if (addToHistory(linkId, url) == Error) {
         qWarning() << Q_FUNC_INFO << "failed to add url to history" << url;
     }
 
@@ -313,7 +313,8 @@ void DBWorker::navigateTo(int tabId, QString url, QString title, QString path) {
     clearDeprecatedTabHistory(tabId, currentLink.linkId());
 
     int linkId = createLink(url, title, path);
-    if (!addToHistory(linkId)) {
+
+    if (addToHistory(linkId, url) == Error) {
         qWarning() << Q_FUNC_INFO << "failed to add url to history" << url;
     }
 
@@ -448,28 +449,34 @@ int DBWorker::getNextLinkIdFromTabHistory(int tabHistoryId)
 }
 
 // Adds url to table history if it is not already there
-bool DBWorker::addToHistory(int linkId)
+HistoryResult DBWorker::addToHistory(int linkId, QString url)
 {
 #ifdef DEBUG_LOGS
     qDebug() << "link id:" << linkId;
 #endif
+
+    // Skip adding any urls with 'about:' prefix
+    if (url.startsWith("about:")) {
+        return Skipped;
+    }
+
     QSqlQuery query = prepare("SELECT link_id FROM history WHERE link_id = ?;");
     query.bindValue(0, linkId);
     if (!execute(query)) {
-        return false;
+        return Error;
     }
 
     if (query.first()) {
         query = prepare("UPDATE history SET date = ? WHERE link_id = ?;");
         query.bindValue(0, QDateTime::currentDateTimeUtc().toTime_t());
         query.bindValue(1, linkId);
-        return execute(query);
+        return execute(query) ? Added : Error;
     }
 
     query = prepare("INSERT INTO history (link_id, date) VALUES (?, ?);");
     query.bindValue(0, linkId);
     query.bindValue(1, QDateTime::currentDateTimeUtc().toTime_t());
-    return execute(query);
+    return execute(query) ? Added : Error;
 }
 
 void DBWorker::clearHistory()
@@ -563,7 +570,7 @@ int DBWorker::createLink(QString url, QString title, QString thumbPath)
 void DBWorker::getHistory(const QString &filter)
 {
     // Skip empty titles always
-    QString filterQuery("WHERE (NULLIF(link.title, '') IS NOT NULL AND %1) ");
+    QString filterQuery("WHERE (NULLIF(link.title, '') IS NOT NULL AND link.url NOT LIKE 'about:%' AND %1) ");
     if (!filter.isEmpty()) {
         filterQuery = filterQuery.arg(QString("(link.url LIKE :search OR link.title LIKE :search)"));
     } else {
