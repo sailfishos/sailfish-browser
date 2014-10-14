@@ -24,9 +24,12 @@
 // comma-separated types
 typedef QMap<QString, QString> SettingsMap;
 
+enum HistoryResult { Error, Added, Skipped };
+
 class DBWorker : public QObject
 {
     Q_OBJECT
+
 public:
     DBWorker(QObject *parent = 0);
 
@@ -72,7 +75,7 @@ private:
     Link getLink(int linkId);
     Link getLink(QString url);
     void updateLink(int linkId, QString url, QString title, QString thumbPath);
-    bool addToHistory(int linkId);
+    HistoryResult addToHistory(int linkId, QString url);
     int addToTabHistory(int tabId, int linkId);
     Link getLinkFromTabHistory(int tabHistoryId);
     Link getCurrentLink(int tabId);
