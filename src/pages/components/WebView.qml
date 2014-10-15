@@ -149,6 +149,9 @@ WebContainer {
             property int iconSize
             property string iconType
 
+            fullscreenHeight: container.fullscreenHeight
+            toolbarHeight: container.toolbarHeight
+
             loaded: loadProgress === 100 && !loading
             enabled: webView.enabled
             // Active could pause e.g. video in cover by anding
@@ -161,8 +164,8 @@ WebContainer {
             active: visible // || !loaded
 
             // There needs to be enough content for enabling chrome gesture
-            chromeGestureThreshold: container.toolbarHeight / 2
-            chromeGestureEnabled: contentHeight > container.fullscreenHeight + container.toolbarHeight
+            chromeGestureThreshold: toolbarHeight / 2
+            chromeGestureEnabled: (contentHeight > fullscreenHeight + toolbarHeight) && !forcedChrome
 
             signal selectionRangeUpdated(variant data)
             signal selectionCopied(variant data)
@@ -188,6 +191,8 @@ WebContainer {
 
             onUrlChanged: {
                 if (url == "about:blank") return
+
+                webView.findInPageHasResult = false
 
                 if (!PopupHandler.isRejectedGeolocationUrl(url)) {
                     PopupHandler.rejectedGeolocationUrl = ""
@@ -247,7 +252,7 @@ WebContainer {
 
             onLoadedChanged: {
                 if (loaded && !userHasDraggedWhileLoading) {
-                    container.resetHeight(false)
+                    resetHeight(false)
                     if (resurrectedContentRect) {
                         sendAsyncMessage("embedui:zoomToRect",
                                          {
@@ -273,7 +278,7 @@ WebContainer {
                     favicon = ""
                     iconType = ""
                     iconSize = 0
-                    container.resetHeight(false)
+                    resetHeight(false)
                 }
             }
 

@@ -214,7 +214,6 @@ private:
     bool m_canGoBack;
     bool m_realNavigation;
     bool m_readyToLoad;
-
     bool m_deferredReload;
     QVariant m_deferredLoad;
 

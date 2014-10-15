@@ -19,9 +19,4 @@ Browser.IconButton {
     clip: true
     width: opacity * expandedWidth
     opacity: active ? 1.0 : 0.0
-
-    // Don't pass touch events through in the middle FadeAnimation
-    enabled: opacity === 1.0
-
-    Behavior on opacity { FadeAnimation {} }
 }

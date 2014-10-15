@@ -28,9 +28,13 @@ class DeclarativeWebPage : public QuickMozView {
     Q_PROPERTY(bool loaded MEMBER m_loaded NOTIFY loadedChanged FINAL)
     Q_PROPERTY(bool userHasDraggedWhileLoading MEMBER m_userHasDraggedWhileLoading NOTIFY userHasDraggedWhileLoadingChanged FINAL)
     Q_PROPERTY(bool fullscreen READ fullscreen NOTIFY fullscreenChanged FINAL)
+    Q_PROPERTY(bool forcedChrome READ forcedChrome NOTIFY forcedChromeChanged FINAL)
     Q_PROPERTY(bool domContentLoaded READ domContentLoaded NOTIFY domContentLoadedChanged FINAL)
     Q_PROPERTY(QString favicon MEMBER m_favicon NOTIFY faviconChanged FINAL)
     Q_PROPERTY(QVariant resurrectedContentRect READ resurrectedContentRect WRITE setResurrectedContentRect NOTIFY resurrectedContentRectChanged)
+
+    Q_PROPERTY(qreal fullscreenHeight MEMBER m_fullScreenHeight NOTIFY fullscreenHeightChanged FINAL)
+    Q_PROPERTY(qreal toolbarHeight MEMBER m_toolbarHeight NOTIFY toolbarHeightChanged FINAL)
 
 public:
     DeclarativeWebPage(QQuickItem *parent = 0);
@@ -46,6 +50,7 @@ public:
     void setResurrectedContentRect(QVariant resurrectedContentRect);
 
     bool fullscreen() const;
+    bool forcedChrome() const;
     bool domContentLoaded() const;
 
     bool urlHasChanged() const;
@@ -59,6 +64,10 @@ public:
     Q_INVOKABLE void loadTab(QString newUrl, bool force);
     Q_INVOKABLE void grabToFile();
     Q_INVOKABLE void grabThumbnail();
+    Q_INVOKABLE void forceChrome(bool forcedChrome);
+
+public slots:
+    void resetHeight(bool respectContentHeight = true);
 
 signals:
     void containerChanged();
@@ -66,12 +75,16 @@ signals:
     void loadedChanged();
     void userHasDraggedWhileLoadingChanged();
     void fullscreenChanged();
+    void forcedChromeChanged();
     void domContentLoadedChanged();
     void faviconChanged();
     void resurrectedContentRectChanged();
     void clearGrabResult();
     void grabResult(QString fileName);
     void thumbnailResult(QString data);
+
+    void fullscreenHeightChanged();
+    void toolbarHeightChanged();
 
 protected:
     void componentComplete();
@@ -93,6 +106,7 @@ private:
     bool m_loaded;
     bool m_userHasDraggedWhileLoading;
     bool m_fullscreen;
+    bool m_forcedChrome;
     bool m_domContentLoaded;
     bool m_urlHasChanged;
     bool m_backForwardNavigation;
@@ -101,6 +115,9 @@ private:
     QSharedPointer<QQuickItemGrabResult> m_grabResult;
     QSharedPointer<QQuickItemGrabResult> m_thumbnailResult;
     QFutureWatcher<QString> m_grabWritter;
+
+    qreal m_fullScreenHeight;
+    qreal m_toolbarHeight;
 };
 
 QDebug operator<<(QDebug, const DeclarativeWebPage *);

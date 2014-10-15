@@ -125,7 +125,7 @@ Page {
         MouseArea {
             anchors.fill: parent
             enabled: overlay.animator.atTop && webView.contentItem
-            onClicked: overlay.cancelEnteringUrl()
+            onClicked: overlay.dismiss()
         }
     }
 

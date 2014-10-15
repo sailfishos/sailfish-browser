@@ -56,7 +56,10 @@ Item {
             width: midIconWidth
             icon.source: "image://theme/icon-m-search"
             active: webView.contentItem
-            onTapped: searchFromActivePage()
+            onTapped: {
+                findInPageActive = true
+                findInPage()
+            }
         }
 
         Browser.IconButton {

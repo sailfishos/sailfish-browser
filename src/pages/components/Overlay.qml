@@ -64,10 +64,11 @@ PanelBackground {
         overlayAnimator.showOverlay(action === PageStackAction.Immediate)
     }
 
-    function cancelEnteringUrl() {
+    function dismiss() {
         if (webView.contentItem) {
             webView.contentItem.opacity = 1.0
         }
+        toolBar.resetFind()
         overlay.animator.showChrome()
     }
 
@@ -112,7 +113,7 @@ PanelBackground {
                     webView.tabModel.newTab(enteredPage.url, enteredPage.title)
                     searchField.enteringNewTabUrl = false
                     enteredPage = null
-                } else {
+                } else if (!toolBar.findInPageActive) {
                     searchField.resetUrl(webView.url)
                 }
             }
@@ -121,7 +122,18 @@ PanelBackground {
 
     Connections {
         target: webView
-        onUrlChanged: searchField.resetUrl(webView.url)
+
+        onLoadingChanged: {
+            if (webView.loading) {
+                toolBar.resetFind()
+            }
+        }
+
+        onUrlChanged: {
+            if (!toolBar.findInPageActive) {
+                searchField.resetUrl(webView.url)
+            }
+        }
     }
 
     Image {
@@ -161,7 +173,7 @@ PanelBackground {
                 if (overlay.y < dragThreshold) {
                     overlayAnimator.showOverlay(false)
                 } else {
-                    cancelEnteringUrl()
+                    dismiss()
                 }
             } else {
                 // Store previous end state
@@ -188,12 +200,16 @@ PanelBackground {
                 id: toolBar
 
                 url: overlay.webView.url
+                findText: searchField.text
                 bookmarked: bookmarkModel.count && bookmarkModel.contains(webView.url)
                 opacity: (overlay.y - webView.fullscreenHeight/2)  / (webView.fullscreenHeight/2 - toolBar.height)
                 visible: opacity > 0.0
                 secondaryToolsActive: overlayAnimator.secondaryTools
 
-                onShowOverlay: overlayAnimator.showOverlay()
+                onShowOverlay: {
+                    searchField.resetUrl(webView.url)
+                    overlayAnimator.showOverlay()
+                }
                 onShowTabs: {
                     overlayAnimator.showChrome()
                     // Push the tab index and active page that were current at this moment.
@@ -204,7 +220,7 @@ PanelBackground {
                                    })
                 }
                 onShowSecondaryTools: overlayAnimator.showSecondaryTools()
-                onHideSecondaryTools: overlayAnimator.showChrome()
+                onShowChrome: overlayAnimator.showChrome()
 
                 onCloseActiveTab: {
                     console.log("Close active page")
@@ -215,11 +231,11 @@ PanelBackground {
                     }
                 }
 
-                onEnterNewTabUrl: {
-                    console.log("Enter url for new tab")
-                    overlay.enterNewTabUrl()
+                onEnterNewTabUrl: overlay.enterNewTabUrl()
+                onFindInPage: {
+                    searchField.resetUrl("")
+                    overlayAnimator.showOverlay()
                 }
-                onSearchFromActivePage: console.log("Search from active page")
                 onShareActivePage: {
                     console.log("Share active page")
 
@@ -250,10 +266,21 @@ PanelBackground {
                 textLeftMargin: Theme.paddingLarge
                 textRightMargin: Theme.paddingLarge
 
-                //: Placeholder text for url typing and searching
-                //% "Type URL or search"
-                placeholderText: qsTrId("sailfish_browser-ph-type_url_or_search")
-                EnterKey.onClicked: overlay.loadPage(text)
+                placeholderText: toolBar.findInPageActive ?
+                                     //: Placeholder text for finding text from the web page
+                                     //% "Find from page"
+                                     qsTrId("sailfish_browser-ph-type_find_from_page") :
+                                     //: Placeholder text for url typing and searching
+                                     //% "Type URL or search"
+                                     qsTrId("sailfish_browser-ph-type_url_or_search")
+                EnterKey.onClicked: {
+                    if (toolBar.findInPageActive) {
+                        webView.sendAsyncMessage("embedui:find", { text: text, backwards: false, again: false })
+                        overlayAnimator.showChrome()
+                    } else {
+                        overlay.loadPage(text)
+                    }
+                }
 
                 background: null
                 opacity: toolBar.opacity * -1.0
@@ -279,6 +306,16 @@ PanelBackground {
                 }
             }
 
+            // Below the HistoryList and FavoriteGrid to let dragging to work
+            // when finding from the page
+            MouseArea {
+                anchors {
+                    fill: historyList
+                    topMargin: searchField.height
+                }
+                enabled: toolBar.findInPageActive
+            }
+
             Browser.HistoryList {
                 id: historyList
 
@@ -292,7 +329,7 @@ PanelBackground {
 
                 search: searchField.text
                 opacity: historyContainer.showFavorites ? 0.0 : 1.0
-                visible: !overlayAnimator.atBottom && opacity > 0.0
+                visible: !overlayAnimator.atBottom && !toolBar.findInPageActive && opacity > 0.0
 
                 onMovingChanged: if (moving) historyList.focus = true
                 onSearchChanged: if (search !== webView.url) historyModel.search(search)
@@ -307,7 +344,7 @@ PanelBackground {
                 height: historyList.height
                 anchors.horizontalCenter: parent.horizontalCenter
                 opacity: historyContainer.showFavorites ? 1.0 : 0.0
-                visible: !overlayAnimator.atBottom && opacity > 0.0
+                visible: !overlayAnimator.atBottom && !toolBar.findInPageActive && opacity > 0.0
                 columns: browserPage.isPortrait ? 4 : 7
 
                 header: Item {
