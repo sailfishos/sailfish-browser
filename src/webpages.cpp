@@ -204,10 +204,7 @@ void WebPages::updateActivePage(WebPageEntry *webPageEntry, bool resurrect)
 
         // Allow suspending only the current active page if it is not the creator (parent).
         if (webPageEntry->webPage->parentId() != (int)activeWebPage->uniqueID()) {
-             if (activeWebPage->loading()) {
-                 activeWebPage->stop();
-             }
-             activeWebPage->suspendView();
+            activeWebPage->requestSuspending();
         }
     }
 

@@ -59,7 +59,7 @@ Item {
 
     function suspendView() {
         if (webView) {
-            webView.suspendView()
+            webView.requestSuspending()
         }
         webViewSuspended()
     }
