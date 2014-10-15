@@ -144,7 +144,6 @@ WebContainer {
             property int iconSize
             property string iconType
 
-            loaded: loadProgress === 100 && !loading
             enabled: container.active
             // Active could pause e.g. video in cover by anding
             // Qt.application.active to visible
