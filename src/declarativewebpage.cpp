@@ -57,7 +57,10 @@ int DeclarativeWebPage::tabId() const
 
 void DeclarativeWebPage::setTabId(int tabId)
 {
-    m_tabId = tabId;
+    if (m_tabId != tabId) {
+        m_tabId = tabId;
+        emit tabIdChanged();
+    }
 }
 
 bool DeclarativeWebPage::domContentLoaded() const
