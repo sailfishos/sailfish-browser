@@ -28,8 +28,25 @@ MouseArea {
 
     onClicked: view.activateTab(index)
 
+    Rectangle {
+        id: placeholder
+        color: Theme.rgba(Theme.highlightBackgroundColor, Theme.highlightBackgroundOpacity)
+        radius: 2/3 * Theme.paddingMedium
+        visible: false
+        anchors {
+            fill: root
+            topMargin: root.topMargin
+            leftMargin: root.leftMargin
+            rightMargin: root.rightMargin
+            bottomMargin: Theme.paddingMedium
+        }
+    }
+
     Image {
         id: image
+
+        readonly property bool active: source != ""
+
         source: !activeTab ? thumbnailPath : ""
         cache: false
         visible: false
@@ -43,38 +60,23 @@ MouseArea {
         id: textureSource
         anchors.fill: mask
         visible: false
-        anchors {
-            top: parent.top
-            left: parent.left
-            right: parent.right
-            topMargin: root.topMargin
-            leftMargin: root.leftMargin
-            rightMargin: root.rightMargin
-        }
-        height: mask.height
-        sourceItem: activeTab ? activeWebPage : image
+        live: activeTab
+        sourceItem: activeTab ? activeWebPage : (image.active ? image : placeholder)
         sourceRect: Qt.rect(0, 0, mask.width, mask.height)
     }
 
     ShaderEffectSource {
         id: mask
-        anchors {
-            fill: root
-            topMargin: root.topMargin
-            leftMargin: root.leftMargin
-            rightMargin: root.rightMargin
-            bottomMargin: Theme.paddingMedium
-        }
-
+        anchors.fill: placeholder
         hideSource: true
         visible: false
         sourceItem: Rectangle {
+            x: placeholder.x
+            y: placeholder.y
+            width: placeholder.width
+            height: placeholder.height
+            radius: placeholder.radius
             color: "white"
-            radius: 2/3 * Theme.paddingMedium
-            x: mask.x
-            y: mask.y
-            width: mask.width
-            height: mask.height
         }
     }
 
