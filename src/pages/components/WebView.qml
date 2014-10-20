@@ -268,6 +268,10 @@ WebContainer {
                 if (loaded && webView.background) {
                     suspendView();
                 }
+
+                if (loaded) {
+                    grabToFile()
+                }
             }
 
             onLoadingChanged: {

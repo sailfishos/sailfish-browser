@@ -29,8 +29,6 @@ DeclarativeTabModel::DeclarativeTabModel(QObject *parent)
             this, SLOT(tabChanged(Tab)));
     connect(DBManager::instance(), SIGNAL(titleChanged(int,int,QString,QString)),
             this, SLOT(updateTitle(int,int,QString,QString)));
-    connect(DBManager::instance(), SIGNAL(thumbPathChanged(int,QString)),
-            this, SLOT(updateThumbnailPath(int,QString)));
 }
 
 DeclarativeTabModel::~DeclarativeTabModel()
