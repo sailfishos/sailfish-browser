@@ -161,7 +161,7 @@ WebContainer {
             // Page loading should finish even if it would be at background.
             // Slow network (2G). Maybe we need something like
             // suspend() { if (loaded) { suspendView() } } for suspend calls.
-            active: visible // || !loaded
+            active: visible || container.tabId == tabId
 
             // There needs to be enough content for enabling chrome gesture
             chromeGestureThreshold: toolbarHeight / 2
