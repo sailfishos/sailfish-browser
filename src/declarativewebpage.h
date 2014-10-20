@@ -17,6 +17,7 @@
 #include <QQuickItemGrabResult>
 #include <QPointer>
 #include <quickmozview.h>
+#include <QRgb>
 
 class DeclarativeWebContainer;
 
@@ -100,6 +101,8 @@ private slots:
 
 private:
     QString saveToFile(QImage image, QRect cropBounds);
+    bool isBlack(QRgb rgb) const;
+    bool allBlack(const QImage &image) const;
 
     QPointer<DeclarativeWebContainer> m_container;
     int m_tabId;

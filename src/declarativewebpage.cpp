@@ -235,7 +235,27 @@ QString DeclarativeWebPage::saveToFile(QImage image, QRect cropBounds)
     // 75% quality jpg produces small and good enough capture.
     QString path = QString("%1/tab-%2-thumb.jpg").arg(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)).arg(m_tabId);
     image = image.copy(cropBounds);
-    return image.save(path, "jpg", 75) ? path : "";
+    return !allBlack(image) && image.save(path, "jpg", 75) ? path : "";
+}
+
+bool DeclarativeWebPage::isBlack(QRgb rgb) const
+{
+    return qRed(rgb) == 0 && qGreen(rgb) == 0 && qBlue(rgb) == 0;
+}
+
+bool DeclarativeWebPage::allBlack(const QImage &image) const
+{
+    int h = image.height();
+    int w = image.width();
+
+    for (int j = 0; j < h; ++j) {
+        const QRgb *b = (const QRgb *)image.constScanLine(j);
+        for (int i = 0; i < w; ++i) {
+            if (!isBlack(b[i]))
+                return false;
+        }
+    }
+    return true;
 }
 
 void DeclarativeWebPage::onRecvAsyncMessage(const QString& message, const QVariant& data)
