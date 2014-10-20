@@ -46,17 +46,14 @@ BackgroundItem {
             source: !activeTab ? thumbnailPath : ""
             cache: false
             visible: false
-            anchors.fill: mask
-            fillMode: Image.PreserveAspectCrop
             asynchronous: true
             smooth: true
         },
 
         ShaderEffectSource {
             id: textureSource
-            anchors.fill: mask
+            anchors.fill: parent
             visible: false
-            live: activeTab
             sourceItem: activeTab ? activeWebPage : (image.active ? image : contentItem)
             sourceRect: Qt.rect(0, 0, mask.width, mask.height)
         },
