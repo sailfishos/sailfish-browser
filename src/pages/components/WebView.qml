@@ -148,7 +148,7 @@ WebContainer {
             enabled: container.active
             // Active could pause e.g. video in cover by anding
             // Qt.application.active to visible
-            active: visible
+            active: visible || container.tabId == tabId
 
             // There needs to be enough content for enabling chrome gesture
             chromeGestureThreshold: container.toolbarHeight / 2
