@@ -60,7 +60,6 @@ BackgroundItem {
             asynchronous: true
             smooth: true
         },
-
         ShaderEffectSource {
             id: textureSource
             width: root.implicitWidth
@@ -70,7 +69,6 @@ BackgroundItem {
             sourceItem: activeTab ? activeWebPage : (image.active ? image : contentItem)
             sourceRect: Qt.rect(0, 0, mask.width, mask.height)
         },
-
         ShaderEffectSource {
             id: mask
             anchors.fill: contentItem
@@ -86,7 +84,6 @@ BackgroundItem {
                 color: "white"
             }
         },
-
         ShaderEffect {
             id: roundingItem
             property variant source: textureSource
@@ -104,43 +101,14 @@ BackgroundItem {
                     gl_FragColor = texture2D(source, qt_TexCoord0.st) * (texture2D(maskSource, qt_TexCoord0.st).a) * qt_Opacity;
                 }"
         },
-
         OpacityRampEffect {
             slope: 2.6
             offset: 0.6
-            //        slope: slope.value
-            //        offset: offset.value
 
             sourceItem: roundingItem
             anchors.fill: mask
             direction: OpacityRamp.TopToBottom
         },
-
-        // Debug slider for opacity ramp
-        //    Column {
-        //        anchors.top: parent.top
-        //        anchors.topMargin: 20
-        //        width: parent.width
-        //        spacing: 20
-        //        Slider {
-        //            id: slope
-        //            width: parent.width
-        //            value: 2.6
-        //            stepSize: 0.02
-        //            minimumValue: 0.5
-        //            maximumValue: 10.0
-        //            valueText: value
-        //        }
-
-        //        Slider {
-        //            id: offset
-        //            width: parent.width
-        //            value: 0.6
-        //            stepSize: 0.01
-        //            valueText: value
-        //        }
-        //    }
-
         IconButton {
             id: close
 
@@ -166,13 +134,11 @@ BackgroundItem {
                 removeTimer.running = true
             }
         },
-
         Timer {
             id: removeTimer
             interval: 16
             onTriggered: view.closeTab(index)
         },
-
         Label {
             anchors {
                 left: close.right
