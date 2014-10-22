@@ -108,10 +108,11 @@ PanelBackground {
 
         onAtBottomChanged: {
             if (atBottom) {
-                if (searchField.enteringNewTabUrl && enteredPage) {
+                searchField.enteringNewTabUrl = false
+
+                if (enteredPage) {
                     console.log("Load enter url at bottom:", enteredPage.url, enteredPage.title)
                     webView.tabModel.newTab(enteredPage.url, enteredPage.title)
-                    searchField.enteringNewTabUrl = false
                     enteredPage = null
                 } else if (!toolBar.findInPageActive) {
                     searchField.resetUrl(webView.url)
