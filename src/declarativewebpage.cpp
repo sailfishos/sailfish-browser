@@ -195,8 +195,10 @@ void DeclarativeWebPage::grabResultReady()
 {
     QImage image = m_grabResult->image();
     m_grabResult.clear();
-    int size = qMin(width(), height());
-    QRect cropBounds(0, 0, size, size/2);
+    int w = qMin(width(), height());
+    int h = qMax(width(), height());
+    h = qMax(h / 3, w / 2);
+    QRect cropBounds(0, 0, w, h);
 
     m_grabWritter.setFuture(QtConcurrent::run(this, &DeclarativeWebPage::saveToFile, image, cropBounds));
 }
