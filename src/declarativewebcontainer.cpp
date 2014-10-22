@@ -30,6 +30,10 @@
 #include <qmozcontext.h>
 #include <QGuiApplication>
 
+#ifndef DEBUG_LOGS
+#define DEBUG_LOGS 0
+#endif
+
 DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     : QQuickItem(parent)
     , m_webPage(0)
@@ -497,7 +501,7 @@ void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int activeTabId, 
         return;
     }
     const Tab &tab = m_model->activeTab();
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
     qDebug() << "canGoBack = " << m_canGoBack << "canGoForward = " << m_canGoForward << &tab;
 #endif
 
@@ -559,7 +563,7 @@ void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int activeTabId, 
 void DeclarativeWebContainer::screenCaptureReady()
 {
     ScreenCapture capture = m_screenCapturer.result();
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
     qDebug() << capture.tabId << capture.path << isActiveTab(capture.tabId);
 #endif
     if (capture.tabId != -1) {
@@ -684,7 +688,7 @@ void DeclarativeWebContainer::captureScreen(int size, qreal rotate)
     QImage image = window()->grabWindow();
     QRect cropBounds(0, 0, size, size);
 
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
     qDebug() << "about to set future";
 #endif
     // asynchronous save to avoid the slow I/O
