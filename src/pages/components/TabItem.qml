@@ -135,6 +135,7 @@ BackgroundItem {
                 bottom: parent.bottom
                 bottomMargin: -Theme.paddingMedium
             }
+            highlighted: down || activeTab
             icon.source: "image://theme/icon-m-tab-close"
             onClicked: {
                 activeTabIndex = -1
@@ -152,7 +153,7 @@ BackgroundItem {
 
             text: title
             truncationMode: TruncationMode.Fade
-            color: down ? Theme.highlightColor : Theme.primaryColor
+            color: down || activeTab ? Theme.highlightColor : Theme.primaryColor
         }
     ]
 }
