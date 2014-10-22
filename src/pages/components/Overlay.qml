@@ -146,7 +146,7 @@ PanelBackground {
         id: progressBar
         width: parent.width
         height: toolBar.toolsHeight
-        visible: !firstUseOverlay
+        visible: !firstUseOverlay && !searchField.enteringNewTabUrl
         opacity: webView.loading ? 1.0 : 0.0
         progress: webView.loadProgress / 100.0
     }
