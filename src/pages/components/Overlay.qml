@@ -199,7 +199,7 @@ PanelBackground {
             Browser.ToolBar {
                 id: toolBar
 
-                url: webView.contentItem && webView.contentItem.url
+                url: webView.contentItem && webView.contentItem.url || ""
                 findText: searchField.text
                 bookmarked: bookmarkModel.count && bookmarkModel.contains(webView.url)
                 opacity: (overlay.y - webView.fullscreenHeight/2)  / (webView.fullscreenHeight/2 - toolBar.height)
