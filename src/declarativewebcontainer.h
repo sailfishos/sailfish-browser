@@ -111,6 +111,7 @@ public:
     Q_INVOKABLE void goBack();
     Q_INVOKABLE bool activatePage(int tabId, bool force = false);
     Q_INVOKABLE void loadNewTab(QString url, QString title, int parentId);
+    Q_INVOKABLE bool alive(int tabId);
 
     Q_INVOKABLE void dumpPages() const;
 

@@ -104,6 +104,9 @@ BackgroundItem {
         OpacityRampEffect {
             slope: 2.6
             offset: 0.6
+            // This information should be role of the TabModel
+            // WebView can still have alive method for checking alive pages/tabs.
+            opacity: webView.alive(tabId) ? 1.0 : 0.6
 
             sourceItem: roundingItem
             anchors.fill: mask

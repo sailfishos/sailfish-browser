@@ -46,6 +46,8 @@ public:
     bool setMaxLivePages(int count);
     int maxLivePages() const;
 
+    bool alive(int tabId) const;
+
     WebPageActivationData page(int tabId, int parentId = 0);
     void release(int tabId, bool virtualize = false);
     void clear();

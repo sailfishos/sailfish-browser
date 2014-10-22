@@ -61,6 +61,11 @@ int WebPages::maxLivePages() const
     return m_activePages.maxLivePages();
 }
 
+bool WebPages::alive(int tabId) const
+{
+    return m_activePages.alive(tabId);
+}
+
 WebPageActivationData WebPages::page(int tabId, int parentId)
 {
     if (!m_webPageComponent) {

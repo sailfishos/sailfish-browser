@@ -349,6 +349,11 @@ void DeclarativeWebContainer::loadNewTab(QString url, QString title, int parentI
     emit triggerLoad(url, title);
 }
 
+bool DeclarativeWebContainer::alive(int tabId)
+{
+    return m_webPages->alive(tabId);
+}
+
 void DeclarativeWebContainer::dumpPages() const
 {
     m_webPages->dumpPages();
