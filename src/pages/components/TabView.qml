@@ -11,6 +11,7 @@
 
 import QtQuick 2.1
 import Sailfish.Silica 1.0
+import "." as Browser
 
 SilicaGridView {
     id: tabView
@@ -25,14 +26,16 @@ SilicaGridView {
 
     cellWidth: portrait ? parent.width : parent.width / 3
     cellHeight: portrait ? Screen.width / 2 : cellWidth
+
     width: parent.width
     height: parent.height
     clip: true
     currentIndex: -1
-    displaced: Transition { NumberAnimation { properties: "x,y"; easing.type: Easing.InOutQuad; duration: 200 } }
-
-    Behavior on cellWidth { NumberAnimation { easing.type: Easing.InOutQuad; duration: 200 } }
-    Behavior on cellHeight { NumberAnimation { easing.type: Easing.InOutQuad; duration: 200 } }
+    header: spacer
+    footer: spacer
+    // If approved to Silica, remove these transitions from browser.
+    displaced: Browser.DisplaceTransition {}
+    remove: Browser.RemoveTransition {}
 
     delegate: TabItem {
         id: tabItem
@@ -40,12 +43,21 @@ SilicaGridView {
         width: tabView.cellWidth
         height: tabView.cellHeight
 
-        topMargin: (portrait ? index === 0 : index < 3) ? Theme.paddingLarge : Theme.paddingMedium
+        topMargin: Theme.paddingMedium
         leftMargin: (portrait || index % 3 === 0) ? Theme.paddingLarge : Theme.paddingMedium
         rightMargin: (portrait || index % 3 === 2) ? Theme.paddingLarge : Theme.paddingMedium
+        bottomMargin: Theme.paddingMedium
 
-        ListView.onAdd: AddAnimation {}
-        ListView.onRemove: RemoveAnimation { target: tabItem }
+        Behavior on width {
+            enabled: !tabItem.destroying
+            NumberAnimation { easing.type: Easing.InOutQuad; duration: 150 }
+        }
+        Behavior on height {
+            enabled: !tabItem.destroying
+            NumberAnimation { easing.type: Easing.InOutQuad; duration: 150 }
+        }
+
+        GridView.onAdd: AddAnimation {}
     }
 
     // Behind tab delegates
@@ -73,5 +85,13 @@ SilicaGridView {
 
     VerticalScrollDecorator {
         flickable: tabView
+    }
+
+    Component {
+        id: spacer
+        Item {
+            width: tabView.width
+            height: Theme.paddingMedium
+        }
     }
 }

@@ -15,28 +15,39 @@ import Sailfish.Silica 1.0
 BackgroundItem {
     id: root
 
-    readonly property bool activeTab: activeTabIndex === index
+    property bool activeTab: activeTabIndex === index
     // Expose ListView for all items
     property Item view: GridView.view
     property real topMargin
     property real leftMargin
     property real rightMargin
+    property real bottomMargin
+    property bool destroying
 
+    // In direction so that we can break this binding when closing a tab
+    implicitWidth: width
+    implicitHeight: height
+
+    enabled: !destroying
+
+    clip: true
     layer.effect: PressEffect {}
     layer.enabled: _showPress
+
+    // Rounded background item that is also a placeholder for a tab not having
+    // thumbnail image.
     contentItem.visible: false
     contentItem.color: Theme.rgba(Theme.highlightBackgroundColor, Theme.highlightBackgroundOpacity)
     contentItem.radius: 2/3 * Theme.paddingMedium
-    contentItem.anchors {
-        fill: root
-        topMargin: root.topMargin
-        leftMargin: root.leftMargin
-        rightMargin: root.rightMargin
-        bottomMargin: Theme.paddingMedium
-    }
+    contentItem.x: root.leftMargin
+    contentItem.y: root.topMargin
+    contentItem.width: root.implicitWidth - root.leftMargin - root.rightMargin
+    contentItem.height: root.implicitHeight - root.topMargin - root.bottomMargin
 
     onClicked: view.activateTab(index)
 
+    // contentItem is hidden so this cannot be children of the contentItem.
+    // So, making them as siblings of the contentItem.
     data: [
         Image {
             id: image
@@ -52,7 +63,9 @@ BackgroundItem {
 
         ShaderEffectSource {
             id: textureSource
-            anchors.fill: parent
+            width: root.implicitWidth
+            height: root.implicitHeight
+            live: !destroying
             visible: false
             sourceItem: activeTab ? activeWebPage : (image.active ? image : contentItem)
             sourceRect: Qt.rect(0, 0, mask.width, mask.height)
@@ -61,6 +74,7 @@ BackgroundItem {
         ShaderEffectSource {
             id: mask
             anchors.fill: contentItem
+            live: textureSource.live
             hideSource: true
             visible: false
             sourceItem: Rectangle {
@@ -133,14 +147,30 @@ BackgroundItem {
             anchors {
                 left: mask.left
                 bottom: parent.bottom
-                bottomMargin: -Theme.paddingMedium
+                bottomMargin: -root.bottomMargin
             }
             highlighted: down || activeTab
             icon.source: "image://theme/icon-m-tab-close"
             onClicked: {
+                // Break binding, so that texture size would not change when
+                // closing tab (animating height).
+                root.implicitHeight = root.height
+                root.implicitWidth = root.width
+
+                destroying = true
+                // Break binding to prevent texture source to change.
+                if (activeTab) {
+                    activeTab = true
+                }
                 activeTabIndex = -1
-                view.closeTab(index)
+                removeTimer.running = true
             }
+        },
+
+        Timer {
+            id: removeTimer
+            interval: 16
+            onTriggered: view.closeTab(index)
         },
 
         Label {
