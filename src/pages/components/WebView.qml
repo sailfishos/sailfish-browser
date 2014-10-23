@@ -100,7 +100,6 @@ WebContainer {
     fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) || webView.inputPanelVisible || !webView.foreground || (contentItem && contentItem.fullscreen) || firstUseFullscreen
     _readyToLoad: contentItem && contentItem.viewReady && tabModel.loaded
 
-    loading: contentItem ? contentItem.loading : tabModel.count > 0
     favicon: contentItem ? contentItem.favicon : ""
 
     webPageComponent: webPageComponent

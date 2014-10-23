@@ -47,7 +47,7 @@ class DeclarativeWebContainer : public QQuickItem {
 
     Q_PROPERTY(QString favicon MEMBER m_favicon NOTIFY faviconChanged)
 
-    Q_PROPERTY(bool loading MEMBER m_loading NOTIFY loadingChanged FINAL)
+    Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged FINAL)
     Q_PROPERTY(int loadProgress READ loadProgress WRITE setLoadProgress NOTIFY loadProgressChanged FINAL)
 
     // Navigation related properties
@@ -81,6 +81,8 @@ public:
     void setForeground(bool active);
 
     bool background() const;
+
+    bool loading() const;
 
     int loadProgress() const;
     void setLoadProgress(int loadProgress);
