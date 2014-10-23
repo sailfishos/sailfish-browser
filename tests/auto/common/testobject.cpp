@@ -34,14 +34,14 @@ TestObject::TestObject(QByteArray qmlData)
     qsrand((uint)time.msec());
 
     setTestData(qmlData);
-    mView.show();
+    mView.showFullScreen();
     QTest::qWaitForWindowExposed(&mView);
 }
 
 void TestObject::init(const QUrl &url)
 {
     setTestUrl(url);
-    mView.show();
+    mView.showFullScreen();
     QTest::qWaitForWindowExposed(&mView);
 }
 
