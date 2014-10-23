@@ -143,12 +143,13 @@ WebContainer {
 
             property int iconSize
             property string iconType
+            readonly property bool activeWebPage: container.tabId == tabId
 
             loaded: loadProgress === 100 && !loading
             enabled: container.active
             // Active could pause e.g. video in cover by anding
             // Qt.application.active to visible
-            active: visible || container.tabId == tabId
+            active: visible || activeWebPage
 
             // There needs to be enough content for enabling chrome gesture
             chromeGestureThreshold: container.toolbarHeight / 2
@@ -164,7 +165,7 @@ WebContainer {
 
             onLoadProgressChanged: {
                 // Ignore first load progress if it is directly 50%
-                if (container.loadProgress === 0 && loadProgress === 50) {
+                if (!activeWebPage || container.loadProgress === 0 && loadProgress === 50) {
                     return
                 }
 
@@ -254,12 +255,14 @@ WebContainer {
             onLoadingChanged: {
                 if (loading) {
                     userHasDraggedWhileLoading = false
-                    container.loadProgress = 0
                     webPage.chrome = true
                     favicon = ""
                     iconType = ""
                     iconSize = 0
-                    container.resetHeight(false)
+                    if (activeWebPage) {
+                        container.loadProgress = 0
+                        container.resetHeight(false)
+                    }
                 }
             }
 
