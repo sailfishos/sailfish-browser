@@ -51,12 +51,12 @@ void TestObject::init(const QUrl &url)
     Note: this might cause indefinite loop, if not used cautiously. Check
     that \a spy is initialized before expected emits can happen.
 */
-void TestObject::waitSignals(QSignalSpy &spy, int expectedSignalCount) const
+void TestObject::waitSignals(QSignalSpy &spy, int expectedSignalCount, int timeout) const
 {
     int i = 0;
     int maxWaits = 10;
     while (spy.count() < expectedSignalCount && i < maxWaits) {
-        spy.wait();
+        spy.wait(timeout);
         ++i;
     }
 }
