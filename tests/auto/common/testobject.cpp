@@ -48,7 +48,7 @@ void TestObject::init(const QUrl &url)
 void TestObject::waitSignals(QSignalSpy &spy, int expectedSignalCount) const
 {
     int i = 0;
-    int maxWaits = 10;
+    int maxWaits = qMax(10, expectedSignalCount);
     while (spy.count() < expectedSignalCount && i < maxWaits) {
         spy.wait();
         ++i;

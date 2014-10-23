@@ -240,6 +240,34 @@ void WebPages::dumpPages() const
     qDebug() << "---- end ------";
 }
 
+QList<int> WebPages::liveTabs()
+{
+    QList<WebPageEntry *> pages = m_activePages.values();
+    QList<int> tabIds;
+    int count = pages.count();
+    for (int i = 0; i < count; ++i) {
+        WebPageEntry *pageEntry = pages.at(i);
+        if (pageEntry->webPage) {
+            tabIds << pageEntry->webPage->tabId();
+        }
+    }
+    return tabIds;
+}
+
+QList<int> WebPages::zombifiedTabs()
+{
+    QMapIterator<int, WebPageEntry*> pages(m_activePages);
+    QList<int> tabIds;
+
+    while (pages.hasNext()) {
+        pages.next();
+        if (!pages.value()->webPage) {
+            tabIds << pages.key();
+        }
+    }
+    return tabIds;
+}
+
 WebPages::WebPageEntry::WebPageEntry(DeclarativeWebPage *webPage, QRectF *cssContentRect)
     : webPage(webPage)
     , cssContentRect(cssContentRect)
