@@ -17,16 +17,22 @@
 #include <QQuickView>
 #include <QQuickItem>
 #include <QSignalSpy>
+#include <QTime>
 #include <QtTest>
 
 TestObject::TestObject()
     : QObject()
 {
+    QTime time = QTime::currentTime();
+    qsrand((uint)time.msec());
 }
 
 TestObject::TestObject(QByteArray qmlData)
     : QObject()
 {
+    QTime time = QTime::currentTime();
+    qsrand((uint)time.msec());
+
     setTestData(qmlData);
     mView.show();
     QTest::qWaitForWindowExposed(&mView);
@@ -72,4 +78,9 @@ void TestObject::setTestUrl(const QUrl &url)
 void TestObject::setContextProperty(const QString &name, QObject *value)
 {
     mView.rootContext()->setContextProperty(name, value);
+}
+
+int TestObject::random(int min, int max)
+{
+    return qrand() % ((max + 1) - min) + min;
 }
