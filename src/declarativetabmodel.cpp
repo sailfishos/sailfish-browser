@@ -18,6 +18,10 @@
 #include <QStringList>
 #include <QUrl>
 
+#ifndef DEBUG_LOGS
+#define DEBUG_LOGS 0
+#endif
+
 static QList<int> s_tabOrder;
 
 DeclarativeTabModel::DeclarativeTabModel(QObject *parent)
@@ -52,7 +56,7 @@ void DeclarativeTabModel::addTab(const QString& url, const QString &title) {
     int linkId = DBManager::instance()->createLink(tabId, url, title);
 
     Tab tab(tabId, Link(linkId, url, "", title), 0, 0);
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
     qDebug() << "new tab data:" << &tab;
 #endif
     if (m_activeTab.isValid()) {
@@ -130,7 +134,7 @@ bool DeclarativeTabModel::activateTab(int index, bool loadActiveTab)
 {
     if (index >= 0 && index < m_tabs.count()) {
         Tab newActiveTab = m_tabs.at(index);
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
         qDebug() << "activate tab: " << index << &newActiveTab;
 #endif
         beginRemoveRows(QModelIndex(), index, index);
@@ -139,7 +143,7 @@ bool DeclarativeTabModel::activateTab(int index, bool loadActiveTab)
 
         // Current active tab back to model data.
         if (m_activeTab.isValid()) {
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
             qDebug() << "insert to first index: " << &m_activeTab;
 #endif
             beginInsertRows(QModelIndex(), 0, 0);
@@ -165,7 +169,7 @@ bool DeclarativeTabModel::activateTabById(int tabId)
 void DeclarativeTabModel::closeActiveTab()
 {
     if (m_activeTab.isValid()) {
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
         qDebug() << &m_activeTab;
 #endif
         // Clear active tab data and try to active a tab from the first model index.
@@ -340,7 +344,7 @@ void DeclarativeTabModel::tabsAvailable(QList<Tab> tabs)
 
 void DeclarativeTabModel::tabChanged(const Tab &tab)
 {
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
     qDebug() << &m_activeTab;
     qDebug() << "new tab data:" << &tab;
 #endif
@@ -429,7 +433,7 @@ void DeclarativeTabModel::updateTitle(int tabId, bool activeTab, QString title)
 
 void DeclarativeTabModel::removeTab(int tabId, const QString &thumbnail, int index)
 {
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
     qDebug() << "index:" << index << tabId;
 #endif
     DBManager::instance()->removeTab(tabId);
@@ -466,7 +470,7 @@ void DeclarativeTabModel::saveTabOrder()
     for (int i = 0; i < m_tabs.count(); ++i) {
         const Tab &tab = m_tabs.at(i);
         tabOrder.append(QString("%1,").arg(tab.tabId()));
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
         qDebug() << "append:" << &tab;
 #endif
     }
@@ -488,7 +492,7 @@ void DeclarativeTabModel::loadTabOrder()
 }
 void DeclarativeTabModel::updateActiveTab(const Tab &activeTab, bool loadActiveTab)
 {
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
     qDebug() << "old active tab: " << &m_activeTab << m_tabs.count();
     qDebug() << "new active tab: " << &activeTab;
 #endif
@@ -503,7 +507,7 @@ void DeclarativeTabModel::updateActiveTab(const Tab &activeTab, bool loadActiveT
 void DeclarativeTabModel::updateTabUrl(int tabId, bool activeTab, const QString &url, bool navigate)
 {
     if (!LinkValidator::navigable(QUrl(url))) {
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
         qDebug() << "invalid url: " << url;
 #endif
         return;
@@ -568,7 +572,7 @@ bool DeclarativeTabModel::tabSort(const Tab &t1, const Tab &t2)
 
 void DeclarativeTabModel::updateThumbnailPath(int tabId, bool activeTab, QString path)
 {
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
     qDebug() << &m_activeTab;
 #endif
     if (activeTab) {
@@ -578,7 +582,7 @@ void DeclarativeTabModel::updateThumbnailPath(int tabId, bool activeTab, QString
         roles << ThumbPathRole;
         for (int i = 0; i < m_tabs.count(); i++) {
             if (m_tabs.at(i).tabId() == tabId && m_tabs.at(i).thumbnailPath() != path) {
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
                 qDebug() << "model tab thumbnail updated: " << path << tabId;
 #endif
                 m_tabs[i].setThumbnailPath(path);

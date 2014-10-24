@@ -20,7 +20,11 @@
 #include <QRectF>
 #include <qqmlinfo.h>
 
-#ifdef DEBUG_LOGS
+#ifndef DEBUG_LOGS
+#define DEBUG_LOGS 0
+#endif
+
+#if DEBUG_LOGS
 #include <QDebug>
 #endif
 
@@ -72,7 +76,7 @@ WebPageActivationData WebPages::page(int tabId, int parentId)
         return WebPageActivationData(m_activePage->webPage, false);
     }
 
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
     qDebug() << "about to create a new tab or activate old:" << tabId;
 #endif
 
@@ -98,7 +102,7 @@ WebPageActivationData WebPages::page(int tabId, int parentId)
                 }
 
                 m_webPageComponent->completeCreate();
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
                 qDebug() << "New view id:" << webPage->uniqueID() << "parentId:" << webPage->parentId() << "tab id:" << webPage->tabId();
 #endif
                 m_activePages.insert(tabId, pageEntry);
@@ -115,7 +119,7 @@ WebPageActivationData WebPages::page(int tabId, int parentId)
     }
 
     updateActivePage(pageEntry, resurrect);
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
     dumpPages();
 #endif
 
@@ -125,7 +129,7 @@ WebPageActivationData WebPages::page(int tabId, int parentId)
 void WebPages::release(int tabId, bool virtualize)
 {
     WebPageEntry *pageEntry = m_activePages.value(tabId, 0);
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
     qDebug() << "--- beginning: " << tabId << virtualize << pageEntry << (pageEntry ? pageEntry->webPage : 0);
     dumpPages();
 #endif
@@ -158,7 +162,7 @@ void WebPages::release(int tabId, bool virtualize)
         }
     }
 
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
     qDebug() << "--- end ---";
     dumpPages();
 #endif
