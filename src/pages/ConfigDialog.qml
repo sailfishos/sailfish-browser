@@ -83,9 +83,9 @@ Dialog {
 
             SearchField {
                 width: prefsList.width
-                //: Placeholder text for config filtering.
-                //% "Filter"
-                placeholderText: qsTrId("sailfish_browser-ph-config-filter")
+                //: Placeholder text for search (used in about:config page).
+                //% "Search"
+                placeholderText: qsTrId("sailfish_browser-ph-search")
                 inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase
 
                 EnterKey.onClicked: filterModel(text)
