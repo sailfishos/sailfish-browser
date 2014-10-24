@@ -37,10 +37,11 @@ public:
     explicit TestObject(QByteArray qmlData);
 
     void init(const QUrl &url);
-    void waitSignals(QSignalSpy &spy, int expectedSignalCount) const;
+    void waitSignals(QSignalSpy &spy, int expectedSignalCount, int timeout = 5000) const;
     void setTestData(QByteArray qmlData);
     void setTestUrl(const QUrl &url);
     void setContextProperty(const QString &name, QObject *value);
+    int random(int min, int max);
 
     template <typename T> T *qmlObject(const char *propertyName) {
         QVariant var = mRootObject->property(propertyName);
