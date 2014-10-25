@@ -169,6 +169,11 @@ bool DeclarativeWebContainer::background() const
     return m_webPage ? m_webPage->background() : false;
 }
 
+bool DeclarativeWebContainer::loading() const
+{
+    return m_webPage ? m_webPage->loading() : m_model->count();
+}
+
 int DeclarativeWebContainer::loadProgress() const
 {
     return m_loadProgress;
@@ -384,6 +389,7 @@ bool DeclarativeWebContainer::activatePage(int tabId, bool force)
         connect(m_webPage, SIGNAL(scrollableOffsetChanged()), this, SLOT(resetHeight()), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(windowCloseRequested()), this, SLOT(closeWindow()), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(urlChanged()), this, SLOT(onPageUrlChanged()), Qt::UniqueConnection);
+        connect(m_webPage, SIGNAL(loadingChanged()), this, SIGNAL(loadingChanged()), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(titleChanged()), this, SLOT(onPageTitleChanged()), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(domContentLoadedChanged()), this, SLOT(sendVkbOpenCompositionMetrics()), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(backgroundChanged()), this, SIGNAL(backgroundChanged()), Qt::UniqueConnection);
