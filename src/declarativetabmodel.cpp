@@ -18,6 +18,10 @@
 #include <QStringList>
 #include <QUrl>
 
+#ifndef DEBUG_LOGS
+#define DEBUG_LOGS 0
+#endif
+
 DeclarativeTabModel::DeclarativeTabModel(QObject *parent)
     : QAbstractListModel(parent)
     , m_loaded(false)
@@ -54,14 +58,14 @@ void DeclarativeTabModel::addTab(const QString& url, const QString &title) {
     int linkId = DBManager::instance()->createLink(tabId, url, title);
 
     Tab tab(tabId, Link(linkId, url, "", title), 0, 0);
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
     qDebug() << "new tab data:" << &tab;
 #endif
     int index = m_tabs.count();
     beginInsertRows(QModelIndex(), index, index);
     m_tabs.append(tab);
     endInsertRows();
-    // We should trigger this when adding tab only when
+    // We should trigger this only when
     // tab is added through new window request. In all other
     // case we should keep the new tab in background.
     updateActiveTab(tab, true);
@@ -133,7 +137,7 @@ bool DeclarativeTabModel::activateTab(int index, bool loadActiveTab)
 {
     if (index >= 0 && index < m_tabs.count()) {
         const Tab &newActiveTab = m_tabs.at(index);
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
         qDebug() << "activate tab: " << index << &newActiveTab;
 #endif
         updateActiveTab(newActiveTab, loadActiveTab);
@@ -320,7 +324,7 @@ void DeclarativeTabModel::tabsAvailable(QList<Tab> tabs)
 
 void DeclarativeTabModel::tabChanged(const Tab &tab)
 {
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
     qDebug() << "new tab data:" << &tab;
 #endif
     if (m_tabs.isEmpty()) {
@@ -403,7 +407,7 @@ void DeclarativeTabModel::updateTitle(int tabId, bool activeTab, QString title)
 
 void DeclarativeTabModel::removeTab(int tabId, const QString &thumbnail, int index)
 {
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
     qDebug() << "index:" << index << tabId;
 #endif
     DBManager::instance()->removeTab(tabId);
@@ -437,7 +441,7 @@ int DeclarativeTabModel::findTabIndex(int tabId) const
 
 void DeclarativeTabModel::updateActiveTab(const Tab &activeTab, bool loadActiveTab)
 {
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
     qDebug() << "new active tab:" << &activeTab << "old active tab:" << &m_activeTab << "count:" << m_tabs.count();
 #endif
     if (m_tabs.isEmpty()) {
@@ -465,7 +469,7 @@ void DeclarativeTabModel::updateActiveTab(const Tab &activeTab, bool loadActiveT
 void DeclarativeTabModel::updateTabUrl(int tabId, bool activeTab, const QString &url, bool navigate)
 {
     if (!LinkValidator::navigable(QUrl(url))) {
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
         qDebug() << "invalid url: " << url;
 #endif
         return;
@@ -529,7 +533,7 @@ void DeclarativeTabModel::updateThumbnailPath(int tabId, QString path)
     roles << ThumbPathRole;
     for (int i = 0; i < m_tabs.count(); i++) {
         if (m_tabs.at(i).tabId() == tabId && m_tabs.at(i).thumbnailPath() != path) {
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
             qDebug() << "model tab thumbnail updated: " << path << i << tabId;
 #endif
             m_tabs[i].setThumbnailPath(path);

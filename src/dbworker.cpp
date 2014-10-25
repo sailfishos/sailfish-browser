@@ -22,6 +22,10 @@
 #include <QFile>
 #include <QDateTime>
 
+#ifndef DEBUG_LOGS
+#define DEBUG_LOGS 0
+#endif
+
 static const char * const create_table_tab =
         "CREATE TABLE tab (tab_id INTEGER PRIMARY KEY,\n"
         "tab_history_id INTEGER\n"
@@ -123,7 +127,7 @@ bool DBWorker::execute(QSqlQuery &query)
 
 void DBWorker::createTab(int tabId)
 {
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
     qDebug() << "new tab id: " << tabId;
 #endif
     QSqlQuery query = prepare("INSERT INTO tab (tab_id, tab_history_id) VALUES (?,?);");
@@ -151,7 +155,7 @@ int DBWorker::createLink(int tabId, QString url, QString title)
         qWarning() << Q_FUNC_INFO << "failed to add url to tab history" << url;
     }
 
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
     qDebug() << "created link:" << linkId << "with history id:" << historyId << "for tab:" << tabId << url;
 #endif
     return linkId;
@@ -159,7 +163,7 @@ int DBWorker::createLink(int tabId, QString url, QString title)
 
 bool DBWorker::updateTab(int tabId, int tabHistoryId)
 {
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
     qDebug() << "tab:" << tabId << "tab history id:" << tabHistoryId;
 #endif
     QSqlQuery query = prepare("UPDATE tab SET tab_history_id = ? WHERE tab_id = ?;");
@@ -186,7 +190,7 @@ Tab DBWorker::getTabData(int tabId, int historyId)
     Link link = getLinkFromTabHistory(hId);
     int nextId = getNextLinkIdFromTabHistory(hId);
     int previousId = getPreviousLinkIdFromTabHistory(hId);
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
     qDebug() << tabId << historyId << "next link id:" << nextId << "previous link id:" << previousId << link.linkId()<< link.title() << link.url();
 #endif
     return Tab(tabId, link, nextId, previousId);
@@ -194,7 +198,7 @@ Tab DBWorker::getTabData(int tabId, int historyId)
 
 void DBWorker::removeTab(int tabId)
 {
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
     qDebug() << "tab id:" << tabId;
 #endif
 
@@ -250,7 +254,7 @@ void DBWorker::getTab(int tabId)
     }
 
     if (query.first()) {
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
         Tab tab = getTabData(query.value(0).toInt(), query.value(1).toInt());
         qDebug() << query.value(0).toInt() << query.value(1).toInt() << tab.title() << tab.url();
 #endif
@@ -325,7 +329,7 @@ void DBWorker::navigateTo(int tabId, QString url, QString title, QString path) {
         qWarning() << Q_FUNC_INFO << "failed to add url to tab history" << url;
     }
 
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
     qDebug() << "emit tab changed:" << tabId << historyId << title << url;
 #endif
     emit tabChanged(getTabData(tabId, historyId));
@@ -338,7 +342,7 @@ void DBWorker::updateTab(int tabId, QString url, QString title, QString path)
         qWarning() << "attempt to update url that is not stored in db." << tabId << title << url << path << currentLink.linkId() << currentLink.url();
         return;
     }
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
     qDebug() << tabId << title << url << path;
 #endif
     updateLink(currentLink.linkId(), url, title, path);
@@ -426,7 +430,7 @@ int DBWorker::getPreviousLinkIdFromTabHistory(int tabHistoryId)
 }
 
 void DBWorker::clearDeprecatedTabHistory(int tabId, int currentLinkId) {
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
     qDebug() << "tab id:" << tabId << "current link id:" << currentLinkId;
 #endif
     QSqlQuery query = prepare("DELETE FROM tab_history WHERE tab_id = ? AND link_id > ?;");
@@ -451,7 +455,7 @@ int DBWorker::getNextLinkIdFromTabHistory(int tabHistoryId)
 // Adds url to table history if it is not already there
 HistoryResult DBWorker::addToHistory(int linkId, QString url)
 {
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
     qDebug() << "link id:" << linkId;
 #endif
 
@@ -509,7 +513,7 @@ int DBWorker::addToTabHistory(int tabId, int linkId)
         return 0;
     }
 
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
     qDebug() << "tab:" << tabId << "link:" << linkId << "tab history id" << query.lastInsertId();
 #endif
     return lastId.toInt();
@@ -558,7 +562,7 @@ int DBWorker::createLink(QString url, QString title, QString thumbPath)
         return 0;
     }
 
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
     qDebug() << title << url << thumbPath << lastId.toInt();
 #endif
     int linkId = lastId.toInt();

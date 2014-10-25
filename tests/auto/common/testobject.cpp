@@ -17,25 +17,31 @@
 #include <QQuickView>
 #include <QQuickItem>
 #include <QSignalSpy>
+#include <QTime>
 #include <QtTest>
 
 TestObject::TestObject()
     : QObject()
 {
+    QTime time = QTime::currentTime();
+    qsrand((uint)time.msec());
 }
 
 TestObject::TestObject(QByteArray qmlData)
     : QObject()
 {
+    QTime time = QTime::currentTime();
+    qsrand((uint)time.msec());
+
     setTestData(qmlData);
-    mView.show();
+    mView.showFullScreen();
     QTest::qWaitForWindowExposed(&mView);
 }
 
 void TestObject::init(const QUrl &url)
 {
     setTestUrl(url);
-    mView.show();
+    mView.showFullScreen();
     QTest::qWaitForWindowExposed(&mView);
 }
 
@@ -45,12 +51,12 @@ void TestObject::init(const QUrl &url)
     Note: this might cause indefinite loop, if not used cautiously. Check
     that \a spy is initialized before expected emits can happen.
 */
-void TestObject::waitSignals(QSignalSpy &spy, int expectedSignalCount) const
+void TestObject::waitSignals(QSignalSpy &spy, int expectedSignalCount, int timeout) const
 {
     int i = 0;
     int maxWaits = 10;
     while (spy.count() < expectedSignalCount && i < maxWaits) {
-        spy.wait();
+        spy.wait(timeout);
         ++i;
     }
 }
@@ -72,4 +78,9 @@ void TestObject::setTestUrl(const QUrl &url)
 void TestObject::setContextProperty(const QString &name, QObject *value)
 {
     mView.rootContext()->setContextProperty(name, value);
+}
+
+int TestObject::random(int min, int max)
+{
+    return qrand() % ((max + 1) - min) + min;
 }

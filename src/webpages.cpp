@@ -20,7 +20,11 @@
 #include <QRectF>
 #include <qqmlinfo.h>
 
-#ifdef DEBUG_LOGS
+#ifndef DEBUG_LOGS
+#define DEBUG_LOGS 0
+#endif
+
+#if DEBUG_LOGS
 #include <QDebug>
 #endif
 
@@ -81,7 +85,7 @@ WebPageActivationData WebPages::page(int tabId, int parentId)
         return WebPageActivationData(activePage, false);
     }
 
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
     qDebug() << "about to create a new tab or activate old:" << tabId;
 #endif
 
@@ -101,7 +105,7 @@ WebPageActivationData WebPages::page(int tabId, int parentId)
                 webPage->setTabId(tabId);
                 webPage->setContainer(m_webContainer);
                 m_webPageComponent->completeCreate();
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
                 qDebug() << "New view id:" << webPage->uniqueID() << "parentId:" << webPage->parentId() << "tab id:" << webPage->tabId();
 #endif
                 m_activePages.prepend(tabId, webPage);
@@ -119,7 +123,7 @@ WebPageActivationData WebPages::page(int tabId, int parentId)
     DeclarativeWebPage *newActiveWebPage = m_activePages.activate(tabId);
     updateStates(oldActiveWebPage, newActiveWebPage);
 
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
     dumpPages();
 #endif
 

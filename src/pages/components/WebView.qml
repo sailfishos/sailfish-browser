@@ -110,7 +110,6 @@ WebContainer {
                     (contentItem && contentItem.fullscreen) || firstUseFullscreen
     _readyToLoad: contentItem && contentItem.viewReady && tabModel.loaded
 
-    loading: contentItem ? contentItem.loading : tabModel.count > 0
     favicon: contentItem ? contentItem.favicon : ""
 
     webPageComponent: webPageComponent
@@ -148,6 +147,7 @@ WebContainer {
 
             property int iconSize
             property string iconType
+            readonly property bool activeWebPage: container.tabId == tabId
 
             fullscreenHeight: container.fullscreenHeight
             toolbarHeight: container.toolbarHeight
@@ -161,7 +161,7 @@ WebContainer {
             // Page loading should finish even if it would be at background.
             // Slow network (2G). Maybe we need something like
             // suspend() { if (loaded) { suspendView() } } for suspend calls.
-            active: visible || container.tabId == tabId
+            active: visible || activeWebPage
 
             // There needs to be enough content for enabling chrome gesture
             chromeGestureThreshold: toolbarHeight / 2
@@ -180,7 +180,7 @@ WebContainer {
 
             onLoadProgressChanged: {
                 // Ignore first load progress if it is directly 50%
-                if (container.loadProgress === 0 && loadProgress === 50) {
+                if (!activeWebPage || container.loadProgress === 0 && loadProgress === 50) {
                     return
                 }
 
@@ -277,12 +277,16 @@ WebContainer {
             onLoadingChanged: {
                 if (loading) {
                     userHasDraggedWhileLoading = false
-                    container.loadProgress = 0
                     webPage.chrome = true
                     favicon = ""
                     iconType = ""
                     iconSize = 0
+
                     resetHeight(false)
+
+                    if (activeWebPage) {
+                        container.loadProgress = 0
+                    }
                 }
             }
 

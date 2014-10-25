@@ -30,6 +30,10 @@
 #include <qmozcontext.h>
 #include <QGuiApplication>
 
+#ifndef DEBUG_LOGS
+#define DEBUG_LOGS 0
+#endif
+
 DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     : QQuickItem(parent)
     , m_webPage(0)
@@ -92,7 +96,16 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
 {
     if (m_webPage != webPage) {
         m_webPage = webPage;
+
+        if (m_webPage) {
+            m_tabId = m_webPage->tabId();
+        } else {
+            m_tabId = 0;
+        }
+
         emit contentItemChanged();
+        emit tabIdChanged();
+
         updateUrl(url());
         updateTitle(title());
     }
@@ -155,6 +168,11 @@ void DeclarativeWebContainer::setMaxLiveTabCount(int count)
 bool DeclarativeWebContainer::background() const
 {
     return m_webPage ? m_webPage->background() : false;
+}
+
+bool DeclarativeWebContainer::loading() const
+{
+    return m_webPage ? m_webPage->loading() : m_model->count();
 }
 
 int DeclarativeWebContainer::loadProgress() const
@@ -333,6 +351,7 @@ bool DeclarativeWebContainer::activatePage(int tabId, bool force)
                 this, SLOT(imeNotificationChanged(int,bool,int,int,QString)), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(windowCloseRequested()), this, SLOT(closeWindow()), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(urlChanged()), this, SLOT(onPageUrlChanged()), Qt::UniqueConnection);
+        connect(m_webPage, SIGNAL(loadingChanged()), this, SIGNAL(loadingChanged()), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(titleChanged()), this, SLOT(onPageTitleChanged()), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(domContentLoadedChanged()), this, SLOT(sendVkbOpenCompositionMetrics()), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(backgroundChanged()), this, SIGNAL(backgroundChanged()), Qt::UniqueConnection);
@@ -426,7 +445,7 @@ void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int activeTabId, 
         return;
     }
     const Tab &tab = m_model->activeTab();
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
     qDebug() << "canGoBack = " << m_canGoBack << "canGoForward = " << m_canGoForward << &tab;
 #endif
 
