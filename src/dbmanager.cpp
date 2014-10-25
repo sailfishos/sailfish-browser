@@ -167,7 +167,7 @@ void DBManager::saveSetting(QString name, QString value)
 {
     m_settings.insert(name, value);
     emit settingsChanged();
-    QMetaObject::invokeMethod(worker, "saveSetting", Qt::QueuedConnection,
+    QMetaObject::invokeMethod(worker, "saveSetting", Qt::BlockingQueuedConnection,
                               Q_ARG(QString, name), Q_ARG(QString, value));
 }
 
@@ -185,7 +185,7 @@ void DBManager::deleteSetting(QString name)
     if (m_settings.contains(name)) {
         m_settings.remove(name);
         emit settingsChanged();
-        QMetaObject::invokeMethod(worker, "deleteSetting", Qt::QueuedConnection,
+        QMetaObject::invokeMethod(worker, "deleteSetting", Qt::BlockingQueuedConnection,
                                   Q_ARG(QString, name));
     }
 }

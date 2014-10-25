@@ -368,6 +368,11 @@ void DeclarativeTabModel::updateTitle(int tabId, int linkId, QString url, QStrin
             QModelIndex start = index(i, 0);
             QModelIndex end = index(i, 0);
             emit dataChanged(start, end, roles);
+
+            if (tabId == m_activeTab.tabId()) {
+                m_activeTab.setTitle(title);
+            }
+
             break;
         }
     }
@@ -398,6 +403,10 @@ void DeclarativeTabModel::updateTitle(int tabId, bool activeTab, QString title)
         linkId = m_tabs.at(tabIndex).currentLink();
         emit dataChanged(index(tabIndex, 0), index(tabIndex, 0), roles);
         updateDb = true;
+
+        if (tabId == m_activeTab.tabId() && activeTab) {
+            m_activeTab.setTitle(title);
+        }
     }
 
     if (updateDb) {

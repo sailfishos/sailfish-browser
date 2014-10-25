@@ -137,6 +137,7 @@ private:
     void updateNewTabData(NewTabData *newTabData);
     QString newTabTitle() const;
 
+    // This should be replaced by m_activeTabIndex
     Tab m_activeTab;
     QList<Tab> m_tabs;
 
