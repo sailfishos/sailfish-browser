@@ -104,7 +104,16 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
 {
     if (m_webPage != webPage) {
         m_webPage = webPage;
+
+        if (m_webPage) {
+            m_tabId = m_webPage->tabId();
+        } else {
+            m_tabId = 0;
+        }
+
         emit contentItemChanged();
+        emit tabIdChanged();
+
         updateUrl(url());
         updateTitle(title());
     }
