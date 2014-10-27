@@ -54,11 +54,16 @@ SilicaGridView {
     delegate: ListItem {
         id: container
 
+        property Item remorse
+
         function remove() {
             //: Remorse timer for removing bookmark
             //% "Removing favorite"
-            remorse.execute(container, qsTrId("sailfish_browser-la-removing_favorite"),
-                            function() { bookmarkModel.removeBookmark(url) } )
+            remorse = remorseAction(qsTrId("sailfish_browser-la-removing_favorite"),
+                                    function() { bookmarkModel.removeBookmark(url) } )
+            remorse.canceled.connect(function() {
+                remorse = null
+            })
         }
 
         signal addToLauncher
@@ -70,6 +75,12 @@ SilicaGridView {
         menu: favoriteContextMenu
         down: favoriteItem.down
         showMenuOnPressAndHold: false
+
+        onVisibleChanged: {
+            if (!visible && remorse) {
+                remorse.destroy()
+            }
+        }
 
         onAddToLauncher: {
             // url, title, favicon
@@ -116,8 +127,6 @@ SilicaGridView {
 
             GridView.onAdd: AddAnimation { target: favoriteItem }
             GridView.onRemove: animateRemoval()
-
-            RemorseItem { id: remorse }
         }
     }
 
