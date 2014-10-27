@@ -31,8 +31,6 @@ DeclarativeTabModel::DeclarativeTabModel(QObject *parent)
             this, SLOT(tabsAvailable(QList<Tab>)));
     connect(DBManager::instance(), SIGNAL(tabChanged(Tab)),
             this, SLOT(tabChanged(Tab)));
-    connect(DBManager::instance(), SIGNAL(titleChanged(int,int,QString,QString)),
-            this, SLOT(updateTitle(int,int,QString,QString)));
 }
 
 DeclarativeTabModel::~DeclarativeTabModel()
@@ -332,7 +330,7 @@ void DeclarativeTabModel::tabChanged(const Tab &tab)
         return;
     }
 
-    int i = m_tabs.indexOf(tab); // match based on tab_id
+    int i = findTabIndex(tab.tabId());
     if (i > -1) {
         QVector<int> roles;
         Tab oldTab = m_tabs[i];
@@ -354,27 +352,6 @@ void DeclarativeTabModel::tabChanged(const Tab &tab)
     if (tab.tabId() == m_activeTab.tabId()) {
         m_activeTab = tab;
         emit activeTabChanged(tab.tabId(), tab.tabId(), true);
-    }
-}
-
-void DeclarativeTabModel::updateTitle(int tabId, int linkId, QString url, QString title)
-{
-    for (int i = 0; i < m_tabs.count(); ++i) {
-        const Tab &tab = m_tabs.at(i);
-        if (tab.tabId() == tabId && tab.currentLink() == linkId && tab.url() == url) {
-            m_tabs[i].setTitle(title);
-            QVector<int> roles;
-            roles << TitleRole;
-            QModelIndex start = index(i, 0);
-            QModelIndex end = index(i, 0);
-            emit dataChanged(start, end, roles);
-
-            if (tabId == m_activeTab.tabId()) {
-                m_activeTab.setTitle(title);
-            }
-
-            break;
-        }
     }
 }
 
