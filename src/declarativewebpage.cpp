@@ -131,8 +131,11 @@ void DeclarativeWebPage::loadTab(QString newUrl, bool force)
 void DeclarativeWebPage::grabToFile()
 {
     emit clearGrabResult();
+    // grabToImage handles invalid geometry.
     m_grabResult = grabToImage();
-    connect(m_grabResult.data(), SIGNAL(ready()), this, SLOT(grabResultReady()));
+    if (m_grabResult.data()) {
+        connect(m_grabResult.data(), SIGNAL(ready()), this, SLOT(grabResultReady()));
+    }
 }
 
 void DeclarativeWebPage::grabThumbnail()

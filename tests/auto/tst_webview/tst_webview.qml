@@ -28,9 +28,9 @@ ApplicationWindow {
         WebView {
             id: webView
 
-            active: true
             toolbarHeight: 50
             portrait: true
+            visible: true
 
             HistoryModel {
                 id: historyModel
