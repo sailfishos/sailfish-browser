@@ -131,7 +131,7 @@ PanelBackground {
         }
 
         onUrlChanged: {
-            if (!toolBar.findInPageActive) {
+            if (!toolBar.findInPageActive && !searchField.enteringNewTabUrl && !searchField.edited) {
                 searchField.resetUrl(webView.url)
             }
         }
