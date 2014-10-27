@@ -332,7 +332,6 @@ void DBWorker::navigateTo(int tabId, QString url, QString title, QString path) {
 #if DEBUG_LOGS
     qDebug() << "emit tab changed:" << tabId << historyId << title << url;
 #endif
-    emit tabChanged(getTabData(tabId, historyId));
 }
 
 void DBWorker::updateTab(int tabId, QString url, QString title, QString path)
@@ -346,7 +345,6 @@ void DBWorker::updateTab(int tabId, QString url, QString title, QString path)
     qDebug() << tabId << title << url << path;
 #endif
     updateLink(currentLink.linkId(), url, title, path);
-    emit tabChanged(getTabData(tabId));
 }
 
 void DBWorker::goForward(int tabId) {

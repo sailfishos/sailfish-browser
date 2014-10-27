@@ -34,8 +34,6 @@ DeclarativeTabModel::DeclarativeTabModel(QObject *parent)
             this, SLOT(tabsAvailable(QList<Tab>)));
     connect(DBManager::instance(), SIGNAL(tabChanged(Tab)),
             this, SLOT(tabChanged(Tab)));
-    connect(DBManager::instance(), SIGNAL(titleChanged(int,int,QString,QString)),
-            this, SLOT(updateTitle(int,int,QString,QString)));
 }
 
 QHash<int, QByteArray> DeclarativeTabModel::roleNames() const
@@ -351,7 +349,7 @@ void DeclarativeTabModel::tabChanged(const Tab &tab)
     if (m_activeTab.tabId() == tab.tabId()) {
         updateActiveTab(tab, true);
     } else {
-        int i = m_tabs.indexOf(tab); // match based on tab_id
+        int i = findTabIndex(tab.tabId());
         if (i > -1) {
             QVector<int> roles;
             Tab oldTab = m_tabs[i];
@@ -372,27 +370,6 @@ void DeclarativeTabModel::tabChanged(const Tab &tab)
     }
 }
 
-void DeclarativeTabModel::updateTitle(int tabId, int linkId, QString url, QString title)
-{
-    if (m_activeTab.tabId() == tabId && m_activeTab.currentLink() == linkId &&
-            m_activeTab.url() == url) {
-        m_activeTab.setTitle(title);
-    } else {
-        for (int i = 0; i < m_tabs.count(); ++i) {
-            const Tab &tab = m_tabs.at(i);
-            if (tab.tabId() == tabId && tab.currentLink() == linkId && tab.url() == url) {
-                m_tabs[i].setTitle(title);
-                QVector<int> roles;
-                roles << TitleRole;
-                QModelIndex start = index(i, 0);
-                QModelIndex end = index(i, 0);
-                emit dataChanged(start, end, roles);
-                break;
-            }
-        }
-    }
-}
-
 void DeclarativeTabModel::updateUrl(int tabId, bool activeTab, QString url, bool backForwardNavigation, bool initialLoad)
 {
     if (backForwardNavigation)
@@ -409,7 +386,6 @@ void DeclarativeTabModel::updateUrl(int tabId, bool activeTab, QString url, bool
 void DeclarativeTabModel::updateTitle(int tabId, bool activeTab, QString title)
 {
     int tabIndex = findTabIndex(tabId);
-
     bool updateDb = false;
 
     int linkId = 0;
@@ -517,6 +493,8 @@ void DeclarativeTabModel::updateTabUrl(int tabId, bool activeTab, const QString 
     bool updateDb = false;
     if (activeTab) {
         m_activeTab.setUrl(url);
+        m_activeTab.setTitle("");
+        m_activeTab.setThumbnailPath("");
         updateDb = true;
         if (navigate) {
             m_activeTab.setNextLink(0);
@@ -532,6 +510,13 @@ void DeclarativeTabModel::updateTabUrl(int tabId, bool activeTab, const QString 
         m_tabs[tabIndex].setThumbnailPath("");
         emit dataChanged(index(tabIndex, 0), index(tabIndex, 0), roles);
         updateDb = true;
+
+        if (navigate) {
+            m_tabs[tabIndex].setNextLink(0);
+            int currentLinkId = m_tabs[tabIndex].currentLink();
+            m_tabs[tabIndex].setPreviousLink(currentLinkId);
+            m_tabs[tabIndex].setCurrentLink(DBManager::instance()->nextLinkId());
+        }
     }
 
     if (updateDb) {

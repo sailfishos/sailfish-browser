@@ -525,32 +525,7 @@ void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int activeTabId, 
     setThumbnailPath(tab.thumbnailPath());
 
     updateUrl(tab.url());
-
-    /**
-     * TODO: We should update title here as well.
-     * Reason not to do so yet is the way how database writes are synchronized to model and
-     * webcontainer states. Currently DeclarativeTabModel do not ignore callbacks from database
-     * worker if another operation made call obsolete.
-     *
-     * For example:
-     * DeclarativeWebPage::loadTab loads an url when the url changes onPageUrlChanged
-     * slot gets called and update url of webcontainer and initiates async write to database without title.
-     * After a while db replies that tab has changed including data.
-     * Right after onPageUrlChanged slot is called, onPageTitleChanged slot is called. The onPageTitleChanged
-     * triggers async write to database with title.
-     * Due to async nature, order of operations might look like (loadTab):
-     *   1) onPageUrlChanged
-     *   2) onPageTitleChanged (so far all would be good)
-     *   3) DB call from to DeclarativeTabModel::tabChanged (with url, callback from 1)
-     *   4) DB call from to DeclarativeTabModel::tabChanged (with url & title, callback from 2)
-     *
-     * Callbacks should be bound to triggered operation allowing other operations
-     * to ignore callback that are not needed anymore. E.g. in above case
-     * 2th step should mark for model that callback coming from onPageUrlChanged 3rd can be
-     * ignored as we know at that moment there is another callback soon coming.
-     */
-    // updateTitle(tab.title());
-    // Reverts title change handling that was introduced in commit ad85e79d.
+    updateTitle(tab.title());
 
     if (m_tabId != activeTabId) {
         m_tabId = activeTabId;
@@ -767,10 +742,16 @@ void DeclarativeWebContainer::onPageUrlChanged()
         m_initialUrl = "";
 
         webPage->setUrlHasChanged(true);
+        bool wasBackForwardNavigation = webPage->backForwardNavigation();
         webPage->setBackForwardNavigation(false);
 
         if (activeTab && webPage == m_webPage) {
             updateUrl(url);
+
+            if (!initialLoad && !wasBackForwardNavigation) {
+                const Tab &tab = m_model->activeTab();
+                updateNavigationStatus(tab);
+            }
         }
     }
 }

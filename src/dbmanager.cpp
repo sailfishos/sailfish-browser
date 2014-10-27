@@ -78,6 +78,11 @@ int DBManager::createLink(int tabId, QString url, QString title)
     QMetaObject::invokeMethod(worker, "createLink", Qt::BlockingQueuedConnection,
                               Q_RETURN_ARG(int, linkId), Q_ARG(int, tabId),
                               Q_ARG(QString, url), Q_ARG(QString, title));
+
+    if (linkId == m_nextLinkId) {
+        ++m_nextLinkId;
+    }
+
     return linkId;
 }
 
