@@ -358,7 +358,7 @@ Page {
                         width: parent.width
                         // Handle initially newTab state. Currently newTab initially
                         // true when triggering new tab cover action.
-                        text: newTab ? "" : browserPage.url
+                        text: newTab || browserPage.url == "about:blank" ? "" : browserPage.url
 
                         //: Placeholder for the search/address field
                         //% "Search or Address"
