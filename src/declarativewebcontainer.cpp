@@ -621,31 +621,29 @@ void DeclarativeWebContainer::onPageUrlChanged()
     DeclarativeWebPage *webPage = qobject_cast<DeclarativeWebPage *>(sender());
     if (webPage && m_model) {
         QString url = webPage->url().toString();
-        if (url != "about:blank") {
-            int tabId = webPage->tabId();
-            bool activeTab = isActiveTab(tabId);
-            // Update initial back / forward navigation state
-            if (activeTab && !webPage->urlHasChanged()) {
+        int tabId = webPage->tabId();
+        bool activeTab = isActiveTab(tabId);
+        // Update initial back / forward navigation state
+        if (activeTab && !webPage->urlHasChanged()) {
+            const Tab &tab = m_model->activeTab();
+            updateNavigationStatus(tab);
+        }
+
+        // Initial url should not be considered as navigation request that increases navigation history.
+        bool initialLoad = m_initialUrl.isEmpty() && !webPage->urlHasChanged();
+        m_model->updateUrl(tabId, activeTab, url, webPage->backForwardNavigation(), initialLoad);
+        m_initialUrl = "";
+
+        webPage->setUrlHasChanged(true);
+        bool wasBackForwardNavigation = webPage->backForwardNavigation();
+        webPage->setBackForwardNavigation(false);
+
+        if (activeTab && webPage == m_webPage) {
+            updateUrl(url);
+
+            if (!initialLoad && !wasBackForwardNavigation) {
                 const Tab &tab = m_model->activeTab();
                 updateNavigationStatus(tab);
-            }
-
-            // Initial url should not be considered as navigation request that increases navigation history.
-            bool initialLoad = m_initialUrl.isEmpty() && !webPage->urlHasChanged();
-            m_model->updateUrl(tabId, activeTab, url, webPage->backForwardNavigation(), initialLoad);
-            m_initialUrl = "";
-
-            webPage->setUrlHasChanged(true);
-            bool wasBackForwardNavigation = webPage->backForwardNavigation();
-            webPage->setBackForwardNavigation(false);
-
-            if (activeTab && webPage == m_webPage) {
-                updateUrl(url);
-
-                if (!initialLoad && !wasBackForwardNavigation) {
-                    const Tab &tab = m_model->activeTab();
-                    updateNavigationStatus(tab);
-                }
             }
         }
     }

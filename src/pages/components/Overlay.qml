@@ -255,7 +255,7 @@ PanelBackground {
 
                 function resetUrl(url) {
                     // Reset first text and then mark as unedited.
-                    text = url
+                    text = url === "about:blank" ? "" : url
                     edited = false
                 }
 

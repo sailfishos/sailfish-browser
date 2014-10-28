@@ -151,6 +151,10 @@ Column {
                             //: No text search results were found from the page.
                             //% "No results"
                             return qsTrId("sailfish_browser-la-no_results")
+                        } else if (url == "about:blank") {
+                            //: Placeholder text for url typing and searching
+                            //% "Type URL or search"
+                            return qsTrId("sailfish_browser-ph-type_url_or_search")
                         } else if (url) {
                             return parseDisplayableUrl(url)
                         } else if (webView.contentItem) {
