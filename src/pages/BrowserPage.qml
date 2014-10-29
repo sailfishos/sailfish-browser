@@ -205,8 +205,10 @@ Page {
                            - parent.anchors.rightMargin
 
                     Browser.TitleBar {
-                        url: webView.url
-                        title: webView.title
+                        url: webView.contentItem && webView.contentItem.url || ""
+                        title: webView.contentItem && webView.contentItem.title || ""
+                        showEmpty: url == "about:blank"
+
                         height: parent.height
                         onClicked: controlArea.openTabPage(true, false, PageStackAction.Animated)
                         // Workaround for binding loop jb#15182

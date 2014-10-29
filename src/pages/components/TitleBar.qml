@@ -15,8 +15,9 @@ import Sailfish.Silica 1.0
 BackgroundItem {
     id: backgroundItem
 
-    property alias title: titleLabel.text
+    property string title
     property alias url: urlLabel.text
+    property bool showEmpty
 
     implicitHeight: texts.height
     contentItem.color: "transparent"
@@ -31,12 +32,17 @@ BackgroundItem {
             id: titleLabel
             width: parent.width
             color: backgroundItem.highlighted ? Theme.highlightColor : Theme.primaryColor
-            font.pixelSize: Theme.fontSizeExtraSmall
+            font.pixelSize: showEmpty ? Theme.fontSizeSmall : Theme.fontSizeExtraSmall
             font.weight: Font.Normal
+
+            //: Placeholder text for url typing and searching
+            //% "Type URL or search"
+            text: showEmpty ? qsTrId("sailfish_browser-ph-type_url_or_search") : backgroundItem.title
             truncationMode: TruncationMode.Fade
         }
         Label {
             id: urlLabel
+            visible: !showEmpty
             width: parent.width
             color: backgroundItem.highlighted ? Theme.highlightColor : Theme.primaryColor
             font.pixelSize: Theme.fontSizeTiny
