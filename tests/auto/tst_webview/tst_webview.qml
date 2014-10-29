@@ -31,6 +31,13 @@ ApplicationWindow {
             active: true
             toolbarHeight: 50
             portrait: true
+            width: parent.width
+            height: parent.height
+
+            onLoadProgressChanged: console.log("progress:", loadProgress, url, tabId)
+            onLoadingChanged: console.log(loading, url, tabId)
+            onUrlChanged: console.log(url, tabId)
+            onContentItemChanged: console.log(contentItem, "url:", (contentItem ? contentItem.url : "no url" ), "tabId:", (contentItem ? contentItem.tabId : -1 ))
 
             HistoryModel {
                 id: historyModel

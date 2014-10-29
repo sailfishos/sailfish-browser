@@ -48,6 +48,10 @@ public:
     int parentTabId(int tabId) const;
     void dumpPages() const;
 
+    // Testability helpers
+    QList<int> liveTabs();
+    QList<int> zombifiedTabs();
+
 private:
     struct WebPageEntry {
         WebPageEntry(DeclarativeWebPage *webPage, QRectF *cssContentRect);

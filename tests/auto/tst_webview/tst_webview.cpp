@@ -27,7 +27,6 @@ class tst_webview : public TestObject
 
 public:
     tst_webview();
-
 private slots:
     void initTestCase();
     void testNewTab_data();
@@ -42,9 +41,14 @@ private slots:
     void clear();
     void restart();
     void changeTabAndLoad();
+    void insertOnlinePages_data();
+    void insertOnlinePages();
+    void suffleTabsWaitLoaded();
+    void suffleTabsSwitchImmediately();
     void cleanupTestCase();
 
 private:
+    void activeTabAndLoad(int i);
     QString formatUrl(QString fileName) const;
     void verifyHistory(QList<TestTab> &historyOrder);
 
@@ -52,6 +56,7 @@ private:
     DeclarativeTabModel *tabModel;
     DeclarativeWebContainer *webContainer;
     QString baseUrl;
+    bool offline;
 };
 
 tst_webview::tst_webview()
@@ -59,6 +64,7 @@ tst_webview::tst_webview()
     , historyModel(0)
     , tabModel(0)
     , webContainer(0)
+    , offline(getenv("BROWSER_OFFLINE"))
 {
 }
 
@@ -674,6 +680,130 @@ void tst_webview::changeTabAndLoad()
     QCOMPARE(webContainer->m_webPages->m_activePages.count(), 2);
 }
 
+void tst_webview::insertOnlinePages_data()
+{
+    QSignalSpy tabsCleared(tabModel, SIGNAL(tabsCleared()));
+    tabModel->clear();
+    QTest::qWait(1000);
+    waitSignals(tabsCleared, 1);
+    QVERIFY(tabModel->count() == 0);
+
+    webContainer->setProperty("maxLiveTabCount", 3);
+    QTest::addColumn<QString>("newUrl");
+    QTest::addColumn<int>("liveTabCount");
+
+    QTest::newRow("google.com") << "http://www.google.com" << 1;
+    QTest::newRow("m.engadget.com") << "http://m.engadget.com" << 2;
+    QTest::newRow("yahoo.com") << "http://www.yahoo.com" << 3;
+    QTest::newRow("facebook.com") << "http://m.facebook.com" << 3;
+}
+
+void tst_webview::insertOnlinePages()
+{
+    if (offline) {
+        QEXPECT_FAIL("", "This cannot be executed without network", Abort);
+        QCOMPARE(false, true);
+    }
+
+    QFETCH(QString, newUrl);
+    QFETCH(int, liveTabCount);
+
+    QSignalSpy urlChangedSpy(webContainer, SIGNAL(urlChanged()));
+    QSignalSpy tabCountSpy(tabModel, SIGNAL(countChanged()));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,int)));
+    QSignalSpy tabAddedSpy(tabModel, SIGNAL(tabAdded(int)));
+    QSignalSpy contentItemSpy(webContainer, SIGNAL(contentItemChanged()));
+    QSignalSpy loadingChanged(webContainer, SIGNAL(loadingChanged()));
+
+    tabModel->newTab(newUrl, "");
+
+    // Wait for MozView instance change.
+    waitSignals(contentItemSpy, 1);
+    QCOMPARE(contentItemSpy.count(), 1);
+
+    // Load started and ended
+    waitSignals(loadingChanged, 2);
+
+    // ~last in the sequence of adding a new tab.
+    waitSignals(tabAddedSpy, 1);
+
+    // Ignore possible redirection by checking that at least one url and one title change were emitted.
+    QVERIFY(urlChangedSpy.count() > 0);
+    QCOMPARE(tabCountSpy.count(), 1);
+
+    QCOMPARE(webContainer->m_webPages->liveTabs().count(), liveTabCount);
+    QCOMPARE(activeTabChangedSpy.count(), 1);
+}
+
+void tst_webview::suffleTabsWaitLoaded()
+{
+    if (offline) {
+        QEXPECT_FAIL("", "This cannot be executed without network", Abort);
+        QCOMPARE(false, true);
+    }
+
+    // Loops through 4 tabs so that in every 2nd round we pick inactive tab and after which we
+    // pick zombified tab.
+    for (int i = 0; i < 4; ++i) {
+        QSignalSpy loadingChanged(webContainer, SIGNAL(loadingChanged()));
+        QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,int,bool)));
+
+        activeTabAndLoad(i);
+
+        QCOMPARE(activeTabChangedSpy.count(), 1);
+        waitSignals(loadingChanged, 2);
+        QVERIFY(webContainer->webPage());
+        QVERIFY(!webContainer->webPage()->loading());
+        QVERIFY(webContainer->webPage()->property("loaded").toBool());
+    }
+}
+
+void tst_webview::suffleTabsSwitchImmediately()
+{
+    if (offline) {
+        QEXPECT_FAIL("", "This cannot be executed without network", Abort);
+        QCOMPARE(false, true);
+    }
+
+    // Loops through 4 tabs so that in every 2nd round we pick inactive tab and after which we
+    // pick zombified tab.
+    for (int i = 0; i < 4; ++i) {
+        QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,int,bool)));
+        QSignalSpy loadProgressSpy(webContainer, SIGNAL(loadProgressChanged()));
+
+        activeTabAndLoad(i);
+        QCOMPARE(activeTabChangedSpy.count(), 1);
+        QVERIFY(webContainer->webPage());
+
+        // Let loading to proceed to 90%
+        int i = 0;
+        while (i < 90 && webContainer->loadProgress() < 90) {
+            loadProgressSpy.wait();
+            ++i;
+        }
+
+        QVERIFY(webContainer->loadProgress() >= 90);
+    }
+
+    // Go through all zombie tabs so that each of them get fully loaded.
+    for (int i = 0; i < 4; ++i) {
+        QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,int,bool)));
+
+        QList<int> zombifiedTabs = webContainer->m_webPages->zombifiedTabs();
+        QCOMPARE(zombifiedTabs.count(), 1);
+        int tabId = zombifiedTabs.at(0);
+        tabModel->activateTabById(tabId);
+        QSignalSpy loadingChanged(webContainer, SIGNAL(loadingChanged()));
+        QCOMPARE(activeTabChangedSpy.count(), 1);
+
+        // 60secs of timeout per loading change.
+        waitSignals(loadingChanged, 2, 60000);
+        QVERIFY(webContainer->webPage());
+        QVERIFY(!webContainer->webPage()->loading());
+        QVERIFY(webContainer->webPage()->property("loaded").toBool());
+    }
+}
+
 void tst_webview::cleanupTestCase()
 {
     QTest::qWait(1000);
@@ -713,6 +843,40 @@ void tst_webview::verifyHistory(QList<TestTab> &historyOrder)
         QCOMPARE(historyModel->data(modelIndex, DeclarativeHistoryModel::UrlRole).toString(),
                  historyOrder.at(i).url);
     }
+}
+
+// Used with suffleTabsWaitLoaded and suffleTabsSwitchImmediately (4 tabs)
+void tst_webview::activeTabAndLoad(int i)
+{
+    int tabId = -1;
+    bool reload = false;
+    if (i % 2 == 0) {
+        // Inactive and not current tab
+        QList<int> liveTabs = webContainer->m_webPages->liveTabs();
+        QCOMPARE(liveTabs.count(), 3);
+        tabId = liveTabs.at(random(0, 2));
+
+        while (tabId == webContainer->tabId()) {
+            tabId = liveTabs.at(random(0, 2));
+        }
+        reload = true;
+    } else {
+        // First and last zombified tab.
+        QList<int> zombifiedTabs = webContainer->m_webPages->zombifiedTabs();
+        QCOMPARE(zombifiedTabs.count(), 1);
+        tabId = zombifiedTabs.at(0);
+    }
+
+    tabModel->activateTabById(tabId);
+
+    QVERIFY(webContainer->webPage());
+    QSignalSpy loadingSpy(webContainer->webPage(), SIGNAL(loadingChanged()));
+
+    // Reload inactive tab.
+    if (reload) {
+        webContainer->webPage()->reload();
+    }
+    waitSignals(loadingSpy, 1);
 }
 
 int main(int argc, char *argv[])

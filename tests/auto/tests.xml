@@ -23,7 +23,7 @@
                <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_dbmanager -platform wayland-egl -iterations 10</step>
            </case>
            <case manual="false" name="webview">
-               <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_webview -platform wayland-egl</step>
+               <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; BROWSER_OFFLINE=1 ./tst_webview</step>
            </case>
            <case manual="false" name="desktopbookmarkwriter">
                <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_desktopbookmarkwriter</step>
