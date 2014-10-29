@@ -74,7 +74,6 @@ WebPageActivationData WebPages::page(int tabId, int parentId)
 
     if (m_activePages.active(tabId)) {
         DeclarativeWebPage *activePage = m_activePages.activeWebPage();
-        qDebug() << "active page:" << activePage << tabId;
         activePage->resumeView();
         activePage->setVisible(true);
         return WebPageActivationData(activePage, false);

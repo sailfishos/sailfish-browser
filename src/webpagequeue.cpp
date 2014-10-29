@@ -15,6 +15,14 @@
 #include <QObject>
 #include <QRectF>
 
+#ifndef DEBUG_LOGS
+#define DEBUG_LOGS 0
+#endif
+
+#if DEBUG_LOGS
+#include <QDebug>
+#endif
+
 WebPageQueue::WebPageQueue()
     : m_maxLiveCount(5)
 {
@@ -72,7 +80,7 @@ void WebPageQueue::release(int tabId,  bool virtualize)
 {
     int index = -1;
     WebPageEntry *pageEntry = find(tabId, index);
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
     qDebug() << "--- beginning: " << tabId << virtualize << pageEntry << (pageEntry ? pageEntry->webPage : 0);
     dumpPages();
 #endif
@@ -96,7 +104,7 @@ void WebPageQueue::release(int tabId,  bool virtualize)
         }
     }
 
-#ifdef DEBUG_LOGS
+#if DEBUG_LOGS
     qDebug() << "--- end ---";
     dumpPages();
 #endif
