@@ -424,7 +424,7 @@ void tst_webview::testLiveTabCount()
     QCOMPARE(activeTabChangedSpy.count(), 1);
 
     QCOMPARE(webContainer->m_webPages->count(), liveTabCount);
-    QCOMPARE(webContainer->m_webPages->m_activePages.count(), expectedTabCount);
+    QCOMPARE(webContainer->m_webPages->m_activePages.count(), liveTabCount);
 }
 
 void tst_webview::forwardBackwardNavigation()
@@ -550,8 +550,8 @@ void tst_webview::forwardBackwardNavigation()
 
     // Same as in previous case
     QCOMPARE(tabModel->count(), 7);
-    QCOMPARE(webContainer->m_webPages->count(), webContainer->m_maxLiveTabCount);
-    QCOMPARE(webContainer->m_webPages->m_activePages.count(), 7);
+    QCOMPARE(webContainer->m_webPages->count(), webContainer->maxLiveTabCount());
+    QCOMPARE(webContainer->m_webPages->m_activePages.count(), webContainer->maxLiveTabCount());
 }
 
 void tst_webview::clear()
@@ -564,7 +564,7 @@ void tst_webview::clear()
     QVERIFY(historyModel->rowCount() == 0);
     QVERIFY(webContainer->m_webPages->count() == 0);
     QVERIFY(webContainer->m_webPages->m_activePages.count() == 0);
-    QVERIFY(!webContainer->m_webPages->m_activePage);
+    QVERIFY(!webContainer->m_webPages->m_activePages.activeWebPage());
     QVERIFY(!webContainer->m_webPage);
 }
 
