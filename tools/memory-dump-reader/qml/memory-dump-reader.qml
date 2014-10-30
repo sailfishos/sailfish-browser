@@ -30,6 +30,7 @@ Rectangle {
             if (jsonObject.path.indexOf(alloc.path) === 0) {
                 alloc.amount += jsonObject.amount
                 alloc["type"] = type
+                alloc["description"] = ""
                 found = true
             }
         }
@@ -72,7 +73,7 @@ Rectangle {
         var keys = ["canvas-2d-pixels", "gfx-surface-image", "gfx-surface-xlib",
                     "gfx-textures", "ghost-windows", "heap-allocated", "heap-committed",
                     "host-object-urls", "imagelib-surface-cache", "js-main-runtime-temporary-peak", "page-faults-hard",
-                    "page-faults-soft", "resident", "resident-unique"]
+                    "page-faults-soft", "resident", "resident-unique", "explicit/gfx/heap-textures"]
 
         var excludeKeys = ["gfx-textures", "resident-unique", "heap-allocated"]
 
@@ -153,41 +154,59 @@ Rectangle {
 
 
         delegate: Rectangle {
+            property int fontSize: 13
+
             width: parent.width
             border.color: "black"
-            border.width: 2
-            height: 50
+            border.width: 1
+            height: descriptionText.height
             color: "white"
 
             Text {
                 id: amountText
-                width: 100
+                width: 40
                 x: 20
                 color: "black"
-                font.pixelSize: 20
+                font.pixelSize: fontSize
                 text: (amount / 1024 / 1024).toFixed(1)
             }
 
             Text {
-                id: unit
+                id: unitText
                 anchors {
                     left: amountText.right; leftMargin: 10
                     right: pathText.left; rightMargin: 10
                 }
                 color: "black"
-                font.pixelSize: 20
+                font.pixelSize: fontSize
                 text: "MB"
             }
 
             Text {
                 id: pathText
                 anchors {
-                    right: parent.right
-                    rightMargin: 20
+                    right: descriptionText.left; rightMargin: 10
                 }
+
                 text: path
-                font.pixelSize: 20
+                font.pixelSize: fontSize
                 color: "black"
+            }
+
+            Text {
+                id: descriptionText
+
+                anchors {
+                    right: parent.right
+                    rightMargin: width ? 20 : 0
+                }
+
+                width: text ? 250 : 0
+                text: description
+                font.pixelSize: fontSize
+                maximumLineCount: 4
+                color: "black"
+                wrapMode: Text.WordWrap
             }
         }
 
