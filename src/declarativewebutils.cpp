@@ -207,7 +207,7 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     // Memory management related preferences.
     // We're sending "memory-pressure" when browser is on background (cover by another application)
     // and when the browser page is inactivated.
-    mozContext->setPref(QString("javascript.options.gc_on_memory_pressure"), true);
+    mozContext->setPref(QString("javascript.options.gc_on_memory_pressure"), false);
 
     // Disable SSLv3
     mozContext->setPref(QString("security.tls.version.min"), QVariant(1));
