@@ -42,7 +42,7 @@ Requires: sailfish-components-media-qt5
 %{_oneshot_requires_post}
 
 %description
-Sailfish Web Browser
+Sailfish Web Browser 
 
 %package settings
 Summary:  Browser plugin for Jolla Settings
