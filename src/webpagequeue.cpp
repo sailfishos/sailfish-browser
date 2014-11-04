@@ -192,7 +192,7 @@ void WebPageQueue::virtualizeInactive()
     for (int i = 1; i < m_queue.count(); ++i) {
         DeclarativeWebPage* page = m_queue.at(i)->webPage;
         if (page &&
-            (livePage->parentId() != (int)page->uniqueID() || (int)livePage->uniqueID() != page->parentId())) {
+                (livePage->parentId() != (int)page->uniqueID() || (int)livePage->uniqueID() != page->parentId())) {
             release(m_queue.at(i)->tabId, true);
         }
     }

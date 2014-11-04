@@ -164,10 +164,10 @@ void WebPages::updateStates(DeclarativeWebPage *oldActivePage, DeclarativeWebPag
 
         // Allow suspending only the current active page if it is not the creator (parent).
         if (newActivePage->parentId() != (int)oldActivePage->uniqueID()) {
-             if (oldActivePage->loading()) {
-                 oldActivePage->stop();
-             }
-             oldActivePage->suspendView();
+            if (oldActivePage->loading()) {
+                oldActivePage->stop();
+            }
+            oldActivePage->suspendView();
         }
     }
 
@@ -188,7 +188,7 @@ void WebPages::handleMemNotify(const QString &memoryLevel)
         m_activePages.virtualizeInactive();
 
         if (!m_webContainer->foreground() &&
-            (QDateTime::currentMSecsSinceEpoch() - m_backgroundTimestamp) > gMemoryPressureTimeout) {
+                (QDateTime::currentMSecsSinceEpoch() - m_backgroundTimestamp) > gMemoryPressureTimeout) {
             m_backgroundTimestamp = QDateTime::currentMSecsSinceEpoch();
             QMozContext::GetInstance()->sendObserve(QString("memory-pressure"), QString("heap-minimize"));
         }
