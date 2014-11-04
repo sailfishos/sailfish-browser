@@ -25,6 +25,7 @@
 
 WebPageQueue::WebPageQueue()
     : m_maxLiveCount(5)
+    , m_livePagePrepended(false)
 {
 }
 
@@ -130,6 +131,7 @@ void WebPageQueue::prepend(int tabId, DeclarativeWebPage *webPage)
 
     m_queue.prepend(pageEntry);
     updateLivePages();
+    m_livePagePrepended = true;
 }
 
 void WebPageQueue::clear()
@@ -180,9 +182,16 @@ int WebPageQueue::maxLivePages() const
 
 void WebPageQueue::virtualizeInactive()
 {
+    if (!m_livePagePrepended) {
+        // no need to iterate through a queue of only one live page
+        return;
+    }
+
     for (int i = 1; i < m_queue.count(); ++i) {
         release(m_queue.at(i)->tabId, true);
     }
+
+    m_livePagePrepended = false;
 }
 
 void WebPageQueue::dumpPages() const

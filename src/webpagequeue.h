@@ -55,6 +55,11 @@ private:
 
     QList<WebPageEntry *> m_queue;
     int m_maxLiveCount;
+
+    // This flag is set when we prepend a live page to the queue and reset upon
+    // virtualization of inactive live pages as only one live page stays in the
+    // queue.
+    bool m_livePagePrepended;
 };
 
 #endif
