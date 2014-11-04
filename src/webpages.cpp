@@ -13,6 +13,7 @@
 #include "declarativewebcontainer.h"
 #include "declarativewebpage.h"
 
+#include <QDBusConnection>
 #include <QQmlComponent>
 #include <QQmlEngine>
 #include <QQmlContext>
@@ -31,6 +32,9 @@
 WebPages::WebPages(QObject *parent)
     : QObject(parent)
 {
+    QDBusConnection::systemBus().connect("com.nokia.mce", "/com/nokia/mce/signal",
+                                         "com.nokia.mce.signal", "sig_memory_level_ind",
+                                         this, SLOT(handleMemNotify(QString)));
 }
 
 WebPages::~WebPages()
@@ -162,4 +166,11 @@ void WebPages::updateStates(DeclarativeWebPage *oldActivePage, DeclarativeWebPag
 void WebPages::dumpPages() const
 {
     m_activePages.dumpPages();
+}
+
+void WebPages::handleMemNotify(const QString &memoryLevel)
+{
+    if (memoryLevel == QString("warning") || memoryLevel == QString("critical")) {
+        m_activePages.virtualizeInactive();
+    }
 }

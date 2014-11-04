@@ -178,6 +178,13 @@ int WebPageQueue::maxLivePages() const
     return m_maxLiveCount;
 }
 
+void WebPageQueue::virtualizeInactive()
+{
+    for (int i = 1; i < m_queue.count(); ++i) {
+        release(m_queue.at(i)->tabId, true);
+    }
+}
+
 void WebPageQueue::dumpPages() const
 {
     qDebug() << "---- start ----";

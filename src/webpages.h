@@ -52,6 +52,9 @@ public:
     int parentTabId(int tabId) const;
     void dumpPages() const;
 
+private slots:
+    void handleMemNotify(const QString &memoryLevel);
+
 private:
     void updateStates(DeclarativeWebPage *oldActivePage, DeclarativeWebPage *newActivePage);
 
