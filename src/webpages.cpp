@@ -12,7 +12,10 @@
 #include "webpages.h"
 #include "declarativewebcontainer.h"
 #include "declarativewebpage.h"
+#include "qmozcontext.h"
 
+#include <QDateTime>
+#include <QDBusConnection>
 #include <QQmlComponent>
 #include <QQmlEngine>
 #include <QQmlContext>
@@ -28,9 +31,15 @@
 #include <QDebug>
 #endif
 
+static const qint64 gMemoryPressureTimeout = 600 * 1000; // 600 sec
+
 WebPages::WebPages(QObject *parent)
     : QObject(parent)
+    , m_backgroundTimestamp(0)
 {
+    QDBusConnection::systemBus().connect("com.nokia.mce", "/com/nokia/mce/signal",
+                                         "com.nokia.mce.signal", "sig_memory_level_ind",
+                                         this, SLOT(handleMemNotify(QString)));
 }
 
 WebPages::~WebPages()
@@ -42,6 +51,15 @@ void WebPages::initialize(DeclarativeWebContainer *webContainer, QQmlComponent *
     if (!m_webContainer || !m_webPageComponent) {
         m_webContainer = webContainer;
         m_webPageComponent = webPageComponent;
+    }
+
+    connect(webContainer, SIGNAL(foregroundChanged()), this, SLOT(updateBackgroundTimestamp()));
+}
+
+void WebPages::updateBackgroundTimestamp()
+{
+    if (!m_webContainer->foreground()) {
+        m_backgroundTimestamp = QDateTime::currentMSecsSinceEpoch();
     }
 }
 
@@ -146,10 +164,10 @@ void WebPages::updateStates(DeclarativeWebPage *oldActivePage, DeclarativeWebPag
 
         // Allow suspending only the current active page if it is not the creator (parent).
         if (newActivePage->parentId() != (int)oldActivePage->uniqueID()) {
-             if (oldActivePage->loading()) {
-                 oldActivePage->stop();
-             }
-             oldActivePage->suspendView();
+            if (oldActivePage->loading()) {
+                oldActivePage->stop();
+            }
+            oldActivePage->suspendView();
         }
     }
 
@@ -162,4 +180,17 @@ void WebPages::updateStates(DeclarativeWebPage *oldActivePage, DeclarativeWebPag
 void WebPages::dumpPages() const
 {
     m_activePages.dumpPages();
+}
+
+void WebPages::handleMemNotify(const QString &memoryLevel)
+{
+    if (memoryLevel == QString("warning") || memoryLevel == QString("critical")) {
+        m_activePages.virtualizeInactive();
+
+        if (!m_webContainer->foreground() &&
+                (QDateTime::currentMSecsSinceEpoch() - m_backgroundTimestamp) > gMemoryPressureTimeout) {
+            m_backgroundTimestamp = QDateTime::currentMSecsSinceEpoch();
+            QMozContext::GetInstance()->sendObserve(QString("memory-pressure"), QString("heap-minimize"));
+        }
+    }
 }
