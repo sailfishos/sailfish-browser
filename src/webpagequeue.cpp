@@ -182,13 +182,12 @@ int WebPageQueue::maxLivePages() const
 
 void WebPageQueue::virtualizeInactive()
 {
-    if (!m_livePagePrepended) {
-        // no need to iterate through a queue of only one live page
+    if (!m_livePagePrepended || m_queue.isEmpty() || !m_queue.at(0)->webPage) {
+        // no need to iterate through a queue of only one or zero live pages
         return;
     }
 
     DeclarativeWebPage* livePage = m_queue.at(0)->webPage;
-    Q_ASSERT(livePage);
 
     for (int i = 1; i < m_queue.count(); ++i) {
         DeclarativeWebPage* page = m_queue.at(i)->webPage;
