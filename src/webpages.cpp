@@ -12,7 +12,9 @@
 #include "webpages.h"
 #include "declarativewebcontainer.h"
 #include "declarativewebpage.h"
+#include "qmozcontext.h"
 
+#include <QDateTime>
 #include <QDBusConnection>
 #include <QQmlComponent>
 #include <QQmlEngine>
@@ -29,8 +31,11 @@
 #include <QDebug>
 #endif
 
+static const qint64 gMemoryPressureTimeout = 600 * 1000; // 600 sec
+
 WebPages::WebPages(QObject *parent)
     : QObject(parent)
+    , m_backgroundTimestamp(0)
 {
     QDBusConnection::systemBus().connect("com.nokia.mce", "/com/nokia/mce/signal",
                                          "com.nokia.mce.signal", "sig_memory_level_ind",
@@ -46,6 +51,15 @@ void WebPages::initialize(DeclarativeWebContainer *webContainer, QQmlComponent *
     if (!m_webContainer || !m_webPageComponent) {
         m_webContainer = webContainer;
         m_webPageComponent = webPageComponent;
+    }
+
+    connect(webContainer, SIGNAL(foregroundChanged()), this, SLOT(updateBackgroundTimestamp()));
+}
+
+void WebPages::updateBackgroundTimestamp()
+{
+    if (!m_webContainer->foreground()) {
+        m_backgroundTimestamp = QDateTime::currentMSecsSinceEpoch();
     }
 }
 
@@ -172,5 +186,11 @@ void WebPages::handleMemNotify(const QString &memoryLevel)
 {
     if (memoryLevel == QString("warning") || memoryLevel == QString("critical")) {
         m_activePages.virtualizeInactive();
+
+        if (!m_webContainer->foreground() &&
+            (QDateTime::currentMSecsSinceEpoch() - m_backgroundTimestamp) > gMemoryPressureTimeout) {
+            m_backgroundTimestamp = QDateTime::currentMSecsSinceEpoch();
+            QMozContext::GetInstance()->sendObserve(QString("memory-pressure"), QString("heap-minimize"));
+        }
     }
 }
