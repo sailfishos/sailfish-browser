@@ -187,8 +187,15 @@ void WebPageQueue::virtualizeInactive()
         return;
     }
 
+    DeclarativeWebPage* livePage = m_queue.at(0)->webPage;
+    Q_ASSERT(livePage);
+
     for (int i = 1; i < m_queue.count(); ++i) {
-        release(m_queue.at(i)->tabId, true);
+        DeclarativeWebPage* page = m_queue.at(i)->webPage;
+        if (page &&
+            (livePage->parentId() != (int)page->uniqueID() || (int)livePage->uniqueID() != page->parentId())) {
+            release(m_queue.at(i)->tabId, true);
+        }
     }
 
     m_livePagePrepended = false;
