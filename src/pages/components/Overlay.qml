@@ -111,7 +111,6 @@ PanelBackground {
                 searchField.enteringNewTabUrl = false
 
                 if (enteredPage) {
-                    console.log("Load enter url at bottom:", enteredPage.url, enteredPage.title)
                     webView.tabModel.newTab(enteredPage.url, enteredPage.title)
                     enteredPage = null
                 } else if (!toolBar.findInPageActive) {
@@ -183,8 +182,6 @@ PanelBackground {
                 }
 
                 overlayAnimator.drag()
-                console.log("Previous dragging state:", state)
-
             }
         }
 
@@ -224,7 +221,6 @@ PanelBackground {
                 onShowChrome: overlayAnimator.showChrome()
 
                 onCloseActiveTab: {
-                    console.log("Close active page")
                     // Activates (loads) the tab next to the currect active.
                     webView.tabModel.closeActiveTab()
                     if (webView.tabModel.count == 0) {
@@ -238,9 +234,10 @@ PanelBackground {
                     overlayAnimator.showOverlay()
                 }
                 onShareActivePage: {
-                    console.log("Share active page")
-
-                    pageStack.push(Qt.resolvedUrl("../ShareLinkPage.qml"), {"link" : webView.url, "linkTitle": webView.title})
+                    pageStack.push(Qt.resolvedUrl("../ShareLinkPage.qml"), {
+                                       "link" : webView.url,
+                                       "linkTitle": webView.title
+                                   })
                 }
                 onBookmarkActivePage: favoriteGrid.fetchAndSaveBookmark()
                 onRemoveActivePageFromBookmarks: bookmarkModel.removeBookmark(webView.url)
@@ -402,8 +399,6 @@ PanelBackground {
                 onCloseTab: {
                     webView.tabModel.remove(index)
                     if (webView.tabModel.count === 0) {
-                        console.log("All tabs closed open new tab view!!")
-                        // Call own slot.
                         enterNewTabUrl()
                     }
                 }

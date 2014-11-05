@@ -106,7 +106,6 @@ Page {
         portrait: browserPage.isPortrait
         maxLiveTabCount: 3
         toolbarHeight: overlay.toolBar.toolsHeight
-        onCanGoBackChanged: console.log("CAN GO BACK:", canGoBack)
         clip: true
     }
 

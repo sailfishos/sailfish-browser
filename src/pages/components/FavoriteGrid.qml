@@ -84,7 +84,6 @@ SilicaGridView {
 
         onAddToLauncher: {
             // url, title, favicon
-            console.log("url", url, title)
             pageStack.push(addToLauncherDialog,
                            {
                                "url": url,

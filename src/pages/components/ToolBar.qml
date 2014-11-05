@@ -197,7 +197,6 @@ Column {
                 }
 
                 onTapped: {
-                    console.log("find backwards:", findText)
                     webView.sendAsyncMessage("embedui:find", { text: findText, backwards: true, again: true })
                 }
             }
@@ -212,7 +211,6 @@ Column {
                 }
 
                 onTapped: {
-                    console.log("find forward:", findText)
                     webView.sendAsyncMessage("embedui:find", { text: findText, backwards: false, again: true })
                 }
             }

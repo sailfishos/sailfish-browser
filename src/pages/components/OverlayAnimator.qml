@@ -62,8 +62,6 @@ Item {
     }
 
     onStateChanged: {
-        console.log("State:", state)
-        console.trace()
         // Animation end changes to true state. Hence not like atTop = state !== "fullscreenOverlay"
         if (state !== "fullscreenOverlay") {
             atTop = false
