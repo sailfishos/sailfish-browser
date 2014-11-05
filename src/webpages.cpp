@@ -32,14 +32,18 @@
 #endif
 
 static const qint64 gMemoryPressureTimeout = 600 * 1000; // 600 sec
+// In normal cases gLowMemoryEnabled is true. Can be disabled e.g. for test runs.
+static const bool gLowMemoryEnabled = qgetenv("LOW_MEMORY_DISABLED").isEmpty();
 
 WebPages::WebPages(QObject *parent)
     : QObject(parent)
     , m_backgroundTimestamp(0)
 {
-    QDBusConnection::systemBus().connect("com.nokia.mce", "/com/nokia/mce/signal",
-                                         "com.nokia.mce.signal", "sig_memory_level_ind",
-                                         this, SLOT(handleMemNotify(QString)));
+    if (gLowMemoryEnabled) {
+        QDBusConnection::systemBus().connect("com.nokia.mce", "/com/nokia/mce/signal",
+                                             "com.nokia.mce.signal", "sig_memory_level_ind",
+                                             this, SLOT(handleMemNotify(QString)));
+    }
 }
 
 WebPages::~WebPages()
