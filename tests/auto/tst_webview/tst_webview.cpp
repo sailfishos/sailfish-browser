@@ -593,8 +593,8 @@ void tst_webview::restart()
     QVERIFY(!webContainer->canGoForward());
 
     QList<TestTab> historyOrder;
-    historyOrder.append(TestTab(formatUrl("testpage.html"), QString("TestPage")));
     historyOrder.append(TestTab(formatUrl("testuseragent.html"), QString("TestUserAgent")));
+    historyOrder.append(TestTab(formatUrl("testpage.html"), QString("TestPage")));
 
     // Before restart
     verifyHistory(historyOrder);
@@ -649,9 +649,9 @@ void tst_webview::changeTabAndLoad()
     QTest::qWait(1000);
 
     QList<TestTab> historyOrder;
-    historyOrder.append(TestTab(formatUrl("testpage.html"), QString("TestPage")));
-    historyOrder.append(TestTab(formatUrl("testuseragent.html"), QString("TestUserAgent")));
     historyOrder.append(TestTab(formatUrl("testwindowopen.html"), QString("Test window opening")));
+    historyOrder.append(TestTab(formatUrl("testuseragent.html"), QString("TestUserAgent")));
+    historyOrder.append(TestTab(formatUrl("testpage.html"), QString("TestPage")));
 
     verifyHistory(historyOrder);
 
@@ -662,7 +662,7 @@ void tst_webview::changeTabAndLoad()
     QTest::qWait(1000);
 
     // Should be after "testpage.html"
-    historyOrder.insert(1, TestTab(formatUrl("testselect.html"), QString("TestSelect")));
+    historyOrder.insert(0, TestTab(formatUrl("testselect.html"), QString("TestSelect")));
     verifyHistory(historyOrder);
 
     QCOMPARE(webContainer->url(), testSelect);
