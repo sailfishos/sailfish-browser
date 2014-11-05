@@ -21,6 +21,7 @@ class DeclarativeWebUtils : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString homePage READ homePage NOTIFY homePageChanged FINAL)
+    Q_PROPERTY(bool firstUseDone READ firstUseDone NOTIFY firstUseDoneChanged FINAL)
 
 public:
     explicit DeclarativeWebUtils(QObject *parent = 0);
@@ -36,6 +37,7 @@ public:
 
 signals:
     void homePageChanged();
+    void firstUseDoneChanged();
 
 private:
     QString m_homePage;
