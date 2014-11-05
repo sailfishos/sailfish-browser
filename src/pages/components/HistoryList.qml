@@ -28,7 +28,6 @@ SilicaListView {
         ListView.onAdd: AddAnimation { target: historyDelegate }
 
         Column {
-            id: row
             width: view.width - Theme.paddingLarge * 2
             x: Theme.paddingLarge
             anchors.verticalCenter: parent.verticalCenter
@@ -43,7 +42,6 @@ SilicaListView {
             }
 
             Label {
-                id: urlText
                 text: Theme.highlightText(url, search, Theme.highlightColor)
                 opacity: 0.6
                 color: highlighted ? Theme.highlightColor : Theme.primaryColor
