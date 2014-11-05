@@ -45,6 +45,10 @@ private slots:
     void cleanupTestCase();
 
 private:
+    void load(QString url);
+    void goBack();
+    void goForward();
+
     QString formatUrl(QString fileName) const;
     void verifyHistory(QList<TestTab> &historyOrder);
 
@@ -422,18 +426,45 @@ void tst_webview::testLiveTabCount()
     QCOMPARE(webContainer->m_webPages->m_activePages.count(), liveTabCount);
 }
 
+void tst_webview::load(QString url)
+{
+    QSignalSpy loadingChanged(webContainer, SIGNAL(loadingChanged()));
+    QSignalSpy grabbed(webContainer->webPage(), SIGNAL(grabResult(QString)));
+    webContainer->webPage()->loadTab(url, false);
+    waitSignals(loadingChanged, 2);
+    waitSignals(grabbed, 1);
+}
+
+void tst_webview::goBack()
+{
+    // We grab an image once the page is loaded. Thus, it's also a good
+    // checking that goBack loaded the page.
+    QSignalSpy grabbed(webContainer->webPage(), SIGNAL(grabResult(QString)));
+    webContainer->goBack();
+    waitSignals(grabbed, 1);
+}
+
+void tst_webview::goForward()
+{
+    // We grab an image once the page is loaded. Thus, it's also a good
+    // checking that goBack loaded the page.
+    QSignalSpy grabbed(webContainer->webPage(), SIGNAL(grabResult(QString)));
+    webContainer->goForward();
+    waitSignals(grabbed, 1);
+}
+
 void tst_webview::forwardBackwardNavigation()
 {
     QSignalSpy urlChangedSpy(webContainer, SIGNAL(urlChanged()));
     QSignalSpy titleChangedSpy(webContainer, SIGNAL(titleChanged()));
     QSignalSpy forwardSpy(webContainer, SIGNAL(canGoForwardChanged()));
     QSignalSpy backSpy(webContainer, SIGNAL(canGoBackChanged()));
-    QSignalSpy loadingChanged(webContainer, SIGNAL(loadingChanged()));
 
     QString url = formatUrl("testwindowopen.html");
     QString title = "Test window opening";
-    webContainer->webPage()->loadTab(url, false);
-    waitSignals(loadingChanged, 2);
+
+    QVERIFY(webContainer->webPage());
+    load(url);
 
     QCOMPARE(urlChangedSpy.count(), 1);
     QCOMPARE(titleChangedSpy.count(), 1);
@@ -443,8 +474,8 @@ void tst_webview::forwardBackwardNavigation()
 
     QCOMPARE(backSpy.count(), 1);
     QVERIFY(webContainer->canGoBack());
-    webContainer->goBack();
-    QTest::qWait(1000);
+    goBack();
+
     QCOMPARE(forwardSpy.count(), 1);
     QCOMPARE(backSpy.count(), 2);
     QCOMPARE(urlChangedSpy.count(), 2);
@@ -460,8 +491,7 @@ void tst_webview::forwardBackwardNavigation()
     QCOMPARE(urlChangedSpy.count(), 2);
     QCOMPARE(titleChangedSpy.count(), 2);
 
-    webContainer->goForward();
-    QTest::qWait(1000);
+    goForward();
 
     QCOMPARE(forwardSpy.count(), 2);
     QCOMPARE(backSpy.count(), 3);
@@ -475,9 +505,9 @@ void tst_webview::forwardBackwardNavigation()
     backSpy.clear();
     urlChangedSpy.clear();
     titleChangedSpy.clear();
-    webContainer->goBack();
-    QTest::qWait(1000);
+    goBack();
 
+    QTest::qWait(1000);
     QCOMPARE(forwardSpy.count(), 1);
     QCOMPARE(backSpy.count(), 1);
     QCOMPARE(urlChangedSpy.count(), 1);
@@ -487,9 +517,7 @@ void tst_webview::forwardBackwardNavigation()
     QVERIFY(webContainer->canGoForward());
     url = formatUrl("testurlscheme.html");
     title = "TestUrlScheme";
-    loadingChanged.clear();
-    webContainer->webPage()->loadTab(url, false);
-    waitSignals(loadingChanged, 2);
+    load(url);
 
     QCOMPARE(forwardSpy.count(), 2);
     QCOMPARE(backSpy.count(), 2);
@@ -503,9 +531,7 @@ void tst_webview::forwardBackwardNavigation()
 
     url = formatUrl("testuseragent.html");
     title = "TestUserAgent";
-    loadingChanged.clear();
-    webContainer->webPage()->loadTab(url, false);
-    waitSignals(loadingChanged, 2);
+    load(url);
 
     QCOMPARE(forwardSpy.count(), 2);
     QCOMPARE(backSpy.count(), 2);
@@ -518,8 +544,8 @@ void tst_webview::forwardBackwardNavigation()
 
     // testwebprompts.html, testurlscheme.html, testuseragent.html
     // Navigate twice back.
-    webContainer->goBack();
-    QTest::qWait(1000);
+    goBack();
+
     QCOMPARE(forwardSpy.count(), 3);
     // When goBack / goForward is called respected navigation direction is blocked immediately.
     // Only after information is returned from database we might unlock navigation direction.
@@ -532,8 +558,8 @@ void tst_webview::forwardBackwardNavigation()
     QVERIFY(webContainer->canGoForward());
 
     // Back to first page.
-    webContainer->goBack();
-    QTest::qWait(1000);
+    goBack();
+
     QCOMPARE(forwardSpy.count(), 3);
     QCOMPARE(backSpy.count(), 5);
     QCOMPARE(urlChangedSpy.count(), 5);
