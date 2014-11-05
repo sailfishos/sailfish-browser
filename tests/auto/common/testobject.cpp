@@ -33,6 +33,9 @@ TestObject::TestObject(QByteArray qmlData)
     QTime time = QTime::currentTime();
     qsrand((uint)time.msec());
 
+    mView.setPersistentOpenGLContext(true);
+    mView.setPersistentSceneGraph(true);
+
     setTestData(qmlData);
     mView.showFullScreen();
     QTest::qWaitForWindowExposed(&mView);
@@ -40,6 +43,9 @@ TestObject::TestObject(QByteArray qmlData)
 
 void TestObject::init(const QUrl &url)
 {
+    mView.setPersistentOpenGLContext(true);
+    mView.setPersistentSceneGraph(true);
+
     setTestUrl(url);
     mView.showFullScreen();
     QTest::qWaitForWindowExposed(&mView);
