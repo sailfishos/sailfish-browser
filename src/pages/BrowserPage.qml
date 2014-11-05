@@ -93,12 +93,6 @@ Page {
         }
     }
 
-    onStatusChanged: {
-        if (status === PageStatus.Inactive) {
-            MozContext.sendObserve("memory-pressure", null)
-        }
-    }
-
     HistoryModel {
         id: historyModel
     }

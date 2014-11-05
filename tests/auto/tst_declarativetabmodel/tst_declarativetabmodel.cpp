@@ -319,6 +319,7 @@ void tst_declarativetabmodel::multipleTabsWithSameUrls()
 
     QString page2Tab1Url = "http://www.foobar.com/page2";
     tabModel->updateUrl(tab1, true, page2Tab1Url, false);
+    QTest::qWait(1000);
     QCOMPARE(tabModel->activeTab().url(), page2Tab1Url);
     // This is a bit problematic. From model point of view only url has changed.
     // In real life between url change and title change there is a short moment
@@ -333,22 +334,33 @@ void tst_declarativetabmodel::multipleTabsWithSameUrls()
     QString page1Tab2Title = "First Page Too";
     tabModel->addTab(page1Tab2Url, page1Tab2Title);
     int tab2 = currentTabId();
+    QVERIFY(tab1 != tab2);
     QCOMPARE(tabModel->activeTab().url(), page1Tab2Url);
     QCOMPARE(tabModel->activeTab().title(), page1Tab2Title);
+    QTest::qWait(1000);
+
+    int index = tabModel->findTabIndex(tab1);
+    QModelIndex modelIndex = tabModel->createIndex(index, 0);
+
+    // tab1 has page2Tab1Url and empty title still.
+    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), page2Tab1Url);
+    QVERIFY(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString().isEmpty());
 
     QTest::qWait(1000);
 
     QString page2Tab2Url = page2Tab1Url;
     QString page2Tab2Title = "Second Page Too";
     tabModel->updateUrl(tab2, true, page2Tab2Url, false);
-    QCOMPARE(tabModel->activeTab().url(), page2Tab2Url);
-    QCOMPARE(tabModel->activeTab().url(), page2Tab2Url);
-    QVERIFY(tabModel->activeTab().title().isEmpty());
 
     QTest::qWait(1000);
 
+    QCOMPARE(tabModel->activeTab().url(), page2Tab2Url);
+    QVERIFY(tabModel->activeTab().title().isEmpty());
+
+    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), page2Tab1Url);
+    QVERIFY(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString().isEmpty());
+
     tabModel->updateTitle(tab2, true, page2Tab2Title);
-    QCOMPARE(tabModel->activeTab().title(), page2Tab2Title);
     QCOMPARE(tabModel->activeTab().title(), page2Tab2Title);
 
     QTest::qWait(1000);
@@ -407,6 +419,7 @@ void tst_declarativetabmodel::updateInvalidUrls()
     QFETCH(QString, expectedUrl);
     QFETCH(QString, url);
     tabModel->updateUrl(currentTabId(), true, url, false);
+    QTest::qWait(1000);
     QCOMPARE(tabModel->activeTab().url(), expectedUrl);
 }
 

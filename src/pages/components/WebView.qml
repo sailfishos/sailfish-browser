@@ -120,12 +120,6 @@ WebContainer {
 
     onTriggerLoad: webView.load(url, title)
 
-    onBackgroundChanged: {
-        if (background) {
-            MozContext.sendObserve("memory-pressure", "heap-minimize")
-        }
-    }
-
     visible: WebUtils.firstUseDone
 
     WebViewCreator {

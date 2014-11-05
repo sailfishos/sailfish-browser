@@ -54,6 +54,10 @@ public:
     int parentTabId(int tabId) const;
     void dumpPages() const;
 
+private slots:
+    void handleMemNotify(const QString &memoryLevel);
+    void updateBackgroundTimestamp();
+
 private:
     void updateStates(DeclarativeWebPage *oldActivePage, DeclarativeWebPage *newActivePage);
 
@@ -61,6 +65,7 @@ private:
     QPointer<QQmlComponent> m_webPageComponent;
     // Contains both virtual and real
     WebPageQueue m_activePages;
+    qint64 m_backgroundTimestamp;
 
     friend class tst_webview;
 };
