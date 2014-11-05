@@ -138,6 +138,9 @@ WebContainer {
             property string iconType
             readonly property bool activeWebPage: container.tabId == tabId
 
+            fullscreenHeight: container.fullscreenHeight
+            toolbarHeight: container.toolbarHeight
+
             loaded: loadProgress === 100 && !loading
             enabled: container.active
             // Active could pause e.g. video in cover by anding
@@ -145,8 +148,8 @@ WebContainer {
             active: visible || activeWebPage
 
             // There needs to be enough content for enabling chrome gesture
-            chromeGestureThreshold: container.toolbarHeight / 2
-            chromeGestureEnabled: contentHeight > container.fullscreenHeight + container.toolbarHeight
+            chromeGestureThreshold: toolbarHeight / 2
+            chromeGestureEnabled: (contentHeight > fullscreenHeight + toolbarHeight) && !forcedChrome
 
             signal selectionRangeUpdated(variant data)
             signal selectionCopied(variant data)
@@ -227,7 +230,7 @@ WebContainer {
 
             onLoadedChanged: {
                 if (loaded && !userHasDraggedWhileLoading) {
-                    container.resetHeight(false)
+                    resetHeight(false)
                     if (resurrectedContentRect) {
                         sendAsyncMessage("embedui:zoomToRect",
                                          {
@@ -254,8 +257,8 @@ WebContainer {
                     iconSize = 0
                     if (activeWebPage) {
                         container.loadProgress = 0
-                        container.resetHeight(false)
                     }
+                    resetHeight(false)
                 }
             }
 
