@@ -31,7 +31,7 @@ Requires: sailfish-browser-settings = %{version}
 Requires: qt5-plugin-imageformat-ico
 Requires: qt5-plugin-imageformat-gif
 Requires: qt5-plugin-position-geoclue
-Requires: mapplauncherd-booster-silica-qt5
+Requires: mapplauncherd-booster-browser
 Requires: desktop-file-utils
 Requires: qt5-qtgraphicaleffects
 Requires: nemo-qml-plugin-contextkit-qt5
