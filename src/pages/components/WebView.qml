@@ -281,7 +281,6 @@ WebContainer {
                     if (activeWebPage) {
                         container.loadProgress = 0
                     }
-                    resetHeight(false)
                 }
             }
 
