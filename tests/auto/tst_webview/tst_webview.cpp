@@ -433,6 +433,7 @@ void tst_webview::load(QString url)
     webContainer->webPage()->loadTab(url, false);
     waitSignals(loadingChanged, 2);
     waitSignals(grabbed, 1);
+    QTest::qWait(100);
 }
 
 void tst_webview::goBack()
@@ -442,6 +443,7 @@ void tst_webview::goBack()
     QSignalSpy grabbed(webContainer->webPage(), SIGNAL(grabResult(QString)));
     webContainer->goBack();
     waitSignals(grabbed, 1);
+    QTest::qWait(100);
 }
 
 void tst_webview::goForward()
@@ -451,6 +453,7 @@ void tst_webview::goForward()
     QSignalSpy grabbed(webContainer->webPage(), SIGNAL(grabResult(QString)));
     webContainer->goForward();
     waitSignals(grabbed, 1);
+    QTest::qWait(100);
 }
 
 void tst_webview::forwardBackwardNavigation()
@@ -601,9 +604,7 @@ void tst_webview::restart()
 
     // Title "TestUserAgent"
     QString testUserAgentUrl = formatUrl("testuseragent.html");
-    QSignalSpy loadingChanged(webContainer, SIGNAL(loadingChanged()));
-    webContainer->webPage()->loadTab(testUserAgentUrl, false);
-    waitSignals(loadingChanged, 2);
+    load(testUserAgentUrl);
 
     QCOMPARE(tabModel->activeTab().url(), testUserAgentUrl);
     QCOMPARE(webContainer->url(), testUserAgentUrl);
