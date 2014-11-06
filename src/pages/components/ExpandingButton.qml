@@ -16,7 +16,7 @@ import "." as Browser
 Browser.IconButton {
     property int expandedWidth
 
-    clip: true
+    clip: opacity < 1.0
     width: opacity * expandedWidth
     opacity: active ? 1.0 : 0.0
 }

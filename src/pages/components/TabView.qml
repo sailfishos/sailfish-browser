@@ -29,7 +29,6 @@ SilicaGridView {
 
     width: parent.width
     height: parent.height
-    clip: true
     currentIndex: -1
     header: spacer
     footer: spacer

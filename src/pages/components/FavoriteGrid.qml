@@ -34,7 +34,6 @@ SilicaGridView {
     }
 
     signal load(string url, string title)
-    // Do we need to at all
     signal newTab(string url, string title)
     signal share(string url, string title)
 

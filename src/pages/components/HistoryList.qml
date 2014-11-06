@@ -52,7 +52,7 @@ SilicaListView {
         }
 
         onClicked: {
-            Qt.inputMethod.hide()
+            view.focus = true
             view.load(model.url, model.title)
         }
     }

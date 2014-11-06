@@ -356,10 +356,11 @@ PanelBackground {
 
                 onMovingChanged: if (moving) favoriteGrid.focus = true
                 onLoad: overlay.loadPage(url, title)
-
-                // Do we need this one???
                 onNewTab: {
-                    toolBar.reset("", true)
+                    searchField.resetUrl(url)
+                    // Not the best property name but functionality of opening a favorite
+                    // to a new tab is exactly the same as opening new tab by typing a url.
+                    searchField.enteringNewTabUrl = true
                     overlay.loadPage(url, title)
                 }
 

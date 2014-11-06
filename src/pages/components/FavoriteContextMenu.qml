@@ -20,12 +20,11 @@ Component {
         property string title
         property string url
 
-        // Do we want this one?
-//        MenuItem {
-//            //% "Open in new tab"
-//            text: qsTrId("sailfish_browser-me-open_new_tab")
-//            onClicked: view.newTab(url, title)
-//        }
+        MenuItem {
+            //% "Open in new tab"
+            text: qsTrId("sailfish_browser-me-open_new_tab")
+            onClicked: view.newTab(url, title)
+        }
 
         MenuItem {
             //: Share link from browser pulley menu

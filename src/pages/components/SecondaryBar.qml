@@ -24,7 +24,7 @@ Item {
 
     width: parent.width
     height: isPortrait ? Settings.toolbarLarge : Settings.toolbarSmall
-    clip: true
+    clip: opacity < 1.0
 
     Row {
         width: parent.width

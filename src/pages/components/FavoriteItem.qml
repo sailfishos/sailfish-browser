@@ -21,7 +21,6 @@ BackgroundItem {
     _showPress: false
 
     onPressAndHold: {
-        Qt.inputMethod.hide()
         _pressAndHold = true
         browserPage.focus = true
     }
