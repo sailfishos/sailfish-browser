@@ -88,6 +88,8 @@ private:
     QVariant m_resurrectedContentRect;
 };
 
+QDebug operator<<(QDebug, const DeclarativeWebPage *);
+
 QML_DECLARE_TYPE(DeclarativeWebPage)
 
 #endif
