@@ -23,6 +23,7 @@ DeclarativeWebPage::DeclarativeWebPage(QQuickItem *parent)
     , m_loaded(false)
     , m_userHasDraggedWhileLoading(false)
     , m_fullscreen(false)
+    , m_forcedChrome(false)
     , m_domContentLoaded(false)
     , m_urlHasChanged(false)
     , m_backForwardNavigation(false)
@@ -30,6 +31,8 @@ DeclarativeWebPage::DeclarativeWebPage(QQuickItem *parent)
     connect(this, SIGNAL(viewInitialized()), this, SLOT(onViewInitialized()));
     connect(this, SIGNAL(recvAsyncMessage(const QString, const QVariant)),
             this, SLOT(onRecvAsyncMessage(const QString&, const QVariant&)));
+    connect(this, SIGNAL(contentHeightChanged()), this, SLOT(resetHeight()));
+    connect(this, SIGNAL(scrollableOffsetChanged()), this, SLOT(resetHeight()));
 }
 
 DeclarativeWebPage::~DeclarativeWebPage()
@@ -117,6 +120,56 @@ void DeclarativeWebPage::loadTab(QString newUrl, bool force)
     }
 }
 
+/**
+ * Use this to lock to chrome mode. This disables the gesture
+ * that normally enables fullscreen mode. The chromeGestureEnabled property
+ * is bound to this so that contentHeight changes do not re-enable the
+ * gesture.
+ *
+ * When gesture is allowed to be used again, unlock call by forceChrome(false).
+ *
+ * Used for instance when find-in-page view is active that is part of
+ * the new browser user interface.
+ */
+void DeclarativeWebPage::forceChrome(bool forcedChrome)
+{
+    // This way we don't break chromeGestureEnabled and chrome bindings.
+    setChromeGestureEnabled(!forcedChrome);
+    if (forcedChrome) {
+        setChrome(forcedChrome);
+    }
+    // Without chrome respect content height.
+    resetHeight(!forcedChrome);
+    if (m_forcedChrome != forcedChrome) {
+        m_forcedChrome = forcedChrome;
+        emit forcedChromeChanged();
+    }
+}
+
+void DeclarativeWebPage::resetHeight(bool respectContentHeight)
+{
+    if (!state().isEmpty()) {
+        return;
+    }
+
+    // Application active
+    if (respectContentHeight && !m_forcedChrome) {
+        // Handle webPage height over here, BrowserPage.qml loading
+        // reset might be redundant as we have also loaded trigger
+        // reset. However, I'd leave it there for safety reasons.
+        // We need to reset height always back to short height when loading starts
+        // so that after tab change there is always initial short composited height.
+        // Height may expand when content is moved.
+        if (contentHeight() > (m_fullScreenHeight + m_toolbarHeight) || fullscreen()) {
+            setHeight(m_fullScreenHeight);
+        } else {
+            setHeight(m_fullScreenHeight - m_toolbarHeight);
+        }
+    } else {
+        setHeight(m_fullScreenHeight - m_toolbarHeight);
+    }
+}
+
 void DeclarativeWebPage::componentComplete()
 {
     QuickMozView::componentComplete();
@@ -143,11 +196,16 @@ bool DeclarativeWebPage::fullscreen() const
     return m_fullscreen;
 }
 
+bool DeclarativeWebPage::forcedChrome() const
+{
+    return m_forcedChrome;
+}
+
 void DeclarativeWebPage::setFullscreen(const bool fullscreen)
 {
     if (m_fullscreen != fullscreen) {
         m_fullscreen = fullscreen;
-        m_container->resetHeight();
+        resetHeight();
         emit fullscreenChanged();
     }
 }

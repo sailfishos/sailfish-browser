@@ -387,15 +387,13 @@ bool DeclarativeWebContainer::activatePage(int tabId, bool force)
         WebPageActivationData activationData = m_webPages->page(tabId, m_model->newTabParentId());
         activationData.webPage->disconnect(this);
         setWebPage(activationData.webPage);
-        m_webPage->setChrome(true);
         // Reset always height so that orentation change is taken into account.
-        resetHeight();
+        m_webPage->forceChrome(false);
+        m_webPage->setChrome(true);
         setLoadProgress(m_webPage->loadProgress());
 
         connect(m_webPage, SIGNAL(imeNotification(int,bool,int,int,QString)),
                 this, SLOT(imeNotificationChanged(int,bool,int,int,QString)), Qt::UniqueConnection);
-        connect(m_webPage, SIGNAL(contentHeightChanged()), this, SLOT(resetHeight()), Qt::UniqueConnection);
-        connect(m_webPage, SIGNAL(scrollableOffsetChanged()), this, SLOT(resetHeight()), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(windowCloseRequested()), this, SLOT(closeWindow()), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(urlChanged()), this, SLOT(onPageUrlChanged()), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(loadingChanged()), this, SIGNAL(loadingChanged()), Qt::UniqueConnection);
@@ -448,26 +446,11 @@ bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
 
 void DeclarativeWebContainer::resetHeight(bool respectContentHeight)
 {
-    if (!m_webPage || !m_webPage->state().isEmpty()) {
+    if (!m_webPage) {
         return;
     }
 
-    // Application active
-    if (respectContentHeight) {
-        // Handle webPage height over here, BrowserPage.qml loading
-        // reset might be redundant as we have also loaded trigger
-        // reset. However, I'd leave it there for safety reasons.
-        // We need to reset height always back to short height when loading starts
-        // so that after tab change there is always initial short composited height.
-        // Height may expand when content is moved.
-        if (contentHeight() > (m_fullScreenHeight + m_toolbarHeight) || m_webPage->fullscreen()) {
-            m_webPage->setHeight(m_fullScreenHeight);
-        } else {
-            m_webPage->setHeight(m_fullScreenHeight - m_toolbarHeight);
-        }
-    } else {
-        m_webPage->setHeight(m_fullScreenHeight - m_toolbarHeight);
-    }
+    m_webPage->resetHeight(respectContentHeight);
 }
 
 void DeclarativeWebContainer::imeNotificationChanged(int state, bool open, int cause, int focusChange, const QString &type)
