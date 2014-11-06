@@ -126,65 +126,62 @@ Column {
             onTapped: webView.goBack()
         }
 
-        Item {
+        MouseArea {
+            id: touchArea
+
+            readonly property bool down: pressed && containsMouse
+
             height: parent.height
             width: toolBarRow.width - (tabButton.width + reloadButton.width + backIcon.width + menuButton.width)
+            enabled: !showFindButtons
 
-            MouseArea {
-                id: touchArea
+            onClicked: toolBarRow.showOverlay()
 
-                readonly property bool down: pressed && containsMouse
+            Label {
+                anchors.verticalCenter: parent.verticalCenter
+                width: parent.width + Theme.paddingMedium
+                color: touchArea.down ? Theme.highlightColor : Theme.primaryColor
 
-                anchors.fill: parent
-                enabled: opacity === 1.0
-                opacity: showFindButtons ? 0.0 : 1.0
-
-                Behavior on opacity { FadeAnimation {} }
-
-                Label {
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: parent.width + Theme.paddingMedium
-                    color: touchArea.down ? Theme.highlightColor : Theme.primaryColor
-
-                    text: {
-                        if (findInPageActive) {
-                            //: No text search results were found from the page.
-                            //% "No results"
-                            return qsTrId("sailfish_browser-la-no_results")
-                        } else if (url == "about:blank") {
-                            //: Placeholder text for url typing and searching
-                            //% "Type URL or search"
-                            return qsTrId("sailfish_browser-ph-type_url_or_search")
-                        } else if (url) {
-                            return parseDisplayableUrl(url)
-                        } else if (webView.contentItem) {
-                            //: Loading text that is visible when url is not yet resolved.
-                            //% "Loading"
-                            return qsTrId("sailfish_browser-la-loading")
-                        } else {
-                            //: All tabs have been closed.
-                            //% "No tabs"
-                            return qsTrId("sailfish_browser-la-no_tabs")
-                        }
-                    }
-
-                    truncationMode: TruncationMode.Fade
-
-                    function parseDisplayableUrl(url) {
-                        var returnUrl = WebUtils.displayableUrl(url)
-                        returnUrl = returnUrl.substring(returnUrl.lastIndexOf("/") + 1) // Strip protocol
-                        if (returnUrl.indexOf("www.") === 0) {
-                            returnUrl = returnUrl.substring(4)
-                        } else if (returnUrl.indexOf("m.") === 0 && returnUrl.length > 2) {
-                            returnUrl = returnUrl.substring(2)
-                        } else if (returnUrl.indexOf("mobile.") === 0 && returnUrl.length > 7) {
-                            returnUrl = returnUrl.substring(7)
-                        }
-
-                        return returnUrl || url
+                text: {
+                    if (findInPageActive) {
+                        //: No text search results were found from the page.
+                        //% "No results"
+                        return qsTrId("sailfish_browser-la-no_results")
+                    } else if (url == "about:blank") {
+                        //: Placeholder text for url typing and searching
+                        //% "Type URL or search"
+                        return qsTrId("sailfish_browser-ph-type_url_or_search")
+                    } else if (url) {
+                        return parseDisplayableUrl(url)
+                    } else if (webView.contentItem) {
+                        //: Loading text that is visible when url is not yet resolved.
+                        //% "Loading"
+                        return qsTrId("sailfish_browser-la-loading")
+                    } else {
+                        //: All tabs have been closed.
+                        //% "No tabs"
+                        return qsTrId("sailfish_browser-la-no_tabs")
                     }
                 }
-                onClicked: toolBarRow.showOverlay()
+
+                truncationMode: TruncationMode.Fade
+
+                opacity: showFindButtons ? 0.0 : 1.0
+                Behavior on opacity { FadeAnimation {} }
+
+                function parseDisplayableUrl(url) {
+                    var returnUrl = WebUtils.displayableUrl(url)
+                    returnUrl = returnUrl.substring(returnUrl.lastIndexOf("/") + 1) // Strip protocol
+                    if (returnUrl.indexOf("www.") === 0) {
+                        returnUrl = returnUrl.substring(4)
+                    } else if (returnUrl.indexOf("m.") === 0 && returnUrl.length > 2) {
+                        returnUrl = returnUrl.substring(2)
+                    } else if (returnUrl.indexOf("mobile.") === 0 && returnUrl.length > 7) {
+                        returnUrl = returnUrl.substring(7)
+                    }
+
+                    return returnUrl || url
+                }
             }
 
             Browser.ExpandingButton {
