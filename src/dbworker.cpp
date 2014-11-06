@@ -574,6 +574,7 @@ void DBWorker::getHistory(const QString &filter)
     // Skip empty titles always
     QString filterQuery("WHERE (NULLIF(link.title, '') IS NOT NULL AND link.url NOT LIKE 'about:%' AND %1) ");
     QString order;
+
     if (!filter.isEmpty()) {
         filterQuery = filterQuery.arg(QString("(link.url LIKE :search OR link.title LIKE :search)"));
         order = QString("LENGTH(link.url), link.title, history.date ASC");

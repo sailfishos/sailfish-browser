@@ -687,7 +687,7 @@ void tst_webview::changeTabAndLoad()
     webContainer->webPage()->loadTab(testSelect, false);
     waitSignals(loadingChanged, 2);
 
-    // Should be after "testselect.html" (most recent)
+    // Should be before "testpage.html"
     historyOrder.insert(0, TestTab(formatUrl("testselect.html"), QString("TestSelect")));
     verifyHistory(historyOrder);
 

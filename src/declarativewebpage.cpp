@@ -144,6 +144,17 @@ void DeclarativeWebPage::grabThumbnail()
     connect(m_thumbnailResult.data(), SIGNAL(ready()), this, SLOT(thumbnailReady()));
 }
 
+/**
+ * Use this to lock to chrome mode. This disables the gesture
+ * that normally enables fullscreen mode. The chromeGestureEnabled property
+ * is bound to this so that contentHeight changes do not re-enable the
+ * gesture.
+ *
+ * When gesture is allowed to be used again, unlock call by forceChrome(false).
+ *
+ * Used for instance when find-in-page view is active that is part of
+ * the new browser user interface.
+ */
 void DeclarativeWebPage::forceChrome(bool forcedChrome)
 {
     // This way we don't break chromeGestureEnabled and chrome bindings.
@@ -292,7 +303,8 @@ void DeclarativeWebPage::setFullscreen(const bool fullscreen)
     }
 }
 
-QDebug operator<<(QDebug dbg, const DeclarativeWebPage *page) {
+QDebug operator<<(QDebug dbg, const DeclarativeWebPage *page)
+{
     if (!page) {
         return dbg << "DeclarativeWebPage (this = 0x0)";
     }
