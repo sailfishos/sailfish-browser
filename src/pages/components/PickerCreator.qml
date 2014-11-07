@@ -62,113 +62,31 @@ Item {
         if (mode == FileUploadMode.OpenMultiple) {
             switch (filter) {
             case FileUploadFilter.Image:
-                pageStack.push(multiImagePickerComponent)
+                pageStack.push(Qt.resolvedUrl("pickers/MultiImagePicker.qml"), {"creator": pickerCreator})
                 break
             case FileUploadFilter.Audio:
-                pageStack.push(multiMusicPickerComponent)
+                pageStack.push(Qt.resolvedUrl("pickers/MultiMusicPicker.qml"), {"creator": pickerCreator})
                 break
             case FileUploadFilter.Video:
-                pageStack.push(multiVideoPickerComponent)
+                pageStack.push(Qt.resolvedUrl("pickers/MultiVideoPicker.qml"), {"creator": pickerCreator})
                 break
             default:
-                pageStack.push(multiContentPickerComponent)
+                pageStack.push(Qt.resolvedUrl("pickers/MultiContentPicker.qml"), {"creator": pickerCreator})
             }
         } else {
             switch (filter) {
             case FileUploadFilter.Image:
-                pageStack.push(imagePickerComponent)
+                pageStack.push(Qt.resolvedUrl("pickers/ImagePicker.qml"), {"creator": pickerCreator})
                 break
             case FileUploadFilter.Audio:
-                pageStack.push(musicPickerComponent)
+                pageStack.push(Qt.resolvedUrl("pickers/MusicPicker.qml"), {"creator": pickerCreator})
                 break
             case FileUploadFilter.Video:
-                pageStack.push(videoPickerComponent)
+                pageStack.push(Qt.resolvedUrl("pickers/VideoPicker.qml"), {"creator": pickerCreator})
                 break
             default:
-                pageStack.push(contentPickerComponent)
+                pageStack.push(Qt.resolvedUrl("pickers/ContentPicker.qml"), {"creator": pickerCreator})
             }
-        }
-    }
-
-
-    Component  {
-        id: imagePickerComponent
-        ImagePickerPage {
-            //: For choosing image to send to the website from the device
-            //% "Upload image"
-            title: qsTrId("sailfish_browser-he-upload_image")
-            Component.onDestruction: sendResponse(selectedContent)
-        }
-    }
-
-    Component  {
-        id: multiImagePickerComponent
-        MultiImagePickerDialog {
-            //: For choosing images to send to the website from the device
-            //% "Upload images"
-            title: qsTrId("sailfish_browser-he-upload_images")
-            Component.onDestruction: sendResponseList(selectedContent)
-        }
-    }
-
-
-    Component  {
-        id: contentPickerComponent
-        ContentPickerPage {
-            //: For choosing any file (document/image/video/audio) to send to the website from the device
-            //% "Upload file"
-            title: qsTrId("sailfish_browser-he-upload_file")
-            Component.onDestruction: sendResponse(selectedContent)
-        }
-    }
-
-    Component  {
-        id: multiContentPickerComponent
-        MultiContentPickerDialog {
-            //: For choosing files (document/image/video/audio) to send to the website from the device
-            //% "Upload files"
-            title: qsTrId("sailfish_browser-he-upload_files")
-            Component.onDestruction: sendResponseList(selectedContent)
-        }
-    }
-
-    Component  {
-        id: videoPickerComponent
-        VideoPickerPage {
-            //: For choosing video to send to the website from the device
-            //% "Upload video"
-            title: qsTrId("sailfish_browser-he-upload_video")
-            Component.onDestruction: sendResponse(selectedContent)
-        }
-    }
-
-    Component  {
-        id: multiVideoPickerComponent
-        MultiVideoPickerDialog {
-            //: For choosing videos to send to the website from the device
-            //% "Upload videos"
-            title: qsTrId("sailfish_browser-he-upload_videos")
-            Component.onDestruction: sendResponseList(selectedContent)
-        }
-    }
-
-    Component  {
-        id: musicPickerComponent
-        MusicPickerPage {
-            //: For choosing audio file to send to the website from the device
-            //% "Upload audio file"
-            title: qsTrId("sailfish_browser-he-upload_audio")
-            Component.onDestruction: sendResponse(selectedContent)
-        }
-    }
-
-    Component  {
-        id: multiMusicPickerComponent
-        MultiMusicPickerDialog {
-            //: For choosing audio files to send to the website from the device
-            //% "Upload audio files"
-            title: qsTrId("sailfish_browser-he-upload_audio_files")
-            Component.onDestruction: sendResponseList(selectedContent)
         }
     }
 }
