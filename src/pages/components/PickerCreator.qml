@@ -85,18 +85,8 @@ Item {
                 pageStack.push(videoPickerComponent)
                 break
             default:
-                pageStack.push(contentPickerComponent)
+                pageStack.push(Qt.resolvedUrl("pickers/ContentPicker.qml"), {"creator": pickerCreator})
             }
-        }
-    }
-
-    Component  {
-        id: contentPickerComponent
-        ContentPickerPage {
-            //: For choosing any file (document/image/video/audio) to send to the website from the device
-            //% "Upload file"
-            title: qsTrId("sailfish_browser-he-upload_file")
-            Component.onDestruction: sendResponse(selectedContent)
         }
     }
 
