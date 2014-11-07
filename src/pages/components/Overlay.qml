@@ -13,7 +13,6 @@ import QtQuick 2.2
 import Sailfish.Silica 1.0
 import Sailfish.Browser 1.0
 import "." as Browser
-import ".." as Pages
 
 PanelBackground {
     id: overlay
@@ -30,7 +29,7 @@ PanelBackground {
 
     function loadPage(url, title)  {
         if (url == "about:config") {
-            pageStack.push(configWarningDialog);
+            pageStack.push(Qt.resolvedUrl("ConfigWarning.qml"));
         } else {
             // let gecko figure out how to handle malformed URLs
             var pageUrl = url
@@ -411,25 +410,6 @@ PanelBackground {
 
                 Component.onCompleted: positionViewAtIndex(webView.tabModel.activeTabIndex, ListView.Center)
             }
-        }
-    }
-
-    Component {
-        id: configWarningDialog
-        ConfirmDialog {
-            //: Warning of changing browser configurations.
-            //% "Changing these advanced settings can cause issues with stability, security and performance of Sailfish Browser. Continue ?"
-            text: qsTrId("sailfish_browser-la-config-warning");
-            acceptDestination: configDialog
-        }
-    }
-
-    Component {
-        id: configDialog
-        Pages.ConfigDialog {
-            // On accept pop back to browserPage
-            acceptDestination: browserPage
-            acceptDestinationAction: PageStackAction.Pop
         }
     }
 }
