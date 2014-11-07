@@ -18,7 +18,7 @@ PanelBackground {
     id: overlay
 
     property bool active
-    property alias webView: overlayAnimator.webView
+    property Item webView
     property Item browserPage
     property alias historyModel: historyList.model
     property alias toolBar: toolBar
@@ -28,6 +28,10 @@ PanelBackground {
     property var enteredPage
 
     function loadPage(url, title)  {
+        if (firstUseOverlay) {
+            firstUseOverlay.done()
+        }
+
         if (url == "about:config") {
             pageStack.push(Qt.resolvedUrl("ConfigWarning.qml"));
         } else {
@@ -104,6 +108,7 @@ PanelBackground {
         overlay: overlay
         portrait: browserPage.isPortrait
         active: Qt.application.active
+        webView: firstUseOverlay ? firstUseOverlay : overlay.webView
 
         onAtBottomChanged: {
             if (atBottom) {
@@ -159,7 +164,7 @@ PanelBackground {
 
         width: parent.width
         height: historyContainer.height
-        enabled: !webView.fullscreenMode && webView.contentItem
+        enabled: !webView.fullscreenMode && (webView.contentItem || firstUseOverlay)
 
         drag.target: overlay
         drag.filterChildren: true
@@ -251,7 +256,7 @@ PanelBackground {
 
                 function resetUrl(url) {
                     // Reset first text and then mark as unedited.
-                    text = url === "about:blank" ? "" : url
+                    text = url === "about:blank" ? "" : url || ""
                     edited = false
                 }
 
@@ -378,7 +383,7 @@ PanelBackground {
             property Item activeWebPage
 
             onStatusChanged: {
-                if (status == PageStatus.Active) {
+                if (activeWebPage && status == PageStatus.Active) {
                     activeWebPage.grabToFile()
                 }
             }

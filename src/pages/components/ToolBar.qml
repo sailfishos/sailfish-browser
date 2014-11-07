@@ -87,16 +87,8 @@ Column {
             Browser.TabButton {
                 opacity: secondaryToolsActive || findInPageActive ? 0.0 : 1.0
                 horizontalOffset: toolsRow.horizontalOffset
-                label.visible: webView.tabModel.count > 0
                 label.text: webView.tabModel.count
-                onTapped: {
-                    if (firstUseOverlay) {
-                        firstUseOverlay.visible = false
-                        firstUseOverlay.destroy()
-                    }
-                    if (!WebUtils.firstUseDone) WebUtils.firstUseDone = true
-                    toolBarRow.showTabs()
-                }
+                onTapped: toolBarRow.showTabs()
             }
 
             Browser.IconButton {

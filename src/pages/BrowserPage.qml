@@ -21,7 +21,6 @@ Page {
 
     property Item firstUseOverlay
     property Item debug
-    property alias firstUseFullscreen: webView.firstUseFullscreen
     property Component tabPageComponent
 
     property alias tabs: webView.tabModel
@@ -117,7 +116,7 @@ Page {
 
         MouseArea {
             anchors.fill: parent
-            enabled: overlay.animator.atTop && webView.contentItem
+            enabled: overlay.animator.atTop && (webView.contentItem || firstUseOverlay)
             onClicked: overlay.dismiss()
         }
     }
@@ -167,8 +166,7 @@ Page {
 
             // We have incoming URL so let's show it
             if (firstUseOverlay) {
-                firstUseOverlay.destroy()
-                webView.visible = true
+                firstUseOverlay.dismiss()
             }
 
             if (browserPage.status !== PageStatus.Active) {
@@ -187,7 +185,13 @@ Page {
         if (!WebUtils.firstUseDone) {
             var component = Qt.createComponent(Qt.resolvedUrl("components/FirstUseOverlay.qml"))
             if (component.status == Component.Ready) {
-                firstUseOverlay = component.createObject(browserPage, {"width":browserPage.width, "height":browserPage.heigh, "gestureThreshold" : toolBar.toolsHeight});
+                // Parent to browserPage so that FirstUseOverlay is visible as WebView is invisible
+                // when FirstUseOverlay is visible.
+                firstUseOverlay = component.createObject(browserPage, {
+                                                             "width": webView.width,
+                                                             "height": webView.height,
+                                                             "fullscreenHeight": browserPage.height,
+                                                             "gestureThreshold" : webView.toolbarHeight / 2});
             } else {
                 console.log("FirstUseOverlay create failed " + component.errorString())
             }

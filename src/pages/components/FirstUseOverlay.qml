@@ -14,12 +14,31 @@ import Sailfish.Silica 1.0
 
 
 SilicaFlickable {
-    anchors.fill: parent
-
     property double startY
     property double gestureThreshold
 
+    // These properties allows us to fake the FirstUseOverlay
+    // for OverlayAnimator to be similar to WebView itself.
+    property real fullscreenHeight
+    property bool fullscreenMode
+
+    function done() {
+        if (!WebUtils.firstUseDone) {
+            WebUtils.firstUseDone = true
+        }
+        dismiss()
+    }
+
+    function dismiss() {
+        visible = false
+        firstUseOverlay = null
+        webView.visible = true
+        destroy()
+    }
+
     contentHeight: contentColumn.height
+    z: -1
+    clip: true
 
     onFlickStarted: startY = contentY
     onFlickEnded: startY = contentY
@@ -28,9 +47,12 @@ SilicaFlickable {
         var offset = contentY
         var currentDelta = offset - startY
 
-        if (Math.abs(currentDelta) > gestureThreshold) {
-            browserPage.firstUseFullscreen = currentDelta > 0
+        if (currentDelta > gestureThreshold) {
             startY = contentY
+            fullscreenMode = true
+        } else if (currentDelta < -gestureThreshold) {
+            startY = contentY
+            fullscreenMode = false
         }
     }
 
@@ -43,7 +65,7 @@ SilicaFlickable {
             right: parent.right
         }
         spacing: Theme.paddingLarge
-        height: window.height + gestureThreshold * 2
+        height: window.height + gestureThreshold * 8
 
         FirstUseTip {
             //: Hello, here's few tips about the browser toolbar

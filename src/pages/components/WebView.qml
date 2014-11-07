@@ -21,7 +21,6 @@ WebContainer {
     id: webView
 
     property color _decoratorColor: Theme.highlightDimmerColor
-    property bool firstUseFullscreen
     readonly property bool moving: contentItem ? contentItem.moving : false
 
     property bool findInPageHasResult
@@ -107,7 +106,7 @@ WebContainer {
     inputPanelHeight: window.pageStack.panelSize
     inputPanelOpenHeight: window.pageStack.imSize
     fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) ||
-                    (contentItem && contentItem.fullscreen) || firstUseFullscreen
+                    (contentItem && contentItem.fullscreen)
     _readyToLoad: contentItem && contentItem.viewReady && tabModel.loaded
 
     favicon: contentItem ? contentItem.favicon : ""
