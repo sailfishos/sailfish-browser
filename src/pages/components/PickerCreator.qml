@@ -76,7 +76,7 @@ Item {
         } else {
             switch (filter) {
             case FileUploadFilter.Image:
-                pageStack.push(imagePickerComponent)
+                pageStack.push(Qt.resolvedUrl("pickers/ImagePicker.qml"), {"creator": pickerCreator})
                 break
             case FileUploadFilter.Audio:
                 pageStack.push(musicPickerComponent)
@@ -87,17 +87,6 @@ Item {
             default:
                 pageStack.push(contentPickerComponent)
             }
-        }
-    }
-
-
-    Component  {
-        id: imagePickerComponent
-        ImagePickerPage {
-            //: For choosing image to send to the website from the device
-            //% "Upload image"
-            title: qsTrId("sailfish_browser-he-upload_image")
-            Component.onDestruction: sendResponse(selectedContent)
         }
     }
 
