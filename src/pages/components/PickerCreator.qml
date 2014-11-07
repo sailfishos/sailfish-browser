@@ -71,7 +71,7 @@ Item {
                 pageStack.push(multiVideoPickerComponent)
                 break
             default:
-                pageStack.push(multiContentPickerComponent)
+                pageStack.push(Qt.resolvedUrl("pickers/MultiContentPicker.qml"), {"creator": pickerCreator})
             }
         } else {
             switch (filter) {
@@ -87,16 +87,6 @@ Item {
             default:
                 pageStack.push(Qt.resolvedUrl("pickers/ContentPicker.qml"), {"creator": pickerCreator})
             }
-        }
-    }
-
-    Component  {
-        id: multiContentPickerComponent
-        MultiContentPickerDialog {
-            //: For choosing files (document/image/video/audio) to send to the website from the device
-            //% "Upload files"
-            title: qsTrId("sailfish_browser-he-upload_files")
-            Component.onDestruction: sendResponseList(selectedContent)
         }
     }
 

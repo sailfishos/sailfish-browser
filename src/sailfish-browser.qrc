@@ -39,6 +39,7 @@
     <file>pages/components/ResourceController.qml</file>
     <file>pages/components/pickers/ContentPicker.qml</file>
     <file>pages/components/pickers/ImagePicker.qml</file>
+    <file>pages/components/pickers/MultiContentPicker.qml</file>
     <file>pages/components/pickers/MultiImagePicker.qml</file>
     <file>pages/components/graphic-radial-mask.png</file>
 </qresource>
