@@ -41,6 +41,7 @@
     <file>pages/components/pickers/ImagePicker.qml</file>
     <file>pages/components/pickers/MultiContentPicker.qml</file>
     <file>pages/components/pickers/MultiImagePicker.qml</file>
+    <file>pages/components/pickers/MultiMusicPicker.qml</file>
     <file>pages/components/pickers/MultiVideoPicker.qml</file>
     <file>pages/components/pickers/MusicPicker.qml</file>
     <file>pages/components/pickers/VideoPicker.qml</file>
