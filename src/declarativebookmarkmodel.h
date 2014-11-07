@@ -15,15 +15,12 @@
 #include <QAbstractListModel>
 #include <QStringList>
 #include <QMap>
-#include <QQmlParserStatus>
 
 #include "bookmark.h"
 
-class DeclarativeBookmarkModel : public QAbstractListModel, public QQmlParserStatus
+class DeclarativeBookmarkModel : public QAbstractListModel
 {
     Q_OBJECT
-    Q_INTERFACES(QQmlParserStatus)
-
     Q_PROPERTY(int count READ rowCount NOTIFY countChanged)
 public:
     DeclarativeBookmarkModel(QObject *parent = 0);
@@ -44,10 +41,6 @@ public:
     int rowCount(const QModelIndex & parent = QModelIndex()) const;
     QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;
     QHash<int, QByteArray> roleNames() const;
-
-    // From QQmlParserStatus
-    void classBegin();
-    void componentComplete();
 
 private slots:
     void clearBookmarks();

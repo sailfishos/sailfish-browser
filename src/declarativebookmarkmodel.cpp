@@ -12,11 +12,13 @@
 #include "declarativebookmarkmodel.h"
 #include "bookmarkmanager.h"
 
-
 DeclarativeBookmarkModel::DeclarativeBookmarkModel(QObject *parent) :
     QAbstractListModel(parent)
 {
     connect(BookmarkManager::instance(), SIGNAL(cleared()), this, SLOT(clearBookmarks()));
+    bookmarks = BookmarkManager::instance()->load();
+    bookmarkUrls = bookmarks.keys();
+    emit countChanged();
 }
 
 QHash<int, QByteArray> DeclarativeBookmarkModel::roleNames() const
@@ -92,17 +94,6 @@ void DeclarativeBookmarkModel::clearBookmarks()
     endRemoveRows();
     emit countChanged();
 }
-
-void DeclarativeBookmarkModel::componentComplete()
-{
-    beginResetModel();
-    bookmarks = BookmarkManager::instance()->load();
-    bookmarkUrls = bookmarks.keys();
-    endResetModel();
-    emit countChanged();
-}
-
-void DeclarativeBookmarkModel::classBegin() {}
 
 void DeclarativeBookmarkModel::save()
 {
