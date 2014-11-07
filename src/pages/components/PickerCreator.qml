@@ -62,7 +62,7 @@ Item {
         if (mode == FileUploadMode.OpenMultiple) {
             switch (filter) {
             case FileUploadFilter.Image:
-                pageStack.push(multiImagePickerComponent)
+                pageStack.push(Qt.resolvedUrl("pickers/MultiImagePicker.qml"), {"creator": pickerCreator})
                 break
             case FileUploadFilter.Audio:
                 pageStack.push(multiMusicPickerComponent)
@@ -89,17 +89,6 @@ Item {
             }
         }
     }
-
-    Component  {
-        id: multiImagePickerComponent
-        MultiImagePickerDialog {
-            //: For choosing images to send to the website from the device
-            //% "Upload images"
-            title: qsTrId("sailfish_browser-he-upload_images")
-            Component.onDestruction: sendResponseList(selectedContent)
-        }
-    }
-
 
     Component  {
         id: contentPickerComponent
