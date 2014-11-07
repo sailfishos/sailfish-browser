@@ -82,21 +82,11 @@ Item {
                 pageStack.push(musicPickerComponent)
                 break
             case FileUploadFilter.Video:
-                pageStack.push(videoPickerComponent)
+                pageStack.push(Qt.resolvedUrl("pickers/VideoPicker.qml"), {"creator": pickerCreator})
                 break
             default:
                 pageStack.push(Qt.resolvedUrl("pickers/ContentPicker.qml"), {"creator": pickerCreator})
             }
-        }
-    }
-
-    Component  {
-        id: videoPickerComponent
-        VideoPickerPage {
-            //: For choosing video to send to the website from the device
-            //% "Upload video"
-            title: qsTrId("sailfish_browser-he-upload_video")
-            Component.onDestruction: sendResponse(selectedContent)
         }
     }
 
