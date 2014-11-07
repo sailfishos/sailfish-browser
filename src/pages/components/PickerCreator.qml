@@ -79,7 +79,7 @@ Item {
                 pageStack.push(Qt.resolvedUrl("pickers/ImagePicker.qml"), {"creator": pickerCreator})
                 break
             case FileUploadFilter.Audio:
-                pageStack.push(musicPickerComponent)
+                pageStack.push(Qt.resolvedUrl("pickers/MusicPicker.qml"), {"creator": pickerCreator})
                 break
             case FileUploadFilter.Video:
                 pageStack.push(Qt.resolvedUrl("pickers/VideoPicker.qml"), {"creator": pickerCreator})
@@ -87,16 +87,6 @@ Item {
             default:
                 pageStack.push(Qt.resolvedUrl("pickers/ContentPicker.qml"), {"creator": pickerCreator})
             }
-        }
-    }
-
-    Component  {
-        id: musicPickerComponent
-        MusicPickerPage {
-            //: For choosing audio file to send to the website from the device
-            //% "Upload audio file"
-            title: qsTrId("sailfish_browser-he-upload_audio")
-            Component.onDestruction: sendResponse(selectedContent)
         }
     }
 
