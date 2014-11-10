@@ -443,7 +443,6 @@ void tst_webview::goBack()
     QSignalSpy grabbed(webContainer->webPage(), SIGNAL(grabResult(QString)));
     webContainer->goBack();
     waitSignals(grabbed, 1);
-    QTest::qWait(100);
 }
 
 void tst_webview::goForward()
@@ -453,7 +452,6 @@ void tst_webview::goForward()
     QSignalSpy grabbed(webContainer->webPage(), SIGNAL(grabResult(QString)));
     webContainer->goForward();
     waitSignals(grabbed, 1);
-    QTest::qWait(100);
 }
 
 void tst_webview::forwardBackwardNavigation()

@@ -23,7 +23,6 @@ DeclarativeWebPage::DeclarativeWebPage(QQuickItem *parent)
     , m_container(0)
     , m_tabId(0)
     , m_viewReady(false)
-    , m_loaded(false)
     , m_userHasDraggedWhileLoading(false)
     , m_fullscreen(false)
     , m_forcedChrome(false)
@@ -130,6 +129,9 @@ void DeclarativeWebPage::loadTab(QString newUrl, bool force)
 
 void DeclarativeWebPage::grabToFile()
 {
+    if (!m_viewReady || backForwardNavigation())
+        return;
+
     emit clearGrabResult();
     // grabToImage handles invalid geometry.
     m_grabResult = grabToImage();

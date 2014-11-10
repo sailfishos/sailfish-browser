@@ -145,7 +145,6 @@ WebContainer {
             fullscreenHeight: container.fullscreenHeight
             toolbarHeight: container.toolbarHeight
 
-            loaded: loadProgress === 100 && !loading
             enabled: webView.enabled
             // Active could pause e.g. video in cover by anding
             // Qt.application.active to visible
