@@ -39,6 +39,8 @@ SilicaFlickable {
     contentHeight: contentColumn.height
     z: -1
     clip: true
+    boundsBehavior: Flickable.StopAtBounds
+    flickableDirection: Flickable.VerticalFlick
 
     onFlickStarted: startY = contentY
     onFlickEnded: startY = contentY
@@ -49,9 +51,11 @@ SilicaFlickable {
 
         if (currentDelta > gestureThreshold) {
             startY = contentY
+            currentDelta = 0
             fullscreenMode = true
         } else if (currentDelta < -gestureThreshold) {
             startY = contentY
+            currentDelta = 0
             fullscreenMode = false
         }
     }
