@@ -139,20 +139,16 @@ Column {
                         //: No text search results were found from the page.
                         //% "No results"
                         return qsTrId("sailfish_browser-la-no_results")
-                    } else if (url == "about:blank") {
+                    } else if (url == "about:blank" || webView.tabModel.count === 0) {
                         //: Placeholder text for url typing and searching
                         //% "Type URL or search"
                         return qsTrId("sailfish_browser-ph-type_url_or_search")
                     } else if (url) {
                         return parseDisplayableUrl(url)
-                    } else if (webView.contentItem) {
+                    } else {
                         //: Loading text that is visible when url is not yet resolved.
                         //% "Loading"
                         return qsTrId("sailfish_browser-la-loading")
-                    } else {
-                        //: All tabs have been closed.
-                        //% "No tabs"
-                        return qsTrId("sailfish_browser-la-no_tabs")
                     }
                 }
 
