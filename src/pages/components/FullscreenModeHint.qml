@@ -13,11 +13,12 @@ import QtQuick 2.1
 import Sailfish.Silica 1.0
 
 Loader {
-    anchors.fill: parent
+    property Item viewItem
+
+    anchors.fill: viewItem
     active: counter.active
 
     sourceComponent: Item {
-        property Item viewItem: firstUseOverlay ? firstUseOverlay : webView
         property bool fullscreenMode: viewItem && viewItem.fullscreenMode
 
         anchors.fill: parent

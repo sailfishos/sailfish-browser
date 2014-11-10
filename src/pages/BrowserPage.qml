@@ -210,6 +210,4 @@ Page {
     Browser.BrowserNotification {
         id: notification
     }
-
-    Browser.FullscreenModeHint {}
 }
