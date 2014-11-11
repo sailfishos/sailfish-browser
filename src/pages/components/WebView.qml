@@ -128,8 +128,8 @@ WebContainer {
     }
 
     Label {
-        color: Theme.highlightColor
         font.pixelSize: Theme.fontSizeExtraLarge * 2
+        horizontalAlignment: Text.AlignHCenter
         x: Theme.paddingLarge * 2
         width: parent.width - x * 2
         anchors.verticalCenterOffset: -Theme.paddingLarge * 4
