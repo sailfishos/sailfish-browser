@@ -30,34 +30,43 @@ Item {
     property bool _immediate
 
     function showSecondaryTools() {
-        state = "doubleToolBar"
+        updateState("doubleToolBar")
     }
 
     function showChrome() {
-        state = "chromeVisible"
+        updateState("chromeVisible")
     }
 
     function showOverlay(immediate) {
-        _immediate = immediate || false
-        state = "fullscreenOverlay"
+        updateState("fullscreenOverlay", immediate || false)
     }
 
     function drag() {
-        state = "draggingOverlay"
+        updateState("draggingOverlay")
     }
 
     function hide() {
-        state = "noOverlay"
+        updateState("noOverlay")
+    }
+
+    // Wrapper from updating the state. Handy for debugging.
+    function updateState(newState, immediate) {
+        _immediate = immediate || false
+        state = newState
     }
 
     state: "chromeVisible"
 
     // TODO: Fix real cover. Once that is fixed, we should remove this block.
     onActiveChanged: {
-        if (active && state !== "fullscreenOverlay") {
-            state = "chromeVisible"
-        } else if (!active) {
-            state = "fullscreenWebPage"
+        if (active) {
+            if (webView.tabModel.loaded && webView.tabModel.count === 0) {
+                updateState("fullscreenOverlay", true)
+            } else {
+                updateState("chromeVisible", true)
+            }
+        } else {
+            updateState("fullscreenWebPage", true)
         }
     }
 
@@ -77,10 +86,14 @@ Item {
         ignoreUnknownSignals: true
 
         onFullscreenModeChanged: {
+            if (!active) {
+                return
+            }
+
             if (!webView.fullscreenMode) {
-                animator.state = "chromeVisible"
+                updateState("chromeVisible")
             } else if (webView.fullscreenMode) {
-                animator.state = "fullscreenWebPage"
+                updateState("fullscreenWebPage")
             }
         }
     }
