@@ -127,9 +127,27 @@ WebContainer {
         onNewWindowRequested: webView.loadNewTab(url, "", parentId)
     }
 
+    Label {
+        color: Theme.highlightColor
+        font.pixelSize: Theme.fontSizeExtraLarge * 2
+        x: Theme.paddingLarge * 2
+        width: parent.width - x * 2
+        anchors.verticalCenterOffset: -Theme.paddingLarge * 4
+        anchors.verticalCenter: parent.verticalCenter
+        opacity: !background.visible && !foreground ? 1.0 : 0.0
+        wrapMode: Text.WordWrap
+
+        //: Create a new tab cover text
+        //% "Create a new tab"
+        text: qsTrId("sailfish_browser-he-create_new_tab")
+
+        Behavior on opacity { FadeAnimation {} }
+    }
+
     Rectangle {
         id: background
         anchors.fill: parent
+        visible: foreground && contentItem
         color: contentItem && contentItem.bgcolor ? contentItem.bgcolor : "white"
     }
 
