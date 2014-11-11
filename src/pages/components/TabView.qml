@@ -89,14 +89,9 @@ SilicaGridView {
 
     ViewPlaceholder {
         enabled: !webView.tabModel.count
-
-        //: Empty state when no tabs in tabs view
-        //% "No open tabs"
-        text: qsTrId("sailfish_browser-ph-no_open_tabs")
-
         //: Hint to create a new tab from pull down menu.
         //% "Pull down to create a new tab"
-        hintText: qsTrId("sailfish_browser-ph-pull_down_to_create_tab_hint")
+        text: qsTrId("sailfish_browser-la-pull_down_to_create_tab_hint")
     }
 
     Component {
