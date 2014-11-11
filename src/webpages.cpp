@@ -35,6 +35,9 @@ static const qint64 gMemoryPressureTimeout = 600 * 1000; // 600 sec
 // In normal cases gLowMemoryEnabled is true. Can be disabled e.g. for test runs.
 static const bool gLowMemoryEnabled = qgetenv("LOW_MEMORY_DISABLED").isEmpty();
 
+static const QLatin1String gLowMemoryWarning("warning");
+static const QLatin1String gLowMemoryCritical("critical");
+
 WebPages::WebPages(QObject *parent)
     : QObject(parent)
     , m_backgroundTimestamp(0)
@@ -58,12 +61,28 @@ void WebPages::initialize(DeclarativeWebContainer *webContainer, QQmlComponent *
     }
 
     connect(webContainer, SIGNAL(foregroundChanged()), this, SLOT(updateBackgroundTimestamp()));
+    connect(webContainer, SIGNAL(backgroundChanged()), this, SLOT(virtualizeInactive()));
 }
 
 void WebPages::updateBackgroundTimestamp()
 {
+    // In Switcher.
     if (!m_webContainer->foreground()) {
         m_backgroundTimestamp = QDateTime::currentMSecsSinceEpoch();
+    }
+}
+
+/*!
+ * Virtualize pages that are inactive (all but the first).
+ * This also takes a time stamp that is later used to
+ * trigger gc and heap minimizing when low memory notifacations
+ * is recieved after some time.
+ */
+void WebPages::virtualizeInactive()
+{
+    // Another application got opened.
+    if (m_webContainer->background()) {
+        handleMemNotify(gLowMemoryWarning);
     }
 }
 
@@ -188,7 +207,7 @@ void WebPages::dumpPages() const
 
 void WebPages::handleMemNotify(const QString &memoryLevel)
 {
-    if (memoryLevel == QString("warning") || memoryLevel == QString("critical")) {
+    if (memoryLevel == gLowMemoryWarning || memoryLevel == gLowMemoryCritical) {
         m_activePages.virtualizeInactive();
 
         if (!m_webContainer->foreground() &&
