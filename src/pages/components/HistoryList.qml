@@ -57,6 +57,16 @@ SilicaListView {
         }
     }
 
+    ViewPlaceholder {
+        x: (view.width - width) / 2
+        y: view.originY + (view.height - height) / 2
+        enabled: !history.count
+
+        //: Press enter to search from web.
+        //% "Press enter to search from web"
+        text: qsTrId("sailfish_browser-la-press_enter_to_search_from_web")
+    }
+
     VerticalScrollDecorator {
         parent: view
         flickable: view
