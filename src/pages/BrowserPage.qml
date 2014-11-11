@@ -132,7 +132,7 @@ Page {
     }
 
     CoverActionList {
-        enabled: browserPage.status === PageStatus.Active
+        enabled: browserPage.status === PageStatus.Active && webView.contentItem
         iconBackground: true
 
         CoverAction {
@@ -151,6 +151,19 @@ Page {
                 } else {
                     webView.reload()
                 }
+            }
+        }
+    }
+
+    CoverActionList {
+        enabled: browserPage.status === PageStatus.Active && !webView.contentItem
+        iconBackground: true
+
+        CoverAction {
+            iconSource: "image://theme/icon-cover-new"
+            onTriggered: {
+                overlay.enterNewTabUrl(PageStackAction.Immediate)
+                activate()
             }
         }
     }
