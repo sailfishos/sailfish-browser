@@ -85,10 +85,38 @@ Column {
             height: parent.height
 
             Browser.TabButton {
+                id: tabs
+
                 opacity: secondaryToolsActive || findInPageActive ? 0.0 : 1.0
                 horizontalOffset: toolsRow.horizontalOffset
                 label.text: webView.tabModel.count
                 onTapped: toolBarRow.showTabs()
+
+                SequentialAnimation {
+                    id: animation
+                    loops: 2
+                    alwaysRunToEnd: true
+
+                    ScaleAnimator {
+                        target: tabs
+                        from: 1.0
+                        to: 1.3
+                        duration: 500
+                        easing.type: Easing.InOutQuad
+                    }
+                    ScaleAnimator {
+                        target: tabs
+                        from: 1.3
+                        to: 1.0
+                        duration: 500
+                        easing.type: Easing.InOutQuad
+                    }
+                }
+
+                Connections {
+                    target: webView.tabModel
+                    onNewTabRequested: animation.start()
+                }
             }
 
             Browser.IconButton {
