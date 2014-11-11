@@ -68,6 +68,7 @@ SilicaGridView {
     }
 
     PullDownMenu {
+        visible: Qt.application.active
         flickable: tabView
 
         MenuItem {

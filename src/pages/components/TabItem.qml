@@ -102,11 +102,11 @@ BackgroundItem {
                 }"
         },
         OpacityRampEffect {
+            id: ramp
             slope: 2.6
             offset: 0.6
-            // This information should be role of the TabModel
-            // WebView can still have alive method for checking alive pages/tabs.
-            opacity: webView.alive(tabId) ? 1.0 : 0.6
+            opacity: 1.0
+            enabled: Qt.application.active
 
             sourceItem: roundingItem
             anchors.fill: mask
@@ -115,6 +115,7 @@ BackgroundItem {
         IconButton {
             id: close
 
+            visible: ramp.enabled
             anchors {
                 left: mask.left
                 bottom: parent.bottom
@@ -150,6 +151,7 @@ BackgroundItem {
                 verticalCenter: close.verticalCenter
             }
 
+            visible: ramp.enabled
             text: title
             truncationMode: TruncationMode.Fade
             color: down || activeTab ? Theme.highlightColor : Theme.primaryColor
