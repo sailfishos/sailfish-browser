@@ -24,8 +24,6 @@ Loader {
         anchors.fill: parent
 
         onFullscreenModeChanged: {
-            console.log("Fullscreen mode!! ", fullscreenMode, width, height)
-
             if (fullscreenMode) {
                 touchInteractionHint.direction = TouchInteraction.Down
             } else {
@@ -56,8 +54,6 @@ Loader {
             // Initial state differs from normal state. That's why direction is handled in onFullscreenModeChanged.
             direction: TouchInteraction.Up
             anchors.horizontalCenter: parent.horizontalCenter
-
-            onRunningChanged: console.log("Hint running:", running, fullscreenMode, startY, distance)
             loops: 6
 
             layer.effect: PressEffect {
