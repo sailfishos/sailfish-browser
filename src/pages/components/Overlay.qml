@@ -316,6 +316,20 @@ PanelBackground {
                     topMargin: searchField.height
                 }
                 enabled: toolBar.findInPageActive
+
+                ViewPlaceholder {
+                    // The parent is a sibling of the historyList. Hence,
+                    // flickable binding.
+                    flickable: historyList
+                    x: (historyList.width - width) / 2
+                    y: historyList.originY + (historyList.height - height) / 2
+
+                    enabled: parent.enabled && searchField.text
+
+                    //: View placeholder text for find-in-page search.
+                    //% "Press enter to search"
+                    text: qsTrId("sailfish_browser-la-press_enter_to_search")
+                }
             }
 
             Browser.HistoryList {
