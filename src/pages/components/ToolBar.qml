@@ -92,30 +92,30 @@ Column {
                 label.text: webView.tabModel.count
                 onTapped: toolBarRow.showTabs()
 
-                SequentialAnimation {
-                    id: animation
-                    loops: 2
+                RotationAnimator {
+                    id: rotationAnimator
+                    target: tabs.icon
+                    duration: 1500
+                    easing.type: Easing.InOutQuad
                     alwaysRunToEnd: true
-
-                    ScaleAnimator {
-                        target: tabs
-                        from: 1.0
-                        to: 1.3
-                        duration: 500
-                        easing.type: Easing.InOutQuad
-                    }
-                    ScaleAnimator {
-                        target: tabs
-                        from: 1.3
-                        to: 1.0
-                        duration: 500
-                        easing.type: Easing.InOutQuad
-                    }
                 }
 
                 Connections {
                     target: webView.tabModel
-                    onNewTabRequested: animation.start()
+                    onNewTabRequested: {
+                        // New tab request triggers 90 degrees clockwise rotation
+                        // for the tab icon.
+                        rotationAnimator.from = rotationAnimator.to
+                        rotationAnimator.to = rotationAnimator.from + 90
+                        rotationAnimator.restart()
+                    }
+
+                    onTabClosed: {
+                        // Counter closewise when closing.
+                        rotationAnimator.from = rotationAnimator.to
+                        rotationAnimator.to = rotationAnimator.from - 90
+                        rotationAnimator.restart()
+                    }
                 }
             }
 
