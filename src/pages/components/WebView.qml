@@ -13,7 +13,6 @@ import QtQuick 2.1
 import Sailfish.Silica 1.0
 import Sailfish.Browser 1.0
 import Qt5Mozilla 1.0
-import org.nemomobile.connectivity 1.0
 import "WebPopupHandler.js" as PopupHandler
 import "." as Browser
 
@@ -31,22 +30,7 @@ WebContainer {
         }
     }
 
-    // force property only used by WebView itself for deferred loading when
-    // network connectivity is established or when loading initial web page.
     function load(url, title, force) {
-//        if (url.substring(0, 6) !== "about:" && url.substring(0, 5) !== "file:"
-//            && !connectionHelper.haveNetworkConnectivity()
-//            && !deferredLoad) {
-
-//            deferredReload = false
-//            deferredLoad = {
-//                "url": url,
-//                "title": title
-//            }
-//            connectionHelper.attemptToConnectNetwork()
-//            return
-//        }
-
         // Modify url and title to string
         title = title ? "" + title : ""
         url = url ? "" + url : ""
@@ -70,17 +54,6 @@ WebContainer {
         if (!contentItem) {
             return
         }
-
-        var url = contentItem.url.toString()
-//        if (url.substring(0, 6) !== "about:" && url.substring(0, 5) !== "file:"
-//            && !deferredReload
-//            && !connectionHelper.haveNetworkConnectivity()) {
-
-//            deferredReload = true
-//            deferredLoad = null
-//            connectionHelper.attemptToConnectNetwork()
-//            return
-//        }
 
         contentItem.reload()
     }
@@ -448,38 +421,10 @@ WebContainer {
         Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
     }
 
-//    ConnectionHelper {
-//        id: connectionHelper
-
-//        onNetworkConnectivityEstablished: {
-//            var url
-//            var title
-
-//            if (deferredLoad) {
-//                url = deferredLoad["url"]
-//                title = deferredLoad["title"]
-//                deferredLoad = null
-//                webView.load(url, title, true)
-//            } else if (deferredReload) {
-//                deferredReload = false
-//                contentItem.reload()
-//            }
-//        }
-
-//        onNetworkConnectivityUnavailable: {
-//            if (contentItem) {
-//                deferredLoad = null
-//                deferredReload = false
-//            }
-//        }
-//    }
-
     ResourceController {
         id: resourceController
         webView: contentItem
         background: webView.background
-
-        //onWebViewSuspended: connectionHelper.closeNetworkSession()
     }
 
     Timer {
@@ -493,7 +438,6 @@ WebContainer {
         PickerCreator {}
     }
 
-    //Component.onDestruction: connectionHelper.closeNetworkSession()
     Component.onCompleted: {
         PopupHandler.auxTimer = auxTimer
         PopupHandler.pageStack = pageStack
