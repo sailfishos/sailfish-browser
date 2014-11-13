@@ -267,6 +267,7 @@ PanelBackground {
                 width: parent.width
                 textLeftMargin: Theme.paddingLarge
                 textRightMargin: Theme.paddingLarge
+                inputMethodHints: Qt.ImhUrlCharactersOnly
 
                 placeholderText: toolBar.findInPageActive ?
                                      //: Placeholder text for finding text from the web page
