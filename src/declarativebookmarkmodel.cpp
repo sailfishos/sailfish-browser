@@ -18,7 +18,6 @@ DeclarativeBookmarkModel::DeclarativeBookmarkModel(QObject *parent) :
     connect(BookmarkManager::instance(), SIGNAL(cleared()), this, SLOT(clearBookmarks()));
     bookmarks = BookmarkManager::instance()->load();
     bookmarkUrls = bookmarks.keys();
-    emit countChanged();
 }
 
 QHash<int, QByteArray> DeclarativeBookmarkModel::roleNames() const
