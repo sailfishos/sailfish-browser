@@ -62,9 +62,9 @@ SilicaListView {
         y: view.originY + (view.height - height) / 2
         enabled: !history.count
 
-        //: Shown as placeholder in history list when entered text did not match.
-        //% "Press enter to search from web"
-        text: qsTrId("sailfish_browser-la-press_enter_to_search_from_web")
+        //: Shown as placeholder in history list when entered text or url did not match to history.
+        //% "Press enter to open"
+        text: qsTrId("sailfish_browser-la-press_enter_to_open")
     }
 
     VerticalScrollDecorator {
