@@ -128,7 +128,6 @@ private:
         int parentId;
     };
 
-    void load();
     void removeTab(int tabId, const QString &thumbnail, int index);
     int findTabIndex(int tabId) const;
     void updateActiveTab(const Tab &activeTab, bool loadActiveTab);
