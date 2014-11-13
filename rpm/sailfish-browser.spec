@@ -1,7 +1,7 @@
 Name:       sailfish-browser
 
 Summary:    Sailfish Browser
-Version:    1.1.22
+Version:    1.2.1
 Release:    1
 Group:      Applications/Internet
 License:    MPLv2
@@ -24,7 +24,7 @@ BuildRequires:  gdb
 BuildRequires:  oneshot
 
 Requires: sailfishsilica-qt5 >= 0.11.8
-Requires: jolla-ambient >= 0.3.24
+Requires: jolla-ambient >= 0.4.18
 Requires: xulrunner-qt5 >= 29.0.1.9
 Requires: embedlite-components-qt5 >= 1.6.4
 Requires: sailfish-browser-settings = %{version}
