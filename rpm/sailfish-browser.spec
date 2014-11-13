@@ -22,6 +22,8 @@ BuildRequires:  qt5-qttools
 BuildRequires:  qt5-qttools-linguist
 BuildRequires:  gdb
 BuildRequires:  oneshot
+# to build the package without scalability support, disable next line
+BuildRequires:  sailfishsilica-qt5-devel
 
 Requires: sailfishsilica-qt5 >= 0.11.8
 Requires: jolla-ambient >= 0.4.18

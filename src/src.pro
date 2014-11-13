@@ -34,6 +34,11 @@ packagesExist(qdeclarative5-boostable) {
     warning("qdeclarative5-boostable not available; startup times will be slower")
 }
 
+packagesExist(sailfishsilica) {
+    DEFINES += SCALABLE_UI
+    PKGCONFIG += sailfishsilica
+}
+
 # Include qtmozembed
 isEmpty(QTEMBED_LIB) {
   PKGCONFIG += qt5embedwidget

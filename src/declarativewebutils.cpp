@@ -24,10 +24,16 @@
 #include "declarativewebutils.h"
 #include "qmozcontext.h"
 
+#ifdef SCALABLE_UI
+#include <silicatheme.h>
+#endif
+
 static const QString system_components_time_stamp("/var/lib/_MOZEMBED_CACHE_CLEAN_");
 static const QString profilePath("/.mozilla/mozembed");
 static const QString openSearchPath("/usr/lib/mozembedlite/chrome/embedlite/content/");
 static DeclarativeWebUtils *gSingleton = 0;
+static const qreal cssPixelRatioRoundingFactor = 0.5;
+static const qreal cssDefaultPixelRatio = 1.5;
 
 typedef QMap<QString, QString> StringMap;
 
@@ -128,14 +134,30 @@ void DeclarativeWebUtils::updateWebEngineSettings()
         langs = locale.at(0);
     }
 
+    qreal silicaPixelRatio = 1.0;
+    qreal touchSideRadius = 32;
+    qreal touchTopRadius = 48;
+    qreal touchBottomRadius = 16;
+    qreal inputItemSize = 28;
+    qreal zoomMargin = 14;
+#ifdef SCALABLE_UI
+    Silica::Theme *theme = Silica::Theme::instance();
+    silicaPixelRatio = theme->pixelRatio();
+    touchSideRadius = theme->paddingMedium() + theme->paddingLarge();
+    touchTopRadius = theme->paddingLarge() * 2;
+    touchBottomRadius = theme->paddingMedium() + theme->paddingSmall();
+    inputItemSize = theme->fontSizeSmall();
+    zoomMargin = theme->paddingMedium();
+#endif
+
     QMozContext* mozContext = QMozContext::GetInstance();
     mozContext->setPref(QString("intl.accept_languages"), QVariant(langs));
 
     // these are magic numbers defining touch radius required to detect <image src=""> touch
-    mozContext->setPref(QString("browser.ui.touch.left"), QVariant(32));
-    mozContext->setPref(QString("browser.ui.touch.right"), QVariant(32));
-    mozContext->setPref(QString("browser.ui.touch.top"), QVariant(48));
-    mozContext->setPref(QString("browser.ui.touch.bottom"), QVariant(16));
+    mozContext->setPref(QString("browser.ui.touch.left"), QVariant(touchSideRadius));
+    mozContext->setPref(QString("browser.ui.touch.right"), QVariant(touchSideRadius));
+    mozContext->setPref(QString("browser.ui.touch.top"), QVariant(touchTopRadius));
+    mozContext->setPref(QString("browser.ui.touch.bottom"), QVariant(touchBottomRadius));
 
     // Install embedlite handlers for guestures
     mozContext->setPref(QString("embedlite.azpc.handle.singletap"), QVariant(false));
@@ -191,11 +213,15 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     mozContext->setPref(QString("keyword.enabled"), QVariant(true));
 
     // Scale up content size
-    mozContext->setPixelRatio(1.5);
+    qreal mozCssPixelRatio = cssDefaultPixelRatio * silicaPixelRatio;
+    // Round to nearest even rounding factor
+    mozCssPixelRatio = qRound(mozCssPixelRatio / cssPixelRatioRoundingFactor) * cssPixelRatioRoundingFactor;
+    mozContext->setPixelRatio(mozCssPixelRatio);
+    emit cssPixelRatioChanged();
 
     // Theme.fontSizeSmall
-    mozContext->setPref(QString("embedlite.inputItemSize"), QVariant(28));
-    mozContext->setPref(QString("embedlite.zoomMargin"), QVariant(14));
+    mozContext->setPref(QString("embedlite.inputItemSize"), QVariant(inputItemSize));
+    mozContext->setPref(QString("embedlite.zoomMargin"), QVariant(zoomMargin));
 
     // Memory management related preferences.
     // We're sending "memory-pressure" when browser is on background (cover by another application)
@@ -224,6 +250,15 @@ void DeclarativeWebUtils::setFirstUseDone(bool firstUseDone) {
 bool DeclarativeWebUtils::debugMode() const
 {
     return m_debugMode;
+}
+
+qreal DeclarativeWebUtils::cssPixelRatio() const
+{
+    QMozContext* mozContext = QMozContext::GetInstance();
+    if (mozContext) {
+        return mozContext->pixelRatio();
+    }
+    return 1.0;
 }
 
 bool DeclarativeWebUtils::firstUseDone() const {

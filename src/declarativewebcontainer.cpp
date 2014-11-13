@@ -30,6 +30,10 @@
 #include <qmozcontext.h>
 #include <QGuiApplication>
 
+#ifdef SCALABLE_UI
+#include <silicatheme.h>
+#endif
+
 #ifndef DEBUG_LOGS
 #define DEBUG_LOGS 0
 #endif
@@ -712,6 +716,9 @@ void DeclarativeWebContainer::updateVkbHeight()
     if (width() > height()) {
         vkbHeight = 340;
     }
+#ifdef SCALABLE_UI
+    vkbHeight *= Silica::Theme::instance()->pixelRatio();
+#endif
 #endif
     m_inputPanelOpenHeight = vkbHeight;
 }
