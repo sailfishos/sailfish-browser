@@ -24,10 +24,10 @@ class DeclarativeTabModel : public QAbstractListModel, public QQmlParserStatus
     Q_OBJECT
     Q_INTERFACES(QQmlParserStatus)
 
+    Q_PROPERTY(int activeTabIndex READ activeTabIndex NOTIFY activeTabIndexChanged FINAL)
     Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
     Q_PROPERTY(int nextTabId READ nextTabId NOTIFY nextTabIdChanged FINAL)
     Q_PROPERTY(bool loaded READ loaded NOTIFY loadedChanged FINAL)
-    Q_PROPERTY(bool browsing READ browsing WRITE setBrowsing NOTIFY browsingChanged FINAL)
     // TODO: Remove newTab related functions from WebContainer, WebPage, and TabModel pushed to C++ side.
     Q_PROPERTY(bool hasNewTabData READ hasNewTabData NOTIFY hasNewTabDataChanged FINAL)
     // TODO: Only needed by on_ReadyToLoadChanged handler of WebView
@@ -35,6 +35,7 @@ class DeclarativeTabModel : public QAbstractListModel, public QQmlParserStatus
 
 public:
     DeclarativeTabModel(QObject *parent = 0);
+    ~DeclarativeTabModel();
     
     enum TabRoles {
         ThumbPathRole = Qt::UserRole + 1,
@@ -56,6 +57,7 @@ public:
 
     Q_INVOKABLE void dumpTabs() const;
 
+    int activeTabIndex() const;
     int count() const;
     void addTab(const QString &url, const QString &title);
     bool activateTabById(int tabId);
@@ -74,9 +76,6 @@ public:
 
     bool loaded() const;
 
-    bool browsing() const;
-    void setBrowsing(bool browsing);
-
     bool hasNewTabData() const;
     QString newTabUrl() const;
 
@@ -88,14 +87,14 @@ public:
 
     void updateUrl(int tabId, bool activeTab, QString url, bool backForwardNavigation, bool initialLoad = false);
     void updateTitle(int tabId, bool activeTab, QString title);
-    void updateThumbnailPath(int tabId, bool activeTab, QString path);
-
-    static bool tabSort(const Tab &t1, const Tab &t2);
 
 public slots:
+    // TODO: Move to be private
     void tabsAvailable(QList<Tab> tabs);
+    void updateThumbnailPath(int tabId, QString path);
 
 signals:
+    void activeTabIndexChanged();
     void countChanged();
     void activeTabChanged(int oldTabId, int activeTabId, bool loadActiveTab = true);
     // TODO: Update test to use activeTabChanged instead. Currently this is here
@@ -109,7 +108,6 @@ signals:
     void hasNewTabDataChanged();
     void newTabUrlChanged();
     void newTabRequested(QString url, QString title);
-    void updateActiveThumbnail();
 
 private slots:
     void tabChanged(const Tab &tab);
@@ -130,20 +128,19 @@ private:
     };
 
     void load();
-    void removeTab(int tabId, const QString &thumbnail, int index = -1);
+    void removeTab(int tabId, const QString &thumbnail, int index);
     int findTabIndex(int tabId) const;
-    void saveTabOrder();
-    void loadTabOrder();
     void updateActiveTab(const Tab &activeTab, bool loadActiveTab);
     void updateTabUrl(int tabId, bool activeTab, const QString &url, bool navigate);
 
     void updateNewTabData(NewTabData *newTabData);
     QString newTabTitle() const;
 
+    // This should be replaced by m_activeTabIndex
     Tab m_activeTab;
     QList<Tab> m_tabs;
+
     bool m_loaded;
-    bool m_browsing;
     int m_nextTabId;
 
     QScopedPointer<NewTabData> m_newTabData;

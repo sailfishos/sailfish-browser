@@ -24,7 +24,7 @@ public :
     ~WebPageQueue();
 
     int count() const;
-    int alive(int tabId) const;
+    bool alive(int tabId) const;
     bool active(int tabId) const;
     DeclarativeWebPage *activate(int tabId);
     DeclarativeWebPage *activeWebPage() const;

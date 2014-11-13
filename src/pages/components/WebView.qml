@@ -21,7 +21,9 @@ WebContainer {
     id: webView
 
     property color _decoratorColor: Theme.highlightDimmerColor
-    property bool firstUseFullscreen
+    readonly property bool moving: contentItem ? contentItem.moving : false
+
+    property bool findInPageHasResult
 
     function stop() {
         if (contentItem) {
@@ -91,13 +93,20 @@ WebContainer {
         contentItem.sendAsyncMessage(name, data)
     }
 
+    function grabActivePage() {
+        if (webView.contentItem) {
+            webView.contentItem.grabToFile()
+        }
+    }
+
     width: parent.width
     height: portrait ? Screen.height : Screen.width
     foreground: Qt.application.active
     allowHiding: !resourceController.videoActive && !resourceController.audioActive
     inputPanelHeight: window.pageStack.panelSize
     inputPanelOpenHeight: window.pageStack.imSize
-    fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) || webView.inputPanelVisible || !webView.foreground || (contentItem && contentItem.fullscreen) || firstUseFullscreen
+    fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) ||
+                    (contentItem && contentItem.fullscreen)
     _readyToLoad: contentItem && contentItem.viewReady && tabModel.loaded
 
     favicon: contentItem ? contentItem.favicon : ""
@@ -105,17 +114,12 @@ WebContainer {
     webPageComponent: webPageComponent
 
     tabModel: TabModel {
-        // Enable browsing after new tab actually created or it was not even requested
-        browsing: webView.active && !hasNewTabData && contentItem && contentItem.loaded
+        id: tabs
     }
 
     onTriggerLoad: webView.load(url, title)
 
-    onActiveChanged: {
-        if (active && !contentItem && tabModel && !tabModel.hasNewTabData && tabId > 0) {
-            activatePage(tabId, true)
-        }
-    }
+    visible: WebUtils.firstUseDone
 
     WebViewCreator {
         activeWebView: contentItem
@@ -123,9 +127,27 @@ WebContainer {
         onNewWindowRequested: webView.loadNewTab(url, "", parentId)
     }
 
+    Label {
+        font.pixelSize: Theme.fontSizeExtraLarge * 2
+        horizontalAlignment: Text.AlignHCenter
+        x: Theme.paddingLarge * 2
+        width: parent.width - x * 2
+        anchors.verticalCenterOffset: -Theme.paddingLarge * 4
+        anchors.verticalCenter: parent.verticalCenter
+        opacity: !background.visible && !foreground ? 1.0 : 0.0
+        wrapMode: Text.WordWrap
+
+        //: Create a new tab cover text
+        //% "Create a new tab"
+        text: qsTrId("sailfish_browser-he-create_new_tab")
+
+        Behavior on opacity { FadeAnimation {} }
+    }
+
     Rectangle {
         id: background
         anchors.fill: parent
+        visible: foreground && contentItem
         color: contentItem && contentItem.bgcolor ? contentItem.bgcolor : "white"
     }
 
@@ -141,10 +163,14 @@ WebContainer {
             fullscreenHeight: container.fullscreenHeight
             toolbarHeight: container.toolbarHeight
 
-            loaded: loadProgress === 100 && !loading
-            enabled: container.active
+            enabled: webView.enabled
             // Active could pause e.g. video in cover by anding
             // Qt.application.active to visible
+            // TODO: This should still be futher investigated.
+            // Guarding of suspend/resume & gc combo
+            // Page loading should finish even if it would be at background.
+            // Slow network (2G). Maybe we need something like
+            // suspend() { if (loaded) { suspendView() } } for suspend calls.
             active: visible || activeWebPage
 
             // There needs to be enough content for enabling chrome gesture
@@ -159,6 +185,9 @@ WebContainer {
             width: container.width
             state: ""
 
+            onClearGrabResult: tabs.updateThumbnailPath(tabId, "");
+            onGrabResult: tabs.updateThumbnailPath(tabId, fileName);
+
             onLoadProgressChanged: {
                 // Ignore first load progress if it is directly 50%
                 if (!activeWebPage || container.loadProgress === 0 && loadProgress === 50) {
@@ -172,6 +201,8 @@ WebContainer {
 
             onUrlChanged: {
                 if (url == "about:blank") return
+
+                webView.findInPageHasResult = false
 
                 if (!PopupHandler.isRejectedGeolocationUrl(url)) {
                     PopupHandler.rejectedGeolocationUrl = ""
@@ -209,6 +240,7 @@ WebContainer {
                 addMessageListener("embed:prompt")
                 addMessageListener("embed:auth")
                 addMessageListener("embed:login")
+                addMessageListener("embed:find")
                 addMessageListener("embed:permissions")
                 addMessageListener("Content:ContextMenu")
                 addMessageListener("Content:SelectionRange");
@@ -246,6 +278,10 @@ WebContainer {
                 if (loaded && webView.background) {
                     suspendView();
                 }
+
+                if (loaded) {
+                    grabToFile()
+                }
             }
 
             onLoadingChanged: {
@@ -255,10 +291,12 @@ WebContainer {
                     favicon = ""
                     iconType = ""
                     iconSize = 0
+
+                    resetHeight(false)
+
                     if (activeWebPage) {
                         container.loadProgress = 0
                     }
-                    resetHeight(false)
                 }
             }
 
@@ -336,6 +374,14 @@ WebContainer {
                     webPage.selectionRangeUpdated(data)
                     break
                 }
+                case "embed:find": {
+                    // Found, or found wrapped
+                    if( data.r == 0 || data.r == 2) {
+                        webView.findInPageHasResult = true
+                    } else {
+                        webView.findInPageHasResult = false
+                    }
+                }
                 }
             }
             onRecvSyncMessage: {
@@ -353,15 +399,18 @@ WebContainer {
                 }
             }
 
+            Behavior on opacity { FadeAnimation {} }
+
             // We decided to disable "text selection" until we understand how it
             // should look like in Sailfish.
             // TextSelectionController {}
             states: State {
                 name: "boundHeightControl"
-                when: container.inputPanelVisible || !container.foreground
+                when: container.inputPanelVisible && container.enabled
                 PropertyChanges {
                     target: webPage
-                    height: container.parent.height
+                    // was floor
+                    height: Math.ceil(container.parent.height)
                 }
             }
         }

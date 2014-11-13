@@ -45,6 +45,10 @@ private slots:
     void cleanupTestCase();
 
 private:
+    void load(QString url);
+    void goBack();
+    void goForward();
+
     QString formatUrl(QString fileName) const;
     void verifyHistory(QList<TestTab> &historyOrder);
 
@@ -101,28 +105,24 @@ void tst_webview::testNewTab_data()
     QTest::addColumn<QString>("newTitle");
     QTest::addColumn<QString>("expectedTitle");
     QTest::addColumn<int>("expectedTitleChangeCount");
+    QTest::addColumn<int>("activeTabIndex");
     QTest::addColumn<QStringList>("activeTabs");
 
     QString homePage = DeclarativeWebUtils::instance()->homePage();
-    QStringList activeTabOrder = QStringList() << formatUrl("testselect.html")
-                                               << homePage;
+    QStringList activeTabOrder = QStringList() << homePage
+                                               << formatUrl("testselect.html");
     QTest::newRow("testselect") << formatUrl("testselect.html") << "TestSelect"
-                                << "TestSelect" << 2 << activeTabOrder;
+                                << "TestSelect" << 2 << 1 << activeTabOrder;
 
-    activeTabOrder = QStringList() << formatUrl("testuseragent.html")
-                                   << formatUrl("testselect.html")
-                                   << homePage;
+    activeTabOrder << formatUrl("testuseragent.html");
     QTest::newRow("testuseragent") << formatUrl("testuseragent.html") << "TestUserAgent"
-                                   << "TestUserAgent" << 2 << activeTabOrder;
+                                   << "TestUserAgent" << 2 << 2 << activeTabOrder;
 
     // The new tab added without newTitle -> title loaded from testnavigation.html page.
     // Same as creating a new tab by typing the address to the url field.
-    activeTabOrder = QStringList() << formatUrl("testnavigation.html")
-                                   << formatUrl("testuseragent.html")
-                                   << formatUrl("testselect.html")
-                                   << homePage;
+    activeTabOrder << formatUrl("testnavigation.html");
     QTest::newRow("testnavigation") << formatUrl("testnavigation.html") << ""
-                                    << "TestNavigation" << 2 << activeTabOrder;
+                                    << "TestNavigation" << 2 << 3 << activeTabOrder;
 }
 
 void tst_webview::testNewTab()
@@ -187,10 +187,10 @@ void tst_webview::testNewTab()
     QCOMPARE(addedTabId, webContainer->webPage()->tabId());
 
     QFETCH(QStringList, activeTabs);
+    QFETCH(int, activeTabIndex);
     QCOMPARE(webContainer->m_webPages->count(), activeTabs.count());
     QCOMPARE(webContainer->m_webPages->m_activePages.count(), activeTabs.count());
-    QCOMPARE(webContainer->webPage()->url().toString(), activeTabs.at(0));
-    activeTabs.removeFirst();
+    QCOMPARE(webContainer->webPage()->url().toString(), activeTabs.at(activeTabIndex));
     for (int i = 0; i < activeTabs.count(); ++i) {
         QModelIndex modelIndex = tabModel->createIndex(i, 0);
         QString url = tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString();
@@ -205,16 +205,16 @@ void tst_webview::testNewTab()
 void tst_webview::testActivateTab()
 {
     // Active tabs in order:
-    // "testnavigation.html", "TestNavigation" (active)
-    // "testuseragent.html", "TestUserAgent" (0)
+    // "testpage.html", "TestPage" (0)
     // "testselect.html", "TestSelect" (1)
-    // "testpage.html", "TestPage" (2)
+    // "testuseragent.html", "TestUserAgent" (2)
+    // "testnavigation.html", "TestNavigation" (3 - active)
     QCOMPARE(tabModel->count(), 4);
     QCOMPARE(webContainer->m_webPages->count(), 4);
     QCOMPARE(webContainer->m_webPages->m_activePages.count(), 4);
 
     // "testpage.html", "TestPage"
-    QModelIndex modelIndex = tabModel->createIndex(2, 0);
+    QModelIndex modelIndex = tabModel->createIndex(0, 0);
     QString newActiveUrl = tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString();
     QString newActiveTitle = tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString();
     int newActiveTabId = tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt();
@@ -224,7 +224,7 @@ void tst_webview::testActivateTab()
     QSignalSpy titleChangedSpy(webContainer, SIGNAL(titleChanged()));
     QSignalSpy contentItemSpy(webContainer, SIGNAL(contentItemChanged()));
 
-    tabModel->activateTab(2);
+    tabModel->activateTab(0);
     QCOMPARE(activeTabChangedSpy.count(), 1);
     QCOMPARE(contentItemSpy.count(), 1);
     // Tab already loaded.
@@ -251,18 +251,10 @@ void tst_webview::testActivateTab()
 void tst_webview::testCloseActiveTab()
 {
     // Active tabs in order:
-    // "testpage.html", "TestPage" (active)
-    // "testnavigation.html", "TestNavigation" (0)
-    // "testuseragent.html", "TestUserAgent" (1)
-    // "testselect.html", "TestSelect" (2)
-
-    // "testnavigation.html", "TestNavigation"
-    QModelIndex modelIndex = tabModel->createIndex(0, 0);
-    QString newActiveUrl = tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString();
-    QString newActiveTitle = tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString();
-    int newActiveTabId = tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt();
-
-    int previousTabId = webContainer->webPage()->tabId();
+    // "testpage.html", "TestPage" (0 - active)
+    // "testselect.html", "TestSelect" (1)
+    // "testuseragent.html", "TestUserAgent" (2)
+    // "testnavigation.html", "TestNavigation" (3)
 
     QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,int)));
     QSignalSpy tabClosedSpy(tabModel, SIGNAL(tabClosed(int)));
@@ -272,6 +264,7 @@ void tst_webview::testCloseActiveTab()
 
     // Close will nullify contentItem and prepares new active tab but doesn't load/change
     // contentItem item.
+    int previousTabId = webContainer->webPage()->tabId();
     tabModel->closeActiveTab();
     // Updates contentItem to match index zero.
     webContainer->activatePage(webContainer->tabId());
@@ -290,20 +283,26 @@ void tst_webview::testCloseActiveTab()
     QVERIFY(!webContainer->webPage()->loading());
     QCOMPARE(webContainer->webPage()->loadProgress(), 100);
 
+    // "testselect.html", "TestSelect" is the new active tab as it was next to testpage.html.
+    QModelIndex modelIndex = tabModel->createIndex(0, 0);
+    QString newActiveUrl = tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString();
+    QString newActiveTitle = tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString();
+    int newActiveTabId = tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt();
+
     QCOMPARE(webContainer->webPage()->tabId(), newActiveTabId);
     QCOMPARE(webContainer->url(), newActiveUrl);
-    QVERIFY(webContainer->url().endsWith("testnavigation.html"));
+    QVERIFY(webContainer->url().endsWith("testselect.html"));
     QCOMPARE(webContainer->title(), newActiveTitle);
-    QCOMPARE(webContainer->title(), QString("TestNavigation"));
+    QCOMPARE(webContainer->title(), QString("TestSelect"));
     // Two signals: closeActiveTab causes contentItem to be destroyed. Thus, both url and title
     // are update signaled. Second url/title changed signal comes
     // when the first item from model is made as active tab.
     QCOMPARE(urlChangedSpy.count(), 2);
     QCOMPARE(titleChangedSpy.count(), 2);
     QCOMPARE(webContainer->webPage()->url().toString(), newActiveUrl);
-    QVERIFY(webContainer->webPage()->url().toString().endsWith("testnavigation.html"));
+    QVERIFY(webContainer->webPage()->url().toString().endsWith("testselect.html"));
     QCOMPARE(webContainer->webPage()->title(), newActiveTitle);
-    QCOMPARE(webContainer->webPage()->title(), QString("TestNavigation"));
+    QCOMPARE(webContainer->webPage()->title(), QString("TestSelect"));
 
     // Signaled always when tab is changed.
     arguments = activeTabChangedSpy.takeFirst();
@@ -314,9 +313,9 @@ void tst_webview::testCloseActiveTab()
 void tst_webview::testRemoveTab()
 {
     // Active tabs in order:
-    // "testnavigation.html", "TestNavigation" (active)
-    // "testuseragent.html", "TestUserAgent" (0)
-    // "testselect.html", "TestSelect" (1)
+    // "testselect.html", "TestSelect" (0 - active)
+    // "testuseragent.html", "TestUserAgent" (1)
+    // "testnavigation.html", "TestNavigation" (2)
 
     QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,int)));
     QSignalSpy tabClosedSpy(tabModel, SIGNAL(tabClosed(int)));
@@ -325,9 +324,10 @@ void tst_webview::testRemoveTab()
     QSignalSpy titleChangedSpy(webContainer, SIGNAL(titleChanged()));
     QSignalSpy contentItemSpy(webContainer, SIGNAL(contentItemChanged()));
 
-    QModelIndex modelIndex = tabModel->createIndex(0, 0);
+    int removeIndex = 1;
+    QModelIndex modelIndex = tabModel->createIndex(removeIndex, 0);
     int tabIdOfIndexZero = tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt();
-    tabModel->remove(0);
+    tabModel->remove(removeIndex);
 
     QCOMPARE(tabClosedSpy.count(), 1);
     QList<QVariant> arguments = tabClosedSpy.takeFirst();
@@ -346,15 +346,14 @@ void tst_webview::testRemoveTab()
 void tst_webview::testUrlLoading()
 {
     // Active tabs in order:
-    // "testnavigation.html", "TestNavigation" (active)
-    // "testselect.html", "TestSelect" (0)
+    // "testselect.html", "TestSelect" (0 - active)
+    // "testnavigation.html", "TestNavigation" (1)
 
     QSignalSpy urlChangedSpy(webContainer, SIGNAL(urlChanged()));
     QSignalSpy titleChangedSpy(webContainer, SIGNAL(titleChanged()));
     QSignalSpy pageUrlChangedSpy(webContainer->webPage(), SIGNAL(urlChanged()));
     QSignalSpy pageTitleChangedSpy(webContainer->webPage(), SIGNAL(titleChanged()));
     QSignalSpy backNavigationChangedSpy(webContainer, SIGNAL(canGoBackChanged()));
-
 
     QSignalSpy contentItemSpy(webContainer, SIGNAL(contentItemChanged()));
     QSignalSpy loadingChanged(webContainer, SIGNAL(loadingChanged()));
@@ -427,20 +426,46 @@ void tst_webview::testLiveTabCount()
     QCOMPARE(webContainer->m_webPages->m_activePages.count(), liveTabCount);
 }
 
+void tst_webview::load(QString url)
+{
+    QSignalSpy loadingChanged(webContainer, SIGNAL(loadingChanged()));
+    QSignalSpy grabbed(webContainer->webPage(), SIGNAL(grabResult(QString)));
+    webContainer->webPage()->loadTab(url, false);
+    waitSignals(loadingChanged, 2);
+    waitSignals(grabbed, 1);
+    QTest::qWait(100);
+}
+
+void tst_webview::goBack()
+{
+    // We grab an image once the page is loaded. Thus, it's also a good
+    // checking that goBack loaded the page.
+    QSignalSpy grabbed(webContainer->webPage(), SIGNAL(grabResult(QString)));
+    webContainer->goBack();
+    waitSignals(grabbed, 1);
+}
+
+void tst_webview::goForward()
+{
+    // We grab an image once the page is loaded. Thus, it's also a good
+    // checking that goBack loaded the page.
+    QSignalSpy grabbed(webContainer->webPage(), SIGNAL(grabResult(QString)));
+    webContainer->goForward();
+    waitSignals(grabbed, 1);
+}
+
 void tst_webview::forwardBackwardNavigation()
 {
     QSignalSpy urlChangedSpy(webContainer, SIGNAL(urlChanged()));
     QSignalSpy titleChangedSpy(webContainer, SIGNAL(titleChanged()));
     QSignalSpy forwardSpy(webContainer, SIGNAL(canGoForwardChanged()));
     QSignalSpy backSpy(webContainer, SIGNAL(canGoBackChanged()));
-    QSignalSpy loadingChanged(webContainer, SIGNAL(loadingChanged()));
-    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,int)));
 
     QString url = formatUrl("testwindowopen.html");
     QString title = "Test window opening";
-    webContainer->webPage()->loadTab(url, false);
-    waitSignals(loadingChanged, 2);
-    waitSignals(activeTabChangedSpy, 1);
+
+    QVERIFY(webContainer->webPage());
+    load(url);
 
     QCOMPARE(urlChangedSpy.count(), 1);
     QCOMPARE(titleChangedSpy.count(), 1);
@@ -450,8 +475,8 @@ void tst_webview::forwardBackwardNavigation()
 
     QCOMPARE(backSpy.count(), 1);
     QVERIFY(webContainer->canGoBack());
-    webContainer->goBack();
-    QTest::qWait(1000);
+    goBack();
+
     QCOMPARE(forwardSpy.count(), 1);
     QCOMPARE(backSpy.count(), 2);
     QCOMPARE(urlChangedSpy.count(), 2);
@@ -467,8 +492,7 @@ void tst_webview::forwardBackwardNavigation()
     QCOMPARE(urlChangedSpy.count(), 2);
     QCOMPARE(titleChangedSpy.count(), 2);
 
-    webContainer->goForward();
-    QTest::qWait(1000);
+    goForward();
 
     QCOMPARE(forwardSpy.count(), 2);
     QCOMPARE(backSpy.count(), 3);
@@ -482,9 +506,9 @@ void tst_webview::forwardBackwardNavigation()
     backSpy.clear();
     urlChangedSpy.clear();
     titleChangedSpy.clear();
-    webContainer->goBack();
-    QTest::qWait(1000);
+    goBack();
 
+    QTest::qWait(1000);
     QCOMPARE(forwardSpy.count(), 1);
     QCOMPARE(backSpy.count(), 1);
     QCOMPARE(urlChangedSpy.count(), 1);
@@ -494,8 +518,7 @@ void tst_webview::forwardBackwardNavigation()
     QVERIFY(webContainer->canGoForward());
     url = formatUrl("testurlscheme.html");
     title = "TestUrlScheme";
-    webContainer->webPage()->loadTab(url, false);
-    QTest::qWait(1000);
+    load(url);
 
     QCOMPARE(forwardSpy.count(), 2);
     QCOMPARE(backSpy.count(), 2);
@@ -509,8 +532,7 @@ void tst_webview::forwardBackwardNavigation()
 
     url = formatUrl("testuseragent.html");
     title = "TestUserAgent";
-    webContainer->webPage()->loadTab(url, false);
-    QTest::qWait(1000);
+    load(url);
 
     QCOMPARE(forwardSpy.count(), 2);
     QCOMPARE(backSpy.count(), 2);
@@ -523,8 +545,8 @@ void tst_webview::forwardBackwardNavigation()
 
     // testwebprompts.html, testurlscheme.html, testuseragent.html
     // Navigate twice back.
-    webContainer->goBack();
-    QTest::qWait(1000);
+    goBack();
+
     QCOMPARE(forwardSpy.count(), 3);
     // When goBack / goForward is called respected navigation direction is blocked immediately.
     // Only after information is returned from database we might unlock navigation direction.
@@ -537,8 +559,8 @@ void tst_webview::forwardBackwardNavigation()
     QVERIFY(webContainer->canGoForward());
 
     // Back to first page.
-    webContainer->goBack();
-    QTest::qWait(1000);
+    goBack();
+
     QCOMPARE(forwardSpy.count(), 3);
     QCOMPARE(backSpy.count(), 5);
     QCOMPARE(urlChangedSpy.count(), 5);
@@ -580,8 +602,7 @@ void tst_webview::restart()
 
     // Title "TestUserAgent"
     QString testUserAgentUrl = formatUrl("testuseragent.html");
-    webContainer->webPage()->loadTab(testUserAgentUrl, false);
-    QTest::qWait(1000);
+    load(testUserAgentUrl);
 
     QCOMPARE(tabModel->activeTab().url(), testUserAgentUrl);
     QCOMPARE(webContainer->url(), testUserAgentUrl);
@@ -599,12 +620,15 @@ void tst_webview::restart()
     // Before restart
     verifyHistory(historyOrder);
 
-    delete tabModel;
-    tabModel = 0;
+    tabModel->deleteLater();
+    QTest::waitForEvents();
+
     delete historyModel;
     historyModel = 0;
     delete webContainer;
     webContainer = 0;
+
+    QTest::qWait(1000);
 
     setTestData(EMPTY_QML);
     setTestUrl(QUrl("qrc:///tst_webview.qml"));
@@ -658,10 +682,11 @@ void tst_webview::changeTabAndLoad()
     // Active previous tab and an load url.
     tabModel->activateTabById(previousTab);
     QString testSelect(formatUrl("testselect.html"));
+    QSignalSpy loadingChanged(webContainer, SIGNAL(loadingChanged()));
     webContainer->webPage()->loadTab(testSelect, false);
-    QTest::qWait(1000);
+    waitSignals(loadingChanged, 2);
 
-    // Should be after "testpage.html"
+    // Should be before "testpage.html"
     historyOrder.insert(0, TestTab(formatUrl("testselect.html"), QString("TestSelect")));
     verifyHistory(historyOrder);
 
@@ -684,7 +709,10 @@ void tst_webview::cleanupTestCase()
     QVERIFY(webContainer->title().isEmpty());
 
     // Wait for event loop of db manager
+    tabModel->deleteLater();
+    QTest::waitForEvents();
     QTest::qWait(1000);
+
     QString dbFileName = QString("%1/%2")
             .arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation))
             .arg(QLatin1String(DB_NAME));

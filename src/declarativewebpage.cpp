@@ -12,15 +12,37 @@
 #include "declarativewebpage.h"
 #include "declarativewebcontainer.h"
 
+#include <QtConcurrent>
+#include <QStandardPaths>
+
 static const QString gFullScreenMessage("embed:fullscreenchanged");
 static const QString gDomContentLoadedMessage("embed:domcontentloaded");
+
+bool isBlack(QRgb rgb)
+{
+    return qRed(rgb) == 0 && qGreen(rgb) == 0 && qBlue(rgb) == 0;
+}
+
+bool allBlack(const QImage &image)
+{
+    int h = image.height();
+    int w = image.width();
+
+    for (int j = 0; j < h; ++j) {
+        const QRgb *b = (const QRgb *)image.constScanLine(j);
+        for (int i = 0; i < w; ++i) {
+            if (!isBlack(b[i]))
+                return false;
+        }
+    }
+    return true;
+}
 
 DeclarativeWebPage::DeclarativeWebPage(QQuickItem *parent)
     : QuickMozView(parent)
     , m_container(0)
     , m_tabId(0)
     , m_viewReady(false)
-    , m_loaded(false)
     , m_userHasDraggedWhileLoading(false)
     , m_fullscreen(false)
     , m_forcedChrome(false)
@@ -31,13 +53,17 @@ DeclarativeWebPage::DeclarativeWebPage(QQuickItem *parent)
     connect(this, SIGNAL(viewInitialized()), this, SLOT(onViewInitialized()));
     connect(this, SIGNAL(recvAsyncMessage(const QString, const QVariant)),
             this, SLOT(onRecvAsyncMessage(const QString&, const QVariant&)));
+    connect(&m_grabWritter, SIGNAL(finished()), this, SLOT(grabWritten()));
     connect(this, SIGNAL(contentHeightChanged()), this, SLOT(resetHeight()));
     connect(this, SIGNAL(scrollableOffsetChanged()), this, SLOT(resetHeight()));
 }
 
 DeclarativeWebPage::~DeclarativeWebPage()
 {
-
+    m_grabWritter.cancel();
+    m_grabWritter.waitForFinished();
+    m_grabResult.clear();
+    m_thumbnailResult.clear();
 }
 
 DeclarativeWebContainer *DeclarativeWebPage::container() const
@@ -116,8 +142,28 @@ void DeclarativeWebPage::loadTab(QString newUrl, bool force)
     QString oldUrl = url().toString();
     if ((!newUrl.isEmpty() && oldUrl != newUrl) || force) {
         m_domContentLoaded = false;
+        emit domContentLoadedChanged();
         load(newUrl);
     }
+}
+
+void DeclarativeWebPage::grabToFile()
+{
+    if (!m_viewReady || backForwardNavigation())
+        return;
+
+    emit clearGrabResult();
+    // grabToImage handles invalid geometry.
+    m_grabResult = grabToImage();
+    if (m_grabResult.data()) {
+        connect(m_grabResult.data(), SIGNAL(ready()), this, SLOT(grabResultReady()));
+    }
+}
+
+void DeclarativeWebPage::grabThumbnail()
+{
+    m_thumbnailResult = grabToImage();
+    connect(m_thumbnailResult.data(), SIGNAL(ready()), this, SLOT(thumbnailReady()));
 }
 
 /**
@@ -179,6 +225,55 @@ void DeclarativeWebPage::onViewInitialized()
 {
     addMessageListener(gFullScreenMessage);
     addMessageListener(gDomContentLoadedMessage);
+}
+
+void DeclarativeWebPage::grabResultReady()
+{
+    QImage image = m_grabResult->image();
+    m_grabResult.clear();
+    int w = qMin(width(), height());
+    int h = qMax(width(), height());
+    h = qMax(h / 3, w / 2);
+    QRect cropBounds(0, 0, w, h);
+
+    m_grabWritter.setFuture(QtConcurrent::run(this, &DeclarativeWebPage::saveToFile, image, cropBounds));
+}
+
+void DeclarativeWebPage::grabWritten()
+{
+    QString path = m_grabWritter.result();
+    emit grabResult(path);
+}
+
+void DeclarativeWebPage::thumbnailReady()
+{
+    QImage image = m_thumbnailResult->image();
+    m_thumbnailResult.clear();
+    int size = qMin(width(), height());
+    QRect cropBounds(0, 0, size, size);
+
+    image = image.copy(cropBounds);
+    QByteArray iconData;
+    QBuffer buffer(&iconData);
+    buffer.open(QIODevice::WriteOnly);
+    if (image.save(&buffer, "jpg", 75)) {
+        buffer.close();
+        emit thumbnailResult(QString(BASE64_IMAGE).arg(QString(iconData.toBase64())));
+    } else {
+        emit thumbnailResult(DEFAULT_DESKTOP_BOOKMARK_ICON);
+    }
+}
+
+QString DeclarativeWebPage::saveToFile(QImage image, QRect cropBounds)
+{
+    if (image.isNull()) {
+        return "";
+    }
+
+    // 75% quality jpg produces small and good enough capture.
+    QString path = QString("%1/tab-%2-thumb.jpg").arg(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)).arg(m_tabId);
+    image = image.copy(cropBounds);
+    return !allBlack(image) && image.save(path, "jpg", 75) ? path : "";
 }
 
 void DeclarativeWebPage::onRecvAsyncMessage(const QString& message, const QVariant& data)

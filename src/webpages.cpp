@@ -87,6 +87,11 @@ int WebPages::maxLivePages() const
     return m_activePages.maxLivePages();
 }
 
+bool WebPages::alive(int tabId) const
+{
+    return m_activePages.alive(tabId);
+}
+
 WebPageActivationData WebPages::page(int tabId, int parentId)
 {
     if (!m_webPageComponent) {
@@ -165,6 +170,7 @@ void WebPages::updateStates(DeclarativeWebPage *oldActivePage, DeclarativeWebPag
 {
     if (oldActivePage) {
         oldActivePage->setVisible(false);
+        oldActivePage->setOpacity(1.0);
 
         // Allow suspending only the current active page if it is not the creator (parent).
         if (newActivePage->parentId() != (int)oldActivePage->uniqueID()) {

@@ -41,11 +41,11 @@ int WebPageQueue::count() const
     return count;
 }
 
-int WebPageQueue::alive(int tabId) const
+bool WebPageQueue::alive(int tabId) const
 {
     int index = -1;
     WebPageQueue::WebPageEntry *webPageEntry = find(tabId, index);
-    return webPageEntry && webPageEntry->webPage;
+    return index >= 0 && webPageEntry && webPageEntry->webPage;
 }
 
 bool WebPageQueue::active(int tabId) const

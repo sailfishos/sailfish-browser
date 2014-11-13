@@ -14,12 +14,35 @@ import Sailfish.Silica 1.0
 
 
 SilicaFlickable {
-    anchors.fill: parent
+    id: root
 
     property double startY
     property double gestureThreshold
 
+    // These properties allows us to fake the FirstUseOverlay
+    // for OverlayAnimator to be similar to WebView itself.
+    property real fullscreenHeight
+    property bool fullscreenMode
+
+    function done() {
+        if (!WebUtils.firstUseDone) {
+            WebUtils.firstUseDone = true
+        }
+        dismiss()
+    }
+
+    function dismiss() {
+        visible = false
+        firstUseOverlay = null
+        webView.visible = true
+        destroy()
+    }
+
     contentHeight: contentColumn.height
+    z: -1
+    clip: true
+    boundsBehavior: Flickable.StopAtBounds
+    flickableDirection: Flickable.VerticalFlick
 
     onFlickStarted: startY = contentY
     onFlickEnded: startY = contentY
@@ -28,9 +51,14 @@ SilicaFlickable {
         var offset = contentY
         var currentDelta = offset - startY
 
-        if (Math.abs(currentDelta) > gestureThreshold) {
-            browserPage.firstUseFullscreen = currentDelta > 0
+        if (currentDelta > gestureThreshold) {
             startY = contentY
+            currentDelta = 0
+            fullscreenMode = true
+        } else if (currentDelta < -gestureThreshold) {
+            startY = contentY
+            currentDelta = 0
+            fullscreenMode = false
         }
     }
 
@@ -43,61 +71,33 @@ SilicaFlickable {
             right: parent.right
         }
         spacing: Theme.paddingLarge
-        height: window.height + gestureThreshold * 2
+        height: window.height + gestureThreshold * 8
 
-        FirstUseTip {
-            //: Hello, here's few tips about the browser toolbar
-            //% "Hello, here's few tips about the browser toolbar"
-            text: qsTrId("sailfish_browser-he-first_use")
-            header: true
+        Label {
+            color: Theme.highlightColor
+            font.pixelSize: Theme.fontSizeHuge
+            font.family: Theme.fontFamilyHeading
+            width: parent.width - Theme.paddingLarge * 2
+
+            //: Ahoy
+            //% "Ahoy"
+            text: qsTrId("sailfish_browser-he-first_use_ahoy")
         }
 
-        FirstUseTip {
-            //: Tab to go to previous or next page
-            //% "Tab to go to previous or next page"
-            text: qsTrId("sailfish_browser-la-first_use_navigation_hint")
-            iconSource: "image://theme/icon-m-back"
-        }
+        Label {
+            color: Theme.highlightColor
+            font.pixelSize: Theme.fontSizeExtraLarge
+            font.family: Theme.fontFamilyHeading
+            width: parent.width - Theme.paddingLarge * 2
+            wrapMode: Text.WordWrap
 
-        FirstUseTip {
-            //: Mark a page as favorite for easy access later on
-            //% "Mark a page as favorite for easy access later on"
-            text: qsTrId("sailfish_browser-la-first_use_bookmark_hint")
-            iconSource: "image://theme/icon-m-favorite"
-        }
-
-        FirstUseTip {
-            //: Switch between open tabs, edit the address of the current one or open a bookmark
-            //% "Switch between open tabs, edit the address of the current one or open a bookmark"
-            text: qsTrId("sailfish_browser-la-first_use_tabs_hint")
-            iconSource: "image://theme/icon-m-tabs"
-        }
-
-        FirstUseTip {
-            //: Reload the page
-            //% "Reload the page"
-            text: qsTrId("sailfish_browser-la-first_reload_hint")
-            iconSource: "image://theme/icon-m-refresh"
-        }
-
-        FirstUseTip {
-            //: Now, try moving this text up to hide the toolbar.
-            //% "Now, try moving this text up to hide the toolbar."
-            text: qsTrId("sailfish_browser-la-first_hide_toolbar_hint")
+            //: Welcome to the new Sailfish Browser experience
+            //% "Welcome to the new Sailfish Browser experience"
+            text: qsTrId("sailfish_browser-he-first_use_welcome")
         }
     }
 
-    Label {
-        //: Flick down to reveal the toolbar
-        //% "Flick down to reveal the toolbar"
-        text: qsTrId("sailfish_browser-la-toolbar_hint")
-        wrapMode: Text.WordWrap
-        width: parent.width - Theme.paddingLarge
-        color: Theme.highlightColor
-        anchors {
-            bottom: parent.bottom; bottomMargin: Theme.paddingLarge
-            left: parent.left; leftMargin: Theme.paddingLarge
-            horizontalCenter: parent.horizontalCenter
-        }
+    children: FullscreenModeHint {
+        viewItem: root
     }
 }

@@ -12,21 +12,22 @@
 #include "desktopbookmarkwriter.h"
 
 #include <QDir>
-#include <QFileInfo>
-#include <QNetworkReply>
-#include <QImage>
 #include <QStandardPaths>
-#include <QUrl>
-
-#define BASE64_IMAGE_PREFIX "data:image/png;base64,"
-#define BASE64_IMAGE "data:image/png;base64,%1"
+#include <QtConcurrent>
 
 static bool dbw_testMode = false;
 
 DesktopBookmarkWriter::DesktopBookmarkWriter(QObject *parent)
     : QObject(parent)
-    , m_minimumIconSize(64) // Initial value that matches theme iconSizeMedium.
 {
+    connect(&m_writter, SIGNAL(finished()), this, SLOT(desktopFileWritten()));
+}
+
+DesktopBookmarkWriter::~DesktopBookmarkWriter()
+{
+    if (m_writter.isRunning()) {
+        m_writter.waitForFinished();
+    }
 }
 
 void DesktopBookmarkWriter::setTestModeEnabled(bool testMode)
@@ -39,96 +40,24 @@ bool DesktopBookmarkWriter::isTestModeEnabled()
     return dbw_testMode;
 }
 
-bool DesktopBookmarkWriter::save()
+void DesktopBookmarkWriter::save(QString url, QString title, QString icon)
 {
-    if (m_link.trimmed().isEmpty() || m_title.trimmed().isEmpty()) {
-        return false;
+    if (url.trimmed().isEmpty() || title.trimmed().isEmpty()) {
+        emit saved("");
+        return;
     }
 
-    QString icon = m_icon;
-    if (icon.startsWith("/")) {
-        icon = "file://" + icon;
+    if (icon.isEmpty()) {
+        icon = DEFAULT_DESKTOP_BOOKMARK_ICON;
     }
 
-    if (m_icon.isEmpty()) {
-        m_iconData = defaultIcon();
-        write();
-    } else if (!QUrl(icon).isLocalFile()){
-        QUrl url(icon);
-        QString path = url.path();
-        if (path.endsWith(".ico")) {
-            m_iconData = defaultIcon();
-            write();
-        } else {
-            QNetworkRequest request(url);
-            QNetworkReply *reply = m_networkAccessManager.get(request);
-            connect(reply, SIGNAL(finished()), this, SLOT(iconReady()));
-        }
-    } else {
-        QFile localIcon(QUrl(icon).toLocalFile());
-        QByteArray iconData;
-        if (localIcon.open(QFile::ReadOnly)) {
-            iconData = localIcon.readAll();
-        }
-        setIconData(iconData);
-        write();
-    }
-    return true;
+    m_writter.setFuture(QtConcurrent::run(this, &DesktopBookmarkWriter::write, url, title, icon));
 }
 
-
-bool DesktopBookmarkWriter::exists(const QString &file)
+void DesktopBookmarkWriter::desktopFileWritten()
 {
-    return QFileInfo(file).exists();
-}
-
-void DesktopBookmarkWriter::clear()
-{
-    if (!m_icon.isEmpty()) {
-        m_icon = "";
-        emit iconChanged();
-    }
-
-    if (!m_link.isEmpty()) {
-        m_link = "";
-        emit linkChanged();
-    }
-
-    if (!m_title.isEmpty()) {
-        m_title = "";
-        emit titleChanged();
-    }
-
-    if (!m_iconData.isEmpty()) {
-        m_iconData = "";
-    }
-}
-
-void DesktopBookmarkWriter::iconReady()
-{
-    QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
-    if (reply) {
-        QByteArray iconData = reply->readAll();
-        setIconData(iconData);
-        reply->deleteLater();
-        write();
-    }
-}
-
-void DesktopBookmarkWriter::setIconData(const QByteArray &data)
-{
-    QImage image;
-    image.loadFromData(data);
-    if (image.width() < m_minimumIconSize || image.height() < m_minimumIconSize) {
-        m_iconData = defaultIcon();
-    } else {
-        m_iconData = QString(BASE64_IMAGE).arg(QString(data.toBase64()));
-    }
-}
-
-QString DesktopBookmarkWriter::defaultIcon()
-{
-    return QString(DEFAULT_DESKTOP_BOOKMARK_ICON);
+    QString path = m_writter.result();
+    emit saved(path);
 }
 
 QString DesktopBookmarkWriter::uniqueDesktopFileName(QString title)
@@ -142,6 +71,8 @@ QString DesktopBookmarkWriter::uniqueDesktopFileName(QString title)
     title = title.simplified().replace(QString(" "), QString("-"));
 
     QDir dir(filePath);
+    dir.mkpath(filePath);
+
     dir.setNameFilters(QStringList() << QString("sailfish-browser-%2*").arg(title));
     QStringList similarlyNamedFiles = dir.entryList();
     int count = similarlyNamedFiles.count();
@@ -155,22 +86,23 @@ QString DesktopBookmarkWriter::uniqueDesktopFileName(QString title)
     return QString(DESKTOP_FILE_PATTERN).arg(filePath, title).arg(count);
 }
 
-void DesktopBookmarkWriter::write()
+QString DesktopBookmarkWriter::write(QString url, QString title, QString icon)
 {
-    QString fileName = uniqueDesktopFileName(m_title);
+    QString fileName = uniqueDesktopFileName(title);
     QString desktopFileData = QString("[Desktop Entry]\n" \
                                       "Type=Link\n" \
                                       "Name=%1\n" \
                                       "Icon=%2\n" \
                                       "URL=%3\n" \
-                                      "Comment=%4\n").arg(m_title.trimmed(), m_iconData,
-                                                          m_link.trimmed(), m_title.trimmed());
+                                      "Comment=%4\n").arg(title.trimmed(), icon,
+                                                          url.trimmed(), title.trimmed());
     QFile desktopFile(fileName);
     if (desktopFile.open(QFile::WriteOnly)) {
         desktopFile.write(desktopFileData.toUtf8());
         desktopFile.flush();
         desktopFile.close();
-        clear();
-        emit saved(fileName);
+        return fileName;
+    } else {
+        return "";
     }
 }

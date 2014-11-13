@@ -31,7 +31,6 @@ class DeclarativeWebContainer : public QQuickItem {
     Q_PROPERTY(DeclarativeWebPage *contentItem READ webPage NOTIFY contentItemChanged FINAL)
     Q_PROPERTY(DeclarativeTabModel *tabModel READ tabModel WRITE setTabModel NOTIFY tabModelChanged FINAL)
     Q_PROPERTY(bool foreground READ foreground WRITE setForeground NOTIFY foregroundChanged FINAL)
-    Q_PROPERTY(bool active READ active WRITE setActive NOTIFY activeChanged FINAL)
     Q_PROPERTY(int maxLiveTabCount READ maxLiveTabCount WRITE setMaxLiveTabCount NOTIFY maxLiveTabCountChanged FINAL)
     // This property should cover all possible popus
     Q_PROPERTY(bool popupActive MEMBER m_popupActive NOTIFY popupActiveChanged FINAL)
@@ -58,7 +57,6 @@ class DeclarativeWebContainer : public QQuickItem {
     Q_PROPERTY(QString title READ title NOTIFY titleChanged FINAL)
     Q_PROPERTY(QString url READ url NOTIFY urlChanged FINAL)
     Q_PROPERTY(QString initialUrl MEMBER m_initialUrl NOTIFY initialUrlChanged FINAL)
-    Q_PROPERTY(QString thumbnailPath READ thumbnailPath NOTIFY thumbnailPathChanged FINAL)
 
     Q_PROPERTY(QQmlComponent* webPageComponent MEMBER m_webPageComponent NOTIFY webPageComponentChanged FINAL)
 
@@ -90,9 +88,6 @@ public:
     int loadProgress() const;
     void setLoadProgress(int loadProgress);
 
-    bool active() const;
-    void setActive(bool active);
-
     bool inputPanelVisible() const;
 
     qreal inputPanelHeight() const;
@@ -118,8 +113,8 @@ public:
     Q_INVOKABLE void goBack();
     Q_INVOKABLE bool activatePage(int tabId, bool force = false);
     Q_INVOKABLE void loadNewTab(QString url, QString title, int parentId);
+    Q_INVOKABLE bool alive(int tabId);
 
-    Q_INVOKABLE void captureScreen();
     Q_INVOKABLE void dumpPages() const;
 
 signals:
@@ -129,7 +124,6 @@ signals:
     void foregroundChanged();
     void backgroundChanged();
     void allowHidingChanged();
-    void activeChanged();
     void maxLiveTabCountChanged();
     void popupActiveChanged();
     void portraitChanged();
@@ -169,7 +163,7 @@ public slots:
 
 private slots:
     void imeNotificationChanged(int state, bool open, int cause, int focusChange, const QString& type);
-    void screenCaptureReady();
+    void handleEnabledChanged();
     void onActiveTabChanged(int oldTabId, int activeTabId, bool loadActiveTab);
     void onModelLoaded();
     void onDownloadStarted();
@@ -180,8 +174,6 @@ private slots:
     void closeWindow();
     void onPageUrlChanged();
     void onPageTitleChanged();
-    void onPageThumbnailChanged(int tabId, QString path);
-    void updateThumbnail();
 
     // These are here to inform embedlite-components that keyboard is open or close
     // matching composition metrics.
@@ -189,22 +181,12 @@ private slots:
 
 private:
     void setWebPage(DeclarativeWebPage *webPage);
-    void setThumbnailPath(QString thumbnailPath);
     qreal contentHeight() const;
-    void captureScreen(int size, qreal rotate);
     int parentTabId(int tabId) const;
     void updateNavigationStatus(const Tab &tab);
     void updateVkbHeight();
-
     void updateUrl(const QString &newUrl);
     void updateTitle(const QString &newTitle);
-
-    struct ScreenCapture {
-        int tabId;
-        QString path;
-    };
-
-    ScreenCapture saveToFile(QImage image, QRect cropBounds, int tabId, qreal rotate);
 
     QPointer<DeclarativeWebPage> m_webPage;
     QPointer<DeclarativeTabModel> m_model;
@@ -213,7 +195,6 @@ private:
     QScopedPointer<WebPages> m_webPages;
     bool m_foreground;
     bool m_allowHiding;
-    bool m_active;
     bool m_popupActive;
     bool m_portrait;
     bool m_fullScreenMode;
@@ -224,7 +205,6 @@ private:
     qreal m_toolbarHeight;
 
     QString m_favicon;
-    QString m_thumbnailPath;
     QString m_initialUrl;
 
     QString m_url;
@@ -237,9 +217,6 @@ private:
     bool m_canGoBack;
     bool m_realNavigation;
     bool m_readyToLoad;
-
-    QFutureWatcher<ScreenCapture> m_screenCapturer;
-
     bool m_deferredReload;
     QVariant m_deferredLoad;
 

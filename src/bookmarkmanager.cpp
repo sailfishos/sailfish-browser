@@ -63,6 +63,7 @@ void BookmarkManager::save(const QMap<QString, Bookmark*> & bookmarks)
         title.insert("url", QJsonValue(bookmark->url()));
         title.insert("title", QJsonValue(bookmark->title()));
         title.insert("favicon", QJsonValue(bookmark->favicon()));
+        title.insert("hasTouchIcon", QJsonValue(bookmark->hasTouchIcon()));
         items.append(QJsonValue(title));
     }
     QJsonDocument doc(items);
@@ -109,7 +110,8 @@ QMap<QString, Bookmark*> BookmarkManager::load() {
 
                 Bookmark* m = new Bookmark(obj.value("title").toString(),
                                            url,
-                                           favicon);
+                                           favicon,
+                                           obj.value("hasTouchIcon").toBool());
                 bookmarks.insert(url, m);
             }
         }

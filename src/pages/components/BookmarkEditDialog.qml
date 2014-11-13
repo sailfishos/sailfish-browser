@@ -21,7 +21,7 @@ UserPrompt {
     property alias editedUrl: urlField.text
     property alias editedTitle: titleField.text
 
-    canAccept: urlField.text !== "" && (urlField.text !== url || titleField.text !== title)
+    canAccept: urlField.text && titleField.text && (urlField.text !== url || titleField.text !== title)
 
     //% "Edit favorite"
     title: qsTrId("sailfish_browser-he-edit_favorite")

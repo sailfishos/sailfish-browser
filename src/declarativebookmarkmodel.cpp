@@ -12,11 +12,12 @@
 #include "declarativebookmarkmodel.h"
 #include "bookmarkmanager.h"
 
-
 DeclarativeBookmarkModel::DeclarativeBookmarkModel(QObject *parent) :
     QAbstractListModel(parent)
 {
     connect(BookmarkManager::instance(), SIGNAL(cleared()), this, SLOT(clearBookmarks()));
+    bookmarks = BookmarkManager::instance()->load();
+    bookmarkUrls = bookmarks.keys();
 }
 
 QHash<int, QByteArray> DeclarativeBookmarkModel::roleNames() const
@@ -25,13 +26,14 @@ QHash<int, QByteArray> DeclarativeBookmarkModel::roleNames() const
     roles[UrlRole] = "url";
     roles[TitleRole] = "title";
     roles[FaviconRole] = "favicon";
+    roles[TouchIconRole] = "hasTouchIcon";
     return roles;
 }
 
-void DeclarativeBookmarkModel::addBookmark(const QString& url, const QString& title, const QString& favicon)
+void DeclarativeBookmarkModel::addBookmark(const QString& url, const QString& title, const QString& favicon, bool touchIcon)
 {
     beginInsertRows(QModelIndex(), rowCount(), rowCount());
-    bookmarks.insert(url, new Bookmark(title, url, favicon));
+    bookmarks.insert(url, new Bookmark(title, url, favicon, touchIcon));
     bookmarkUrls.append(url);
     endInsertRows();
 
@@ -92,15 +94,6 @@ void DeclarativeBookmarkModel::clearBookmarks()
     emit countChanged();
 }
 
-void DeclarativeBookmarkModel::componentComplete()
-{
-    bookmarks = BookmarkManager::instance()->load();
-    bookmarkUrls = bookmarks.keys();
-    emit countChanged();
-}
-
-void DeclarativeBookmarkModel::classBegin() {}
-
 void DeclarativeBookmarkModel::save()
 {
     BookmarkManager::instance()->save(bookmarks);
@@ -124,6 +117,8 @@ QVariant DeclarativeBookmarkModel::data(const QModelIndex & index, int role) con
         return bookmark->title();
     } else if (role == FaviconRole) {
         return bookmark->favicon();
+    } else if (role == TouchIconRole) {
+        return bookmark->hasTouchIcon();
     }
     return QVariant();
 }

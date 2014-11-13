@@ -15,15 +15,12 @@
 #include <QAbstractListModel>
 #include <QStringList>
 #include <QMap>
-#include <QQmlParserStatus>
 
 #include "bookmark.h"
 
-class DeclarativeBookmarkModel : public QAbstractListModel, public QQmlParserStatus
+class DeclarativeBookmarkModel : public QAbstractListModel
 {
     Q_OBJECT
-    Q_INTERFACES(QQmlParserStatus)
-
     Q_PROPERTY(int count READ rowCount NOTIFY countChanged)
 public:
     DeclarativeBookmarkModel(QObject *parent = 0);
@@ -31,10 +28,11 @@ public:
     enum BookmarkRoles {
            UrlRole = Qt::UserRole + 1,
            TitleRole,
-           FaviconRole
+           FaviconRole,
+           TouchIconRole,
     };
 
-    Q_INVOKABLE void addBookmark(const QString& url, const QString& title, const QString& favicon);
+    Q_INVOKABLE void addBookmark(const QString& url, const QString& title, const QString& favicon, bool touchIcon = false);
     Q_INVOKABLE void removeBookmark(const QString& url);
     Q_INVOKABLE bool contains(const QString& url) const;
     Q_INVOKABLE void editBookmark(int index, const QString& url, const QString& title);
@@ -43,10 +41,6 @@ public:
     int rowCount(const QModelIndex & parent = QModelIndex()) const;
     QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;
     QHash<int, QByteArray> roleNames() const;
-
-    // From QQmlParserStatus
-    void classBegin();
-    void componentComplete();
 
 private slots:
     void clearBookmarks();

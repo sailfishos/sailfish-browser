@@ -22,8 +22,10 @@ Item {
         id: progressRect
         height: parent.height
         width: progressBar.progress * parent.width
-        color: Theme.highlightBackgroundColor
-        opacity: 0.3
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.5) }
+            GradientStop { position: 1.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.0) }
+        }
 
         Behavior on width {
             enabled: progressBar.opacity == 1.0

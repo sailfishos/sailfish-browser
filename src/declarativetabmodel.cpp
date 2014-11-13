@@ -22,18 +22,20 @@
 #define DEBUG_LOGS 0
 #endif
 
-static QList<int> s_tabOrder;
-
 DeclarativeTabModel::DeclarativeTabModel(QObject *parent)
     : QAbstractListModel(parent)
     , m_loaded(false)
-    , m_browsing(false)
     , m_nextTabId(DBManager::instance()->getMaxTabId() + 1)
 {
     connect(DBManager::instance(), SIGNAL(tabsAvailable(QList<Tab>)),
             this, SLOT(tabsAvailable(QList<Tab>)));
     connect(DBManager::instance(), SIGNAL(tabChanged(Tab)),
             this, SLOT(tabChanged(Tab)));
+}
+
+DeclarativeTabModel::~DeclarativeTabModel()
+{
+    DBManager::instance()->saveSetting("activeTabId", QString("%1").arg(m_activeTab.tabId()));
 }
 
 QHash<int, QByteArray> DeclarativeTabModel::roleNames() const
@@ -57,13 +59,15 @@ void DeclarativeTabModel::addTab(const QString& url, const QString &title) {
 #if DEBUG_LOGS
     qDebug() << "new tab data:" << &tab;
 #endif
-    if (m_activeTab.isValid()) {
-        beginInsertRows(QModelIndex(), 0, 0);
-        m_tabs.insert(0, m_activeTab);
-        endInsertRows();
-    }
-
+    int index = m_tabs.count();
+    beginInsertRows(QModelIndex(), index, index);
+    m_tabs.append(tab);
+    endInsertRows();
+    // We should trigger this only when
+    // tab is added through new window request. In all other
+    // case we should keep the new tab in background.
     updateActiveTab(tab, true);
+
     emit countChanged();
     emit tabAdded(tabId);
 
@@ -78,10 +82,15 @@ int DeclarativeTabModel::nextTabId() const
 
 void DeclarativeTabModel::remove(int index) {
     if (!m_tabs.isEmpty() && index >= 0 && index < m_tabs.count()) {
-        beginRemoveRows(QModelIndex(), index, index);
+        bool removingActiveTab = activeTabIndex() == index;
         removeTab(m_tabs.at(index).tabId(), m_tabs.at(index).thumbnailPath(), index);
-        endRemoveRows();
-        saveTabOrder();
+        if (removingActiveTab) {
+            if (index >= m_tabs.count()) {
+                --index;
+            }
+
+            activateTab(index, false);
+        }
     }
 }
 
@@ -104,12 +113,9 @@ void DeclarativeTabModel::clear()
     if (count() == 0)
         return;
 
-    beginResetModel();
     for (int i = m_tabs.count() - 1; i >= 0; --i) {
         removeTab(m_tabs.at(i).tabId(), m_tabs.at(i).thumbnailPath(), i);
     }
-    closeActiveTab();
-    endResetModel();
     resetNewTabData();
     emit tabsCleared();
 }
@@ -117,9 +123,6 @@ void DeclarativeTabModel::clear()
 
 bool DeclarativeTabModel::activateTab(const QString& url)
 {
-    if (m_activeTab.url() == url) {
-        return true;
-    }
     for (int i = 0; i < m_tabs.size(); i++) {
         if (m_tabs.at(i).url() == url) {
             return activateTab(i);
@@ -131,28 +134,15 @@ bool DeclarativeTabModel::activateTab(const QString& url)
 bool DeclarativeTabModel::activateTab(int index, bool loadActiveTab)
 {
     if (index >= 0 && index < m_tabs.count()) {
-        Tab newActiveTab = m_tabs.at(index);
+        const Tab &newActiveTab = m_tabs.at(index);
 #if DEBUG_LOGS
         qDebug() << "activate tab: " << index << &newActiveTab;
 #endif
-        beginRemoveRows(QModelIndex(), index, index);
-        m_tabs.removeAt(index);
-        endRemoveRows();
-
-        // Current active tab back to model data.
-        if (m_activeTab.isValid()) {
-#if DEBUG_LOGS
-            qDebug() << "insert to first index: " << &m_activeTab;
-#endif
-            beginInsertRows(QModelIndex(), 0, 0);
-            m_tabs.insert(0, m_activeTab);
-            endInsertRows();
-        }
-
         updateActiveTab(newActiveTab, loadActiveTab);
         return true;
+    } else {
+        return false;
     }
-    return false;
 }
 
 bool DeclarativeTabModel::activateTabById(int tabId)
@@ -164,21 +154,23 @@ bool DeclarativeTabModel::activateTabById(int tabId)
     return false;
 }
 
+/**
+ * @brief DeclarativeTabModel::closeActiveTab
+ * Closes the active tab and activates a tab next to the current tab. If possible
+ * tab that is after the current tab is activated, then falling back to previous tabs, or
+ * finally none (if all closed).
+ */
 void DeclarativeTabModel::closeActiveTab()
 {
-    if (m_activeTab.isValid()) {
-#if DEBUG_LOGS
-        qDebug() << &m_activeTab;
-#endif
-        // Clear active tab data and try to active a tab from the first model index.
-        int activeTabId = m_activeTab.tabId();
-        // Invalidate so that it will not back to model.
-        m_activeTab.setTabId(0);
-        removeTab(activeTabId, m_activeTab.thumbnailPath());
-        if (!activateTab(0, false)) {
-            // Last active tab got closed.
-            emit activeTabChanged(activeTabId, 0, false);
+    if (!m_tabs.isEmpty()) {
+        int index = activeTabIndex();
+        removeTab(m_activeTab.tabId(), m_activeTab.thumbnailPath(), index);
+
+        if (index >= m_tabs.count()) {
+            --index;
         }
+
+        activateTab(index);
     }
 }
 
@@ -200,20 +192,18 @@ void DeclarativeTabModel::resetNewTabData()
 
 void DeclarativeTabModel::dumpTabs() const
 {
-    if (m_activeTab.isValid()) {
-        qDebug() << "active tab:" << &m_activeTab;
-    }
-
     for (int i = 0; i < m_tabs.size(); i++) {
         qDebug() << "tab[" << i << "]:" << &m_tabs.at(i);
     }
 }
 
+int DeclarativeTabModel::activeTabIndex() const
+{
+    return findTabIndex(m_activeTab.tabId());
+}
+
 int DeclarativeTabModel::count() const
 {
-    if (m_activeTab.isValid()) {
-        return m_tabs.count() + 1;
-    }
     return m_tabs.count();
 }
 
@@ -246,22 +236,6 @@ void DeclarativeTabModel::componentComplete()
 bool DeclarativeTabModel::loaded() const
 {
     return m_loaded;
-}
-
-bool DeclarativeTabModel::browsing() const
-{
-    return m_browsing;
-}
-
-void DeclarativeTabModel::setBrowsing(bool browsing)
-{
-    if (browsing != m_browsing) {
-        m_browsing = browsing;
-        if (m_browsing) {
-            emit updateActiveThumbnail();
-        }
-        emit browsingChanged();
-    }
 }
 
 bool DeclarativeTabModel::hasNewTabData() const
@@ -312,12 +286,18 @@ void DeclarativeTabModel::tabsAvailable(QList<Tab> tabs)
     m_tabs = tabs;
 
     if (m_tabs.count() > 0) {
-        loadTabOrder();
-        qSort(m_tabs.begin(), m_tabs.end(), DeclarativeTabModel::tabSort);
-        m_activeTab = m_tabs.at(0);
-        m_tabs.removeAt(0);
+        QString activeTabId = DBManager::instance()->getSetting("activeTabId");
+        bool ok = false;
+        int tabId = activeTabId.toInt(&ok);
+        int index = findTabIndex(tabId);
+        if (index >= 0) {
+            m_activeTab = m_tabs[index];
+        } else {
+            // Fallback for browser update as this "activeTabId" is a new setting.
+            m_activeTab = m_tabs[0];
+        }
+        emit activeTabIndexChanged();
     } else {
-        m_activeTab = Tab();
         emit tabsCleared();
     }
 
@@ -343,30 +323,35 @@ void DeclarativeTabModel::tabsAvailable(QList<Tab> tabs)
 void DeclarativeTabModel::tabChanged(const Tab &tab)
 {
 #if DEBUG_LOGS
-    qDebug() << &m_activeTab;
     qDebug() << "new tab data:" << &tab;
 #endif
-    if (m_activeTab.tabId() == tab.tabId()) {
-        updateActiveTab(tab, true);
-    } else {
-        int i = findTabIndex(tab.tabId());
-        if (i > -1) {
-            QVector<int> roles;
-            Tab oldTab = m_tabs[i];
-            if (oldTab.url() != tab.url()) {
-                roles << UrlRole;
-            }
-            if (oldTab.title() != tab.title()) {
-                roles << TitleRole;
-            }
-            if (oldTab.thumbnailPath() != tab.thumbnailPath()) {
-                roles << ThumbPathRole;
-            }
-            m_tabs[i] = tab;
-            QModelIndex start = index(i, 0);
-            QModelIndex end = index(i, 0);
-            emit dataChanged(start, end, roles);
+    if (m_tabs.isEmpty()) {
+        qWarning() << "No tabs!";
+        return;
+    }
+
+    int i = findTabIndex(tab.tabId());
+    if (i > -1) {
+        QVector<int> roles;
+        Tab oldTab = m_tabs[i];
+        if (oldTab.url() != tab.url()) {
+            roles << UrlRole;
         }
+        if (oldTab.title() != tab.title()) {
+            roles << TitleRole;
+        }
+        if (oldTab.thumbnailPath() != tab.thumbnailPath()) {
+            roles << ThumbPathRole;
+        }
+        m_tabs[i] = tab;
+        QModelIndex start = index(i, 0);
+        QModelIndex end = index(i, 0);
+        emit dataChanged(start, end, roles);
+    }
+
+    if (tab.tabId() == m_activeTab.tabId()) {
+        m_activeTab = tab;
+        emit activeTabChanged(tab.tabId(), tab.tabId(), true);
     }
 }
 
@@ -387,19 +372,18 @@ void DeclarativeTabModel::updateTitle(int tabId, bool activeTab, QString title)
 {
     int tabIndex = findTabIndex(tabId);
     bool updateDb = false;
-
     int linkId = 0;
-    if (activeTab) {
-        m_activeTab.setTitle(title);
-        updateDb = true;
-        linkId = m_activeTab.currentLink();
-    } else if (tabIndex >= 0 && m_tabs.at(tabIndex).title() != title) {
+    if (tabIndex >= 0 && (m_tabs.at(tabIndex).title() != title || activeTab)) {
         QVector<int> roles;
         roles << TitleRole;
         m_tabs[tabIndex].setTitle(title);
         linkId = m_tabs.at(tabIndex).currentLink();
         emit dataChanged(index(tabIndex, 0), index(tabIndex, 0), roles);
         updateDb = true;
+
+        if (tabId == m_activeTab.tabId() && activeTab) {
+            m_activeTab.setTitle(title);
+        }
     }
 
     if (updateDb) {
@@ -419,7 +403,12 @@ void DeclarativeTabModel::removeTab(int tabId, const QString &thumbnail, int ind
     }
 
     if (index >= 0) {
+        if (activeTabIndex() == index) {
+            m_activeTab.setTabId(0);
+        }
+        beginRemoveRows(QModelIndex(), index, index);
         m_tabs.removeAt(index);
+        endRemoveRows();
     }
 
     emit countChanged();
@@ -436,47 +425,30 @@ int DeclarativeTabModel::findTabIndex(int tabId) const
     return -1;
 }
 
-void DeclarativeTabModel::saveTabOrder()
-{
-    QString tabOrder = "";
-    if (m_activeTab.isValid()) {
-        tabOrder = QString("%1,").arg(m_activeTab.tabId());
-    }
-
-    for (int i = 0; i < m_tabs.count(); ++i) {
-        const Tab &tab = m_tabs.at(i);
-        tabOrder.append(QString("%1,").arg(tab.tabId()));
-#if DEBUG_LOGS
-        qDebug() << "append:" << &tab;
-#endif
-    }
-    DBManager::instance()->saveSetting("tabOrder", tabOrder);
-}
-
-void DeclarativeTabModel::loadTabOrder()
-{
-    QString tabOrder = DBManager::instance()->getSetting("tabOrder");
-    QStringList tmpList = tabOrder.split(",");
-    bool ok = false;
-    for (int i = 0; i < tmpList.count(); ++i) {
-        const QString &strTab = tmpList.at(i);
-        int tabId = strTab.toInt(&ok);
-        if (ok) {
-            s_tabOrder << tabId;
-        }
-    }
-}
 void DeclarativeTabModel::updateActiveTab(const Tab &activeTab, bool loadActiveTab)
 {
 #if DEBUG_LOGS
-    qDebug() << "old active tab: " << &m_activeTab << m_tabs.count();
-    qDebug() << "new active tab: " << &activeTab;
+    qDebug() << "new active tab:" << &activeTab << "old active tab:" << &m_activeTab << "count:" << m_tabs.count();
 #endif
+    if (m_tabs.isEmpty()) {
+        return;
+    }
+
     if (m_activeTab != activeTab) {
         int oldTabId = m_activeTab.tabId();
         m_activeTab = activeTab;
+
+        // If tab has changed, update active tab role.
+        int tabIndex = activeTabIndex();
+        if (oldTabId != m_activeTab.tabId() && tabIndex >= 0) {
+            emit activeTabIndexChanged();
+        }
+        // To avoid blinking we don't expose "activeTabIndex" as a model role because
+        // it should be updated over here and this is too early.
+        // Instead, we pass current contentItem and activeTabIndex
+        // when pushing the TabPage to the PageStack. This is the signal changes the
+        // contentItem of WebView.
         emit activeTabChanged(oldTabId, activeTab.tabId(), loadActiveTab);
-        saveTabOrder();
     }
 }
 
@@ -491,32 +463,26 @@ void DeclarativeTabModel::updateTabUrl(int tabId, bool activeTab, const QString 
 
     int tabIndex = findTabIndex(tabId);
     bool updateDb = false;
-    if (activeTab) {
-        m_activeTab.setUrl(url);
-        m_activeTab.setTitle("");
-        m_activeTab.setThumbnailPath("");
-        updateDb = true;
-        if (navigate) {
-            m_activeTab.setNextLink(0);
-            int currentLinkId = m_activeTab.currentLink();
-            m_activeTab.setPreviousLink(currentLinkId);
-            m_activeTab.setCurrentLink(DBManager::instance()->nextLinkId());
-        }
-    } else if (tabIndex >= 0 && m_tabs.at(tabIndex).url() != url) {
+    if (tabIndex >= 0 && (m_tabs.at(tabIndex).url() != url || activeTab)) {
         QVector<int> roles;
         roles << UrlRole << TitleRole << ThumbPathRole;
         m_tabs[tabIndex].setUrl(url);
-        m_tabs[tabIndex].setTitle("");
-        m_tabs[tabIndex].setThumbnailPath("");
-        emit dataChanged(index(tabIndex, 0), index(tabIndex, 0), roles);
-        updateDb = true;
 
         if (navigate) {
             m_tabs[tabIndex].setNextLink(0);
-            int currentLinkId = m_tabs[tabIndex].currentLink();
+            int currentLinkId = m_tabs.at(tabIndex).currentLink();
             m_tabs[tabIndex].setPreviousLink(currentLinkId);
             m_tabs[tabIndex].setCurrentLink(DBManager::instance()->nextLinkId());
         }
+        m_tabs[tabIndex].setTitle("");
+        m_tabs[tabIndex].setThumbnailPath("");
+
+        if (tabId == m_activeTab.tabId()) {
+            m_activeTab = m_tabs[tabIndex];
+        }
+
+        emit dataChanged(index(tabIndex, 0), index(tabIndex, 0), roles);
+        updateDb = true;
     }
 
     if (updateDb) {
@@ -544,37 +510,23 @@ void DeclarativeTabModel::updateNewTabData(NewTabData *newTabData)
     }
 }
 
-bool DeclarativeTabModel::tabSort(const Tab &t1, const Tab &t2)
+void DeclarativeTabModel::updateThumbnailPath(int tabId, QString path)
 {
-    int i1 = s_tabOrder.indexOf(t1.tabId());
-    int i2 = s_tabOrder.indexOf(t2.tabId());
-    if (i2 == -1) {
-        return true;
-    } else {
-        return i1 < i2;
-    }
-}
+    if (tabId <= 0)
+        return;
 
-void DeclarativeTabModel::updateThumbnailPath(int tabId, bool activeTab, QString path)
-{
+    QVector<int> roles;
+    roles << ThumbPathRole;
+    for (int i = 0; i < m_tabs.count(); i++) {
+        if (m_tabs.at(i).tabId() == tabId && m_tabs.at(i).thumbnailPath() != path) {
 #if DEBUG_LOGS
-    qDebug() << &m_activeTab;
+            qDebug() << "model tab thumbnail updated: " << path << i << tabId;
 #endif
-    if (activeTab) {
-        m_activeTab.setThumbnailPath(path);
-    } else {
-        QVector<int> roles;
-        roles << ThumbPathRole;
-        for (int i = 0; i < m_tabs.count(); i++) {
-            if (m_tabs.at(i).tabId() == tabId && m_tabs.at(i).thumbnailPath() != path) {
-#if DEBUG_LOGS
-                qDebug() << "model tab thumbnail updated: " << path << tabId;
-#endif
-                m_tabs[i].setThumbnailPath(path);
-                QModelIndex start = index(i, 0);
-                QModelIndex end = index(i, 0);
-                emit dataChanged(start, end, roles);
-            }
+            m_tabs[i].setThumbnailPath(path);
+            QModelIndex start = index(i, 0);
+            QModelIndex end = index(i, 0);
+            emit dataChanged(start, end, roles);
+            DBManager::instance()->updateThumbPath(tabId, path);
         }
     }
 }

@@ -42,7 +42,6 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     , m_settingManager(SettingManager::instance())
     , m_foreground(true)
     , m_allowHiding(true)
-    , m_active(false)
     , m_popupActive(false)
     , m_portrait(true)
     , m_fullScreenMode(false)
@@ -62,12 +61,10 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
 {
     m_webPages.reset(new WebPages(this));
     setFlag(QQuickItem::ItemHasContents, true);
-    connect(&m_screenCapturer, SIGNAL(finished()), this, SLOT(screenCaptureReady()));
     connect(DownloadManager::instance(), SIGNAL(downloadStarted()), this, SLOT(onDownloadStarted()));
-    connect(DBManager::instance(), SIGNAL(thumbPathChanged(int,QString)),
-            this, SLOT(onPageThumbnailChanged(int,QString)));
     connect(this, SIGNAL(_readyToLoadChanged()), this, SLOT(onReadyToLoad()));
     connect(this, SIGNAL(portraitChanged()), this, SLOT(resetHeight()));
+    connect(this, SIGNAL(enabledChanged()), this, SLOT(handleEnabledChanged()));
 
     QString cacheLocation = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
     QDir dir(cacheLocation);
@@ -88,9 +85,6 @@ DeclarativeWebContainer::~DeclarativeWebContainer()
     if (m_webPage) {
         disconnect(m_webPage, 0, 0, 0);
     }
-
-    m_screenCapturer.cancel();
-    m_screenCapturer.waitForFinished();
 }
 
 DeclarativeWebPage *DeclarativeWebContainer::webPage() const
@@ -135,9 +129,7 @@ void DeclarativeWebContainer::setTabModel(DeclarativeTabModel *model)
             connect(m_model, SIGNAL(loadedChanged()), this, SLOT(onModelLoaded()));
             connect(m_model, SIGNAL(tabClosed(int)), this, SLOT(releasePage(int)));
             connect(m_model, SIGNAL(tabsCleared()), this, SLOT(onTabsCleared()));
-            // Try to make this to normal direct connection once we have removed QML_BAD_GUI_RENDER_LOOP.
-            connect(m_model, SIGNAL(newTabRequested(QString,QString)), this, SLOT(onNewTabRequested(QString,QString)), Qt::QueuedConnection);
-            connect(m_model, SIGNAL(updateActiveThumbnail()), this, SLOT(updateThumbnail()));
+            connect(m_model, SIGNAL(newTabRequested(QString,QString)), this, SLOT(onNewTabRequested(QString,QString)));
         }
         emit tabModelChanged();
     }
@@ -196,30 +188,6 @@ void DeclarativeWebContainer::setLoadProgress(int loadProgress)
     }
 }
 
-bool DeclarativeWebContainer::active() const
-{
-    return m_active;
-}
-
-void DeclarativeWebContainer::setActive(bool active)
-{
-    if (m_active != active) {
-        m_active = active;
-        emit activeChanged();
-
-        // If dialog has been opened, we need to verify that input panel is not visible.
-        // This might happen when the user fills in login details to a form and
-        // presses enter to accept the form after which PasswordManagerDialog is pushed to pagestack
-        // on top the BrowserPage. Once PassowordManagerDialog is accepted/rejected
-        // this condition can be met. If active changes to true before keyboard is fully closed,
-        // then the inputPanelVisibleChanged() signal is emitted by setInputPanelHeight.
-        if (m_active && m_inputPanelHeight == 0 && m_inputPanelVisible) {
-            m_inputPanelVisible = false;
-            emit inputPanelVisibleChanged();
-        }
-    }
-}
-
 bool DeclarativeWebContainer::inputPanelVisible() const
 {
     return m_inputPanelVisible;
@@ -235,7 +203,7 @@ void DeclarativeWebContainer::setInputPanelHeight(qreal height)
     if (m_inputPanelHeight != height) {
         bool imVisibleChanged = false;
         m_inputPanelHeight = height;
-        if (m_active) {
+        if (isEnabled()) {
             if (m_inputPanelHeight == 0) {
                 if (m_inputPanelVisible) {
                     m_inputPanelVisible = false;
@@ -280,19 +248,6 @@ QString DeclarativeWebContainer::title() const
 QString DeclarativeWebContainer::url() const
 {
     return m_webPage ? m_webPage->url().toString() : m_url;
-}
-
-QString DeclarativeWebContainer::thumbnailPath() const
-{
-    return m_thumbnailPath;
-}
-
-void DeclarativeWebContainer::setThumbnailPath(QString thumbnailPath)
-{
-    if (m_thumbnailPath != thumbnailPath) {
-        m_thumbnailPath = thumbnailPath;
-        emit thumbnailPathChanged();
-    }
 }
 
 bool DeclarativeWebContainer::readyToLoad() const
@@ -413,21 +368,9 @@ void DeclarativeWebContainer::loadNewTab(QString url, QString title, int parentI
     emit triggerLoad(url, title);
 }
 
-void DeclarativeWebContainer::captureScreen()
+bool DeclarativeWebContainer::alive(int tabId)
 {
-    if (!m_webPage || !isVisible()) {
-        return;
-    }
-
-    if (m_active && m_webPage->domContentLoaded() && !m_popupActive) {
-        int size = QGuiApplication::primaryScreen()->size().width();
-        if (!m_portrait && !m_fullScreenMode) {
-            size -= m_toolbarHeight;
-        }
-
-        qreal rotation = parentItem() ? parentItem()->rotation() : 0;
-        captureScreen(size, rotation);
-    }
+    return m_webPages->alive(tabId);
 }
 
 void DeclarativeWebContainer::dumpPages() const
@@ -482,29 +425,23 @@ qreal DeclarativeWebContainer::contentHeight() const
     }
 }
 
-DeclarativeWebContainer::ScreenCapture DeclarativeWebContainer::saveToFile(QImage image, QRect cropBounds, int tabId, qreal rotate)
+void DeclarativeWebContainer::handleEnabledChanged()
 {
-    QString path = QString("%1/tab-%2-thumb.png").arg(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)).arg(tabId);
-    QTransform transform;
-    transform.rotate(360 - rotate);
-    image = image.transformed(transform);
-    image = image.copy(cropBounds);
-
-    ScreenCapture capture;
-    if(image.save(path)) {
-        capture.tabId = tabId;
-        capture.path = path;
-    } else {
-        capture.tabId = -1;
-        qWarning() << Q_FUNC_INFO << "failed to save image" << path;
+    // If dialog has been opened, we need to verify that input panel is not visible.
+    // This might happen when the user fills in login details to a form and
+    // presses enter to accept the form after which PasswordManagerDialog is pushed to pagestack
+    // on top the BrowserPage. Once PassowordManagerDialog is accepted/rejected
+    // this condition can be met. If active changes to true before keyboard is fully closed,
+    // then the inputPanelVisibleChanged() signal is emitted by setInputPanelHeight.
+    if (isEnabled() && m_inputPanelHeight == 0 && m_inputPanelVisible) {
+        m_inputPanelVisible = false;
+        emit inputPanelVisibleChanged();
     }
-    return capture;
 }
 
 void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int activeTabId, bool loadActiveTab)
 {
     if (activeTabId <= 0) {
-        setThumbnailPath("");
         return;
     }
     const Tab &tab = m_model->activeTab();
@@ -513,9 +450,6 @@ void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int activeTabId, 
 #endif
 
     updateNavigationStatus(tab);
-
-    setThumbnailPath(tab.thumbnailPath());
-
     updateUrl(tab.url());
     updateTitle(tab.title());
 
@@ -538,21 +472,6 @@ void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int activeTabId, 
         }
     } else if (!m_realNavigation && isActiveTab(activeTabId) && m_webPage->backForwardNavigation()) {
         emit triggerLoad(tab.url(), tab.title());
-    }
-}
-
-void DeclarativeWebContainer::screenCaptureReady()
-{
-    ScreenCapture capture = m_screenCapturer.result();
-#if DEBUG_LOGS
-    qDebug() << capture.tabId << capture.path << isActiveTab(capture.tabId);
-#endif
-    if (capture.tabId != -1) {
-        // Update immediately without dbworker round trip.
-        if (isActiveTab(capture.tabId)) {
-            setThumbnailPath(capture.path);
-        }
-        DBManager::instance()->updateThumbPath(capture.tabId, capture.path);
     }
 }
 
@@ -596,17 +515,11 @@ void DeclarativeWebContainer::onNewTabRequested(QString url, QString title)
     Tab tab;
     updateNavigationStatus(tab);
 
-    if (m_active) {
-        loadNewTab(url, title, 0);
-    } else {
-        if (m_webPage) {
-            m_webPage->setVisible(false);
-            setWebPage(0);
-        }
-        QMetaObject::invokeMethod(this, "onNewTabRequested", Qt::QueuedConnection,
-                                  Q_ARG(QString, url),
-                                  Q_ARG(QString, title));
+    if (m_webPage) {
+        m_webPage->setVisible(false);
+        m_webPage->setOpacity(1.0);
     }
+    loadNewTab(url, title, 0);
 }
 
 void DeclarativeWebContainer::onReadyToLoad()
@@ -628,7 +541,7 @@ void DeclarativeWebContainer::onReadyToLoad()
     } else if (!m_initialUrl.isEmpty()) {
         emit triggerLoad(m_initialUrl, "");
     } else if (m_model->count() > 0) {
-        // First tab is actived when tabs are loaded to the tabs tabModel.
+        // Previous active tab is actived when tabs are loaded to the tabs tabModel.
         m_model->resetNewTabData();
         const Tab &tab = m_model->activeTab();
         emit triggerLoad(tab.url(), tab.title());
@@ -643,37 +556,17 @@ void DeclarativeWebContainer::onTabsCleared()
     m_webPages->clear();
     m_title = "";
     m_url = "";
+    // TODO: Do this really emit signals? WebPage is behind a QPointer. Thus, it should be already null.
+    // webPage destroyed signal could be used.
     setWebPage(0);
+//    emit contentItemChanged();
+//    emit titleChanged();
+//    emit urlChanged();
+
     if (m_tabId != 0) {
         m_tabId = 0;
         emit tabIdChanged();
     }
-    setThumbnailPath("");
-}
-
-/**
- * @brief DeclarativeTab::captureScreen
- * Rotation transformation is applied first, then geometry values on top of it.
- * @param size
- * @param rotate clockwise rotation of the image in degrees
- */
-void DeclarativeWebContainer::captureScreen(int size, qreal rotate)
-{
-    if (!window() || !window()->isActive() || !m_webPage) {
-        return;
-    }
-
-    // Cleanup old thumb.
-    setThumbnailPath("");
-
-    QImage image = window()->grabWindow();
-    QRect cropBounds(0, 0, size, size);
-
-#if DEBUG_LOGS
-    qDebug() << "about to set future";
-#endif
-    // asynchronous save to avoid the slow I/O
-    m_screenCapturer.setFuture(QtConcurrent::run(this, &DeclarativeWebContainer::saveToFile, image, cropBounds, m_webPage->tabId(), rotate));
 }
 
 int DeclarativeWebContainer::parentTabId(int tabId) const
@@ -691,11 +584,20 @@ void DeclarativeWebContainer::releasePage(int tabId, bool virtualize)
         // Successfully destroyed. Emit relevant property changes.
         if (!m_webPage) {
             m_tabId = 0;
+            if (m_canGoBack) {
+                m_canGoBack = false;
+                emit canGoBackChanged();
+            }
+
+            if (m_canGoForward) {
+                m_canGoForward = false;
+                emit canGoForwardChanged();
+            }
+
             emit contentItemChanged();
             updateUrl("");
             updateTitle("");
             emit tabIdChanged();
-            setThumbnailPath("");
         }
         m_model->resetNewTabData();
     }
@@ -759,25 +661,6 @@ void DeclarativeWebContainer::onPageTitleChanged()
         if (activeTab && webPage == m_webPage) {
             updateTitle(title);
         }
-    }
-}
-
-void DeclarativeWebContainer::onPageThumbnailChanged(int tabId, QString path)
-{
-    if (isActiveTab(tabId)) {
-        setThumbnailPath(path);
-    }
-
-    if (m_model) {
-        m_model->updateThumbnailPath(tabId, isActiveTab(tabId), path);
-    }
-}
-
-void DeclarativeWebContainer::updateThumbnail()
-{
-    const Tab &tab = m_model->activeTab();
-    if (isActiveTab(tab.tabId()) && tab.isValid()) {
-        captureScreen();
     }
 }
 

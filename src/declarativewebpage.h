@@ -13,8 +13,11 @@
 #define DECLARATIVEWEBPAGE_H
 
 #include <qqml.h>
+#include <QFutureWatcher>
+#include <QQuickItemGrabResult>
 #include <QPointer>
 #include <quickmozview.h>
+#include <QRgb>
 
 class DeclarativeWebContainer;
 
@@ -23,7 +26,6 @@ class DeclarativeWebPage : public QuickMozView {
     Q_PROPERTY(DeclarativeWebContainer* container READ container NOTIFY containerChanged FINAL)
     Q_PROPERTY(int tabId READ tabId NOTIFY tabIdChanged FINAL)
     Q_PROPERTY(bool viewReady MEMBER m_viewReady NOTIFY viewReadyChanged FINAL)
-    Q_PROPERTY(bool loaded MEMBER m_loaded NOTIFY loadedChanged FINAL)
     Q_PROPERTY(bool userHasDraggedWhileLoading MEMBER m_userHasDraggedWhileLoading NOTIFY userHasDraggedWhileLoadingChanged FINAL)
     Q_PROPERTY(bool fullscreen READ fullscreen NOTIFY fullscreenChanged FINAL)
     Q_PROPERTY(bool forcedChrome READ forcedChrome NOTIFY forcedChromeChanged FINAL)
@@ -59,6 +61,8 @@ public:
     bool viewReady() const;
 
     Q_INVOKABLE void loadTab(QString newUrl, bool force);
+    Q_INVOKABLE void grabToFile();
+    Q_INVOKABLE void grabThumbnail();
     Q_INVOKABLE void forceChrome(bool forcedChrome);
 
 public slots:
@@ -68,13 +72,15 @@ signals:
     void containerChanged();
     void tabIdChanged();
     void viewReadyChanged();
-    void loadedChanged();
     void userHasDraggedWhileLoadingChanged();
     void fullscreenChanged();
     void forcedChromeChanged();
     void domContentLoadedChanged();
     void faviconChanged();
     void resurrectedContentRectChanged();
+    void clearGrabResult();
+    void grabResult(QString fileName);
+    void thumbnailResult(QString data);
 
     void fullscreenHeightChanged();
     void toolbarHeightChanged();
@@ -86,12 +92,16 @@ private slots:
     void setFullscreen(const bool fullscreen);
     void onRecvAsyncMessage(const QString& message, const QVariant& data);
     void onViewInitialized();
+    void grabResultReady();
+    void grabWritten();
+    void thumbnailReady();
 
 private:
+    QString saveToFile(QImage image, QRect cropBounds);
+
     QPointer<DeclarativeWebContainer> m_container;
     int m_tabId;
     bool m_viewReady;
-    bool m_loaded;
     bool m_userHasDraggedWhileLoading;
     bool m_fullscreen;
     bool m_forcedChrome;
@@ -100,6 +110,9 @@ private:
     bool m_backForwardNavigation;
     QString m_favicon;
     QVariant m_resurrectedContentRect;
+    QSharedPointer<QQuickItemGrabResult> m_grabResult;
+    QSharedPointer<QQuickItemGrabResult> m_thumbnailResult;
+    QFutureWatcher<QString> m_grabWritter;
 
     qreal m_fullScreenHeight;
     qreal m_toolbarHeight;

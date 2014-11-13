@@ -13,6 +13,24 @@ import QtQuick 2.0
 import Sailfish.Silica 1.0
 
 IconButton {
+    // Keep icon enabled so that drag area can filter mouse events.
+    property bool active: true
+
+    signal tapped
+
+    // Don't pass touch events through in the middle FadeAnimation
+    enabled: opacity === 1.0
+
+    width: parent.width
     height: parent.height
-    width: height
+    icon.opacity: active ? 1.0 : 0.4
+    icon.highlighted: active && down
+
+    onClicked: {
+        if (active) {
+            tapped()
+        }
+    }
+
+    Behavior on opacity { FadeAnimation {} }
 }

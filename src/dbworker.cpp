@@ -587,7 +587,7 @@ void DBWorker::getHistory(const QString &filter)
                                   "FROM history INNER JOIN link "
                                   "ON history.link_id = link.link_id "
                                   "%1"
-                                  "ORDER BY %2;").arg(filterQuery).arg(order);
+                                  "ORDER BY %2 LIMIT 20;").arg(filterQuery).arg(order);
     QSqlQuery query = prepare(queryString);
     if (!filter.isEmpty()) {
         query.bindValue(QString(":search"), QString("%%1%").arg(filter));
