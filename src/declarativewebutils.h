@@ -53,6 +53,7 @@ signals:
     void openUrlRequested(QString url);
     void firstUseDoneChanged();
     void dumpMemoryInfo(QString fileName);
+    void beforeShutdown();
 
 private slots:
     void updateWebEngineSettings();

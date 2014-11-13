@@ -111,6 +111,7 @@ signals:
 
 private slots:
     void tabChanged(const Tab &tab);
+    void saveActiveTab() const;
 
 private:
     struct NewTabData {

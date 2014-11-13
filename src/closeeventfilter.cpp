@@ -12,6 +12,7 @@
 #include <QCoreApplication>
 #include "closeeventfilter.h"
 #include "qmozcontext.h"
+#include "declarativewebutils.h"
 
 CloseEventFilter::CloseEventFilter(DownloadManager *dlMgr, QObject *parent)
     : QObject(parent),
@@ -36,6 +37,7 @@ bool CloseEventFilter::eventFilter(QObject *obj, QEvent *event)
 
 void CloseEventFilter::stopApplication()
 {
+    emit DeclarativeWebUtils::instance()->beforeShutdown();
     QMozContext::GetInstance()->stopEmbedding();
     qApp->quit();
  }

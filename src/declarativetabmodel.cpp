@@ -12,6 +12,7 @@
 #include "declarativetabmodel.h"
 #include "dbmanager.h"
 #include "linkvalidator.h"
+#include "declarativewebutils.h"
 
 #include <QFile>
 #include <QDebug>
@@ -31,11 +32,12 @@ DeclarativeTabModel::DeclarativeTabModel(QObject *parent)
             this, SLOT(tabsAvailable(QList<Tab>)));
     connect(DBManager::instance(), SIGNAL(tabChanged(Tab)),
             this, SLOT(tabChanged(Tab)));
+    connect(DeclarativeWebUtils::instance(), SIGNAL(beforeShutdown()),
+            this, SLOT(saveActiveTab()));
 }
 
 DeclarativeTabModel::~DeclarativeTabModel()
 {
-    DBManager::instance()->saveSetting("activeTabId", QString("%1").arg(m_activeTab.tabId()));
 }
 
 QHash<int, QByteArray> DeclarativeTabModel::roleNames() const
@@ -529,4 +531,9 @@ void DeclarativeTabModel::updateThumbnailPath(int tabId, QString path)
             DBManager::instance()->updateThumbPath(tabId, path);
         }
     }
+}
+
+void DeclarativeTabModel::saveActiveTab() const
+{
+    DBManager::instance()->saveSetting("activeTabId", QString("%1").arg(m_activeTab.tabId()));
 }

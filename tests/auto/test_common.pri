@@ -1,7 +1,9 @@
 # include this after TARGET name of the unit test
-CONFIG += testcase
+CONFIG += testcase link_pkgconfig
 
 QT += quick testlib qml quick concurrent sql
+
+PKGCONFIG += mlite5
 
 INCLUDEPATH += ../../../src
 
