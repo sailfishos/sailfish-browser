@@ -233,27 +233,6 @@ WebContainer {
                 }
             }
 
-            onViewInitialized: {
-                addMessageListener("chrome:linkadded")
-                addMessageListener("embed:alert")
-                addMessageListener("embed:confirm")
-                addMessageListener("embed:prompt")
-                addMessageListener("embed:auth")
-                addMessageListener("embed:login")
-                addMessageListener("embed:find")
-                addMessageListener("embed:permissions")
-                addMessageListener("Content:ContextMenu")
-                addMessageListener("Content:SelectionRange");
-                addMessageListener("Content:SelectionCopied");
-                addMessageListener("embed:selectasync")
-                addMessageListener("embed:filepicker")
-
-                loadFrameScript("chrome://embedlite/content/SelectAsyncHelper.js")
-                loadFrameScript("chrome://embedlite/content/embedhelper.js")
-
-                viewReady = true
-            }
-
             onDraggingChanged: {
                 if (dragging && loading) {
                     userHasDraggedWhileLoading = true

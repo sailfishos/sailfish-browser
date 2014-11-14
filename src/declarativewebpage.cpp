@@ -18,6 +18,20 @@
 static const QString gFullScreenMessage("embed:fullscreenchanged");
 static const QString gDomContentLoadedMessage("embed:domcontentloaded");
 
+static const QString gLinkAddedMessage("chrome:linkadded");
+static const QString gAlertMessage("embed:alert");
+static const QString gConfirmMessage("embed:confirm");
+static const QString gPromptMessage("embed:prompt");
+static const QString gAuthMessage("embed:auth");
+static const QString gLoginMessage("embed:login");
+static const QString gFindMessage("embed:find");
+static const QString gPermissionsMessage("embed:permissions");
+static const QString gContextMenuMessage("Content:ContextMenu");
+static const QString gSelectionRangeMessage("Content:SelectionRange");
+static const QString gSelectionCopiedMessage("Content:SelectionCopied");
+static const QString gSelectAsyncMessage("embed:selectasync");
+static const QString gFilePickerMessage("embed:filepicker");
+
 bool isBlack(QRgb rgb)
 {
     return qRed(rgb) == 0 && qGreen(rgb) == 0 && qBlue(rgb) == 0;
@@ -225,6 +239,27 @@ void DeclarativeWebPage::onViewInitialized()
 {
     addMessageListener(gFullScreenMessage);
     addMessageListener(gDomContentLoadedMessage);
+
+    addMessageListener(gLinkAddedMessage);
+    addMessageListener(gAlertMessage);
+    addMessageListener(gConfirmMessage);
+    addMessageListener(gPromptMessage);
+    addMessageListener(gAuthMessage);
+    addMessageListener(gLoginMessage);
+    addMessageListener(gFindMessage);
+    addMessageListener(gPermissionsMessage);
+    addMessageListener(gContextMenuMessage);
+    addMessageListener(gSelectionRangeMessage);
+    addMessageListener(gSelectionCopiedMessage);
+    addMessageListener(gSelectAsyncMessage);
+    addMessageListener(gFilePickerMessage);
+
+    loadFrameScript("chrome://embedlite/content/SelectAsyncHelper.js");
+    loadFrameScript("chrome://embedlite/content/embedhelper.js");
+
+    // This is the only place that is allowed to change this to true.
+    m_viewReady = true;
+    emit viewReadyChanged();
 }
 
 void DeclarativeWebPage::grabResultReady()
