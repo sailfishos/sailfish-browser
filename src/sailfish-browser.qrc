@@ -3,7 +3,7 @@
     <file>browser.qml</file>
     <file>pages/BrowserPage.qml</file>
     <file>pages/ShareLinkPage.qml</file>
-    <file>pages/ConfigDialog.qml</file>
+    <file>pages/components/ConfigDialog.qml</file>
     <file>pages/components/AlertDialog.qml</file>
     <file>pages/components/AuthDialog.qml</file>
     <file>pages/components/BookmarkEditDialog.qml</file>
@@ -37,6 +37,13 @@
     <file>pages/components/WebPopupHandler.js</file>
     <file>pages/components/HistoryList.qml</file>
     <file>pages/components/ResourceController.qml</file>
+    <file>pages/components/SecondaryBar.qml</file>
+    <file>pages/components/TabButton.qml</file>
+    <file>pages/components/TabView.qml</file>
+    <file>pages/components/PressEffect.qml</file>
+    <file>pages/components/ExpandingButton.qml</file>
+    <file>pages/components/DisplaceTransition.qml</file>
+    <file>pages/components/RemoveTransition.qml</file>
     <file>pages/components/pickers/ContentPicker.qml</file>
     <file>pages/components/pickers/ImagePicker.qml</file>
     <file>pages/components/pickers/MultiContentPicker.qml</file>
