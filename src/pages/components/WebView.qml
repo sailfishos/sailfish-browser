@@ -30,26 +30,6 @@ WebContainer {
         }
     }
 
-    function load(url, title, force) {
-        // Modify url and title to string
-        title = title ? "" + title : ""
-        url = url ? "" + url : ""
-
-        // This guarantees at that least one webview exists.
-        if (tabModel.count == 0 && !tabModel.hasNewTabData) {
-            tabModel.newTabData(url, title, null)
-        }
-
-        if (!tabModel.hasNewTabData || force || !webView.activatePage(tabModel.nextTabId)) {
-            // First contentItem will be created once tab activated.
-            if (contentItem && contentItem.viewReady) {
-                contentItem.loadTab(url, force)
-            } else {
-                webView.initialUrl = url
-            }
-        }
-    }
-
     function reload() {
         if (!contentItem) {
             return
@@ -89,8 +69,6 @@ WebContainer {
     tabModel: TabModel {
         id: tabs
     }
-
-    onTriggerLoad: webView.load(url, title)
 
     visible: WebUtils.firstUseDone
 

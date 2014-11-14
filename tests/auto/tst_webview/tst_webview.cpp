@@ -362,7 +362,7 @@ void tst_webview::testUrlLoading()
     QString newTitle = "TestUrlScheme";
 
     // Mimic favorite opening to already opened tab.
-    emit webContainer->triggerLoad(newUrl, newTitle);
+    webContainer->load(newUrl, newTitle);
     waitSignals(loadingChanged, 2);
 
     QCOMPARE(contentItemSpy.count(), 0);

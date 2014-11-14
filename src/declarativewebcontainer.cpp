@@ -278,6 +278,26 @@ bool DeclarativeWebContainer::isActiveTab(int tabId)
     return m_webPage && m_webPage->tabId() == tabId;
 }
 
+void DeclarativeWebContainer::load(QString url, QString title, bool force)
+{
+    if (url.isEmpty()) {
+        url = "about:blank";
+    }
+
+    if (m_model->count() == 0 && !m_model->hasNewTabData()) {
+        m_model->newTabData(url, title);
+    }
+
+    if (!m_model->hasNewTabData() || force || !activatePage(m_model->nextTabId())) {
+        // First contentItem will be created once tab activated.
+        if (m_webPage && m_webPage->viewReady()) {
+            m_webPage->loadTab(url, force);
+        } else {
+            m_initialUrl = url;
+        }
+    }
+}
+
 void DeclarativeWebContainer::goForward()
 {
     if (m_canGoForward && m_webPage) {
@@ -364,7 +384,7 @@ void DeclarativeWebContainer::loadNewTab(QString url, QString title, int parentI
     m_model->newTabData(url, title, webPage(), parentId);
     // This could handle new page creation directly if/
     // when connection helper is accessible from QML.
-    emit triggerLoad(url, title);
+    load(url, title);
 }
 
 bool DeclarativeWebContainer::alive(int tabId)
@@ -467,10 +487,10 @@ void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int activeTabId, 
 
         if (activatePage(activeTabId, true) && m_readyToLoad
                 && (m_webPage->tabId() != activeTabId || m_webPage->url().toString() != tabUrl)) {
-            emit triggerLoad(tabUrl, tab.title());
+            load(tabUrl, tab.title());
         }
     } else if (!m_realNavigation && isActiveTab(activeTabId) && m_webPage->backForwardNavigation()) {
-        emit triggerLoad(tab.url(), tab.title());
+        m_webPage->loadTab(tab.url(), tab.title());
     }
 }
 
@@ -538,15 +558,15 @@ void DeclarativeWebContainer::onReadyToLoad()
     if (m_model->hasNewTabData()) {
         m_webPage->loadTab(m_model->newTabUrl(), false);
     } else if (!m_initialUrl.isEmpty()) {
-        emit triggerLoad(m_initialUrl, "");
+        load(m_initialUrl, "");
     } else if (m_model->count() > 0) {
         // Previous active tab is actived when tabs are loaded to the tabs tabModel.
         m_model->resetNewTabData();
         const Tab &tab = m_model->activeTab();
-        emit triggerLoad(tab.url(), tab.title());
+        load(tab.url(), tab.title());
     } else {
         // This can happen only during startup.
-        emit triggerLoad(DeclarativeWebUtils::instance()->homePage(), "");
+        load(DeclarativeWebUtils::instance()->homePage(), "");
     }
 }
 

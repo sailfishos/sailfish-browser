@@ -56,7 +56,6 @@ class DeclarativeWebContainer : public QQuickItem {
     Q_PROPERTY(int tabId READ tabId NOTIFY tabIdChanged FINAL)
     Q_PROPERTY(QString title READ title NOTIFY titleChanged FINAL)
     Q_PROPERTY(QString url READ url NOTIFY urlChanged FINAL)
-    Q_PROPERTY(QString initialUrl MEMBER m_initialUrl NOTIFY initialUrlChanged FINAL)
 
     Q_PROPERTY(QQmlComponent* webPageComponent MEMBER m_webPageComponent NOTIFY webPageComponentChanged FINAL)
 
@@ -106,6 +105,7 @@ public:
 
     bool isActiveTab(int tabId);
 
+    Q_INVOKABLE void load(QString url = "", QString title = "", bool force = false);
     Q_INVOKABLE void goForward();
     Q_INVOKABLE void goBack();
     Q_INVOKABLE bool activatePage(int tabId, bool force = false);
@@ -141,13 +141,11 @@ signals:
     void tabIdChanged();
     void titleChanged();
     void urlChanged();
-    void initialUrlChanged();
     void thumbnailPathChanged();
 
     void _readyToLoadChanged();
 
     void webPageComponentChanged();
-    void triggerLoad(QString url, QString title);
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event);
