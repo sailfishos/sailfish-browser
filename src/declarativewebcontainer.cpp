@@ -57,7 +57,6 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     , m_canGoBack(false)
     , m_realNavigation(false)
     , m_readyToLoad(false)
-    , m_deferredReload(false)
 {
     m_webPages.reset(new WebPages(this));
     setFlag(QQuickItem::ItemHasContents, true);
