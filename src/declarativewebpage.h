@@ -25,7 +25,7 @@ class DeclarativeWebPage : public QuickMozView {
     Q_OBJECT
     Q_PROPERTY(DeclarativeWebContainer* container READ container NOTIFY containerChanged FINAL)
     Q_PROPERTY(int tabId READ tabId NOTIFY tabIdChanged FINAL)
-    Q_PROPERTY(bool viewReady MEMBER m_viewReady NOTIFY viewReadyChanged FINAL)
+    Q_PROPERTY(bool viewReady READ viewReady NOTIFY viewReadyChanged FINAL)
     Q_PROPERTY(bool userHasDraggedWhileLoading MEMBER m_userHasDraggedWhileLoading NOTIFY userHasDraggedWhileLoadingChanged FINAL)
     Q_PROPERTY(bool fullscreen READ fullscreen NOTIFY fullscreenChanged FINAL)
     Q_PROPERTY(bool forcedChrome READ forcedChrome NOTIFY forcedChromeChanged FINAL)
