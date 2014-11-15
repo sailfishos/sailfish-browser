@@ -56,12 +56,13 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     , m_canGoForward(false)
     , m_canGoBack(false)
     , m_realNavigation(false)
-    , m_readyToLoad(false)
+    , m_completed(false)
+    , m_initialized(false)
 {
     m_webPages.reset(new WebPages(this));
     setFlag(QQuickItem::ItemHasContents, true);
     connect(DownloadManager::instance(), SIGNAL(downloadStarted()), this, SLOT(onDownloadStarted()));
-    connect(this, SIGNAL(_readyToLoadChanged()), this, SLOT(onReadyToLoad()));
+    connect(QMozContext::GetInstance(), SIGNAL(onInitialized()), this, SLOT(initialize()));
     connect(this, SIGNAL(portraitChanged()), this, SLOT(resetHeight()));
     connect(this, SIGNAL(enabledChanged()), this, SLOT(handleEnabledChanged()));
 
@@ -94,6 +95,11 @@ DeclarativeWebPage *DeclarativeWebContainer::webPage() const
 void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
 {
     if (m_webPage != webPage) {
+        // Disconnect previous page.
+        if (m_webPage) {
+            m_webPage->disconnect(this);
+        }
+
         m_webPage = webPage;
 
         if (m_webPage) {
@@ -125,13 +131,18 @@ void DeclarativeWebContainer::setTabModel(DeclarativeTabModel *model)
         m_model = model;
         if (m_model) {
             connect(m_model, SIGNAL(activeTabChanged(int,int,bool)), this, SLOT(onActiveTabChanged(int,int,bool)));
-            connect(m_model, SIGNAL(loadedChanged()), this, SLOT(onModelLoaded()));
+            connect(m_model, SIGNAL(loadedChanged()), this, SLOT(initialize()));
             connect(m_model, SIGNAL(tabClosed(int)), this, SLOT(releasePage(int)));
             connect(m_model, SIGNAL(tabsCleared()), this, SLOT(onTabsCleared()));
-            connect(m_model, SIGNAL(newTabRequested(QString,QString)), this, SLOT(onNewTabRequested(QString,QString)));
+            connect(m_model, SIGNAL(newTabRequested(QString,QString,int)), this, SLOT(onNewTabRequested(QString,QString,int)));
         }
         emit tabModelChanged();
     }
+}
+
+bool DeclarativeWebContainer::completed() const
+{
+    return m_completed;
 }
 
 bool DeclarativeWebContainer::foreground() const
@@ -249,30 +260,6 @@ QString DeclarativeWebContainer::url() const
     return m_webPage ? m_webPage->url().toString() : m_url;
 }
 
-bool DeclarativeWebContainer::readyToLoad() const
-{
-    return m_readyToLoad;
-}
-
-void DeclarativeWebContainer::setReadyToLoad(bool readyToLoad)
-{
-    static bool browserReady = false;
-    if (!browserReady && readyToLoad) {
-        bool wasClearHistoryRequested = m_settingManager->clearHistoryRequested();
-        browserReady = true;
-        m_settingManager->initialize();
-        if (m_model && wasClearHistoryRequested) {
-            readyToLoad = false;
-            emit m_model->countChanged();
-        }
-    }
-
-    if (m_readyToLoad != readyToLoad) {
-        m_readyToLoad = readyToLoad;
-        emit _readyToLoadChanged();
-    }
-}
-
 bool DeclarativeWebContainer::isActiveTab(int tabId)
 {
     return m_webPage && m_webPage->tabId() == tabId;
@@ -284,16 +271,30 @@ void DeclarativeWebContainer::load(QString url, QString title, bool force)
         url = "about:blank";
     }
 
-    if (m_model->count() == 0 && !m_model->hasNewTabData()) {
-        m_model->newTabData(url, title);
+    if (m_webPage && m_webPage->viewReady()) {
+        m_webPage->loadTab(url, force);
+    } else if (!canInitialize()) {
+        updateUrl(url);
+        updateTitle(title);
+    } else if (m_model && m_model->count() == 0) {
+        // Browser running all tabs are closed.
+        m_model->newTab(url, title);
     }
+}
 
-    if (!m_model->hasNewTabData() || force || !activatePage(m_model->nextTabId())) {
-        // First contentItem will be created once tab activated.
-        if (m_webPage && m_webPage->viewReady()) {
-            m_webPage->loadTab(url, force);
+/**
+ * @brief DeclarativeWebContainer::reload
+ * Reloads the active tab. If not tabs exist this does nothing. If the page was
+ * virtualized it will be resurrected.
+ */
+void DeclarativeWebContainer::reload(bool force)
+{
+    if (m_tabId > 0) {
+        if (force && m_webPage && m_webPage->viewReady() && m_webPage->tabId() == m_tabId) {
+            // Reload live active tab directly.
+            m_webPage->reload();
         } else {
-            m_initialUrl = url;
+            loadTab(m_tabId, m_url, m_title, force);
         }
     }
 }
@@ -350,7 +351,7 @@ void DeclarativeWebContainer::goBack()
     }
 }
 
-bool DeclarativeWebContainer::activatePage(int tabId, bool force)
+bool DeclarativeWebContainer::activatePage(int tabId, bool force, int parentId)
 {
     if (!m_model) {
         return false;
@@ -358,8 +359,7 @@ bool DeclarativeWebContainer::activatePage(int tabId, bool force)
 
     m_webPages->initialize(this, m_webPageComponent.data());
     if ((m_model->loaded() || force) && tabId > 0 && m_webPages->initialized()) {
-        WebPageActivationData activationData = m_webPages->page(tabId, m_model->newTabParentId());
-        activationData.webPage->disconnect(this);
+        WebPageActivationData activationData = m_webPages->page(tabId, parentId);
         setWebPage(activationData.webPage);
         // Reset always height so that orentation change is taken into account.
         m_webPage->forceChrome(false);
@@ -379,14 +379,6 @@ bool DeclarativeWebContainer::activatePage(int tabId, bool force)
     return false;
 }
 
-void DeclarativeWebContainer::loadNewTab(QString url, QString title, int parentId)
-{
-    m_model->newTabData(url, title, webPage(), parentId);
-    // This could handle new page creation directly if/
-    // when connection helper is accessible from QML.
-    load(url, title);
-}
-
 bool DeclarativeWebContainer::alive(int tabId)
 {
     return m_webPages->alive(tabId);
@@ -404,6 +396,15 @@ bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
         return true;
     }
     return QObject::eventFilter(obj, event);
+}
+
+void DeclarativeWebContainer::componentComplete()
+{
+    QQuickItem::componentComplete();
+    if (m_initialized && !m_completed) {
+        m_completed = true;
+        emit completedChanged();
+    }
 }
 
 void DeclarativeWebContainer::resetHeight(bool respectContentHeight)
@@ -465,58 +466,98 @@ void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int activeTabId, 
     }
     setActiveTabData();
 
-    if (m_model->hasNewTabData() || !loadActiveTab) {
+    if (!loadActiveTab) {
         return;
     }
 
     // Switch to different tab.
     if (oldTabId != activeTabId) {
-        QString tabUrl = tab.url();
-
-        if (activatePage(activeTabId, true) && m_readyToLoad
-                && (m_webPage->tabId() != activeTabId || m_webPage->url().toString() != tabUrl)) {
-            load(tabUrl, tab.title());
-        }
+        reload(false);
     } else if (!m_realNavigation && isActiveTab(activeTabId) && m_webPage->backForwardNavigation()) {
-        m_webPage->loadTab(tab.url(), true);
+        m_webPage->loadTab(m_url, false);
     }
 }
 
-void DeclarativeWebContainer::onModelLoaded()
+void DeclarativeWebContainer::initialize()
 {
     // This signal handler is responsible for activating
     // the first page.
+    if (!canInitialize() || m_initialized) {
+        return;
+    }
+
+    bool clearTabs = m_settingManager->clearHistoryRequested();
+    int oldCount = m_model->count();
+
+    // Clear tabs immediately from the model.
+    if (clearTabs) {
+        m_model->clear();
+    }
+
+    // If data was cleared when initialized and we had tabs in previous
+    // session, reset tab model to unloaded state. DBManager emits
+    // tabsAvailable with empty list when tabs are cleared => tab model
+    // changes back to loaded and the initialize() slot gets called again.
+    if (m_settingManager->initialize() && (oldCount > 0) && clearTabs) {
+        m_model->setUnloaded();
+        return;
+    }
+
+    // Load test
+    // 1) firstUseDone and no tabs, load initial url or home page to a new tab.
+    // 2) model has tabs, load initial url or active tab.
     bool firstUseDone = DeclarativeWebUtils::instance()->firstUseDone();
-    if (m_model->hasNewTabData() || (m_model->count() == 0 && firstUseDone)) {
-        activatePage(m_model->nextTabId(), true);
+    if (m_model->count() == 0 && firstUseDone) {
+        QString url = m_url.isEmpty() ? DeclarativeWebUtils::instance()->homePage() : m_url;
+        QString title = url == m_url ? m_title : "";
+        m_model->newTab(url, title);
     } else if (m_model->count() > 0) {
         const Tab &tab = m_model->activeTab();
-        activatePage(tab.tabId(), true);
+        // Activating a web page updates url and title from the active web page.
+        // So, let's figure out url and title, active page, and then set initial url and title.
+        QString url = m_url.isEmpty() ? tab.url() : m_url;
+        QString title = url == m_url ? m_title : tab.title();
+        loadTab(tab.tabId(), url, title, true);
     }
+
+    if (isComponentComplete() && !m_completed) {
+        m_completed = true;
+        emit completedChanged();
+    }
+    m_initialized = true;
 }
 
 void DeclarativeWebContainer::onDownloadStarted()
 {
-    // This is not 100% solid. A new tab is created for every incoming
-    // url. In slow network connectivity one can close previous tab or
-    // create a new tab before downloadStarted is emitted
-    // by DownloadManager. To get this to the 100%, we would need to
-    // pass windowId of the active window when download is started and close
-    // the passed windowId instead.
-    if (m_model && m_model->hasNewTabData() && m_model->count() > 0 && m_webPage) {
-        DeclarativeWebPage *previousWebPage = qobject_cast<DeclarativeWebPage *>(m_model->newTabPreviousPage());
-        releasePage(m_webPage->tabId());
-        if (previousWebPage) {
-            activatePage(previousWebPage->tabId());
-        } else if (m_model->count() == 0) {
-            // Download doesn't add tab to model. Mimic
-            // model change in case tabs count goes to zero.
-            emit m_model->countChanged();
+    // This is not 100% solid. A newTab is called on incoming
+    // url (during browser start) if no tabs exist (waitingForNewTab). In slow network
+    // connectivity one can create a a new tab before downloadStarted is emitted
+    // from DownloadManager. To get this to the 100%, we should add downloadStatus
+    // to the QmlMozView containing status of downloading.
+    if (m_model->waitingForNewTab())  {
+        m_model->setWaitingForNewTab(false);
+        updateUrl("");
+        updateTitle("");
+    } else {
+        // When downloading to an existing tab refresh url,
+        // title, and navigation status from the active tab. Trigger load for the tab
+        // if url differs. In case browser is started with a dl url we have an "incorrect" initial url.
+        QString oldUrl = m_url;
+        setActiveTabData();
+        if (m_url != url() || m_url != oldUrl) {
+            loadTab(m_tabId, m_url, m_title, true);
         }
+    }
+
+    if (m_model->count() == 0) {
+        // Download doesn't add tab to model. Mimic
+        // model change in case downloading was started without
+        // existing tabs.
+        emit m_model->countChanged();
     }
 }
 
-void DeclarativeWebContainer::onNewTabRequested(QString url, QString title)
+void DeclarativeWebContainer::onNewTabRequested(QString url, QString title, int parentId)
 {
     // An empty tab for cleaning previous navigation status.
     Tab tab;
@@ -526,49 +567,20 @@ void DeclarativeWebContainer::onNewTabRequested(QString url, QString title)
         m_webPage->setVisible(false);
         m_webPage->setOpacity(1.0);
     }
-    loadNewTab(url, title, 0);
-}
 
-void DeclarativeWebContainer::onReadyToLoad()
-{
-    // Triggered when tabs of tab model are available and QmlMozView is ready to load.
-    // Load test
-    // 1) tabModel.hasNewTabData -> loadTab (already activated view)
-    // 2) browser starting and initial url given
-    // 3) model has tabs, load active tab -> load (activate view when needed)
-    // 4) load home page -> load (activate view when needed)
-
-    // visible could be possible delay property for _readyToLoad if so wanted.
-    if (!m_readyToLoad || !m_model) {
-        return;
-    }
-
-    if (m_model->hasNewTabData()) {
-        m_webPage->loadTab(m_model->newTabUrl(), false);
-    } else if (!m_initialUrl.isEmpty()) {
-        load(m_initialUrl, "");
-    } else if (m_model->count() > 0) {
-        // Previous active tab is actived when tabs are loaded to the tabs tabModel.
-        m_model->resetNewTabData();
-        const Tab &tab = m_model->activeTab();
-        load(tab.url(), tab.title());
-    } else {
-        // This can happen only during startup.
-        load(DeclarativeWebUtils::instance()->homePage(), "");
+    if (activatePage(m_model->nextTabId(), false, parentId)) {
+        m_webPage->setInitialUrl(url);
+        m_webPage->setInitialTitle(title);
     }
 }
 
 void DeclarativeWebContainer::onTabsCleared()
 {
     m_webPages->clear();
-    m_title = "";
-    m_url = "";
-    // TODO: Do this really emit signals? WebPage is behind a QPointer. Thus, it should be already null.
-    // webPage destroyed signal could be used.
-    setWebPage(0);
-//    emit contentItemChanged();
-//    emit titleChanged();
-//    emit urlChanged();
+    // Trigger contentItem changed and then reset title, url, and tabId.
+    emit contentItemChanged();
+    updateTitle("");
+    updateUrl("");
 
     if (m_tabId != 0) {
         m_tabId = 0;
@@ -606,7 +618,6 @@ void DeclarativeWebContainer::releasePage(int tabId, bool virtualize)
             updateTitle("");
             emit tabIdChanged();
         }
-        m_model->resetNewTabData();
     }
 }
 
@@ -637,11 +648,22 @@ void DeclarativeWebContainer::onPageUrlChanged()
         }
 
         // Initial url should not be considered as navigation request that increases navigation history.
-        bool initialLoad = m_initialUrl.isEmpty() && !webPage->urlHasChanged();
-        m_model->updateUrl(tabId, activeTab, url, webPage->backForwardNavigation(), initialLoad);
-        m_initialUrl = "";
-
+        // Cleanup this.
+        bool initialLoad = !webPage->initialUrl().isEmpty() && !webPage->urlHasChanged();
+        // Virtualized pages need to be checked from the model.
+        if (webPage->boundToModel() || m_model->contains(tabId)) {
+            m_model->updateUrl(tabId, activeTab, url, webPage->backForwardNavigation(), initialLoad);
+        } else {
+            // Adding tab to the model is delayed so that url resolved to download link do not get added
+            // to the model. We should have downloadStatus(status) and linkClicked(url) signals in QmlMozView.
+            // To distinguish linkClicked(url) from downloadStatus(status) the downloadStatus(status) signal
+            // should not be emitted when link clicking started downloading or opened (will open) a new window.
+            m_model->addTab(webPage->initialUrl(), webPage->initialTitle());
+        }
+        webPage->bindToModel();
+        webPage->resetInitialData();
         webPage->setUrlHasChanged(true);
+
         bool wasBackForwardNavigation = webPage->backForwardNavigation();
         webPage->setBackForwardNavigation(false);
 
@@ -733,6 +755,10 @@ void DeclarativeWebContainer::updateVkbHeight()
  */
 void DeclarativeWebContainer::updateUrl(const QString &newUrl)
 {
+    if (newUrl.isEmpty() && !m_completed) {
+        return;
+    }
+
     if (m_url != newUrl) {
         m_url = newUrl;
         emit urlChanged();
@@ -754,6 +780,26 @@ void DeclarativeWebContainer::updateTitle(const QString &newTitle)
     if (m_title != newTitle) {
         m_title = newTitle;
         emit titleChanged();
+    }
+}
+
+bool DeclarativeWebContainer::canInitialize() const
+{
+    return QMozContext::GetInstance()->initialized() && m_model && m_model->loaded();
+}
+
+void DeclarativeWebContainer::loadTab(int tabId, QString url, QString title, bool force)
+{
+    if (activatePage(tabId, true) || force) {
+        // Note: active pages containing a "link" between each other (parent-child relationship)
+        // are not destroyed automatically e.g. in low memory notification.
+        // Hence, parentId is not necessary over here.
+        if (m_webPage->viewReady()) {
+            m_webPage->loadTab(url, force);
+        } else {
+            m_webPage->setInitialUrl(url);
+            m_webPage->setInitialTitle(title);
+        }
     }
 }
 

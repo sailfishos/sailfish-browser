@@ -30,14 +30,6 @@ WebContainer {
         }
     }
 
-    function reload() {
-        if (!contentItem) {
-            return
-        }
-
-        contentItem.reload()
-    }
-
     function sendAsyncMessage(name, data) {
         if (!contentItem) {
             return
@@ -60,7 +52,6 @@ WebContainer {
     inputPanelOpenHeight: window.pageStack.imSize
     fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) ||
                     (contentItem && contentItem.fullscreen)
-    _readyToLoad: contentItem && contentItem.viewReady && tabModel.loaded
 
     favicon: contentItem ? contentItem.favicon : ""
 
@@ -75,7 +66,7 @@ WebContainer {
     WebViewCreator {
         activeWebView: contentItem
         // onNewWindowRequested is always handled as synchronous operation (not through newTab).
-        onNewWindowRequested: webView.loadNewTab(url, "", parentId)
+        onNewWindowRequested: tabModel.newTab(url, "", parentId)
     }
 
     Label {

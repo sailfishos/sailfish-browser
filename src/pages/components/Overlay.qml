@@ -50,6 +50,7 @@ PanelBackground {
                     "url": pageUrl,
                     "title": pageTitle
                 }
+                webView.tabModel.waitingForNewTab = true
             }
             webView.focus = true
         }
@@ -82,7 +83,8 @@ PanelBackground {
 
     onActiveChanged: {
         if (active && !webView.contentItem && !searchField.enteringNewTabUrl && webView.tabId > 0) {
-            webView.activatePage(webView.tabId, true)
+            // Don't force reloading tab change if already loaded.
+            webView.reload(false)
         }
     }
 

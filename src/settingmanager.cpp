@@ -21,6 +21,7 @@ static SettingManager *gSingleton = 0;
 
 SettingManager::SettingManager(QObject *parent)
     : QObject(parent)
+    , m_initialized(false)
 {
     m_clearPrivateDataConfItem = new MGConfItem("/apps/sailfish-browser/actions/clear_private_data", this);
     m_clearHistoryConfItem = new MGConfItem("/apps/sailfish-browser/actions/clear_history", this);
@@ -44,14 +45,19 @@ bool SettingManager::clearHistoryRequested() const
             m_clearHistoryConfItem->value(QVariant(false)).toBool();
 }
 
-void SettingManager::initialize()
+bool SettingManager::initialize()
 {
-    if (!clearPrivateData()) {
-        clearHistory();
-        clearCookies();
-        clearPasswords();
-        clearCache();
-        clearBookmarks();
+    if (m_initialized) {
+        return false;
+    }
+
+    bool clearedData = clearPrivateData();
+    if (!clearedData) {
+        clearedData |= clearCookies();
+        clearedData |= clearPasswords();
+        clearedData |= clearCache();
+        clearedData |= clearBookmarks();
+        clearedData |= clearHistory();
     }
     setSearchEngine();
     doNotTrack();
@@ -72,6 +78,9 @@ void SettingManager::initialize()
             this, SLOT(setSearchEngine()));
     connect(m_doNotTrackConfItem, SIGNAL(valueChanged()),
             this, SLOT(doNotTrack()));
+
+    m_initialized = true;
+    return clearedData;
 }
 
 int SettingManager::toolbarSmall()
@@ -105,43 +114,47 @@ bool SettingManager::clearPrivateData()
     return actionNeeded;
 }
 
-void SettingManager::clearHistory()
+bool SettingManager::clearHistory()
 {
     bool actionNeeded = m_clearHistoryConfItem->value(false).toBool();
     if (actionNeeded) {
         DBManager::instance()->clearHistory();
         m_clearHistoryConfItem->set(false);
     }
+    return actionNeeded;
 }
 
-void SettingManager::clearCookies()
+bool SettingManager::clearCookies()
 {
     bool actionNeeded = m_clearCookiesConfItem->value(false).toBool();
     if (actionNeeded) {
         QMozContext::GetInstance()->sendObserve(QString("clear-private-data"), QString("cookies"));
         m_clearCookiesConfItem->set(false);
     }
+    return actionNeeded;
 }
 
-void SettingManager::clearPasswords()
+bool SettingManager::clearPasswords()
 {
     bool actionNeeded = m_clearPasswordsConfItem->value(false).toBool();
     if (actionNeeded) {
         QMozContext::GetInstance()->sendObserve(QString("clear-private-data"), QString("passwords"));
         m_clearPasswordsConfItem->set(false);
     }
+    return actionNeeded;
 }
 
-void SettingManager::clearCache()
+bool SettingManager::clearCache()
 {
     bool actionNeeded = m_clearCacheConfItem->value(false).toBool();
     if (actionNeeded) {
         QMozContext::GetInstance()->sendObserve(QString("clear-private-data"), QString("cache"));
         m_clearCacheConfItem->set(false);
     }
+    return actionNeeded;
 }
 
-void SettingManager::clearBookmarks()
+bool SettingManager::clearBookmarks()
 {
     bool actionNeeded = m_clearBookmarksConfItem->value(false).toBool();
     if (actionNeeded) {
@@ -149,6 +162,7 @@ void SettingManager::clearBookmarks()
         bookmarks->clear();
         m_clearBookmarksConfItem->set(false);
     }
+    return actionNeeded;
 }
 
 void SettingManager::setSearchEngine()

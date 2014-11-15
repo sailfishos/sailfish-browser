@@ -60,7 +60,7 @@ Item {
     // TODO: Fix real cover. Once that is fixed, we should remove this block.
     onActiveChanged: {
         if (active) {
-            if (webView.tabModel.loaded && webView.tabModel.count === 0) {
+            if (webView.completed && !webView.tabModel.waitingForNewTab && webView.tabModel.count === 0) {
                 updateState("fullscreenOverlay", true)
             } else {
                 updateState("chromeVisible", true)

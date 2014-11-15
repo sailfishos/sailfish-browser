@@ -24,7 +24,7 @@ class SettingManager : public QObject
 
 public:
     bool clearHistoryRequested() const;
-    void initialize();
+    bool initialize();
 
     int toolbarSmall();
     int toolbarLarge();
@@ -37,11 +37,11 @@ signals:
 
 private slots:
     bool clearPrivateData();
-    void clearHistory();
-    void clearCookies();
-    void clearPasswords();
-    void clearCache();
-    void clearBookmarks();
+    bool clearHistory();
+    bool clearCookies();
+    bool clearPasswords();
+    bool clearCache();
+    bool clearBookmarks();
     void setSearchEngine();
     void doNotTrack();
 
@@ -59,6 +59,8 @@ private:
 
     MGConfItem *m_toolbarSmall;
     MGConfItem *m_toolbarLarge;
+
+    bool m_initialized;
 };
 
 #endif
