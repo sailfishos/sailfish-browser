@@ -201,7 +201,6 @@ void DBWorker::removeTab(int tabId)
 #if DEBUG_LOGS
     qDebug() << "tab id:" << tabId;
 #endif
-
     QSqlQuery query = prepare("DELETE FROM tab WHERE tab_id = ?;");
     query.bindValue(0, tabId);
     execute(query);
@@ -228,6 +227,7 @@ void DBWorker::removeTab(int tabId)
 
 void DBWorker::removeAllTabs()
 {
+    int oldTabCount = tabCount();
     QSqlQuery query = prepare("DELETE FROM tab;");
     execute(query);
 
@@ -242,7 +242,9 @@ void DBWorker::removeAllTabs()
     execute(query);
 
     QList<Tab> tabList;
-    emit tabsAvailable(tabList);
+    if (oldTabCount != 0) {
+        emit tabsAvailable(tabList);
+    }
 }
 
 void DBWorker::getTab(int tabId)
@@ -483,6 +485,7 @@ HistoryResult DBWorker::addToHistory(int linkId, QString url)
 
 void DBWorker::clearHistory()
 {
+    int oldTabCount = tabCount();
     QSqlQuery query = prepare("DELETE FROM history;");
     execute(query);
     removeAllTabs();
@@ -491,8 +494,10 @@ void DBWorker::clearHistory()
 
     QList<Link> linkList;
     emit historyAvailable(linkList);
-    QList<Tab> tabList;
-    emit tabsAvailable(tabList);
+    if (oldTabCount != 0) {
+        QList<Tab> tabList;
+        emit tabsAvailable(tabList);
+    }
 }
 
 int DBWorker::addToTabHistory(int tabId, int linkId)
