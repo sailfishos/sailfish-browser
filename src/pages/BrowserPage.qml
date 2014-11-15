@@ -34,6 +34,12 @@ Page {
         webView.load(url, title)
     }
 
+    function bringToForeground() {
+        if (!window.applicationActive) {
+            window.activate()
+        }
+    }
+
     // Safety clipping. There is clipping in ApplicationWindow that should react upon focus changes.
     // This clipping can handle also clipping of QmlMozView. When this page is active we do not need to clip
     // if input method is not visible.
@@ -139,7 +145,7 @@ Page {
             iconSource: "image://theme/icon-cover-new"
             onTriggered: {
                 overlay.enterNewTabUrl(PageStackAction.Immediate)
-                activate()
+                bringToForeground()
             }
         }
 
@@ -171,11 +177,11 @@ Page {
     Connections {
         target: WebUtils
         onOpenUrlRequested: {
-            if (!window.applicationActive) {
-                window.activate()
-            }
             // url is empty when user tapped icon when browser was already open.
-            if (url == "") return
+            if (url == "") {
+                bringToForeground()
+                return
+            }
 
             // We have incoming URL so let's show it
             if (firstUseOverlay) {
@@ -191,6 +197,7 @@ Page {
                 // Not found in tabs list, create newtab and load
                 webView.load(url)
             }
+            bringToForeground()
         }
     }
 

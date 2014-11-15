@@ -59,6 +59,12 @@ Item {
 
     // TODO: Fix real cover. Once that is fixed, we should remove this block.
     onActiveChanged: {
+        // When activating and state is already "fullscreenOverlay" don't do anything.
+        // For instance "new-tab" cover action triggers this state change.
+        if (active && state === "fullscreenOverlay") {
+            return
+        }
+
         if (active) {
             if (webView.completed && !webView.tabModel.waitingForNewTab && webView.tabModel.count === 0) {
                 updateState("fullscreenOverlay", true)
@@ -94,6 +100,15 @@ Item {
                 updateState("chromeVisible")
             } else if (webView.fullscreenMode) {
                 updateState("fullscreenWebPage")
+            }
+        }
+    }
+
+    Connections {
+        target: webView.tabModel
+        onCountChanged: {
+            if (webView.completed && webView.tabModel.count === 0) {
+                updateState("fullscreenOverlay")
             }
         }
     }
