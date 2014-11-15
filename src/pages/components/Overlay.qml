@@ -164,7 +164,7 @@ PanelBackground {
 
         width: parent.width
         height: historyContainer.height
-        enabled: !webView.fullscreenMode && (webView.contentItem || firstUseOverlay)
+        enabled: !webView.fullscreenMode && (webView.tabModel.count > 0 || firstUseOverlay)
 
         drag.target: overlay
         drag.filterChildren: true

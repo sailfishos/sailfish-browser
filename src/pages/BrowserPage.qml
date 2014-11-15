@@ -116,7 +116,7 @@ Page {
 
         MouseArea {
             anchors.fill: parent
-            enabled: overlay.animator.atTop && (webView.contentItem || firstUseOverlay)
+            enabled: overlay.animator.atTop && (webView.tabModel.count > 0 || firstUseOverlay)
             onClicked: overlay.dismiss()
         }
     }
