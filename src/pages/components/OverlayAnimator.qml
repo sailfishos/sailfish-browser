@@ -52,6 +52,15 @@ Item {
     // Wrapper from updating the state. Handy for debugging.
     function updateState(newState, immediate) {
         _immediate = immediate || false
+        // Verify that we return back to opacity 1.0
+        // For instance, push to switcher from new-tab-creation overlay
+        if (newState === "fullscreenWebPage" || newState === "chromeVisible") {
+            if (webView && webView.contentItem) {
+                webView.contentItem.visible = true
+                webView.contentItem.opacity = 1.0
+            }
+        }
+
         state = newState
     }
 
@@ -59,9 +68,10 @@ Item {
 
     // TODO: Fix real cover. Once that is fixed, we should remove this block.
     onActiveChanged: {
-        // When activating and state is already "fullscreenOverlay" don't do anything.
+        // When activating and state already changed to something else than
+        // "fullscreenWebPage" we should not alter the state.
         // For instance "new-tab" cover action triggers this state change.
-        if (active && state === "fullscreenOverlay") {
+        if (active && state !== "fullscreenWebPage") {
             return
         }
 
