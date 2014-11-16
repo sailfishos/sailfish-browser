@@ -490,7 +490,7 @@ void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int activeTabId, 
             load(tabUrl, tab.title());
         }
     } else if (!m_realNavigation && isActiveTab(activeTabId) && m_webPage->backForwardNavigation()) {
-        m_webPage->loadTab(tab.url(), tab.title());
+        m_webPage->loadTab(tab.url(), true);
     }
 }
 
