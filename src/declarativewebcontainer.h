@@ -166,6 +166,7 @@ private slots:
     void closeWindow();
     void onPageUrlChanged();
     void onPageTitleChanged();
+    void setActiveTabData();
 
     // These are here to inform embedlite-components that keyboard is open or close
     // matching composition metrics.

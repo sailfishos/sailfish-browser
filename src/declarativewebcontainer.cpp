@@ -463,19 +463,7 @@ void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int activeTabId, 
     if (activeTabId <= 0) {
         return;
     }
-    const Tab &tab = m_model->activeTab();
-#if DEBUG_LOGS
-    qDebug() << "canGoBack = " << m_canGoBack << "canGoForward = " << m_canGoForward << &tab;
-#endif
-
-    updateNavigationStatus(tab);
-    updateUrl(tab.url());
-    updateTitle(tab.title());
-
-    if (m_tabId != activeTabId) {
-        m_tabId = activeTabId;
-        emit tabIdChanged();
-    }
+    setActiveTabData();
 
     if (m_model->hasNewTabData() || !loadActiveTab) {
         return;
@@ -680,6 +668,23 @@ void DeclarativeWebContainer::onPageTitleChanged()
         if (activeTab && webPage == m_webPage) {
             updateTitle(title);
         }
+    }
+}
+
+void DeclarativeWebContainer::setActiveTabData()
+{
+    const Tab &tab = m_model->activeTab();
+#if DEBUG_LOGS
+    qDebug() << "canGoBack = " << m_canGoBack << "canGoForward = " << m_canGoForward << &tab;
+#endif
+
+    updateNavigationStatus(tab);
+    updateUrl(tab.url());
+    updateTitle(tab.title());
+
+    if (m_tabId != tab.tabId()) {
+        m_tabId = tab.tabId();
+        emit tabIdChanged();
     }
 }
 
