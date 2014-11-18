@@ -85,7 +85,7 @@ Item {
             } else {
                 updateState("chromeVisible", true)
             }
-        } else {
+        } else if (webView.tabModel.count > 0) {
             updateState("fullscreenWebPage", true)
         }
     }
@@ -124,6 +124,8 @@ Item {
             if (webView.completed && webView.tabModel.count === 0) {
                 updateState("fullscreenOverlay")
             }
+
+            window.setBrowserCover(webView.tabModel)
         }
     }
 

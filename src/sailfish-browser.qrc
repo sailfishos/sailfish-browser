@@ -1,6 +1,7 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource>
     <file>browser.qml</file>
+    <file>cover/NoTabsCover.qml</file>
     <file>pages/BrowserPage.qml</file>
     <file>pages/ShareLinkPage.qml</file>
     <file>pages/components/ConfigDialog.qml</file>

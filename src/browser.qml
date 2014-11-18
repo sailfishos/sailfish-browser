@@ -2,6 +2,7 @@
 **
 ** Copyright (C) 2013 Jolla Ltd.
 ** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jollamobile.com>
+** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **
 ****************************************************************************/
 
@@ -11,14 +12,33 @@
 
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import Sailfish.Browser 1.0
 import "pages"
 
 ApplicationWindow {
     id: window
 
+    signal newTab
+
+    function setBrowserCover(model) {
+        if (model && model.count === 0) {
+            cover = Qt.resolvedUrl("cover/NoTabsCover.qml")
+        } else {
+            cover = null
+        }
+    }
+
     allowedOrientations: WebUtils.firstUseDone && Qt.application.active ? Orientation.Landscape | Orientation.Portrait | Orientation.LandscapeInverted : Orientation.Portrait
     _defaultPageOrientations: allowedOrientations
-    initialPage: Component {BrowserPage {}}
-    cover: undefined
-}
+    cover: null
+    initialPage: Component {
+        BrowserPage {
+            id: browserPage
 
+            Connections {
+                target: window
+                onNewTab: browserPage.activateNewTabView()
+            }
+        }
+    }
+}
