@@ -57,6 +57,7 @@ public:
 private slots:
     void handleMemNotify(const QString &memoryLevel);
     void updateBackgroundTimestamp();
+    void virtualizeInactive();
 
 private:
     void updateStates(DeclarativeWebPage *oldActivePage, DeclarativeWebPage *newActivePage);
