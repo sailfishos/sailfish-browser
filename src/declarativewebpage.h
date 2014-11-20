@@ -25,7 +25,6 @@ class DeclarativeWebPage : public QuickMozView {
     Q_OBJECT
     Q_PROPERTY(DeclarativeWebContainer* container READ container NOTIFY containerChanged FINAL)
     Q_PROPERTY(int tabId READ tabId NOTIFY tabIdChanged FINAL)
-    Q_PROPERTY(bool viewReady READ viewReady NOTIFY viewReadyChanged FINAL)
     Q_PROPERTY(bool userHasDraggedWhileLoading MEMBER m_userHasDraggedWhileLoading NOTIFY userHasDraggedWhileLoadingChanged FINAL)
     Q_PROPERTY(bool fullscreen READ fullscreen NOTIFY fullscreenChanged FINAL)
     Q_PROPERTY(bool forcedChrome READ forcedChrome NOTIFY forcedChromeChanged FINAL)
@@ -54,6 +53,17 @@ public:
 
     bool urlHasChanged() const;
     void setUrlHasChanged(bool urlHasChanged);
+
+    QString initialUrl() const;
+    void setInitialUrl(const QString &url);
+
+    QString initialTitle() const;
+    void setInitialTitle(const QString &title);
+
+    void resetInitialData();
+
+    void bindToModel();
+    bool boundToModel();
 
     bool backForwardNavigation() const;
     void setBackForwardNavigation(bool backForwardNavigation);
@@ -108,6 +118,9 @@ private:
     bool m_domContentLoaded;
     bool m_urlHasChanged;
     bool m_backForwardNavigation;
+    bool m_boundToModel;
+    QString m_initialUrl;
+    QString m_initialTitle;
     QString m_favicon;
     QVariant m_resurrectedContentRect;
     QSharedPointer<QQuickItemGrabResult> m_grabResult;

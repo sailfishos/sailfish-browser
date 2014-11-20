@@ -65,9 +65,6 @@ private slots:
     void reloadModel();
     void changeTabAndLoad();
 
-    void newTabData();
-    void resetNewTabData();
-
     void clear();
 
 private:
@@ -611,46 +608,6 @@ void tst_declarativetabmodel::changeTabAndLoad()
     QCOMPARE(tabModel->activeTab().nextLink(), 0);
     QCOMPARE(tabModel->activeTab().url(), url);
     QCOMPARE(tabModel->activeTab().title(), QString(""));
-}
-
-void tst_declarativetabmodel::newTabData()
-{
-    tabModel->resetNewTabData();
-
-    QSignalSpy newTabDataChanged(tabModel, SIGNAL(hasNewTabDataChanged()));
-    QSignalSpy newTabUrlChanged(tabModel, SIGNAL(newTabUrlChanged()));
-    QVERIFY(tabModel->newTabTitle().isEmpty());
-    QObject page;
-    tabModel->newTabData("http://foobar.com", "FooBar", &page);
-
-    QCOMPARE(newTabDataChanged.count(), 1);
-    QCOMPARE(newTabUrlChanged.count(), 1);
-
-    QCOMPARE(tabModel->newTabUrl(), QString("http://foobar.com"));
-    QCOMPARE(tabModel->newTabTitle(), QString("FooBar"));
-    QCOMPARE(tabModel->newTabPreviousPage(), &page);
-}
-
-void tst_declarativetabmodel::resetNewTabData()
-{
-    // Old values (see newTabData test):
-    // url = "http://foobar.com"
-    // title = "FooBar"
-    // previousPage = Temporary QObject pointer (non zero)
-    QSignalSpy newTabDataChanged(tabModel, SIGNAL(hasNewTabDataChanged()));
-    QSignalSpy newTabUrlChanged(tabModel, SIGNAL(newTabUrlChanged()));
-
-    QVERIFY(tabModel->newTabPreviousPage());
-    QVERIFY(!tabModel->newTabTitle().isEmpty());
-    tabModel->resetNewTabData();
-
-    QCOMPARE(newTabDataChanged.count(), 1);
-    QCOMPARE(newTabUrlChanged.count(), 1);
-
-    QVERIFY(!tabModel->hasNewTabData());
-    QVERIFY(tabModel->newTabUrl().isEmpty());
-    QVERIFY(tabModel->newTabTitle().isEmpty());
-    QVERIFY(!tabModel->newTabPreviousPage());
 }
 
 void tst_declarativetabmodel::clear()

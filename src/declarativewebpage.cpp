@@ -63,6 +63,7 @@ DeclarativeWebPage::DeclarativeWebPage(QQuickItem *parent)
     , m_domContentLoaded(false)
     , m_urlHasChanged(false)
     , m_backForwardNavigation(false)
+    , m_boundToModel(false)
 {
     connect(this, SIGNAL(viewInitialized()), this, SLOT(onViewInitialized()));
     connect(this, SIGNAL(recvAsyncMessage(const QString, const QVariant)),
@@ -119,6 +120,42 @@ bool DeclarativeWebPage::urlHasChanged() const
 void DeclarativeWebPage::setUrlHasChanged(bool urlHasChanged)
 {
     m_urlHasChanged = urlHasChanged;
+}
+
+QString DeclarativeWebPage::initialUrl() const
+{
+    return m_initialUrl;
+}
+
+void DeclarativeWebPage::setInitialUrl(const QString &url)
+{
+    m_initialUrl = url;
+}
+
+QString DeclarativeWebPage::initialTitle() const
+{
+    return m_initialTitle;
+}
+
+void DeclarativeWebPage::setInitialTitle(const QString &title)
+{
+    m_initialTitle = title;
+}
+
+void DeclarativeWebPage::resetInitialData()
+{
+    m_initialUrl = "";
+    m_initialTitle = "";
+}
+
+void DeclarativeWebPage::bindToModel()
+{
+    m_boundToModel = true;
+}
+
+bool DeclarativeWebPage::boundToModel()
+{
+    return m_boundToModel;
 }
 
 bool DeclarativeWebPage::backForwardNavigation() const
@@ -260,6 +297,10 @@ void DeclarativeWebPage::onViewInitialized()
     // This is the only place that is allowed to change this to true.
     m_viewReady = true;
     emit viewReadyChanged();
+
+    if (!m_initialUrl.isEmpty()) {
+        loadTab(m_initialUrl, false);
+    }
 }
 
 void DeclarativeWebPage::grabResultReady()

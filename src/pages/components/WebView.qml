@@ -30,14 +30,6 @@ WebContainer {
         }
     }
 
-    function reload() {
-        if (!contentItem) {
-            return
-        }
-
-        contentItem.reload()
-    }
-
     function sendAsyncMessage(name, data) {
         if (!contentItem) {
             return
@@ -60,7 +52,6 @@ WebContainer {
     inputPanelOpenHeight: window.pageStack.imSize
     fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) ||
                     (contentItem && contentItem.fullscreen)
-    _readyToLoad: contentItem && contentItem.viewReady && tabModel.loaded
 
     favicon: contentItem ? contentItem.favicon : ""
 
@@ -75,7 +66,7 @@ WebContainer {
     WebViewCreator {
         activeWebView: contentItem
         // onNewWindowRequested is always handled as synchronous operation (not through newTab).
-        onNewWindowRequested: webView.loadNewTab(url, "", parentId)
+        onNewWindowRequested: tabModel.newTab(url, "", parentId)
     }
 
     Label {
@@ -138,17 +129,6 @@ WebContainer {
 
             onClearGrabResult: tabs.updateThumbnailPath(tabId, "");
             onGrabResult: tabs.updateThumbnailPath(tabId, fileName);
-
-            onLoadProgressChanged: {
-                // Ignore first load progress if it is directly 50%
-                if (!activeWebPage || container.loadProgress === 0 && loadProgress === 50) {
-                    return
-                }
-
-                if (loadProgress > container.loadProgress) {
-                    container.loadProgress = loadProgress
-                }
-            }
 
             onUrlChanged: {
                 if (url == "about:blank") return
@@ -223,10 +203,6 @@ WebContainer {
                     iconSize = 0
 
                     resetHeight(false)
-
-                    if (activeWebPage) {
-                        container.loadProgress = 0
-                    }
                 }
             }
 

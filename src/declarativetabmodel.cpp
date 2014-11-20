@@ -1,7 +1,8 @@
 /****************************************************************************
 **
 ** Copyright (C) 2013 Jolla Ltd.
-** Contact: Petri M. Gerdt <petri.gerdt@jollamobile.com>
+** Contact: Petri M. Gerdt <petri.gerdt@jolla.com>
+** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **
 ****************************************************************************/
 
@@ -26,6 +27,7 @@
 DeclarativeTabModel::DeclarativeTabModel(QObject *parent)
     : QAbstractListModel(parent)
     , m_loaded(false)
+    , m_waitingForNewTab(false)
     , m_nextTabId(DBManager::instance()->getMaxTabId() + 1)
 {
     connect(DBManager::instance(), SIGNAL(tabsAvailable(QList<Tab>)),
@@ -75,6 +77,8 @@ void DeclarativeTabModel::addTab(const QString& url, const QString &title) {
 
     m_nextTabId = ++tabId;
     emit nextTabIdChanged();
+
+    setWaitingForNewTab(false);
 }
 
 int DeclarativeTabModel::nextTabId() const
@@ -118,10 +122,9 @@ void DeclarativeTabModel::clear()
     for (int i = m_tabs.count() - 1; i >= 0; --i) {
         removeTab(m_tabs.at(i).tabId(), m_tabs.at(i).thumbnailPath(), i);
     }
-    resetNewTabData();
-    emit tabsCleared();
-}
 
+    setWaitingForNewTab(false);
+}
 
 bool DeclarativeTabModel::activateTab(const QString& url)
 {
@@ -172,24 +175,14 @@ void DeclarativeTabModel::closeActiveTab()
             --index;
         }
 
-        activateTab(index);
+        activateTab(index, true);
     }
 }
 
-void DeclarativeTabModel::newTab(const QString &url, const QString &title)
+void DeclarativeTabModel::newTab(const QString &url, const QString &title, int parentId)
 {
-    // TODO: This doesn't really fit in here. We should consider adding of custom event for new tab creation.
-    emit newTabRequested(url, title);
-}
-
-void DeclarativeTabModel::newTabData(const QString &url, const QString &title, QObject *contentItem, int parentId)
-{
-    updateNewTabData(new NewTabData(url, title, contentItem, parentId));
-}
-
-void DeclarativeTabModel::resetNewTabData()
-{
-    updateNewTabData(0);
+    setWaitingForNewTab(true);
+    emit newTabRequested(url, title, parentId);
 }
 
 void DeclarativeTabModel::dumpTabs() const
@@ -240,24 +233,25 @@ bool DeclarativeTabModel::loaded() const
     return m_loaded;
 }
 
-bool DeclarativeTabModel::hasNewTabData() const
+void DeclarativeTabModel::setUnloaded()
 {
-    return m_newTabData && !m_newTabData->url.isEmpty();
+    if (m_loaded) {
+        m_loaded = false;
+        emit loadedChanged();
+    }
 }
 
-QString DeclarativeTabModel::newTabUrl() const
+bool DeclarativeTabModel::waitingForNewTab() const
 {
-    return hasNewTabData() ? m_newTabData->url : "";
+    return m_waitingForNewTab;
 }
 
-QString DeclarativeTabModel::newTabTitle() const
+void DeclarativeTabModel::setWaitingForNewTab(bool waiting)
 {
-    return hasNewTabData() ? m_newTabData->title : "";
-}
-
-QObject *DeclarativeTabModel::newTabPreviousPage() const
-{
-    return hasNewTabData() ? m_newTabData->previousPage : 0;
+    if (m_waitingForNewTab != waiting) {
+        m_waitingForNewTab = waiting;
+        emit waitingForNewTabChanged();
+    }
 }
 
 const QList<Tab> &DeclarativeTabModel::tabs() const
@@ -270,9 +264,9 @@ const Tab &DeclarativeTabModel::activeTab() const
     return m_activeTab;
 }
 
-int DeclarativeTabModel::newTabParentId() const
+bool DeclarativeTabModel::contains(int tabId) const
 {
-    return hasNewTabData() ? m_newTabData->parentId : 0;
+    return findTabIndex(tabId) >= 0;
 }
 
 void DeclarativeTabModel::classBegin()
@@ -362,12 +356,9 @@ void DeclarativeTabModel::updateUrl(int tabId, bool activeTab, QString url, bool
     if (backForwardNavigation)
     {
         updateTabUrl(tabId, activeTab, url, false);
-    } else if (!hasNewTabData()) {
-        updateTabUrl(tabId, activeTab, url, !initialLoad);
     } else {
-        addTab(url, newTabTitle());
+        updateTabUrl(tabId, activeTab, url, !initialLoad);
     }
-    resetNewTabData();
 }
 
 void DeclarativeTabModel::updateTitle(int tabId, bool activeTab, QString title)
@@ -415,6 +406,12 @@ void DeclarativeTabModel::removeTab(int tabId, const QString &thumbnail, int ind
 
     emit countChanged();
     emit tabClosed(tabId);
+
+    // This guarantees that view will reset its internal state
+    // when the last tab got closed.
+    if (m_tabs.isEmpty()) {
+        emit tabsCleared();
+    }
 }
 
 int DeclarativeTabModel::findTabIndex(int tabId) const
@@ -493,22 +490,6 @@ void DeclarativeTabModel::updateTabUrl(int tabId, bool activeTab, const QString 
         } else {
             DBManager::instance()->navigateTo(tabId, url, "", "");
         }
-    }
-}
-
-void DeclarativeTabModel::updateNewTabData(NewTabData *newTabData)
-{
-    bool hadNewTabData = hasNewTabData();
-    QString currentTabUrl = newTabUrl();
-    bool urlChanged = newTabData ? currentTabUrl != newTabData->url : !currentTabUrl.isEmpty();
-
-    m_newTabData.reset(newTabData);
-    if (urlChanged) {
-        emit newTabUrlChanged();
-    }
-
-    if (hadNewTabData != hasNewTabData()) {
-        emit hasNewTabDataChanged();
     }
 }
 

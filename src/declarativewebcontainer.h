@@ -30,6 +30,7 @@ class DeclarativeWebContainer : public QQuickItem {
 
     Q_PROPERTY(DeclarativeWebPage *contentItem READ webPage NOTIFY contentItemChanged FINAL)
     Q_PROPERTY(DeclarativeTabModel *tabModel READ tabModel WRITE setTabModel NOTIFY tabModelChanged FINAL)
+    Q_PROPERTY(bool completed READ completed NOTIFY completedChanged FINAL)
     Q_PROPERTY(bool foreground READ foreground WRITE setForeground NOTIFY foregroundChanged FINAL)
     Q_PROPERTY(int maxLiveTabCount READ maxLiveTabCount WRITE setMaxLiveTabCount NOTIFY maxLiveTabCountChanged FINAL)
     // This property should cover all possible popus
@@ -47,7 +48,7 @@ class DeclarativeWebContainer : public QQuickItem {
     Q_PROPERTY(QString favicon MEMBER m_favicon NOTIFY faviconChanged)
 
     Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged FINAL)
-    Q_PROPERTY(int loadProgress READ loadProgress WRITE setLoadProgress NOTIFY loadProgressChanged FINAL)
+    Q_PROPERTY(int loadProgress READ loadProgress NOTIFY loadProgressChanged FINAL)
 
     // Navigation related properties
     Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY canGoForwardChanged FINAL)
@@ -59,9 +60,6 @@ class DeclarativeWebContainer : public QQuickItem {
 
     Q_PROPERTY(QQmlComponent* webPageComponent MEMBER m_webPageComponent NOTIFY webPageComponentChanged FINAL)
 
-    // "private" properties.
-    Q_PROPERTY(bool _readyToLoad READ readyToLoad WRITE setReadyToLoad NOTIFY _readyToLoadChanged FINAL)
-
 public:
     DeclarativeWebContainer(QQuickItem *parent = 0);
     ~DeclarativeWebContainer();
@@ -70,6 +68,8 @@ public:
 
     DeclarativeTabModel *tabModel() const;
     void setTabModel(DeclarativeTabModel *model);
+
+    bool completed() const;
 
     bool foreground() const;
     void setForeground(bool active);
@@ -100,16 +100,13 @@ public:
     QString url() const;
     QString thumbnailPath() const;
 
-    bool readyToLoad() const;
-    void setReadyToLoad(bool readyToLoad);
-
     bool isActiveTab(int tabId);
+    bool activatePage(int tabId, bool force = false, int parentId = 0);
 
     Q_INVOKABLE void load(QString url = "", QString title = "", bool force = false);
+    Q_INVOKABLE void reload(bool force = true);
     Q_INVOKABLE void goForward();
     Q_INVOKABLE void goBack();
-    Q_INVOKABLE bool activatePage(int tabId, bool force = false);
-    Q_INVOKABLE void loadNewTab(QString url, QString title, int parentId);
     Q_INVOKABLE bool alive(int tabId);
 
     Q_INVOKABLE void dumpPages() const;
@@ -117,6 +114,7 @@ public:
 signals:
     void contentItemChanged();
     void tabModelChanged();
+    void completedChanged();
     void pageStackChanged();
     void foregroundChanged();
     void backgroundChanged();
@@ -143,12 +141,11 @@ signals:
     void urlChanged();
     void thumbnailPathChanged();
 
-    void _readyToLoadChanged();
-
     void webPageComponentChanged();
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event);
+    void componentComplete();
 
 public slots:
     void resetHeight(bool respectContentHeight = true);
@@ -156,16 +153,18 @@ public slots:
 private slots:
     void imeNotificationChanged(int state, bool open, int cause, int focusChange, const QString& type);
     void handleEnabledChanged();
+    void initialize();
     void onActiveTabChanged(int oldTabId, int activeTabId, bool loadActiveTab);
-    void onModelLoaded();
     void onDownloadStarted();
-    void onNewTabRequested(QString url, QString title);
-    void onReadyToLoad();
+    void onNewTabRequested(QString url, QString title, int parentId);
     void onTabsCleared();
     void releasePage(int tabId, bool virtualize = false);
     void closeWindow();
     void onPageUrlChanged();
     void onPageTitleChanged();
+    void updateLoadProgress();
+    void updateLoading();
+    void setActiveTabData();
 
     // These are here to inform embedlite-components that keyboard is open or close
     // matching composition metrics.
@@ -179,6 +178,8 @@ private:
     void updateVkbHeight();
     void updateUrl(const QString &newUrl);
     void updateTitle(const QString &newTitle);
+    bool canInitialize() const;
+    void loadTab(int tabId, QString url, QString title, bool force);
 
     QPointer<DeclarativeWebPage> m_webPage;
     QPointer<DeclarativeTabModel> m_model;
@@ -197,8 +198,14 @@ private:
     qreal m_toolbarHeight;
 
     QString m_favicon;
-    QString m_initialUrl;
 
+    // See DeclarativeWebContainer::load (line 283) as load need to "work" even if engine, model,
+    // or qml component is not yet completed (completed property is still false). So cache url/title for later use.
+    // Problem is visible with a download url as it does not trigger urlChange for the loaded page (correct behavior).
+    // Once downloading has been started and if we have existing tabs we reset
+    // back to the active tab and load it. In case we didn't not have tabs open when downloading was
+    // triggered we just clear these.
+    // The exposed url/title are always coming from the active web page.
     QString m_url;
     QString m_title;
     int m_tabId;
@@ -208,7 +215,9 @@ private:
     bool m_canGoForward;
     bool m_canGoBack;
     bool m_realNavigation;
-    bool m_readyToLoad;
+
+    bool m_completed;
+    bool m_initialized;
 
     friend class tst_webview;
 };
