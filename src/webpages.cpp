@@ -194,6 +194,10 @@ void WebPages::dumpPages() const
 
 void WebPages::handleMemNotify(const QString &memoryLevel)
 {
+    if (!m_webContainer || !m_webContainer->completed()) {
+        return;
+    }
+
     if (memoryLevel == QString("warning") || memoryLevel == QString("critical")) {
         m_activePages.virtualizeInactive();
 
