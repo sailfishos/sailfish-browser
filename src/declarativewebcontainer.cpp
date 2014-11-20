@@ -110,9 +110,12 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
 
         emit contentItemChanged();
         emit tabIdChanged();
+        emit loadingChanged();
 
         updateUrl(url());
         updateTitle(title());
+
+        setLoadProgress(m_webPage ? m_webPage->loadProgress() : 0);
     }
 }
 
@@ -364,13 +367,12 @@ bool DeclarativeWebContainer::activatePage(int tabId, bool force, int parentId)
         // Reset always height so that orentation change is taken into account.
         m_webPage->forceChrome(false);
         m_webPage->setChrome(true);
-        setLoadProgress(m_webPage->loadProgress());
-
         connect(m_webPage, SIGNAL(imeNotification(int,bool,int,int,QString)),
                 this, SLOT(imeNotificationChanged(int,bool,int,int,QString)), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(windowCloseRequested()), this, SLOT(closeWindow()), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(urlChanged()), this, SLOT(onPageUrlChanged()), Qt::UniqueConnection);
-        connect(m_webPage, SIGNAL(loadingChanged()), this, SIGNAL(loadingChanged()), Qt::UniqueConnection);
+        connect(m_webPage, SIGNAL(loadingChanged()), this, SLOT(updateLoading()), Qt::UniqueConnection);
+        connect(m_webPage, SIGNAL(loadProgressChanged()), this, SLOT(updateLoadProgress()), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(titleChanged()), this, SLOT(onPageTitleChanged()), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(domContentLoadedChanged()), this, SLOT(sendVkbOpenCompositionMetrics()), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(backgroundChanged()), this, SIGNAL(backgroundChanged()), Qt::UniqueConnection);
@@ -586,6 +588,9 @@ void DeclarativeWebContainer::onTabsCleared()
         m_tabId = 0;
         emit tabIdChanged();
     }
+
+    emit loadingChanged();
+    setLoadProgress(0);
 }
 
 int DeclarativeWebContainer::parentTabId(int tabId) const
@@ -691,6 +696,27 @@ void DeclarativeWebContainer::onPageTitleChanged()
             updateTitle(title);
         }
     }
+}
+
+void DeclarativeWebContainer::updateLoadProgress()
+{
+    if (!m_webPage || m_loadProgress == 0 && m_webPage->loadProgress() == 50) {
+        return;
+    }
+
+    int progress = m_webPage->loadProgress();
+    if (progress > m_loadProgress) {
+        setLoadProgress(progress);
+    }
+}
+
+void DeclarativeWebContainer::updateLoading()
+{
+    if (m_webPage && m_webPage->loading()) {
+        setLoadProgress(0);
+    }
+
+    emit loadingChanged();
 }
 
 void DeclarativeWebContainer::setActiveTabData()

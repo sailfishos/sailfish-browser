@@ -130,17 +130,6 @@ WebContainer {
             onClearGrabResult: tabs.updateThumbnailPath(tabId, "");
             onGrabResult: tabs.updateThumbnailPath(tabId, fileName);
 
-            onLoadProgressChanged: {
-                // Ignore first load progress if it is directly 50%
-                if (!activeWebPage || container.loadProgress === 0 && loadProgress === 50) {
-                    return
-                }
-
-                if (loadProgress > container.loadProgress) {
-                    container.loadProgress = loadProgress
-                }
-            }
-
             onUrlChanged: {
                 if (url == "about:blank") return
 
@@ -214,10 +203,6 @@ WebContainer {
                     iconSize = 0
 
                     resetHeight(false)
-
-                    if (activeWebPage) {
-                        container.loadProgress = 0
-                    }
                 }
             }
 

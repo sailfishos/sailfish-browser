@@ -48,7 +48,7 @@ class DeclarativeWebContainer : public QQuickItem {
     Q_PROPERTY(QString favicon MEMBER m_favicon NOTIFY faviconChanged)
 
     Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged FINAL)
-    Q_PROPERTY(int loadProgress READ loadProgress WRITE setLoadProgress NOTIFY loadProgressChanged FINAL)
+    Q_PROPERTY(int loadProgress READ loadProgress NOTIFY loadProgressChanged FINAL)
 
     // Navigation related properties
     Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY canGoForwardChanged FINAL)
@@ -162,6 +162,8 @@ private slots:
     void closeWindow();
     void onPageUrlChanged();
     void onPageTitleChanged();
+    void updateLoadProgress();
+    void updateLoading();
     void setActiveTabData();
 
     // These are here to inform embedlite-components that keyboard is open or close
