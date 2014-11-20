@@ -278,8 +278,10 @@ PanelBackground {
                                      qsTrId("sailfish_browser-ph-type_url_or_search")
                 EnterKey.onClicked: {
                     if (toolBar.findInPageActive) {
-                        webView.sendAsyncMessage("embedui:find", { text: text, backwards: false, again: false })
-                        overlayAnimator.showChrome()
+                        if (text) {
+                            webView.sendAsyncMessage("embedui:find", { text: text, backwards: false, again: false })
+                            overlayAnimator.showChrome()
+                        }
                     } else {
                         overlay.loadPage(text)
                     }
