@@ -249,8 +249,8 @@ void DeclarativeWebPage::resetHeight(bool respectContentHeight)
         return;
     }
 
-    // Application active
-    if (respectContentHeight && !m_forcedChrome) {
+    // fullscreen() below in the fullscreen request coming from the web content.
+    if (respectContentHeight && (!m_forcedChrome || fullscreen())) {
         // Handle webPage height over here, BrowserPage.qml loading
         // reset might be redundant as we have also loaded trigger
         // reset. However, I'd leave it there for safety reasons.
