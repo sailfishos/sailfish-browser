@@ -155,7 +155,13 @@ Column {
             width: toolBarRow.width - (tabButton.width + reloadButton.width + backIcon.width + menuButton.width)
             enabled: !showFindButtons
 
-            onClicked: toolBarRow.showOverlay()
+            onClicked: {
+                if (findInPageActive) {
+                    findInPage()
+                } else {
+                    toolBarRow.showOverlay()
+                }
+            }
 
             Label {
                 anchors.verticalCenter: parent.verticalCenter
