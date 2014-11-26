@@ -75,7 +75,8 @@ private:
     bool canGoBack();
     bool canGoForward();
 
-    int currentTabId();
+    int currentTabId() const;
+    QString currentTabUrl() const;
 
     DeclarativeTabModel *tabModel;
     QList<TestTab> originalTabOrder;
@@ -357,7 +358,7 @@ void tst_declarativetabmodel::multipleTabsWithSameUrls()
     QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), page2Tab1Url);
     QVERIFY(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString().isEmpty());
 
-    tabModel->updateTitle(tab2, true, page2Tab2Title);
+    tabModel->updateTitle(tab2, true, page2Tab2Url, page2Tab2Title);
     QCOMPARE(tabModel->activeTab().title(), page2Tab2Title);
 
     QTest::qWait(1000);
@@ -469,7 +470,7 @@ void tst_declarativetabmodel::updateTitle()
     QSignalSpy titleChangeSpy(DBManager::instance(), SIGNAL(titleChanged(int,int,QString,QString)));
     int tabId = currentTabId();
     QString title = "A title something";
-    tabModel->updateTitle(tabId, true, title);
+    tabModel->updateTitle(tabId, true, currentTabUrl(), title);
     waitSignals(titleChangeSpy, 1);
 
     QCOMPARE(tabModel->activeTab().title(), title);
@@ -481,7 +482,7 @@ void tst_declarativetabmodel::updateTitle()
     QCOMPARE(tabModel->activeTab().url(), url);
 
     title = "FooBar Title";
-    tabModel->updateTitle(tab1, true, title);
+    tabModel->updateTitle(tab1, true, url, title);
     waitSignals(titleChangeSpy, 2);
     QCOMPARE(tabModel->activeTab().title(), title);
 
@@ -489,7 +490,7 @@ void tst_declarativetabmodel::updateTitle()
     QModelIndex modelIndex = tabModel->createIndex(changedIndex, 0);
     QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), title);
 
-    tabModel->updateTitle(tab1, true, "");
+    tabModel->updateTitle(tab1, true, currentTabUrl(), "");
     waitSignals(titleChangeSpy, 3);
     QVERIFY(tabModel->activeTab().title().isEmpty());
     QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), QString(""));
@@ -508,7 +509,7 @@ void tst_declarativetabmodel::updateTitle()
     QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), title);
 
     title = "FooBar Two";
-    tabModel->updateTitle(tab2, true, title);
+    tabModel->updateTitle(tab2, true, url, title);
     waitSignals(titleChangeSpy, 4);
     QCOMPARE(tabModel->activeTab().title(), title);
 
@@ -519,7 +520,7 @@ void tst_declarativetabmodel::updateTitle()
     QString activeTabTitle = tabModel->activeTab().title();
 
     title = "FooBar non active tab";
-    tabModel->updateTitle(tab1, false, title);
+    tabModel->updateTitle(tab1, false, url, title);
     waitSignals(titleChangeSpy, 5);
     QCOMPARE(tabModel->activeTab().title(), activeTabTitle);
 
@@ -649,12 +650,20 @@ bool tst_declarativetabmodel::canGoForward()
     return tabModel->activeTab().nextLink() > 0;
 }
 
-int tst_declarativetabmodel::currentTabId()
+int tst_declarativetabmodel::currentTabId() const
 {
     if (tabModel->activeTab().isValid()) {
         return tabModel->activeTab().tabId();
     }
     return 0;
+}
+
+QString tst_declarativetabmodel::currentTabUrl() const
+{
+    if (tabModel->activeTab().isValid()) {
+        return tabModel->activeTab().url();
+    }
+    return QString();
 }
 
 int main(int argc, char *argv[])

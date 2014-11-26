@@ -135,10 +135,10 @@ void DBManager::removeAllTabs()
     QMetaObject::invokeMethod(worker, "removeAllTabs", Qt::QueuedConnection);
 }
 
-void DBManager::updateTitle(int tabId, int linkId, QString title)
+void DBManager::updateTitle(int tabId, int linkId, QString url, QString title)
 {
     QMetaObject::invokeMethod(worker, "updateTitle", Qt::QueuedConnection,
-                              Q_ARG(int, tabId), Q_ARG(int, linkId), Q_ARG(QString, title));
+                              Q_ARG(int, tabId), Q_ARG(int, linkId), Q_ARG(QString, url), Q_ARG(QString, title));
 }
 
 void DBManager::updateThumbPath(int tabId, QString path)
