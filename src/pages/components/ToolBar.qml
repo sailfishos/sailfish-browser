@@ -73,9 +73,24 @@ Column {
         id: toolsRow
         readonly property int horizontalOffset: Theme.paddingSmall
         readonly property int iconWidth: Theme.iconSizeMedium + 2 * Theme.paddingMedium
+        // Height of toolbar should be such that viewport height is
+        // even number both chrome and fullscreen modes. For instance
+        // height of 110px for toolbar would result 1px rounding
+        // error in chrome mode as viewport height would be 850px. This would
+        // result in CSS pixels viewport height of 566.66..px -> rounded to 566px.
+        // So, we make sure below that (device height - toolbar height) / pixel ratio is even number.
+        // target values when Theme.pixelratio == 1 are:
+        // portrait: 108px
+        // landcape: 78px
+        property int scaledPortraitHeight: Screen.height -
+                                           Math.floor((Screen.height - Settings.toolbarLarge * Theme.pixelRatio) /
+                                                      WebUtils.cssPixelRatio) * WebUtils.cssPixelRatio
+        property int scaledLandscapeHeight: Screen.width -
+                                            Math.floor((Screen.width - Settings.toolbarSmall * Theme.pixelRatio) /
+                                                      WebUtils.cssPixelRatio) * WebUtils.cssPixelRatio
 
         width: parent.width
-        height: isPortrait ? Settings.toolbarLarge : Settings.toolbarSmall
+        height: isPortrait ? scaledPortraitHeight : scaledLandscapeHeight
 
         // Container item for cross fading tabs, close, find in page button (and keep Row's width still).
         Item {
