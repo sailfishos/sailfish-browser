@@ -202,6 +202,13 @@ Page {
     }
 
     Component.onCompleted: {
+        WebUtils.silicaPixelRatio = Theme.pixelRatio
+        WebUtils.touchSideRadius = Theme.paddingMedium + Theme.paddingLarge
+        WebUtils.touchTopRadius = Theme.paddingLarge * 2
+        WebUtils.touchBottomRadius = Theme.paddingMedium + Theme.paddingSmall
+        WebUtils.inputItemSize = Theme.fontSizeSmall
+        WebUtils.zoomMargin = Theme.paddingMedium
+
         if (!WebUtils.firstUseDone) {
             var component = Qt.createComponent(Qt.resolvedUrl("components/FirstUseOverlay.qml"))
             if (component.status == Component.Ready) {
