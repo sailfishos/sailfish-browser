@@ -24,27 +24,23 @@
 #include "declarativewebutils.h"
 #include "qmozcontext.h"
 
-#ifdef SCALABLE_UI
-#include <silicatheme.h>
-#endif
-
-static const QString system_components_time_stamp("/var/lib/_MOZEMBED_CACHE_CLEAN_");
-static const QString profilePath("/.mozilla/mozembed");
-static const QString openSearchPath("/usr/lib/mozembedlite/chrome/embedlite/content/");
+static const QString gSystemComponentsTimeStamp("/var/lib/_MOZEMBED_CACHE_CLEAN_");
+static const QString gProfilePath("/.mozilla/mozembed");
+static const QString gOpenSearchPath("/usr/lib/mozembedlite/chrome/embedlite/content/");
 static DeclarativeWebUtils *gSingleton = 0;
-static const qreal cssPixelRatioRoundingFactor = 0.5;
-static const qreal cssDefaultPixelRatio = 1.5;
+static const qreal gCssPixelRatioRoundingFactor = 0.5;
+static const qreal gCssDefaultPixelRatio = 1.5;
 
 typedef QMap<QString, QString> StringMap;
 
 const StringMap getAvailableOpenSearchConfigs()
 {
     StringMap configs;
-    QDir configDir(openSearchPath);
+    QDir configDir(gOpenSearchPath);
     configDir.setSorting(QDir::Name);
 
     foreach (QString fileName, configDir.entryList(QStringList("*.xml"))) {
-        QFile xmlFile(openSearchPath + fileName);
+        QFile xmlFile(gOpenSearchPath + fileName);
         xmlFile.open(QIODevice::ReadOnly | QIODevice::Text);
         QXmlStreamReader xml(&xmlFile);
         QString searchEngine;
@@ -73,6 +69,12 @@ DeclarativeWebUtils::DeclarativeWebUtils()
     : QObject()
     , m_homePage("/apps/sailfish-browser/settings/home_page", this)
     , m_debugMode(qApp->arguments().contains("-debugMode"))
+    , m_silicaPixelRatio(1.0)
+    , m_touchSideRadius(32.0)
+    , m_touchTopRadius(48.0)
+    , m_touchBottomRadius(16.0)
+    , m_inputItemSize(28.0)
+    , m_zoomMargin(14.0)
 {
     connect(QMozContext::GetInstance(), SIGNAL(onInitialized()),
             this, SLOT(updateWebEngineSettings()));
@@ -103,9 +105,9 @@ bool DeclarativeWebUtils::fileExists(QString fileName) const
 
 void DeclarativeWebUtils::clearStartupCacheIfNeeded()
 {
-    QFileInfo systemStamp(system_components_time_stamp);
+    QFileInfo systemStamp(gSystemComponentsTimeStamp);
     if (systemStamp.exists()) {
-        QString mostProfilePath = QDir::homePath() + profilePath;
+        QString mostProfilePath = QDir::homePath() + gProfilePath;
         QString localStampString(mostProfilePath + QString("/_CACHE_CLEAN_"));
         QFileInfo localStamp(localStampString);
         if (localStamp.exists() && systemStamp.lastModified() > localStamp.lastModified()) {
@@ -134,30 +136,14 @@ void DeclarativeWebUtils::updateWebEngineSettings()
         langs = locale.at(0);
     }
 
-    qreal silicaPixelRatio = 1.0;
-    qreal touchSideRadius = 32;
-    qreal touchTopRadius = 48;
-    qreal touchBottomRadius = 16;
-    qreal inputItemSize = 28;
-    qreal zoomMargin = 14;
-#ifdef SCALABLE_UI
-    Silica::Theme *theme = Silica::Theme::instance();
-    silicaPixelRatio = theme->pixelRatio();
-    touchSideRadius = theme->paddingMedium() + theme->paddingLarge();
-    touchTopRadius = theme->paddingLarge() * 2;
-    touchBottomRadius = theme->paddingMedium() + theme->paddingSmall();
-    inputItemSize = theme->fontSizeSmall();
-    zoomMargin = theme->paddingMedium();
-#endif
-
     QMozContext* mozContext = QMozContext::GetInstance();
     mozContext->setPref(QString("intl.accept_languages"), QVariant(langs));
 
     // these are magic numbers defining touch radius required to detect <image src=""> touch
-    mozContext->setPref(QString("browser.ui.touch.left"), QVariant(touchSideRadius));
-    mozContext->setPref(QString("browser.ui.touch.right"), QVariant(touchSideRadius));
-    mozContext->setPref(QString("browser.ui.touch.top"), QVariant(touchTopRadius));
-    mozContext->setPref(QString("browser.ui.touch.bottom"), QVariant(touchBottomRadius));
+    mozContext->setPref(QStringLiteral("browser.ui.touch.left"), QVariant(m_touchSideRadius));
+    mozContext->setPref(QStringLiteral("browser.ui.touch.right"), QVariant(m_touchSideRadius));
+    mozContext->setPref(QStringLiteral("browser.ui.touch.top"), QVariant(m_touchTopRadius));
+    mozContext->setPref(QStringLiteral("browser.ui.touch.bottom"), QVariant(m_touchBottomRadius));
 
     // Install embedlite handlers for guestures
     mozContext->setPref(QString("embedlite.azpc.handle.singletap"), QVariant(false));
@@ -213,15 +199,11 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     mozContext->setPref(QString("keyword.enabled"), QVariant(true));
 
     // Scale up content size
-    qreal mozCssPixelRatio = cssDefaultPixelRatio * silicaPixelRatio;
-    // Round to nearest even rounding factor
-    mozCssPixelRatio = qRound(mozCssPixelRatio / cssPixelRatioRoundingFactor) * cssPixelRatioRoundingFactor;
-    mozContext->setPixelRatio(mozCssPixelRatio);
-    emit cssPixelRatioChanged();
+    setContentScaling();
 
     // Theme.fontSizeSmall
-    mozContext->setPref(QString("embedlite.inputItemSize"), QVariant(inputItemSize));
-    mozContext->setPref(QString("embedlite.zoomMargin"), QVariant(zoomMargin));
+    mozContext->setPref(QStringLiteral("embedlite.inputItemSize"), QVariant(m_inputItemSize));
+    mozContext->setPref(QStringLiteral("embedlite.zoomMargin"), QVariant(m_zoomMargin));
 
     // Memory management related preferences.
     // We're sending "memory-pressure" when browser is on background (cover by another application)
@@ -263,6 +245,108 @@ qreal DeclarativeWebUtils::cssPixelRatio() const
 
 bool DeclarativeWebUtils::firstUseDone() const {
     return m_firstUseDone;
+}
+
+qreal DeclarativeWebUtils::silicaPixelRatio() const
+{
+    return m_silicaPixelRatio;
+}
+
+void DeclarativeWebUtils::setSilicaPixelRatio(qreal silicaPixelRatio)
+{
+    if (m_silicaPixelRatio != silicaPixelRatio) {
+        m_silicaPixelRatio = silicaPixelRatio;
+        if (QMozContext::GetInstance()->initialized()) {
+            setContentScaling();
+        }
+        emit silicaPixelRatioChanged();
+    }
+}
+
+qreal DeclarativeWebUtils::touchSideRadius() const
+{
+    return m_touchSideRadius;
+}
+
+void DeclarativeWebUtils::setTouchSideRadius(qreal touchSideRadius)
+{
+    if (m_touchSideRadius != touchSideRadius) {
+        m_touchSideRadius = touchSideRadius;
+        QMozContext* mozContext = QMozContext::GetInstance();
+        if (mozContext->initialized()) {
+            mozContext->setPref(QStringLiteral("browser.ui.touch.left"), QVariant(m_touchSideRadius));
+            mozContext->setPref(QStringLiteral("browser.ui.touch.right"), QVariant(m_touchSideRadius));
+        }
+        emit touchSideRadiusChanged();
+    }
+}
+
+qreal DeclarativeWebUtils::touchTopRadius() const
+{
+    return m_touchTopRadius;
+}
+
+void DeclarativeWebUtils::setTouchTopRadius(qreal touchTopRadius)
+{
+    if (m_touchTopRadius != touchTopRadius) {
+        m_touchTopRadius = touchTopRadius;
+        QMozContext* mozContext = QMozContext::GetInstance();
+        if (mozContext->initialized()) {
+            mozContext->setPref(QStringLiteral("browser.ui.touch.top"), QVariant(m_touchTopRadius));
+        }
+        emit touchTopRadiusChanged();
+    }
+}
+
+qreal DeclarativeWebUtils::touchBottomRadius() const
+{
+    return m_touchBottomRadius;
+}
+
+void DeclarativeWebUtils::setTouchBottomRadius(qreal touchBottomRadius)
+{
+    if (m_touchBottomRadius != touchBottomRadius) {
+        m_touchBottomRadius = touchBottomRadius;
+        QMozContext* mozContext = QMozContext::GetInstance();
+        if (mozContext->initialized()) {
+            mozContext->setPref(QStringLiteral("browser.ui.touch.bottom"), QVariant(m_touchBottomRadius));
+        }
+        emit touchBottomRadiusChanged();
+    }
+}
+
+qreal DeclarativeWebUtils::inputItemSize() const
+{
+    return m_inputItemSize;
+}
+
+void DeclarativeWebUtils::setInputItemSize(qreal inputItemSize)
+{
+    if (m_inputItemSize != inputItemSize) {
+        m_inputItemSize = inputItemSize;
+        QMozContext* mozContext = QMozContext::GetInstance();
+        if (mozContext->initialized()) {
+            mozContext->setPref(QStringLiteral("embedlite.inputItemSize"), QVariant(m_inputItemSize));
+        }
+        emit inputItemSizeChanged();
+    }
+}
+
+qreal DeclarativeWebUtils::zoomMargin() const
+{
+    return m_zoomMargin;
+}
+
+void DeclarativeWebUtils::setZoomMargin(qreal zoomMargin)
+{
+    if (m_zoomMargin != zoomMargin) {
+        m_zoomMargin = zoomMargin;
+        QMozContext* mozContext = QMozContext::GetInstance();
+        if (mozContext->initialized()) {
+            mozContext->setPref(QStringLiteral("embedlite.zoomMargin"), QVariant(m_zoomMargin));
+        }
+        emit zoomMarginChanged();
+    }
 }
 
 QString DeclarativeWebUtils::homePage() const
@@ -342,4 +426,14 @@ void DeclarativeWebUtils::handleObserve(const QString message, const QVariant da
             }
         }
     }
+}
+
+void DeclarativeWebUtils::setContentScaling()
+{
+    QMozContext* mozContext = QMozContext::GetInstance();
+    qreal mozCssPixelRatio = gCssDefaultPixelRatio * m_silicaPixelRatio;
+    // Round to nearest even rounding factor
+    mozCssPixelRatio = qRound(mozCssPixelRatio / gCssPixelRatioRoundingFactor) * gCssPixelRatioRoundingFactor;
+    mozContext->setPixelRatio(mozCssPixelRatio);
+    emit cssPixelRatioChanged();
 }

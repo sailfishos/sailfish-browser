@@ -45,6 +45,11 @@ void DeclarativeWebUtils::setFirstUseDone(bool firstUseDone)
     m_firstUseDone = firstUseDone;
 }
 
+qreal DeclarativeWebUtils::silicaPixelRatio() const
+{
+    return 1.0;
+}
+
 DeclarativeWebUtils *DeclarativeWebUtils::instance()
 {
     if (!gSingleton) {

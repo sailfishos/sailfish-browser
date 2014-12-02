@@ -34,6 +34,7 @@ public:
     QString homePage() const;
     bool firstUseDone() const;
     void setFirstUseDone(bool firstUseDone);
+    qreal silicaPixelRatio() const;
 
 signals:
     void homePageChanged();
