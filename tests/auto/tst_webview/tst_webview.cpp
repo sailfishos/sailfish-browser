@@ -71,7 +71,10 @@ void tst_webview::initTestCase()
     init(QUrl("qrc:///tst_webview.qml"));
     webContainer = TestObject::qmlObject<DeclarativeWebContainer>("webView");
     QVERIFY(webContainer);
+    QSignalSpy completedChanged(webContainer, SIGNAL(completedChanged()));
     QSignalSpy loadingChanged(webContainer, SIGNAL(loadingChanged()));
+    QSignalSpy urlChanged(webContainer, SIGNAL(urlChanged()));
+    QSignalSpy titleChanged(webContainer, SIGNAL(titleChanged()));
 
     tabModel = TestObject::qmlObject<DeclarativeTabModel>("tabModel");
     QVERIFY(tabModel);
@@ -80,12 +83,18 @@ void tst_webview::initTestCase()
     historyModel = TestObject::qmlObject<DeclarativeHistoryModel>("historyModel");
     QVERIFY(historyModel);
 
+    waitSignals(completedChanged, 1);
     waitSignals(loadingChanged, 2);
+    waitSignals(tabAddedSpy, 1);
+    waitSignals(urlChanged, 1);
+    waitSignals(titleChanged, 1);
 
     DeclarativeWebPage *webPage = webContainer->webPage();
     QVERIFY(webPage);
     QCOMPARE(webPage->url().toString(), DeclarativeWebUtils::instance()->homePage());
     QCOMPARE(webPage->title(), QString("TestPage"));
+    QCOMPARE(webContainer->url(), DeclarativeWebUtils::instance()->homePage());
+    QCOMPARE(webContainer->title(), QString("TestPage"));
     QCOMPARE(tabModel->count(), 1);
     QCOMPARE(webContainer->m_webPages->count(), 1);
     QCOMPARE(webContainer->m_webPages->m_activePages.count(), 1);
@@ -93,7 +102,6 @@ void tst_webview::initTestCase()
     baseUrl = QUrl(DeclarativeWebUtils::instance()->homePage()).toLocalFile();
     baseUrl = QFileInfo(baseUrl).canonicalPath();
 
-    waitSignals(tabAddedSpy, 1);
     QCOMPARE(tabAddedSpy.count(), 1);
 
     QMozContext::GetInstance()->setPref(QString("media.resource_handler_disabled"), QVariant(true));
@@ -156,7 +164,12 @@ void tst_webview::testNewTab()
     QVERIFY(webContainer->webPage());
     QVERIFY(previousPage != webContainer->webPage());
     QCOMPARE(contentItemSpy.count(), 1);
+    QSignalSpy pageUrlChangedSpy(webContainer->webPage(), SIGNAL(urlChanged()));
+    QSignalSpy pageTitleChangedSpy(webContainer->webPage(), SIGNAL(titleChanged()));
+
     waitSignals(loadingChanged, 2);
+    waitSignals(pageUrlChangedSpy, 1);
+    waitSignals(pageTitleChangedSpy, 1);
 
     // These are difficult to spy at this point as url changes almost immediately
     // and contentItem is changed in newTab code path.
@@ -364,6 +377,8 @@ void tst_webview::testUrlLoading()
     // Mimic favorite opening to already opened tab.
     webContainer->load(newUrl, newTitle);
     waitSignals(loadingChanged, 2);
+    waitSignals(pageUrlChangedSpy, 1);
+    waitSignals(pageTitleChangedSpy, 1);
 
     QCOMPARE(contentItemSpy.count(), 0);
 
@@ -393,11 +408,13 @@ void tst_webview::testLiveTabCount_data()
     QTest::addColumn<QString>("newUrl");
     QTest::addColumn<int>("expectedTabCount");
     QTest::addColumn<int>("liveTabCount");
-    QTest::newRow("testuseragent") << formatUrl("testuseragent.html") << 3 << 3;
-    QTest::newRow("testinputfocus") << formatUrl("testinputfocus.html") << 4 << 4;
-    QTest::newRow("testurlscheme") << formatUrl("testurlscheme.html") << 5 << 5;
-    QTest::newRow("testwindowopen") << formatUrl("testwindowopen.html") << 6 << 5;
-    QTest::newRow("testwebprompts") << formatUrl("testwebprompts.html") << 7 << 5;
+    QTest::addColumn<int>("willHaveTitle");
+    QTest::addColumn<int>("hadTitle"); // Previous page had title
+    QTest::newRow("testuseragent") << formatUrl("testuseragent.html") << 3 << 3 << 1 << 1;
+    QTest::newRow("testinputfocus") << formatUrl("testinputfocus.html") << 4 << 4 << 0 << 1;
+    QTest::newRow("testurlscheme") << formatUrl("testurlscheme.html") << 5 << 5 << 1 << 0;
+    QTest::newRow("testwindowopen") << formatUrl("testwindowopen.html") << 6 << 5 << 1 << 1;
+    QTest::newRow("testwebprompts") << formatUrl("testwebprompts.html") << 7 << 5 << 1 << 1;
 }
 
 void tst_webview::testLiveTabCount()
@@ -410,9 +427,20 @@ void tst_webview::testLiveTabCount()
     QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,int)));
     QSignalSpy tabAddedSpy(tabModel, SIGNAL(tabAdded(int)));
     QSignalSpy loadingChanged(webContainer, SIGNAL(loadingChanged()));
+    QSignalSpy urlChangedSpy(webContainer, SIGNAL(urlChanged()));
+    QSignalSpy titleChangedSpy(webContainer, SIGNAL(titleChanged()));
 
     tabModel->newTab(newUrl, "");
     waitSignals(loadingChanged, 2);
+    waitSignals(urlChangedSpy, 1);
+
+    // New tab has always an empty title. Title of the container changes in case the title of
+    // the page changes given that the page title differs.
+    // So, number of change signals varies between 0-2 signals.
+    QFETCH(int, willHaveTitle);
+    QFETCH(int, hadTitle);
+    int changeCount = willHaveTitle + hadTitle;
+    waitSignals(titleChangedSpy, changeCount);
 
     // ~last in the sequence of adding a new tab.
     waitSignals(tabAddedSpy, 1);
@@ -430,10 +458,12 @@ void tst_webview::load(QString url)
 {
     QSignalSpy loadingChanged(webContainer, SIGNAL(loadingChanged()));
     QSignalSpy grabbed(webContainer->webPage(), SIGNAL(grabResult(QString)));
+    QSignalSpy urlChangedSpy(webContainer, SIGNAL(urlChanged()));
     webContainer->webPage()->loadTab(url, false);
+    waitSignals(urlChangedSpy, 1);
     waitSignals(loadingChanged, 2);
     waitSignals(grabbed, 1);
-    QTest::qWait(100);
+    QTest::qWait(500);
 }
 
 void tst_webview::goBack()
@@ -441,8 +471,10 @@ void tst_webview::goBack()
     // We grab an image once the page is loaded. Thus, it's also a good
     // checking that goBack loaded the page.
     QSignalSpy grabbed(webContainer->webPage(), SIGNAL(grabResult(QString)));
+    QSignalSpy urlChangedSpy(webContainer, SIGNAL(urlChanged()));
     webContainer->goBack();
     waitSignals(grabbed, 1);
+    waitSignals(urlChangedSpy, 1);
 }
 
 void tst_webview::goForward()
@@ -682,9 +714,7 @@ void tst_webview::changeTabAndLoad()
     // Active previous tab and an load url.
     tabModel->activateTabById(previousTab);
     QString testSelect(formatUrl("testselect.html"));
-    QSignalSpy loadingChanged(webContainer, SIGNAL(loadingChanged()));
-    webContainer->webPage()->loadTab(testSelect, false);
-    waitSignals(loadingChanged, 2);
+    load(testSelect);
 
     // Should be before "testpage.html"
     historyOrder.insert(0, TestTab(formatUrl("testselect.html"), QString("TestSelect")));
