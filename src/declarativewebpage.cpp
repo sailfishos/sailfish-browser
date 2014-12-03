@@ -200,7 +200,7 @@ void DeclarativeWebPage::loadTab(QString newUrl, bool force)
 
 void DeclarativeWebPage::grabToFile()
 {
-    if (!m_viewReady || backForwardNavigation())
+    if (!m_viewReady || backForwardNavigation() || !active())
         return;
 
     emit clearGrabResult();
