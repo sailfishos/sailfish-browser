@@ -61,6 +61,10 @@ Item {
             }
         }
 
+        if (newState !== "fullscreenWebPage") {
+            overlay.visible = true
+        }
+
         state = newState
     }
 
@@ -229,6 +233,7 @@ Item {
                             webView.contentItem.chrome = animator.state !== "fullscreenWebPage"
                         }
                         _immediate = false
+                        overlay.visible = animator.state !== "fullscreenWebPage"
                     }
                 }
             }
