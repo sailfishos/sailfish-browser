@@ -71,7 +71,7 @@ Item {
         // When activating and state already changed to something else than
         // "fullscreenWebPage" we should not alter the state.
         // For instance "new-tab" cover action triggers this state change.
-        if (active && state !== "fullscreenWebPage") {
+        if (active && (state !== "fullscreenWebPage" || webView.contentItem && webView.contentItem.fullscreen)) {
             return
         }
 

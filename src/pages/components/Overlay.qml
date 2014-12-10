@@ -73,7 +73,12 @@ PanelBackground {
             webView.contentItem.opacity = 1.0
         }
         toolBar.resetFind()
-        overlay.animator.showChrome()
+        if (webView.contentItem && webView.contentItem.fullscreen) {
+            // Web content is in fullscreen mode thus we don't show chrome
+            overlay.animator.updateState("fullscreenWebPage")
+        } else {
+            overlay.animator.showChrome()
+        }
     }
 
     y: webView.fullscreenHeight - toolBar.toolsHeight
