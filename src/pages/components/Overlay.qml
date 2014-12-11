@@ -73,13 +73,20 @@ PanelBackground {
             webView.contentItem.opacity = 1.0
         }
         toolBar.resetFind()
-        overlay.animator.showChrome()
+        if (webView.contentItem && webView.contentItem.fullscreen) {
+            // Web content is in fullscreen mode thus we don't show chrome
+            overlay.animator.updateState("fullscreenWebPage")
+        } else {
+            overlay.animator.showChrome()
+        }
     }
 
     y: webView.fullscreenHeight - toolBar.toolsHeight
 
     width: parent.width
     height: historyContainer.height
+    // `visible` is controlled by Browser.OverlayAnimator
+    enabled: visible
 
     onActiveChanged: {
         if (active && !webView.contentItem && !searchField.enteringNewTabUrl && webView.tabId > 0) {
@@ -104,6 +111,7 @@ PanelBackground {
         when: dragArea.drag.active
     }
 
+    // This is an invisible object responsible to hide/show Overlay in an animated way
     Browser.OverlayAnimator {
         id: overlayAnimator
 
