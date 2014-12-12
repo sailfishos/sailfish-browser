@@ -50,6 +50,9 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     // Workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=929879
     setenv("LC_NUMERIC", "C", 1);
     setlocale(LC_NUMERIC, "C");
+
+    QQuickWindow::setDefaultAlphaBuffer(true);
+
 #ifdef HAS_BOOSTER
     QScopedPointer<QGuiApplication> app(MDeclarativeCache::qApplication(argc, argv));
     QScopedPointer<QQuickView> view(MDeclarativeCache::qQuickView());

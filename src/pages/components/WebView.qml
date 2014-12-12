@@ -69,47 +69,6 @@ WebContainer {
         onNewWindowRequested: tabModel.newTab(url, "", parentId)
     }
 
-    Label {
-        id: coverLabel
-
-        property bool allowedToShow: !background.visible && tabModel.count === 0
-
-        font.pixelSize: Theme.fontSizeExtraLarge * 2
-        horizontalAlignment: Text.AlignHCenter
-        x: Theme.paddingLarge * 2
-        width: parent.width - x * 2
-        anchors.verticalCenterOffset: -Theme.paddingLarge * 4
-        anchors.verticalCenter: parent.verticalCenter
-        wrapMode: Text.WordWrap
-        visible: false
-
-        //: Create a new tab cover text
-        //% "Create a new tab"
-        text: qsTrId("sailfish_browser-he-create_new_tab")
-
-        onAllowedToShowChanged: {
-            if (!allowedToShow) {
-                visible = false
-            } else {
-                showTimer.restart()
-            }
-        }
-
-        // Delay showing of the "Creating a new tab" text when Browser is pushed to switcher.
-        // Without this there is a small blink of the text when pushed to cover quickly.
-        // Note: This should be removed when switching to real cover and label moved to the cover.
-        Timer {
-            id: showTimer
-            interval: 200
-
-            onTriggered: {
-                if (coverLabel.allowedToShow) {
-                    coverLabel.visible = true
-                }
-            }
-        }
-    }
-
     Rectangle {
         id: background
         anchors.fill: parent

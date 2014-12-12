@@ -13,7 +13,7 @@ isEmpty(USE_RESOURCES) {
   DEPLOYMENT_PATH = /usr/share/$$TARGET
   # QML files and folders
   qml.path = $$DEPLOYMENT_PATH
-  qml.files = *.qml pages
+  qml.files = *.qml pages cover
 
 
   DEFINES += DEPLOYMENT_PATH=\"\\\"\"$${DEPLOYMENT_PATH}/\"\\\"\"
@@ -90,6 +90,7 @@ HEADERS += \
     declarativefileuploadfilter.h
 
 OTHER_FILES = *.qml \
+              cover/*.qml \
               pages/*.qml \
               pages/components/*.qml \
               pages/components/*.js \

@@ -40,6 +40,12 @@ Page {
         }
     }
 
+    function activateNewTabView() {
+        pageStack.pop(browserPage, PageStackAction.Immediate);
+        overlay.enterNewTabUrl(PageStackAction.Immediate)
+        bringToForeground()
+    }
+
     // Safety clipping. There is clipping in ApplicationWindow that should react upon focus changes.
     // This clipping can handle also clipping of QmlMozView. When this page is active we do not need to clip
     // if input method is not visible.
@@ -142,10 +148,7 @@ Page {
 
         CoverAction {
             iconSource: "image://theme/icon-cover-new"
-            onTriggered: {
-                overlay.enterNewTabUrl(PageStackAction.Immediate)
-                bringToForeground()
-            }
+            onTriggered: activateNewTabView()
         }
 
         CoverAction {
@@ -156,19 +159,6 @@ Page {
                 } else {
                     webView.reload()
                 }
-            }
-        }
-    }
-
-    CoverActionList {
-        enabled: browserPage.status === PageStatus.Active && !webView.contentItem
-        iconBackground: true
-
-        CoverAction {
-            iconSource: "image://theme/icon-cover-new"
-            onTriggered: {
-                overlay.enterNewTabUrl(PageStackAction.Immediate)
-                activate()
             }
         }
     }
