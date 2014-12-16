@@ -230,7 +230,7 @@ void tst_declarativehistorymodel::searchWithSpecialChars_data()
     QTest::newRow("special_site") << "http://www.pöö.com/" << "wierd site" << "pöö" << 1;
     QTest::newRow("special_title") << "http://www.foobar.com/" << "pöö wierd title" << "pöö" << 2;
     QTest::newRow("special_escaped_chars") << "http://www.foobar.com/" << "special title: ';\";ö" << "';\";" << 1;
-    QTest::newRow("special_upper_case_special_char") << "http://www.foobar.com/" << "Ö is wierd char" << "Ö" << 4;
+    QTest::newRow("special_upper_case_special_char") << "http://www.foobar.com/" << "Ö is wierd char" << "Ö" << 2;
 }
 
 void tst_declarativehistorymodel::searchWithSpecialChars()

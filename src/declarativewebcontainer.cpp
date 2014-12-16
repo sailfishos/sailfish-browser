@@ -687,10 +687,11 @@ void DeclarativeWebContainer::onPageTitleChanged()
 {
     DeclarativeWebPage *webPage = qobject_cast<DeclarativeWebPage *>(sender());
     if (webPage && m_model) {
+        QString url = webPage->url().toString();
         QString title = webPage->title();
         int tabId = webPage->tabId();
         bool activeTab = isActiveTab(tabId);
-        m_model->updateTitle(tabId, activeTab, title);
+        m_model->updateTitle(tabId, activeTab, url, title);
 
         if (activeTab && webPage == m_webPage) {
             updateTitle(title);

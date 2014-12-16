@@ -46,7 +46,7 @@ public slots:
     int getMaxTabId();
     int getMaxLinkId();
 
-    void updateTitle(int tabId, int linkId, QString title);
+    void updateTitle(int tabId, int linkId, QString url, QString title);
     void updateThumbPath(int tabId, QString path);
 
     void goForward(int tabId);
@@ -75,7 +75,7 @@ private:
     Link getLink(int linkId);
     Link getLink(QString url);
     void updateLink(int linkId, QString url, QString title, QString thumbPath);
-    HistoryResult addToHistory(int linkId, QString url);
+    HistoryResult addToBrowserHistory(QString url, QString title);
     int addToTabHistory(int tabId, int linkId);
     Link getLinkFromTabHistory(int tabHistoryId);
     Link getCurrentLink(int tabId);
@@ -87,6 +87,7 @@ private:
     Tab getTabData(int tabId, int historyId = 0);
     int tabCount();
     int integerQuery(const QString &statement);
+    void migrateHistory();
 
     QSqlQuery prepare(const QString &statement);
     bool execute(QSqlQuery &query);

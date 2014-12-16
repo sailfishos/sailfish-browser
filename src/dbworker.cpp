@@ -38,8 +38,12 @@ static const char * const create_table_link =
         "thumb_path TEXT\n"
         ");\n";
 
-static const char * const create_table_history =
-        "CREATE TABLE history (link_id INTEGER PRIMARY KEY,\n"
+static const char * const create_table_browser_history =
+        "CREATE TABLE browser_history (id INTEGER PRIMARY KEY AUTOINCREMENT,\n"
+        "url TEXT UNIQUE,\n"
+        "title TEXT,\n"
+        "favorite_icon TEXT,\n"
+        "visited_count INTEGER DEFAULT 1,\n"
         "date INTEGER"
         ");\n";
 
@@ -59,7 +63,7 @@ static const char *db_schema[] = {
     create_table_tab,
     create_table_tab_history,
     create_table_link,
-    create_table_history,
+    create_table_browser_history,
     create_table_settings
 };
 static int db_schema_count = sizeof(db_schema) / sizeof(*db_schema);
@@ -96,9 +100,54 @@ void DBWorker::init()
         }
     }
 
+    migrateHistory();
+
     m_updateThumbPathQuery = prepare("UPDATE link SET thumb_path = ? "
                                      "WHERE link_id IN (SELECT link.link_id "
                                      "FROM tab_history INNER JOIN link ON tab_history.link_id=link.link_id WHERE tab_history.tab_id = ?);");
+}
+
+// This method migrates data from history table (introduced in 42dbd01d23bc90cf1f5e177ceeefc05c91aa19cd) to browser_history table
+void DBWorker::migrateHistory() {
+    // Check if browser_history table exists
+    QSqlQuery browser_history_table_exists = prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='browser_history';");
+    if(execute(browser_history_table_exists)) {
+        if (!browser_history_table_exists.first()) {
+            // browser_history table does not exist, let's create it
+            browser_history_table_exists.clear();
+            QSqlQuery create_browser_history_table = prepare(create_table_browser_history);
+            if (!execute(create_browser_history_table)) {
+                qCritical() << "Failed to create browser_history table";
+            }
+        }
+    } else {
+        qCritical() << "Failed to query for browser_history table";
+    }
+
+    QSqlQuery history_table_exists = prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='history';");
+    if(execute(history_table_exists)) {
+        if (history_table_exists.first()) {
+            // history table exists, migrate all it's data to browser_history table and delete it
+            history_table_exists.clear();
+
+            QSqlQuery update_browser_history = prepare("INSERT INTO browser_history (url, title, date) select "\
+                                               "link.url, link.title, history.date from link, history where "\
+                                               "history.link_id = link.link_id and NULLIF(link.title, '') IS NOT NULL and "\
+                                               "link.link_id in (select MAX(link_id) from link group by url);");
+
+
+            if (!execute(update_browser_history)) {
+                qCritical() << "Failed to update browser history";
+            }
+
+            QSqlQuery delete_history_table = prepare("DROP TABLE history;");
+            if (!execute(delete_history_table)) {
+                qCritical() << "Failed to delete history table";
+            }
+        }
+    } else {
+        qCritical() << "Failed to query for history table";
+    }
 }
 
 QSqlQuery DBWorker::prepare(const QString &statement)
@@ -144,7 +193,7 @@ int DBWorker::createLink(int tabId, QString url, QString title)
 
     int linkId = createLink(url, title, "");
 
-    if (addToHistory(linkId, url) == Error) {
+    if (addToBrowserHistory(url, title) == Error) {
         qWarning() << Q_FUNC_INFO << "failed to add url to history" << url;
     }
 
@@ -209,7 +258,7 @@ void DBWorker::removeTab(int tabId)
     query = prepare("DELETE FROM link WHERE link_id IN "
                     "(SELECT DISTINCT link_id FROM tab_history WHERE tab_id = ? "
                     "AND link_id NOT IN (SELECT link_id FROM tab_history WHERE tab_id != ? "
-                    "UNION SELECT link_id FROM history))");
+                    "))");
     query.bindValue(0, tabId);
     query.bindValue(1, tabId);
 
@@ -233,8 +282,7 @@ void DBWorker::removeAllTabs()
 
     // Remove links that are not stored in history
     query = prepare("DELETE FROM link WHERE link_id IN "
-                    "(SELECT DISTINCT link_id FROM tab_history "
-                    "WHERE link_id NOT IN (SELECT link_id FROM history))");
+                    "(SELECT DISTINCT link_id FROM tab_history)");
     execute(query);
 
     // Remove history
@@ -320,7 +368,7 @@ void DBWorker::navigateTo(int tabId, QString url, QString title, QString path) {
 
     int linkId = createLink(url, title, path);
 
-    if (addToHistory(linkId, url) == Error) {
+    if (addToBrowserHistory(url, title) == Error) {
         qWarning() << Q_FUNC_INFO << "failed to add url to history" << url;
     }
 
@@ -453,7 +501,7 @@ int DBWorker::getNextLinkIdFromTabHistory(int tabHistoryId)
 }
 
 // Adds url to table history if it is not already there
-HistoryResult DBWorker::addToHistory(int linkId, QString url)
+HistoryResult DBWorker::addToBrowserHistory(QString url, QString title)
 {
 #if DEBUG_LOGS
     qDebug() << "link id:" << linkId;
@@ -463,30 +511,40 @@ HistoryResult DBWorker::addToHistory(int linkId, QString url)
     if (url.startsWith("about:")) {
         return Skipped;
     }
+    QSqlQuery query = prepare("SELECT 1 FROM browser_history WHERE url = ?;");
 
-    QSqlQuery query = prepare("SELECT link_id FROM history WHERE link_id = ?;");
-    query.bindValue(0, linkId);
+    query.bindValue(0, url);
     if (!execute(query)) {
         return Error;
     }
 
+    // Update history entry if it exists
     if (query.first()) {
-        query = prepare("UPDATE history SET date = ? WHERE link_id = ?;");
-        query.bindValue(0, QDateTime::currentDateTimeUtc().toTime_t());
-        query.bindValue(1, linkId);
+        if (title.isEmpty()) {
+            query = prepare("UPDATE browser_history SET date = ?, visited_count = visited_count + 1  WHERE url = ?;");
+            query.bindValue(0, QDateTime::currentDateTimeUtc().toTime_t());
+            query.bindValue(1, url);
+        } else {
+            query = prepare("UPDATE browser_history SET date = ?, title = ?, visited_count = visited_count + 1  WHERE url = ?;");
+            query.bindValue(0, QDateTime::currentDateTimeUtc().toTime_t());
+            query.bindValue(1, title);
+            query.bindValue(2, url);
+        }
         return execute(query) ? Added : Error;
     }
 
-    query = prepare("INSERT INTO history (link_id, date) VALUES (?, ?);");
-    query.bindValue(0, linkId);
-    query.bindValue(1, QDateTime::currentDateTimeUtc().toTime_t());
+    // Otherwise create a new history entry
+    query = prepare("INSERT INTO browser_history (url, title, date) VALUES (?, ?, ?);");
+    query.bindValue(0, url);
+    query.bindValue(1, title);
+    query.bindValue(2, QDateTime::currentDateTimeUtc().toTime_t());
     return execute(query) ? Added : Error;
 }
 
 void DBWorker::clearHistory()
 {
     int oldTabCount = tabCount();
-    QSqlQuery query = prepare("DELETE FROM history;");
+    QSqlQuery query = prepare("DELETE FROM browser_history;");
     execute(query);
     removeAllTabs();
     query = prepare("DELETE FROM link;");
@@ -534,14 +592,6 @@ void DBWorker::clearTabHistory(int tabId)
     query.bindValue(2, tabId);
     execute(query);
 
-    // Remove urls from history
-    query = prepare("DELETE FROM history WHERE link_id IN "
-                    "(SELECT DISTINCT link_id FROM tab_history WHERE tab_id = ? "
-                    "AND link_id NOT IN (SELECT link_id FROM tab_history WHERE tab_id != ?))");
-    query.bindValue(0, tabId);
-    query.bindValue(1, tabId);
-    execute(query);
-
     query = prepare("DELETE FROM tab_history WHERE tab_id = ? "
                     "AND id NOT IN (SELECT tab_history_id FROM tab WHERE tab_id = ?);");
     query.bindValue(0, tabId);
@@ -577,20 +627,19 @@ int DBWorker::createLink(QString url, QString title, QString thumbPath)
 void DBWorker::getHistory(const QString &filter)
 {
     // Skip empty titles always
-    QString filterQuery("WHERE (NULLIF(link.title, '') IS NOT NULL AND link.url NOT LIKE 'about:%' AND %1) ");
+    QString filterQuery("WHERE (NULLIF(title, '') IS NOT NULL AND url NOT LIKE 'about:%' AND %1) ");
     QString order;
 
     if (!filter.isEmpty()) {
-        filterQuery = filterQuery.arg(QString("(link.url LIKE :search OR link.title LIKE :search)"));
-        order = QString("LENGTH(link.url), link.title, history.date ASC");
+        filterQuery = filterQuery.arg(QString("(url LIKE :search OR title LIKE :search)"));
+        order = QString("LENGTH(url), title, date ASC");
     } else {
         filterQuery = filterQuery.arg(1);
-        order = QString("history.date DESC");
+        order = QString("date DESC");
     }
 
-    QString queryString = QString("SELECT DISTINCT link.url, link.title "
-                                  "FROM history INNER JOIN link "
-                                  "ON history.link_id = link.link_id "
+    QString queryString = QString("SELECT DISTINCT url, title "
+                                  "FROM browser_history "
                                   "%1"
                                   "ORDER BY %2 LIMIT 20;").arg(filterQuery).arg(order);
     QSqlQuery query = prepare(queryString);
@@ -648,7 +697,7 @@ void DBWorker::updateThumbPath(int tabId, QString path)
     }
 }
 
-void DBWorker::updateTitle(int tabId, int linkId, QString title)
+void DBWorker::updateTitle(int tabId, int linkId, QString url, QString title)
 {
     Link link = getLink(linkId);
     QSqlQuery query = prepare("UPDATE link SET title = ? WHERE link_id = ?;");
@@ -659,6 +708,13 @@ void DBWorker::updateTitle(int tabId, int linkId, QString title)
             // For browsing history
             emit titleChanged(tabId, linkId, link.url(), title);
         }
+    }
+
+    query = prepare("UPDATE browser_history SET title = ? WHERE url = ?;");
+    query.bindValue(0, title);
+    query.bindValue(1, url);
+    if (!execute(query)) {
+        qWarning() << "Failed to add title to browser history";
     }
 }
 

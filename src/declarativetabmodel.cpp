@@ -361,7 +361,7 @@ void DeclarativeTabModel::updateUrl(int tabId, bool activeTab, QString url, bool
     }
 }
 
-void DeclarativeTabModel::updateTitle(int tabId, bool activeTab, QString title)
+void DeclarativeTabModel::updateTitle(int tabId, bool activeTab, QString url, QString title)
 {
     int tabIndex = findTabIndex(tabId);
     bool updateDb = false;
@@ -380,7 +380,7 @@ void DeclarativeTabModel::updateTitle(int tabId, bool activeTab, QString title)
     }
 
     if (updateDb) {
-        DBManager::instance()->updateTitle(tabId, linkId, title);
+        DBManager::instance()->updateTitle(tabId, linkId, url, title);
     }
 }
 

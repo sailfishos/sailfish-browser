@@ -39,7 +39,7 @@ public:
     void goBack(int tabId);
 
     void updateThumbPath(int tabId, QString path);
-    void updateTitle(int tabId, int linkId, QString title);
+    void updateTitle(int tabId, int linkId, QString url, QString title);
 
     void clearHistory();
     void getHistory(const QString &filter = "");
