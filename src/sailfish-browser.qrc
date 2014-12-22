@@ -4,12 +4,13 @@
     <file>cover/NoTabsCover.qml</file>
     <file>pages/BrowserPage.qml</file>
     <file>pages/ShareLinkPage.qml</file>
-    <file>pages/components/ConfigDialog.qml</file>
     <file>pages/components/AlertDialog.qml</file>
     <file>pages/components/AuthDialog.qml</file>
     <file>pages/components/BookmarkEditDialog.qml</file>
     <file>pages/components/BrowserContextMenu.qml</file>
     <file>pages/components/BrowserNotification.qml</file>
+    <file>pages/components/ConfigDialog.qml</file>
+    <file>pages/components/ConfigWarning.qml</file>
     <file>pages/components/ConfirmDialog.qml</file>
     <file>pages/components/DebugOverlay.qml</file>
     <file>pages/components/DownloadRemorsePopup.qml</file>
