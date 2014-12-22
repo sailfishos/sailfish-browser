@@ -11,15 +11,15 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import QtQuick 2.2
+import Sailfish.Silica 1.0
 
 ConfirmDialog {
+    property Item browserPage
+
     //: Warning of changing browser configurations.
     //% "Changing these advanced settings can cause issues with stability, security and performance of Sailfish Browser. Continue ?"
     text: qsTrId("sailfish_browser-la-config-warning");
-    acceptDestination: configDialog
-
-    Component {
-        id: configDialog
+    acceptDestination: Component {
         ConfigDialog {
             // On accept pop back to browserPage
             acceptDestination: browserPage
