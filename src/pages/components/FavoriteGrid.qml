@@ -16,8 +16,9 @@ import Sailfish.Browser 1.0
 SilicaGridView {
     id: favoriteGrid
 
-    property int columns: 4
-    property int initialCellWidth: (parent.width - Theme.paddingLarge * 2) / columns
+    // browserPage.isPortrait ? 4 : 7
+    readonly property int columns: Math.floor(parent.width / Theme.itemSizeExtraLarge)
+    readonly property int initialCellWidth: (parent.width - Theme.paddingLarge * 2) / columns
 
     function fetchAndSaveBookmark() {
         var webPage = webView && webView.contentItem
