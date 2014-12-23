@@ -374,7 +374,6 @@ PanelBackground {
                 anchors.horizontalCenter: parent.horizontalCenter
                 opacity: historyContainer.showFavorites ? 1.0 : 0.0
                 visible: !overlayAnimator.atBottom && !toolBar.findInPageActive && opacity > 0.0
-                columns: browserPage.isPortrait ? 4 : 7
 
                 header: Item {
                     width: parent.width
