@@ -33,7 +33,7 @@ PanelBackground {
         }
 
         if (url == "about:config") {
-            pageStack.push(Qt.resolvedUrl("ConfigWarning.qml"));
+            pageStack.push(Qt.resolvedUrl("ConfigWarning.qml"), {"browserPage": browserPage});
         } else {
             // let gecko figure out how to handle malformed URLs
             var pageUrl = url
