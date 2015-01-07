@@ -18,6 +18,10 @@ Bookmark::Bookmark(QString title, QString url, QString favicon, bool hasTouchIco
     , m_favicon(favicon)
     , m_hasTouchIcon(hasTouchIcon)
 {
+    if (m_favicon.isEmpty()) {
+        m_favicon = DEFAULT_DESKTOP_BOOKMARK_ICON;
+        m_hasTouchIcon = true;
+    }
 }
 
 QString Bookmark::title() const {
