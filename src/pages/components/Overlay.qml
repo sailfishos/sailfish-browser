@@ -358,6 +358,7 @@ PanelBackground {
 
                 search: searchField.text
                 opacity: historyContainer.showFavorites ? 0.0 : 1.0
+                enabled: overlayAnimator.atTop
                 visible: !overlayAnimator.atBottom && !toolBar.findInPageActive && opacity > 0.0
 
                 onMovingChanged: if (moving) historyList.focus = true
@@ -373,6 +374,7 @@ PanelBackground {
                 height: historyList.height
                 anchors.horizontalCenter: parent.horizontalCenter
                 opacity: historyContainer.showFavorites ? 1.0 : 0.0
+                enabled: overlayAnimator.atTop
                 visible: !overlayAnimator.atBottom && !toolBar.findInPageActive && opacity > 0.0
 
                 header: Item {
