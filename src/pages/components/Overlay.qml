@@ -130,6 +130,9 @@ PanelBackground {
                 } else if (!toolBar.findInPageActive) {
                     searchField.resetUrl(webView.url)
                 }
+
+                favoriteGrid.positionViewAtBeginning()
+                historyList.positionViewAtBeginning()
             }
         }
     }
