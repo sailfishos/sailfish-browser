@@ -457,33 +457,29 @@ void tst_webview::testLiveTabCount()
 void tst_webview::load(QString url)
 {
     QSignalSpy loadingChanged(webContainer, SIGNAL(loadingChanged()));
-    QSignalSpy grabbed(webContainer->webPage(), SIGNAL(grabResult(QString)));
+    QSignalSpy painted(webContainer->webPage(), SIGNAL(firstPaint(int,int)));
     QSignalSpy urlChangedSpy(webContainer, SIGNAL(urlChanged()));
     webContainer->webPage()->loadTab(url, false);
     waitSignals(urlChangedSpy, 1);
     waitSignals(loadingChanged, 2);
-    waitSignals(grabbed, 1);
+    waitSignals(painted, 2);
     QTest::qWait(500);
 }
 
 void tst_webview::goBack()
 {
-    // We grab an image once the page is loaded. Thus, it's also a good
-    // checking that goBack loaded the page.
-    QSignalSpy grabbed(webContainer->webPage(), SIGNAL(grabResult(QString)));
+    QSignalSpy painted(webContainer->webPage(), SIGNAL(firstPaint(int,int)));
     QSignalSpy urlChangedSpy(webContainer, SIGNAL(urlChanged()));
     webContainer->goBack();
-    waitSignals(grabbed, 1);
+    waitSignals(painted, 2);
     waitSignals(urlChangedSpy, 1);
 }
 
 void tst_webview::goForward()
 {
-    // We grab an image once the page is loaded. Thus, it's also a good
-    // checking that goBack loaded the page.
-    QSignalSpy grabbed(webContainer->webPage(), SIGNAL(grabResult(QString)));
+    QSignalSpy painted(webContainer->webPage(), SIGNAL(firstPaint(int,int)));
     webContainer->goForward();
-    waitSignals(grabbed, 1);
+    waitSignals(painted, 2);
 }
 
 void tst_webview::forwardBackwardNavigation()
