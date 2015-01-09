@@ -33,8 +33,8 @@ Item {
         updateState("doubleToolBar")
     }
 
-    function showChrome() {
-        updateState("chromeVisible")
+    function showChrome(immediate) {
+        updateState("chromeVisible", immediate || false)
     }
 
     function showOverlay(immediate) {
