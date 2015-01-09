@@ -429,6 +429,12 @@ PanelBackground {
                     pageStack.pop()
                 }
                 onActivateTab: {
+                    // In case tab activated from tab view and first use exists.
+                    // Let's mark first time usage guideline as done.
+                    if (firstUseOverlay) {
+                        firstUseOverlay.done()
+                    }
+
                     webView.tabModel.activateTab(index)
                     pageStack.pop()
                 }
