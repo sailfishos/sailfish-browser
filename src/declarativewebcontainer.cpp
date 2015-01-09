@@ -75,6 +75,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
 
     connect(this, SIGNAL(heightChanged()), this, SLOT(sendVkbOpenCompositionMetrics()));
     connect(this, SIGNAL(widthChanged()), this, SLOT(sendVkbOpenCompositionMetrics()));
+    connect(this, SIGNAL(foregroundChanged()), this, SLOT(updateWindowFlags()));
 
     qApp->installEventFilter(this);
 }
@@ -734,6 +735,23 @@ void DeclarativeWebContainer::setActiveTabData()
     if (m_tabId != tab.tabId()) {
         m_tabId = tab.tabId();
         emit tabIdChanged();
+    }
+}
+
+void DeclarativeWebContainer::updateWindowFlags()
+{
+    QQuickWindow *win = window();
+    if (win && m_webPage) {
+        static Qt::WindowFlags f = 0;
+        if (f == 0) {
+            f = win->flags();
+        }
+
+        if (!m_foreground) {
+            win->setFlags(f | Qt::CoverWindow | Qt::FramelessWindowHint);
+        } else {
+            win->setFlags(f);
+        }
     }
 }
 

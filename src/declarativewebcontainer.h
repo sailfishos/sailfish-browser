@@ -166,6 +166,8 @@ private slots:
     void updateLoading();
     void setActiveTabData();
 
+    void updateWindowFlags();
+
     // These are here to inform embedlite-components that keyboard is open or close
     // matching composition metrics.
     void sendVkbOpenCompositionMetrics();
