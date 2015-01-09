@@ -507,10 +507,10 @@ void DeclarativeWebContainer::initialize()
     }
 
     // Load test
-    // 1) firstUseDone and no tabs, load initial url or home page to a new tab.
+    // 1) no tabs and firstUseDone or we have incoming url, load initial url or home page to a new tab.
     // 2) model has tabs, load initial url or active tab.
     bool firstUseDone = DeclarativeWebUtils::instance()->firstUseDone();
-    if (m_model->count() == 0 && firstUseDone) {
+    if (m_model->count() == 0 && (firstUseDone || !m_url.isEmpty())) {
         QString url = m_url.isEmpty() ? DeclarativeWebUtils::instance()->homePage() : m_url;
         QString title = url == m_url ? m_title : "";
         m_model->newTab(url, title);
