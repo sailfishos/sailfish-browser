@@ -305,7 +305,9 @@ PanelBackground {
                 visible: opacity > 0.0
                 onOverlayAtTopChanged: {
                     if (overlayAtTop) {
-                        forceActiveFocus()
+                        if (toolBar.findInPageActive) {
+                            forceActiveFocus()
+                        }
                     } else {
                         focus = false
                     }
