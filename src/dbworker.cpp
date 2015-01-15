@@ -26,6 +26,11 @@
 #define DEBUG_LOGS 0
 #endif
 
+#define DB_USER_VERSION 1
+
+#define QUOTE(arg) #arg
+#define STR(arg) QUOTE(arg)
+
 static const char * const create_table_tab =
         "CREATE TABLE tab (tab_id INTEGER PRIMARY KEY,\n"
         "tab_history_id INTEGER\n"
@@ -59,12 +64,16 @@ static const char * const create_table_settings =
         "value TEXT\n"
         ");\n";
 
+static const char * const set_user_version =
+        "PRAGMA user_version=" STR(DB_USER_VERSION) ";\n";
+
 static const char *db_schema[] = {
     create_table_tab,
     create_table_tab_history,
     create_table_link,
     create_table_browser_history,
-    create_table_settings
+    create_table_settings,
+    set_user_version
 };
 static int db_schema_count = sizeof(db_schema) / sizeof(*db_schema);
 
@@ -100,15 +109,32 @@ void DBWorker::init()
         }
     }
 
-    migrateHistory();
+    // check current schema version and migrate if needed
+    QSqlQuery schemaQuery = prepare("PRAGMA user_version;");
+    if (execute(schemaQuery) && schemaQuery.next()) {
+        int userVersion = schemaQuery.value(0).toInt();
+        if (userVersion == 0) {
+            migrateTo_1();
+        }
+    } else {
+        qWarning() << "Failed to check schema version";
+    }
 
     m_updateThumbPathQuery = prepare("UPDATE link SET thumb_path = ? "
                                      "WHERE link_id IN (SELECT link.link_id "
                                      "FROM tab_history INNER JOIN link ON tab_history.link_id=link.link_id WHERE tab_history.tab_id = ?);");
 }
 
+void DBWorker::setUserVersion(int userVersion)
+{
+    QSqlQuery updateQuery = prepare(QString("PRAGMA user_version = %1;").arg(userVersion));
+    if (!execute(updateQuery)) {
+        qWarning() << "Failed to update schema user version";
+    }
+}
+
 // This method migrates data from history table (introduced in 42dbd01d23bc90cf1f5e177ceeefc05c91aa19cd) to browser_history table
-void DBWorker::migrateHistory() {
+void DBWorker::migrateTo_1() {
     // Check if browser_history table exists
     QSqlQuery browser_history_table_exists = prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='browser_history';");
     if(execute(browser_history_table_exists)) {
@@ -148,6 +174,8 @@ void DBWorker::migrateHistory() {
     } else {
         qCritical() << "Failed to query for history table";
     }
+
+    setUserVersion(1);
 }
 
 QSqlQuery DBWorker::prepare(const QString &statement)

@@ -87,7 +87,8 @@ private:
     Tab getTabData(int tabId, int historyId = 0);
     int tabCount();
     int integerQuery(const QString &statement);
-    void migrateHistory();
+    void migrateTo_1();
+    void setUserVersion(int userVersion);
 
     QSqlQuery prepare(const QString &statement);
     bool execute(QSqlQuery &query);
