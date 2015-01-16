@@ -30,4 +30,10 @@ Image {
             return 'image://theme/' + icon
         }
     }
+
+    onStatusChanged: {
+        if (status === Image.Error) {
+            icon = "icon-launcher-bookmark"
+        }
+    }
 }
