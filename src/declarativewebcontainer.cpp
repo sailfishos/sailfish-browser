@@ -61,6 +61,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
 {
     m_webPages.reset(new WebPages(this));
     setFlag(QQuickItem::ItemHasContents, true);
+    connect(DownloadManager::instance(), SIGNAL(initializedChanged()), this, SLOT(initialize()));
     connect(DownloadManager::instance(), SIGNAL(downloadStarted()), this, SLOT(onDownloadStarted()));
     connect(QMozContext::GetInstance(), SIGNAL(onInitialized()), this, SLOT(initialize()));
     connect(this, SIGNAL(portraitChanged()), this, SLOT(resetHeight()));
@@ -534,7 +535,7 @@ void DeclarativeWebContainer::onDownloadStarted()
 {
     // This is not 100% solid. A newTab is called on incoming
     // url (during browser start) if no tabs exist (waitingForNewTab). In slow network
-    // connectivity one can create a a new tab before downloadStarted is emitted
+    // connectivity one can create a new tab before downloadStarted is emitted
     // from DownloadManager. To get this to the 100%, we should add downloadStatus
     // to the QmlMozView containing status of downloading.
     if (m_model->waitingForNewTab())  {
@@ -562,6 +563,8 @@ void DeclarativeWebContainer::onDownloadStarted()
 
 void DeclarativeWebContainer::onNewTabRequested(QString url, QString title, int parentId)
 {
+    // TODO: Remove unused title argument.
+    Q_UNUSED(title);
     // An empty tab for cleaning previous navigation status.
     Tab tab;
     updateNavigationStatus(tab);
@@ -573,7 +576,6 @@ void DeclarativeWebContainer::onNewTabRequested(QString url, QString title, int 
 
     if (activatePage(m_model->nextTabId(), false, parentId)) {
         m_webPage->setInitialUrl(url);
-        m_webPage->setInitialTitle(title);
     }
 }
 
@@ -655,7 +657,7 @@ void DeclarativeWebContainer::onPageUrlChanged()
 
         // Initial url should not be considered as navigation request that increases navigation history.
         // Cleanup this.
-        bool initialLoad = !webPage->initialUrl().isEmpty() && !webPage->urlHasChanged();
+        bool initialLoad = !webPage->urlHasChanged();
         // Virtualized pages need to be checked from the model.
         if (webPage->boundToModel() || m_model->contains(tabId)) {
             m_model->updateUrl(tabId, activeTab, url, webPage->backForwardNavigation(), initialLoad);
@@ -664,10 +666,9 @@ void DeclarativeWebContainer::onPageUrlChanged()
             // to the model. We should have downloadStatus(status) and linkClicked(url) signals in QmlMozView.
             // To distinguish linkClicked(url) from downloadStatus(status) the downloadStatus(status) signal
             // should not be emitted when link clicking started downloading or opened (will open) a new window.
-            m_model->addTab(webPage->initialUrl(), webPage->initialTitle());
+            m_model->addTab(url, "");
         }
         webPage->bindToModel();
-        webPage->resetInitialData();
         webPage->setUrlHasChanged(true);
 
         bool wasBackForwardNavigation = webPage->backForwardNavigation();
@@ -831,11 +832,13 @@ void DeclarativeWebContainer::updateTitle(const QString &newTitle)
 
 bool DeclarativeWebContainer::canInitialize() const
 {
-    return QMozContext::GetInstance()->initialized() && m_model && m_model->loaded();
+    return QMozContext::GetInstance()->initialized() && DownloadManager::instance()->initialized() && m_model && m_model->loaded();
 }
 
 void DeclarativeWebContainer::loadTab(int tabId, QString url, QString title, bool force)
 {
+    // TODO: Remove references to title.
+    Q_UNUSED(title);
     if (activatePage(tabId, true) || force) {
         // Note: active pages containing a "link" between each other (parent-child relationship)
         // are not destroyed automatically e.g. in low memory notification.
@@ -844,7 +847,6 @@ void DeclarativeWebContainer::loadTab(int tabId, QString url, QString title, boo
             m_webPage->loadTab(url, force);
         } else {
             m_webPage->setInitialUrl(url);
-            m_webPage->setInitialTitle(title);
         }
     }
 }

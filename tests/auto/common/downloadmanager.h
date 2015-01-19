@@ -20,8 +20,10 @@ class DownloadManager : public QObject
 
 public:
     static DownloadManager *instance();
+    bool initialized();
 
 signals:
+    void initializedChanged();
     void downloadStarted();
 
 private:
