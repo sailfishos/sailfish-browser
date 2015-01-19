@@ -193,7 +193,8 @@ void DeclarativeWebUtils::updateWebEngineSettings()
                              << "media-decoder-info"
                              << "embed:download"
                              << "embed:allprefs"
-                             << "embed:search");
+                             << "embed:search"
+                             << "download-manager-initialized");
 
     // Enable internet search
     mozContext->setPref(QString("keyword.enabled"), QVariant(true));

@@ -27,6 +27,7 @@ static DownloadManager *gSingleton = 0;
 
 DownloadManager::DownloadManager()
     : QObject()
+    , m_initialized(false)
 {
     m_transferClient = new TransferEngineInterface("org.nemo.transferengine",
                                                    "/org/nemo/transferengine",
@@ -43,7 +44,11 @@ DownloadManager::~DownloadManager()
 
 void DownloadManager::recvObserve(const QString message, const QVariant data)
 {
-    if (message != "embed:download") {
+
+    if (message == "download-manager-initialized" && !m_initialized) {
+        m_initialized = true;
+        emit initializedChanged();
+    } else if (message != "embed:download") {
         // here we are interested in download messages only
         return;
     }
@@ -231,6 +236,11 @@ bool DownloadManager::existActiveTransfers()
         }
     }
     return exists;
+}
+
+bool DownloadManager::initialized()
+{
+    return m_initialized;
 }
 
 void DownloadManager::checkAllTransfers()
