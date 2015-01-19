@@ -44,7 +44,10 @@ BackgroundItem {
     contentItem.width: root.implicitWidth - root.leftMargin - root.rightMargin
     contentItem.height: root.implicitHeight - root.topMargin - root.bottomMargin
 
-    onClicked: view.activateTab(index)
+    onClicked: {
+        activeTabIndex = -1
+        view.activateTab(index)
+    }
 
     // contentItem is hidden so this cannot be children of the contentItem.
     // So, making them as siblings of the contentItem.
