@@ -61,6 +61,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
 {
     m_webPages.reset(new WebPages(this));
     setFlag(QQuickItem::ItemHasContents, true);
+    connect(DownloadManager::instance(), SIGNAL(initializedChanged()), this, SLOT(initialize()));
     connect(DownloadManager::instance(), SIGNAL(downloadStarted()), this, SLOT(onDownloadStarted()));
     connect(QMozContext::GetInstance(), SIGNAL(onInitialized()), this, SLOT(initialize()));
     connect(this, SIGNAL(portraitChanged()), this, SLOT(resetHeight()));
@@ -534,7 +535,7 @@ void DeclarativeWebContainer::onDownloadStarted()
 {
     // This is not 100% solid. A newTab is called on incoming
     // url (during browser start) if no tabs exist (waitingForNewTab). In slow network
-    // connectivity one can create a a new tab before downloadStarted is emitted
+    // connectivity one can create a new tab before downloadStarted is emitted
     // from DownloadManager. To get this to the 100%, we should add downloadStatus
     // to the QmlMozView containing status of downloading.
     if (m_model->waitingForNewTab())  {
@@ -831,7 +832,7 @@ void DeclarativeWebContainer::updateTitle(const QString &newTitle)
 
 bool DeclarativeWebContainer::canInitialize() const
 {
-    return QMozContext::GetInstance()->initialized() && m_model && m_model->loaded();
+    return QMozContext::GetInstance()->initialized() && DownloadManager::instance()->initialized() && m_model && m_model->loaded();
 }
 
 void DeclarativeWebContainer::loadTab(int tabId, QString url, QString title, bool force)
