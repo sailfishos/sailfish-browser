@@ -122,30 +122,9 @@ void DeclarativeWebPage::setUrlHasChanged(bool urlHasChanged)
     m_urlHasChanged = urlHasChanged;
 }
 
-QString DeclarativeWebPage::initialUrl() const
-{
-    return m_initialUrl;
-}
-
 void DeclarativeWebPage::setInitialUrl(const QString &url)
 {
     m_initialUrl = url;
-}
-
-QString DeclarativeWebPage::initialTitle() const
-{
-    return m_initialTitle;
-}
-
-void DeclarativeWebPage::setInitialTitle(const QString &title)
-{
-    m_initialTitle = title;
-}
-
-void DeclarativeWebPage::resetInitialData()
-{
-    m_initialUrl = "";
-    m_initialTitle = "";
 }
 
 void DeclarativeWebPage::bindToModel()
@@ -300,6 +279,7 @@ void DeclarativeWebPage::onViewInitialized()
 
     if (!m_initialUrl.isEmpty()) {
         loadTab(m_initialUrl, false);
+        m_initialUrl = "";
     }
 }
 
