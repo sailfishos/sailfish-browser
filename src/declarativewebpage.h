@@ -54,13 +54,7 @@ public:
     bool urlHasChanged() const;
     void setUrlHasChanged(bool urlHasChanged);
 
-    QString initialUrl() const;
     void setInitialUrl(const QString &url);
-
-    QString initialTitle() const;
-    void setInitialTitle(const QString &title);
-
-    void resetInitialData();
 
     void bindToModel();
     bool boundToModel();
@@ -120,7 +114,6 @@ private:
     bool m_backForwardNavigation;
     bool m_boundToModel;
     QString m_initialUrl;
-    QString m_initialTitle;
     QString m_favicon;
     QVariant m_resurrectedContentRect;
     QSharedPointer<QQuickItemGrabResult> m_grabResult;

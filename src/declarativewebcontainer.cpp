@@ -563,6 +563,8 @@ void DeclarativeWebContainer::onDownloadStarted()
 
 void DeclarativeWebContainer::onNewTabRequested(QString url, QString title, int parentId)
 {
+    // TODO: Remove unused title argument.
+    Q_UNUSED(title);
     // An empty tab for cleaning previous navigation status.
     Tab tab;
     updateNavigationStatus(tab);
@@ -574,7 +576,6 @@ void DeclarativeWebContainer::onNewTabRequested(QString url, QString title, int 
 
     if (activatePage(m_model->nextTabId(), false, parentId)) {
         m_webPage->setInitialUrl(url);
-        m_webPage->setInitialTitle(title);
     }
 }
 
@@ -656,7 +657,7 @@ void DeclarativeWebContainer::onPageUrlChanged()
 
         // Initial url should not be considered as navigation request that increases navigation history.
         // Cleanup this.
-        bool initialLoad = !webPage->initialUrl().isEmpty() && !webPage->urlHasChanged();
+        bool initialLoad = !webPage->urlHasChanged();
         // Virtualized pages need to be checked from the model.
         if (webPage->boundToModel() || m_model->contains(tabId)) {
             m_model->updateUrl(tabId, activeTab, url, webPage->backForwardNavigation(), initialLoad);
@@ -665,10 +666,9 @@ void DeclarativeWebContainer::onPageUrlChanged()
             // to the model. We should have downloadStatus(status) and linkClicked(url) signals in QmlMozView.
             // To distinguish linkClicked(url) from downloadStatus(status) the downloadStatus(status) signal
             // should not be emitted when link clicking started downloading or opened (will open) a new window.
-            m_model->addTab(webPage->initialUrl(), webPage->initialTitle());
+            m_model->addTab(url, "");
         }
         webPage->bindToModel();
-        webPage->resetInitialData();
         webPage->setUrlHasChanged(true);
 
         bool wasBackForwardNavigation = webPage->backForwardNavigation();
@@ -837,6 +837,8 @@ bool DeclarativeWebContainer::canInitialize() const
 
 void DeclarativeWebContainer::loadTab(int tabId, QString url, QString title, bool force)
 {
+    // TODO: Remove references to title.
+    Q_UNUSED(title);
     if (activatePage(tabId, true) || force) {
         // Note: active pages containing a "link" between each other (parent-child relationship)
         // are not destroyed automatically e.g. in low memory notification.
@@ -845,7 +847,6 @@ void DeclarativeWebContainer::loadTab(int tabId, QString url, QString title, boo
             m_webPage->loadTab(url, force);
         } else {
             m_webPage->setInitialUrl(url);
-            m_webPage->setInitialTitle(title);
         }
     }
 }
