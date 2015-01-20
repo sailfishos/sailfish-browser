@@ -45,7 +45,7 @@ private slots:
     void cleanupTestCase();
 
 private:
-    void load(QString url);
+    void load(QString url, bool expectTitleChange);
     void goBack();
     void goForward();
 
@@ -454,13 +454,17 @@ void tst_webview::testLiveTabCount()
     QCOMPARE(webContainer->m_webPages->m_activePages.count(), liveTabCount);
 }
 
-void tst_webview::load(QString url)
+void tst_webview::load(QString url, bool expectTitleChange)
 {
     QSignalSpy loadingChanged(webContainer, SIGNAL(loadingChanged()));
     QSignalSpy painted(webContainer->webPage(), SIGNAL(firstPaint(int,int)));
     QSignalSpy urlChangedSpy(webContainer, SIGNAL(urlChanged()));
+    QSignalSpy titleChangedSpy(webContainer, SIGNAL(titleChanged()));
     webContainer->webPage()->loadTab(url, false);
     waitSignals(urlChangedSpy, 1);
+    if (expectTitleChange) {
+        waitSignals(titleChangedSpy, 1);
+    }
     waitSignals(loadingChanged, 2);
     waitSignals(painted, 2);
     QTest::qWait(500);
@@ -493,7 +497,7 @@ void tst_webview::forwardBackwardNavigation()
     QString title = "Test window opening";
 
     QVERIFY(webContainer->webPage());
-    load(url);
+    load(url, true /* expectTitleChange */);
 
     QCOMPARE(urlChangedSpy.count(), 1);
     QCOMPARE(titleChangedSpy.count(), 1);
@@ -546,7 +550,7 @@ void tst_webview::forwardBackwardNavigation()
     QVERIFY(webContainer->canGoForward());
     url = formatUrl("testurlscheme.html");
     title = "TestUrlScheme";
-    load(url);
+    load(url, true /* expectTitleChange */);
 
     QCOMPARE(forwardSpy.count(), 2);
     QCOMPARE(backSpy.count(), 2);
@@ -560,7 +564,7 @@ void tst_webview::forwardBackwardNavigation()
 
     url = formatUrl("testuseragent.html");
     title = "TestUserAgent";
-    load(url);
+    load(url, true /* expectTitleChange */);
 
     QCOMPARE(forwardSpy.count(), 2);
     QCOMPARE(backSpy.count(), 2);
@@ -630,7 +634,7 @@ void tst_webview::restart()
 
     // Title "TestUserAgent"
     QString testUserAgentUrl = formatUrl("testuseragent.html");
-    load(testUserAgentUrl);
+    load(testUserAgentUrl, true /* expectTitleChange */);
 
     QCOMPARE(tabModel->activeTab().url(), testUserAgentUrl);
     QCOMPARE(webContainer->url(), testUserAgentUrl);
@@ -710,7 +714,7 @@ void tst_webview::changeTabAndLoad()
     // Active previous tab and an load url.
     tabModel->activateTabById(previousTab);
     QString testSelect(formatUrl("testselect.html"));
-    load(testSelect);
+    load(testSelect, true /* expectTitleChange */);
 
     // Should be before "testpage.html"
     historyOrder.insert(0, TestTab(formatUrl("testselect.html"), QString("TestSelect")));
