@@ -88,6 +88,7 @@ WebContainer {
             property string iconType
             property int frameCounter
             property bool rendered
+            property Item textSelectionController: null
             readonly property bool activeWebPage: container.tabId == tabId
 
             property QtObject pickerOpener: Pickers.PickerOpener {
@@ -279,6 +280,9 @@ WebContainer {
                     break
                 }
                 case "Content:SelectionRange": {
+                    if (textSelectionController === null) {
+                        textSelectionController = textSelectionControllerComponent.createObject(webPage)
+                    }
                     webPage.selectionRangeUpdated(data)
                     break
                 }
@@ -304,6 +308,13 @@ WebContainer {
                     }
                     break
                 }
+                }
+            }
+
+            onContextMenuRequested: {
+                if (data.types.indexOf("content-text") !== -1) {
+                   // we want to select some content text
+                   webPage.sendAsyncMessage("Browser:SelectionStart", {"xPos": data.xPos, "yPos": data.yPos})
                 }
             }
 
@@ -344,4 +355,10 @@ WebContainer {
 //        opacity: contentItem && contentItem.horizontalScrollDecorator.moving ? 1.0 : 0.0
 //        Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
 //    }
+
+    Component {
+        id: textSelectionControllerComponent
+
+        TextSelectionController { color: _decoratorColor }
+    }
 }
