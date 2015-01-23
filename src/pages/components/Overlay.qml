@@ -177,7 +177,7 @@ PanelBackground {
 
         width: parent.width
         height: historyContainer.height
-        enabled: !overlayAnimator.atBottom && (webView.tabModel.count > 0 || firstUseOverlay)
+        enabled: !overlayAnimator.atBottom && (webView.tabModel.count > 0 || firstUseOverlay) && !favoriteGrid.contextMenuActive
 
         drag.target: overlay
         drag.filterChildren: true
