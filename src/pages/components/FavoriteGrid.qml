@@ -45,6 +45,13 @@ SilicaGridView {
     cellHeight: Math.round(Screen.height / 6)
     displaced: Transition { NumberAnimation { properties: "x,y"; easing.type: Easing.InOutQuad; duration: 200 } }
 
+    onVisibleChanged: {
+        if (!visible && contextMenuActive) {
+            contextMenu.hide()
+        }
+    }
+
+    readonly property bool contextMenuActive: contextMenu && contextMenu.active
     property Item contextMenu: currentItem ? currentItem._menuItem : null
     // Figure out which delegates need to be moved down to make room
     // for the context menu when it's open.
