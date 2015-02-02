@@ -82,6 +82,9 @@ SilicaGridView {
         menu: favoriteContextMenu
         down: favoriteItem.down
         showMenuOnPressAndHold: false
+        // Do not capture mouse events here. This ListItem only handles
+        // menu creation and destruction.
+        enabled: false
 
         onVisibleChanged: {
             if (!visible && remorse) {
