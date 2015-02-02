@@ -45,6 +45,13 @@ SilicaGridView {
     cellHeight: Math.round(Screen.height / 6)
     displaced: Transition { NumberAnimation { properties: "x,y"; easing.type: Easing.InOutQuad; duration: 200 } }
 
+    onVisibleChanged: {
+        if (!visible && contextMenuActive) {
+            contextMenu.hide()
+        }
+    }
+
+    readonly property bool contextMenuActive: contextMenu && contextMenu.active
     property Item contextMenu: currentItem ? currentItem._menuItem : null
     // Figure out which delegates need to be moved down to make room
     // for the context menu when it's open.
@@ -75,6 +82,18 @@ SilicaGridView {
         menu: favoriteContextMenu
         down: favoriteItem.down
         showMenuOnPressAndHold: false
+        // Do not capture mouse events here. This ListItem only handles
+        // menu creation and destruction.
+        enabled: false
+
+        // Update menu position upon orientation change. Delegate's x might change when
+        // orientation changes as there are 4 columns in portrait and 7 in landscape.
+        // This breaks binding that exists in ContextMenu.
+        onXChanged: {
+            if (_menuItem && _menuItem.active) {
+                _menuItem.x = -x
+            }
+        }
 
         onVisibleChanged: {
             if (!visible && remorse) {
