@@ -86,6 +86,15 @@ SilicaGridView {
         // menu creation and destruction.
         enabled: false
 
+        // Update menu position upon orientation change. Delegate's x might change when
+        // orientation changes as there are 4 columns in portrait and 7 in landscape.
+        // This breaks binding that exists in ContextMenu.
+        onXChanged: {
+            if (_menuItem && _menuItem.active) {
+                _menuItem.x = -x
+            }
+        }
+
         onVisibleChanged: {
             if (!visible && remorse) {
                 remorse.destroy()
