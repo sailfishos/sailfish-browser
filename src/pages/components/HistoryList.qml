@@ -35,6 +35,7 @@ SilicaListView {
             Label {
                 id: titleText
                 text: Theme.highlightText(title, search, Theme.highlightColor)
+                textFormat: Text.StyledText
                 color: highlighted ? Theme.highlightColor : Theme.primaryColor
                 font.pixelSize: Theme.fontSizeSmall
                 truncationMode: TruncationMode.Fade
@@ -43,6 +44,7 @@ SilicaListView {
 
             Label {
                 text: Theme.highlightText(url, search, Theme.highlightColor)
+                textFormat: Text.StyledText
                 opacity: 0.6
                 color: highlighted ? Theme.highlightColor : Theme.primaryColor
                 font.pixelSize: Theme.fontSizeSmall
