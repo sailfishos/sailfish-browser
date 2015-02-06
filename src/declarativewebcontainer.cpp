@@ -26,6 +26,7 @@
 #include <QGuiApplication>
 #include <QScreen>
 #include <QMetaMethod>
+#include <QtMath>
 
 #include <qmozcontext.h>
 #include <QGuiApplication>
@@ -74,8 +75,8 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
         return;
     }
 
-    connect(this, SIGNAL(heightChanged()), this, SLOT(sendVkbOpenCompositionMetrics()));
-    connect(this, SIGNAL(widthChanged()), this, SLOT(sendVkbOpenCompositionMetrics()));
+    connect(this, SIGNAL(portraitChanged()), this, SLOT(onPortraitChanged()));
+    connect(this, SIGNAL(inputPanelVisibleChanged()), this, SLOT(onInputPanelVisibilityChanged()));
     connect(this, SIGNAL(foregroundChanged()), this, SLOT(updateWindowFlags()));
 
     qApp->installEventFilter(this);
@@ -224,7 +225,7 @@ void DeclarativeWebContainer::setInputPanelHeight(qreal height)
                     m_inputPanelVisible = false;
                     imVisibleChanged = true;
                 }
-            } else if (m_inputPanelHeight == m_inputPanelOpenHeight) {
+            } else if (m_inputPanelHeight == inputPanelOpenHeight()) {
                 if (!m_inputPanelVisible) {
                     m_inputPanelVisible = true;
                     imVisibleChanged = true;
@@ -376,7 +377,6 @@ bool DeclarativeWebContainer::activatePage(int tabId, bool force, int parentId)
         connect(m_webPage, SIGNAL(loadingChanged()), this, SLOT(updateLoading()), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(loadProgressChanged()), this, SLOT(updateLoadProgress()), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(titleChanged()), this, SLOT(onPageTitleChanged()), Qt::UniqueConnection);
-        connect(m_webPage, SIGNAL(domContentLoadedChanged()), this, SLOT(sendVkbOpenCompositionMetrics()), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(backgroundChanged()), this, SIGNAL(backgroundChanged()), Qt::UniqueConnection);
         return activationData.activated;
     }
@@ -427,15 +427,16 @@ void DeclarativeWebContainer::imeNotificationChanged(int state, bool open, int c
     Q_UNUSED(focusChange)
     Q_UNUSED(type)
 
-    // QmlMozView's input context open is actually intention (0 closed, 1 opened).
+    // QmlMozView's input context open is actually intention (0 closed, 1 opened, 2 password).
     // cause 3 equals InputContextAction::CAUSE_MOUSE nsIWidget.h
-    if (state == 1 && cause == 3) {
+    if (state != 0 && cause == 3) {
         // For safety reset height based on contentHeight before going to "boundHeightControl" state
         // so that when vkb is closed we get correctly reset height back.
         resetHeight(true);
         if (!m_inputPanelVisible) {
             m_inputPanelVisible = true;
             emit inputPanelVisibleChanged();
+            connect(m_webPage, SIGNAL(viewAreaChanged()), this, SLOT(notifyVkbFullyOpen()), Qt::UniqueConnection);
         }
     }
 }
@@ -769,25 +770,15 @@ void DeclarativeWebContainer::updateNavigationStatus(const Tab &tab)
     }
 }
 
-void DeclarativeWebContainer::updateVkbHeight()
+qreal DeclarativeWebContainer::inputPanelOpenHeight() const
 {
-    qreal vkbHeight = 0;
-    // Keyboard rect is updated too late, when vkb hidden we cannot yet get size.
-    // We need to send correct information to embedlite-components before virtual keyboard is open
-    // so that when input element is focused contect is zoomed to the correct target (available area).
-#if 0
-    if (qGuiApp->inputMethod()) {
-        vkbHeight = qGuiApp->inputMethod()->keyboardRectangle().height();
+    if (m_inputPanelOpenHeight) {
+        return m_inputPanelOpenHeight;
+    } else {
+        // TODO: replace with qGuiApp->inputMethod()->keyboardRectangle().height() once it
+        // starts to return non zero when hidden.
+        return m_portrait ? 440 : 340;
     }
-#else
-    // TODO: remove once keyboard height is not zero when hidden and take above #if 0 block into use.
-    vkbHeight = 440;
-    if (width() > height()) {
-        vkbHeight = 340;
-    }
-    vkbHeight *= DeclarativeWebUtils::instance()->silicaPixelRatio();
-#endif
-    m_inputPanelOpenHeight = vkbHeight;
 }
 
 /**
@@ -851,24 +842,57 @@ void DeclarativeWebContainer::loadTab(int tabId, QString url, QString title, boo
     }
 }
 
-void DeclarativeWebContainer::sendVkbOpenCompositionMetrics()
+void DeclarativeWebContainer::notifyVkbFullyOpen()
 {
-    updateVkbHeight();
+    if (!window()) {
+        return;
+    }
+
+    int vkbHeight = 0;
+    int winHeight = 0;
+
+    if (m_portrait) {
+        vkbHeight = qGuiApp->inputMethod()->keyboardRectangle().height();
+        winHeight = window()->height();
+    } else {
+        vkbHeight = qGuiApp->inputMethod()->keyboardRectangle().width();
+        winHeight = window()->width();
+    }
+    vkbHeight *= DeclarativeWebUtils::instance()->silicaPixelRatio();
+
+    if (!vkbHeight) {
+        return;
+    }
+
+    m_inputPanelOpenHeight = vkbHeight;
+    int vkbOpenCompositionHeight = winHeight - vkbHeight;
+    int vkbOpenMaxCssCompositionWidth = width() / m_webPage->resolution();
+    int vkbOpenMaxCssCompositionHeight = vkbOpenCompositionHeight / m_webPage->resolution();
 
     QVariantMap map;
-
-    // Round values to even numbers.
-    int vkbOpenCompositionHeight = height() - m_inputPanelOpenHeight;
-    int vkbOpenMaxCssCompositionWidth = width() / QMozContext::GetInstance()->pixelRatio();
-    int vkbOpenMaxCssCompositionHeight = vkbOpenCompositionHeight / QMozContext::GetInstance()->pixelRatio();
-
+    map.insert("open", QVariant(true));
     map.insert("compositionHeight", vkbOpenCompositionHeight);
     map.insert("maxCssCompositionWidth", vkbOpenMaxCssCompositionWidth);
     map.insert("maxCssCompositionHeight", vkbOpenMaxCssCompositionHeight);
 
-    QVariant data(map);
+    if (vkbOpenCompositionHeight >= qFloor(m_webPage->contentRect().height() * m_webPage->resolution())) {
+        disconnect(m_webPage, SIGNAL(viewAreaChanged()), 0, 0);
+        m_webPage->sendAsyncMessage("embedui:vkbFullyOpen", QVariant(map));
+    }
+}
 
-    if (m_webPage) {
-        m_webPage->sendAsyncMessage("embedui:vkbOpenCompositionMetrics", data);
+void DeclarativeWebContainer::onInputPanelVisibilityChanged()
+{
+    if (!m_inputPanelVisible) {
+        QVariantMap map;
+        map.insert("open", QVariant(false));
+        m_webPage->sendAsyncMessage("embedui:vkbFullyOpen", QVariant(map));
+    }
+}
+
+void DeclarativeWebContainer::onPortraitChanged()
+{
+    if (m_inputPanelVisible) {
+        connect(m_webPage, SIGNAL(viewAreaChanged()), this, SLOT(notifyVkbFullyOpen()), Qt::UniqueConnection);
     }
 }

@@ -170,7 +170,9 @@ private slots:
 
     // These are here to inform embedlite-components that keyboard is open or close
     // matching composition metrics.
-    void sendVkbOpenCompositionMetrics();
+    void notifyVkbFullyOpen();
+    void onInputPanelVisibilityChanged();
+    void onPortraitChanged();
 
 private:
     void setWebPage(DeclarativeWebPage *webPage);
@@ -178,6 +180,7 @@ private:
     int parentTabId(int tabId) const;
     void updateNavigationStatus(const Tab &tab);
     void updateVkbHeight();
+    qreal inputPanelOpenHeight() const;
     void updateUrl(const QString &newUrl);
     void updateTitle(const QString &newTitle);
     bool canInitialize() const;
