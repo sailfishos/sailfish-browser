@@ -84,7 +84,7 @@ PanelBackground {
     y: webView.fullscreenHeight - toolBar.toolsHeight
 
     width: parent.width
-    height: historyContainer.height
+    height: historyContainer.height + privateModeLabel.height
     // `visible` is controlled by Browser.OverlayAnimator
     enabled: visible
 
@@ -158,6 +158,29 @@ PanelBackground {
         source: "image://theme/graphic-gradient-edge"
     }
 
+    Label {
+        id: privateModeLabel
+
+        PrivateModeTexture {
+            anchors.fill: parent
+        }
+
+        //: Label for private browsing above address bar
+        //% "Private browsing"
+        text: qsTrId("sailfish_browser-la-private_mode")
+        visible: searchField.visible && webView.privateMode
+        height: toolBar.height
+        width: parent.width
+
+        anchors.bottom: dragArea.top
+        horizontalAlignment: Text.AlignHCenter
+        verticalAlignment: Text.AlignVCenter
+
+        color: Theme.primaryColor
+        font.pixelSize: Theme.fontSizeLarge
+    }
+
+
     Browser.ProgressBar {
         id: progressBar
         width: parent.width
@@ -210,6 +233,10 @@ PanelBackground {
             width: parent.width
             height: toolBar.toolsHeight + historyList.height
             clip: true
+
+            PrivateModeTexture {
+                visible: toolBar.visible && webView.privateMode
+            }
 
             Browser.ToolBar {
                 id: toolBar
@@ -415,15 +442,23 @@ PanelBackground {
 
             onStatusChanged: {
                 if (activeWebPage && status == PageStatus.Active) {
-                    activeWebPage.grabToFile()
+                    webView.privateMode ? activeWebPage.grabThumbnail() : activeWebPage.grabToFile()
                 }
             }
 
             Browser.TabView {
                 model: webView.tabModel
                 portrait: tabPage.isPortrait
+                privateMode: webView.privateMode
 
                 onHide: pageStack.pop()
+
+                onPrivateModeChanged: {
+                    webView.privateMode = privateMode;
+                    tabPage.activeTabIndex =  webView.tabModel.activeTabIndex;
+                    tabPage.activeWebPage = webView.contentItem;
+                }
+
                 onEnterNewTabUrl: {
                     overlay.enterNewTabUrl(PageStackAction.Immediate)
                     pageStack.pop()
@@ -439,7 +474,7 @@ PanelBackground {
                     pageStack.pop()
                 }
                 onCloseTab: {
-                    webView.tabModel.remove(index)
+                    webView.tabModel.remove(index);
                     if (webView.tabModel.count === 0) {
                         enterNewTabUrl()
                     }
