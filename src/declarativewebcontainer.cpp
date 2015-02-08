@@ -59,14 +59,21 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     , m_completed(false)
     , m_initialized(false)
 {
-    m_webPages.reset(new WebPages(this));
     setFlag(QQuickItem::ItemHasContents, true);
+    setPrivateMode(m_settingManager->autostartPrivateBrowsing());
+
+    m_normalWebPages.reset(new WebPages(this));
+    m_privateWebPages.reset(new WebPages(this));
+
+    setWebPages();
+
     connect(DownloadManager::instance(), SIGNAL(initializedChanged()), this, SLOT(initialize()));
     connect(DownloadManager::instance(), SIGNAL(downloadStarted()), this, SLOT(onDownloadStarted()));
     connect(QMozContext::GetInstance(), SIGNAL(onInitialized()), this, SLOT(initialize()));
     connect(this, SIGNAL(portraitChanged()), this, SLOT(resetHeight()));
     connect(this, SIGNAL(enabledChanged()), this, SLOT(handleEnabledChanged()));
 
+    connect(this, SIGNAL(privateModeChanged()), this, SLOT(updateMode()));
     QString cacheLocation = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
     QDir dir(cacheLocation);
     if(!dir.exists() && !dir.mkpath(cacheLocation)) {
@@ -77,6 +84,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     connect(this, SIGNAL(heightChanged()), this, SLOT(sendVkbOpenCompositionMetrics()));
     connect(this, SIGNAL(widthChanged()), this, SLOT(sendVkbOpenCompositionMetrics()));
     connect(this, SIGNAL(foregroundChanged()), this, SLOT(updateWindowFlags()));
+
 
     qApp->installEventFilter(this);
 }
@@ -180,6 +188,20 @@ void DeclarativeWebContainer::setMaxLiveTabCount(int count)
     }
 }
 
+bool DeclarativeWebContainer::privateMode() const
+{
+    return m_privateMode;
+}
+
+void DeclarativeWebContainer::setPrivateMode(bool privateMode)
+{
+    if (m_privateMode != privateMode) {
+        m_privateMode = privateMode;
+        m_settingManager->setAutostartPrivateBrowsing(privateMode);
+        emit privateModeChanged();
+    }
+}
+
 bool DeclarativeWebContainer::background() const
 {
     return m_webPage ? m_webPage->background() : false;
@@ -187,7 +209,10 @@ bool DeclarativeWebContainer::background() const
 
 bool DeclarativeWebContainer::loading() const
 {
-    return m_webPage ? m_webPage->loading() : m_model->count();
+    if (m_webPage)
+        return m_webPage->loading();
+    else
+        return m_model ? m_model->count() : false;
 }
 
 int DeclarativeWebContainer::loadProgress() const
@@ -380,12 +405,26 @@ bool DeclarativeWebContainer::activatePage(int tabId, bool force, int parentId)
         connect(m_webPage, SIGNAL(backgroundChanged()), this, SIGNAL(backgroundChanged()), Qt::UniqueConnection);
         return activationData.activated;
     }
+
     return false;
 }
 
 bool DeclarativeWebContainer::alive(int tabId)
 {
     return m_webPages->alive(tabId);
+}
+
+void DeclarativeWebContainer::updateMode()
+{
+    setWebPages();
+    setActiveTabData();
+
+    // Clear private web pages when mode changes
+    if (!m_privateMode) {
+        m_privateWebPages->clear();
+    }
+
+    reload(false);
 }
 
 void DeclarativeWebContainer::dumpPages() const
@@ -737,6 +776,13 @@ void DeclarativeWebContainer::setActiveTabData()
         m_tabId = tab.tabId();
         emit tabIdChanged();
     }
+}
+
+void DeclarativeWebContainer::setWebPages() {
+    if (m_privateMode)
+        m_webPages = m_privateWebPages.data();
+    else
+        m_webPages = m_normalWebPages.data();
 }
 
 void DeclarativeWebContainer::updateWindowFlags()

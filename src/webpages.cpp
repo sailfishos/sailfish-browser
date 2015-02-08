@@ -123,6 +123,7 @@ WebPageActivationData WebPages::page(int tabId, int parentId)
             if (webPage) {
                 webPage->setParentItem(m_webContainer);
                 webPage->setParentID(parentId);
+                webPage->setPrivateMode(m_webContainer->privateMode());
                 webPage->setTabId(tabId);
                 webPage->setContainer(m_webContainer);
                 m_webPageComponent->completeCreate();

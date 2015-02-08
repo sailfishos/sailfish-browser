@@ -58,6 +58,8 @@ class DeclarativeWebContainer : public QQuickItem {
     Q_PROPERTY(QString title READ title NOTIFY titleChanged FINAL)
     Q_PROPERTY(QString url READ url NOTIFY urlChanged FINAL)
 
+    Q_PROPERTY(bool privateMode READ privateMode WRITE setPrivateMode NOTIFY privateModeChanged FINAL)
+
     Q_PROPERTY(QQmlComponent* webPageComponent MEMBER m_webPageComponent NOTIFY webPageComponentChanged FINAL)
 
 public:
@@ -76,6 +78,9 @@ public:
 
     int maxLiveTabCount() const;
     void setMaxLiveTabCount(int count);
+
+    bool privateMode() const;
+    void setPrivateMode(bool);
 
     bool background() const;
 
@@ -101,6 +106,7 @@ public:
     QString thumbnailPath() const;
 
     bool isActiveTab(int tabId);
+
     bool activatePage(int tabId, bool force = false, int parentId = 0);
 
     Q_INVOKABLE void load(QString url = "", QString title = "", bool force = false);
@@ -140,6 +146,7 @@ signals:
     void titleChanged();
     void urlChanged();
     void thumbnailPathChanged();
+    void privateModeChanged();
 
     void webPageComponentChanged();
 
@@ -165,6 +172,8 @@ private slots:
     void updateLoadProgress();
     void updateLoading();
     void setActiveTabData();
+    void setWebPages();
+    void updateMode();
 
     void updateWindowFlags();
 
@@ -187,7 +196,12 @@ private:
     QPointer<DeclarativeTabModel> m_model;
     QPointer<QQmlComponent> m_webPageComponent;
     QPointer<SettingManager> m_settingManager;
-    QScopedPointer<WebPages> m_webPages;
+    QPointer<WebPages> m_webPages;
+
+    QScopedPointer<WebPages> m_normalWebPages;
+    QScopedPointer<WebPages> m_privateWebPages;
+
+
     bool m_foreground;
     bool m_allowHiding;
     bool m_popupActive;
@@ -220,6 +234,8 @@ private:
 
     bool m_completed;
     bool m_initialized;
+
+    bool m_privateMode;
 
     friend class tst_webview;
 };
