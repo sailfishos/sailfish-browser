@@ -11,7 +11,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "declarativetabmodel.h"
-#include "dbmanager.h"
 #include "linkvalidator.h"
 #include "declarativewebutils.h"
 
@@ -24,18 +23,12 @@
 #define DEBUG_LOGS 0
 #endif
 
-DeclarativeTabModel::DeclarativeTabModel(QObject *parent)
+DeclarativeTabModel::DeclarativeTabModel(int nextTabId, QObject *parent)
     : QAbstractListModel(parent)
     , m_loaded(false)
     , m_waitingForNewTab(false)
-    , m_nextTabId(DBManager::instance()->getMaxTabId() + 1)
+    , m_nextTabId(nextTabId)
 {
-    connect(DBManager::instance(), SIGNAL(tabsAvailable(QList<Tab>)),
-            this, SLOT(tabsAvailable(QList<Tab>)));
-    connect(DBManager::instance(), SIGNAL(tabChanged(Tab)),
-            this, SLOT(tabChanged(Tab)));
-    connect(DeclarativeWebUtils::instance(), SIGNAL(beforeShutdown()),
-            this, SLOT(saveActiveTab()));
 }
 
 DeclarativeTabModel::~DeclarativeTabModel()
@@ -56,8 +49,8 @@ void DeclarativeTabModel::addTab(const QString& url, const QString &title) {
     if (!LinkValidator::navigable(QUrl(url))) {
         return;
     }
-    int tabId = DBManager::instance()->createTab();
-    int linkId = DBManager::instance()->createLink(tabId, url, title);
+    int tabId = createTab();
+    int linkId = createLink(tabId, url, title);
 
     Tab tab(tabId, Link(linkId, url, "", title), 0, 0);
 #if DEBUG_LOGS
@@ -224,10 +217,6 @@ QVariant DeclarativeTabModel::data(const QModelIndex & index, int role) const {
     return QVariant();
 }
 
-void DeclarativeTabModel::componentComplete()
-{
-}
-
 bool DeclarativeTabModel::loaded() const
 {
     return m_loaded;
@@ -269,88 +258,6 @@ bool DeclarativeTabModel::contains(int tabId) const
     return findTabIndex(tabId) >= 0;
 }
 
-void DeclarativeTabModel::classBegin()
-{
-    DBManager::instance()->getAllTabs();
-}
-
-void DeclarativeTabModel::tabsAvailable(QList<Tab> tabs)
-{
-    beginResetModel();
-    int oldCount = count();
-    m_tabs.clear();
-    m_tabs = tabs;
-
-    if (m_tabs.count() > 0) {
-        QString activeTabId = DBManager::instance()->getSetting("activeTabId");
-        bool ok = false;
-        int tabId = activeTabId.toInt(&ok);
-        int index = findTabIndex(tabId);
-        if (index >= 0) {
-            m_activeTab = m_tabs[index];
-        } else {
-            // Fallback for browser update as this "activeTabId" is a new setting.
-            m_activeTab = m_tabs[0];
-        }
-        emit activeTabIndexChanged();
-    } else {
-        emit tabsCleared();
-    }
-
-    endResetModel();
-
-    if (count() != oldCount) {
-        emit countChanged();
-    }
-
-    int maxTabId = DBManager::instance()->getMaxTabId();
-    if (m_nextTabId != maxTabId + 1) {
-        m_nextTabId = maxTabId + 1;
-        emit nextTabIdChanged();
-    }
-
-    // Startup should be synced to this.
-    if (!m_loaded) {
-        m_loaded = true;
-        emit loadedChanged();
-    }
-}
-
-void DeclarativeTabModel::tabChanged(const Tab &tab)
-{
-#if DEBUG_LOGS
-    qDebug() << "new tab data:" << &tab;
-#endif
-    if (m_tabs.isEmpty()) {
-        qWarning() << "No tabs!";
-        return;
-    }
-
-    int i = findTabIndex(tab.tabId());
-    if (i > -1) {
-        QVector<int> roles;
-        Tab oldTab = m_tabs[i];
-        if (oldTab.url() != tab.url()) {
-            roles << UrlRole;
-        }
-        if (oldTab.title() != tab.title()) {
-            roles << TitleRole;
-        }
-        if (oldTab.thumbnailPath() != tab.thumbnailPath()) {
-            roles << ThumbPathRole;
-        }
-        m_tabs[i] = tab;
-        QModelIndex start = index(i, 0);
-        QModelIndex end = index(i, 0);
-        emit dataChanged(start, end, roles);
-    }
-
-    if (tab.tabId() == m_activeTab.tabId()) {
-        m_activeTab = tab;
-        emit activeTabChanged(tab.tabId(), tab.tabId(), true);
-    }
-}
-
 void DeclarativeTabModel::updateUrl(int tabId, bool activeTab, QString url, bool backForwardNavigation, bool initialLoad)
 {
     if (backForwardNavigation)
@@ -380,7 +287,7 @@ void DeclarativeTabModel::updateTitle(int tabId, bool activeTab, QString url, QS
     }
 
     if (updateDb) {
-        DBManager::instance()->updateTitle(tabId, linkId, url, title);
+        updateTitle(tabId, linkId, url, title);
     }
 }
 
@@ -389,7 +296,7 @@ void DeclarativeTabModel::removeTab(int tabId, const QString &thumbnail, int ind
 #if DEBUG_LOGS
     qDebug() << "index:" << index << tabId;
 #endif
-    DBManager::instance()->removeTab(tabId);
+    removeTab(tabId);
     QFile f(thumbnail);
     if (f.exists()) {
         f.remove();
@@ -471,7 +378,7 @@ void DeclarativeTabModel::updateTabUrl(int tabId, bool activeTab, const QString 
             m_tabs[tabIndex].setNextLink(0);
             int currentLinkId = m_tabs.at(tabIndex).currentLink();
             m_tabs[tabIndex].setPreviousLink(currentLinkId);
-            m_tabs[tabIndex].setCurrentLink(DBManager::instance()->nextLinkId());
+            m_tabs[tabIndex].setCurrentLink(nextLinkId());
         }
         m_tabs[tabIndex].setTitle("");
         m_tabs[tabIndex].setThumbnailPath("");
@@ -486,11 +393,12 @@ void DeclarativeTabModel::updateTabUrl(int tabId, bool activeTab, const QString 
 
     if (updateDb) {
         if (!navigate) {
-            DBManager::instance()->updateTab(tabId, url, "", "");
+            updateTab(tabId, url, "", "");
         } else {
-            DBManager::instance()->navigateTo(tabId, url, "", "");
+            navigateTo(tabId, url, "", "");
         }
     }
+
 }
 
 void DeclarativeTabModel::updateThumbnailPath(int tabId, QString path)
@@ -509,12 +417,7 @@ void DeclarativeTabModel::updateThumbnailPath(int tabId, QString path)
             QModelIndex start = index(i, 0);
             QModelIndex end = index(i, 0);
             emit dataChanged(start, end, roles);
-            DBManager::instance()->updateThumbPath(tabId, path);
+            updateThumbPath(tabId, path);
         }
     }
-}
-
-void DeclarativeTabModel::saveActiveTab() const
-{
-    DBManager::instance()->saveSetting("activeTabId", QString("%1").arg(m_activeTab.tabId()));
 }
