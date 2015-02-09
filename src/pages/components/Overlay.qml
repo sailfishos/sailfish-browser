@@ -176,7 +176,7 @@ PanelBackground {
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
 
-        color: Theme.primaryColor
+        color: Theme.highlightColor
         font.pixelSize: Theme.fontSizeLarge
     }
 
