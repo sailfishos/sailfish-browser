@@ -454,9 +454,9 @@ PanelBackground {
                 onHide: pageStack.pop()
 
                 onPrivateModeChanged: {
-                    webView.privateMode = privateMode;
-                    tabPage.activeTabIndex =  webView.tabModel.activeTabIndex;
-                    tabPage.activeWebPage = webView.contentItem;
+                    webView.privateMode = privateMode
+                    tabPage.activeTabIndex =  webView.tabModel.activeTabIndex
+                    tabPage.activeWebPage = webView.contentItem
                 }
 
                 onEnterNewTabUrl: {
@@ -474,7 +474,7 @@ PanelBackground {
                     pageStack.pop()
                 }
                 onCloseTab: {
-                    webView.tabModel.remove(index);
+                    webView.tabModel.remove(index)
                     if (webView.tabModel.count === 0) {
                         enterNewTabUrl()
                     }

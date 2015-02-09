@@ -119,11 +119,11 @@ WebContainer {
             width: container.width
             state: ""
 
-            onClearGrabResult: tabModel.updateThumbnailPath(tabId, "");
-            onGrabResult: tabModel.updateThumbnailPath(tabId, fileName);
+            onClearGrabResult: tabModel.updateThumbnailPath(tabId, "")
+            onGrabResult: tabModel.updateThumbnailPath(tabId, fileName)
 
             // Image data is base64 encoded which can be directly used as source in Image element
-            onThumbnailResult: tabModel.updateThumbnailPath(tabId, data);
+            onThumbnailResult: tabModel.updateThumbnailPath(tabId, data)
 
             onUrlChanged: {
                 if (url == "about:blank") return

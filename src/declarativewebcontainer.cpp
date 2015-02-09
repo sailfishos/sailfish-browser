@@ -209,10 +209,11 @@ bool DeclarativeWebContainer::background() const
 
 bool DeclarativeWebContainer::loading() const
 {
-    if (m_webPage)
+    if (m_webPage) {
         return m_webPage->loading();
-    else
+    } else {
         return m_model ? m_model->count() : false;
+    }
 }
 
 int DeclarativeWebContainer::loadProgress() const
@@ -779,10 +780,11 @@ void DeclarativeWebContainer::setActiveTabData()
 }
 
 void DeclarativeWebContainer::setWebPages() {
-    if (m_privateMode)
+    if (m_privateMode) {
         m_webPages = m_privateWebPages.data();
-    else
+    } else {
         m_webPages = m_normalWebPages.data();
+    }
 }
 
 void DeclarativeWebContainer::updateWindowFlags()
