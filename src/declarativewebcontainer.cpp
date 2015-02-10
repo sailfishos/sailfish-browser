@@ -10,7 +10,8 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "declarativewebcontainer.h"
-#include "declarativetabmodel.h"
+#include "persistenttabmodel.h"
+#include "privatetabmodel.h"
 #include "declarativewebpage.h"
 #include "dbmanager.h"
 #include "downloadmanager.h"
@@ -64,6 +65,11 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
 
     m_normalWebPages.reset(new WebPages(this));
     m_privateWebPages.reset(new WebPages(this));
+
+    m_persistentTabModel.reset(new PersistentTabModel());
+    m_privateTabModel.reset(new PrivateTabModel());
+
+    setTabModel(privateMode() ? m_privateTabModel.data() : m_persistentTabModel.data());
 
     setWebPages();
 
@@ -417,12 +423,14 @@ bool DeclarativeWebContainer::alive(int tabId)
 
 void DeclarativeWebContainer::updateMode()
 {
+    setTabModel(privateMode() ? m_privateTabModel.data() : m_persistentTabModel.data());
     setWebPages();
     setActiveTabData();
 
-    // Clear private web pages when mode changes
+    // Clear private web pages and private tab model when mode changes
     if (!m_privateMode) {
         m_privateWebPages->clear();
+        m_privateTabModel->clear();
     }
 
     reload(false);

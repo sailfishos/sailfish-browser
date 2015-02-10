@@ -57,19 +57,6 @@ WebContainer {
 
     webPageComponent: webPageComponent
 
-    PersistentTabModel {
-        id: persistentTabModel
-    }
-
-    PrivateTabModel {
-        id: privateTabModel
-    }
-
-    // Clear private tab model when mode changes
-    onPrivateModeChanged: if (!privateMode) privateTabModel.clear()
-
-    tabModel: privateMode ? privateTabModel : persistentTabModel
-
     visible: WebUtils.firstUseDone
 
     WebViewCreator {

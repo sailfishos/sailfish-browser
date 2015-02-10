@@ -200,6 +200,8 @@ private:
 
     QScopedPointer<WebPages> m_normalWebPages;
     QScopedPointer<WebPages> m_privateWebPages;
+    QScopedPointer<DeclarativeTabModel> m_persistentTabModel;
+    QScopedPointer<DeclarativeTabModel> m_privateTabModel;
 
 
     bool m_foreground;
