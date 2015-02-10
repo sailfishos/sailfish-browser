@@ -130,7 +130,7 @@ void DeclarativeWebContainer::setTabModel(DeclarativeTabModel *model)
 {
     if (m_model != model) {
         if (m_model) {
-            disconnect(m_model);
+            disconnect(m_model, 0, 0, 0);
         }
 
         m_model = model;
