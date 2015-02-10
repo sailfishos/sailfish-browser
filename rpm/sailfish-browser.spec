@@ -86,7 +86,7 @@ Unit tests and additional data needed for functional tests
 
 %qmake5
 
-make %{?jobs:-j%jobs}
+make %{_smp_mflags}
 
 # >> build post
 # << build post
