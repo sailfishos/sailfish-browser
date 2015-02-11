@@ -66,8 +66,8 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     m_normalWebPages.reset(new WebPages(this));
     m_privateWebPages.reset(new WebPages(this));
 
-    m_persistentTabModel.reset(new PersistentTabModel());
-    m_privateTabModel.reset(new PrivateTabModel());
+    m_persistentTabModel.reset(new PersistentTabModel(this));
+    m_privateTabModel.reset(new PrivateTabModel(this));
 
     setTabModel(privateMode() ? m_privateTabModel.data() : m_persistentTabModel.data());
 
