@@ -106,7 +106,6 @@ public:
     QString thumbnailPath() const;
 
     bool isActiveTab(int tabId);
-
     bool activatePage(int tabId, bool force = false, int parentId = 0);
 
     Q_INVOKABLE void load(QString url = "", QString title = "", bool force = false);

@@ -15,5 +15,5 @@ Image {
     anchors.fill: parent
     fillMode: Image.Tile
     source: "graphic-diagonal-line-texture.png"
+    visible: opacity > 0.0
 }
-
