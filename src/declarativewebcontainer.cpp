@@ -426,7 +426,19 @@ void DeclarativeWebContainer::updateMode()
     setWebPages();
     setActiveTabData();
 
-    reload(false);
+    // Hide currently active web page
+    if (m_webPage) {
+        m_webPage->setVisible(false);
+        m_webPage->setOpacity(1.0);
+    }
+
+    // Reload active tab from new mode
+    if (m_model->count() > 0) {
+        reload(false);
+    } else {
+        setWebPage(NULL);
+        emit contentItemChanged();
+    }
 }
 
 void DeclarativeWebContainer::dumpPages() const
