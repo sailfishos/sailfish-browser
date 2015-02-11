@@ -13,7 +13,7 @@
 #include "declarativewebutils.h"
 
 PrivateTabModel::PrivateTabModel(QObject *parent)
-    : DeclarativeTabModel(1, parent),
+    : DeclarativeTabModel(10000, parent),
       m_nextLinkId(1)
 {
     // Startup should be synced to this.
