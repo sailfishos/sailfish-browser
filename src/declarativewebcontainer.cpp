@@ -59,6 +59,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     , m_realNavigation(false)
     , m_completed(false)
     , m_initialized(false)
+    , m_privateMode(m_settingManager->autostartPrivateBrowsing())
 {
     setFlag(QQuickItem::ItemHasContents, true);
 
@@ -68,7 +69,8 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     m_persistentTabModel.reset(new PersistentTabModel(this));
     m_privateTabModel.reset(new PrivateTabModel(this));
 
-    setPrivateMode(m_settingManager->autostartPrivateBrowsing());
+    setTabModel(privateMode() ? m_privateTabModel.data() : m_persistentTabModel.data());
+    setWebPages();
 
     connect(DownloadManager::instance(), SIGNAL(initializedChanged()), this, SLOT(initialize()));
     connect(DownloadManager::instance(), SIGNAL(downloadStarted()), this, SLOT(onDownloadStarted()));
