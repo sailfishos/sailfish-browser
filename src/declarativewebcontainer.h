@@ -172,7 +172,6 @@ private slots:
     void updateLoading();
     void setActiveTabData();
     void setWebPages();
-    void updateMode();
 
     void updateWindowFlags();
 
@@ -190,6 +189,7 @@ private:
     void updateTitle(const QString &newTitle);
     bool canInitialize() const;
     void loadTab(int tabId, QString url, QString title, bool force);
+    void updateMode();
 
     QPointer<DeclarativeWebPage> m_webPage;
     QPointer<DeclarativeTabModel> m_model;

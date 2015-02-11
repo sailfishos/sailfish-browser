@@ -61,7 +61,6 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     , m_initialized(false)
 {
     setFlag(QQuickItem::ItemHasContents, true);
-    setPrivateMode(m_settingManager->autostartPrivateBrowsing());
 
     m_normalWebPages.reset(new WebPages(this));
     m_privateWebPages.reset(new WebPages(this));
@@ -69,9 +68,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     m_persistentTabModel.reset(new PersistentTabModel(this));
     m_privateTabModel.reset(new PrivateTabModel(this));
 
-    setTabModel(privateMode() ? m_privateTabModel.data() : m_persistentTabModel.data());
-
-    setWebPages();
+    setPrivateMode(m_settingManager->autostartPrivateBrowsing());
 
     connect(DownloadManager::instance(), SIGNAL(initializedChanged()), this, SLOT(initialize()));
     connect(DownloadManager::instance(), SIGNAL(downloadStarted()), this, SLOT(onDownloadStarted()));
@@ -79,7 +76,6 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     connect(this, SIGNAL(portraitChanged()), this, SLOT(resetHeight()));
     connect(this, SIGNAL(enabledChanged()), this, SLOT(handleEnabledChanged()));
 
-    connect(this, SIGNAL(privateModeChanged()), this, SLOT(updateMode()));
     QString cacheLocation = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
     QDir dir(cacheLocation);
     if(!dir.exists() && !dir.mkpath(cacheLocation)) {
@@ -204,6 +200,7 @@ void DeclarativeWebContainer::setPrivateMode(bool privateMode)
     if (m_privateMode != privateMode) {
         m_privateMode = privateMode;
         m_settingManager->setAutostartPrivateBrowsing(privateMode);
+        updateMode();
         emit privateModeChanged();
     }
 }
