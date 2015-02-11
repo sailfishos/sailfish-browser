@@ -22,6 +22,11 @@ void DBusAdaptor::openUrl(QStringList args)
     m_BrowserService->openUrl(args);
 }
 
+void DBusAdaptor::activateNewTabView()
+{
+    m_BrowserService->activateNewTabView();
+}
+
 void DBusAdaptor::cancelTransfer(int transferId)
 {
     m_BrowserService->cancelTransfer(transferId);

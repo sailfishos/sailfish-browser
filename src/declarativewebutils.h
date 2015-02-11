@@ -71,6 +71,7 @@ public slots:
 signals:
     void homePageChanged();
     void openUrlRequested(QString url);
+    void activateNewTabViewRequested();
     void firstUseDoneChanged();
     void dumpMemoryInfo(QString fileName);
     void beforeShutdown();
