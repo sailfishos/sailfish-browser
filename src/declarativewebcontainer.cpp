@@ -424,12 +424,6 @@ void DeclarativeWebContainer::updateMode()
     setWebPages();
     setActiveTabData();
 
-    // Clear private web pages and private tab model when mode changes
-    if (!m_privateMode) {
-        m_privateWebPages->clear();
-        m_privateTabModel->clear();
-    }
-
     reload(false);
 }
 
