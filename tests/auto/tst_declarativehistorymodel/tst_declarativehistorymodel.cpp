@@ -25,7 +25,7 @@ static const QByteArray QML_SNIPPET = \
         "   width: 100; height: 100\n" \
         "   property alias tabModel: tabModel\n" \
         "   property alias historyModel: historyModel\n" \
-        "   TabModel { id: tabModel }\n" \
+        "   PersistentTabModel { id: tabModel }\n" \
         "   HistoryModel { id: historyModel }\n" \
         "}\n";
 

@@ -25,7 +25,7 @@ static const QByteArray QML_SNIPPET = \
         "Item {\n" \
         "   width: 100; height: 100\n" \
         "   property alias tabModel: model\n" \
-        "   TabModel { id: model }\n" \
+        "   PersistentTabModel { id: model }\n" \
         "}\n";
 
 class tst_declarativetabmodel : public TestObject
