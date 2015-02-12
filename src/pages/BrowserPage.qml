@@ -189,6 +189,9 @@ Page {
             }
             bringToForeground()
         }
+        onActivateNewTabViewRequested: {
+            activateNewTabView()
+        }
     }
 
     Component.onCompleted: {
