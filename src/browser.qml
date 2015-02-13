@@ -28,8 +28,9 @@ ApplicationWindow {
         }
     }
 
+    // TODO: Bind directly the "defaultAllowedOrientations" once it's available in SDK
     allowedOrientations: WebUtils.firstUseDone && Qt.application.active ? Orientation.Landscape | Orientation.Portrait | Orientation.LandscapeInverted : Orientation.Portrait
-    _defaultPageOrientations: allowedOrientations
+    _defaultPageOrientations: Orientation.All
     cover: null
     initialPage: Component {
         BrowserPage {
@@ -39,6 +40,12 @@ ApplicationWindow {
                 target: window
                 onNewTab: browserPage.activateNewTabView()
             }
+        }
+    }
+
+    Component.onCompleted: {
+        if (window.hasOwnProperty("defaultAllowedOrientations")) {
+            allowedOrientations = Qt.binding(function() { return WebUtils.firstUseDone && Qt.application.active ? defaultAllowedOrientations : Orientation.Portrait })
         }
     }
 }
