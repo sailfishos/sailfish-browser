@@ -28,8 +28,8 @@ ApplicationWindow {
         }
     }
 
-    allowedOrientations: WebUtils.firstUseDone && Qt.application.active ? Orientation.Landscape | Orientation.Portrait | Orientation.LandscapeInverted : Orientation.Portrait
-    _defaultPageOrientations: allowedOrientations
+    allowedOrientations: WebUtils.firstUseDone && Qt.application.active ? defaultAllowedOrientations : Orientation.Portrait
+    _defaultPageOrientations: Orientation.All
     cover: null
     initialPage: Component {
         BrowserPage {
