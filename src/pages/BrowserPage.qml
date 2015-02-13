@@ -12,6 +12,7 @@
 
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import Sailfish.Silica.private 1.0
 import Sailfish.Browser 1.0
 import "components" as Browser
 
@@ -21,6 +22,7 @@ Page {
 
     property Item firstUseOverlay
     property Item debug
+    property alias firstUseFullscreen: webView.firstUseFullscreen
     property Component tabPageComponent
 
     property alias tabs: webView.tabModel
@@ -28,22 +30,14 @@ Page {
     property alias viewLoading: webView.loading
     property alias url: webView.url
     property alias title: webView.title
+    property alias thumbnailPath: webView.thumbnailPath
+
+    property alias imageLoader: imageLoader
+    property alias desktopBookmarkWriter: desktopBookmarkWriter
     property alias webView: webView
 
     function load(url, title) {
         webView.load(url, title)
-    }
-
-    function bringToForeground() {
-        if (!window.applicationActive) {
-            window.activate()
-        }
-    }
-
-    function activateNewTabView() {
-        pageStack.pop(browserPage, PageStackAction.Immediate);
-        overlay.enterNewTabUrl(PageStackAction.Immediate)
-        bringToForeground()
     }
 
     // Safety clipping. There is clipping in ApplicationWindow that should react upon focus changes.
@@ -52,8 +46,8 @@ Page {
     clip: status != PageStatus.Active || webView.inputPanelVisible
 
     orientationTransitions: Transition {
-        to: 'Portrait,Landscape,PortraitInverted,LandscapeInverted'
-        from: 'Portrait,Landscape,PortraitInverted,LandscapeInverted'
+        to: 'Portrait,Landscape,LandscapeInverted'
+        from: 'Portrait,Landscape,LandscapeInverted'
         SequentialAnimation {
             PropertyAction {
                 target: browserPage
@@ -104,6 +98,12 @@ Page {
         }
     }
 
+    onStatusChanged: {
+        if (status === PageStatus.Inactive) {
+            MozContext.sendObserve("memory-pressure", null)
+        }
+    }
+
     HistoryModel {
         id: historyModel
     }
@@ -116,39 +116,60 @@ Page {
         fullscreenHeight: portrait ? Screen.height : Screen.width
         portrait: browserPage.isPortrait
         maxLiveTabCount: 3
-        toolbarHeight: overlay.toolBar.toolsHeight
+        toolbarHeight: overlay.toolBar.height
+
+        bookmarkModel: BookmarkModel {}
+
+        onCanGoBackChanged: console.log("CAN GO BACK:", canGoBack)
         clip: true
     }
 
     Rectangle {
         width: webView.width
         height: Math.ceil(webView.height)
-        opacity: 0.9 - (overlay.y / (webView.fullscreenHeight - overlay.toolBar.toolsHeight)) * 0.9
+        opacity: 0.9 - (overlay.y / (webView.fullscreenHeight - overlay.toolBar.height)) * 0.9
         color: Theme.highlightDimmerColor
 
         MouseArea {
             anchors.fill: parent
-            enabled: overlay.animator.atTop && (webView.tabModel.count > 0 || firstUseOverlay)
-            onClicked: overlay.dismiss()
+            enabled: overlay.animator.atTop
+            onClicked: overlay.animator.showChrome()
         }
     }
 
     Browser.Overlay {
         id: overlay
 
-        active: browserPage.status == PageStatus.Active
+        enabled: !webView.fullscreenMode && !webView.moving
         webView: webView
         historyModel: historyModel
         browserPage: browserPage
     }
 
     CoverActionList {
-        enabled: browserPage.status === PageStatus.Active && webView.contentItem
+        enabled: browserPage.status === PageStatus.Active && (Config.sailfishVersion >= 2.0)
         iconBackground: true
 
         CoverAction {
             iconSource: "image://theme/icon-cover-new"
-            onTriggered: activateNewTabView()
+            onTriggered: {
+                overlay.openNewTabView(PageStackAction.Immediate)
+                activate()
+            }
+        }
+    }
+
+    // TODO: remove once we move to sailfish 2.0
+    CoverActionList {
+        enabled: browserPage.status === PageStatus.Active && (Config.sailfishVersion < 2.0)
+        iconBackground: true
+
+        CoverAction {
+            iconSource: "image://theme/icon-cover-new"
+            onTriggered: {
+                overlay.openNewTabView(PageStackAction.Immediate)
+                activate()
+            }
         }
 
         CoverAction {
@@ -166,52 +187,33 @@ Page {
     Connections {
         target: WebUtils
         onOpenUrlRequested: {
-            // url is empty when user tapped icon when browser was already open.
-            if (url == "") {
-                bringToForeground()
-                return
+            if (!window.applicationActive) {
+                window.activate()
             }
+            // url is empty when user tapped icon when browser was already open.
+            if (url == "") return
 
             // We have incoming URL so let's show it
             if (firstUseOverlay) {
-                firstUseOverlay.dismiss()
+                firstUseOverlay.destroy()
+                webView.visible = true
             }
-
+            webView.captureScreen()
+            if (!webView.tabModel.activateTab(url)) {
+                // Not found in tabs list, create newtab and load
+                webView.load(url)
+            }
             if (browserPage.status !== PageStatus.Active) {
                 pageStack.pop(browserPage, PageStackAction.Immediate)
             }
-
-            webView.grabActivePage()
-            if (!webView.tabModel.activateTab(url)) {
-                // Not found in tabs list, load it. A new tab will be created if no tabs exist.
-                webView.load(url)
-                overlay.animator.showChrome(true)
-            }
-            bringToForeground()
-        }
-        onActivateNewTabViewRequested: {
-            activateNewTabView()
         }
     }
 
     Component.onCompleted: {
-        WebUtils.silicaPixelRatio = Theme.pixelRatio
-        WebUtils.touchSideRadius = Theme.paddingMedium + Theme.paddingLarge
-        WebUtils.touchTopRadius = Theme.paddingLarge * 2
-        WebUtils.touchBottomRadius = Theme.paddingMedium + Theme.paddingSmall
-        WebUtils.inputItemSize = Theme.fontSizeSmall
-        WebUtils.zoomMargin = Theme.paddingMedium
-
         if (!WebUtils.firstUseDone) {
             var component = Qt.createComponent(Qt.resolvedUrl("components/FirstUseOverlay.qml"))
             if (component.status == Component.Ready) {
-                // Parent to browserPage so that FirstUseOverlay is visible as WebView is invisible
-                // when FirstUseOverlay is visible.
-                firstUseOverlay = component.createObject(browserPage, {
-                                                             "width": webView.width,
-                                                             "height": webView.height,
-                                                             "fullscreenHeight": browserPage.height,
-                                                             "gestureThreshold" : webView.toolbarHeight / 2});
+                firstUseOverlay = component.createObject(browserPage, {"width":browserPage.width, "height":browserPage.heigh, "gestureThreshold" : toolBar.height});
             } else {
                 console.log("FirstUseOverlay create failed " + component.errorString())
             }
@@ -229,5 +231,16 @@ Page {
 
     Browser.BrowserNotification {
         id: notification
+    }
+
+    DesktopBookmarkWriter {
+        id: desktopBookmarkWriter
+        minimumIconSize: Theme.iconSizeMedium
+    }
+
+    Image {
+        id: imageLoader
+        x: Screen.height * 2
+        sourceSize.width: Theme.iconSizeLauncher
     }
 }
