@@ -14,7 +14,7 @@
 #include "dbmanager.h"
 
 PrivateTabModel::PrivateTabModel(QObject *parent)
-    : DeclarativeTabModel(DBManager::instance()->getMaxTabId() + 1000, parent),
+    : DeclarativeTabModel(DBManager::instance()->getMaxTabId() + 10000, parent),
       m_nextLinkId(1)
 {
     // Startup should be synced to this.
