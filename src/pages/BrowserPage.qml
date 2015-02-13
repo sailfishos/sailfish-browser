@@ -12,6 +12,7 @@
 
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import Sailfish.Silica.private 1.0
 import Sailfish.Browser 1.0
 import "components" as Browser
 
@@ -143,7 +144,18 @@ Page {
     }
 
     CoverActionList {
-        enabled: browserPage.status === PageStatus.Active && webView.contentItem
+        enabled: browserPage.status === PageStatus.Active && webView.contentItem && (Config.sailfishVersion >= 2.0)
+        iconBackground: true
+
+        CoverAction {
+            iconSource: "image://theme/icon-cover-new"
+            onTriggered: activateNewTabView()
+        }
+    }
+
+    // TODO: remove once we move to sailfish 2.0
+    CoverActionList {
+        enabled: browserPage.status === PageStatus.Active && webView.contentItem && (Config.sailfishVersion < 2.0)
         iconBackground: true
 
         CoverAction {
