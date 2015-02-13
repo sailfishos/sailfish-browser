@@ -171,7 +171,6 @@ private slots:
     void updateLoadProgress();
     void updateLoading();
     void setActiveTabData();
-    void setWebPages();
 
     void updateWindowFlags();
 
@@ -197,8 +196,6 @@ private:
     QPointer<SettingManager> m_settingManager;
     QPointer<WebPages> m_webPages;
 
-    QScopedPointer<WebPages> m_normalWebPages;
-    QScopedPointer<WebPages> m_privateWebPages;
     QScopedPointer<DeclarativeTabModel> m_persistentTabModel;
     QScopedPointer<DeclarativeTabModel> m_privateTabModel;
 

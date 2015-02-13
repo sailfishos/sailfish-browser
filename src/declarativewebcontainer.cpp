@@ -63,14 +63,11 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
 {
     setFlag(QQuickItem::ItemHasContents, true);
 
-    m_normalWebPages.reset(new WebPages(this));
-    m_privateWebPages.reset(new WebPages(this));
-
+    m_webPages = new WebPages(this);
     m_persistentTabModel.reset(new PersistentTabModel(this));
     m_privateTabModel.reset(new PrivateTabModel(this));
 
     setTabModel(privateMode() ? m_privateTabModel.data() : m_persistentTabModel.data());
-    setWebPages();
 
     connect(DownloadManager::instance(), SIGNAL(initializedChanged()), this, SLOT(initialize()));
     connect(DownloadManager::instance(), SIGNAL(downloadStarted()), this, SLOT(onDownloadStarted()));
@@ -423,7 +420,6 @@ bool DeclarativeWebContainer::alive(int tabId)
 void DeclarativeWebContainer::updateMode()
 {
     setTabModel(privateMode() ? m_privateTabModel.data() : m_persistentTabModel.data());
-    setWebPages();
     setActiveTabData();
 
     // Hide currently active web page
@@ -789,14 +785,6 @@ void DeclarativeWebContainer::setActiveTabData()
     if (m_tabId != tab.tabId()) {
         m_tabId = tab.tabId();
         emit tabIdChanged();
-    }
-}
-
-void DeclarativeWebContainer::setWebPages() {
-    if (m_privateMode) {
-        m_webPages = m_privateWebPages.data();
-    } else {
-        m_webPages = m_normalWebPages.data();
     }
 }
 
