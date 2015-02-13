@@ -52,8 +52,8 @@ Page {
     clip: status != PageStatus.Active || webView.inputPanelVisible
 
     orientationTransitions: Transition {
-        to: 'Portrait,Landscape,LandscapeInverted'
-        from: 'Portrait,Landscape,LandscapeInverted'
+        to: 'Portrait,Landscape,PortraitInverted,LandscapeInverted'
+        from: 'Portrait,Landscape,PortraitInverted,LandscapeInverted'
         SequentialAnimation {
             PropertyAction {
                 target: browserPage
