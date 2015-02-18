@@ -13,7 +13,7 @@ import QtQuick 2.0
 import Sailfish.Silica 1.0
 
 BackgroundItem {
-    readonly property bool showContextMenu: down && _pressAndHold && browserPage.webView.inputPanelHeight === 0
+    readonly property bool showContextMenu: down && _pressAndHold && !Qt.inputMethod.visible
     property bool _pressAndHold
 
     layer.effect: PressEffect {}

@@ -48,8 +48,6 @@ WebContainer {
     height: portrait ? Screen.height : Screen.width
     foreground: Qt.application.active
     allowHiding: !resourceController.videoActive && !resourceController.audioActive
-    inputPanelHeight: window.pageStack.panelSize
-    inputPanelOpenHeight: window.pageStack.imSize
     fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) ||
                     (contentItem && contentItem.fullscreen)
 
@@ -295,7 +293,7 @@ WebContainer {
             // TextSelectionController {}
             states: State {
                 name: "boundHeightControl"
-                when: container.inputPanelVisible && container.enabled
+                when: Qt.inputMethod.visible && container.enabled
                 PropertyChanges {
                     target: webPage
                     // was floor

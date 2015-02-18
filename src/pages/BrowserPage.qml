@@ -49,7 +49,7 @@ Page {
     // Safety clipping. There is clipping in ApplicationWindow that should react upon focus changes.
     // This clipping can handle also clipping of QmlMozView. When this page is active we do not need to clip
     // if input method is not visible.
-    clip: status != PageStatus.Active || webView.inputPanelVisible
+    clip: status != PageStatus.Active || Qt.inputMethod.visible
 
     orientationTransitions: Transition {
         to: 'Portrait,Landscape,LandscapeInverted'

@@ -38,9 +38,6 @@ class DeclarativeWebContainer : public QQuickItem {
     Q_PROPERTY(bool portrait MEMBER m_portrait NOTIFY portraitChanged FINAL)
     Q_PROPERTY(bool fullscreenMode MEMBER m_fullScreenMode NOTIFY fullscreenModeChanged FINAL)
     Q_PROPERTY(qreal fullscreenHeight MEMBER m_fullScreenHeight NOTIFY fullscreenHeightChanged FINAL)
-    Q_PROPERTY(bool inputPanelVisible READ inputPanelVisible NOTIFY inputPanelVisibleChanged FINAL)
-    Q_PROPERTY(qreal inputPanelHeight READ inputPanelHeight WRITE setInputPanelHeight NOTIFY inputPanelHeightChanged FINAL)
-    Q_PROPERTY(qreal inputPanelOpenHeight MEMBER m_inputPanelOpenHeight NOTIFY inputPanelOpenHeightChanged FINAL)
     Q_PROPERTY(qreal toolbarHeight MEMBER m_toolbarHeight NOTIFY toolbarHeightChanged FINAL)
     Q_PROPERTY(bool background READ background NOTIFY backgroundChanged FINAL)
     Q_PROPERTY(bool allowHiding MEMBER m_allowHiding NOTIFY allowHidingChanged FINAL)
@@ -84,11 +81,6 @@ public:
     int loadProgress() const;
     void setLoadProgress(int loadProgress);
 
-    bool inputPanelVisible() const;
-
-    qreal inputPanelHeight() const;
-    void setInputPanelHeight(qreal height);
-
     bool canGoForward() const;
     void setCanGoForward(bool canGoForward);
 
@@ -124,9 +116,6 @@ signals:
     void portraitChanged();
     void fullscreenModeChanged();
     void fullscreenHeightChanged();
-    void inputPanelVisibleChanged();
-    void inputPanelHeightChanged();
-    void inputPanelOpenHeightChanged();
     void toolbarHeightChanged();
 
     void faviconChanged();
@@ -152,7 +141,6 @@ public slots:
 
 private slots:
     void imeNotificationChanged(int state, bool open, int cause, int focusChange, const QString& type);
-    void handleEnabledChanged();
     void initialize();
     void onActiveTabChanged(int oldTabId, int activeTabId, bool loadActiveTab);
     void onDownloadStarted();
@@ -180,7 +168,6 @@ private:
     int parentTabId(int tabId) const;
     void updateNavigationStatus(const Tab &tab);
     void updateVkbHeight();
-    qreal inputPanelOpenHeight() const;
     void updateUrl(const QString &newUrl);
     void updateTitle(const QString &newTitle);
     bool canInitialize() const;
@@ -197,9 +184,6 @@ private:
     bool m_portrait;
     bool m_fullScreenMode;
     qreal m_fullScreenHeight;
-    bool m_inputPanelVisible;
-    qreal m_inputPanelHeight;
-    qreal m_inputPanelOpenHeight;
     qreal m_toolbarHeight;
 
     QString m_favicon;

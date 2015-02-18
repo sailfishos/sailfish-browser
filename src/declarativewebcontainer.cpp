@@ -47,9 +47,6 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     , m_portrait(true)
     , m_fullScreenMode(false)
     , m_fullScreenHeight(0.0)
-    , m_inputPanelVisible(false)
-    , m_inputPanelHeight(0.0)
-    , m_inputPanelOpenHeight(0.0)
     , m_toolbarHeight(0.0)
     , m_tabId(0)
     , m_loading(false)
@@ -66,7 +63,6 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     connect(DownloadManager::instance(), SIGNAL(downloadStarted()), this, SLOT(onDownloadStarted()));
     connect(QMozContext::GetInstance(), SIGNAL(onInitialized()), this, SLOT(initialize()));
     connect(this, SIGNAL(portraitChanged()), this, SLOT(resetHeight()));
-    connect(this, SIGNAL(enabledChanged()), this, SLOT(handleEnabledChanged()));
 
     QString cacheLocation = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
     QDir dir(cacheLocation);
@@ -76,8 +72,8 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     }
 
     connect(this, SIGNAL(portraitChanged()), this, SLOT(onPortraitChanged()));
-    connect(this, SIGNAL(inputPanelVisibleChanged()), this, SLOT(onInputPanelVisibilityChanged()));
     connect(this, SIGNAL(foregroundChanged()), this, SLOT(updateWindowFlags()));
+    connect(qApp->inputMethod(), SIGNAL(visibleChanged()), this, SLOT(onInputPanelVisibilityChanged()));
 
     qApp->installEventFilter(this);
 }
@@ -201,43 +197,6 @@ void DeclarativeWebContainer::setLoadProgress(int loadProgress)
     if (m_loadProgress != loadProgress) {
         m_loadProgress = loadProgress;
         emit loadProgressChanged();
-    }
-}
-
-bool DeclarativeWebContainer::inputPanelVisible() const
-{
-    return m_inputPanelVisible;
-}
-
-qreal DeclarativeWebContainer::inputPanelHeight() const
-{
-    return m_inputPanelHeight;
-}
-
-void DeclarativeWebContainer::setInputPanelHeight(qreal height)
-{
-    if (m_inputPanelHeight != height) {
-        bool imVisibleChanged = false;
-        m_inputPanelHeight = height;
-        if (isEnabled()) {
-            if (m_inputPanelHeight == 0) {
-                if (m_inputPanelVisible) {
-                    m_inputPanelVisible = false;
-                    imVisibleChanged = true;
-                }
-            } else if (m_inputPanelHeight == inputPanelOpenHeight()) {
-                if (!m_inputPanelVisible) {
-                    m_inputPanelVisible = true;
-                    imVisibleChanged = true;
-                }
-            }
-        }
-
-        if (imVisibleChanged) {
-            emit inputPanelVisibleChanged();
-        }
-
-        emit inputPanelHeightChanged();
     }
 }
 
@@ -433,9 +392,7 @@ void DeclarativeWebContainer::imeNotificationChanged(int state, bool open, int c
         // For safety reset height based on contentHeight before going to "boundHeightControl" state
         // so that when vkb is closed we get correctly reset height back.
         resetHeight(true);
-        if (!m_inputPanelVisible) {
-            m_inputPanelVisible = true;
-            emit inputPanelVisibleChanged();
+        if (qApp->inputMethod()->isVisible()) {
             connect(m_webPage, SIGNAL(viewAreaChanged()), this, SLOT(notifyVkbFullyOpen()), Qt::UniqueConnection);
         }
     }
@@ -447,20 +404,6 @@ qreal DeclarativeWebContainer::contentHeight() const
         return m_webPage->contentHeight();
     } else {
         return 0.0;
-    }
-}
-
-void DeclarativeWebContainer::handleEnabledChanged()
-{
-    // If dialog has been opened, we need to verify that input panel is not visible.
-    // This might happen when the user fills in login details to a form and
-    // presses enter to accept the form after which PasswordManagerDialog is pushed to pagestack
-    // on top the BrowserPage. Once PassowordManagerDialog is accepted/rejected
-    // this condition can be met. If active changes to true before keyboard is fully closed,
-    // then the inputPanelVisibleChanged() signal is emitted by setInputPanelHeight.
-    if (isEnabled() && m_inputPanelHeight == 0 && m_inputPanelVisible) {
-        m_inputPanelVisible = false;
-        emit inputPanelVisibleChanged();
     }
 }
 
@@ -770,17 +713,6 @@ void DeclarativeWebContainer::updateNavigationStatus(const Tab &tab)
     }
 }
 
-qreal DeclarativeWebContainer::inputPanelOpenHeight() const
-{
-    if (m_inputPanelOpenHeight) {
-        return m_inputPanelOpenHeight;
-    } else {
-        // TODO: replace with qGuiApp->inputMethod()->keyboardRectangle().height() once it
-        // starts to return non zero when hidden.
-        return m_portrait ? 440 : 340;
-    }
-}
-
 /**
  * Pass the newUrl. This should be used everywhere when
  * url is about to change. E.g. when updating current contentItem.
@@ -864,7 +796,6 @@ void DeclarativeWebContainer::notifyVkbFullyOpen()
         return;
     }
 
-    m_inputPanelOpenHeight = vkbHeight;
     int vkbOpenCompositionHeight = winHeight - vkbHeight;
     int vkbOpenMaxCssCompositionWidth = width() / m_webPage->resolution();
     int vkbOpenMaxCssCompositionHeight = vkbOpenCompositionHeight / m_webPage->resolution();
@@ -883,7 +814,7 @@ void DeclarativeWebContainer::notifyVkbFullyOpen()
 
 void DeclarativeWebContainer::onInputPanelVisibilityChanged()
 {
-    if (!m_inputPanelVisible) {
+    if (!qApp->inputMethod()->isVisible()) {
         QVariantMap map;
         map.insert("open", QVariant(false));
         m_webPage->sendAsyncMessage("embedui:vkbFullyOpen", QVariant(map));
@@ -892,7 +823,7 @@ void DeclarativeWebContainer::onInputPanelVisibilityChanged()
 
 void DeclarativeWebContainer::onPortraitChanged()
 {
-    if (m_inputPanelVisible) {
+    if (qApp->inputMethod()->isVisible()) {
         connect(m_webPage, SIGNAL(viewAreaChanged()), this, SLOT(notifyVkbFullyOpen()), Qt::UniqueConnection);
     }
 }
