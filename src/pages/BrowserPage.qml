@@ -141,7 +141,7 @@ Page {
     }
 
     Label {
-        x: Theme.paddingLarge
+        x: (contentDimmer.width - implicitWidth) / 2
         // Allow only half of the width
         width: parent.width / 2
         truncationMode: TruncationMode.Fade
@@ -149,7 +149,6 @@ Page {
         anchors {
             bottom: contentDimmer.bottom
             bottomMargin: (overlay.toolBar.toolsHeight - height) / 2
-            horizontalCenter: contentDimmer.horizontalCenter
         }
 
         //: Label for private browsing above address bar

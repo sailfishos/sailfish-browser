@@ -86,7 +86,6 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     connect(this, SIGNAL(widthChanged()), this, SLOT(sendVkbOpenCompositionMetrics()));
     connect(this, SIGNAL(foregroundChanged()), this, SLOT(updateWindowFlags()));
 
-
     qApp->installEventFilter(this);
 }
 
@@ -408,7 +407,6 @@ bool DeclarativeWebContainer::activatePage(int tabId, bool force, int parentId)
         connect(m_webPage, SIGNAL(backgroundChanged()), this, SIGNAL(backgroundChanged()), Qt::UniqueConnection);
         return activationData.activated;
     }
-
     return false;
 }
 
