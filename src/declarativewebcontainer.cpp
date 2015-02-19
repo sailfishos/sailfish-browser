@@ -392,9 +392,7 @@ void DeclarativeWebContainer::imeNotificationChanged(int state, bool open, int c
         // For safety reset height based on contentHeight before going to "boundHeightControl" state
         // so that when vkb is closed we get correctly reset height back.
         resetHeight(true);
-        if (qApp->inputMethod()->isVisible()) {
-            connect(m_webPage, SIGNAL(viewAreaChanged()), this, SLOT(notifyVkbFullyOpen()), Qt::UniqueConnection);
-        }
+        connect(m_webPage, SIGNAL(viewAreaChanged()), this, SLOT(notifyVkbFullyOpen()), Qt::UniqueConnection);
     }
 }
 
