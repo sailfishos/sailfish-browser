@@ -14,7 +14,7 @@
 #include <QSignalSpy>
 #include <qqml.h>
 
-#include "declarativetabmodel.h"
+#include "persistenttabmodel.h"
 #include "declarativehistorymodel.h"
 #include "testobject.h"
 
@@ -25,7 +25,7 @@ static const QByteArray QML_SNIPPET = \
         "   width: 100; height: 100\n" \
         "   property alias tabModel: tabModel\n" \
         "   property alias historyModel: historyModel\n" \
-        "   TabModel { id: tabModel }\n" \
+        "   PersistentTabModel { id: tabModel }\n" \
         "   HistoryModel { id: historyModel }\n" \
         "}\n";
 
@@ -272,7 +272,7 @@ int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
     app.setAttribute(Qt::AA_Use96Dpi, true);
-    qmlRegisterType<DeclarativeTabModel>("Sailfish.Browser", 1, 0, "TabModel");
+    qmlRegisterType<PersistentTabModel>("Sailfish.Browser", 1, 0, "PersistentTabModel");
     qmlRegisterType<DeclarativeHistoryModel>("Sailfish.Browser", 1, 0, "HistoryModel");
     tst_declarativehistorymodel testcase;
     return QTest::qExec(&testcase, argc, argv); \

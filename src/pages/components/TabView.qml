@@ -17,6 +17,7 @@ SilicaGridView {
     id: tabView
 
     property bool portrait
+    property bool privateMode
 
     signal hide
     signal enterNewTabUrl
@@ -35,6 +36,10 @@ SilicaGridView {
     // If approved to Silica, remove these transitions from browser.
     displaced: Browser.DisplaceTransition {}
     remove: Browser.RemoveTransition {}
+
+    PrivateModeTexture {
+        visible: privateMode
+    }
 
     delegate: TabItem {
         id: tabItem
@@ -71,6 +76,16 @@ SilicaGridView {
         visible: Qt.application.active
         flickable: tabView
 
+        MenuItem {
+            text: tabView.privateMode ?
+                    //: Menu item switching back to normal browser
+                    //% "Normal browsing"
+                    qsTrId("sailfish_browser-me-normal_browsing") :
+                    //: Menu item switching to private browser
+                    //% "Private browsing"
+                    qsTrId("sailfish_browser-me-private_browsing")
+            onClicked: tabView.privateMode = !tabView.privateMode
+        }
         MenuItem {
             visible: webView.tabModel.count
             //% "Close all tabs"
