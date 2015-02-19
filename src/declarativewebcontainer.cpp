@@ -628,7 +628,6 @@ void DeclarativeWebContainer::onNewTabRequested(QString url, QString title, int 
 
 void DeclarativeWebContainer::onTabsCleared()
 {
-    m_webPages->clear();
     // Trigger contentItem changed and then reset title, url, and tabId.
     emit contentItemChanged();
     updateTitle("");
