@@ -434,6 +434,13 @@ PanelBackground {
                     webView.privateMode = privateMode
                     tabPage.activeTabIndex =  webView.tabModel.activeTabIndex
                     tabPage.activeWebPage = webView.contentItem
+
+                    if (webView.tabModel.count === 0) {
+                        overlay.enterNewTabUrl(PageStackAction.Immediate)
+                    } else if (!overlayAnimator.atBottom) {
+                        // Hide overlay while switching to non-empty tabmodel
+                        dismiss()
+                    }
                 }
 
                 onEnterNewTabUrl: {
