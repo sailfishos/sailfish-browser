@@ -195,9 +195,8 @@ private:
     QPointer<QQmlComponent> m_webPageComponent;
     QPointer<SettingManager> m_settingManager;
     QPointer<WebPages> m_webPages;
-
-    QScopedPointer<DeclarativeTabModel> m_persistentTabModel;
-    QScopedPointer<DeclarativeTabModel> m_privateTabModel;
+    QPointer<DeclarativeTabModel> m_persistentTabModel;
+    QPointer<DeclarativeTabModel> m_privateTabModel;
 
 
     bool m_foreground;
