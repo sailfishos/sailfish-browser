@@ -16,9 +16,35 @@ import Sailfish.Browser 1.0
 SilicaGridView {
     id: favoriteGrid
 
-    // browserPage.isPortrait ? 4 : 7
-    readonly property int columns: Math.floor(parent.width / Theme.itemSizeExtraLarge)
-    readonly property int initialCellWidth: (parent.width - Theme.paddingLarge * 2) / columns
+    readonly property real pageHeight: Math.ceil(browserPage.height + pageStack.panelSize)
+
+    readonly property Item contextMenu: currentItem ? currentItem._menuItem : null
+    readonly property bool contextMenuActive: contextMenu && contextMenu.active
+
+    readonly property bool largeScreen: Screen.sizeCategory >= Screen.Large
+
+    // Figure out which delegates need to be moved down to make room
+    // for the context menu when it's open.
+    readonly property int minOffsetIndex: contextMenu ? currentIndex - (currentIndex % columns) + columns : 0
+    readonly property int yOffset: contextMenu ? contextMenu.height : 0
+
+    // Reduced/canceled from container.offsetY
+    readonly property real firstRowOffset: largeScreen ? -Theme.paddingLarge * 2 : 0
+
+    readonly property int rows: Math.floor(pageHeight / minimumCellHeight)
+    readonly property int columns: Math.floor(browserPage.width / minimumCellWidth)
+
+    readonly property int horizontalMargin: largeScreen ? 6 * Theme.paddingLarge : Theme.paddingLarge
+    readonly property int initialCellWidth: (browserPage.width - 2*horizontalMargin) / columns
+
+    // The multipliers below for Large screens are magic. They look good on Jolla tablet.
+    readonly property real minimumCellWidth: largeScreen ? Theme.itemSizeExtraLarge * 1.6 : Theme.itemSizeExtraLarge
+    // phone reference row height: 960 / 6
+    readonly property real minimumCellHeight: largeScreen ? Theme.itemSizeExtraLarge * 1.6 : Theme.pixelRatio * 160
+
+    signal load(string url, string title)
+    signal newTab(string url, string title)
+    signal share(string url, string title)
 
     function fetchAndSaveBookmark() {
         var webPage = webView && webView.contentItem
@@ -34,15 +60,13 @@ SilicaGridView {
         }
     }
 
-    signal load(string url, string title)
-    signal newTab(string url, string title)
-    signal share(string url, string title)
-
+    y: firstRowOffset
     width: cellWidth * columns
     currentIndex: -1
-
+    anchors.horizontalCenter: parent.horizontalCenter
     cellWidth: Math.round(initialCellWidth + (initialCellWidth - Theme.iconSizeLauncher) / (columns - 1))
-    cellHeight: Math.round(Screen.height / 6)
+    cellHeight: Math.round(pageHeight / rows)
+
     displaced: Transition { NumberAnimation { properties: "x,y"; easing.type: Easing.InOutQuad; duration: 200 } }
 
     onVisibleChanged: {
@@ -51,17 +75,13 @@ SilicaGridView {
         }
     }
 
-    readonly property bool contextMenuActive: contextMenu && contextMenu.active
-    property Item contextMenu: currentItem ? currentItem._menuItem : null
-    // Figure out which delegates need to be moved down to make room
-    // for the context menu when it's open.
-    property int minOffsetIndex: contextMenu ? currentIndex - (currentIndex % columns) + columns : 0
-    property int yOffset: contextMenu ? contextMenu.height : 0
-
     delegate: ListItem {
         id: container
 
         property Item remorse
+        property real offsetY: largeScreen
+                               ? (((y % (favoriteGrid.pageHeight-container.contentHeight+1)) / (favoriteGrid.pageHeight-container.contentHeight+1)) - 0.5) * (Theme.paddingLarge*4)
+                               : 0
 
         function remove() {
             //: Remorse timer for removing bookmark
@@ -79,7 +99,7 @@ SilicaGridView {
         width: favoriteGrid.cellWidth
         _showPress: false
         contentHeight: favoriteGrid.cellHeight
-        menu: favoriteContextMenu
+        menu: largeScreen ? null : favoriteContextMenu
         down: favoriteItem.down
         showMenuOnPressAndHold: false
         // Do not capture mouse events here. This ListItem only handles
@@ -126,7 +146,7 @@ SilicaGridView {
 
             width: favoriteGrid.cellWidth
             height: favoriteGrid.cellHeight
-            y: index >= favoriteGrid.minOffsetIndex ? favoriteGrid.yOffset : 0.0
+            y: (index >= favoriteGrid.minOffsetIndex ? favoriteGrid.yOffset : 0.0) - container.offsetY
 
             onClicked: favoriteGrid.load(model.url, model.title)
             onShowContextMenuChanged: {
@@ -154,6 +174,7 @@ SilicaGridView {
 
     VerticalScrollDecorator {
         parent: favoriteGrid
+        anchors.rightMargin: -(browserPage.width - favoriteGrid.width) / 2
         flickable: favoriteGrid
     }
 
