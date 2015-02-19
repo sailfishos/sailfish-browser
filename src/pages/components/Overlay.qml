@@ -460,13 +460,13 @@ PanelBackground {
                 onCloseTab: {
                     webView.tabModel.remove(index)
                     if (webView.tabModel.count === 0) {
-                        enterNewTabUrl()
+                        overlay.enterNewTabUrl(PageStackAction.Immediate)
                     }
                 }
 
                 onCloseAll: {
                     webView.tabModel.clear()
-                    enterNewTabUrl()
+                    overlay.enterNewTabUrl(PageStackAction.Immediate)
                 }
 
                 Component.onCompleted: {
