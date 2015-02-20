@@ -21,8 +21,8 @@ UserPrompt {
     acceptText: qsTrId("sailfish_browser-he-accept_location")
 
     Label {
-        x: Theme.paddingLarge
-        width: parent.width - Theme.paddingLarge * 2
+        x: Theme.horizontalPageMargin
+        width: parent.width - Theme.horizontalPageMargin * 2
         //: The site that wants know user location
         //% "The site wants to use your current location."
         text: qsTrId("sailfish_browser-la-location_requested")

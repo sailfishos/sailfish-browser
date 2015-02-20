@@ -87,7 +87,7 @@ Page {
             }
 
             Label {
-                x: Theme.paddingLarge
+                x: Theme.horizontalPageMargin
                 anchors.verticalCenter: parent.verticalCenter
                 text: label
                 color: {

@@ -15,8 +15,8 @@ import Sailfish.Silica 1.0
 Label {
     property bool largeFont: true
 
-    x: Theme.paddingLarge
-    width: parent.width - (2 * Theme.paddingLarge)
+    x: Theme.horizontalPageMargin
+    width: parent.width - (2 * Theme.horizontalPageMargin)
     anchors {
         top: parent.top
         topMargin: !largeFont ? Theme.paddingLarge : Theme.itemSizeSmall

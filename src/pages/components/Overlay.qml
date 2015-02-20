@@ -282,8 +282,8 @@ PanelBackground {
                 // On top of HistoryList and FavoriteGrid
                 z: 1
                 width: parent.width
-                textLeftMargin: Theme.paddingLarge
-                textRightMargin: Theme.paddingLarge
+                textLeftMargin: Theme.horizontalPageMargin
+                textRightMargin: Theme.horizontalPageMargin
                 inputMethodHints: Qt.ImhUrlCharactersOnly
 
                 placeholderText: toolBar.findInPageActive ?

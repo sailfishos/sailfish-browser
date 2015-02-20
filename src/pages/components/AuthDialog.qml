@@ -32,8 +32,8 @@ UserPrompt {
         width: parent.width
 
         Label {
-            x: Theme.paddingLarge
-            width: parent.width - Theme.paddingLarge * 2
+            x: Theme.horizontalPageMargin
+            width: parent.width - Theme.horizontalPageMargin * 2
             //: %1 is server URL, %2 is HTTP auth realm
             //% "The server %1 requires authentication. The server says: %2"
             text: qsTrId("sailfish_browser-la-auth_requested").arg(hostname).arg(realm)

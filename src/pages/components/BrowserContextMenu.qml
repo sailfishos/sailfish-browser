@@ -51,7 +51,7 @@ Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
             visible: root.linkTitle.length > 0
             text: root.linkTitle
-            width: root.width - Theme.paddingLarge*2
+            width: root.width - Theme.horizontalPageMargin*2
             elide: Text.ElideRight
             wrapMode: Text.Wrap
             maximumLineCount: 2
@@ -65,7 +65,7 @@ Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
             color: Theme.highlightColor
             text: root.imageSrc.length > 0 ? root.imageSrc : root.linkHref
-            width: root.width - Theme.paddingLarge*2
+            width: root.width - Theme.horizontalPageMargin*2
             wrapMode: Text.Wrap
             elide: Text.ElideRight
             maximumLineCount: landscape ? 1 : 4

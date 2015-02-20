@@ -65,10 +65,12 @@ SilicaFlickable {
     Column {
         id: contentColumn
         anchors {
-            margins: Theme.paddingLarge
             top: parent.top
             left: parent.left
             right: parent.right
+            topMargin: Theme.paddingLarge
+            leftMargin: Theme.horizontalPageMargin
+            rightMargin: Theme.horizontalPageMargin
         }
         spacing: Theme.paddingLarge
         height: window.height + gestureThreshold * 8
@@ -77,7 +79,7 @@ SilicaFlickable {
             color: Theme.highlightColor
             font.pixelSize: Theme.fontSizeHuge
             font.family: Theme.fontFamilyHeading
-            width: parent.width - Theme.paddingLarge * 2
+            width: parent.width - Theme.horizontalPageMargin * 2
 
             //: Ahoy
             //% "Ahoy"
@@ -88,7 +90,7 @@ SilicaFlickable {
             color: Theme.highlightColor
             font.pixelSize: Theme.fontSizeExtraLarge
             font.family: Theme.fontFamilyHeading
-            width: parent.width - Theme.paddingLarge * 2
+            width: parent.width - Theme.horizontalPageMargin * 2
             wrapMode: Text.WordWrap
 
             //: Welcome to the new Sailfish Browser experience

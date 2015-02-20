@@ -18,7 +18,7 @@ SilicaGridView {
 
     // browserPage.isPortrait ? 4 : 7
     readonly property int columns: Math.floor(parent.width / Theme.itemSizeExtraLarge)
-    readonly property int initialCellWidth: (parent.width - Theme.paddingLarge * 2) / columns
+    readonly property int initialCellWidth: (parent.width - Theme.horizontalPageMargin * 2) / columns
 
     function fetchAndSaveBookmark() {
         var webPage = webView && webView.contentItem

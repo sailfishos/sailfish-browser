@@ -48,8 +48,8 @@ SilicaGridView {
         height: tabView.cellHeight
 
         topMargin: Theme.paddingMedium
-        leftMargin: (portrait || index % 3 === 0) ? Theme.paddingLarge : Theme.paddingMedium
-        rightMargin: (portrait || index % 3 === 2) ? Theme.paddingLarge : Theme.paddingMedium
+        leftMargin: (portrait || index % 3 === 0) ? Theme.horizontalPageMargin : Theme.paddingMedium
+        rightMargin: (portrait || index % 3 === 2) ? Theme.horizontalPageMargin : Theme.paddingMedium
         bottomMargin: Theme.paddingMedium
 
         Behavior on width {

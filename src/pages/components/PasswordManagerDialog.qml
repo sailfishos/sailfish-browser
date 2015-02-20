@@ -46,7 +46,7 @@ Dialog {
         id: label
 
         anchors.centerIn: parent
-        width: parent.width - 2 * Theme.paddingLarge
+        width: parent.width - 2 * Theme.horizontalPageMargin
         wrapMode: Text.Wrap
         horizontalAlignment: Text.AlignHCenter
         font {

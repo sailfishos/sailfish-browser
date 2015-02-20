@@ -71,7 +71,9 @@ Column {
 
     Row {
         id: toolsRow
-        readonly property int horizontalOffset: Theme.paddingSmall
+        readonly property int horizontalOffset: Screen.sizeCategory >= Screen.Large
+                                                ? Theme.horizontalPageMargin-Theme.paddingLarge-Theme.paddingMedium
+                                                : Theme.paddingSmall
         readonly property int iconWidth: Theme.iconSizeMedium + 2 * Theme.paddingMedium
         // Height of toolbar should be such that viewport height is
         // even number both chrome and fullscreen modes. For instance

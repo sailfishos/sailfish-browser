@@ -28,8 +28,8 @@ SilicaListView {
         ListView.onAdd: AddAnimation { target: historyDelegate }
 
         Column {
-            width: view.width - Theme.paddingLarge * 2
-            x: Theme.paddingLarge
+            width: view.width - Theme.horizontalPageMargin * 2
+            x: Theme.horizontalPageMargin
             anchors.verticalCenter: parent.verticalCenter
 
             Label {

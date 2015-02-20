@@ -74,7 +74,7 @@ Dialog {
             onClicked: selectModel.setProperty(index, "selected", !selected)
 
             Label {
-                x: Theme.paddingLarge
+                x: Theme.horizontalPageMargin
                 anchors.verticalCenter: parent.verticalCenter
                 text: label
                 color: {
