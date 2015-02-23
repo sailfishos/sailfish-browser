@@ -119,6 +119,8 @@ PanelBackground {
         portrait: browserPage.isPortrait
         active: Qt.application.active
         webView: firstUseOverlay ? firstUseOverlay : overlay.webView
+        // Favorite grid first row offset is negative. So, increase minumumY drag by that.
+        openYPosition: dragArea.drag.minimumY
 
         onAtBottomChanged: {
             if (atBottom) {
@@ -182,8 +184,9 @@ PanelBackground {
         drag.target: overlay
         drag.filterChildren: true
         drag.axis: Drag.YAxis
-        drag.minimumY: browserPage.isPortrait ? toolBar.toolsHeight : 0
-        drag.maximumY: browserPage.isPortrait ? webView.fullscreenHeight - toolBar.toolsHeight : webView.fullscreenHeight
+        // Favorite grid first row offset is negative. So, increase minumumY drag by that.
+        drag.minimumY: (browserPage.isPortrait ? toolBar.toolsHeight : 0) - favoriteGrid.firstRowOffset
+        drag.maximumY: webView.fullscreenHeight - toolBar.toolsHeight
 
         drag.onActiveChanged: {
             if (!drag.active) {
@@ -375,7 +378,6 @@ PanelBackground {
                 id: favoriteGrid
 
                 height: historyList.height
-                anchors.horizontalCenter: parent.horizontalCenter
                 opacity: historyContainer.showFavorites ? 1.0 : 0.0
                 enabled: overlayAnimator.atTop
                 visible: !overlayAnimator.atBottom && !toolBar.findInPageActive && opacity > 0.0
