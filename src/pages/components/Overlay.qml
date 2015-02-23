@@ -377,7 +377,7 @@ PanelBackground {
             Browser.FavoriteGrid {
                 id: favoriteGrid
 
-                height: historyList.height
+                height: historyList.height - favoriteGrid.firstRowOffset
                 opacity: historyContainer.showFavorites ? 1.0 : 0.0
                 enabled: overlayAnimator.atTop
                 visible: !overlayAnimator.atBottom && !toolBar.findInPageActive && opacity > 0.0
