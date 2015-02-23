@@ -176,6 +176,7 @@ SilicaGridView {
         parent: favoriteGrid
         anchors.rightMargin: -(browserPage.width - favoriteGrid.width) / 2
         flickable: favoriteGrid
+        _headerSpacing: -firstRowOffset
     }
 
     Component {
