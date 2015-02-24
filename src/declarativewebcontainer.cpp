@@ -639,11 +639,6 @@ void DeclarativeWebContainer::releasePage(int tabId, bool virtualize)
         m_webPages->release(tabId, virtualize);
         // Successfully destroyed. Emit relevant property changes.
         if (!m_webPage || m_model->count() == 0) {
-            if (m_tabId != 0) {
-                m_tabId = 0;
-                emit tabIdChanged();
-            }
-
             if (m_canGoBack) {
                 m_canGoBack = false;
                 emit canGoBackChanged();
@@ -657,6 +652,11 @@ void DeclarativeWebContainer::releasePage(int tabId, bool virtualize)
             emit contentItemChanged();
             updateUrl("");
             updateTitle("");
+
+            if (m_tabId != 0) {
+                m_tabId = 0;
+                emit tabIdChanged();
+            }
 
             emit loadingChanged();
             setLoadProgress(0);
