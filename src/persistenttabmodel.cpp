@@ -37,10 +37,10 @@ void PersistentTabModel::tabsAvailable(QList<Tab> tabs)
     beginResetModel();
     int oldCount = count();
 
-    if (tabs.isEmpty()) {
-        clear();
-    } else {
-        m_tabs.clear();
+    // Clear always previous tabs
+    clear();
+
+    if (tabs.count() > 0) {
         m_tabs = tabs;
         QString activeTabId = DBManager::instance()->getSetting("activeTabId");
         bool ok = false;
