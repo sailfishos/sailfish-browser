@@ -36,10 +36,12 @@ void PersistentTabModel::tabsAvailable(QList<Tab> tabs)
 {
     beginResetModel();
     int oldCount = count();
-    m_tabs.clear();
-    m_tabs = tabs;
 
-    if (m_tabs.count() > 0) {
+    if (tabs.isEmpty()) {
+        clear();
+    } else {
+        m_tabs.clear();
+        m_tabs = tabs;
         QString activeTabId = DBManager::instance()->getSetting("activeTabId");
         bool ok = false;
         int tabId = activeTabId.toInt(&ok);
@@ -51,8 +53,6 @@ void PersistentTabModel::tabsAvailable(QList<Tab> tabs)
             m_activeTab = m_tabs[0];
         }
         emit activeTabIndexChanged();
-    } else {
-        emit tabsCleared();
     }
 
     endResetModel();

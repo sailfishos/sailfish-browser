@@ -87,7 +87,6 @@ signals:
     // only for testing purposes.
     void tabAdded(int tabId);
     void tabClosed(int tabId);
-    void tabsCleared();
     void nextTabIdChanged();
     void loadedChanged();
     void waitingForNewTabChanged();

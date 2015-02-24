@@ -610,11 +610,14 @@ void tst_webview::forwardBackwardNavigation()
 
 void tst_webview::clear()
 {
-    QSignalSpy tabsCleared(tabModel, SIGNAL(tabsCleared()));
+    QSignalSpy tabClosed(tabModel, SIGNAL(tabClosed(int)));
     historyModel->clear();
     tabModel->clear();
     QTest::qWait(1000);
-    waitSignals(tabsCleared, 1);
+    waitSignals(tabClosed, 7);
+
+    // From the previous case there should be 7 tabs to close
+    QCOMPARE(tabClosed.count(), 7);
     QVERIFY(historyModel->rowCount() == 0);
     QVERIFY(webContainer->m_webPages->count() == 0);
     QVERIFY(webContainer->m_webPages->m_activePages.count() == 0);
