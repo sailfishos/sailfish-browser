@@ -571,7 +571,6 @@ HistoryResult DBWorker::addToBrowserHistory(QString url, QString title)
 
 void DBWorker::clearHistory()
 {
-    int oldTabCount = tabCount();
     QSqlQuery query = prepare("DELETE FROM browser_history;");
     execute(query);
     removeAllTabs();
@@ -580,10 +579,6 @@ void DBWorker::clearHistory()
 
     QList<Link> linkList;
     emit historyAvailable(linkList);
-    if (oldTabCount != 0) {
-        QList<Tab> tabList;
-        emit tabsAvailable(tabList);
-    }
 }
 
 int DBWorker::addToTabHistory(int tabId, int linkId)

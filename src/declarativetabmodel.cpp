@@ -313,12 +313,6 @@ void DeclarativeTabModel::removeTab(int tabId, const QString &thumbnail, int ind
 
     emit countChanged();
     emit tabClosed(tabId);
-
-    // This guarantees that view will reset its internal state
-    // when the last tab got closed.
-    if (m_tabs.isEmpty()) {
-        emit tabsCleared();
-    }
 }
 
 int DeclarativeTabModel::findTabIndex(int tabId) const

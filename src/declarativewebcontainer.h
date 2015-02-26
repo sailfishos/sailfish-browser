@@ -163,7 +163,6 @@ private slots:
     void onActiveTabChanged(int oldTabId, int activeTabId, bool loadActiveTab);
     void onDownloadStarted();
     void onNewTabRequested(QString url, QString title, int parentId);
-    void onTabsCleared();
     void releasePage(int tabId, bool virtualize = false);
     void closeWindow();
     void onPageUrlChanged();
