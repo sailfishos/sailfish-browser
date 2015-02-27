@@ -28,7 +28,7 @@ ApplicationWindow {
         }
     }
 
-    allowedOrientations: WebUtils.firstUseDone && Qt.application.active ? defaultAllowedOrientations : Orientation.Portrait
+    allowedOrientations: defaultAllowedOrientations
     _defaultPageOrientations: Orientation.All
     cover: null
     initialPage: Component {
