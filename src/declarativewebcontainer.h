@@ -193,6 +193,7 @@ private:
     bool m_popupActive;
     bool m_portrait;
     bool m_fullScreenMode;
+    bool m_activatingTab;
     qreal m_fullScreenHeight;
     bool m_inputPanelVisible;
     qreal m_inputPanelHeight;
