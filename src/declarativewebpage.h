@@ -18,6 +18,7 @@
 #include <QPointer>
 #include <quickmozview.h>
 #include <QRgb>
+#include "tab.h"
 
 class DeclarativeWebContainer;
 
@@ -54,13 +55,10 @@ public:
     bool urlHasChanged() const;
     void setUrlHasChanged(bool urlHasChanged);
 
-    void setInitialUrl(const QString &url);
+    void setInitialTab(const Tab &tab);
 
     void bindToModel();
     bool boundToModel();
-
-    bool backForwardNavigation() const;
-    void setBackForwardNavigation(bool backForwardNavigation);
 
     bool viewReady() const;
 
@@ -111,9 +109,8 @@ private:
     bool m_forcedChrome;
     bool m_domContentLoaded;
     bool m_urlHasChanged;
-    bool m_backForwardNavigation;
     bool m_boundToModel;
-    QString m_initialUrl;
+    Tab m_initialTab;
     QString m_favicon;
     QVariant m_resurrectedContentRect;
     QSharedPointer<QQuickItemGrabResult> m_grabResult;

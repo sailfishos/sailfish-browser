@@ -62,7 +62,6 @@ DeclarativeWebPage::DeclarativeWebPage(QQuickItem *parent)
     , m_forcedChrome(false)
     , m_domContentLoaded(false)
     , m_urlHasChanged(false)
-    , m_backForwardNavigation(false)
     , m_boundToModel(false)
 {
     connect(this, SIGNAL(viewInitialized()), this, SLOT(onViewInitialized()));
@@ -122,9 +121,9 @@ void DeclarativeWebPage::setUrlHasChanged(bool urlHasChanged)
     m_urlHasChanged = urlHasChanged;
 }
 
-void DeclarativeWebPage::setInitialUrl(const QString &url)
+void DeclarativeWebPage::setInitialTab(const Tab &tab)
 {
-    m_initialUrl = url;
+    m_initialTab = tab;
 }
 
 void DeclarativeWebPage::bindToModel()
@@ -135,16 +134,6 @@ void DeclarativeWebPage::bindToModel()
 bool DeclarativeWebPage::boundToModel()
 {
     return m_boundToModel;
-}
-
-bool DeclarativeWebPage::backForwardNavigation() const
-{
-    return m_backForwardNavigation;
-}
-
-void DeclarativeWebPage::setBackForwardNavigation(bool backForwardNavigation)
-{
-    m_backForwardNavigation = backForwardNavigation;
 }
 
 bool DeclarativeWebPage::viewReady() const
@@ -179,7 +168,7 @@ void DeclarativeWebPage::loadTab(QString newUrl, bool force)
 
 void DeclarativeWebPage::grabToFile()
 {
-    if (!m_viewReady || backForwardNavigation() || !active() || !isPainted())
+    if (!m_viewReady || !active() || !isPainted())
         return;
 
     emit clearGrabResult();
@@ -277,9 +266,10 @@ void DeclarativeWebPage::onViewInitialized()
     m_viewReady = true;
     emit viewReadyChanged();
 
-    if (!m_initialUrl.isEmpty()) {
-        loadTab(m_initialUrl, false);
-        m_initialUrl = "";
+    if (!m_initialTab.url().isEmpty()) {
+        loadTab(m_initialTab.url(), false);
+        m_initialTab.setUrl("");
+    }
     }
 }
 
