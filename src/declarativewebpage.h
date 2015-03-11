@@ -21,6 +21,7 @@
 #include "tab.h"
 
 class DeclarativeWebContainer;
+class Link;
 
 class DeclarativeWebPage : public QuickMozView {
     Q_OBJECT
@@ -93,17 +94,22 @@ protected:
 private slots:
     void setFullscreen(const bool fullscreen);
     void onRecvAsyncMessage(const QString& message, const QVariant& data);
+    void onTabHistoryAvailable(const int& tabId, const QList<Link>& links);
     void onViewInitialized();
     void grabResultReady();
     void grabWritten();
     void thumbnailReady();
+    void restoreHistory();
 
 private:
     QString saveToFile(QImage image, QRect cropBounds);
+    void setupWebPage();
 
     QPointer<DeclarativeWebContainer> m_container;
     int m_tabId;
     bool m_viewReady;
+    bool m_viewInitialized;
+    bool m_tabHistoryReady;
     bool m_userHasDraggedWhileLoading;
     bool m_fullscreen;
     bool m_forcedChrome;
@@ -116,6 +122,7 @@ private:
     QSharedPointer<QQuickItemGrabResult> m_grabResult;
     QSharedPointer<QQuickItemGrabResult> m_thumbnailResult;
     QFutureWatcher<QString> m_grabWritter;
+    QList<Link> m_restoredTabHistory;
 
     qreal m_fullScreenHeight;
     qreal m_toolbarHeight;
