@@ -14,6 +14,7 @@
 
 #include <QtConcurrent>
 #include <QStandardPaths>
+#include <qmozscrolldecorator.h>
 
 static const QString gFullScreenMessage("embed:fullscreenchanged");
 static const QString gDomContentLoadedMessage("embed:domcontentloaded");
@@ -71,6 +72,7 @@ DeclarativeWebPage::DeclarativeWebPage(QQuickItem *parent)
     connect(&m_grabWritter, SIGNAL(finished()), this, SLOT(grabWritten()));
     connect(this, SIGNAL(contentHeightChanged()), this, SLOT(resetHeight()));
     connect(this, SIGNAL(scrollableOffsetChanged()), this, SLOT(resetHeight()));
+    connect(verticalScrollDecorator(), SIGNAL(positionChanged()), this, SLOT(checkScrollSpeed()));
 }
 
 DeclarativeWebPage::~DeclarativeWebPage()
@@ -243,6 +245,20 @@ void DeclarativeWebPage::resetHeight(bool respectContentHeight)
         }
     } else {
         setHeight(m_fullScreenHeight - m_toolbarHeight);
+    }
+}
+
+void DeclarativeWebPage::checkScrollSpeed()
+{
+    if (scrollSpeedTimer.remainingTime() > 0) {
+        if (qAbs(verticalScrollDecorator()->position() - startVerticalScrollPos) > 300) {
+            qDebug()<<"Show scroller";
+        }
+    } else {
+        qDebug() << "Starting timer";
+        scrollSpeedTimer.setSingleShot(true);
+        scrollSpeedTimer.start(500);
+        startVerticalScrollPos = verticalScrollDecorator()->position();
     }
 }
 

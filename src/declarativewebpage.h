@@ -18,6 +18,7 @@
 #include <QPointer>
 #include <quickmozview.h>
 #include <QRgb>
+#include <QTimer>
 
 class DeclarativeWebContainer;
 
@@ -71,6 +72,7 @@ public:
 
 public slots:
     void resetHeight(bool respectContentHeight = true);
+    void checkScrollSpeed();
 
 signals:
     void containerChanged();
@@ -119,9 +121,12 @@ private:
     QSharedPointer<QQuickItemGrabResult> m_grabResult;
     QSharedPointer<QQuickItemGrabResult> m_thumbnailResult;
     QFutureWatcher<QString> m_grabWritter;
+    QTimer scrollSpeedTimer;
 
     qreal m_fullScreenHeight;
     qreal m_toolbarHeight;
+
+    int startVerticalScrollPos;
 };
 
 QDebug operator<<(QDebug, const DeclarativeWebPage *);
