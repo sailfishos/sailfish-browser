@@ -11,6 +11,7 @@
 
 #include "declarativewebpage.h"
 #include "declarativewebcontainer.h"
+#include "qmozcontext.h"
 
 #include <QtConcurrent>
 #include <QStandardPaths>
@@ -253,6 +254,22 @@ void DeclarativeWebPage::checkScrollSpeed()
     if (scrollSpeedTimer.remainingTime() > 0) {
         if (qAbs(verticalScrollDecorator()->position() - startVerticalScrollPos) > 300) {
             qDebug()<<"Show scroller";
+
+        /*int diff = verticalScrollDecorator()->position() - startVerticalScrollPos;
+        if (diff > 0 && diff > 300) {
+            qDebug()<<"Scrolling down";
+            qDebug() << "Content height is " << contentHeight();
+            QVariantMap data;
+            data.insert("x", 0);
+            data.insert("y", contentHeight());
+            sendAsyncMessage(QString("embedui:scrollTo"), QVariant(data));
+        } else if (diff < 0 && diff < -300) {
+            qDebug() << "Scrolling up";
+
+            QVariantMap data;
+            data.insert("x", 0);
+            data.insert("y", 0);
+            sendAsyncMessage(QString("embedui:scrollTo"), QVariant(data));*/
         }
     } else {
         qDebug() << "Starting timer";
