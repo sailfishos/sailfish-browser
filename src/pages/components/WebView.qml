@@ -106,6 +106,15 @@ WebContainer {
             width: container.width
             state: ""
 
+            QuickScroll {
+                id: quickScrollItem
+                flickable: webPage
+                visible: true
+                opacity: 1.0
+                z: 100
+                onVisibleChanged: console.log("quickScrollItem visible" + visible)
+            }
+
             onClearGrabResult: tabModel.updateThumbnailPath(tabId, "")
             onGrabResult: tabModel.updateThumbnailPath(tabId, fileName)
 
