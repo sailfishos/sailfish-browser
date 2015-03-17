@@ -51,7 +51,7 @@ signals:
 private:
     void save();
 
-    QMap<QString, Bookmark*> bookmarks;
-    QStringList bookmarkUrls;
+    QList<Bookmark*> bookmarks;
+    QMap<QString, int> bookmarkIndexes;
 };
 #endif // DECLARATIVEBOOKMARKMODEL_H

@@ -13,7 +13,7 @@
 #define BOOKMARKMANAGER_H
 
 #include <QObject>
-#include <QMap>
+#include <QList>
 
 class Bookmark;
 
@@ -24,9 +24,9 @@ class BookmarkManager : public QObject
 public:
     static BookmarkManager* instance();
 
-    void save(const QMap<QString, Bookmark*> & bookmarks);
+    void save(const QList<Bookmark*> & bookmarks);
     void clear();
-    QMap<QString, Bookmark*> load();
+    QList<Bookmark*> load();
 
 signals:
     void cleared();
