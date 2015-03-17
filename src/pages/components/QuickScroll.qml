@@ -37,7 +37,7 @@ import Sailfish.Silica 1.0
 import Sailfish.Browser 1.0
 
 Item {
-    property WebPage flickable
+    //property WebPage flickable
     //property bool quickScroll: flickable && (flickable.flickableDirection === Flickable.VerticalFlick || flickable.flickableDirection === Flickable.AutoFlickDirection)
     property bool quickScroll: flickable
     property bool quickScrollAnimating
@@ -93,8 +93,21 @@ Item {
         property: "active"
         value: false
     }
-    Component {
+    /*Component {
         id: quickScrollAreaComponent
         QuickScrollArea {}
+    }*/
+
+    QuickScrollArea {
+        property WebPage flickable: parent.flickable
+
+        onFlickableChanged: {
+            console.log("flickable changed to " + flickable)
+        }
+    }
+
+    Text {
+        text: "hello"
+        anchors.fill: parent
     }
 }

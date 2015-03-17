@@ -39,7 +39,7 @@ import Sailfish.Browser 1.0
 Column {
     id: root
 
-    property WebPage flickable
+    //property WebPage flickable
     property bool flicking
     //property bool inBounds: (!flickable.pullDownMenu || !flickable.pullDownMenu.active) && (!flickable.pushUpMenu || !flickable.pushUpMenu.active)
     property bool inBounds: true
@@ -64,7 +64,8 @@ Column {
     }
 
     height: flickable.height
-    width: Theme.itemSizeExtraLarge
+    //width: Theme.itemSizeExtraLarge
+    width: 50
     enabled: opacity > 0.0
     anchors.right: parent.right
 
@@ -87,7 +88,9 @@ Column {
         source: "image://theme/icon-m-page-up"
         flickable: root.flickable
         onClicked: {
-            flickable.scrollToTop()
+            console.log("Scrolling to top")
+            flickable.sendAsyncMessage("embedui:scrollTo", {"x":0, "y":0})
+            //flickable.scrollToTop()
             root.clicked = true
         }
 
@@ -101,7 +104,9 @@ Column {
         source: "image://theme/icon-m-page-down"
         flickable: root.flickable
         onClicked: {
-            flickable.scrollToBottom()
+            console.log("Scrolling to bottom")
+            flickable.sendAsyncMessage("embedui:scrollTo", {"x":0, "y":flickable.contentHeight})
+            //flickable.scrollToBottom()
             root.clicked = true
         }
 

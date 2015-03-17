@@ -106,15 +106,6 @@ WebContainer {
             width: container.width
             state: ""
 
-            QuickScroll {
-                id: quickScrollItem
-                flickable: webPage
-                visible: true
-                opacity: 1.0
-                z: 100
-                onVisibleChanged: console.log("quickScrollItem visible" + visible)
-            }
-
             onClearGrabResult: tabModel.updateThumbnailPath(tabId, "")
             onGrabResult: tabModel.updateThumbnailPath(tabId, fileName)
 
@@ -344,6 +335,35 @@ WebContainer {
         opacity: contentItem && contentItem.horizontalScrollDecorator.moving ? 1.0 : 0.0
         Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
     }
+
+    QuickScroll {
+        id: quickScrollItem
+
+        property alias flickable: webView.contentItem
+        width: 50
+        height: contentItem ? contentItem.verticalScrollDecorator.size : 0
+        //y: contentItem ? contentItem.verticalScrollDecorator.position - 25 : 0
+        z: 100
+        anchors.top: contentItem.top
+        anchors.right: contentItem.right
+
+        //flickable: webView.contentItem
+        visible: true
+        opacity: 1.0
+
+        onVisibleChanged: console.log("quickScrollItem visible" + visible)
+    }
+
+    /*Text {
+        text: "hello world"
+        width: 20
+        height: 20
+        x: 20
+        y: 20
+        visible: true
+        opacity: 1.0
+        z: 1
+    }*/
 
     ResourceController {
         id: resourceController
