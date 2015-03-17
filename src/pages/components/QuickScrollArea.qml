@@ -39,7 +39,7 @@ import Sailfish.Browser 1.0
 Column {
     id: root
 
-    //property WebPage flickable
+    property WebPage flickable
     property bool flicking
     //property bool inBounds: (!flickable.pullDownMenu || !flickable.pullDownMenu.active) && (!flickable.pushUpMenu || !flickable.pushUpMenu.active)
     property bool inBounds: true
@@ -65,7 +65,7 @@ Column {
 
     height: flickable.height
     //width: Theme.itemSizeExtraLarge
-    width: 50
+    width: 150
     enabled: opacity > 0.0
     anchors.right: parent.right
 
@@ -94,7 +94,7 @@ Column {
             root.clicked = true
         }
 
-        onVisibleChanged: console.log("QuickScrollButton visible:" + visible)
+        //onVisibleChanged: console.log("QuickScrollButton visible:" + visible)
     }
     QuickScrollButton {
         id: scrollDownButton
@@ -110,6 +110,6 @@ Column {
             root.clicked = true
         }
 
-        onVisibleChanged: console.log("QuickScrollButton visible:" + visible)
+        //onVisibleChanged: console.log("QuickScrollButton visible:" + visible)
     }
 }
