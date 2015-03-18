@@ -11,9 +11,11 @@
 
 #include "declarativewebpage.h"
 #include "declarativewebcontainer.h"
+#include "qmozcontext.h"
 
 #include <QtConcurrent>
 #include <QStandardPaths>
+#include <qmozscrolldecorator.h>
 
 static const QString gFullScreenMessage("embed:fullscreenchanged");
 static const QString gDomContentLoadedMessage("embed:domcontentloaded");
@@ -71,6 +73,7 @@ DeclarativeWebPage::DeclarativeWebPage(QQuickItem *parent)
     connect(&m_grabWritter, SIGNAL(finished()), this, SLOT(grabWritten()));
     connect(this, SIGNAL(contentHeightChanged()), this, SLOT(resetHeight()));
     connect(this, SIGNAL(scrollableOffsetChanged()), this, SLOT(resetHeight()));
+    connect(verticalScrollDecorator(), SIGNAL(positionChanged()), this, SLOT(checkScrollSpeed()));
 }
 
 DeclarativeWebPage::~DeclarativeWebPage()
@@ -243,6 +246,37 @@ void DeclarativeWebPage::resetHeight(bool respectContentHeight)
         }
     } else {
         setHeight(m_fullScreenHeight - m_toolbarHeight);
+    }
+}
+
+void DeclarativeWebPage::checkScrollSpeed()
+{
+    if (m_scrollSpeedTimer.remainingTime() > 0) {
+        if (qAbs(verticalScrollDecorator()->position() - startVerticalScrollPos) > 200) {
+            qDebug()<<"Show scroller";
+            emit showQuickScroll();
+
+            /*int diff = verticalScrollDecorator()->position() - startVerticalScrollPos;
+        if (diff > 0 && diff > 300) {
+            qDebug()<<"Scrolling down";
+            qDebug() << "Content height is " << contentHeight();
+            QVariantMap data;
+            data.insert("x", 0);
+            data.insert("y", contentHeight());
+            sendAsyncMessage(QString("embedui:scrollTo"), QVariant(data));
+        } else if (diff < 0 && diff < -300) {
+            qDebug() << "Scrolling up";
+
+            QVariantMap data;
+            data.insert("x", 0);
+            data.insert("y", 0);
+            sendAsyncMessage(QString("embedui:scrollTo"), QVariant(data));*/
+        }
+    } else {
+        qDebug() << "Starting timer";
+        m_scrollSpeedTimer.setSingleShot(true);
+        m_scrollSpeedTimer.start(500);
+        startVerticalScrollPos = verticalScrollDecorator()->position();
     }
 }
 

@@ -336,6 +336,24 @@ WebContainer {
         Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
     }
 
+    QuickScroll {
+        id: quickScrollItem
+
+        //property alias flickable: webView.contentItem
+        //width: 150
+        //height: contentItem ? contentItem.verticalScrollDecorator.size : 0
+        //y: contentItem ? contentItem.verticalScrollDecorator.position - 25 : 0
+        z: 1
+        anchors.top: contentItem.top
+        anchors.right: verticalScrollDecorator.right
+
+        flickable: webView.contentItem
+        //visible: opacity > 0
+        //opacity: 0.0 //webView.contentItem.showQuickScroll && contentItem.verticalScrollDecorator.moving ? 1.0 : 0.0
+
+        //onVisibleChanged: console.log("quickScrollItem visible" + visible)
+    }
+
     ResourceController {
         id: resourceController
         webView: contentItem
