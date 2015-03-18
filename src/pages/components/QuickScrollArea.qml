@@ -44,15 +44,12 @@ Column {
     //property bool inBounds: (!flickable.pullDownMenu || !flickable.pullDownMenu.active) && (!flickable.pushUpMenu || !flickable.pushUpMenu.active)
     property bool inBounds: true
     property bool pressed: scrollUpButton.pressed || scrollDownButton.pressed
-    property bool active: true //visibilityTimer.running || !clicked && (pressed || (flicking && inBounds))
+    property bool active: flickable.verticalScrollDecorator.moving || pressed
+    //property bool active: flickable.showQuickScroll && flickable.verticalScrollDecorator.moving
     property bool clicked
-    onVisibleChanged: console.log("QuickScrollArea visible:" + visible)
+    //onVisibleChanged: console.log("QuickScrollArea visible:" + visible)
 
-    Component.onCompleted: {
-        console.log("height is " + height)
-        console.log("width is " + width)
-    }
-
+    /*
     onFlickingChanged: {
         if (flicking) {
             clicked = false
@@ -62,10 +59,10 @@ Column {
             }
         }
     }
-
+    */
     height: flickable.height
-    //width: Theme.itemSizeExtraLarge
-    width: 150
+    width: Theme.itemSizeExtraLarge
+    //width: 150
     enabled: opacity > 0.0
     anchors.right: parent.right
 
@@ -76,10 +73,16 @@ Column {
         id: visibilityTimer
         interval: 200
     }
-    Connections {
+    /*Connections {
         target: flickable
         onFlickingVerticallyChanged: flicking = flickable.flickingVertically && Math.abs(flickable.verticalVelocity) > Screen.height
+    }*/
+
+    Connections {
+        target: flickable
+        onShowQuickScrollChanged: visibilityTimer.restart()
     }
+
     QuickScrollButton {
         id: scrollUpButton
 

@@ -42,14 +42,16 @@ Item {
     property bool quickScroll: flickable
     property bool quickScrollAnimating
     property bool _quickScrollAllowed: _initialised && quickScroll && flickable.height >= Screen.width && flickable.contentHeight > 3.5*flickable.height
+    //property bool _quickScrollAllowed: flickable && flickable.height >= Screen.width && flickable.contentHeight > 3.5*flickable.height
     property Item _quickScrollArea
     property bool _incubating
     property bool _initialised
-    property bool _moving: flickable && flickable.moving
+    property bool _moving: flickable && flickable.verticalScrollDecorator.moving
     property var _incubator
 
     Component.onCompleted: _initialised = true
-    /*on_QuickScrollAllowedChanged: {
+
+    on_QuickScrollAllowedChanged: {
         if (_quickScrollAllowed) {
             if (!_quickScrollArea && !_incubating) {
                 _incubator = quickScrollAreaComponent.incubateObject(flickable, {"flickable": flickable })
@@ -72,14 +74,14 @@ Item {
                 }
             }
         }
-    }*/
+    }
 
     // See bug #21387
-    /*on_MovingChanged: {
+    on_MovingChanged: {
         if (_moving && _quickScrollAllowed && !_quickScrollArea && _incubator.status != Component.Ready) {
             _incubator.forceCompletion()
         }
-    }*/
+    }
 
     Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
 
@@ -89,23 +91,25 @@ Item {
             _quickScrollArea = null
         }
     }
+
     Binding {
         when: _quickScrollArea && !_quickScrollAllowed
         target: _quickScrollArea
         property: "active"
         value: false
     }
-    /*Component {
+
+    Component {
         id: quickScrollAreaComponent
         QuickScrollArea {}
-    }*/
+    }
 
-    QuickScrollArea {
+    /*QuickScrollArea {
         //property WebPage flickable: parent.flickable
         flickable: parent.flickable
 
         onFlickableChanged: {
             console.log("flickable changed to " + flickable)
         }
-    }
+    }*/
 }

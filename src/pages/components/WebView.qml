@@ -348,8 +348,8 @@ WebContainer {
         anchors.right: verticalScrollDecorator.right
 
         flickable: webView.contentItem
-        visible: opacity > 0
-        opacity: webView.contentItem.showQuickScroll && contentItem.verticalScrollDecorator.moving ? 1.0 : 0.0
+        //visible: opacity > 0
+        //opacity: 0.0 //webView.contentItem.showQuickScroll && contentItem.verticalScrollDecorator.moving ? 1.0 : 0.0
 
         //onVisibleChanged: console.log("quickScrollItem visible" + visible)
     }
