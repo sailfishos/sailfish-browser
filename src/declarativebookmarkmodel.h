@@ -51,7 +51,9 @@ signals:
 private:
     void save();
 
-    QMap<QString, Bookmark*> bookmarks;
-    QStringList bookmarkUrls;
+    QList<Bookmark*> bookmarks;
+    // This map accelerates access to the `bookmarks` list's elements by their URL.
+    // Consider this as an analog of a DB index for `bookmarks` table indexed by URLs.
+    QMap<QString, int> bookmarkIndexes;
 };
 #endif // DECLARATIVEBOOKMARKMODEL_H

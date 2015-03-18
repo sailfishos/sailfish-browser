@@ -17,7 +17,13 @@ DeclarativeBookmarkModel::DeclarativeBookmarkModel(QObject *parent) :
 {
     connect(BookmarkManager::instance(), SIGNAL(cleared()), this, SLOT(clearBookmarks()));
     bookmarks = BookmarkManager::instance()->load();
-    bookmarkUrls = bookmarks.keys();
+
+    // Generate mapping URL -> bookmark's index in the loaded list.
+    int index(0);
+    foreach (Bookmark* bookmark, bookmarks) {
+        bookmarkIndexes.insert(bookmark->url(), index);
+        index++;
+    }
 }
 
 QHash<int, QByteArray> DeclarativeBookmarkModel::roleNames() const
@@ -33,8 +39,8 @@ QHash<int, QByteArray> DeclarativeBookmarkModel::roleNames() const
 void DeclarativeBookmarkModel::addBookmark(const QString& url, const QString& title, const QString& favicon, bool touchIcon)
 {
     beginInsertRows(QModelIndex(), rowCount(), rowCount());
-    bookmarks.insert(url, new Bookmark(title, url, favicon, touchIcon));
-    bookmarkUrls.append(url);
+    bookmarkIndexes.insert(url, bookmarks.count());
+    bookmarks.append(new Bookmark(title, url, favicon, touchIcon));
     endInsertRows();
 
     emit countChanged();
@@ -47,12 +53,12 @@ void DeclarativeBookmarkModel::removeBookmark(const QString& url)
         return;
     }
 
-    if (bookmarks.contains(url)) {
-        int index = bookmarkUrls.indexOf(url);
+    if (bookmarkIndexes.keys().contains(url)) {
+        int index = bookmarkIndexes.value(url);
         beginRemoveRows(QModelIndex(), index, index);
-        Bookmark* bookmark = bookmarks.take(url);
+        Bookmark* bookmark = bookmarks.takeAt(index);
         delete bookmark;
-        bookmarkUrls.removeAt(index);
+        bookmarkIndexes.remove(url);
         endRemoveRows();
 
         emit countChanged();
@@ -62,16 +68,13 @@ void DeclarativeBookmarkModel::removeBookmark(const QString& url)
 
 void DeclarativeBookmarkModel::editBookmark(int index, const QString& url, const QString& title)
 {
-    if (index < 0 || index > bookmarkUrls.count())
+    if (index < 0 || index > bookmarks.count())
         return;
 
-    Bookmark * bookmark = bookmarks.value(bookmarkUrls[index]);
+    Bookmark * bookmark = bookmarks.value(index);
     QVector<int> roles;
     if (url != bookmark->url()) {
         bookmark->setUrl(url);
-        bookmarks.remove(bookmarkUrls[index]);
-        bookmarks.insert(url, bookmark);
-        bookmarkUrls[index] = url;
         roles << UrlRole;
     }
     if (title != bookmark->title()) {
@@ -87,9 +90,9 @@ void DeclarativeBookmarkModel::editBookmark(int index, const QString& url, const
 
 void DeclarativeBookmarkModel::clearBookmarks()
 {
-    beginRemoveRows(QModelIndex(), 0, bookmarkUrls.count()-1);
+    beginRemoveRows(QModelIndex(), 0, bookmarks.count()-1);
     bookmarks.clear();
-    bookmarkUrls.clear();
+    bookmarkIndexes.clear();
     endRemoveRows();
     emit countChanged();
 }
@@ -107,10 +110,10 @@ int DeclarativeBookmarkModel::rowCount(const QModelIndex & parent) const
 
 QVariant DeclarativeBookmarkModel::data(const QModelIndex & index, int role) const
 {
-    if (index.row() < 0 || index.row() > bookmarkUrls.count())
+    if (index.row() < 0 || index.row() > bookmarks.count())
         return QVariant();
 
-    const Bookmark * bookmark = bookmarks.value(bookmarkUrls[index.row()]);
+    const Bookmark * bookmark = bookmarks.value(index.row());
     if (role == UrlRole) {
         return bookmark->url();
     } else if (role == TitleRole) {
@@ -125,5 +128,5 @@ QVariant DeclarativeBookmarkModel::data(const QModelIndex & index, int role) con
 
 bool DeclarativeBookmarkModel::contains(const QString& url) const
 {
-    return bookmarks.contains(url);
+    return bookmarkIndexes.contains(url);
 }

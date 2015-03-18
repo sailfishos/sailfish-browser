@@ -36,7 +36,7 @@ BookmarkManager* BookmarkManager::instance()
     return singleton;
 }
 
-void BookmarkManager::save(const QMap<QString, Bookmark*> & bookmarks)
+void BookmarkManager::save(const QList<Bookmark*> & bookmarks)
 {
     QString settingsLocation = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
     QDir dir(settingsLocation);
@@ -55,11 +55,8 @@ void BookmarkManager::save(const QMap<QString, Bookmark*> & bookmarks)
     QTextStream out(&file);
     QJsonArray items;
 
-    QMapIterator<QString, Bookmark*> bookmarkIterator(bookmarks);
-    while (bookmarkIterator.hasNext()) {
-        bookmarkIterator.next();
+    foreach (Bookmark* bookmark, bookmarks) {
         QJsonObject title;
-        Bookmark* bookmark = bookmarkIterator.value();
         title.insert("url", QJsonValue(bookmark->url()));
         title.insert("title", QJsonValue(bookmark->title()));
         title.insert("favicon", QJsonValue(bookmark->favicon()));
@@ -74,12 +71,12 @@ void BookmarkManager::save(const QMap<QString, Bookmark*> & bookmarks)
 
 void BookmarkManager::clear()
 {
-    save(QMap<QString, Bookmark*>());
+    save(QList<Bookmark*>());
     emit cleared();
 }
 
-QMap<QString, Bookmark*> BookmarkManager::load() {
-    QMap<QString, Bookmark*> bookmarks;
+QList<Bookmark*> BookmarkManager::load() {
+    QList<Bookmark*> bookmarks;
     QString settingsLocation = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/bookmarks.json";
     QScopedPointer<QFile> file(new QFile(settingsLocation));
 
@@ -112,7 +109,7 @@ QMap<QString, Bookmark*> BookmarkManager::load() {
                                            url,
                                            favicon,
                                            obj.value("hasTouchIcon").toBool());
-                bookmarks.insert(url, m);
+                bookmarks.append(m);
             }
         }
     } else {
