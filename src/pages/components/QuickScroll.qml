@@ -81,6 +81,8 @@ Item {
         }
     }*/
 
+    Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
+
     onQuickScrollChanged: {
         if (!quickScroll && _quickScrollArea) {
             _quickScrollArea.destroy()

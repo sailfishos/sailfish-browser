@@ -340,18 +340,18 @@ WebContainer {
         id: quickScrollItem
 
         //property alias flickable: webView.contentItem
-        width: 150
-        height: contentItem ? contentItem.verticalScrollDecorator.size : 0
+        //width: 150
+        //height: contentItem ? contentItem.verticalScrollDecorator.size : 0
         //y: contentItem ? contentItem.verticalScrollDecorator.position - 25 : 0
-        z: 100
+        z: 1
         anchors.top: contentItem.top
         anchors.right: verticalScrollDecorator.right
 
         flickable: webView.contentItem
-        visible: webView.contentItem.showQuickScroll
-        opacity: visible ? 1 : 0
+        visible: opacity > 0
+        opacity: webView.contentItem.showQuickScroll && contentItem.verticalScrollDecorator.moving ? 1.0 : 0.0
 
-        onVisibleChanged: console.log("quickScrollItem visible" + visible)
+        //onVisibleChanged: console.log("quickScrollItem visible" + visible)
     }
 
     ResourceController {
