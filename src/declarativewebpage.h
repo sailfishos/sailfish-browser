@@ -29,7 +29,6 @@ class DeclarativeWebPage : public QuickMozView {
     Q_PROPERTY(bool userHasDraggedWhileLoading MEMBER m_userHasDraggedWhileLoading NOTIFY userHasDraggedWhileLoadingChanged FINAL)
     Q_PROPERTY(bool fullscreen READ fullscreen NOTIFY fullscreenChanged FINAL)
     Q_PROPERTY(bool forcedChrome READ forcedChrome NOTIFY forcedChromeChanged FINAL)
-    Q_PROPERTY(bool showQuickScroll READ showQuickScroll NOTIFY showQuickScrollChanged FINAL)
     Q_PROPERTY(QString favicon MEMBER m_favicon NOTIFY faviconChanged FINAL)
     Q_PROPERTY(QVariant resurrectedContentRect READ resurrectedContentRect WRITE setResurrectedContentRect NOTIFY resurrectedContentRectChanged)
 
@@ -52,7 +51,6 @@ public:
     bool fullscreen() const;
     bool forcedChrome() const;
     bool domContentLoaded() const;
-    bool showQuickScroll() const;
 
     bool urlHasChanged() const;
     void setUrlHasChanged(bool urlHasChanged);
@@ -83,7 +81,7 @@ signals:
     void userHasDraggedWhileLoadingChanged();
     void fullscreenChanged();
     void forcedChromeChanged();
-    void showQuickScrollChanged();
+    void showQuickScroll();
     void domContentLoadedChanged();
     void faviconChanged();
     void resurrectedContentRectChanged();
@@ -104,8 +102,6 @@ private slots:
     void grabResultReady();
     void grabWritten();
     void thumbnailReady();
-    void setShowQuickScroll(const bool);
-    void hideQuickScroll();
 
 private:
     QString saveToFile(QImage image, QRect cropBounds);
@@ -120,7 +116,6 @@ private:
     bool m_urlHasChanged;
     bool m_backForwardNavigation;
     bool m_boundToModel;
-    bool m_showQuickScroll;
     QString m_initialUrl;
     QString m_favicon;
     QVariant m_resurrectedContentRect;
@@ -128,7 +123,6 @@ private:
     QSharedPointer<QQuickItemGrabResult> m_thumbnailResult;
     QFutureWatcher<QString> m_grabWritter;
     QTimer m_scrollSpeedTimer;
-    QTimer m_showQuickScrollTimer;
 
     qreal m_fullScreenHeight;
     qreal m_toolbarHeight;

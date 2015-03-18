@@ -63,7 +63,6 @@ DeclarativeWebPage::DeclarativeWebPage(QQuickItem *parent)
     , m_fullscreen(false)
     , m_forcedChrome(false)
     , m_domContentLoaded(false)
-    , m_showQuickScroll(false)
     , m_urlHasChanged(false)
     , m_backForwardNavigation(false)
     , m_boundToModel(false)
@@ -75,7 +74,6 @@ DeclarativeWebPage::DeclarativeWebPage(QQuickItem *parent)
     connect(this, SIGNAL(contentHeightChanged()), this, SLOT(resetHeight()));
     connect(this, SIGNAL(scrollableOffsetChanged()), this, SLOT(resetHeight()));
     connect(verticalScrollDecorator(), SIGNAL(positionChanged()), this, SLOT(checkScrollSpeed()));
-    connect(&m_showQuickScrollTimer, SIGNAL(timeout()), this, SLOT(hideQuickScroll()));
 }
 
 DeclarativeWebPage::~DeclarativeWebPage()
@@ -115,11 +113,6 @@ void DeclarativeWebPage::setTabId(int tabId)
 bool DeclarativeWebPage::domContentLoaded() const
 {
     return m_domContentLoaded;
-}
-
-bool DeclarativeWebPage::showQuickScroll() const
-{
-    return m_showQuickScroll;
 }
 
 bool DeclarativeWebPage::urlHasChanged() const
@@ -259,11 +252,10 @@ void DeclarativeWebPage::resetHeight(bool respectContentHeight)
 void DeclarativeWebPage::checkScrollSpeed()
 {
     if (m_scrollSpeedTimer.remainingTime() > 0) {
-        if (qAbs(verticalScrollDecorator()->position() - startVerticalScrollPos) > 300) {
+        if (qAbs(verticalScrollDecorator()->position() - startVerticalScrollPos) > 200) {
             qDebug()<<"Show scroller";
-            setShowQuickScroll(true);
-            m_showQuickScrollTimer.setSingleShot(true);
-            m_showQuickScrollTimer.start(1500);
+            emit showQuickScroll();
+
             /*int diff = verticalScrollDecorator()->position() - startVerticalScrollPos;
         if (diff > 0 && diff > 300) {
             qDebug()<<"Scrolling down";
@@ -401,20 +393,6 @@ void DeclarativeWebPage::setFullscreen(const bool fullscreen)
         resetHeight();
         emit fullscreenChanged();
     }
-}
-
-void DeclarativeWebPage::setShowQuickScroll(const bool showQuickScroll)
-{
-    if (m_showQuickScroll != showQuickScroll) {
-        m_showQuickScroll = showQuickScroll;
-        emit showQuickScrollChanged();
-        qDebug() << "m_showQuickScroll changed to " << m_showQuickScroll;
-    }
-}
-
-void DeclarativeWebPage::hideQuickScroll()
-{
-    setShowQuickScroll(false);
 }
 
 QDebug operator<<(QDebug dbg, const DeclarativeWebPage *page)
