@@ -30,6 +30,7 @@ ApplicationWindow {
 
     allowedOrientations: defaultAllowedOrientations
     _defaultPageOrientations: Orientation.All
+    _defaultLabelFormat: Text.PlainText
     cover: null
     initialPage: Component {
         BrowserPage {
