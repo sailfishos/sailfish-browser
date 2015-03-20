@@ -11,6 +11,7 @@
 
 import QtQuick 2.1
 import Sailfish.Silica 1.0
+import Sailfish.Silica.private 1.0
 import Sailfish.Browser 1.0
 import Qt5Mozilla 1.0
 import "WebPopupHandler.js" as PopupHandler
@@ -105,6 +106,17 @@ WebContainer {
             focus: true
             width: container.width
             state: ""
+
+            QuickScrollHandler {
+                id: quickScrollHandler
+                webPage: webView.contentItem
+            }
+
+            QuickScroll {
+                id: quickScroll
+                flickable: quickScrollHandler
+                z: 1
+            }
 
             onClearGrabResult: tabModel.updateThumbnailPath(tabId, "")
             onGrabResult: tabModel.updateThumbnailPath(tabId, fileName)
