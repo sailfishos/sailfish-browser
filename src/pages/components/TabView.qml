@@ -41,10 +41,6 @@ SilicaGridView {
     displaced: Browser.DisplaceTransition {}
     remove: Browser.RemoveTransition {}
 
-    PrivateModeTexture {
-        visible: privateMode
-    }
-
     delegate: TabItem {
         id: tabItem
 
@@ -72,12 +68,19 @@ SilicaGridView {
     }
 
     // Behind tab delegates
-    children: MouseArea {
-        z: -1
-        width: tabView.width
-        height: tabView.height
-        onClicked: hide()
-    }
+    children: [
+        PrivateModeTexture {
+            z: -1
+            visible: privateMode
+        },
+
+        MouseArea {
+            z: -1
+            width: tabView.width
+            height: tabView.height
+            onClicked: hide()
+        }
+    ]
 
     PullDownMenu {
         visible: Qt.application.active
