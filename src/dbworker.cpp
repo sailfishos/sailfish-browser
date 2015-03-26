@@ -31,6 +31,8 @@
 #define QUOTE(arg) #arg
 #define STR(arg) QUOTE(arg)
 
+#define MAX_BROWSER_HISTORY_SIZE 2000
+
 static const char * const create_table_tab =
         "CREATE TABLE tab (tab_id INTEGER PRIMARY KEY,\n"
         "tab_history_id INTEGER\n"
@@ -106,6 +108,13 @@ void DBWorker::init()
         for (int i = 0; i < db_schema_count; ++i) {
             QSqlQuery query = prepare(db_schema[i]);
             execute(query);
+        }
+    } else {
+        // Limit history size to 2000 entries
+        QSqlQuery cleanupHistory = prepare("DELETE FROM browser_history WHERE id NOT IN (SELECT id from browser_history"\
+                                           " ORDER BY date DESC LIMIT " STR(MAX_BROWSER_HISTORY_SIZE) ");");
+        if (!execute(cleanupHistory)) {
+            qWarning() << "Failed to clear older history items";
         }
     }
 
@@ -571,7 +580,6 @@ HistoryResult DBWorker::addToBrowserHistory(QString url, QString title)
 
 void DBWorker::clearHistory()
 {
-    int oldTabCount = tabCount();
     QSqlQuery query = prepare("DELETE FROM browser_history;");
     execute(query);
     removeAllTabs();
@@ -580,10 +588,6 @@ void DBWorker::clearHistory()
 
     QList<Link> linkList;
     emit historyAvailable(linkList);
-    if (oldTabCount != 0) {
-        QList<Tab> tabList;
-        emit tabsAvailable(tabList);
-    }
 }
 
 int DBWorker::addToTabHistory(int tabId, int linkId)

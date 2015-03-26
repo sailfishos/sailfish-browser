@@ -122,6 +122,7 @@ Page {
     }
 
     Rectangle {
+        id: contentDimmer
         width: webView.width
         height: Math.ceil(webView.height)
         opacity: 0.9 - (overlay.y / (webView.fullscreenHeight - overlay.toolBar.toolsHeight)) * 0.9
@@ -132,6 +133,32 @@ Page {
             enabled: overlay.animator.atTop && (webView.tabModel.count > 0 || firstUseOverlay)
             onClicked: overlay.dismiss()
         }
+
+        Browser.PrivateModeTexture {
+            id: privateModeTexture
+            anchors.fill: contentDimmer
+            visible: webView.privateMode && !overlay.animator.allowContentUse
+        }
+    }
+
+    Label {
+        x: (contentDimmer.width - implicitWidth) / 2
+        // Allow only half of the width
+        width: parent.width / 2
+        truncationMode: TruncationMode.Fade
+        opacity: privateModeTexture.visible ? 1.0 : 0.0
+        anchors {
+            bottom: contentDimmer.bottom
+            bottomMargin: (overlay.toolBar.toolsHeight - height) / 2
+        }
+
+        //: Label for private browsing above address bar
+        //% "Private browsing"
+        text: qsTrId("sailfish_browser-la-private_mode")
+        color: Theme.highlightColor
+        font.pixelSize: Theme.fontSizeLarge
+
+        Behavior on opacity { FadeAnimation {} }
     }
 
     Browser.Overlay {

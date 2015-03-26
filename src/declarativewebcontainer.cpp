@@ -10,7 +10,8 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "declarativewebcontainer.h"
-#include "declarativetabmodel.h"
+#include "persistenttabmodel.h"
+#include "privatetabmodel.h"
 #include "declarativewebpage.h"
 #include "dbmanager.h"
 #include "downloadmanager.h"
@@ -59,9 +60,16 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     , m_realNavigation(false)
     , m_completed(false)
     , m_initialized(false)
+    , m_privateMode(m_settingManager->autostartPrivateBrowsing())
 {
-    m_webPages.reset(new WebPages(this));
     setFlag(QQuickItem::ItemHasContents, true);
+
+    m_webPages = new WebPages(this);
+    m_persistentTabModel = new PersistentTabModel(this);
+    m_privateTabModel = new PrivateTabModel(this);
+
+    setTabModel(privateMode() ? m_privateTabModel.data() : m_persistentTabModel.data());
+
     connect(DownloadManager::instance(), SIGNAL(initializedChanged()), this, SLOT(initialize()));
     connect(DownloadManager::instance(), SIGNAL(downloadStarted()), this, SLOT(onDownloadStarted()));
     connect(QMozContext::GetInstance(), SIGNAL(onInitialized()), this, SLOT(initialize()));
@@ -140,7 +148,6 @@ void DeclarativeWebContainer::setTabModel(DeclarativeTabModel *model)
             connect(m_model, SIGNAL(activeTabChanged(int,int,bool)), this, SLOT(onActiveTabChanged(int,int,bool)));
             connect(m_model, SIGNAL(loadedChanged()), this, SLOT(initialize()));
             connect(m_model, SIGNAL(tabClosed(int)), this, SLOT(releasePage(int)));
-            connect(m_model, SIGNAL(tabsCleared()), this, SLOT(onTabsCleared()));
             connect(m_model, SIGNAL(newTabRequested(QString,QString,int)), this, SLOT(onNewTabRequested(QString,QString,int)));
         }
         emit tabModelChanged();
@@ -182,6 +189,21 @@ void DeclarativeWebContainer::setMaxLiveTabCount(int count)
     }
 }
 
+bool DeclarativeWebContainer::privateMode() const
+{
+    return m_privateMode;
+}
+
+void DeclarativeWebContainer::setPrivateMode(bool privateMode)
+{
+    if (m_privateMode != privateMode) {
+        m_privateMode = privateMode;
+        m_settingManager->setAutostartPrivateBrowsing(privateMode);
+        updateMode();
+        emit privateModeChanged();
+    }
+}
+
 bool DeclarativeWebContainer::background() const
 {
     return m_webPage ? m_webPage->background() : false;
@@ -189,7 +211,11 @@ bool DeclarativeWebContainer::background() const
 
 bool DeclarativeWebContainer::loading() const
 {
-    return m_webPage ? m_webPage->loading() : m_model->count();
+    if (m_webPage) {
+        return m_webPage->loading();
+    } else {
+        return m_model ? m_model->count() : false;
+    }
 }
 
 int DeclarativeWebContainer::loadProgress() const
@@ -392,6 +418,26 @@ bool DeclarativeWebContainer::alive(int tabId)
     return m_webPages->alive(tabId);
 }
 
+void DeclarativeWebContainer::updateMode()
+{
+    setTabModel(privateMode() ? m_privateTabModel.data() : m_persistentTabModel.data());
+    setActiveTabData();
+
+    // Hide currently active web page
+    if (m_webPage) {
+        m_webPage->setVisible(false);
+        m_webPage->setOpacity(1.0);
+    }
+
+    // Reload active tab from new mode
+    if (m_model->count() > 0) {
+        reload(false);
+    } else {
+        setWebPage(NULL);
+        emit contentItemChanged();
+    }
+}
+
 void DeclarativeWebContainer::dumpPages() const
 {
     m_webPages->dumpPages();
@@ -583,23 +629,6 @@ void DeclarativeWebContainer::onNewTabRequested(QString url, QString title, int 
     }
 }
 
-void DeclarativeWebContainer::onTabsCleared()
-{
-    m_webPages->clear();
-    // Trigger contentItem changed and then reset title, url, and tabId.
-    emit contentItemChanged();
-    updateTitle("");
-    updateUrl("");
-
-    if (m_tabId != 0) {
-        m_tabId = 0;
-        emit tabIdChanged();
-    }
-
-    emit loadingChanged();
-    setLoadProgress(0);
-}
-
 int DeclarativeWebContainer::parentTabId(int tabId) const
 {
     if (m_webPages) {
@@ -613,8 +642,7 @@ void DeclarativeWebContainer::releasePage(int tabId, bool virtualize)
     if (m_webPages) {
         m_webPages->release(tabId, virtualize);
         // Successfully destroyed. Emit relevant property changes.
-        if (!m_webPage) {
-            m_tabId = 0;
+        if (!m_webPage || m_model->count() == 0) {
             if (m_canGoBack) {
                 m_canGoBack = false;
                 emit canGoBackChanged();
@@ -628,7 +656,14 @@ void DeclarativeWebContainer::releasePage(int tabId, bool virtualize)
             emit contentItemChanged();
             updateUrl("");
             updateTitle("");
-            emit tabIdChanged();
+
+            if (m_tabId != 0) {
+                m_tabId = 0;
+                emit tabIdChanged();
+            }
+
+            emit loadingChanged();
+            setLoadProgress(0);
         }
     }
 }

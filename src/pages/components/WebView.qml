@@ -40,7 +40,7 @@ WebContainer {
 
     function grabActivePage() {
         if (webView.contentItem) {
-            webView.contentItem.grabToFile()
+            webView.privateMode ? webView.contentItem.grabThumbnail() : webView.contentItem.grabToFile()
         }
     }
 
@@ -56,10 +56,6 @@ WebContainer {
     favicon: contentItem ? contentItem.favicon : ""
 
     webPageComponent: webPageComponent
-
-    tabModel: TabModel {
-        id: tabs
-    }
 
     visible: WebUtils.firstUseDone
 
@@ -110,8 +106,11 @@ WebContainer {
             width: container.width
             state: ""
 
-            onClearGrabResult: tabs.updateThumbnailPath(tabId, "");
-            onGrabResult: tabs.updateThumbnailPath(tabId, fileName);
+            onClearGrabResult: tabModel.updateThumbnailPath(tabId, "")
+            onGrabResult: tabModel.updateThumbnailPath(tabId, fileName)
+
+            // Image data is base64 encoded which can be directly used as source in Image element
+            onThumbnailResult: tabModel.updateThumbnailPath(tabId, data)
 
             onUrlChanged: {
                 if (url == "about:blank") return
@@ -173,7 +172,7 @@ WebContainer {
                 }
 
                 if (loaded) {
-                    grabToFile()
+                    webView.privateMode ? grabThumbnail() : grabToFile()
                 }
             }
 

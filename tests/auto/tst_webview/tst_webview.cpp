@@ -14,7 +14,7 @@
 #include <qmozcontext.h>
 
 #include "declarativehistorymodel.h"
-#include "declarativetabmodel.h"
+#include "persistenttabmodel.h"
 #include "declarativewebcontainer.h"
 #include "declarativewebpage.h"
 #include "declarativewebviewcreator.h"
@@ -610,11 +610,14 @@ void tst_webview::forwardBackwardNavigation()
 
 void tst_webview::clear()
 {
-    QSignalSpy tabsCleared(tabModel, SIGNAL(tabsCleared()));
+    QSignalSpy tabClosed(tabModel, SIGNAL(tabClosed(int)));
     historyModel->clear();
     tabModel->clear();
     QTest::qWait(1000);
-    waitSignals(tabsCleared, 1);
+    waitSignals(tabClosed, 7);
+
+    // From the previous case there should be 7 tabs to close
+    QCOMPARE(tabClosed.count(), 7);
     QVERIFY(historyModel->rowCount() == 0);
     QVERIFY(webContainer->m_webPages->count() == 0);
     QVERIFY(webContainer->m_webPages->m_activePages.count() == 0);
@@ -784,7 +787,8 @@ int main(int argc, char *argv[])
     testcase.setContextProperty("MozContext", QMozContext::GetInstance());
 
     qmlRegisterType<DeclarativeHistoryModel>("Sailfish.Browser", 1, 0, "HistoryModel");
-    qmlRegisterType<DeclarativeTabModel>("Sailfish.Browser", 1, 0, "TabModel");
+    qmlRegisterUncreatableType<DeclarativeTabModel>("Sailfish.Browser", 1, 0, "TabModel", "TabModel is abstract!");
+    qmlRegisterType<PersistentTabModel>("Sailfish.Browser", 1, 0, "PersistentTabModel");
     qmlRegisterType<DeclarativeWebContainer>("Sailfish.Browser", 1, 0, "WebContainer");
     qmlRegisterType<DeclarativeWebPage>("Sailfish.Browser", 1, 0, "WebPage");
     qmlRegisterType<DeclarativeWebViewCreator>("Sailfish.Browser", 1, 0, "WebViewCreator");

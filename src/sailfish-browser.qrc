@@ -46,6 +46,7 @@
     <file>pages/components/ExpandingButton.qml</file>
     <file>pages/components/DisplaceTransition.qml</file>
     <file>pages/components/RemoveTransition.qml</file>
+    <file>pages/components/PrivateModeTexture.qml</file>
     <file>pages/components/pickers/ContentPicker.qml</file>
     <file>pages/components/pickers/ImagePicker.qml</file>
     <file>pages/components/pickers/MultiContentPicker.qml</file>
@@ -55,5 +56,6 @@
     <file>pages/components/pickers/MusicPicker.qml</file>
     <file>pages/components/pickers/VideoPicker.qml</file>
     <file>pages/components/graphic-radial-mask.png</file>
+    <file>pages/components/graphic-diagonal-line-texture.png</file>
 </qresource>
 </RCC>

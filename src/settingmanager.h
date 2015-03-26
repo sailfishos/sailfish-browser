@@ -29,6 +29,9 @@ public:
     int toolbarSmall();
     int toolbarLarge();
 
+    bool autostartPrivateBrowsing() const;
+    void setAutostartPrivateBrowsing(bool);
+
     static SettingManager *instance();
 
 signals:
@@ -56,6 +59,7 @@ private:
     MGConfItem *m_clearBookmarksConfItem;
     MGConfItem *m_searchEngineConfItem;
     MGConfItem *m_doNotTrackConfItem;
+    MGConfItem *m_autostartPrivateBrowsing;
 
     MGConfItem *m_toolbarSmall;
     MGConfItem *m_toolbarLarge;

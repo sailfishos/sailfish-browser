@@ -30,7 +30,8 @@
 #include "browserservice.h"
 #include "downloadmanager.h"
 #include "closeeventfilter.h"
-#include "declarativetabmodel.h"
+#include "persistenttabmodel.h"
+#include "privatetabmodel.h"
 #include "declarativehistorymodel.h"
 #include "declarativewebcontainer.h"
 #include "declarativewebpage.h"
@@ -121,7 +122,9 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     view->setTitle(qtTrId("sailfish-browser-ap-name"));
 
     qmlRegisterType<DeclarativeBookmarkModel>("Sailfish.Browser", 1, 0, "BookmarkModel");
-    qmlRegisterType<DeclarativeTabModel>("Sailfish.Browser", 1, 0, "TabModel");
+    qmlRegisterUncreatableType<DeclarativeTabModel>("Sailfish.Browser", 1, 0, "TabModel", "TabModel is abstract!");
+    qmlRegisterType<PersistentTabModel>("Sailfish.Browser", 1, 0, "PersistentTabModel");
+    qmlRegisterType<PrivateTabModel>("Sailfish.Browser", 1, 0, "PrivateTabModel");
     qmlRegisterType<DeclarativeHistoryModel>("Sailfish.Browser", 1, 0, "HistoryModel");
     qmlRegisterType<DeclarativeWebContainer>("Sailfish.Browser", 1, 0, "WebContainer");
     qmlRegisterType<DeclarativeWebPage>("Sailfish.Browser", 1, 0, "WebPage");

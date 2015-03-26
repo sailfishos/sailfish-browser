@@ -214,6 +214,10 @@ PanelBackground {
             height: toolBar.toolsHeight + historyList.height
             clip: true
 
+            PrivateModeTexture {
+                opacity: toolBar.visible && webView.privateMode ? toolBar.opacity : 0.0
+            }
+
             Browser.ToolBar {
                 id: toolBar
 
@@ -417,15 +421,30 @@ PanelBackground {
 
             onStatusChanged: {
                 if (activeWebPage && status == PageStatus.Active) {
-                    activeWebPage.grabToFile()
+                    webView.privateMode ? activeWebPage.grabThumbnail() : activeWebPage.grabToFile()
                 }
             }
 
             Browser.TabView {
                 model: webView.tabModel
                 portrait: tabPage.isPortrait
+                privateMode: webView.privateMode
 
                 onHide: pageStack.pop()
+
+                onPrivateModeChanged: {
+                    webView.privateMode = privateMode
+                    tabPage.activeTabIndex =  webView.tabModel.activeTabIndex
+                    tabPage.activeWebPage = webView.contentItem
+
+                    if (webView.tabModel.count === 0) {
+                        overlay.enterNewTabUrl(PageStackAction.Immediate)
+                    } else if (!overlayAnimator.atBottom) {
+                        // Hide overlay while switching to non-empty tabmodel
+                        dismiss()
+                    }
+                }
+
                 onEnterNewTabUrl: {
                     overlay.enterNewTabUrl(PageStackAction.Immediate)
                     pageStack.pop()
@@ -443,13 +462,13 @@ PanelBackground {
                 onCloseTab: {
                     webView.tabModel.remove(index)
                     if (webView.tabModel.count === 0) {
-                        enterNewTabUrl()
+                        overlay.enterNewTabUrl(PageStackAction.Immediate)
                     }
                 }
 
                 onCloseAll: {
                     webView.tabModel.clear()
-                    enterNewTabUrl()
+                    overlay.enterNewTabUrl(PageStackAction.Immediate)
                 }
 
                 Component.onCompleted: {

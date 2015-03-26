@@ -33,6 +33,7 @@ ApplicationWindow {
             fullscreenHeight: Screen.height
             width: parent.width
             height: parent.height
+            privateMode: false
 
             HistoryModel {
                 id: historyModel
