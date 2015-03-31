@@ -20,7 +20,7 @@ Rectangle {
     property string linkTitle
     property string imageSrc
     property string contentType
-    property TabModel tabModel
+    property var tabModel
     property PageStack pageStack
     property WebView webView
 
