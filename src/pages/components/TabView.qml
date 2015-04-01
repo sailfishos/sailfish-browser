@@ -76,10 +76,25 @@ SilicaGridView {
     ]
 
     PullDownMenu {
+        id: pullDownMenu
+        property var callbackFunction
+
         visible: Qt.application.active
         flickable: tabView
 
+        // Delay private mode execution until PullDownMenu is closed.
+        onActiveChanged: {
+            if (!active && callbackFunction) {
+                callbackFunction()
+                callbackFunction = null
+            }
+        }
+
         MenuItem {
+            function switchMode() {
+                tabView.privateMode = !tabView.privateMode
+            }
+
             text: tabView.privateMode ?
                     //: Menu item switching back to normal browser
                     //% "Normal browsing"
@@ -87,7 +102,7 @@ SilicaGridView {
                     //: Menu item switching to private browser
                     //% "Private browsing"
                     qsTrId("sailfish_browser-me-private_browsing")
-            onClicked: tabView.privateMode = !tabView.privateMode
+            onClicked: pullDownMenu.callbackFunction = switchMode
         }
         MenuItem {
             visible: webView.tabModel.count
