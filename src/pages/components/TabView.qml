@@ -64,7 +64,10 @@ SilicaGridView {
     children: [
         PrivateModeTexture {
             z: -1
-            visible: privateMode
+            visible: opacity > 0.0
+            opacity: privateMode ? 1.0 : 0.0
+
+            Behavior on opacity { FadeAnimation {} }
         },
 
         MouseArea {
