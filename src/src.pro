@@ -26,6 +26,8 @@ isEmpty(USE_RESOURCES) {
 
 PKGCONFIG +=  nemotransferengine-qt5 mlite5
 
+INCLUDEPATH += "../common/"
+
 packagesExist(qdeclarative5-boostable) {
     message("Building with qdeclarative-boostable support")
     DEFINES += HAS_BOOSTER
@@ -55,6 +57,7 @@ EE_QM = $$OUT_PWD/sailfish-browser_eng_en.qm
 include(../translations/translations.pri)
 include(history.pri)
 include(bookmarks.pri)
+include(../common/common.pri)
 
 # C++ sources
 SOURCES += \
