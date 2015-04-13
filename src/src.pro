@@ -62,6 +62,7 @@ include(../common/common.pri)
 # C++ sources
 SOURCES += \
     sailfishbrowser.cpp \
+    chromeview.cpp \
     declarativewebcontainer.cpp \
     declarativewebpage.cpp \
     declarativewebutils.cpp \
@@ -77,6 +78,7 @@ SOURCES += \
 
 # C++ headers
 HEADERS += \
+    chromeview.h \
     declarativewebcontainer.h \
     declarativewebpage.h \
     declarativewebutils.h \
