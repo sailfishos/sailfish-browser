@@ -52,11 +52,10 @@ bool allBlack(const QImage &image)
     return true;
 }
 
-DeclarativeWebPage::DeclarativeWebPage(QQuickItem *parent)
-    : QuickMozView(parent)
+DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
+    : QOpenGLWebPage(parent)
     , m_container(0)
     , m_tabId(0)
-    , m_viewReady(false)
     , m_userHasDraggedWhileLoading(false)
     , m_fullscreen(false)
     , m_forcedChrome(false)
@@ -65,12 +64,34 @@ DeclarativeWebPage::DeclarativeWebPage(QQuickItem *parent)
     , m_backForwardNavigation(false)
     , m_boundToModel(false)
 {
-    connect(this, SIGNAL(viewInitialized()), this, SLOT(onViewInitialized()));
+    addMessageListener(gFullScreenMessage);
+    addMessageListener(gDomContentLoadedMessage);
+
+    addMessageListener(gLinkAddedMessage);
+    addMessageListener(gAlertMessage);
+    addMessageListener(gConfirmMessage);
+    addMessageListener(gPromptMessage);
+    addMessageListener(gAuthMessage);
+    addMessageListener(gLoginMessage);
+    addMessageListener(gFindMessage);
+    addMessageListener(gPermissionsMessage);
+    addMessageListener(gContextMenuMessage);
+    addMessageListener(gSelectionRangeMessage);
+    addMessageListener(gSelectionCopiedMessage);
+    addMessageListener(gSelectAsyncMessage);
+    addMessageListener(gFilePickerMessage);
+
+    loadFrameScript("chrome://embedlite/content/SelectAsyncHelper.js");
+    loadFrameScript("chrome://embedlite/content/embedhelper.js");
+
     connect(this, SIGNAL(recvAsyncMessage(const QString, const QVariant)),
             this, SLOT(onRecvAsyncMessage(const QString&, const QVariant&)));
     connect(&m_grabWritter, SIGNAL(finished()), this, SLOT(grabWritten()));
     connect(this, SIGNAL(contentHeightChanged()), this, SLOT(resetHeight()));
     connect(this, SIGNAL(scrollableOffsetChanged()), this, SLOT(resetHeight()));
+
+    // TODO: remove this!!!
+    setSize(QSizeF(1536, 2048));
 }
 
 DeclarativeWebPage::~DeclarativeWebPage()
@@ -122,11 +143,6 @@ void DeclarativeWebPage::setUrlHasChanged(bool urlHasChanged)
     m_urlHasChanged = urlHasChanged;
 }
 
-void DeclarativeWebPage::setInitialUrl(const QString &url)
-{
-    m_initialUrl = url;
-}
-
 void DeclarativeWebPage::bindToModel()
 {
     m_boundToModel = true;
@@ -145,11 +161,6 @@ bool DeclarativeWebPage::backForwardNavigation() const
 void DeclarativeWebPage::setBackForwardNavigation(bool backForwardNavigation)
 {
     m_backForwardNavigation = backForwardNavigation;
-}
-
-bool DeclarativeWebPage::viewReady() const
-{
-    return m_viewReady;
 }
 
 QVariant DeclarativeWebPage::resurrectedContentRect() const
@@ -179,7 +190,8 @@ void DeclarativeWebPage::loadTab(QString newUrl, bool force)
 
 void DeclarativeWebPage::grabToFile()
 {
-    if (!m_viewReady || backForwardNavigation() || !active() || !isPainted())
+#if 0
+    if (!completed() || backForwardNavigation() || !active() || !isPainted())
         return;
 
     emit clearGrabResult();
@@ -188,12 +200,16 @@ void DeclarativeWebPage::grabToFile()
     if (m_grabResult.data()) {
         connect(m_grabResult.data(), SIGNAL(ready()), this, SLOT(grabResultReady()));
     }
+#endif
 }
+
 
 void DeclarativeWebPage::grabThumbnail()
 {
+#if 0
     m_thumbnailResult = grabToImage();
     connect(m_thumbnailResult.data(), SIGNAL(ready()), this, SLOT(thumbnailReady()));
+#endif
 }
 
 /**
@@ -224,9 +240,9 @@ void DeclarativeWebPage::forceChrome(bool forcedChrome)
 
 void DeclarativeWebPage::resetHeight(bool respectContentHeight)
 {
-    if (!state().isEmpty()) {
-        return;
-    }
+//    if (!state().isEmpty()) {
+//        return;
+//    }
 
     // fullscreen() below in the fullscreen request coming from the web content.
     if (respectContentHeight && (!m_forcedChrome || fullscreen())) {
@@ -246,42 +262,12 @@ void DeclarativeWebPage::resetHeight(bool respectContentHeight)
     }
 }
 
+#if 0
 void DeclarativeWebPage::componentComplete()
 {
     QuickMozView::componentComplete();
 }
-
-void DeclarativeWebPage::onViewInitialized()
-{
-    addMessageListener(gFullScreenMessage);
-    addMessageListener(gDomContentLoadedMessage);
-
-    addMessageListener(gLinkAddedMessage);
-    addMessageListener(gAlertMessage);
-    addMessageListener(gConfirmMessage);
-    addMessageListener(gPromptMessage);
-    addMessageListener(gAuthMessage);
-    addMessageListener(gLoginMessage);
-    addMessageListener(gFindMessage);
-    addMessageListener(gPermissionsMessage);
-    addMessageListener(gContextMenuMessage);
-    addMessageListener(gSelectionRangeMessage);
-    addMessageListener(gSelectionCopiedMessage);
-    addMessageListener(gSelectAsyncMessage);
-    addMessageListener(gFilePickerMessage);
-
-    loadFrameScript("chrome://embedlite/content/SelectAsyncHelper.js");
-    loadFrameScript("chrome://embedlite/content/embedhelper.js");
-
-    // This is the only place that is allowed to change this to true.
-    m_viewReady = true;
-    emit viewReadyChanged();
-
-    if (!m_initialUrl.isEmpty()) {
-        loadTab(m_initialUrl, false);
-        m_initialUrl = "";
-    }
-}
+#endif
 
 void DeclarativeWebPage::grabResultReady()
 {
@@ -368,7 +354,7 @@ QDebug operator<<(QDebug dbg, const DeclarativeWebPage *page)
     }
 
     dbg.nospace() << "DeclarativeWebPage(url = " << page->url() << ", title = " << page->title() << ", width = " << page->width()
-                  << ", height = " << page->height() << ", opacity = " << page->opacity()
-                  << ", visible = " << page->isVisible() << ", enabled = " << page->isEnabled() << ")";
+                  << ", height = " << page->height() << ", opacity = " //<< page->opacity()
+                  << ", active = " << page->active() << ", enabled = " << page->enabled() << ")";
     return dbg.space();
 }

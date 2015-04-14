@@ -16,21 +16,28 @@
 #include "tab.h"
 #include "webpages.h"
 
-#include <QQuickItem>
+#include <qqml.h>
+#include <QtGui/QWindow>
+#include <QtGui/QOpenGLFunctions>
 #include <QPointer>
 #include <QImage>
 #include <QFutureWatcher>
+#include <QQmlComponent>
+#include <QQuickView>
 
+class QInputMethodEvent;
 class QTimerEvent;
 class DeclarativeTabModel;
 class DeclarativeWebPage;
 
-class DeclarativeWebContainer : public QQuickItem {
+class DeclarativeWebContainer : public QWindow, public QQmlParserStatus, protected QOpenGLFunctions {
     Q_OBJECT
+    Q_INTERFACES(QQmlParserStatus)
 
     Q_PROPERTY(DeclarativeWebPage *contentItem READ webPage NOTIFY contentItemChanged FINAL)
     Q_PROPERTY(DeclarativeTabModel *tabModel READ tabModel WRITE setTabModel NOTIFY tabModelChanged FINAL)
     Q_PROPERTY(bool completed READ completed NOTIFY completedChanged FINAL)
+    Q_PROPERTY(bool enabled MEMBER m_enabled NOTIFY enabledChanged FINAL)
     Q_PROPERTY(bool foreground READ foreground WRITE setForeground NOTIFY foregroundChanged FINAL)
     Q_PROPERTY(int maxLiveTabCount READ maxLiveTabCount WRITE setMaxLiveTabCount NOTIFY maxLiveTabCountChanged FINAL)
     // This property should cover all possible popus
@@ -61,9 +68,9 @@ class DeclarativeWebContainer : public QQuickItem {
     Q_PROPERTY(bool privateMode READ privateMode WRITE setPrivateMode NOTIFY privateModeChanged FINAL)
 
     Q_PROPERTY(QQmlComponent* webPageComponent MEMBER m_webPageComponent NOTIFY webPageComponentChanged FINAL)
-
+    Q_PROPERTY(QWindow *chromeWindow READ chromeWindow WRITE setChromeWindow NOTIFY chromeWindowChanged FINAL)
 public:
-    DeclarativeWebContainer(QQuickItem *parent = 0);
+    DeclarativeWebContainer(QWindow *parent = 0);
     ~DeclarativeWebContainer();
 
     DeclarativeWebPage *webPage() const;
@@ -100,6 +107,9 @@ public:
     bool canGoBack() const;
     void setCanGoBack(bool canGoBack);
 
+    QWindow *chromeWindow() const;
+    void setChromeWindow(QWindow *chromeWindow);
+
     int tabId() const;
     QString title() const;
     QString url() const;
@@ -120,7 +130,7 @@ signals:
     void contentItemChanged();
     void tabModelChanged();
     void completedChanged();
-    void pageStackChanged();
+    void enabledChanged();
     void foregroundChanged();
     void backgroundChanged();
     void allowHidingChanged();
@@ -148,10 +158,22 @@ signals:
     void privateModeChanged();
 
     void webPageComponentChanged();
+    void chromeWindowChanged();
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event);
-    void componentComplete();
+    virtual void touchEvent(QTouchEvent *event);
+    virtual QVariant inputMethodQuery(Qt::InputMethodQuery property) const;
+    virtual void inputMethodEvent(QInputMethodEvent *event);
+    virtual void keyPressEvent(QKeyEvent *event);
+    virtual void keyReleaseEvent(QKeyEvent *event);
+    virtual void focusInEvent(QFocusEvent *event);
+    virtual void focusOutEvent(QFocusEvent *event);
+    virtual void timerEvent(QTimerEvent *event);
+
+    virtual void classBegin();
+    virtual void componentComplete();
+
 
 public slots:
     void resetHeight(bool respectContentHeight = true);
@@ -177,6 +199,8 @@ private slots:
     // matching composition metrics.
     void sendVkbOpenCompositionMetrics();
 
+    void createGLContext();
+
 private:
     void setWebPage(DeclarativeWebPage *webPage);
     qreal contentHeight() const;
@@ -190,6 +214,9 @@ private:
     void updateMode();
 
     QPointer<DeclarativeWebPage> m_webPage;
+    QPointer<QQuickView> m_chromeWindow;
+    QOpenGLContext *m_context;
+
     QPointer<DeclarativeTabModel> m_model;
     QPointer<QQmlComponent> m_webPageComponent;
     QPointer<SettingManager> m_settingManager;
@@ -197,7 +224,7 @@ private:
     QPointer<DeclarativeTabModel> m_persistentTabModel;
     QPointer<DeclarativeTabModel> m_privateTabModel;
 
-
+    bool m_enabled;
     bool m_foreground;
     bool m_allowHiding;
     bool m_popupActive;
