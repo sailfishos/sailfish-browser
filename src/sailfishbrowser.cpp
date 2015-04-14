@@ -186,7 +186,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     view->setSource(QUrl::fromLocalFile(path+"browser.qml"));
 #endif
 
-    view->showFullScreen();
+//    view->showFullScreen();
 
     // Setup embedding
     QTimer::singleShot(0, QMozContext::GetInstance(), SLOT(runEmbedding()));

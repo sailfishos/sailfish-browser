@@ -18,7 +18,7 @@ PanelBackground {
     id: overlay
 
     property bool active
-    property Item webView
+    property QtObject webView
     property Item browserPage
     property alias historyModel: historyList.model
     property alias toolBar: toolBar
@@ -419,7 +419,7 @@ PanelBackground {
         Page {
             id: tabPage
             property int activeTabIndex
-            property Item activeWebPage
+            property QtObject activeWebPage
 
             onStatusChanged: {
                 if (activeWebPage && status == PageStatus.Active) {

@@ -15,7 +15,7 @@ Item {
     id: animator
 
     property Item overlay
-    property Item webView
+    property QtObject webView
     property bool portrait
     property bool atTop
     property bool atMiddle
@@ -56,10 +56,10 @@ Item {
         // Verify that we return back to opacity 1.0
         // For instance, push to switcher from new-tab-creation overlay
         if (newState === "fullscreenWebPage" || newState === "chromeVisible") {
-            if (webView && webView.contentItem) {
-                webView.contentItem.visible = true
-                webView.contentItem.opacity = 1.0
-            }
+//            if (webView && webView.contentItem) {
+//                webView.contentItem.visible = true
+//                webView.contentItem.opacity = 1.0
+//            }
         }
 
         if (newState !== "fullscreenWebPage") {
@@ -121,6 +121,7 @@ Item {
 
     Connections {
         target: webView.tabModel
+        ignoreUnknownSignals: true
         onCountChanged: {
             if (webView.completed && webView.tabModel.count === 0) {
                 updateState("fullscreenOverlay")
