@@ -10,7 +10,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 
-import QtQuick 2.0
+import QtQuick 2.1
 import Sailfish.Silica 1.0
 import Sailfish.Silica.private 1.0
 import Sailfish.Browser 1.0
@@ -109,16 +109,25 @@ Page {
         id: historyModel
     }
 
+    Item {
+//        id: background
+//        anchors.fill: parent
+//        visible: !webView.contentItem
+//        color: webView.contentItem && webView.contentItem.bgcolor ? webView.contentItem.bgcolor : "white"
+
+        onWindowChanged: webView.chromeWindow = window
+    }
+
     Browser.DownloadRemorsePopup { id: downloadPopup }
     Browser.WebView {
         id: webView
 
-        enabled: overlay.animator.allowContentUse
+//        enabled: overlay.animator.allowContentUse
         fullscreenHeight: portrait ? Screen.height : Screen.width
         portrait: browserPage.isPortrait
         maxLiveTabCount: 3
         toolbarHeight: overlay.toolBar.toolsHeight
-        clip: true
+//        clip: true
     }
 
     Rectangle {

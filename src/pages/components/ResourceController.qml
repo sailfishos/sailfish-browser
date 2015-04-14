@@ -17,7 +17,7 @@ import org.nemomobile.policy 1.0
 
 // QtObject cannot have children
 Item {
-    property Item webView
+    property QtObject webView
     property bool videoActive
     property bool audioActive
     property bool background
