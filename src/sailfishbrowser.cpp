@@ -64,8 +64,6 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     QScopedPointer<QGuiApplication> app(new QGuiApplication(argc, argv));
     QScopedPointer<QQuickView> view(new QQuickView);
 #endif
-//    QScopedPointer<ChromeView> view(new ChromeView);
-//    view->create();
     app->setQuitOnLastWindowClosed(false);
 
     // GRE_HOME must be set before QMozContext is initialized.
