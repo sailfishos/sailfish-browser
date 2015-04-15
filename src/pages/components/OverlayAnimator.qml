@@ -120,7 +120,7 @@ Item {
     }
 
     Connections {
-        target: webView.tabModel
+        target: webView && webView.tabModel || null
         ignoreUnknownSignals: true
         onCountChanged: {
             if (webView.completed && webView.tabModel.count === 0) {
@@ -136,13 +136,6 @@ Item {
             name: "fullscreenWebPage"
             changes: [
                 PropertyChanges {
-                    target: webView
-                    // TODO: once we get rid of bad rendering loop, check if we could use here browserPage.height
-                    // instead of webView.fullscreenHeight. Currently with browserPage.height binding we skip
-                    // frames when returning back from tab page so that virtual keyboard was open.
-                    height: overlay.y
-                },
-                PropertyChanges {
                     target: overlay
                     y: webView.fullscreenHeight
                 }
@@ -156,10 +149,6 @@ Item {
             name: "chromeVisible"
             changes: [
                 PropertyChanges {
-                    target: webView
-                    height: overlay.y
-                },
-                PropertyChanges {
                     target: overlay
                     y: webView.fullscreenHeight - overlay.toolBar.toolsHeight
                 }
@@ -168,10 +157,6 @@ Item {
         State {
             name: "draggingOverlay"
             changes: [
-                PropertyChanges {
-                    target: webView
-                    height: overlay.y
-                },
                 PropertyChanges {
                     target: overlay
                     y: overlay.y
@@ -187,12 +172,6 @@ Item {
             name: "fullscreenOverlay"
             changes: [
                 PropertyChanges {
-                    target: webView
-                    // was floor
-                    //height: Math.ceil(overlay.y) ? Math.ceil(overlay.y) : 0
-                    height: overlay.y
-                },
-                PropertyChanges {
                     target: overlay
                     y: openYPosition
                 }
@@ -202,10 +181,6 @@ Item {
         State {
             name: "doubleToolBar"
             changes: [
-                PropertyChanges {
-                    target: webView
-                    height: overlay.y
-                },
                 PropertyChanges {
                     target: overlay
                     y: webView.fullscreenHeight - overlay.toolBar.toolsHeight * 2
