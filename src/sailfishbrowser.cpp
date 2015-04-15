@@ -22,7 +22,6 @@
 #include <QDBusMessage>
 #include <QDBusPendingCall>
 
-#include "chromeview.h"
 #include "qmozcontext.h"
 
 #include "declarativebookmarkmodel.h"
@@ -60,12 +59,13 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 
 #ifdef HAS_BOOSTER
     QScopedPointer<QGuiApplication> app(MDeclarativeCache::qApplication(argc, argv));
-//    QScopedPointer<QQuickView> view(MDeclarativeCache::qQuickView());
+    QScopedPointer<QQuickView> view(MDeclarativeCache::qQuickView());
 #else
     QScopedPointer<QGuiApplication> app(new QGuiApplication(argc, argv));
-//    QScopedPointer<QQuickView> view(new QQuickView);
+    QScopedPointer<QQuickView> view(new QQuickView);
 #endif
-    QScopedPointer<ChromeView> view(new ChromeView);
+//    QScopedPointer<ChromeView> view(new ChromeView);
+//    view->create();
     app->setQuitOnLastWindowClosed(false);
 
     // GRE_HOME must be set before QMozContext is initialized.
@@ -187,8 +187,6 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     }
     view->setSource(QUrl::fromLocalFile(path+"browser.qml"));
 #endif
-
-//    view->showFullScreen();
 
     // Setup embedding
     QTimer::singleShot(0, QMozContext::GetInstance(), SLOT(runEmbedding()));
