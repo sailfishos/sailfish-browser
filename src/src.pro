@@ -58,6 +58,7 @@ include(bookmarks.pri)
 
 # C++ sources
 SOURCES += \
+    inputregion.cpp \
     sailfishbrowser.cpp \
     chromeview.cpp \
     declarativewebcontainer.cpp \
@@ -75,6 +76,8 @@ SOURCES += \
 
 # C++ headers
 HEADERS += \
+    inputregion.h \
+    inputregion_p.h \
     chromeview.h \
     declarativewebcontainer.h \
     declarativewebpage.h \
