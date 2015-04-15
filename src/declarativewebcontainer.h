@@ -68,7 +68,7 @@ class DeclarativeWebContainer : public QWindow, public QQmlParserStatus, protect
     Q_PROPERTY(bool privateMode READ privateMode WRITE setPrivateMode NOTIFY privateModeChanged FINAL)
 
     Q_PROPERTY(QQmlComponent* webPageComponent MEMBER m_webPageComponent NOTIFY webPageComponentChanged FINAL)
-    Q_PROPERTY(QWindow *chromeWindow READ chromeWindow WRITE setChromeWindow NOTIFY chromeWindowChanged FINAL)
+    Q_PROPERTY(QObject *chromeWindow READ chromeWindow WRITE setChromeWindow NOTIFY chromeWindowChanged FINAL)
 public:
     DeclarativeWebContainer(QWindow *parent = 0);
     ~DeclarativeWebContainer();
@@ -107,8 +107,8 @@ public:
     bool canGoBack() const;
     void setCanGoBack(bool canGoBack);
 
-    QWindow *chromeWindow() const;
-    void setChromeWindow(QWindow *chromeWindow);
+    QObject *chromeWindow() const;
+    void setChromeWindow(QObject *chromeWindow);
 
     int tabId() const;
     QString title() const;

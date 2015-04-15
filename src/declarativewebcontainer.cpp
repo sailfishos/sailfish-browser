@@ -291,12 +291,12 @@ bool DeclarativeWebContainer::canGoBack() const
     return m_canGoBack;
 }
 
-QWindow *DeclarativeWebContainer::chromeWindow() const
+QObject *DeclarativeWebContainer::chromeWindow() const
 {
     return m_chromeWindow;
 }
 
-void DeclarativeWebContainer::setChromeWindow(QWindow *chromeWindow)
+void DeclarativeWebContainer::setChromeWindow(QObject *chromeWindow)
 {
     QQuickView *quickView = qobject_cast<QQuickView*>(chromeWindow);
     if (quickView && (quickView != m_chromeWindow)) {
