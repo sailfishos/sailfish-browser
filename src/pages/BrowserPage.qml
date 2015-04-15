@@ -122,12 +122,19 @@ Page {
     Browser.WebView {
         id: webView
 
-//        enabled: overlay.animator.allowContentUse
+        enabled: overlay.animator.allowContentUse
         fullscreenHeight: portrait ? Screen.height : Screen.width
         portrait: browserPage.isPortrait
         maxLiveTabCount: 3
         toolbarHeight: overlay.toolBar.toolsHeight
 //        clip: true
+    }
+
+    InputRegion {
+        window: webView.chromeWindow
+        y: webView.enabled ? overlay.y : 0
+        width: browserPage.width
+        height: webView.enabled ? browserPage.height - overlay.y : browserPage.height
     }
 
     Rectangle {
