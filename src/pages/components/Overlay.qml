@@ -52,7 +52,7 @@ PanelBackground {
                 }
                 webView.tabModel.waitingForNewTab = true
             }
-            webView.focus = true
+            //webView.focus = true
         }
 
         overlayAnimator.showChrome()
@@ -69,9 +69,9 @@ PanelBackground {
     }
 
     function dismiss() {
-        if (webView.contentItem) {
-            webView.contentItem.opacity = 1.0
-        }
+//        if (webView.contentItem) {
+//            webView.contentItem.opacity = 1.0
+//        }
         toolBar.resetFind()
         if (webView.contentItem && webView.contentItem.fullscreen) {
             // Web content is in fullscreen mode thus we don't show chrome
