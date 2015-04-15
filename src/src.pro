@@ -60,7 +60,6 @@ include(bookmarks.pri)
 SOURCES += \
     inputregion.cpp \
     sailfishbrowser.cpp \
-    chromeview.cpp \
     declarativewebcontainer.cpp \
     declarativewebpage.cpp \
     declarativewebutils.cpp \
@@ -78,7 +77,6 @@ SOURCES += \
 HEADERS += \
     inputregion.h \
     inputregion_p.h \
-    chromeview.h \
     declarativewebcontainer.h \
     declarativewebpage.h \
     declarativewebutils.h \
