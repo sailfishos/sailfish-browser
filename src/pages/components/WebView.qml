@@ -348,6 +348,5 @@ WebContainer {
         PopupHandler.WebUtils = WebUtils
         PopupHandler.tabModel = tabModel
         PopupHandler.pickerCreator = pickerCreator
-        webView.privateMode = false
     }
 }
