@@ -308,6 +308,7 @@ void DeclarativeWebContainer::setChromeWindow(QObject *chromeWindow)
 //            connect(m_chromeWindow->rootObject(), SIGNAL(widthChanged()), this, SLOT(sendVkbOpenCompositionMetrics()));
             m_chromeWindow->setTransientParent(this);
             m_chromeWindow->showFullScreen();
+            connect(m_chromeWindow, SIGNAL(contentOrientationChanged(Qt::ScreenOrientation)), this, SLOT(updateContentOrientation(Qt::ScreenOrientation)));
         }
         emit chromeWindowChanged();
     }
@@ -564,6 +565,11 @@ void DeclarativeWebContainer::resetHeight(bool respectContentHeight)
     }
 
     m_webPage->resetHeight(respectContentHeight);
+}
+
+void DeclarativeWebContainer::updateContentOrientation(Qt::ScreenOrientation orientation)
+{
+    reportContentOrientationChange(orientation);
 }
 
 void DeclarativeWebContainer::imeNotificationChanged(int state, bool open, int cause, int focusChange, const QString &type)

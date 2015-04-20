@@ -179,6 +179,7 @@ public slots:
     void resetHeight(bool respectContentHeight = true);
 
 private slots:
+    void updateContentOrientation(Qt::ScreenOrientation orientation);
     void imeNotificationChanged(int state, bool open, int cause, int focusChange, const QString& type);
     void handleEnabledChanged();
     void initialize();
