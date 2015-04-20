@@ -19,7 +19,10 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QDateTime>
+#include <QScreen>
 #include <QStandardPaths>
+#include <QtMath>
+#include <math.h>
 #include "declarativewebutils.h"
 #include "qmozcontext.h"
 #include "opensearchconfigs.h"
@@ -31,6 +34,14 @@ static DeclarativeWebUtils *gSingleton = 0;
 static const qreal gCssPixelRatioRoundingFactor = 0.5;
 static const qreal gCssDefaultPixelRatio = 1.5;
 
+
+bool testScreenDimensions(qreal pixelRatio) {
+    QScreen *screen = QGuiApplication::primaryScreen();
+    qreal w = screen->size().width() / pixelRatio;
+    qreal h = screen->size().height() / pixelRatio;
+
+    return fmod(w, 1.0) == 0 && fmod(h, 1.0) == 0;
+}
 
 DeclarativeWebUtils::DeclarativeWebUtils()
     : QObject()
@@ -403,6 +414,15 @@ void DeclarativeWebUtils::setContentScaling()
     qreal mozCssPixelRatio = gCssDefaultPixelRatio * m_silicaPixelRatio;
     // Round to nearest even rounding factor
     mozCssPixelRatio = qRound(mozCssPixelRatio / gCssPixelRatioRoundingFactor) * gCssPixelRatioRoundingFactor;
+
+    // If we're on hdpi and calcaluted pixel ratio doesn't result integer dimensions, let's try to floor it.
+    if (mozCssPixelRatio >= 2.0 && !testScreenDimensions(mozCssPixelRatio)) {
+        qreal tempPixelRatio = qFloor(mozCssPixelRatio);
+        if (testScreenDimensions(tempPixelRatio)) {
+            mozCssPixelRatio = tempPixelRatio;
+        }
+    }
+
     mozContext->setPixelRatio(mozCssPixelRatio);
     emit cssPixelRatioChanged();
 }
