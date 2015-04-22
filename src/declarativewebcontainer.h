@@ -126,6 +126,8 @@ public:
 
     Q_INVOKABLE void dumpPages() const;
 
+    QObject *focusObject() const;
+
 signals:
     void contentItemChanged();
     void tabModelChanged();
