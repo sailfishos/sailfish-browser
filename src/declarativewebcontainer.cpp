@@ -144,6 +144,7 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
         emit contentItemChanged();
         emit tabIdChanged();
         emit loadingChanged();
+        emit focusObjectChanged(m_webPage);
 
         updateUrl(url());
         updateTitle(title());
@@ -488,6 +489,11 @@ void DeclarativeWebContainer::dumpPages() const
     m_webPages->dumpPages();
 }
 
+QObject *DeclarativeWebContainer::focusObject() const
+{
+    return m_webPage ? m_webPage : QWindow::focusObject();
+}
+
 bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
 {
     // Hiding stops rendering. Don't pass it through if hiding is not allowed.
@@ -543,7 +549,7 @@ void DeclarativeWebContainer::focusInEvent(QFocusEvent *event)
 void DeclarativeWebContainer::focusOutEvent(QFocusEvent *event)
 {
     if (m_webPage && m_enabled) {
-        m_webPage->focusInEvent(event);
+        m_webPage->focusOutEvent(event);
     }
 }
 
