@@ -31,6 +31,9 @@
 #include <qmozcontext.h>
 #include <QGuiApplication>
 
+#include <qpa/qplatformnativeinterface.h>
+
+
 #ifndef DEBUG_LOGS
 #define DEBUG_LOGS 0
 #endif
@@ -74,6 +77,11 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
 
     create();
     setObjectName("WebView");
+
+    if (QPlatformWindow *windowHandle = handle()) {
+        QPlatformNativeInterface *native = QGuiApplication::platformNativeInterface();
+        native->setWindowProperty(windowHandle, QStringLiteral("BACKGROUND_VISIBLE"), false);
+    }
 
     QMozContext::GetInstance()->setPixelRatio(2.0);
 
