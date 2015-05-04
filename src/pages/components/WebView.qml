@@ -44,8 +44,6 @@ WebContainer {
         }
     }
 
-    width: parent.width
-    height: portrait ? Screen.height : Screen.width
     foreground: Qt.application.active
     allowHiding: !resourceController.videoActive && !resourceController.audioActive
     inputPanelHeight: window.pageStack.panelSize
@@ -93,7 +91,7 @@ WebContainer {
             signal contextMenuRequested(variant data)
 
 //            focus: true
-            width: container.width
+            width: container.rotationHandler && container.rotationHandler.width || 0
 //            state: ""
 
             onClearGrabResult: tabModel.updateThumbnailPath(tabId, "")
