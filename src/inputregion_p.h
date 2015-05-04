@@ -20,6 +20,7 @@ class InputRegionPrivate {
 public:
     InputRegionPrivate(InputRegion *q);
 
+    void scheduleUpdate();
     void update();
 
     qreal x;
@@ -28,6 +29,7 @@ public:
     qreal height;
     QWindow *window;
     InputRegion *q_ptr;
+    int updateTimerId;
 
     Q_DECLARE_PUBLIC(InputRegion)
 };

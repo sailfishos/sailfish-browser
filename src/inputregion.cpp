@@ -15,6 +15,9 @@
 #include <QGuiApplication>
 #include <qpa/qplatformnativeinterface.h>
 
+// Hold off actual update to reduce context switches during animations
+const int INPUT_REGION_UPDATE_DELAY = 50; // ms
+
 InputRegionPrivate::InputRegionPrivate(InputRegion *q)
     : x(0.0)
     , y(0.0)
@@ -22,15 +25,31 @@ InputRegionPrivate::InputRegionPrivate(InputRegion *q)
     , height(0.0)
     , window(0)
     , q_ptr(q)
+    , updateTimerId(0)
 {
 }
 
 void InputRegionPrivate::update()
 {
-    if (window && window->handle() && width > 0.0 && height > 0.0) {
+    Q_Q(InputRegion);
+    q->killTimer(updateTimerId);
+    updateTimerId = 0;
+
+    if (window && window->handle()) {
         QPlatformNativeInterface *native = QGuiApplication::platformNativeInterface();
         native->setWindowProperty(window->handle(), QLatin1String("MOUSE_REGION"), QVariant(QRegion(x, y, width, height)));
     }
+}
+
+void InputRegionPrivate::scheduleUpdate()
+{
+    Q_Q(InputRegion);
+
+    if (updateTimerId) {
+        q->killTimer(updateTimerId);
+    }
+
+    updateTimerId = q->startTimer(INPUT_REGION_UPDATE_DELAY);
 }
 
 
@@ -51,7 +70,7 @@ void InputRegion::setX(qreal x)
     Q_D(InputRegion);
     if (d->x != x) {
         d->x = x;
-        d->update();
+        d->scheduleUpdate();
         emit xChanged();
     }
 }
@@ -67,7 +86,7 @@ void InputRegion::setY(qreal y)
     Q_D(InputRegion);
     if (d->y != y) {
         d->y = y;
-        d->update();
+        d->scheduleUpdate();
         emit yChanged();
     }
 }
@@ -83,7 +102,7 @@ void InputRegion::setWidth(qreal width)
     Q_D(InputRegion);
     if (d->width != width) {
         d->width = width;
-        d->update();
+        d->scheduleUpdate();
         emit widthChanged();
     }
 }
@@ -99,7 +118,7 @@ void InputRegion::setHeight(qreal height)
     Q_D(InputRegion);
     if (d->height != height) {
         d->height = height;
-        d->update();
+        d->scheduleUpdate();
         emit heightChanged();
     }
 }
@@ -115,7 +134,13 @@ void InputRegion::setWindow(QWindow *window)
     Q_D(InputRegion);
     if (d->window != window) {
         d->window = window;
-        d->update();
+        d->scheduleUpdate();
         emit windowChanged();
     }
+}
+
+void InputRegion::timerEvent(QTimerEvent *)
+{
+    Q_D(InputRegion);
+    d->update();
 }

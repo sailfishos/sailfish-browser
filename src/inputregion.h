@@ -52,6 +52,9 @@ signals:
     void heightChanged();
     void windowChanged();
 
+protected:
+    void timerEvent(QTimerEvent *);
+
 private:
     InputRegionPrivate *d_ptr;
     Q_DISABLE_COPY(InputRegion)

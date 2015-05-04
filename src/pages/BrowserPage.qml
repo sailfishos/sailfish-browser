@@ -20,6 +20,8 @@ import "components" as Browser
 Page {
     id: browserPage
 
+
+    readonly property rect inputMask: inputMaskForOrientation(orientation)
     readonly property bool active: status == PageStatus.Active
     property Item firstUseOverlay
     property Item debug
@@ -46,6 +48,31 @@ Page {
         pageStack.pop(browserPage, PageStackAction.Immediate);
         overlay.enterNewTabUrl(PageStackAction.Immediate)
         bringToForeground()
+    }
+
+    function inputMaskForOrientation(orientation) {
+        // mask is in portrait window coordinates
+        var mask = Qt.rect(0, 0, Screen.width, Screen.height)
+        if (webView.enabled && browserPage.active && !webView.popupActive) {
+            var overlayVisibleHeight = browserPage.height - overlay.y
+
+            switch (orientation) {
+            case Orientation.None:
+            case Orientation.Portrait:
+                mask.y = overlay.y
+                // fallthrough
+            case Orientation.PortraitInverted:
+                mask.height = overlayVisibleHeight
+                break
+
+            case Orientation.LandscapeInverted:
+                mask.x = overlay.y
+                // fallthrough
+            case Orientation.Landscape:
+                mask.width = overlayVisibleHeight
+            }
+        }
+        return mask
     }
 
     // Safety clipping. There is clipping in ApplicationWindow that should react upon focus changes.
@@ -143,10 +170,10 @@ Page {
 
     InputRegion {
         window: webView.chromeWindow
-        y: webView.enabled && browserPage.active && !webView.popupActive ? overlay.y : 0
-
-        width: browserPage.width
-        height: webView.enabled && browserPage.active && !webView.popupActive ? browserPage.height - overlay.y : browserPage.height
+        x: inputMask.x
+        y: inputMask.y
+        width: inputMask.width
+        height: inputMask.height
     }
 
     Rectangle {
