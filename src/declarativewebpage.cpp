@@ -89,9 +89,6 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
     connect(&m_grabWritter, SIGNAL(finished()), this, SLOT(grabWritten()));
     connect(this, SIGNAL(contentHeightChanged()), this, SLOT(resetHeight()));
     connect(this, SIGNAL(scrollableOffsetChanged()), this, SLOT(resetHeight()));
-
-    // TODO: remove this!!!
-    setSize(QSizeF(1536, 2048));
 }
 
 DeclarativeWebPage::~DeclarativeWebPage()

@@ -40,6 +40,7 @@
 
 DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     : QWindow(parent)
+    , m_rotationHandler(0)
     , m_webPage(0)
     , m_context(0)
     , m_model(0)
@@ -68,7 +69,8 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     , m_privateMode(m_settingManager->autostartPrivateBrowsing())
 {
 
-    resize(1536, 2048);;
+    QSize screenSize = QGuiApplication::primaryScreen()->size();
+    resize(screenSize.width(), screenSize.height());;
     setSurfaceType(QWindow::OpenGLSurface);
 
     QSurfaceFormat format(requestedFormat());
@@ -135,6 +137,10 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
         m_webPage = webPage;
 
         if (m_webPage) {
+            m_webPage->setWindow(this);
+            if (m_chromeWindow) {
+                updateContentOrientation(m_chromeWindow->contentOrientation());
+            }
             m_tabId = m_webPage->tabId();
         } else {
             m_tabId = 0;
@@ -317,6 +323,7 @@ void DeclarativeWebContainer::setChromeWindow(QObject *chromeWindow)
 //            connect(m_chromeWindow->rootObject(), SIGNAL(widthChanged()), this, SLOT(sendVkbOpenCompositionMetrics()));
             m_chromeWindow->setTransientParent(this);
             m_chromeWindow->showFullScreen();
+            updateContentOrientation(m_chromeWindow->contentOrientation());
             connect(m_chromeWindow, SIGNAL(contentOrientationChanged(Qt::ScreenOrientation)), this, SLOT(updateContentOrientation(Qt::ScreenOrientation)));
         }
         emit chromeWindowChanged();
@@ -505,8 +512,22 @@ bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
 
 void DeclarativeWebContainer::touchEvent(QTouchEvent *event)
 {
+    if (!m_rotationHandler) {
+        qWarning() << "Cannot deliver touch events without rotationHandler";
+        return;
+    }
+
     if (m_webPage && m_enabled) {
-        m_webPage->touchEvent(event);
+        QList<QTouchEvent::TouchPoint> touchPoints = event->touchPoints();
+        QTouchEvent mappedTouchEvent = *event;
+
+        for (int i = 0; i < touchPoints.count(); ++i) {
+            QPointF pt = m_rotationHandler->mapFromScene(touchPoints.at(i).pos());
+            touchPoints[i].setPos(pt);
+        }
+
+        mappedTouchEvent.setTouchPoints(touchPoints);
+        m_webPage->touchEvent(&mappedTouchEvent);
     }
 }
 
@@ -583,6 +604,10 @@ void DeclarativeWebContainer::resetHeight(bool respectContentHeight)
 
 void DeclarativeWebContainer::updateContentOrientation(Qt::ScreenOrientation orientation)
 {
+    if (m_webPage) {
+        m_webPage->updateContentOrientation(orientation);
+    }
+
     reportContentOrientationChange(orientation);
 }
 

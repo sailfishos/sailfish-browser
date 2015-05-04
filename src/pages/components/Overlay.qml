@@ -95,10 +95,12 @@ PanelBackground {
         }
     }
 
-    gradient: Gradient {
-        GradientStop { position: 0.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.3) }
-        GradientStop { position: 1.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.0) }
-    }
+    color: "black"
+    gradient: null
+//        Gradient {
+//        GradientStop { position: 0.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.3) }
+//        GradientStop { position: 1.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.0) }
+//    }
 
     // Immediately active WebView height binding when dragging
     // starts. If this binding is removed, state change to
