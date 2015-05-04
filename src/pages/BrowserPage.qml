@@ -20,6 +20,7 @@ import "components" as Browser
 Page {
     id: browserPage
 
+    readonly property bool active: status == PageStatus.Active
     property Item firstUseOverlay
     property Item debug
     property Component tabPageComponent
@@ -61,18 +62,18 @@ Page {
                 property: 'orientationTransitionRunning'
                 value: true
             }
-            ParallelAnimation {
-                FadeAnimation {
-                    target: webView.contentItem
-                    to: 0
-                    duration: 150
-                }
-                FadeAnimation {
-                    target: !webView.fullscreenMode ? overlay : null
-                    to: 0
-                    duration: 150
-                }
-            }
+//            ParallelAnimation {
+//                FadeAnimation {
+//                    target: webView.contentItem
+//                    to: 0
+//                    duration: 150
+//                }
+//                FadeAnimation {
+//                    target: !webView.fullscreenMode ? overlay : null
+//                    to: 0
+//                    duration: 150
+//                }
+//            }
             PropertyAction {
                 target: browserPage
                 properties: 'width,height,rotation,orientation'
@@ -85,18 +86,18 @@ Page {
                     _defaultTransition = true
                 }
             }
-            FadeAnimation {
-                target: !webView.fullscreenMode ? overlay : null
-                to: 1
-                duration: 150
-            }
+//            FadeAnimation {
+//                target: !webView.fullscreenMode ? overlay : null
+//                to: 1
+//                duration: 150
+//            }
             // End-2-end implementation for OnUpdateDisplayPort should
             // give better solution and reduce visible relayoutting.
-            FadeAnimation {
-                target: webView.contentItem
-                to: 1
-                duration: 850
-            }
+//            FadeAnimation {
+//                target: webView.contentItem
+//                to: 1
+//                duration: 850
+//            }
             PropertyAction {
                 target: browserPage
                 property: 'orientationTransitionRunning'
@@ -114,7 +115,6 @@ Page {
 //        anchors.fill: parent
 //        visible: !webView.contentItem
 //        color: webView.contentItem && webView.contentItem.bgcolor ? webView.contentItem.bgcolor : "white"
-
         onWindowChanged: webView.chromeWindow = window
     }
 
@@ -128,19 +128,23 @@ Page {
         maxLiveTabCount: 3
         toolbarHeight: overlay.toolBar.toolsHeight
 //        clip: true
+        width: window.width
+        height: window.height
+        rotationHandler: browserPage
     }
 
     InputRegion {
         window: webView.chromeWindow
-        y: webView.enabled ? overlay.y : 0
+        y: webView.enabled && browserPage.active ? overlay.y : 0
+
         width: browserPage.width
-        height: webView.enabled ? browserPage.height - overlay.y : browserPage.height
+        height: webView.enabled && browserPage.active ? browserPage.height - overlay.y : browserPage.height
     }
 
     Rectangle {
         id: contentDimmer
-        width: webView.width
-        height: Math.ceil(webView.height)
+        width: browserPage.width
+        height: Math.ceil(overlay.y)
         opacity: 0.9 - (overlay.y / (webView.fullscreenHeight - overlay.toolBar.toolsHeight)) * 0.9
         color: Theme.highlightDimmerColor
 

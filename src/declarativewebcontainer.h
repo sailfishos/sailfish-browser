@@ -24,6 +24,7 @@
 #include <QFutureWatcher>
 #include <QQmlComponent>
 #include <QQuickView>
+#include <QQuickItem>
 
 class QInputMethodEvent;
 class QTimerEvent;
@@ -34,6 +35,7 @@ class DeclarativeWebContainer : public QWindow, public QQmlParserStatus, protect
     Q_OBJECT
     Q_INTERFACES(QQmlParserStatus)
 
+    Q_PROPERTY(QQuickItem *rotationHandler MEMBER m_rotationHandler NOTIFY rotationHandlerChanged FINAL)
     Q_PROPERTY(DeclarativeWebPage *contentItem READ webPage NOTIFY contentItemChanged FINAL)
     Q_PROPERTY(DeclarativeTabModel *tabModel READ tabModel WRITE setTabModel NOTIFY tabModelChanged FINAL)
     Q_PROPERTY(bool completed READ completed NOTIFY completedChanged FINAL)
@@ -129,6 +131,7 @@ public:
     QObject *focusObject() const;
 
 signals:
+    void rotationHandlerChanged();
     void contentItemChanged();
     void tabModelChanged();
     void completedChanged();
@@ -216,6 +219,7 @@ private:
     void loadTab(int tabId, QString url, QString title, bool force);
     void updateMode();
 
+    QPointer<QQuickItem> m_rotationHandler;
     QPointer<DeclarativeWebPage> m_webPage;
     QPointer<QQuickView> m_chromeWindow;
     QOpenGLContext *m_context;
