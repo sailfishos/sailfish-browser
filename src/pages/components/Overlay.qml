@@ -18,7 +18,7 @@ PanelBackground {
     id: overlay
 
     property bool active
-    property Item webView
+    property QtObject webView
     property Item browserPage
     property alias historyModel: historyList.model
     property alias toolBar: toolBar
@@ -52,16 +52,16 @@ PanelBackground {
                 }
                 webView.tabModel.waitingForNewTab = true
             }
-            webView.focus = true
+            //webView.focus = true
         }
 
         overlayAnimator.showChrome()
     }
 
     function enterNewTabUrl(action) {
-        if (webView.contentItem) {
-            webView.contentItem.opacity = 0.0
-        }
+//        if (webView.contentItem) {
+//            webView.contentItem.opacity = 0.0
+//        }
 
         searchField.enteringNewTabUrl = true
         searchField.resetUrl("")
@@ -69,9 +69,9 @@ PanelBackground {
     }
 
     function dismiss() {
-        if (webView.contentItem) {
-            webView.contentItem.opacity = 1.0
-        }
+//        if (webView.contentItem) {
+//            webView.contentItem.opacity = 1.0
+//        }
         toolBar.resetFind()
         if (webView.contentItem && webView.contentItem.fullscreen) {
             // Web content is in fullscreen mode thus we don't show chrome
@@ -95,10 +95,12 @@ PanelBackground {
         }
     }
 
-    gradient: Gradient {
-        GradientStop { position: 0.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.3) }
-        GradientStop { position: 1.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.0) }
-    }
+    color: "black"
+    gradient: null
+//    gradient: Gradient {
+//        GradientStop { position: 0.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.3) }
+//        GradientStop { position: 1.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.0) }
+//    }
 
     // Immediately active WebView height binding when dragging
     // starts. If this binding is removed, state change to
@@ -417,12 +419,17 @@ PanelBackground {
         Page {
             id: tabPage
             property int activeTabIndex
-            property Item activeWebPage
+            property QtObject activeWebPage
 
             onStatusChanged: {
                 if (activeWebPage && status == PageStatus.Active) {
                     webView.privateMode ? activeWebPage.grabThumbnail() : activeWebPage.grabToFile()
                 }
+            }
+
+            Rectangle {
+                color: "black"
+                anchors.fill: parent
             }
 
             Browser.TabView {

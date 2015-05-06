@@ -14,6 +14,8 @@ isEmpty(QTEMBED_LIB) {
   LIBS+=$$QTEMBED_LIB
 }
 
+QT += gui-private
+
 SOURCES += tst_webview.cpp \
     ../../../src/declarativewebcontainer.cpp \
     ../../../src/declarativewebpage.cpp \

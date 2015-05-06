@@ -90,11 +90,11 @@ void WebPageQueue::release(int tabId,  bool virtualize)
             if (virtualize) {
                 pageEntry->cssContentRect = new QRectF(pageEntry->webPage->contentRect());
             }
-            if (pageEntry->webPage->viewReady()) {
+            if (pageEntry->webPage->completed()) {
                 pageEntry->webPage->setParent(0);
                 delete pageEntry->webPage;
             } else {
-                QObject::connect(pageEntry->webPage, SIGNAL(viewReadyChanged()), pageEntry->webPage, SLOT(deleteLater()));
+                QObject::connect(pageEntry->webPage, SIGNAL(completedChanged()), pageEntry->webPage, SLOT(deleteLater()));
             }
         }
 
@@ -248,7 +248,7 @@ WebPageQueue::WebPageEntry::~WebPageEntry()
         delete cssContentRect;
     }
 
-    if (webPage && (webPage->viewReady() || allowPageDelete)) {
+    if (webPage && (webPage->completed() || allowPageDelete)) {
         webPage->setParent(0);
         delete webPage;
     }

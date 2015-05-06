@@ -31,16 +31,22 @@
 #include <qmozcontext.h>
 #include <QGuiApplication>
 
+#include <qpa/qplatformnativeinterface.h>
+
+
 #ifndef DEBUG_LOGS
 #define DEBUG_LOGS 0
 #endif
 
-DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
-    : QQuickItem(parent)
+DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
+    : QWindow(parent)
+    , m_rotationHandler(0)
     , m_webPage(0)
+    , m_context(0)
     , m_model(0)
     , m_webPageComponent(0)
     , m_settingManager(SettingManager::instance())
+    , m_enabled(true)
     , m_foreground(true)
     , m_allowHiding(true)
     , m_popupActive(false)
@@ -62,7 +68,24 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     , m_initialized(false)
     , m_privateMode(m_settingManager->autostartPrivateBrowsing())
 {
-    setFlag(QQuickItem::ItemHasContents, true);
+
+    QSize screenSize = QGuiApplication::primaryScreen()->size();
+    resize(screenSize.width(), screenSize.height());;
+    setSurfaceType(QWindow::OpenGLSurface);
+
+    QSurfaceFormat format(requestedFormat());
+    format.setAlphaBufferSize(0);
+    setFormat(format);
+
+    create();
+    setObjectName("WebView");
+
+    if (QPlatformWindow *windowHandle = handle()) {
+        QPlatformNativeInterface *native = QGuiApplication::platformNativeInterface();
+        native->setWindowProperty(windowHandle, QStringLiteral("BACKGROUND_VISIBLE"), false);
+    }
+
+    QMozContext::GetInstance()->setPixelRatio(2.0);
 
     m_webPages = new WebPages(this);
     m_persistentTabModel = new PersistentTabModel(this);
@@ -83,11 +106,11 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
         return;
     }
 
-    connect(this, SIGNAL(heightChanged()), this, SLOT(sendVkbOpenCompositionMetrics()));
-    connect(this, SIGNAL(widthChanged()), this, SLOT(sendVkbOpenCompositionMetrics()));
     connect(this, SIGNAL(foregroundChanged()), this, SLOT(updateWindowFlags()));
 
     qApp->installEventFilter(this);
+
+    showFullScreen();
 }
 
 DeclarativeWebContainer::~DeclarativeWebContainer()
@@ -114,6 +137,10 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
         m_webPage = webPage;
 
         if (m_webPage) {
+            m_webPage->setWindow(this);
+            if (m_chromeWindow) {
+                updateContentOrientation(m_chromeWindow->contentOrientation());
+            }
             m_tabId = m_webPage->tabId();
         } else {
             m_tabId = 0;
@@ -123,6 +150,7 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
         emit contentItemChanged();
         emit tabIdChanged();
         emit loadingChanged();
+        emit focusObjectChanged(m_webPage);
 
         updateUrl(url());
         updateTitle(title());
@@ -246,7 +274,7 @@ void DeclarativeWebContainer::setInputPanelHeight(qreal height)
     if (m_inputPanelHeight != height) {
         bool imVisibleChanged = false;
         m_inputPanelHeight = height;
-        if (isEnabled()) {
+        if (m_enabled) {
             if (m_inputPanelHeight == 0) {
                 if (m_inputPanelVisible) {
                     m_inputPanelVisible = false;
@@ -278,6 +306,30 @@ bool DeclarativeWebContainer::canGoBack() const
     return m_canGoBack;
 }
 
+QObject *DeclarativeWebContainer::chromeWindow() const
+{
+    return m_chromeWindow;
+}
+
+void DeclarativeWebContainer::setChromeWindow(QObject *chromeWindow)
+{
+    QQuickView *quickView = qobject_cast<QQuickView*>(chromeWindow);
+    if (quickView && (quickView != m_chromeWindow)) {
+        m_chromeWindow = quickView;
+        qDebug() << "------------------------------------- setChromeWindow: " << m_chromeWindow;
+
+        if (m_chromeWindow) {
+//            connect(m_chromeWindow->rootObject(), SIGNAL(heightChanged()), this, SLOT(sendVkbOpenCompositionMetrics()));
+//            connect(m_chromeWindow->rootObject(), SIGNAL(widthChanged()), this, SLOT(sendVkbOpenCompositionMetrics()));
+            m_chromeWindow->setTransientParent(this);
+            m_chromeWindow->showFullScreen();
+            updateContentOrientation(m_chromeWindow->contentOrientation());
+            connect(m_chromeWindow, SIGNAL(contentOrientationChanged(Qt::ScreenOrientation)), this, SLOT(updateContentOrientation(Qt::ScreenOrientation)));
+        }
+        emit chromeWindowChanged();
+    }
+}
+
 int DeclarativeWebContainer::tabId() const
 {
     return m_tabId;
@@ -306,7 +358,7 @@ void DeclarativeWebContainer::load(QString url, QString title, bool force)
         url = "about:blank";
     }
 
-    if (m_webPage && m_webPage->viewReady()) {
+    if (m_webPage && m_webPage->completed()) {
         m_webPage->loadTab(url, force);
     } else if (!canInitialize()) {
         updateUrl(url);
@@ -325,7 +377,7 @@ void DeclarativeWebContainer::load(QString url, QString title, bool force)
 void DeclarativeWebContainer::reload(bool force)
 {
     if (m_tabId > 0) {
-        if (force && m_webPage && m_webPage->viewReady() && m_webPage->tabId() == m_tabId) {
+        if (force && m_webPage && m_webPage->completed() && m_webPage->tabId() == m_tabId) {
             // Reload live active tab directly.
             m_webPage->reload();
         } else {
@@ -408,6 +460,7 @@ bool DeclarativeWebContainer::activatePage(int tabId, bool force, int parentId)
         connect(m_webPage, SIGNAL(titleChanged()), this, SLOT(onPageTitleChanged()), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(domContentLoadedChanged()), this, SLOT(sendVkbOpenCompositionMetrics()), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(backgroundChanged()), this, SIGNAL(backgroundChanged()), Qt::UniqueConnection);
+        connect(m_webPage, SIGNAL(requestGLContext()), this, SLOT(createGLContext()), Qt::DirectConnection);
         return activationData.activated;
     }
     return false;
@@ -424,10 +477,10 @@ void DeclarativeWebContainer::updateMode()
     setActiveTabData();
 
     // Hide currently active web page
-    if (m_webPage) {
-        m_webPage->setVisible(false);
-        m_webPage->setOpacity(1.0);
-    }
+//    if (m_webPage) {
+//        m_webPage->setVisible(false);
+//        m_webPage->setOpacity(1.0);
+//    }
 
     // Reload active tab from new mode
     if (m_model->count() > 0) {
@@ -443,18 +496,97 @@ void DeclarativeWebContainer::dumpPages() const
     m_webPages->dumpPages();
 }
 
+QObject *DeclarativeWebContainer::focusObject() const
+{
+    return m_webPage ? m_webPage : QWindow::focusObject();
+}
+
 bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
 {
     // Hiding stops rendering. Don't pass it through if hiding is not allowed.
-    if (event->type() == QEvent::Expose && window() && !window()->isExposed() && !m_allowHiding) {
+    if (event->type() == QEvent::Expose && !isExposed() && !m_allowHiding) {
         return true;
     }
     return QObject::eventFilter(obj, event);
 }
 
+void DeclarativeWebContainer::touchEvent(QTouchEvent *event)
+{
+    if (!m_rotationHandler) {
+        qWarning() << "Cannot deliver touch events without rotationHandler";
+        return;
+    }
+
+    if (m_webPage && m_enabled) {
+        QList<QTouchEvent::TouchPoint> touchPoints = event->touchPoints();
+        QTouchEvent mappedTouchEvent = *event;
+
+        for (int i = 0; i < touchPoints.count(); ++i) {
+            QPointF pt = m_rotationHandler->mapFromScene(touchPoints.at(i).pos());
+            touchPoints[i].setPos(pt);
+        }
+
+        mappedTouchEvent.setTouchPoints(touchPoints);
+        m_webPage->touchEvent(&mappedTouchEvent);
+    }
+}
+
+QVariant DeclarativeWebContainer::inputMethodQuery(Qt::InputMethodQuery property) const
+{
+    if (m_webPage && m_enabled) {
+        return m_webPage->inputMethodQuery(property);
+    }
+    return QVariant();
+}
+
+void DeclarativeWebContainer::inputMethodEvent(QInputMethodEvent *event)
+{
+    if (m_webPage && m_enabled) {
+        m_webPage->inputMethodEvent(event);
+    }
+}
+
+void DeclarativeWebContainer::keyPressEvent(QKeyEvent *event)
+{
+    if (m_webPage && m_enabled) {
+        m_webPage->keyPressEvent(event);
+    }
+}
+
+void DeclarativeWebContainer::keyReleaseEvent(QKeyEvent *event)
+{
+    if (m_webPage && m_enabled) {
+        m_webPage->keyReleaseEvent(event);
+    }
+}
+
+void DeclarativeWebContainer::focusInEvent(QFocusEvent *event)
+{
+    if (m_webPage && m_enabled) {
+        m_webPage->focusInEvent(event);
+    }
+}
+
+void DeclarativeWebContainer::focusOutEvent(QFocusEvent *event)
+{
+    if (m_webPage && m_enabled) {
+        m_webPage->focusOutEvent(event);
+    }
+}
+
+void DeclarativeWebContainer::timerEvent(QTimerEvent *event)
+{
+    if (m_webPage && m_enabled) {
+        m_webPage->timerEvent(event);
+    }
+}
+
+void DeclarativeWebContainer::classBegin()
+{
+}
+
 void DeclarativeWebContainer::componentComplete()
 {
-    QQuickItem::componentComplete();
     if (m_initialized && !m_completed) {
         m_completed = true;
         emit completedChanged();
@@ -468,6 +600,15 @@ void DeclarativeWebContainer::resetHeight(bool respectContentHeight)
     }
 
     m_webPage->resetHeight(respectContentHeight);
+}
+
+void DeclarativeWebContainer::updateContentOrientation(Qt::ScreenOrientation orientation)
+{
+    if (m_webPage) {
+        m_webPage->updateContentOrientation(orientation);
+    }
+
+    reportContentOrientationChange(orientation);
 }
 
 void DeclarativeWebContainer::imeNotificationChanged(int state, bool open, int cause, int focusChange, const QString &type)
@@ -507,7 +648,7 @@ void DeclarativeWebContainer::handleEnabledChanged()
     // on top the BrowserPage. Once PassowordManagerDialog is accepted/rejected
     // this condition can be met. If active changes to true before keyboard is fully closed,
     // then the inputPanelVisibleChanged() signal is emitted by setInputPanelHeight.
-    if (isEnabled() && m_inputPanelHeight == 0 && m_inputPanelVisible) {
+    if (m_enabled && m_inputPanelHeight == 0 && m_inputPanelVisible) {
         m_inputPanelVisible = false;
         emit inputPanelVisibleChanged();
     }
@@ -574,7 +715,7 @@ void DeclarativeWebContainer::initialize()
         loadTab(tab.tabId(), url, title, true);
     }
 
-    if (isComponentComplete() && !m_completed) {
+    if (!m_completed) {
         m_completed = true;
         emit completedChanged();
     }
@@ -619,13 +760,13 @@ void DeclarativeWebContainer::onNewTabRequested(QString url, QString title, int 
     Tab tab;
     updateNavigationStatus(tab);
 
-    if (m_webPage) {
-        m_webPage->setVisible(false);
-        m_webPage->setOpacity(1.0);
-    }
+//    if (m_webPage) {
+//        m_webPage->setVisible(false);
+//        m_webPage->setOpacity(1.0);
+//    }
 
     if (activatePage(m_model->nextTabId(), false, parentId)) {
-        m_webPage->setInitialUrl(url);
+        m_webPage->loadTab(url, false);
     }
 }
 
@@ -744,7 +885,7 @@ void DeclarativeWebContainer::onPageTitleChanged()
 
 void DeclarativeWebContainer::updateLoadProgress()
 {
-    if (!m_webPage || m_loadProgress == 0 && m_webPage->loadProgress() == 50) {
+    if (!m_webPage || (m_loadProgress == 0 && m_webPage->loadProgress() == 50)) {
         return;
     }
 
@@ -784,17 +925,16 @@ void DeclarativeWebContainer::setActiveTabData()
 
 void DeclarativeWebContainer::updateWindowFlags()
 {
-    QQuickWindow *win = window();
-    if (win && m_webPage) {
+    if (m_webPage) {
         static Qt::WindowFlags f = 0;
         if (f == 0) {
-            f = win->flags();
+            f = flags();
         }
 
         if (!m_foreground) {
-            win->setFlags(f | Qt::CoverWindow | Qt::FramelessWindowHint);
+            setFlags(f | Qt::CoverWindow | Qt::FramelessWindowHint);
         } else {
-            win->setFlags(f);
+            setFlags(f);
         }
     }
 }
@@ -886,11 +1026,7 @@ void DeclarativeWebContainer::loadTab(int tabId, QString url, QString title, boo
         // Note: active pages containing a "link" between each other (parent-child relationship)
         // are not destroyed automatically e.g. in low memory notification.
         // Hence, parentId is not necessary over here.
-        if (m_webPage->viewReady()) {
-            m_webPage->loadTab(url, force);
-        } else {
-            m_webPage->setInitialUrl(url);
-        }
+        m_webPage->loadTab(url, force);
     }
 }
 
@@ -913,5 +1049,18 @@ void DeclarativeWebContainer::sendVkbOpenCompositionMetrics()
 
     if (m_webPage) {
         m_webPage->sendAsyncMessage("embedui:vkbOpenCompositionMetrics", data);
+    }
+}
+
+void DeclarativeWebContainer::createGLContext()
+{
+    if (!m_context) {
+        m_context = new QOpenGLContext();
+        m_context->setFormat(requestedFormat());
+        m_context->create();
+        m_context->makeCurrent(this);
+        initializeOpenGLFunctions();
+    } else {
+        m_context->makeCurrent(this);
     }
 }

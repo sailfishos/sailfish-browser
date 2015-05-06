@@ -44,8 +44,6 @@ WebContainer {
         }
     }
 
-    width: parent.width
-    height: portrait ? Screen.height : Screen.width
     foreground: Qt.application.active
     allowHiding: !resourceController.videoActive && !resourceController.audioActive
     inputPanelHeight: window.pageStack.panelSize
@@ -55,25 +53,15 @@ WebContainer {
 
     favicon: contentItem ? contentItem.favicon : ""
 
-    webPageComponent: webPageComponent
-
     visible: WebUtils.firstUseDone
 
-    WebViewCreator {
-        activeWebView: contentItem
-        // onNewWindowRequested is always handled as synchronous operation (not through newTab).
-        onNewWindowRequested: tabModel.newTab(url, "", parentId)
-    }
+//    property var foobar: WebViewCreator {
+//        activeWebView: contentItem
+//        // onNewWindowRequested is always handled as synchronous operation (not through newTab).
+//        onNewWindowRequested: tabModel.newTab(url, "", parentId)
+//    }
 
-    Rectangle {
-        id: background
-        anchors.fill: parent
-        visible: foreground || contentItem
-        color: contentItem && contentItem.bgcolor ? contentItem.bgcolor : "white"
-    }
-
-    Component {
-        id: webPageComponent
+    webPageComponent: Component {
         WebPage {
             id: webPage
 
@@ -102,9 +90,9 @@ WebContainer {
             signal selectionCopied(variant data)
             signal contextMenuRequested(variant data)
 
-            focus: true
-            width: container.width
-            state: ""
+//            focus: true
+            width: container.rotationHandler && container.rotationHandler.width || 0
+//            state: ""
 
             onClearGrabResult: tabModel.updateThumbnailPath(tabId, "")
             onGrabResult: tabModel.updateThumbnailPath(tabId, fileName)
@@ -287,76 +275,74 @@ WebContainer {
                 }
             }
 
-            Behavior on opacity { FadeAnimation {} }
+//            Behavior on opacity { FadeAnimation {} }
 
             // We decided to disable "text selection" until we understand how it
             // should look like in Sailfish.
             // TextSelectionController {}
-            states: State {
-                name: "boundHeightControl"
-                when: container.inputPanelVisible && container.enabled
-                PropertyChanges {
-                    target: webPage
-                    // was floor
-                    height: Math.ceil(container.parent.height)
-                }
-            }
+//            states: State {
+//                name: "boundHeightControl"
+//                when: container.inputPanelVisible && container.enabled
+//                PropertyChanges {
+//                    target: webPage
+//                    // was floor
+//                    height: Math.ceil(container.parent.height)
+//                }
+//            }
         }
     }
 
-    Rectangle {
-        id: verticalScrollDecorator
+//    Rectangle {
+//        id: verticalScrollDecorator
 
-        width: 5
-        height: contentItem ? contentItem.verticalScrollDecorator.size : 0
-        y: contentItem ? contentItem.verticalScrollDecorator.position : 0
-        z: 1
-        anchors.right: contentItem ? contentItem.right: undefined
-        color: _decoratorColor
-        smooth: true
-        radius: 2.5
-        visible: contentItem && contentItem.contentHeight > contentItem.height && !contentItem.pinching && !popupActive
-        opacity: contentItem && contentItem.verticalScrollDecorator.moving ? 1.0 : 0.0
-        Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
-    }
+//        width: 5
+//        height: contentItem ? contentItem.verticalScrollDecorator.size : 0
+//        y: contentItem ? contentItem.verticalScrollDecorator.position : 0
+//        z: 1
+//        anchors.right: contentItem ? contentItem.right: undefined
+//        color: _decoratorColor
+//        smooth: true
+//        radius: 2.5
+//        visible: contentItem && contentItem.contentHeight > contentItem.height && !contentItem.pinching && !popupActive
+//        opacity: contentItem && contentItem.verticalScrollDecorator.moving ? 1.0 : 0.0
+//        Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
+//    }
 
-    Rectangle {
-        id: horizontalScrollDecorator
+//    Rectangle {
+//        id: horizontalScrollDecorator
 
-        width: contentItem ? contentItem.horizontalScrollDecorator.size : 0
-        height: 5
-        x: contentItem ? contentItem.horizontalScrollDecorator.position : 0
-        y: webView.height - height
-        z: 1
-        color: _decoratorColor
-        smooth: true
-        radius: 2.5
-        visible: contentItem && contentItem.contentWidth > contentItem.width && !contentItem.pinching && !popupActive
-        opacity: contentItem && contentItem.horizontalScrollDecorator.moving ? 1.0 : 0.0
-        Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
-    }
+//        width: contentItem ? contentItem.horizontalScrollDecorator.size : 0
+//        height: 5
+//        x: contentItem ? contentItem.horizontalScrollDecorator.position : 0
+//        y: webView.height - height
+//        z: 1
+//        color: _decoratorColor
+//        smooth: true
+//        radius: 2.5
+//        visible: contentItem && contentItem.contentWidth > contentItem.width && !contentItem.pinching && !popupActive
+//        opacity: contentItem && contentItem.horizontalScrollDecorator.moving ? 1.0 : 0.0
+//        Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
+//    }
 
-    ResourceController {
-        id: resourceController
+    property var resourceController: ResourceController {
         webView: contentItem
         background: webView.background
     }
 
-    Timer {
-        id: auxTimer
-
+    property Timer auxTimer: Timer {
         interval: 1000
     }
 
-    Component {
-        id: pickerCreator
+    property Component pickerCreator: Component {
         PickerCreator {}
     }
 
     Component.onCompleted: {
+        console.log("---------------------------------------------------------- TERVE!!!")
         PopupHandler.auxTimer = auxTimer
         PopupHandler.pageStack = pageStack
         PopupHandler.webView = webView
+        PopupHandler.browserPage = browserPage
         PopupHandler.resourceController = resourceController
         PopupHandler.WebUtils = WebUtils
         PopupHandler.tabModel = tabModel

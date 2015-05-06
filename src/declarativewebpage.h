@@ -16,12 +16,12 @@
 #include <QFutureWatcher>
 #include <QQuickItemGrabResult>
 #include <QPointer>
-#include <quickmozview.h>
+#include <qopenglwebpage.h>
 #include <QRgb>
 
 class DeclarativeWebContainer;
 
-class DeclarativeWebPage : public QuickMozView {
+class DeclarativeWebPage : public QOpenGLWebPage {
     Q_OBJECT
     Q_PROPERTY(DeclarativeWebContainer* container READ container NOTIFY containerChanged FINAL)
     Q_PROPERTY(int tabId READ tabId NOTIFY tabIdChanged FINAL)
@@ -35,7 +35,7 @@ class DeclarativeWebPage : public QuickMozView {
     Q_PROPERTY(qreal toolbarHeight MEMBER m_toolbarHeight NOTIFY toolbarHeightChanged FINAL)
 
 public:
-    DeclarativeWebPage(QQuickItem *parent = 0);
+    DeclarativeWebPage(QObject *parent = 0);
     ~DeclarativeWebPage();
 
     DeclarativeWebContainer* container() const;
@@ -54,15 +54,11 @@ public:
     bool urlHasChanged() const;
     void setUrlHasChanged(bool urlHasChanged);
 
-    void setInitialUrl(const QString &url);
-
     void bindToModel();
     bool boundToModel();
 
     bool backForwardNavigation() const;
     void setBackForwardNavigation(bool backForwardNavigation);
-
-    bool viewReady() const;
 
     Q_INVOKABLE void loadTab(QString newUrl, bool force);
     Q_INVOKABLE void grabToFile();
@@ -75,7 +71,6 @@ public slots:
 signals:
     void containerChanged();
     void tabIdChanged();
-    void viewReadyChanged();
     void userHasDraggedWhileLoadingChanged();
     void fullscreenChanged();
     void forcedChromeChanged();
@@ -89,13 +84,14 @@ signals:
     void fullscreenHeightChanged();
     void toolbarHeightChanged();
 
+#if 0
 protected:
     void componentComplete();
+#endif
 
 private slots:
     void setFullscreen(const bool fullscreen);
     void onRecvAsyncMessage(const QString& message, const QVariant& data);
-    void onViewInitialized();
     void grabResultReady();
     void grabWritten();
     void thumbnailReady();
@@ -105,7 +101,6 @@ private:
 
     QPointer<DeclarativeWebContainer> m_container;
     int m_tabId;
-    bool m_viewReady;
     bool m_userHasDraggedWhileLoading;
     bool m_fullscreen;
     bool m_forcedChrome;
@@ -113,7 +108,6 @@ private:
     bool m_urlHasChanged;
     bool m_backForwardNavigation;
     bool m_boundToModel;
-    QString m_initialUrl;
     QString m_favicon;
     QVariant m_resurrectedContentRect;
     QSharedPointer<QQuickItemGrabResult> m_grabResult;

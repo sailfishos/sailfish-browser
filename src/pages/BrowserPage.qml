@@ -10,7 +10,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 
-import QtQuick 2.0
+import QtQuick 2.1
 import Sailfish.Silica 1.0
 import Sailfish.Silica.private 1.0
 import Sailfish.Browser 1.0
@@ -20,6 +20,7 @@ import "components" as Browser
 Page {
     id: browserPage
 
+    readonly property bool active: status == PageStatus.Active
     property Item firstUseOverlay
     property Item debug
     property Component tabPageComponent
@@ -52,6 +53,14 @@ Page {
     // if input method is not visible.
     clip: status != PageStatus.Active || webView.inputPanelVisible
 
+    onStatusChanged: {
+        if (status >= PageStatus.Activating && status <= PageStatus.Active) {
+            overlay.animator.showChrome()
+        } else {
+            overlay.animator.hide()
+        }
+    }
+
     orientationTransitions: Transition {
         to: 'Portrait,Landscape,PortraitInverted,LandscapeInverted'
         from: 'Portrait,Landscape,PortraitInverted,LandscapeInverted'
@@ -61,18 +70,18 @@ Page {
                 property: 'orientationTransitionRunning'
                 value: true
             }
-            ParallelAnimation {
-                FadeAnimation {
-                    target: webView.contentItem
-                    to: 0
-                    duration: 150
-                }
-                FadeAnimation {
-                    target: !webView.fullscreenMode ? overlay : null
-                    to: 0
-                    duration: 150
-                }
-            }
+//            ParallelAnimation {
+//                FadeAnimation {
+//                    target: webView.contentItem
+//                    to: 0
+//                    duration: 150
+//                }
+//                FadeAnimation {
+//                    target: !webView.fullscreenMode ? overlay : null
+//                    to: 0
+//                    duration: 150
+//                }
+//            }
             PropertyAction {
                 target: browserPage
                 properties: 'width,height,rotation,orientation'
@@ -85,18 +94,18 @@ Page {
                     _defaultTransition = true
                 }
             }
-            FadeAnimation {
-                target: !webView.fullscreenMode ? overlay : null
-                to: 1
-                duration: 150
-            }
+//            FadeAnimation {
+//                target: !webView.fullscreenMode ? overlay : null
+//                to: 1
+//                duration: 150
+//            }
             // End-2-end implementation for OnUpdateDisplayPort should
             // give better solution and reduce visible relayoutting.
-            FadeAnimation {
-                target: webView.contentItem
-                to: 1
-                duration: 850
-            }
+//            FadeAnimation {
+//                target: webView.contentItem
+//                to: 1
+//                duration: 850
+//            }
             PropertyAction {
                 target: browserPage
                 property: 'orientationTransitionRunning'
@@ -109,6 +118,14 @@ Page {
         id: historyModel
     }
 
+    Item {
+//        id: background
+//        anchors.fill: parent
+//        visible: !webView.contentItem
+//        color: webView.contentItem && webView.contentItem.bgcolor ? webView.contentItem.bgcolor : "white"
+        onWindowChanged: webView.chromeWindow = window
+    }
+
     Browser.DownloadRemorsePopup { id: downloadPopup }
     Browser.WebView {
         id: webView
@@ -118,13 +135,24 @@ Page {
         portrait: browserPage.isPortrait
         maxLiveTabCount: 3
         toolbarHeight: overlay.toolBar.toolsHeight
-        clip: true
+//        clip: true
+        width: window.width
+        height: window.height
+        rotationHandler: browserPage
+    }
+
+    InputRegion {
+        window: webView.chromeWindow
+        y: webView.enabled && browserPage.active && !webView.popupActive ? overlay.y : 0
+
+        width: browserPage.width
+        height: webView.enabled && browserPage.active && !webView.popupActive ? browserPage.height - overlay.y : browserPage.height
     }
 
     Rectangle {
         id: contentDimmer
-        width: webView.width
-        height: Math.ceil(webView.height)
+        width: browserPage.width
+        height: Math.ceil(overlay.y)
         opacity: 0.9 - (overlay.y / (webView.fullscreenHeight - overlay.toolBar.toolsHeight)) * 0.9
         color: Theme.highlightDimmerColor
 
