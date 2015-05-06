@@ -59,9 +59,9 @@ PanelBackground {
     }
 
     function enterNewTabUrl(action) {
-        if (webView.contentItem) {
-            webView.contentItem.opacity = 0.0
-        }
+//        if (webView.contentItem) {
+//            webView.contentItem.opacity = 0.0
+//        }
 
         searchField.enteringNewTabUrl = true
         searchField.resetUrl("")

@@ -1054,13 +1054,13 @@ void DeclarativeWebContainer::sendVkbOpenCompositionMetrics()
 
 void DeclarativeWebContainer::createGLContext()
 {
-    qWarning() << "Multiple tabs are not yet working!!!";
-    Q_ASSERT(!m_context);
-
-    m_context = new QOpenGLContext();
-    m_context->setFormat(requestedFormat());
-    m_context->create();
-    m_context->makeCurrent(this);
-
-    initializeOpenGLFunctions();
+    if (!m_context) {
+        m_context = new QOpenGLContext();
+        m_context->setFormat(requestedFormat());
+        m_context->create();
+        m_context->makeCurrent(this);
+        initializeOpenGLFunctions();
+    } else {
+        m_context->makeCurrent(this);
+    }
 }
