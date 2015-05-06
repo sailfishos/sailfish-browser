@@ -135,10 +135,10 @@ Page {
 
     InputRegion {
         window: webView.chromeWindow
-        y: webView.enabled && browserPage.active ? overlay.y : 0
+        y: webView.enabled && browserPage.active && !webView.popupActive ? overlay.y : 0
 
         width: browserPage.width
-        height: webView.enabled && browserPage.active ? browserPage.height - overlay.y : browserPage.height
+        height: webView.enabled && browserPage.active && !webView.popupActive ? browserPage.height - overlay.y : browserPage.height
     }
 
     Rectangle {
