@@ -342,6 +342,7 @@ WebContainer {
         PopupHandler.auxTimer = auxTimer
         PopupHandler.pageStack = pageStack
         PopupHandler.webView = webView
+        PopupHandler.browserPage = browserPage
         PopupHandler.resourceController = resourceController
         PopupHandler.WebUtils = WebUtils
         PopupHandler.tabModel = tabModel
