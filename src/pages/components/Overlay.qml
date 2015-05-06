@@ -105,17 +105,6 @@ PanelBackground {
 //        GradientStop { position: 1.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.0) }
 //    }
 
-    // Immediately active WebView height binding when dragging
-    // starts. If this binding is removed, state change to
-    // "draggingOverlay" at OverlayAnimator causes a visual glitch
-    // right after transition to "draggingOverlay" has finnished.
-    Binding {
-        target: webView
-        property: "height"
-        value: overlay.y
-        when: dragArea.drag.active
-    }
-
     // This is an invisible object responsible to hide/show Overlay in an animated way
     Browser.OverlayAnimator {
         id: overlayAnimator
