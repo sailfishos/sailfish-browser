@@ -53,6 +53,14 @@ Page {
     // if input method is not visible.
     clip: status != PageStatus.Active || webView.inputPanelVisible
 
+    onStatusChanged: {
+        if (status >= PageStatus.Activating && status <= PageStatus.Active) {
+            overlay.animator.showChrome()
+        } else {
+            overlay.animator.hide()
+        }
+    }
+
     orientationTransitions: Transition {
         to: 'Portrait,Landscape,PortraitInverted,LandscapeInverted'
         from: 'Portrait,Landscape,PortraitInverted,LandscapeInverted'
