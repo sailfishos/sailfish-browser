@@ -97,7 +97,7 @@ PanelBackground {
 
     color: "black"
     gradient: null
-//        Gradient {
+//    gradient: Gradient {
 //        GradientStop { position: 0.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.3) }
 //        GradientStop { position: 1.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.0) }
 //    }
@@ -433,6 +433,11 @@ PanelBackground {
                 if (activeWebPage && status == PageStatus.Active) {
                     webView.privateMode ? activeWebPage.grabThumbnail() : activeWebPage.grabToFile()
                 }
+            }
+
+            Rectangle {
+                color: "black"
+                anchors.fill: parent
             }
 
             Browser.TabView {
