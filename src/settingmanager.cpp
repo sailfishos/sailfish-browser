@@ -110,6 +110,7 @@ bool SettingManager::clearPrivateData()
         QMozContext::GetInstance()->sendObserve(QString("clear-private-data"), QString("cookies"));
         QMozContext::GetInstance()->sendObserve(QString("clear-private-data"), QString("cache"));
         DBManager::instance()->clearHistory();
+        BookmarkManager::instance()->clear();
         m_clearPrivateDataConfItem->set(QVariant(false));
     }
     return actionNeeded;
