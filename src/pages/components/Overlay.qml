@@ -228,11 +228,11 @@ PanelBackground {
                 }
                 onShowTabs: {
                     overlayAnimator.showChrome()
-                    // Push the tab index and active page that were current at this moment.
+                    // Push the currently active tab index.
                     // Changing of active tab cannot cause blinking.
+                    webView.grabActivePage()
                     pageStack.push(tabView, {
-                                       "activeTabIndex": webView.tabModel.activeTabIndex,
-                                       "activeWebPage": webView.contentItem
+                                       "activeTabIndex": webView.tabModel.activeTabIndex
                                    })
                 }
                 onShowSecondaryTools: overlayAnimator.showSecondaryTools()
@@ -419,13 +419,6 @@ PanelBackground {
         Page {
             id: tabPage
             property int activeTabIndex
-            property QtObject activeWebPage
-
-            onStatusChanged: {
-                if (activeWebPage && status == PageStatus.Active) {
-                    webView.privateMode ? activeWebPage.grabThumbnail() : activeWebPage.grabToFile()
-                }
-            }
 
             Rectangle {
                 color: "black"
@@ -442,7 +435,6 @@ PanelBackground {
                 onPrivateModeChanged: {
                     webView.privateMode = privateMode
                     tabPage.activeTabIndex =  webView.tabModel.activeTabIndex
-                    tabPage.activeWebPage = webView.contentItem
 
                     if (webView.tabModel.count === 0) {
                         overlay.enterNewTabUrl(PageStackAction.Immediate)

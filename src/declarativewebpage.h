@@ -14,10 +14,10 @@
 
 #include <qqml.h>
 #include <QFutureWatcher>
-#include <QQuickItemGrabResult>
 #include <QPointer>
-#include <qopenglwebpage.h>
 #include <QRgb>
+#include <qopenglwebpage.h>
+#include <qmozgrabresult.h>
 
 class DeclarativeWebContainer;
 
@@ -97,7 +97,8 @@ private slots:
     void thumbnailReady();
 
 private:
-    QString saveToFile(QImage image, QRect cropBounds);
+    QString saveToFile(QImage image);
+    QSize thumbnailSize();
 
     QPointer<DeclarativeWebContainer> m_container;
     int m_tabId;
@@ -110,8 +111,8 @@ private:
     bool m_boundToModel;
     QString m_favicon;
     QVariant m_resurrectedContentRect;
-    QSharedPointer<QQuickItemGrabResult> m_grabResult;
-    QSharedPointer<QQuickItemGrabResult> m_thumbnailResult;
+    QSharedPointer<QMozGrabResult> m_grabResult;
+    QSharedPointer<QMozGrabResult> m_thumbnailResult;
     QFutureWatcher<QString> m_grabWritter;
 
     qreal m_fullScreenHeight;
