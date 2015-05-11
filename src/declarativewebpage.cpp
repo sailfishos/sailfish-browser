@@ -187,26 +187,25 @@ void DeclarativeWebPage::loadTab(QString newUrl, bool force)
 
 void DeclarativeWebPage::grabToFile()
 {
-#if 0
-    if (!completed() || backForwardNavigation() || !active() || !isPainted())
-        return;
-
     emit clearGrabResult();
     // grabToImage handles invalid geometry.
-    m_grabResult = grabToImage();
-    if (m_grabResult.data()) {
-        connect(m_grabResult.data(), SIGNAL(ready()), this, SLOT(grabResultReady()));
+    m_grabResult = grabToImage(thumbnailSize());
+    if (m_grabResult) {
+        if (!m_grabResult->isReady()) {
+            connect(m_grabResult.data(), SIGNAL(ready()), this, SLOT(grabResultReady()));
+        } else {
+            grabResultReady();
+        }
     }
-#endif
 }
 
 
 void DeclarativeWebPage::grabThumbnail()
 {
-#if 0
-    m_thumbnailResult = grabToImage();
-    connect(m_thumbnailResult.data(), SIGNAL(ready()), this, SLOT(thumbnailReady()));
-#endif
+    m_thumbnailResult = grabToImage(thumbnailSize());
+    if (m_thumbnailResult) {
+        connect(m_thumbnailResult.data(), SIGNAL(ready()), this, SLOT(thumbnailReady()));
+    }
 }
 
 /**
@@ -270,12 +269,7 @@ void DeclarativeWebPage::grabResultReady()
 {
     QImage image = m_grabResult->image();
     m_grabResult.clear();
-    int w = qMin(width(), height());
-    int h = qMax(width(), height());
-    h = qMax(h / 3, w / 2);
-    QRect cropBounds(0, 0, w, h);
-
-    m_grabWritter.setFuture(QtConcurrent::run(this, &DeclarativeWebPage::saveToFile, image, cropBounds));
+    m_grabWritter.setFuture(QtConcurrent::run(this, &DeclarativeWebPage::saveToFile, image));
 }
 
 void DeclarativeWebPage::grabWritten()
@@ -288,10 +282,6 @@ void DeclarativeWebPage::thumbnailReady()
 {
     QImage image = m_thumbnailResult->image();
     m_thumbnailResult.clear();
-    int size = qMin(width(), height());
-    QRect cropBounds(0, 0, size, size);
-
-    image = image.copy(cropBounds);
     QByteArray iconData;
     QBuffer buffer(&iconData);
     buffer.open(QIODevice::WriteOnly);
@@ -303,7 +293,7 @@ void DeclarativeWebPage::thumbnailReady()
     }
 }
 
-QString DeclarativeWebPage::saveToFile(QImage image, QRect cropBounds)
+QString DeclarativeWebPage::saveToFile(QImage image)
 {
     if (image.isNull()) {
         return "";
@@ -311,8 +301,15 @@ QString DeclarativeWebPage::saveToFile(QImage image, QRect cropBounds)
 
     // 75% quality jpg produces small and good enough capture.
     QString path = QString("%1/tab-%2-thumb.jpg").arg(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)).arg(m_tabId);
-    image = image.copy(cropBounds);
     return !allBlack(image) && image.save(path, "jpg", 75) ? path : "";
+}
+
+QSize DeclarativeWebPage::thumbnailSize()
+{
+    int w = qMin(width(), height());
+    int h = qMax(width(), height());
+    h = qMax(h / 3, w / 2);
+    return QSize(w, h);
 }
 
 void DeclarativeWebPage::onRecvAsyncMessage(const QString& message, const QVariant& data)
