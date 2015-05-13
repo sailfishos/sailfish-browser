@@ -332,13 +332,15 @@ PanelBackground {
             }
 
             // Below the HistoryList and FavoriteGrid to let dragging to work
-            // when finding from the page
+            // when finding from the page active or favorite grid enabled (at top).
+            // On large screens favorite grid is not covering fullscreen. Thus,
+            // this needs to be enabled so that overlay can be dragged from edges.
             MouseArea {
                 anchors {
                     fill: historyList
                     topMargin: searchField.height
                 }
-                enabled: toolBar.findInPageActive
+                enabled: toolBar.findInPageActive || favoriteGrid.enabled
 
                 ViewPlaceholder {
                     // The parent is a sibling of the historyList. Hence,
@@ -347,7 +349,7 @@ PanelBackground {
                     x: (historyList.width - width) / 2
                     y: historyList.originY + (historyList.height - height) / 2
 
-                    enabled: parent.enabled && searchField.text
+                    enabled: toolBar.findInPageActive && searchField.text
 
                     //: View placeholder text for find-in-page search.
                     //% "Press enter to search"
