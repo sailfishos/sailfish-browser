@@ -59,22 +59,12 @@ PanelBackground {
     }
 
     function enterNewTabUrl(action) {
-        // TODO: Figure out what to do with content opacity. Remove before merging.
-        // As browser content window is the window at background we cannot really fade it away.
-        // Maybe we just need to keep opacity in 1.0 when overlay is raised regardless of the case.
-//        if (webView.contentItem) {
-//            webView.contentItem.opacity = 0.0
-//        }
-
         searchField.enteringNewTabUrl = true
         searchField.resetUrl("")
         overlayAnimator.showOverlay(action === PageStackAction.Immediate)
     }
 
     function dismiss() {
-//        if (webView.contentItem) {
-//            webView.contentItem.opacity = 1.0
-//        }
         toolBar.resetFind()
         if (webView.contentItem && webView.contentItem.fullscreen) {
             // Web content is in fullscreen mode thus we don't show chrome

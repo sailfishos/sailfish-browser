@@ -53,15 +53,6 @@ Item {
     // Wrapper from updating the state. Handy for debugging.
     function updateState(newState, immediate) {
         _immediate = immediate || false
-        // Verify that we return back to opacity 1.0
-        // For instance, push to switcher from new-tab-creation overlay
-        if (newState === "fullscreenWebPage" || newState === "chromeVisible") {
-//            if (webView && webView.contentItem) {
-//                webView.contentItem.visible = true
-//                webView.contentItem.opacity = 1.0
-//            }
-        }
-
         if (newState !== "fullscreenWebPage") {
             overlay.visible = true
         }
