@@ -24,6 +24,7 @@ PanelBackground {
     property alias toolBar: toolBar
     property alias progressBar: progressBar
     property alias animator: overlayAnimator
+    readonly property alias enteringNewTabUrl: searchField.enteringNewTabUrl
 
     property var enteredPage
 
