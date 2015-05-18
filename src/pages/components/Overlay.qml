@@ -14,7 +14,7 @@ import Sailfish.Silica 1.0
 import Sailfish.Browser 1.0
 import "." as Browser
 
-PanelBackground {
+Background {
     id: overlay
 
     property bool active
@@ -88,13 +88,6 @@ PanelBackground {
             webView.reload(false)
         }
     }
-
-    color: "black"
-    gradient: null
-//    gradient: Gradient {
-//        GradientStop { position: 0.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.3) }
-//        GradientStop { position: 1.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.0) }
-//    }
 
     // This is an invisible object responsible to hide/show Overlay in an animated way
     Browser.OverlayAnimator {
@@ -405,8 +398,7 @@ PanelBackground {
             id: tabPage
             property int activeTabIndex
 
-            Rectangle {
-                color: "black"
+            Browser.Background {
                 anchors.fill: parent
             }
 
