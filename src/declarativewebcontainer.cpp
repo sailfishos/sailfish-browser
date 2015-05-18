@@ -167,18 +167,25 @@ DeclarativeTabModel *DeclarativeWebContainer::tabModel() const
 void DeclarativeWebContainer::setTabModel(DeclarativeTabModel *model)
 {
     if (m_model != model) {
+        int oldCount = 0;
         if (m_model) {
             disconnect(m_model, 0, 0, 0);
+            oldCount = m_model->count();
         }
 
         m_model = model;
+        int newCount = 0;
         if (m_model) {
             connect(m_model, SIGNAL(activeTabChanged(int,int,bool)), this, SLOT(onActiveTabChanged(int,int,bool)));
             connect(m_model, SIGNAL(loadedChanged()), this, SLOT(initialize()));
             connect(m_model, SIGNAL(tabClosed(int)), this, SLOT(releasePage(int)));
             connect(m_model, SIGNAL(newTabRequested(QString,QString,int)), this, SLOT(onNewTabRequested(QString,QString,int)));
+            newCount = m_model->count();
         }
         emit tabModelChanged();
+        if (oldCount != newCount) {
+            emit m_model->countChanged();
+        }
     }
 }
 

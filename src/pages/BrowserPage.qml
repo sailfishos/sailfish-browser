@@ -166,6 +166,8 @@ Page {
         width: window.width
         height: window.height
         rotationHandler: browserPage
+
+        tabModel.onCountChanged: window.solidBackground = tabModel.count == 0
     }
 
     InputRegion {
@@ -223,6 +225,8 @@ Page {
         webView: webView
         historyModel: historyModel
         browserPage: browserPage
+
+        onEnteringNewTabUrlChanged: window.solidBackground = overlay.enteringNewTabUrl
     }
 
     CoverActionList {

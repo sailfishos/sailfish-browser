@@ -18,6 +18,8 @@ import "pages"
 ApplicationWindow {
     id: window
 
+    property bool solidBackground
+
     signal newTab
 
     function setBrowserCover(model) {
@@ -43,4 +45,17 @@ ApplicationWindow {
             }
         }
     }
+
+    data: [
+        Rectangle {
+            z: -1
+            width: window.width
+            height: window.height
+            opacity: window.solidBackground ? 1.0 : 0.0
+            visible: opacity > 0.0
+            color: "white"
+
+            Behavior on opacity { FadeAnimation {} }
+        }
+    ]
 }
