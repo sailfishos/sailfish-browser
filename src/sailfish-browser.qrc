@@ -6,6 +6,7 @@
     <file>pages/ShareLinkPage.qml</file>
     <file>pages/components/AlertDialog.qml</file>
     <file>pages/components/AuthDialog.qml</file>
+    <file>pages/components/Background.qml</file>
     <file>pages/components/BookmarkEditDialog.qml</file>
     <file>pages/components/BrowserContextMenu.qml</file>
     <file>pages/components/BrowserNotification.qml</file>

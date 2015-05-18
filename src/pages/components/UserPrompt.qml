@@ -18,6 +18,10 @@ Dialog {
     property alias title: header.title
     default property alias defaultContent: promptContent.children
 
+    Background {
+        anchors.fill: parent
+    }
+
     SilicaFlickable {
         id: flickable
         anchors.fill: parent
@@ -29,6 +33,8 @@ Dialog {
 
             DialogHeader {
                 id: header
+                dialog: dialog
+                _glassOnly: true
             }
 
             Item {
