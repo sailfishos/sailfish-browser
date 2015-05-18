@@ -476,12 +476,6 @@ void DeclarativeWebContainer::updateMode()
     setTabModel(privateMode() ? m_privateTabModel.data() : m_persistentTabModel.data());
     setActiveTabData();
 
-    // Hide currently active web page
-//    if (m_webPage) {
-//        m_webPage->setVisible(false);
-//        m_webPage->setOpacity(1.0);
-//    }
-
     // Reload active tab from new mode
     if (m_model->count() > 0) {
         reload(false);
@@ -759,11 +753,6 @@ void DeclarativeWebContainer::onNewTabRequested(QString url, QString title, int 
     // An empty tab for cleaning previous navigation status.
     Tab tab;
     updateNavigationStatus(tab);
-
-//    if (m_webPage) {
-//        m_webPage->setVisible(false);
-//        m_webPage->setOpacity(1.0);
-//    }
 
     if (activatePage(m_model->nextTabId(), false, parentId)) {
         m_webPage->loadTab(url, false);

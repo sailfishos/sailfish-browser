@@ -102,7 +102,6 @@ WebPageActivationData WebPages::page(int tabId, int parentId)
     if (m_activePages.active(tabId)) {
         DeclarativeWebPage *activePage = m_activePages.activeWebPage();
         activePage->resumeView();
-//        activePage->setVisible(true);
         return WebPageActivationData(activePage, false);
     }
 
@@ -170,9 +169,6 @@ int WebPages::parentTabId(int tabId) const
 void WebPages::updateStates(DeclarativeWebPage *oldActivePage, DeclarativeWebPage *newActivePage)
 {
     if (oldActivePage) {
-//        oldActivePage->setVisible(false);
-//        oldActivePage->setOpacity(1.0);
-
         // Allow suspending only the current active page if it is not the creator (parent).
         if (newActivePage->parentId() != (int)oldActivePage->uniqueID()) {
             if (oldActivePage->loading()) {
@@ -184,7 +180,6 @@ void WebPages::updateStates(DeclarativeWebPage *oldActivePage, DeclarativeWebPag
 
     if (newActivePage) {
         newActivePage->resumeView();
-//        newActivePage->setVisible(true);
     }
 }
 
