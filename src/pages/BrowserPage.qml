@@ -81,6 +81,10 @@ Page {
     clip: status != PageStatus.Active || webView.inputPanelVisible
 
     onStatusChanged: {
+        if (overlay.enteringNewTabUrl) {
+            return
+        }
+
         if (status >= PageStatus.Activating && status <= PageStatus.Active) {
             overlay.animator.showChrome()
         } else {
