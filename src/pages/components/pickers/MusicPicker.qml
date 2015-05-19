@@ -11,6 +11,7 @@
 
 import QtQuick 2.1
 import Sailfish.Pickers 1.0
+import ".." as Browser
 
 MusicPickerPage {
     property var creator
@@ -19,4 +20,10 @@ MusicPickerPage {
     //% "Upload audio file"
     title: qsTrId("sailfish_browser-he-upload_audio")
     Component.onDestruction: creator.sendResponse(selectedContent)
+
+    _background: Component {
+        Browser.Background {
+            anchors.fill: parent
+        }
+    }
 }
