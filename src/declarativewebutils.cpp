@@ -194,6 +194,7 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     mozContext->setPref(QString("gfx.qt.rgb16.force"), QVariant(false));
     // Use external Qt window for rendering content
     mozContext->setPref(QString("gfx.compositor.external-window"), QVariant(true));
+    mozContext->setPref(QString("gfx.compositor.clear-context"), QVariant(false));
 
     mozContext->setPref(QString("media.resource_handler_disabled"), QVariant(true));
 
