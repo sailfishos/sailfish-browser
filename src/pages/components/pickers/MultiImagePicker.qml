@@ -11,6 +11,7 @@
 
 import QtQuick 2.1
 import Sailfish.Pickers 1.0
+import ".." as Browser
 
 MultiImagePickerDialog {
     property var creator
@@ -19,4 +20,10 @@ MultiImagePickerDialog {
     //% "Upload images"
     title: qsTrId("sailfish_browser-he-upload_images")
     Component.onDestruction: creator.sendResponseList(selectedContent)
+
+    _background: Component {
+        Browser.Background {
+            anchors.fill: parent
+        }
+    }
 }
