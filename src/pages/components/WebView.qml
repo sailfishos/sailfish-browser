@@ -146,8 +146,8 @@ WebContainer {
                 }
 
                 // Refresh timers (if any) keep working even for suspended views. Hence
-                // suspend the view again explicitly if app window is in background.
-                if (loaded && webView.background) {
+                // suspend the view again explicitly if browser content window is in not visible (background).
+                if (loaded && !webView.visible) {
                     suspendView();
                 }
 
@@ -318,7 +318,7 @@ WebContainer {
 
     property var resourceController: ResourceController {
         webView: contentItem
-        background: webView.background
+        background: !webView.visible
     }
 
     property Timer auxTimer: Timer {
