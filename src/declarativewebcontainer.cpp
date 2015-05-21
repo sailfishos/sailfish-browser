@@ -240,11 +240,6 @@ void DeclarativeWebContainer::setPrivateMode(bool privateMode)
     }
 }
 
-bool DeclarativeWebContainer::background() const
-{
-    return m_webPage ? m_webPage->background() : false;
-}
-
 bool DeclarativeWebContainer::loading() const
 {
     if (m_webPage) {
@@ -467,7 +462,6 @@ bool DeclarativeWebContainer::activatePage(int tabId, bool force, int parentId)
         connect(m_webPage, SIGNAL(loadProgressChanged()), this, SLOT(updateLoadProgress()), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(titleChanged()), this, SLOT(onPageTitleChanged()), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(domContentLoadedChanged()), this, SLOT(sendVkbOpenCompositionMetrics()), Qt::UniqueConnection);
-        connect(m_webPage, SIGNAL(backgroundChanged()), this, SIGNAL(backgroundChanged()), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(requestGLContext()), this, SLOT(createGLContext()), Qt::DirectConnection);
         return activationData.activated;
     }

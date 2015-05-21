@@ -51,7 +51,6 @@ class DeclarativeWebContainer : public QWindow, public QQmlParserStatus, protect
     Q_PROPERTY(qreal inputPanelHeight READ inputPanelHeight WRITE setInputPanelHeight NOTIFY inputPanelHeightChanged FINAL)
     Q_PROPERTY(qreal inputPanelOpenHeight MEMBER m_inputPanelOpenHeight NOTIFY inputPanelOpenHeightChanged FINAL)
     Q_PROPERTY(qreal toolbarHeight MEMBER m_toolbarHeight NOTIFY toolbarHeightChanged FINAL)
-    Q_PROPERTY(bool background READ background NOTIFY backgroundChanged FINAL)
     Q_PROPERTY(bool allowHiding MEMBER m_allowHiding NOTIFY allowHidingChanged FINAL)
 
     Q_PROPERTY(QString favicon MEMBER m_favicon NOTIFY faviconChanged)
@@ -90,8 +89,6 @@ public:
 
     bool privateMode() const;
     void setPrivateMode(bool);
-
-    bool background() const;
 
     bool loading() const;
 
@@ -137,7 +134,6 @@ signals:
     void completedChanged();
     void enabledChanged();
     void foregroundChanged();
-    void backgroundChanged();
     void allowHidingChanged();
     void maxLiveTabCountChanged();
     void popupActiveChanged();
