@@ -111,6 +111,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     qApp->installEventFilter(this);
 
     showFullScreen();
+    connect(this, SIGNAL(windowStateChanged(Qt::WindowState)), this, SLOT(updateWindowState(Qt::WindowState)));
 }
 
 DeclarativeWebContainer::~DeclarativeWebContainer()
@@ -610,6 +611,13 @@ void DeclarativeWebContainer::updateContentOrientation(Qt::ScreenOrientation ori
     }
 
     reportContentOrientationChange(orientation);
+}
+
+void DeclarativeWebContainer::updateWindowState(Qt::WindowState windowState)
+{
+    if (m_webPage && windowState >= Qt::WindowMaximized) {
+        m_webPage->update();
+    }
 }
 
 void DeclarativeWebContainer::imeNotificationChanged(int state, bool open, int cause, int focusChange, const QString &type)
