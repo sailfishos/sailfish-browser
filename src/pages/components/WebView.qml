@@ -46,8 +46,6 @@ WebContainer {
 
     foreground: Qt.application.active
     allowHiding: !resourceController.videoActive && !resourceController.audioActive
-    inputPanelHeight: window.pageStack.panelSize
-    inputPanelOpenHeight: window.pageStack.imSize
     fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) ||
                     (contentItem && contentItem.fullscreen)
 
@@ -76,15 +74,13 @@ WebContainer {
 
             // There needs to be enough content for enabling chrome gesture
             chromeGestureThreshold: toolbarHeight / 2
-            chromeGestureEnabled: (contentHeight > fullscreenHeight + toolbarHeight) && !forcedChrome
+            chromeGestureEnabled: (contentHeight > fullscreenHeight + toolbarHeight) && !forcedChrome && enabled && !webView.imOpened
 
             signal selectionRangeUpdated(variant data)
             signal selectionCopied(variant data)
             signal contextMenuRequested(variant data)
 
-//            focus: true
             width: container.rotationHandler && container.rotationHandler.width || 0
-//            state: ""
 
             onClearGrabResult: tabModel.updateThumbnailPath(tabId, "")
             onGrabResult: tabModel.updateThumbnailPath(tabId, fileName)
@@ -267,20 +263,9 @@ WebContainer {
                 }
             }
 
-//            Behavior on opacity { FadeAnimation {} }
-
             // We decided to disable "text selection" until we understand how it
             // should look like in Sailfish.
             // TextSelectionController {}
-//            states: State {
-//                name: "boundHeightControl"
-//                when: container.inputPanelVisible && container.enabled
-//                PropertyChanges {
-//                    target: webPage
-//                    // was floor
-//                    height: Math.ceil(container.parent.height)
-//                }
-//            }
         }
     }
 

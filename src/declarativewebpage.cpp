@@ -236,9 +236,10 @@ void DeclarativeWebPage::forceChrome(bool forcedChrome)
 
 void DeclarativeWebPage::resetHeight(bool respectContentHeight)
 {
-//    if (!state().isEmpty()) {
-//        return;
-//    }
+    // Input panel is fully open.
+    if (m_container->imOpened()) {
+        return;
+    }
 
     // fullscreen() below in the fullscreen request coming from the web content.
     if (respectContentHeight && (!m_forcedChrome || fullscreen())) {
