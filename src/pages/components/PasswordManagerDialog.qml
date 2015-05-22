@@ -36,10 +36,15 @@ Dialog {
                                    })
     }
 
+    Background {
+        anchors.fill: parent
+    }
+
     DialogHeader {
         //: Accept browser's request to save entered password
         //% "Save"
         acceptText: qsTrId("sailfish_browser-he-accept_password_mgr_request")
+        _glassOnly: true
     }
 
     Label {

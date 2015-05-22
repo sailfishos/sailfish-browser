@@ -62,6 +62,7 @@ Dialog {
             dialog: selectDialog
             //% "Select"
             acceptText: qsTrId("sailfish_browser-he-select")
+            _glassOnly: true
         }
 
         section {

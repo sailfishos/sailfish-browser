@@ -57,6 +57,10 @@ Page {
         property int selectedIndex: -1
     }
 
+    Background {
+        anchors.fill: parent
+    }
+
     SilicaListView {
         anchors.fill: parent
         model: selectModel
