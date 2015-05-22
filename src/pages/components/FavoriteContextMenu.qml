@@ -50,7 +50,7 @@ Component {
             //: "Remove favorited / bookmarked web page"
             //% "Remove favorite"
             text: qsTrId("sailfish_browser-me-remove_favorite")
-            onClicked: delegate.remove()
+            onClicked: bookmarkModel.removeBookmark(url)
         }
     }
 }
