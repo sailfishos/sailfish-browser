@@ -330,7 +330,6 @@ WebContainer {
     }
 
     Component.onCompleted: {
-        console.log("---------------------------------------------------------- TERVE!!!")
         PopupHandler.auxTimer = auxTimer
         PopupHandler.pageStack = pageStack
         PopupHandler.webView = webView
