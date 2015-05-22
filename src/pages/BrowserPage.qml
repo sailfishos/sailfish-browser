@@ -12,7 +12,7 @@
 
 import QtQuick 2.1
 import Sailfish.Silica 1.0
-import Sailfish.Silica.private 1.0
+import Sailfish.Silica.private 1.0 as Private
 import Sailfish.Browser 1.0
 import "components" as Browser
 
@@ -144,12 +144,29 @@ Page {
         id: historyModel
     }
 
-    Item {
-//        id: background
-//        anchors.fill: parent
-//        visible: !webView.contentItem
-//        color: webView.contentItem && webView.contentItem.bgcolor ? webView.contentItem.bgcolor : "white"
+    Private.VirtualKeyboardObserver {
+        id: virtualKeyboardObserver
+
+        active: webView.enabled
+        transpose: window._transpose
+        orientation: browserPage.orientation
+
         onWindowChanged: webView.chromeWindow = window
+        onClosedChanged: {
+            if (closed) {
+                webView.updatePageFocus(false)
+            }
+        }
+
+        // Update content height only after virtual keyboard fully opened.
+        states: State {
+            name: "boundHeightControl"
+            when: virtualKeyboardObserver.opened && webView.enabled
+            PropertyChanges {
+                target: webView.contentItem
+                height: browserPage.height - virtualKeyboardObserver.panelSize
+            }
+        }
     }
 
     Browser.DownloadRemorsePopup { id: downloadPopup }
@@ -164,6 +181,7 @@ Page {
         width: window.width
         height: window.height
         rotationHandler: browserPage
+        imOpened: virtualKeyboardObserver.opened
 
         tabModel.onCountChanged: window.solidBackground = tabModel.count == 0
     }
@@ -228,7 +246,7 @@ Page {
     }
 
     CoverActionList {
-        enabled: browserPage.status === PageStatus.Active && webView.contentItem && (Config.sailfishVersion >= 2.0)
+        enabled: browserPage.status === PageStatus.Active && webView.contentItem && (Private.Config.sailfishVersion >= 2.0)
         iconBackground: true
 
         CoverAction {
@@ -239,7 +257,7 @@ Page {
 
     // TODO: remove once we move to sailfish 2.0
     CoverActionList {
-        enabled: browserPage.status === PageStatus.Active && webView.contentItem && (Config.sailfishVersion < 2.0)
+        enabled: browserPage.status === PageStatus.Active && webView.contentItem && (Private.Config.sailfishVersion < 2.0)
         iconBackground: true
 
         CoverAction {
