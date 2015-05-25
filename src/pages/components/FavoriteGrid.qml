@@ -61,18 +61,6 @@ SilicaGridView {
     delegate: ListItem {
         id: container
 
-        property Item remorse
-
-        function remove() {
-            //: Remorse timer for removing bookmark
-            //% "Removing favorite"
-            remorse = remorseAction(qsTrId("sailfish_browser-la-removing_favorite"),
-                                    function() { bookmarkModel.removeBookmark(url) } )
-            remorse.canceled.connect(function() {
-                remorse = null
-            })
-        }
-
         signal addToLauncher
         signal editBookmark
 
@@ -92,12 +80,6 @@ SilicaGridView {
         onXChanged: {
             if (_menuItem && _menuItem.active) {
                 _menuItem.x = -x
-            }
-        }
-
-        onVisibleChanged: {
-            if (!visible && remorse) {
-                remorse.destroy()
             }
         }
 
