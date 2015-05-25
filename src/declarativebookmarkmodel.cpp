@@ -58,7 +58,17 @@ void DeclarativeBookmarkModel::removeBookmark(const QString& url)
         beginRemoveRows(QModelIndex(), index, index);
         Bookmark* bookmark = bookmarks.takeAt(index);
         delete bookmark;
+
+        // Remove index mapping and update remaining indices
         bookmarkIndexes.remove(url);
+        QMap<QString, int>::iterator i = bookmarkIndexes.begin();
+        while (i != bookmarkIndexes.end()) {
+            if (i.value() > index) {
+                i.value()--;
+            }
+            i++;
+        }
+
         endRemoveRows();
 
         emit countChanged();
