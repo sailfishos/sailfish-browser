@@ -12,6 +12,7 @@
 
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import Sailfish.Silica.private 1.0 as Private
 
 Dialog {
     id: selectDialog
@@ -19,6 +20,11 @@ Dialog {
     // input data
     property var options
     property QtObject webview
+
+    orientationTransitions: Private.PageOrientationTransition {
+        fadeTarget: listView
+        targetPage: selectDialog
+    }
 
     onOpened: {
         for (var i=0; i < options.length; i++) {
@@ -55,6 +61,7 @@ Dialog {
     }
 
     SilicaListView {
+        id: listView
         anchors.fill: parent
         model: selectModel
 
