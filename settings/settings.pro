@@ -8,9 +8,13 @@ TARGETPATH = $$[QT_INSTALL_QML]/$$MODULENAME
 QT += qml
 CONFIG += plugin
 
+INCLUDEPATH += "../common/"
+
 import.files = qmldir
 import.path = $$TARGETPATH
 target.path = $$TARGETPATH
+
+include(../common/common.pri)
 
 SOURCES += \
         declarative_plugin.cpp \
