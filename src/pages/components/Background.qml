@@ -16,7 +16,7 @@ import "." as Browser
 
 Rectangle {
     color: "black"
-    opacity: 0.7
+    opacity: 0.8
 
     Private.Wallpaper {
         anchors.fill: parent
