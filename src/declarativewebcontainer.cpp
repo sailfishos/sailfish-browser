@@ -466,6 +466,10 @@ bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
     // Hiding stops rendering. Don't pass it through if hiding is not allowed.
     if (event->type() == QEvent::Expose && !isExposed() && !m_allowHiding) {
         return true;
+    } else if (event->type() == QEvent::Close && m_webPage) {
+	// Make sure gecko does not use GL context we gave it in ::createGLContext
+	// after the window has been closed.
+	m_webPage->suspendView();
     }
     return QObject::eventFilter(obj, event);
 }
