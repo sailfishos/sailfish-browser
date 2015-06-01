@@ -46,7 +46,6 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
     , m_popupActive(false)
     , m_portrait(true)
     , m_fullScreenMode(false)
-    , m_activatingTab(false)
     , m_fullScreenHeight(0.0)
     , m_inputPanelVisible(false)
     , m_inputPanelHeight(0.0)
@@ -118,7 +117,6 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
         } else {
             m_tabId = 0;
         }
-        m_activatingTab = false;
 
         emit contentItemChanged();
         emit tabIdChanged();
@@ -285,14 +283,12 @@ int DeclarativeWebContainer::tabId() const
 
 QString DeclarativeWebContainer::title() const
 {
-    // While switching tab do not return title of the previous page.
-    return m_webPage && !m_activatingTab ? m_webPage->title() : m_title;
+    return m_webPage ? m_webPage->title() : m_title;
 }
 
 QString DeclarativeWebContainer::url() const
 {
-    // While switching tab do not return url of the previous page.
-    return m_webPage && !m_activatingTab ? m_webPage->url().toString() : m_url;
+    return m_webPage ? m_webPage->url().toString() : m_url;
 }
 
 bool DeclarativeWebContainer::isActiveTab(int tabId)
@@ -714,7 +710,6 @@ void DeclarativeWebContainer::onPageUrlChanged()
         webPage->setBackForwardNavigation(false);
 
         if (activeTab && webPage == m_webPage) {
-            m_activatingTab = false;
             updateUrl(url);
 
             if (!initialLoad && !wasBackForwardNavigation) {
@@ -736,7 +731,6 @@ void DeclarativeWebContainer::onPageTitleChanged()
         m_model->updateTitle(tabId, activeTab, url, title);
 
         if (activeTab && webPage == m_webPage) {
-            m_activatingTab = false;
             updateTitle(title);
         }
     }
@@ -771,8 +765,6 @@ void DeclarativeWebContainer::setActiveTabData()
 #endif
 
     updateNavigationStatus(tab);
-    m_activatingTab = m_tabId != tab.tabId() || tab.url() != url() || tab.title() != title();
-
     updateUrl(tab.url());
     updateTitle(tab.title());
 
