@@ -66,7 +66,7 @@ SOURCES += \
     declarativewebcontainer.cpp \
     declarativewebpage.cpp \
     declarativewebutils.cpp \
-    declarativewebviewcreator.cpp \
+    declarativewebpagecreator.cpp \
     browserservice.cpp \
     dbusadaptor.cpp \
     downloadmanager.cpp \
@@ -83,7 +83,7 @@ HEADERS += \
     declarativewebcontainer.h \
     declarativewebpage.h \
     declarativewebutils.h \
-    declarativewebviewcreator.h \
+    declarativewebpagecreator.h \
     browserservice.h \
     dbusadaptor.h \
     downloadmanager.h \

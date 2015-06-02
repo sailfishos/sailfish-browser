@@ -11,7 +11,7 @@
 
 #include <qmozcontext.h>
 #include <quickmozview.h>
-#include "declarativewebviewcreator.h"
+#include "declarativewebpagecreator.h"
 
 DeclarativeWebViewCreator::DeclarativeWebViewCreator(QObject *parent)
     : QMozViewCreator(parent)
