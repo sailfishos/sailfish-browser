@@ -10,44 +10,40 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include <qmozcontext.h>
-#include <quickmozview.h>
+#include "declarativewebpage.h"
 #include "declarativewebpagecreator.h"
 
-DeclarativeWebViewCreator::DeclarativeWebViewCreator(QObject *parent)
+DeclarativeWebPageCreator::DeclarativeWebPageCreator(QObject *parent)
     : QMozViewCreator(parent)
-    , m_activeWebView(0)
+    , m_activeWebPage(0)
 {
     QMozContext::GetInstance()->setViewCreator(this);
 }
 
-
-DeclarativeWebViewCreator::~DeclarativeWebViewCreator()
+DeclarativeWebPageCreator::~DeclarativeWebPageCreator()
 {
     QMozContext::GetInstance()->setViewCreator(0);
 }
 
-
-QuickMozView *DeclarativeWebViewCreator::activeWebView() const
+DeclarativeWebPage *DeclarativeWebPageCreator::activeWebPage() const
 {
-    return m_activeWebView;
+    return m_activeWebPage;
 }
 
-
-void DeclarativeWebViewCreator::setActiveWebView(QuickMozView *activeWebView)
+void DeclarativeWebPageCreator::setActiveWebPage(DeclarativeWebPage *activeWebPage)
 {
-    if (m_activeWebView != activeWebView) {
-        m_activeWebView = activeWebView;
-        emit activeWebViewChanged();
+    if (m_activeWebPage != activeWebPage) {
+        m_activeWebPage = activeWebPage;
+        emit activeWebPageChanged();
     }
 }
 
-
-quint32 DeclarativeWebViewCreator::createView(const QString &url, const quint32 &parentId)
+quint32 DeclarativeWebPageCreator::createView(const QString &url, const quint32 &parentId)
 {
-    QPointer<QuickMozView> oldView = m_activeWebView;
+    QPointer<DeclarativeWebPage> oldPage = m_activeWebPage;
     emit newWindowRequested(url, parentId);
-    if (m_activeWebView && oldView != m_activeWebView) {
-        return m_activeWebView->uniqueID();
+    if (m_activeWebPage && oldPage != m_activeWebPage) {
+        return m_activeWebPage->uniqueID();
     }
     return 0;
 }
