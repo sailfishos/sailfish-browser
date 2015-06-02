@@ -88,21 +88,12 @@ SilicaGridView {
         width: favoriteGrid.cellWidth
         _showPress: false
         contentHeight: favoriteGrid.cellHeight
-        menu: largeScreen ? null : favoriteContextMenu
+        menu: favoriteContextMenu
         down: favoriteItem.down
         showMenuOnPressAndHold: false
         // Do not capture mouse events here. This ListItem only handles
         // menu creation and destruction.
         enabled: false
-
-        // Update menu position upon orientation change. Delegate's x might change when
-        // orientation changes as there are 4 columns in portrait and 7 in landscape.
-        // This breaks binding that exists in ContextMenu.
-        onXChanged: {
-            if (_menuItem && _menuItem.active) {
-                _menuItem.x = -x
-            }
-        }
 
         onAddToLauncher: {
             // url, title, favicon
