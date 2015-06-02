@@ -16,10 +16,8 @@ import Sailfish.Silica.private 1.0 as Private
 import Sailfish.Browser 1.0
 import "components" as Browser
 
-
 Page {
     id: browserPage
-
 
     readonly property rect inputMask: inputMaskForOrientation(orientation)
     readonly property bool active: status == PageStatus.Active
@@ -87,57 +85,25 @@ Page {
         }
     }
 
-    orientationTransitions: Transition {
-        to: 'Portrait,Landscape,PortraitInverted,LandscapeInverted'
-        from: 'Portrait,Landscape,PortraitInverted,LandscapeInverted'
-        SequentialAnimation {
-            PropertyAction {
-                target: browserPage
-                property: 'orientationTransitionRunning'
-                value: true
-            }
-//            ParallelAnimation {
-//                FadeAnimation {
-//                    target: webView.contentItem
-//                    to: 0
-//                    duration: 150
-//                }
-//                FadeAnimation {
-//                    target: !webView.fullscreenMode ? overlay : null
-//                    to: 0
-//                    duration: 150
-//                }
-//            }
-            PropertyAction {
-                target: browserPage
-                properties: 'width,height,rotation,orientation'
-            }
-            ScriptAction {
-                script: {
-                    // Restores the Bindings to width, height and rotation
-                    _defaultTransition = false
-                    webView.resetHeight()
-                    _defaultTransition = true
-                }
-            }
-//            FadeAnimation {
-//                target: !webView.fullscreenMode ? overlay : null
-//                to: 1
-//                duration: 150
-//            }
-            // End-2-end implementation for OnUpdateDisplayPort should
-            // give better solution and reduce visible relayoutting.
-//            FadeAnimation {
-//                target: webView.contentItem
-//                to: 1
-//                duration: 850
-//            }
-            PropertyAction {
-                target: browserPage
-                property: 'orientationTransitionRunning'
-                value: false
-            }
+    property int pageOrientation: pageStack.currentPage._windowOrientation
+    onPageOrientationChanged: {
+        // When on other pages update immediately.
+        if (!active) {
+            webView.applyContentOrientation(pageOrientation)
         }
+    }
+
+    orientationTransitions: orientationFader.orientationTransition
+
+    Browser.OrientationFader {
+        id: orientationFader
+
+        visible: webView.contentItem
+        page: browserPage
+        fadeTarget: overlay.animator.allowContentUse ? overlay : overlay.dragArea
+        color: webView.contentItem ? webView.contentItem.bgcolor : "white"
+
+        onApplyContentOrientation: webView.applyContentOrientation(browserPage.orientation)
     }
 
     HistoryModel {
@@ -183,7 +149,26 @@ Page {
         rotationHandler: browserPage
         imOpened: virtualKeyboardObserver.opened
 
-        tabModel.onCountChanged: window.solidBackground = tabModel.count == 0
+        tabModel.onCountChanged: window.opaqueBackground = tabModel.count == 0
+
+        function applyContentOrientation(orientation) {
+            switch (orientation) {
+            case Orientation.None:
+            case Orientation.Portrait:
+                updateContentOrientation(Qt.PortraitOrientation)
+                break
+            case Orientation.Landscape:
+                updateContentOrientation(Qt.LandscapeOrientation)
+                break
+            case Orientation.PortraitInverted:
+                updateContentOrientation(Qt.InvertedPortraitOrientation)
+                break
+            case Orientation.LandscapeInverted:
+                updateContentOrientation(Qt.InvertedLandscapeOrientation)
+                break
+            }
+            resetHeight()
+        }
     }
 
     InputRegion {
@@ -242,7 +227,7 @@ Page {
         historyModel: historyModel
         browserPage: browserPage
 
-        onEnteringNewTabUrlChanged: window.solidBackground = overlay.enteringNewTabUrl
+        onEnteringNewTabUrlChanged: window.opaqueBackground = overlay.enteringNewTabUrl
     }
 
     CoverActionList {
