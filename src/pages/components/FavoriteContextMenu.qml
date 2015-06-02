@@ -20,6 +20,9 @@ Component {
         property string title
         property string url
 
+        // FavoriteGrid doesn't fill the entire page thus set width to FavoriteGrid's parent
+        width: _flickable !== null ? _flickable.parent.width : (parent ? parent.width : 0)
+
         MenuItem {
             //% "Open in new tab"
             text: qsTrId("sailfish_browser-me-open_new_tab")
