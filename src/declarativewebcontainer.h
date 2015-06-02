@@ -174,9 +174,9 @@ protected:
 
 public slots:
     void resetHeight(bool respectContentHeight = true);
+    void updateContentOrientation(Qt::ScreenOrientation orientation);
 
 private slots:
-    void updateContentOrientation(Qt::ScreenOrientation orientation);
     void updateWindowState(Qt::WindowState windowState);
     void imeNotificationChanged(int state, bool open, int cause, int focusChange, const QString& type);
     void initialize();

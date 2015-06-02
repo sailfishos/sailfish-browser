@@ -24,6 +24,7 @@ Background {
     property alias toolBar: toolBar
     property alias progressBar: progressBar
     property alias animator: overlayAnimator
+    property alias dragArea: dragArea
     readonly property alias enteringNewTabUrl: searchField.enteringNewTabUrl
 
     property var enteredPage
@@ -138,15 +139,6 @@ Background {
         source: "image://theme/graphic-gradient-edge"
     }
 
-    Browser.ProgressBar {
-        id: progressBar
-        width: parent.width
-        height: toolBar.toolsHeight
-        visible: !firstUseOverlay && !searchField.enteringNewTabUrl
-        opacity: webView.loading ? 1.0 : 0.0
-        progress: webView.loadProgress / 100.0
-    }
-
     MouseArea {
         id: dragArea
 
@@ -181,6 +173,15 @@ Background {
 
                 overlayAnimator.drag()
             }
+        }
+
+        Browser.ProgressBar {
+            id: progressBar
+            width: parent.width
+            height: toolBar.toolsHeight
+            visible: !firstUseOverlay && !searchField.enteringNewTabUrl
+            opacity: webView.loading ? 1.0 : 0.0
+            progress: webView.loadProgress / 100.0
         }
 
         Item {

@@ -10,7 +10,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import QtQuick 2.0
+import QtQuick 2.2
 import Sailfish.Silica 1.0
 import Sailfish.Browser 1.0
 import "pages"
@@ -18,7 +18,7 @@ import "pages"
 ApplicationWindow {
     id: window
 
-    property bool solidBackground
+    property bool opaqueBackground
 
     signal newTab
 
@@ -51,7 +51,7 @@ ApplicationWindow {
             z: -1
             width: window.width
             height: window.height
-            opacity: window.solidBackground ? 1.0 : 0.0
+            opacity: window.opaqueBackground ? 1.0 : 0.0
             visible: opacity > 0.0
             color: "white"
 

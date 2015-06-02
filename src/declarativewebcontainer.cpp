@@ -289,7 +289,6 @@ void DeclarativeWebContainer::setChromeWindow(QObject *chromeWindow)
             m_chromeWindow->setTransientParent(this);
             m_chromeWindow->showFullScreen();
             updateContentOrientation(m_chromeWindow->contentOrientation());
-            connect(m_chromeWindow, SIGNAL(contentOrientationChanged(Qt::ScreenOrientation)), this, SLOT(updateContentOrientation(Qt::ScreenOrientation)));
         }
         emit chromeWindowChanged();
     }
