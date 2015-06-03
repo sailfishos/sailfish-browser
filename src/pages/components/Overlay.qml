@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2014 Jolla Ltd.
+** Copyright (C) 2014-2015 Jolla Ltd.
 ** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **
 ****************************************************************************/
@@ -11,6 +11,7 @@
 
 import QtQuick 2.2
 import Sailfish.Silica 1.0
+import Sailfish.Silica.private 1.0 as Private
 import Sailfish.Browser 1.0
 import "." as Browser
 
@@ -404,11 +405,18 @@ Background {
             id: tabPage
             property int activeTabIndex
 
+            orientationTransitions: Private.PageOrientationTransition {
+                fadeTarget: tabViewItem
+                targetPage: browserPage
+            }
+
             Browser.Background {
                 anchors.fill: parent
             }
 
             Browser.TabView {
+                id: tabViewItem
+
                 model: webView.tabModel
                 portrait: tabPage.isPortrait
                 privateMode: webView.privateMode
