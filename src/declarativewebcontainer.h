@@ -13,7 +13,6 @@
 #define DECLARATIVEWEBCONTAINER_H
 
 #include "settingmanager.h"
-#include "tab.h"
 #include "webpages.h"
 
 #include <QQuickItem>
@@ -24,6 +23,7 @@
 class QTimerEvent;
 class DeclarativeTabModel;
 class DeclarativeWebPage;
+class Tab;
 
 class DeclarativeWebContainer : public QQuickItem {
     Q_OBJECT
@@ -50,13 +50,7 @@ class DeclarativeWebContainer : public QQuickItem {
     Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged FINAL)
     Q_PROPERTY(int loadProgress READ loadProgress NOTIFY loadProgressChanged FINAL)
 
-    // Navigation related properties
-    Q_PROPERTY(bool canGoForward READ canGoForward NOTIFY canGoForwardChanged FINAL)
-    Q_PROPERTY(bool canGoBack READ canGoBack NOTIFY canGoBackChanged FINAL)
-
     Q_PROPERTY(int tabId READ tabId NOTIFY tabIdChanged FINAL)
-    Q_PROPERTY(QString title READ title NOTIFY titleChanged FINAL)
-    Q_PROPERTY(QString url READ url NOTIFY urlChanged FINAL)
 
     Q_PROPERTY(bool privateMode READ privateMode WRITE setPrivateMode NOTIFY privateModeChanged FINAL)
 
@@ -95,10 +89,7 @@ public:
     void setInputPanelHeight(qreal height);
 
     bool canGoForward() const;
-    void setCanGoForward(bool canGoForward);
-
     bool canGoBack() const;
-    void setCanGoBack(bool canGoBack);
 
     int tabId() const;
     QString title() const;
@@ -138,12 +129,7 @@ signals:
     void loadingChanged();
     void loadProgressChanged();
 
-    void canGoForwardChanged();
-    void canGoBackChanged();
-
     void tabIdChanged();
-    void titleChanged();
-    void urlChanged();
     void thumbnailPathChanged();
     void privateModeChanged();
 
@@ -181,12 +167,9 @@ private:
     void setWebPage(DeclarativeWebPage *webPage);
     qreal contentHeight() const;
     int parentTabId(int tabId) const;
-    void updateNavigationStatus(const Tab &tab);
     void updateVkbHeight();
-    void updateUrl(const QString &newUrl);
-    void updateTitle(const QString &newTitle);
     bool canInitialize() const;
-    void loadTab(int tabId, QString url, QString title, bool force);
+    void loadTab(const Tab &tab, const bool force);
     void updateMode();
 
     QPointer<DeclarativeWebPage> m_webPage;
@@ -203,7 +186,6 @@ private:
     bool m_popupActive;
     bool m_portrait;
     bool m_fullScreenMode;
-    bool m_activatingTab;
     qreal m_fullScreenHeight;
     bool m_inputPanelVisible;
     qreal m_inputPanelHeight;
@@ -219,15 +201,11 @@ private:
     // back to the active tab and load it. In case we didn't not have tabs open when downloading was
     // triggered we just clear these.
     // The exposed url/title are always coming from the active web page.
-    QString m_url;
-    QString m_title;
+    QString m_initialUrl;
     int m_tabId;
 
     bool m_loading;
     int m_loadProgress;
-    bool m_canGoForward;
-    bool m_canGoBack;
-    bool m_realNavigation;
 
     bool m_completed;
     bool m_initialized;

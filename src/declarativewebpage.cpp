@@ -11,6 +11,8 @@
 
 #include "declarativewebpage.h"
 #include "declarativewebcontainer.h"
+#include "dbmanager.h"
+#include "link.h"
 
 #include <QtConcurrent>
 #include <QStandardPaths>
@@ -57,12 +59,13 @@ DeclarativeWebPage::DeclarativeWebPage(QQuickItem *parent)
     , m_container(0)
     , m_tabId(0)
     , m_viewReady(false)
+    , m_viewInitialized(false)
+    , m_tabHistoryReady(false)
     , m_userHasDraggedWhileLoading(false)
     , m_fullscreen(false)
     , m_forcedChrome(false)
     , m_domContentLoaded(false)
     , m_urlHasChanged(false)
-    , m_backForwardNavigation(false)
     , m_boundToModel(false)
 {
     connect(this, SIGNAL(viewInitialized()), this, SLOT(onViewInitialized()));
@@ -105,6 +108,12 @@ void DeclarativeWebPage::setTabId(int tabId)
         m_tabId = tabId;
         emit tabIdChanged();
     }
+
+    if (m_tabId && !m_tabHistoryReady) {
+        connect(DBManager::instance(), SIGNAL(tabHistoryAvailable(int, QList<Link>)),
+                this, SLOT(onTabHistoryAvailable(int, QList<Link>)));
+        DBManager::instance()->getTabHistory(m_tabId);
+    }
 }
 
 bool DeclarativeWebPage::domContentLoaded() const
@@ -122,9 +131,9 @@ void DeclarativeWebPage::setUrlHasChanged(bool urlHasChanged)
     m_urlHasChanged = urlHasChanged;
 }
 
-void DeclarativeWebPage::setInitialUrl(const QString &url)
+void DeclarativeWebPage::setInitialTab(const Tab &tab)
 {
-    m_initialUrl = url;
+    m_initialTab = tab;
 }
 
 void DeclarativeWebPage::bindToModel()
@@ -135,16 +144,6 @@ void DeclarativeWebPage::bindToModel()
 bool DeclarativeWebPage::boundToModel()
 {
     return m_boundToModel;
-}
-
-bool DeclarativeWebPage::backForwardNavigation() const
-{
-    return m_backForwardNavigation;
-}
-
-void DeclarativeWebPage::setBackForwardNavigation(bool backForwardNavigation)
-{
-    m_backForwardNavigation = backForwardNavigation;
 }
 
 bool DeclarativeWebPage::viewReady() const
@@ -179,7 +178,7 @@ void DeclarativeWebPage::loadTab(QString newUrl, bool force)
 
 void DeclarativeWebPage::grabToFile()
 {
-    if (!m_viewReady || backForwardNavigation() || !active() || !isPainted())
+    if (!m_viewReady || !active() || !isPainted())
         return;
 
     emit clearGrabResult();
@@ -251,8 +250,36 @@ void DeclarativeWebPage::componentComplete()
     QuickMozView::componentComplete();
 }
 
+void DeclarativeWebPage::onTabHistoryAvailable(const int& tabId, const QList<Link>& links)
+{
+    if (tabId == m_tabId) {
+        m_restoredTabHistory = links;
+
+        // reverse the list
+        for(int k=0, s=m_restoredTabHistory.size(), max=(s/2); k<max; k++) {
+            m_restoredTabHistory.swap(k,s-(1+k));
+        }
+
+        m_tabHistoryReady = true;
+        DBManager::instance()->disconnect(this);
+        setupWebPage();
+    }
+}
+
 void DeclarativeWebPage::onViewInitialized()
 {
+    m_viewInitialized = true;
+    setupWebPage();
+}
+
+void DeclarativeWebPage::setupWebPage()
+{
+    qDebug() << m_tabHistoryReady << m_viewInitialized;
+    if (!m_tabHistoryReady || !m_viewInitialized) {
+        // We are still waiting for a reply from DB with tab's history and/or from Gecko's view
+        return;
+    }
+
     addMessageListener(gFullScreenMessage);
     addMessageListener(gDomContentLoadedMessage);
 
@@ -277,11 +304,40 @@ void DeclarativeWebPage::onViewInitialized()
     m_viewReady = true;
     emit viewReadyChanged();
 
-    if (!m_initialUrl.isEmpty()) {
-        loadTab(m_initialUrl, false);
-        m_initialUrl = "";
+    if (!m_initialTab.url().isEmpty()) {
+        loadTab(m_initialTab.url(), false);
+        m_initialTab.setUrl("");
+    }
+
+    if (!m_restoredTabHistory.isEmpty()) {
+        connect(this, SIGNAL(locationChanged()), this, SLOT(restoreHistory()));
     }
 }
+
+void DeclarativeWebPage::restoreHistory()
+{
+    disconnect(this, SIGNAL(locationChanged()), this, SLOT(restoreHistory()));
+    QList<QString> urls;
+    int index(-1);
+    int i(0);
+    foreach (Link link, m_restoredTabHistory) {
+        urls << link.url();
+        if (link.linkId() == m_initialTab.currentLink()) {
+            index = i;
+        }
+        i++;
+    }
+
+    if (index < 0) {
+        urls << url().toString();
+        index = urls.count() - 1;
+    }
+
+    QVariantMap data;
+    data.insert(QString("links"), QVariant(urls));
+    data.insert(QString("index"), QVariant(index));
+    sendAsyncMessage("embedui:addhistory", QVariant(data));
+ }
 
 void DeclarativeWebPage::grabResultReady()
 {

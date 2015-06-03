@@ -21,6 +21,7 @@ Item {
     property bool atMiddle
     property bool atBottom: true
     property int transitionDuration: !_immediate ? 400 : 0
+    property real openYPosition: portrait ? overlay.toolBar.toolsHeight : 0
 
     property bool active
     readonly property bool allowContentUse: state === "chromeVisible" || state === "fullscreenWebPage" || state === "doubleToolBar"
@@ -192,7 +193,7 @@ Item {
                 },
                 PropertyChanges {
                     target: overlay
-                    y: portrait ? overlay.toolBar.toolsHeight : 0
+                    y: openYPosition
                 }
             ]
         },

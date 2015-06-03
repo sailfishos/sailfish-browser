@@ -12,6 +12,7 @@
 
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import Sailfish.Silica.private 1.0
 import Sailfish.Browser 1.0
 import "components" as Browser
 
@@ -26,8 +27,8 @@ Page {
     property alias tabs: webView.tabModel
     property alias history: historyModel
     property alias viewLoading: webView.loading
-    property alias url: webView.url
-    property alias title: webView.title
+    property string url: webView.contentItem ? webView.contentItem.url : ""
+    property string title: webView.contentItem ? webView.contentItem.title : ""
     property alias webView: webView
 
     function load(url, title) {
@@ -52,8 +53,8 @@ Page {
     clip: status != PageStatus.Active || webView.inputPanelVisible
 
     orientationTransitions: Transition {
-        to: 'Portrait,Landscape,LandscapeInverted'
-        from: 'Portrait,Landscape,LandscapeInverted'
+        to: 'Portrait,Landscape,PortraitInverted,LandscapeInverted'
+        from: 'Portrait,Landscape,PortraitInverted,LandscapeInverted'
         SequentialAnimation {
             PropertyAction {
                 target: browserPage
@@ -170,7 +171,18 @@ Page {
     }
 
     CoverActionList {
-        enabled: browserPage.status === PageStatus.Active && webView.contentItem
+        enabled: browserPage.status === PageStatus.Active && webView.contentItem && (Config.sailfishVersion >= 2.0)
+        iconBackground: true
+
+        CoverAction {
+            iconSource: "image://theme/icon-cover-new"
+            onTriggered: activateNewTabView()
+        }
+    }
+
+    // TODO: remove once we move to sailfish 2.0
+    CoverActionList {
+        enabled: browserPage.status === PageStatus.Active && webView.contentItem && (Config.sailfishVersion < 2.0)
         iconBackground: true
 
         CoverAction {
