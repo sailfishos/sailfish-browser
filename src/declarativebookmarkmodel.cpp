@@ -100,7 +100,7 @@ void DeclarativeBookmarkModel::editBookmark(int index, const QString& url, const
 
 void DeclarativeBookmarkModel::clearBookmarks()
 {
-    beginRemoveRows(QModelIndex(), 0, bookmarks.count()-1);
+    beginRemoveRows(QModelIndex(), 0, qMax<int>(0, bookmarks.count()-1));
     bookmarks.clear();
     bookmarkIndexes.clear();
     endRemoveRows();

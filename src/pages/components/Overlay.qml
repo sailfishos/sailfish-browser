@@ -320,7 +320,13 @@ PanelBackground {
 
                 onFocusChanged: {
                     if (focus) {
-                        searchField.selectAll()
+                        // Mark SearchField as edited if focused before url is resolved.
+                        // Otherwise select all.
+                        if (!text) {
+                            edited = true
+                        } else {
+                            searchField.selectAll()
+                        }
                     }
                 }
 
