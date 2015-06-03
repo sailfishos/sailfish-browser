@@ -88,7 +88,12 @@ public:
     qreal inputPanelHeight() const;
     void setInputPanelHeight(qreal height);
 
+    bool canGoForward() const;
+    bool canGoBack() const;
+
     int tabId() const;
+    QString title() const;
+    QString url() const;
     QString thumbnailPath() const;
 
     bool isActiveTab(int tabId);

@@ -261,9 +261,29 @@ void DeclarativeWebContainer::setInputPanelHeight(qreal height)
     }
 }
 
+bool DeclarativeWebContainer::canGoForward() const
+{
+    return m_webPage ? m_webPage->canGoForward() : false;
+}
+
+bool DeclarativeWebContainer::canGoBack() const
+{
+    return m_webPage ? m_webPage->canGoBack() : false;
+}
+
 int DeclarativeWebContainer::tabId() const
 {
     return m_tabId;
+}
+
+QString DeclarativeWebContainer::title() const
+{
+    return m_webPage ? m_webPage->title() : QString();
+}
+
+QString DeclarativeWebContainer::url() const
+{
+    return m_webPage ? m_webPage->url().toString() : QString();
 }
 
 bool DeclarativeWebContainer::isActiveTab(int tabId)
