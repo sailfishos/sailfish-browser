@@ -120,11 +120,11 @@ WebPageActivationData WebPages::page(int tabId, int parentId)
             object->setParent(m_webContainer);
             webPage = qobject_cast<DeclarativeWebPage *>(object);
             if (webPage) {
-//                webPage->setParentItem(m_webContainer);
                 webPage->setParentID(parentId);
                 webPage->setPrivateMode(m_webContainer->privateMode());
                 webPage->setTabId(tabId);
                 webPage->setContainer(m_webContainer);
+                webPage->initialize();
                 m_webPageComponent->completeCreate();
 #if DEBUG_LOGS
                 qDebug() << "New view id:" << webPage->uniqueID() << "parentId:" << webPage->parentId() << "tab id:" << webPage->tabId();
