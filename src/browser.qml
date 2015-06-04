@@ -35,6 +35,7 @@ ApplicationWindow {
     _defaultPageOrientations: Orientation.All
     _defaultLabelFormat: Text.PlainText
     _clippingItem.opacity: 1.0
+    _resizeContent: false
     cover: null
     initialPage: Component {
         BrowserPage {
