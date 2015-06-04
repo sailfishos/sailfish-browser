@@ -11,6 +11,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import QtQuick 2.2
+import QtQuick.Window 2.1
 import Sailfish.Silica 1.0
 import Sailfish.Browser 1.0
 import "pages"
@@ -43,7 +44,17 @@ ApplicationWindow {
                 target: window
                 onNewTab: browserPage.activateNewTabView()
             }
+
+            Component.onCompleted: window.webView = webView
         }
+    }
+
+    property QtObject webView
+    Binding {
+        when: !!_coverWindow
+        target: _coverWindow
+        property: "mainWindow"
+        value: webView
     }
 
     data: [
