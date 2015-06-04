@@ -57,6 +57,11 @@ WebContainer {
 
     webPageComponent: webPageComponent
 
+    onTabModelChanged: {
+        // BrowserContextMenu created in PopupHandler needs to maintain correct tabModel.
+        PopupHandler.tabModel = tabModel
+    }
+
     WebViewCreator {
         activeWebView: contentItem
         // onNewWindowRequested is always handled as synchronous operation (not through newTab).
