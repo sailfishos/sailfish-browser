@@ -57,8 +57,6 @@ WebContainer {
 
     webPageComponent: webPageComponent
 
-    visible: WebUtils.firstUseDone
-
     WebViewCreator {
         activeWebView: contentItem
         // onNewWindowRequested is always handled as synchronous operation (not through newTab).
