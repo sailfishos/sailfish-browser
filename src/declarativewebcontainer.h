@@ -26,6 +26,9 @@
 #include <QQuickView>
 #include <QQuickItem>
 
+#include <QMutex>
+#include <QWaitCondition>
+
 class QInputMethodEvent;
 class QTimerEvent;
 class DeclarativeTabModel;
@@ -258,6 +261,10 @@ private:
     bool m_initialized;
 
     bool m_privateMode;
+    bool m_hasBeenExposed;
+
+    QMutex m_exposedMutex;
+    QWaitCondition m_windowExposed;
 
     friend class tst_webview;
 };
