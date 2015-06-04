@@ -11,6 +11,7 @@
 
 
 import QtQuick 2.1
+import QtQuick.Window 2.1 as QtWindow
 import Sailfish.Silica 1.0
 import Sailfish.Silica.private 1.0 as Private
 import Sailfish.Browser 1.0
@@ -37,8 +38,8 @@ Page {
     }
 
     function bringToForeground() {
-        if (!window.applicationActive) {
-            window.activate()
+        if (!Qt.application.active) {
+            webView.raise()
         }
     }
 
@@ -46,6 +47,8 @@ Page {
         pageStack.pop(browserPage, PageStackAction.Immediate);
         overlay.enterNewTabUrl(PageStackAction.Immediate)
         bringToForeground()
+        // after bringToForeground, webView has focus => activate chrome
+        window.activate()
     }
 
     function inputMaskForOrientation(orientation) {
