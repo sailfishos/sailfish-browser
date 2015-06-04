@@ -15,12 +15,13 @@ Item {
     id: animator
 
     property Item overlay
-    property Item webView
+    property QtObject webView
     property bool portrait
     property bool atTop
     property bool atMiddle
     property bool atBottom: true
     property int transitionDuration: !_immediate ? 400 : 0
+    property real openYPosition: portrait ? overlay.toolBar.toolsHeight : 0
 
     property bool active
     readonly property bool allowContentUse: state === "chromeVisible" || state === "fullscreenWebPage" || state === "doubleToolBar"
@@ -52,15 +53,6 @@ Item {
     // Wrapper from updating the state. Handy for debugging.
     function updateState(newState, immediate) {
         _immediate = immediate || false
-        // Verify that we return back to opacity 1.0
-        // For instance, push to switcher from new-tab-creation overlay
-        if (newState === "fullscreenWebPage" || newState === "chromeVisible") {
-            if (webView && webView.contentItem) {
-                webView.contentItem.visible = true
-                webView.contentItem.opacity = 1.0
-            }
-        }
-
         if (newState !== "fullscreenWebPage") {
             overlay.visible = true
         }
@@ -119,7 +111,8 @@ Item {
     }
 
     Connections {
-        target: webView.tabModel
+        target: webView && webView.tabModel || null
+        ignoreUnknownSignals: true
         onCountChanged: {
             if (webView.completed && webView.tabModel.count === 0) {
                 updateState("fullscreenOverlay")
@@ -134,13 +127,6 @@ Item {
             name: "fullscreenWebPage"
             changes: [
                 PropertyChanges {
-                    target: webView
-                    // TODO: once we get rid of bad rendering loop, check if we could use here browserPage.height
-                    // instead of webView.fullscreenHeight. Currently with browserPage.height binding we skip
-                    // frames when returning back from tab page so that virtual keyboard was open.
-                    height: overlay.y
-                },
-                PropertyChanges {
                     target: overlay
                     y: webView.fullscreenHeight
                 }
@@ -154,10 +140,6 @@ Item {
             name: "chromeVisible"
             changes: [
                 PropertyChanges {
-                    target: webView
-                    height: overlay.y
-                },
-                PropertyChanges {
                     target: overlay
                     y: webView.fullscreenHeight - overlay.toolBar.toolsHeight
                 }
@@ -166,10 +148,6 @@ Item {
         State {
             name: "draggingOverlay"
             changes: [
-                PropertyChanges {
-                    target: webView
-                    height: overlay.y
-                },
                 PropertyChanges {
                     target: overlay
                     y: overlay.y
@@ -185,14 +163,8 @@ Item {
             name: "fullscreenOverlay"
             changes: [
                 PropertyChanges {
-                    target: webView
-                    // was floor
-                    //height: Math.ceil(overlay.y) ? Math.ceil(overlay.y) : 0
-                    height: overlay.y
-                },
-                PropertyChanges {
                     target: overlay
-                    y: portrait ? overlay.toolBar.toolsHeight : 0
+                    y: openYPosition
                 }
             ]
         },
@@ -200,10 +172,6 @@ Item {
         State {
             name: "doubleToolBar"
             changes: [
-                PropertyChanges {
-                    target: webView
-                    height: overlay.y
-                },
                 PropertyChanges {
                     target: overlay
                     y: webView.fullscreenHeight - overlay.toolBar.toolsHeight * 2

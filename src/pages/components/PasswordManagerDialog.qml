@@ -11,14 +11,21 @@
 
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import Sailfish.Silica.private 1.0 as Private
 
 Dialog {
+    id: passwordManagerDialog
 
     // As QML is not very closure friendly we'd better keep webView and requestId as properties of the dialog
     property QtObject webView
     property string requestId
     property string notificationType
     property variant formData
+
+    orientationTransitions: Private.PageOrientationTransition {
+        fadeTarget: contentItem
+        targetPage: passwordManagerDialog
+    }
 
     onAccepted: {
         webView.sendAsyncMessage("embedui:login",
@@ -36,28 +43,37 @@ Dialog {
                                    })
     }
 
-    DialogHeader {
-        //: Accept browser's request to save entered password
-        //% "Save"
-        acceptText: qsTrId("sailfish_browser-he-accept_password_mgr_request")
+    Background {
+        anchors.fill: parent
     }
 
-    Label {
-        id: label
+    Item {
+        id: contentItem
+        anchors.fill: parent
 
-        anchors.centerIn: parent
-        width: parent.width - 2 * Theme.paddingLarge
-        wrapMode: Text.Wrap
-        horizontalAlignment: Text.AlignHCenter
-        font {
-            family: Theme.fontFamilyHeading
-            pixelSize: Theme.fontSizeExtraLarge
+        DialogHeader {
+            //: Accept browser's request to save entered password
+            //% "Save"
+            acceptText: qsTrId("sailfish_browser-he-accept_password_mgr_request")
+            _glassOnly: true
         }
-        color: Theme.highlightColor
-        opacity: 0.6
 
-        text: {
-            switch (notificationType) {
+        Label {
+            id: label
+
+            anchors.centerIn: parent
+            width: parent.width - 2 * Theme.paddingLarge
+            wrapMode: Text.Wrap
+            horizontalAlignment: Text.AlignHCenter
+            font {
+                family: Theme.fontFamilyHeading
+                pixelSize: Theme.fontSizeExtraLarge
+            }
+            color: Theme.highlightColor
+            opacity: 0.6
+
+            text: {
+                switch (notificationType) {
                 case "password-save": {
                     if (formData["displayUser"]) {
                         //% "Would you like to save password for user %1 on %2?"
@@ -87,6 +103,7 @@ Dialog {
                     //       Though this task is quite a corner case and thus of very low priority.
                     console.log("TODO: this notification type hasn't been implemented yet")
                     break
+                }
                 }
             }
         }

@@ -10,13 +10,16 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import QtQuick 2.0
+import QtQuick 2.2
+import QtQuick.Window 2.1
 import Sailfish.Silica 1.0
 import Sailfish.Browser 1.0
 import "pages"
 
 ApplicationWindow {
     id: window
+
+    property bool opaqueBackground
 
     signal newTab
 
@@ -28,8 +31,10 @@ ApplicationWindow {
         }
     }
 
-    allowedOrientations: WebUtils.firstUseDone && Qt.application.active ? Orientation.Landscape | Orientation.Portrait | Orientation.LandscapeInverted : Orientation.Portrait
-    _defaultPageOrientations: allowedOrientations
+    allowedOrientations: defaultAllowedOrientations
+    _defaultPageOrientations: Orientation.All
+    _defaultLabelFormat: Text.PlainText
+    _clippingItem.opacity: 1.0
     cover: null
     initialPage: Component {
         BrowserPage {
@@ -39,6 +44,29 @@ ApplicationWindow {
                 target: window
                 onNewTab: browserPage.activateNewTabView()
             }
+
+            Component.onCompleted: window.webView = webView
         }
     }
+
+    property QtObject webView
+    Binding {
+        when: !!_coverWindow
+        target: _coverWindow
+        property: "mainWindow"
+        value: webView
+    }
+
+    data: [
+        Rectangle {
+            z: -1
+            width: window.width
+            height: window.height
+            opacity: window.opaqueBackground ? 1.0 : 0.0
+            visible: opacity > 0.0
+            color: "white"
+
+            Behavior on opacity { FadeAnimation {} }
+        }
+    ]
 }

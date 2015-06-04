@@ -17,6 +17,7 @@ SilicaGridView {
     id: tabView
 
     property bool portrait
+    readonly property bool largeScreen: Screen.sizeCategory > Screen.Medium
     property bool privateMode
 
     signal hide
@@ -25,8 +26,11 @@ SilicaGridView {
     signal closeTab(int index)
     signal closeAll
 
-    cellWidth: portrait ? parent.width : parent.width / 3
-    cellHeight: portrait ? Screen.width / 2 : cellWidth
+    readonly property int columns: portrait ? (largeScreen ? 2 : 1) : 3
+
+    cellWidth: parent.width / columns
+    // Only small screen in portrait has one column. Use then none square tab.
+    cellHeight: columns === 1 ? Screen.width / 2 : cellWidth
 
     width: parent.width
     height: parent.height
@@ -40,12 +44,15 @@ SilicaGridView {
     delegate: TabItem {
         id: tabItem
 
+        readonly property bool firstColumn: index % columns === 0
+        readonly property bool lastColumn: index % columns === (columns - 1)
+
         width: tabView.cellWidth
         height: tabView.cellHeight
 
         topMargin: Theme.paddingMedium
-        leftMargin: (portrait || index % 3 === 0) ? Theme.paddingLarge : Theme.paddingMedium
-        rightMargin: (portrait || index % 3 === 2) ? Theme.paddingLarge : Theme.paddingMedium
+        leftMargin: firstColumn ? Theme.paddingLarge : Theme.paddingMedium
+        rightMargin: lastColumn ? Theme.paddingLarge : Theme.paddingMedium
         bottomMargin: Theme.paddingMedium
 
         Behavior on width {

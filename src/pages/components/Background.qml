@@ -1,7 +1,7 @@
 /****************************************************************************
 **
 ** Copyright (C) 2015 Jolla Ltd.
-** Contact: Siteshwar Vashisht <siteshwar@gmail.com>
+** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **
 ****************************************************************************/
 
@@ -9,12 +9,19 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import QtQuick 2.1
+import QtQuick 2.2
+import Sailfish.Silica 1.0
+import Sailfish.Silica.private 1.0 as Private
+import "." as Browser
 
-Image {
-    anchors.fill: parent
-    fillMode: Image.Tile
-    source: "graphic-diagonal-line-texture.png"
-    visible: opacity > 0.0
-    verticalAlignment: Image.AlignTop
+Rectangle {
+    color: "black"
+    opacity: 0.8
+
+    Private.Wallpaper {
+        anchors.fill: parent
+        source: ""
+        glassOnly: true
+        effect.blending: true
+    }
 }

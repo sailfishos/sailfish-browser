@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2014 Jolla Ltd.
+** Copyright (C) 2014-2015 Jolla Ltd.
 ** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **
 ****************************************************************************/
@@ -11,19 +11,22 @@
 
 import QtQuick 2.2
 import Sailfish.Silica 1.0
+import Sailfish.Silica.private 1.0 as Private
 import Sailfish.Browser 1.0
 import "." as Browser
 
-PanelBackground {
+Background {
     id: overlay
 
     property bool active
-    property Item webView
+    property QtObject webView
     property Item browserPage
     property alias historyModel: historyList.model
     property alias toolBar: toolBar
     property alias progressBar: progressBar
     property alias animator: overlayAnimator
+    property alias dragArea: dragArea
+    readonly property alias enteringNewTabUrl: searchField.enteringNewTabUrl
 
     property var enteredPage
 
@@ -52,26 +55,19 @@ PanelBackground {
                 }
                 webView.tabModel.waitingForNewTab = true
             }
-            webView.focus = true
+            //webView.focus = true
         }
 
         overlayAnimator.showChrome()
     }
 
     function enterNewTabUrl(action) {
-        if (webView.contentItem) {
-            webView.contentItem.opacity = 0.0
-        }
-
         searchField.enteringNewTabUrl = true
         searchField.resetUrl("")
         overlayAnimator.showOverlay(action === PageStackAction.Immediate)
     }
 
     function dismiss() {
-        if (webView.contentItem) {
-            webView.contentItem.opacity = 1.0
-        }
         toolBar.resetFind()
         if (webView.contentItem && webView.contentItem.fullscreen) {
             // Web content is in fullscreen mode thus we don't show chrome
@@ -95,22 +91,6 @@ PanelBackground {
         }
     }
 
-    gradient: Gradient {
-        GradientStop { position: 0.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.3) }
-        GradientStop { position: 1.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.0) }
-    }
-
-    // Immediately active WebView height binding when dragging
-    // starts. If this binding is removed, state change to
-    // "draggingOverlay" at OverlayAnimator causes a visual glitch
-    // right after transition to "draggingOverlay" has finnished.
-    Binding {
-        target: webView
-        property: "height"
-        value: overlay.y
-        when: dragArea.drag.active
-    }
-
     // This is an invisible object responsible to hide/show Overlay in an animated way
     Browser.OverlayAnimator {
         id: overlayAnimator
@@ -119,6 +99,8 @@ PanelBackground {
         portrait: browserPage.isPortrait
         active: Qt.application.active
         webView: firstUseOverlay ? firstUseOverlay : overlay.webView
+        // Favorite grid first row offset is negative. So, increase minumumY drag by that.
+        openYPosition: dragArea.drag.minimumY
 
         onAtBottomChanged: {
             if (atBottom) {
@@ -158,15 +140,6 @@ PanelBackground {
         source: "image://theme/graphic-gradient-edge"
     }
 
-    Browser.ProgressBar {
-        id: progressBar
-        width: parent.width
-        height: toolBar.toolsHeight
-        visible: !firstUseOverlay && !searchField.enteringNewTabUrl
-        opacity: webView.loading ? 1.0 : 0.0
-        progress: webView.loadProgress / 100.0
-    }
-
     MouseArea {
         id: dragArea
 
@@ -182,8 +155,9 @@ PanelBackground {
         drag.target: overlay
         drag.filterChildren: true
         drag.axis: Drag.YAxis
-        drag.minimumY: browserPage.isPortrait ? toolBar.toolsHeight : 0
-        drag.maximumY: browserPage.isPortrait ? webView.fullscreenHeight - toolBar.toolsHeight : webView.fullscreenHeight
+        // Favorite grid first row offset is negative. So, increase minumumY drag by that.
+        drag.minimumY: (browserPage.isPortrait ? toolBar.toolsHeight : 0) - favoriteGrid.firstRowOffset
+        drag.maximumY: webView.fullscreenHeight - toolBar.toolsHeight
 
         drag.onActiveChanged: {
             if (!drag.active) {
@@ -200,6 +174,15 @@ PanelBackground {
 
                 overlayAnimator.drag()
             }
+        }
+
+        Browser.ProgressBar {
+            id: progressBar
+            width: parent.width
+            height: toolBar.toolsHeight
+            visible: !firstUseOverlay && !searchField.enteringNewTabUrl
+            opacity: webView.loading ? 1.0 : 0.0
+            progress: webView.loadProgress / 100.0
         }
 
         Item {
@@ -231,11 +214,11 @@ PanelBackground {
                 }
                 onShowTabs: {
                     overlayAnimator.showChrome()
-                    // Push the tab index and active page that were current at this moment.
+                    // Push the currently active tab index.
                     // Changing of active tab cannot cause blinking.
+                    webView.grabActivePage()
                     pageStack.push(tabView, {
-                                       "activeTabIndex": webView.tabModel.activeTabIndex,
-                                       "activeWebPage": webView.contentItem
+                                       "activeTabIndex": webView.tabModel.activeTabIndex
                                    })
                 }
                 onShowSecondaryTools: overlayAnimator.showSecondaryTools()
@@ -386,8 +369,7 @@ PanelBackground {
             Browser.FavoriteGrid {
                 id: favoriteGrid
 
-                height: historyList.height
-                anchors.horizontalCenter: parent.horizontalCenter
+                height: historyList.height - favoriteGrid.firstRowOffset
                 opacity: historyContainer.showFavorites ? 1.0 : 0.0
                 enabled: overlayAnimator.atTop
                 visible: !overlayAnimator.atBottom && !toolBar.findInPageActive && opacity > 0.0
@@ -423,15 +405,19 @@ PanelBackground {
         Page {
             id: tabPage
             property int activeTabIndex
-            property Item activeWebPage
 
-            onStatusChanged: {
-                if (activeWebPage && status == PageStatus.Active) {
-                    webView.privateMode ? activeWebPage.grabThumbnail() : activeWebPage.grabToFile()
-                }
+            orientationTransitions: Private.PageOrientationTransition {
+                fadeTarget: tabViewItem
+                targetPage: browserPage
+            }
+
+            Browser.Background {
+                anchors.fill: parent
             }
 
             Browser.TabView {
+                id: tabViewItem
+
                 model: webView.tabModel
                 portrait: tabPage.isPortrait
                 privateMode: webView.privateMode
@@ -441,7 +427,6 @@ PanelBackground {
                 onPrivateModeChanged: {
                     webView.privateMode = privateMode
                     tabPage.activeTabIndex =  webView.tabModel.activeTabIndex
-                    tabPage.activeWebPage = webView.contentItem
 
                     if (webView.tabModel.count === 0) {
                         overlay.enterNewTabUrl(PageStackAction.Immediate)

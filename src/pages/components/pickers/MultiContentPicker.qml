@@ -11,6 +11,7 @@
 
 import QtQuick 2.1
 import Sailfish.Pickers 1.0
+import ".." as Browser
 
 MultiContentPickerDialog {
     property var creator
@@ -19,4 +20,10 @@ MultiContentPickerDialog {
     //% "Upload files"
     title: qsTrId("sailfish_browser-he-upload_files")
     Component.onDestruction: creator.sendResponseList(selectedContent)
+
+    _background: Component {
+        Browser.Background {
+            anchors.fill: parent
+        }
+    }
 }

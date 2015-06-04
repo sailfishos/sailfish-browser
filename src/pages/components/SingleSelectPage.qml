@@ -12,6 +12,7 @@
 
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import Sailfish.Silica.private 1.0 as Private
 
 Page {
     id: selectPage
@@ -51,13 +52,23 @@ Page {
         }
     }
 
+    orientationTransitions: Private.PageOrientationTransition {
+        fadeTarget: listView
+        targetPage: selectPage
+    }
+
     ListModel {
         id: selectModel
 
         property int selectedIndex: -1
     }
 
+    Background {
+        anchors.fill: parent
+    }
+
     SilicaListView {
+        id: listView
         anchors.fill: parent
         model: selectModel
 
