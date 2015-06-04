@@ -28,6 +28,8 @@
 #include <QScreen>
 #include <QMetaMethod>
 
+#include <QOpenGLFunctions_ES2>
+
 #include <qmozcontext.h>
 #include <QGuiApplication>
 
@@ -66,6 +68,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     , m_completed(false)
     , m_initialized(false)
     , m_privateMode(m_settingManager->autostartPrivateBrowsing())
+    , m_hasBeenExposed(false)
 {
 
     QSize screenSize = QGuiApplication::primaryScreen()->size();
@@ -289,6 +292,7 @@ void DeclarativeWebContainer::setChromeWindow(QObject *chromeWindow)
             m_chromeWindow->setTransientParent(this);
             m_chromeWindow->showFullScreen();
             updateContentOrientation(m_chromeWindow->contentOrientation());
+            connect(m_chromeWindow, SIGNAL(contentOrientationChanged(Qt::ScreenOrientation)), this, SLOT(updateContentOrientation(Qt::ScreenOrientation)));
         }
         emit chromeWindowChanged();
     }
@@ -463,8 +467,28 @@ QObject *DeclarativeWebContainer::focusObject() const
 bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
 {
     // Hiding stops rendering. Don't pass it through if hiding is not allowed.
-    if (event->type() == QEvent::Expose && !isExposed() && !m_allowHiding) {
-        return true;
+    if (event->type() == QEvent::Expose) {
+        if (isExposed() && !m_hasBeenExposed) {
+            QMutexLocker lock(&m_exposedMutex);
+            QOpenGLContext context;
+            context.setFormat(requestedFormat());
+            context.create();
+            context.makeCurrent(this);
+
+            QOpenGLFunctions_ES2* funcs = context.versionFunctions<QOpenGLFunctions_ES2>();
+            if (funcs) {
+                funcs->glClearColor(1.0, 1.0, 1.0, 0.0);
+                funcs->glClear(GL_COLOR_BUFFER_BIT);
+            }
+
+            context.swapBuffers(this);
+            context.doneCurrent();
+            m_hasBeenExposed = true;
+            m_windowExposed.wakeAll();
+
+        } else if (!isExposed() && !m_allowHiding) {
+            return true;
+        }
     } else if (event->type() == QEvent::Close && m_webPage) {
         // Make sure gecko does not use GL context we gave it in ::createGLContext
         // after the window has been closed.
@@ -672,6 +696,7 @@ void DeclarativeWebContainer::initialize()
         emit completedChanged();
     }
     m_initialized = true;
+    disconnect(m_chromeWindow, SIGNAL(contentOrientationChanged(Qt::ScreenOrientation)), this, SLOT(updateContentOrientation(Qt::ScreenOrientation)));
 }
 
 void DeclarativeWebContainer::onDownloadStarted()
@@ -1014,6 +1039,11 @@ void DeclarativeWebContainer::sendVkbOpenCompositionMetrics()
 
 void DeclarativeWebContainer::createGLContext()
 {
+    QMutexLocker lock(&m_exposedMutex);
+    if (!m_hasBeenExposed) {
+        m_windowExposed.wait(&m_exposedMutex);
+    }
+
     if (!m_context) {
         m_context = new QOpenGLContext();
         m_context->setFormat(requestedFormat());
