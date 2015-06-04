@@ -181,12 +181,14 @@ Page {
         height: inputMask.height
     }
 
-    Rectangle {
+    Browser.DimmerEffect {
         id: contentDimmer
+        dimmerOpacity: 0.9 - (overlay.y / (webView.fullscreenHeight - overlay.toolBar.toolsHeight)) * 0.9
+        baseOpacity: window.opaqueBackground ? 1 : 0
         width: browserPage.width
         height: Math.ceil(overlay.y)
-        opacity: 0.9 - (overlay.y / (webView.fullscreenHeight - overlay.toolBar.toolsHeight)) * 0.9
-        color: Theme.highlightDimmerColor
+
+        Behavior on baseOpacity { FadeAnimation { property: "baseOpacity" } }
 
         MouseArea {
             anchors.fill: parent
@@ -223,6 +225,9 @@ Page {
 
     Browser.Overlay {
         id: overlay
+
+        baseColor: contentDimmer.baseColor
+        baseOpacity: contentDimmer.baseOpacity
 
         active: browserPage.status == PageStatus.Active
         webView: webView

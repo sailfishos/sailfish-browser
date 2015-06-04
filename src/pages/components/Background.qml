@@ -16,6 +16,9 @@ import "." as Browser
 Item {
     id: wallpaper
 
+    property alias baseColor: base.color
+    property alias baseOpacity: base.opacity
+
     Item {
         id: glassTextureItem
         visible: false
@@ -23,14 +26,22 @@ Item {
         height: glassTextureImage.height
 
         Rectangle {
+            id: base
+            anchors.fill: parent
+            color: "white"
+            opacity: 0
+        }
+
+        Rectangle {
             color: "black"
             opacity: 0.948
             anchors.fill: parent
-            Image {
-                id: glassTextureImage
-                opacity: 0.1
-                source: "image://theme/graphic-shader-texture"
-            }
+        }
+
+        Image {
+            id: glassTextureImage
+            opacity: 0.1
+            source: "image://theme/graphic-shader-texture"
         }
     }
 
