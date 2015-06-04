@@ -52,9 +52,7 @@ BackgroundItem {
         Image {
             id: image
 
-            readonly property bool active: source != ""
-
-            source: !activeTab ? thumbnailPath : ""
+            source: thumbnailPath
             cache: false
             visible: false
             asynchronous: true
@@ -64,9 +62,9 @@ BackgroundItem {
             id: textureSource
             width: root.implicitWidth
             height: root.implicitHeight
-            live: !destroying
+            live: false
             visible: false
-            sourceItem: activeTab ? activeWebPage : (image.active ? image : contentItem)
+            sourceItem: image
             sourceRect: Qt.rect(0, 0, mask.width, mask.height)
         },
         ShaderEffectSource {
