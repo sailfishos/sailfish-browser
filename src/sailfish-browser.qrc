@@ -45,8 +45,6 @@
     <file>pages/components/OrientationFader.qml</file>
     <file>pages/components/PressEffect.qml</file>
     <file>pages/components/ExpandingButton.qml</file>
-    <file>pages/components/DisplaceTransition.qml</file>
-    <file>pages/components/RemoveTransition.qml</file>
     <file>pages/components/PrivateModeTexture.qml</file>
     <file>pages/components/pickers/ContentPicker.qml</file>
     <file>pages/components/pickers/ImagePicker.qml</file>

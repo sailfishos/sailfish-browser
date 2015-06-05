@@ -13,7 +13,7 @@ import QtQuick 2.1
 import Sailfish.Silica 1.0
 import "." as Browser
 
-SilicaGridView {
+SilicaListView {
     id: tabView
 
     property bool portrait
@@ -26,45 +26,21 @@ SilicaGridView {
     signal closeTab(int index)
     signal closeAll
 
-    readonly property int columns: portrait ? (largeScreen ? 2 : 1) : 3
-
-    cellWidth: parent.width / columns
-    // Only small screen in portrait has one column. Use then none square tab.
-    cellHeight: columns === 1 ? Screen.width / 2 : cellWidth
-
     width: parent.width
     height: parent.height
     currentIndex: -1
     header: spacer
     footer: spacer
-    // If approved to Silica, remove these transitions from browser.
-    displaced: Browser.DisplaceTransition {}
-    remove: Browser.RemoveTransition {}
 
     delegate: TabItem {
         id: tabItem
 
-        readonly property bool firstColumn: index % columns === 0
-        readonly property bool lastColumn: index % columns === (columns - 1)
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: Screen.width - (largeScreen ? (2 * Theme.horizontalPageMargin) : 0)
+        height: largeScreen ? Theme.itemSizeExtraLarge + (2 * Theme.paddingLarge) : Screen.height / 5
 
-        width: tabView.cellWidth
-        height: tabView.cellHeight
-
-        topMargin: Theme.paddingMedium
-        leftMargin: firstColumn ? Theme.paddingLarge : Theme.paddingMedium
-        rightMargin: lastColumn ? Theme.paddingLarge : Theme.paddingMedium
-        bottomMargin: Theme.paddingMedium
-
-        Behavior on width {
-            enabled: !tabItem.destroying
-            NumberAnimation { easing.type: Easing.InOutQuad; duration: 150 }
-        }
-        Behavior on height {
-            enabled: !tabItem.destroying
-            NumberAnimation { easing.type: Easing.InOutQuad; duration: 150 }
-        }
-
-        GridView.onAdd: AddAnimation {}
+        ListView.onAdd: AddAnimation {}
+        ListView.onRemove: RemoveAnimation {}
     }
 
     // Behind tab delegates
