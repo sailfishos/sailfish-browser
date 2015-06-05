@@ -42,6 +42,7 @@
     <file>pages/components/SecondaryBar.qml</file>
     <file>pages/components/TabButton.qml</file>
     <file>pages/components/TabView.qml</file>
+    <file>pages/components/OrientationFader.qml</file>
     <file>pages/components/PressEffect.qml</file>
     <file>pages/components/ExpandingButton.qml</file>
     <file>pages/components/DisplaceTransition.qml</file>
