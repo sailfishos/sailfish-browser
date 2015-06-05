@@ -35,7 +35,7 @@
 #include "declarativehistorymodel.h"
 #include "declarativewebcontainer.h"
 #include "declarativewebpage.h"
-#include "declarativewebviewcreator.h"
+#include "declarativewebpagecreator.h"
 #include "declarativefileuploadmode.h"
 #include "declarativefileuploadfilter.h"
 #include "iconfetcher.h"
@@ -129,7 +129,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     qmlRegisterType<DeclarativeHistoryModel>("Sailfish.Browser", 1, 0, "HistoryModel");
     qmlRegisterType<DeclarativeWebContainer>("Sailfish.Browser", 1, 0, "WebContainer");
     qmlRegisterType<DeclarativeWebPage>("Sailfish.Browser", 1, 0, "WebPage");
-    qmlRegisterType<DeclarativeWebViewCreator>("Sailfish.Browser", 1, 0, "WebViewCreator");
+    qmlRegisterType<DeclarativeWebPageCreator>("Sailfish.Browser", 1, 0, "WebPageCreator");
     qmlRegisterType<DeclarativeFileUploadMode>("Sailfish.Browser", 1, 0, "FileUploadMode");
     qmlRegisterType<DeclarativeFileUploadFilter>("Sailfish.Browser", 1, 0, "FileUploadFilter");
     qmlRegisterType<DesktopBookmarkWriter>("Sailfish.Browser", 1, 0, "DesktopBookmarkWriter");

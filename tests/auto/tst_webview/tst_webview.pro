@@ -19,14 +19,14 @@ QT += gui-private
 SOURCES += tst_webview.cpp \
     ../../../src/declarativewebcontainer.cpp \
     ../../../src/declarativewebpage.cpp \
-    ../../../src/declarativewebviewcreator.cpp \
+    ../../../src/declarativewebpagecreator.cpp \
     ../../../src/settingmanager.cpp \
     ../../../src/webpagequeue.cpp \
     ../../../src/webpages.cpp
 
 HEADERS += ../../../src/declarativewebcontainer.h \
     ../../../src/declarativewebpage.h \
-    ../../../src/declarativewebviewcreator.h \
+    ../../../src/declarativewebpagecreator.h \
     ../../../src/settingmanager.h \
     ../../../src/webpagequeue.h \
     ../../../src/webpages.h

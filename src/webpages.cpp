@@ -180,6 +180,7 @@ void WebPages::updateStates(DeclarativeWebPage *oldActivePage, DeclarativeWebPag
 
     if (newActivePage) {
         newActivePage->resumeView();
+        newActivePage->update();
     }
 }
 

@@ -55,11 +55,11 @@ WebContainer {
         PopupHandler.tabModel = tabModel
     }
 
-//    property var foobar: WebViewCreator {
-//        activeWebView: contentItem
-//        // onNewWindowRequested is always handled as synchronous operation (not through newTab).
-//        onNewWindowRequested: tabModel.newTab(url, "", parentId)
-//    }
+    property var webPageCreator: WebPageCreator {
+        activeWebPage: contentItem
+        // onNewWindowRequested is always handled as synchronous operation (not through newTab).
+        onNewWindowRequested: tabModel.newTab(url, "", parentId)
+    }
 
     webPageComponent: Component {
         WebPage {
