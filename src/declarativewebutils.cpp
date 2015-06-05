@@ -194,6 +194,10 @@ void DeclarativeWebUtils::updateWebEngineSettings()
 
     // Disable SSLv3
     mozContext->setPref(QString("security.tls.version.min"), QVariant(1));
+
+    // New rendering pipeline.
+    mozContext->setPref(QString("layers.progressive-paint"), QVariant(true));
+    mozContext->setPref(QString("layers.low-precision-buffer"), QVariant(true));
 }
 
 void DeclarativeWebUtils::setFirstUseDone(bool firstUseDone) {
