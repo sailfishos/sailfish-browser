@@ -135,11 +135,6 @@ Background {
         }
     }
 
-    Image {
-        anchors.fill: parent
-        source: "image://theme/graphic-gradient-edge"
-    }
-
     MouseArea {
         id: dragArea
 
