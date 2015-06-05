@@ -181,12 +181,14 @@ Page {
         height: inputMask.height
     }
 
-    Rectangle {
+    Browser.DimmerEffect {
         id: contentDimmer
         width: browserPage.width
         height: Math.ceil(overlay.y)
-        opacity: 0.9 - (overlay.y / (webView.fullscreenHeight - overlay.toolBar.toolsHeight)) * 0.9
-        color: Theme.highlightDimmerColor
+
+        baseColor: overlay.baseColor
+        baseOpacity: overlay.baseOpacity
+        dimmerOpacity: 0.9 - (overlay.y / (webView.fullscreenHeight - overlay.toolBar.toolsHeight)) * 0.9
 
         MouseArea {
             anchors.fill: parent

@@ -57,17 +57,4 @@ ApplicationWindow {
         property: "mainWindow"
         value: webView
     }
-
-    data: [
-        Rectangle {
-            z: -1
-            width: window.width
-            height: window.height
-            opacity: window.opaqueBackground ? 1.0 : 0.0
-            visible: opacity > 0.0
-            color: "white"
-
-            Behavior on opacity { FadeAnimation {} }
-        }
-    ]
 }

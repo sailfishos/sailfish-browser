@@ -11,17 +11,75 @@
 
 import QtQuick 2.2
 import Sailfish.Silica 1.0
-import Sailfish.Silica.private 1.0 as Private
 import "." as Browser
 
-Rectangle {
-    color: "black"
-    opacity: 0.8
+Item {
+    id: wallpaper
 
-    Private.Wallpaper {
+    readonly property alias baseColor: base.color
+    readonly property alias baseOpacity: base.opacity
+
+    Item {
+        id: glassTextureItem
+        visible: false
+        width: glassTextureImage.width
+        height: glassTextureImage.height
+
+        Rectangle {
+            id: base
+            anchors.fill: parent
+            color: "white"
+            opacity: window.opaqueBackground ? 1 : 0
+            Behavior on opacity { FadeAnimation { } }
+        }
+
+        Rectangle {
+            color: "black"
+            opacity: 0.948
+            anchors.fill: parent
+        }
+
+        Image {
+            id: glassTextureImage
+            opacity: 0.1
+            source: "image://theme/graphic-shader-texture"
+        }
+    }
+
+    ShaderEffect {
+        id: wallpaperEffect
         anchors.fill: parent
-        source: ""
-        glassOnly: true
-        effect.blending: true
+
+        // glass texture size
+        property size glassTextureSizeInv: Qt.size(1.0/(glassTextureImage.sourceSize.width),
+                                                   -1.0/(glassTextureImage.sourceSize.height))
+
+        property variant glassTexture: ShaderEffectSource {
+            hideSource: true
+            sourceItem: glassTextureItem
+            wrapMode: ShaderEffectSource.Repeat
+        }
+
+        blending: false
+
+        vertexShader: "
+           uniform highp mat4 qt_Matrix;
+           attribute highp vec4 qt_Vertex;
+
+           void main() {
+              gl_Position = qt_Matrix * qt_Vertex;
+           }
+        "
+
+        fragmentShader: "
+           uniform sampler2D glassTexture;
+           uniform highp vec2 glassTextureSizeInv;
+           uniform lowp float qt_Opacity;
+
+           void main() {
+              lowp vec4 tx = texture2D(glassTexture, gl_FragCoord.xy * glassTextureSizeInv);
+              gl_FragColor = tx;
+           }
+        "
     }
 }
