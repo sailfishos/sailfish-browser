@@ -31,10 +31,6 @@ Background {
     property var enteredPage
 
     function loadPage(url, title)  {
-        if (firstUseOverlay) {
-            firstUseOverlay.done()
-        }
-
         if (url == "about:config") {
             pageStack.push(Qt.resolvedUrl("ConfigWarning.qml"), {"browserPage": browserPage});
         } else {
@@ -104,7 +100,7 @@ Background {
         overlay: overlay
         portrait: browserPage.isPortrait
         active: Qt.application.active
-        webView: firstUseOverlay ? firstUseOverlay : overlay.webView
+        webView: overlay.webView
         // Favorite grid first row offset is negative. So, increase minumumY drag by that.
         openYPosition: dragArea.drag.minimumY
 
@@ -121,6 +117,10 @@ Background {
 
                 favoriteGrid.positionViewAtBeginning()
                 historyList.positionViewAtBeginning()
+
+                if (!WebUtils.firstUseDone) {
+                    WebUtils.firstUseDone = true
+                }
             }
         }
     }
@@ -151,7 +151,7 @@ Background {
 
         width: parent.width
         height: historyContainer.height
-        enabled: !overlayAnimator.atBottom && (webView.tabModel.count > 0 || firstUseOverlay) && !favoriteGrid.contextMenuActive
+        enabled: !overlayAnimator.atBottom && webView.tabModel.count > 0 && !favoriteGrid.contextMenuActive
 
         drag.target: overlay
         drag.filterChildren: true
@@ -181,7 +181,7 @@ Background {
             id: progressBar
             width: parent.width
             height: toolBar.toolsHeight
-            visible: !firstUseOverlay && !searchField.enteringNewTabUrl
+            visible: !searchField.enteringNewTabUrl
             opacity: webView.loading ? 1.0 : 0.0
             progress: webView.loadProgress / 100.0
         }
@@ -442,12 +442,6 @@ Background {
                     pageStack.pop()
                 }
                 onActivateTab: {
-                    // In case tab activated from tab view and first use exists.
-                    // Let's mark first time usage guideline as done.
-                    if (firstUseOverlay) {
-                        firstUseOverlay.done()
-                    }
-
                     webView.tabModel.activateTab(index)
                     pageStack.pop()
                 }

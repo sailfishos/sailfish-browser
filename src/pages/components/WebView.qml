@@ -50,8 +50,10 @@ WebContainer {
                     (contentItem && contentItem.fullscreen)
 
     favicon: contentItem ? contentItem.favicon : ""
-
-    visible: WebUtils.firstUseDone
+    onTabModelChanged: {
+        // BrowserContextMenu created in PopupHandler needs to maintain correct tabModel.
+        PopupHandler.tabModel = tabModel
+    }
 
 //    property var foobar: WebViewCreator {
 //        activeWebView: contentItem

@@ -24,7 +24,7 @@ ApplicationWindow {
     signal newTab
 
     function setBrowserCover(model) {
-        if (model && model.count === 0) {
+        if (!model || model.count === 0) {
             cover = Qt.resolvedUrl("cover/NoTabsCover.qml")
         } else {
             cover = null
