@@ -16,8 +16,8 @@ import "." as Browser
 Item {
     id: wallpaper
 
-    property alias baseColor: base.color
-    property alias baseOpacity: base.opacity
+    readonly property alias baseColor: base.color
+    readonly property alias baseOpacity: base.opacity
 
     Item {
         id: glassTextureItem
@@ -29,7 +29,8 @@ Item {
             id: base
             anchors.fill: parent
             color: "white"
-            opacity: 0
+            opacity: window.opaqueBackground ? 1 : 0
+            Behavior on opacity { FadeAnimation { } }
         }
 
         Rectangle {
