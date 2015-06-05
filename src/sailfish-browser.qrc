@@ -19,7 +19,6 @@
     <file>pages/components/FavoriteGrid.qml</file>
     <file>pages/components/FavoriteIcon.qml</file>
     <file>pages/components/FavoriteItem.qml</file>
-    <file>pages/components/FirstUseOverlay.qml</file>
     <file>pages/components/IconButton.qml</file>
     <file>pages/components/LocationDialog.qml</file>
     <file>pages/components/Overlay.qml</file>

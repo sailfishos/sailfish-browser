@@ -22,7 +22,6 @@ Page {
 
     readonly property rect inputMask: inputMaskForOrientation(orientation)
     readonly property bool active: status == PageStatus.Active
-    property Item firstUseOverlay
     property Item debug
     property Component tabPageComponent
 
@@ -191,7 +190,7 @@ Page {
 
         MouseArea {
             anchors.fill: parent
-            enabled: overlay.animator.atTop && (webView.tabModel.count > 0 || firstUseOverlay)
+            enabled: overlay.animator.atTop && webView.tabModel.count > 0
             onClicked: overlay.dismiss()
         }
 
@@ -268,15 +267,15 @@ Page {
     Connections {
         target: WebUtils
         onOpenUrlRequested: {
-            // url is empty when user tapped icon when browser was already open.
+            // Url is empty when user tapped icon when browser was already open.
+            // In case first use not done show the overlay immediately.
             if (url == "") {
                 bringToForeground()
-                return
-            }
+                if (!WebUtils.firstUseDone) {
+                    overlay.animator.showOverlay(true)
+                }
 
-            // We have incoming URL so let's show it
-            if (firstUseOverlay) {
-                firstUseOverlay.dismiss()
+                return
             }
 
             if (browserPage.status !== PageStatus.Active) {
@@ -305,18 +304,7 @@ Page {
         WebUtils.zoomMargin = Theme.paddingMedium
 
         if (!WebUtils.firstUseDone) {
-            var component = Qt.createComponent(Qt.resolvedUrl("components/FirstUseOverlay.qml"))
-            if (component.status == Component.Ready) {
-                // Parent to browserPage so that FirstUseOverlay is visible as WebView is invisible
-                // when FirstUseOverlay is visible.
-                firstUseOverlay = component.createObject(browserPage, {
-                                                             "width": webView.width,
-                                                             "height": webView.height,
-                                                             "fullscreenHeight": browserPage.height,
-                                                             "gestureThreshold" : webView.toolbarHeight / 2});
-            } else {
-                console.log("FirstUseOverlay create failed " + component.errorString())
-            }
+            window.setBrowserCover(webView.tabModel)
         }
 
         if (WebUtils.debugMode) {
