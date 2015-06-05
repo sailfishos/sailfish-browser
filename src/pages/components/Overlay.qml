@@ -79,8 +79,14 @@ Background {
 
     y: webView.fullscreenHeight - toolBar.toolsHeight
 
+    Private.VirtualKeyboardObserver {
+        id: virtualKeyboardObserver
+        active: !overlayAnimator.atBottom
+        orientation: browserPage.orientation
+    }
+
     width: parent.width
-    height: historyContainer.height
+    height: historyContainer.height + virtualKeyboardObserver.panelSize
     // `visible` is controlled by Browser.OverlayAnimator
     enabled: visible
 
@@ -342,7 +348,7 @@ Background {
                 id: historyList
 
                 width: parent.width
-                height: browserPage.height - dragArea.drag.minimumY
+                height: browserPage.height - dragArea.drag.minimumY - virtualKeyboardObserver.panelSize
 
                 header: Item {
                     width: parent.width
