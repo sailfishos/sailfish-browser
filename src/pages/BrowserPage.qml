@@ -240,6 +240,10 @@ Page {
         WebUtils.inputItemSize = Theme.fontSizeSmall
         WebUtils.zoomMargin = Theme.paddingMedium
 
+        if (!WebUtils.firstUseDone) {
+            window.setBrowserCover(webView.tabModel)
+        }
+
         if (WebUtils.debugMode) {
             component = Qt.createComponent(Qt.resolvedUrl("components/DebugOverlay.qml"))
             if (component.status === Component.Ready) {
