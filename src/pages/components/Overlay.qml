@@ -347,8 +347,10 @@ Background {
             Browser.HistoryList {
                 id: historyList
 
+                property int panelSize: favoriteGrid.contextMenu && favoriteGrid.contextMenu.active ? 0 : virtualKeyboardObserver.panelSize
+
                 width: parent.width
-                height: browserPage.height - dragArea.drag.minimumY - virtualKeyboardObserver.panelSize
+                height: browserPage.height - dragArea.drag.minimumY - panelSize
 
                 header: Item {
                     width: parent.width
