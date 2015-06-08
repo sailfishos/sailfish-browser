@@ -411,7 +411,7 @@ Background {
 
             orientationTransitions: Private.PageOrientationTransition {
                 fadeTarget: tabViewItem
-                targetPage: browserPage
+                targetPage: tabPage
             }
 
             Browser.Background {
