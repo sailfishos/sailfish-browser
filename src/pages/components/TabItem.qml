@@ -47,7 +47,6 @@ BackgroundItem {
             source: thumbnailPath
             cache: false
             asynchronous: true
-            smooth: true
         },
 
         Rectangle {
