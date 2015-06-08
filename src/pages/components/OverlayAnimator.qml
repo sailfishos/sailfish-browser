@@ -203,7 +203,7 @@ Item {
                             webView.contentItem.chrome = animator.state !== "fullscreenWebPage"
                         }
                         _immediate = false
-                        overlay.visible = animator.state !== "fullscreenWebPage"
+                        overlay.visible = animator.state !== "fullscreenWebPage" && animator.state !== "noOverlay"
                     }
                 }
             }
