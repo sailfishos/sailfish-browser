@@ -32,7 +32,6 @@ BackgroundItem {
 
     // Rounded background item that is also a placeholder for a tab not having
     // thumbnail image.
-    contentItem.visible: false
     contentItem.color: Theme.rgba(Theme.highlightBackgroundColor, Theme.highlightBackgroundOpacity)
     contentItem.width: root.implicitWidth
     contentItem.height: root.implicitHeight
