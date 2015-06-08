@@ -40,7 +40,9 @@ SilicaListView {
         height: largeScreen ? Theme.itemSizeExtraLarge + (2 * Theme.paddingLarge) : Screen.height / 5
 
         ListView.onAdd: AddAnimation {}
-        ListView.onRemove: RemoveAnimation {}
+        ListView.onRemove: RemoveAnimation {
+            target: tabItem
+        }
     }
 
     // Behind tab delegates
