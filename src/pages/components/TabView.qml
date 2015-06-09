@@ -28,7 +28,11 @@ SilicaListView {
     width: parent.width
     height: parent.height
     currentIndex: -1
-    header: spacer
+    header: PageHeader {
+        //: Tabs
+        //% "Tabs"
+        title: qsTrId("sailfish_browser-he-tabs")
+    }
     footer: spacer
 
     delegate: TabItem {

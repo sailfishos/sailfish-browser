@@ -50,11 +50,14 @@ BackgroundItem {
         },
 
         Rectangle {
-            anchors.fill: parent
+            anchors.bottom: parent.bottom
+            width: parent.width
+            height: Math.max(close.height, titleLabel.height) + Theme.paddingLarge * 2
 
             gradient: Gradient {
-                GradientStop { position: 0.4; color: "transparent" }
-                GradientStop { position: 1.0; color: Theme.rgba(Theme.highlightDimmerColor, 1.0) }
+                GradientStop { position: 0.0; color: "transparent" }
+                GradientStop { position: 0.45; color: Qt.rgba(0, 0, 0, 0.5)}
+                GradientStop { position: 0.9; color: Qt.rgba(0, 0, 0, 0.8)}
             }
         },
         IconButton {
@@ -87,6 +90,8 @@ BackgroundItem {
             onTriggered: view.closeTab(index)
         },
         Label {
+            id: titleLabel
+
             anchors {
                 left: close.right
                 right: parent.right
@@ -94,7 +99,6 @@ BackgroundItem {
                 verticalCenter: close.verticalCenter
             }
 
-            font.pixelSize: Theme.fontSizeLarge
             text: title
             truncationMode: TruncationMode.Fade
             color: down || activeTab ? Theme.highlightColor : Theme.primaryColor
