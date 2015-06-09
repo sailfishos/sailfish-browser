@@ -103,7 +103,9 @@ Page {
         visible: webView.contentItem
         page: browserPage
         fadeTarget: overlay.animator.allowContentUse ? overlay : overlay.dragArea
-        color: webView.contentItem ? webView.contentItem.bgcolor : "white"
+        color: webView.contentItem ? (webView.resourceController.videoActive &&
+                                      webView.contentItem.fullscreen ? "black" : webView.contentItem.bgcolor)
+                                   : "white"
 
         onApplyContentOrientation: webView.applyContentOrientation(browserPage.orientation)
     }
