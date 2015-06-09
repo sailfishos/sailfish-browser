@@ -80,10 +80,10 @@ Page {
             return
         }
 
-        if (status >= PageStatus.Activating && status <= PageStatus.Active) {
-            overlay.animator.showChrome()
-        } else {
+        if (status == PageStatus.Inactive && overlay.visible) {
             overlay.animator.hide()
+        } else if (status == PageStatus.Active && webView.contentItem && !overlay.enteringNewTabUrl && !webView.contentItem.fullscreen) {
+            overlay.animator.showChrome()
         }
     }
 
