@@ -21,26 +21,24 @@ SilicaGridView {
     readonly property Item contextMenu: currentItem ? currentItem._menuItem : null
     readonly property bool contextMenuActive: contextMenu && contextMenu.active
 
-    readonly property bool largeScreen: Screen.sizeCategory >= Screen.Large
-
     // Figure out which delegates need to be moved down to make room
     // for the context menu when it's open.
     readonly property int minOffsetIndex: contextMenu ? currentIndex - (currentIndex % columns) + columns : 0
     readonly property int yOffset: contextMenu ? contextMenu.height : 0
 
     // Reduced/canceled from container.offsetY
-    readonly property real firstRowOffset: largeScreen ? -Theme.paddingLarge * 2 : 0
+    readonly property real firstRowOffset: browserPage.largeScreen ? -Theme.paddingLarge * 2 : 0
 
     readonly property int rows: Math.floor(pageHeight / minimumCellHeight)
     readonly property int columns: Math.floor(browserPage.width / minimumCellWidth)
 
-    readonly property int horizontalMargin: largeScreen ? 6 * Theme.paddingLarge : Theme.paddingLarge
+    readonly property int horizontalMargin: browserPage.largeScreen ? 6 * Theme.paddingLarge : Theme.paddingLarge
     readonly property int initialCellWidth: (browserPage.width - 2*horizontalMargin) / columns
 
     // The multipliers below for Large screens are magic. They look good on Jolla tablet.
-    readonly property real minimumCellWidth: largeScreen ? Theme.itemSizeExtraLarge * 1.6 : Theme.itemSizeExtraLarge
+    readonly property real minimumCellWidth: browserPage.largeScreen ? Theme.itemSizeExtraLarge * 1.6 : Theme.itemSizeExtraLarge
     // phone reference row height: 960 / 6
-    readonly property real minimumCellHeight: largeScreen ? Theme.itemSizeExtraLarge * 1.6 : Theme.pixelRatio * 160
+    readonly property real minimumCellHeight: browserPage.largeScreen ? Theme.itemSizeExtraLarge * 1.6 : Theme.pixelRatio * 160
 
     signal load(string url, string title)
     signal newTab(string url, string title)
@@ -78,7 +76,7 @@ SilicaGridView {
     delegate: ListItem {
         id: container
 
-        property real offsetY: largeScreen
+        property real offsetY: browserPage.largeScreen
                                ? (((y % (favoriteGrid.pageHeight-container.contentHeight+1)) / (favoriteGrid.pageHeight-container.contentHeight+1)) - 0.5) * (Theme.paddingLarge*4)
                                : 0
 

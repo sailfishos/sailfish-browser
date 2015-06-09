@@ -17,7 +17,6 @@ SilicaListView {
     id: tabView
 
     property bool portrait
-    readonly property bool largeScreen: Screen.sizeCategory > Screen.Medium
     property bool privateMode
 
     signal hide
@@ -36,8 +35,8 @@ SilicaListView {
         id: tabItem
 
         anchors.horizontalCenter: parent.horizontalCenter
-        width: Screen.width - (largeScreen ? (2 * Theme.horizontalPageMargin) : 0)
-        height: largeScreen ? Theme.itemSizeExtraLarge + (2 * Theme.paddingLarge) : Screen.height / 5
+        width: browserPage.thumbnailSize.width
+        height: browserPage.thumbnailSize.height
 
         ListView.onAdd: AddAnimation {}
         ListView.onRemove: RemoveAnimation {

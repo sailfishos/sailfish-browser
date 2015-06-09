@@ -43,6 +43,8 @@ BackgroundItem {
             id: image
 
             source: thumbnailPath
+            width: root.implicitWidth
+            height: root.implicitHeight
             cache: false
             asynchronous: true
         },
