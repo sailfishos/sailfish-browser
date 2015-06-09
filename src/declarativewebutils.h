@@ -91,6 +91,7 @@ private:
     explicit DeclarativeWebUtils();
     ~DeclarativeWebUtils();
     void setContentScaling();
+    void setRenderingPreferences();
 
     MGConfItem m_homePage;
     bool m_firstUseDone;
