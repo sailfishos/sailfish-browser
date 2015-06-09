@@ -167,7 +167,7 @@ SilicaGridView {
             id: fetcher
             property url url
             property string title
-            property Item webPage
+            property var webPage
             readonly property bool sameWebPage: webPage && title === webPage.title && url === webPage.url
 
             function handleGrabbedThumbnail(data) {
@@ -189,7 +189,7 @@ SilicaGridView {
                     // We are still at same web page but no accepted touch icon. Let's grab thumbnail.
                     canDestroy = false
                     webPage.onThumbnailResult.connect(handleGrabbedThumbnail)
-                    webPage.grabThumbnail()
+                    webPage.grabThumbnail(Qt.size(favoriteGrid.cellHeight, favoriteGrid.cellWidth))
                 } else {
                     // Use default icon.
                     bookmarkModel.addBookmark(url, title || url, defaultIcon, false)
