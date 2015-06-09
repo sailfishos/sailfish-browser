@@ -42,7 +42,9 @@ SilicaListView {
         width: browserPage.thumbnailSize.width
         height: browserPage.thumbnailSize.height
 
-        ListView.onAdd: AddAnimation {}
+        ListView.onAdd: AddAnimation {
+            target: tabItem
+        }
         ListView.onRemove: RemoveAnimation {
             target: tabItem
         }
