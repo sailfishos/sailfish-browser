@@ -38,9 +38,17 @@ WebContainer {
         contentItem.sendAsyncMessage(name, data)
     }
 
+    function thumbnailCaptureSize() {
+        var ratio = Screen.width / browserPage.thumbnailSize.width
+        var height = browserPage.thumbnailSize.height * ratio
+
+        return Qt.size(Screen.width, height)
+    }
+
     function grabActivePage() {
         if (webView.contentItem) {
-            webView.privateMode ? webView.contentItem.grabThumbnail() : webView.contentItem.grabToFile()
+            webView.privateMode ? webView.contentItem.grabThumbnail(thumbnailCaptureSize())
+                                : webView.contentItem.grabToFile(thumbnailCaptureSize())
         }
     }
 
@@ -150,7 +158,7 @@ WebContainer {
                 }
 
                 if (loaded) {
-                    webView.privateMode ? grabThumbnail() : grabToFile()
+                    webView.privateMode ? grabThumbnail(thumbnailCaptureSize()) : grabToFile(thumbnailCaptureSize())
                 }
             }
 

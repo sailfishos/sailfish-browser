@@ -61,8 +61,8 @@ public:
     void setBackForwardNavigation(bool backForwardNavigation);
 
     Q_INVOKABLE void loadTab(QString newUrl, bool force);
-    Q_INVOKABLE void grabToFile();
-    Q_INVOKABLE void grabThumbnail();
+    Q_INVOKABLE void grabToFile(const QSize& size);
+    Q_INVOKABLE void grabThumbnail(const QSize& size);
     Q_INVOKABLE void forceChrome(bool forcedChrome);
 
 public slots:
@@ -98,7 +98,6 @@ private slots:
 
 private:
     QString saveToFile(QImage image);
-    QSize thumbnailSize();
 
     QPointer<DeclarativeWebContainer> m_container;
     int m_tabId;

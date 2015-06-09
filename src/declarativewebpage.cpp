@@ -185,11 +185,11 @@ void DeclarativeWebPage::loadTab(QString newUrl, bool force)
     }
 }
 
-void DeclarativeWebPage::grabToFile()
+void DeclarativeWebPage::grabToFile(const QSize &size)
 {
     emit clearGrabResult();
     // grabToImage handles invalid geometry.
-    m_grabResult = grabToImage(thumbnailSize());
+    m_grabResult = grabToImage(size);
     if (m_grabResult) {
         if (!m_grabResult->isReady()) {
             connect(m_grabResult.data(), SIGNAL(ready()), this, SLOT(grabResultReady()));
@@ -200,9 +200,9 @@ void DeclarativeWebPage::grabToFile()
 }
 
 
-void DeclarativeWebPage::grabThumbnail()
+void DeclarativeWebPage::grabThumbnail(const QSize &size)
 {
-    m_thumbnailResult = grabToImage(thumbnailSize());
+    m_thumbnailResult = grabToImage(size);
     if (m_thumbnailResult) {
         connect(m_thumbnailResult.data(), SIGNAL(ready()), this, SLOT(thumbnailReady()));
     }
@@ -303,14 +303,6 @@ QString DeclarativeWebPage::saveToFile(QImage image)
     // 75% quality jpg produces small and good enough capture.
     QString path = QString("%1/tab-%2-thumb.jpg").arg(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)).arg(m_tabId);
     return !allBlack(image) && image.save(path, "jpg", 75) ? path : "";
-}
-
-QSize DeclarativeWebPage::thumbnailSize()
-{
-    int w = qMin(width(), height());
-    int h = qMax(width(), height());
-    h = qMax(h / 3, w / 2);
-    return QSize(w, h);
 }
 
 void DeclarativeWebPage::onRecvAsyncMessage(const QString& message, const QVariant& data)
