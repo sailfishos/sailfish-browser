@@ -259,13 +259,6 @@ void DeclarativeWebPage::resetHeight(bool respectContentHeight)
     }
 }
 
-#if 0
-void DeclarativeWebPage::componentComplete()
-{
-    QuickMozView::componentComplete();
-}
-#endif
-
 void DeclarativeWebPage::grabResultReady()
 {
     QImage image = m_grabResult->image();

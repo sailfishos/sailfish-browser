@@ -84,11 +84,6 @@ signals:
     void fullscreenHeightChanged();
     void toolbarHeightChanged();
 
-#if 0
-protected:
-    void componentComplete();
-#endif
-
 private slots:
     void setFullscreen(const bool fullscreen);
     void onRecvAsyncMessage(const QString& message, const QVariant& data);
