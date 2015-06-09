@@ -87,3 +87,8 @@ int TestObject::random(int min, int max)
 {
     return qrand() % ((max + 1) - min) + min;
 }
+
+QObject *TestObject::rootObject() const
+{
+    return mRootObject;
+}
