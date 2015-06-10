@@ -157,12 +157,6 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     mozContext->setPref(QString("ui.click_hold_context_menus.delay"), QVariant(800));
     mozContext->setPref(QString("apz.fling_stopped_threshold"), QString("0.13f"));
 
-    // Don't force 16bit color depth
-    mozContext->setPref(QString("gfx.qt.rgb16.force"), QVariant(false));
-    // Use external Qt window for rendering content
-    mozContext->setPref(QString("gfx.compositor.external-window"), QVariant(true));
-    mozContext->setPref(QString("gfx.compositor.clear-context"), QVariant(false));
-
     mozContext->setPref(QString("media.resource_handler_disabled"), QVariant(true));
 
     // Disable asmjs
@@ -182,6 +176,7 @@ void DeclarativeWebUtils::updateWebEngineSettings()
 
     // Scale up content size
     setContentScaling();
+    setRenderingPreferences();
 
     // Theme.fontSizeSmall
     mozContext->setPref(QStringLiteral("embedlite.inputItemSize"), QVariant(m_inputItemSize));
@@ -194,10 +189,6 @@ void DeclarativeWebUtils::updateWebEngineSettings()
 
     // Disable SSLv3
     mozContext->setPref(QString("security.tls.version.min"), QVariant(1));
-
-    // New rendering pipeline.
-    mozContext->setPref(QString("layers.progressive-paint"), QVariant(true));
-    mozContext->setPref(QString("layers.low-precision-buffer"), QVariant(true));
 }
 
 void DeclarativeWebUtils::setFirstUseDone(bool firstUseDone) {
@@ -432,4 +423,29 @@ void DeclarativeWebUtils::setContentScaling()
 
     mozContext->setPixelRatio(mozCssPixelRatio);
     emit cssPixelRatioChanged();
+}
+
+void DeclarativeWebUtils::setRenderingPreferences()
+{
+    QMozContext* mozContext = QMozContext::GetInstance();
+    Q_ASSERT(mozContext->initialized());
+
+    // Don't force 16bit color depth
+    mozContext->setPref(QString("gfx.qt.rgb16.force"), QVariant(false));
+
+    // Use external Qt window for rendering content
+    mozContext->setPref(QString("gfx.compositor.external-window"), QVariant(true));
+    mozContext->setPref(QString("gfx.compositor.clear-context"), QVariant(false));
+
+    // Enable progressive painting.
+    mozContext->setPref(QString("layers.progressive-paint"), QVariant(true));
+    mozContext->setPref(QString("layers.low-precision-buffer"), QVariant(true));
+
+    if (mozContext->pixelRatio() >= 2.0) {
+        mozContext->setPref(QString("layers.tile-width"), QVariant(512));
+        mozContext->setPref(QString("layers.tile-height"), QVariant(512));
+        // Don't use too small low precision buffers for high dpi devices. This reduces
+        // a bit the blurriness.
+        mozContext->setPref(QString("layers.low-precision-resolution"), QString("0.5f"));
+    }
 }
