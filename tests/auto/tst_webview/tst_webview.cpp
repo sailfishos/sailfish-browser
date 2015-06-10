@@ -68,6 +68,9 @@ tst_webview::tst_webview()
 
 void tst_webview::initTestCase()
 {
+    // Create singleton.
+    DeclarativeWebUtils::instance();
+
     init(QUrl("qrc:///tst_webview.qml"));
     webContainer = TestObject::qmlObject<DeclarativeWebContainer>("webView");
     QVERIFY(webContainer);
@@ -75,6 +78,7 @@ void tst_webview::initTestCase()
     QSignalSpy loadingChanged(webContainer, SIGNAL(loadingChanged()));
     QSignalSpy urlChanged(webContainer, SIGNAL(urlChanged()));
     QSignalSpy titleChanged(webContainer, SIGNAL(titleChanged()));
+    QSignalSpy testSetupReadyChanged(rootObject(), SIGNAL(testSetupReadyChanged()));
 
     tabModel = TestObject::qmlObject<DeclarativeTabModel>("tabModel");
     QVERIFY(tabModel);
@@ -88,6 +92,10 @@ void tst_webview::initTestCase()
     waitSignals(tabAddedSpy, 1);
     waitSignals(urlChanged, 1);
     waitSignals(titleChanged, 1);
+    waitSignals(testSetupReadyChanged, 1);
+
+    QVERIFY(rootObject()->property("testSetupReady").toBool());
+    QTest::qWait(500);
 
     DeclarativeWebPage *webPage = webContainer->webPage();
     QVERIFY(webPage);
@@ -606,6 +614,8 @@ void tst_webview::forwardBackwardNavigation()
     QCOMPARE(tabModel->count(), 7);
     QCOMPARE(webContainer->m_webPages->count(), webContainer->maxLiveTabCount());
     QCOMPARE(webContainer->m_webPages->m_activePages.count(), webContainer->maxLiveTabCount());
+
+    QTest::qWait(1000);
 }
 
 void tst_webview::clear()
@@ -623,6 +633,8 @@ void tst_webview::clear()
     QVERIFY(webContainer->m_webPages->m_activePages.count() == 0);
     QVERIFY(!webContainer->m_webPages->m_activePages.activeWebPage());
     QVERIFY(!webContainer->m_webPage);
+
+    QTest::qWait(5000);
 }
 
 void tst_webview::restart()
@@ -630,7 +642,7 @@ void tst_webview::restart()
     // Title "TestPage"
     QString testPageUrl = formatUrl("testpage.html");
     tabModel->newTab(testPageUrl, "");
-    QTest::qWait(1000);
+    QTest::qWait(5000);
 
     QCOMPARE(tabModel->activeTab().url(), testPageUrl);
     QCOMPARE(webContainer->url(), testPageUrl);
@@ -663,11 +675,11 @@ void tst_webview::restart()
     delete webContainer;
     webContainer = 0;
 
-    QTest::qWait(1000);
+    QTest::qWait(5000);
 
     setTestData(EMPTY_QML);
     setTestUrl(QUrl("qrc:///tst_webview.qml"));
-    QTest::qWait(1000);
+    QTest::qWait(5000);
 
     webContainer = TestObject::qmlObject<DeclarativeWebContainer>("webView");
     historyModel = TestObject::qmlObject<DeclarativeHistoryModel>("historyModel");

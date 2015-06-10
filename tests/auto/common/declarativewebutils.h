@@ -41,6 +41,9 @@ signals:
     void firstUseDoneChanged();
     void beforeShutdown();
 
+private slots:
+    void updateWebEngineSettings();
+
 private:
     QString m_homePage;
     bool m_firstUseDone;
