@@ -71,8 +71,8 @@ Column {
 
     Row {
         id: toolsRow
-        readonly property int horizontalOffset: Theme.paddingSmall
-        readonly property int iconWidth: Theme.iconSizeMedium + 2 * Theme.paddingMedium
+        readonly property int horizontalOffset: browserPage.largeScreen ? Theme.paddingLarge : Theme.paddingSmall
+        readonly property int iconWidth: browserPage.largeScreen ? (Theme.iconSizeLarge + 3 * Theme.paddingMedium) : (Theme.iconSizeMedium + 2 * Theme.paddingMedium)
         // Height of toolbar should be such that viewport height is
         // even number both chrome and fullscreen modes. For instance
         // height of 110px for toolbar would result 1px rounding
