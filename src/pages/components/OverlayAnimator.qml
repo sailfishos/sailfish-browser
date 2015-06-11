@@ -102,10 +102,10 @@ Item {
                 return
             }
 
-            if (!webView.fullscreenMode) {
-                updateState("chromeVisible")
-            } else if (webView.fullscreenMode) {
+            if (webView.fullscreenMode) {
                 updateState("fullscreenWebPage")
+            } else {
+                updateState("chromeVisible")
             }
         }
     }
