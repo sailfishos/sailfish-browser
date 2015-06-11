@@ -11,7 +11,6 @@
 
 import QtQuick 2.0
 import Sailfish.Silica 1.0
-import Sailfish.Silica.private 1.0 as Private
 
 Dialog {
     id: passwordManagerDialog
@@ -21,11 +20,6 @@ Dialog {
     property string requestId
     property string notificationType
     property variant formData
-
-    orientationTransitions: Private.PageOrientationTransition {
-        fadeTarget: contentItem
-        targetPage: passwordManagerDialog
-    }
 
     onAccepted: {
         webView.sendAsyncMessage("embedui:login",
@@ -41,10 +35,6 @@ Dialog {
                                        "buttonidx": 1, // "No" button
                                        "id": requestId
                                    })
-    }
-
-    Background {
-        anchors.fill: parent
     }
 
     Item {

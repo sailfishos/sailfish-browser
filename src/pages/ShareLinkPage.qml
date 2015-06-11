@@ -11,8 +11,6 @@
 
 import QtQuick 2.0
 import Sailfish.Silica 1.0
-import Sailfish.Silica.private 1.0 as Private
-import "components" as Browser
 import Sailfish.TransferEngine 1.0
 
 Page {
@@ -20,15 +18,6 @@ Page {
 
     property string link
     property string linkTitle
-
-    orientationTransitions: Private.PageOrientationTransition {
-        fadeTarget: shareMethodList
-        targetPage: page
-    }
-
-    Browser.Background {
-        anchors.fill: parent
-    }
 
     ShareMethodList {
         id: shareMethodList

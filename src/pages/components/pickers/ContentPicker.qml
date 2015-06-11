@@ -11,7 +11,6 @@
 
 import QtQuick 2.1
 import Sailfish.Pickers 1.0
-import ".." as Browser
 
 ContentPickerPage {
     property var creator
@@ -20,10 +19,4 @@ ContentPickerPage {
     //% "Upload file"
     title: qsTrId("sailfish_browser-he-upload_file")
     Component.onDestruction: creator.sendResponse(selectedContent)
-
-    _background: Component {
-        Browser.Background {
-            anchors.fill: parent
-        }
-    }
 }

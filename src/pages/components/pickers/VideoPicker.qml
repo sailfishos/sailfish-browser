@@ -11,7 +11,6 @@
 
 import QtQuick 2.1
 import Sailfish.Pickers 1.0
-import ".." as Browser
 
 VideoPickerPage {
     property var creator
@@ -20,10 +19,4 @@ VideoPickerPage {
     //% "Upload video"
     title: qsTrId("sailfish_browser-he-upload_video")
     Component.onDestruction: creator.sendResponse(selectedContent)
-
-    _background: Component {
-        Browser.Background {
-            anchors.fill: parent
-        }
-    }
 }
