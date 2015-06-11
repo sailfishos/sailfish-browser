@@ -175,6 +175,10 @@ void WebPages::updateStates(DeclarativeWebPage *oldActivePage, DeclarativeWebPag
                 oldActivePage->stop();
             }
             oldActivePage->suspendView();
+        } else {
+            // Sets parent to inactive and suspends rendering keeping
+            // timeouts running.
+            oldActivePage->setActive(false);
         }
     }
 
