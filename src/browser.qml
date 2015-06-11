@@ -21,8 +21,6 @@ ApplicationWindow {
 
     property bool opaqueBackground
 
-    signal newTab
-
     function setBrowserCover(model) {
         if (!model || model.count === 0) {
             cover = Qt.resolvedUrl("cover/NoTabsCover.qml")
@@ -39,13 +37,6 @@ ApplicationWindow {
     cover: null
     initialPage: Component {
         BrowserPage {
-            id: browserPage
-
-            Connections {
-                target: window
-                onNewTab: browserPage.activateNewTabView()
-            }
-
             Component.onCompleted: window.webView = webView
         }
     }

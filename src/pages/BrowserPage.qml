@@ -239,8 +239,9 @@ Page {
     }
 
     CoverActionList {
-        enabled: browserPage.status === PageStatus.Active && webView.contentItem && (Private.Config.sailfishVersion >= 2.0)
+        enabled: (browserPage.status === PageStatus.Active || !webView.tabModel || webView.tabModel.count === 0) && (Private.Config.sailfishVersion >= 2.0)
         iconBackground: true
+        window: webView
 
         CoverAction {
             iconSource: "image://theme/icon-cover-new"
@@ -252,6 +253,7 @@ Page {
     CoverActionList {
         enabled: browserPage.status === PageStatus.Active && webView.contentItem && (Private.Config.sailfishVersion < 2.0)
         iconBackground: true
+        window: webView
 
         CoverAction {
             iconSource: "image://theme/icon-cover-new"
