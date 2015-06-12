@@ -239,36 +239,13 @@ Page {
     }
 
     CoverActionList {
-        enabled: (browserPage.status === PageStatus.Active || !webView.tabModel || webView.tabModel.count === 0) && (Private.Config.sailfishVersion >= 2.0)
+        enabled: (browserPage.status === PageStatus.Active || !webView.tabModel || webView.tabModel.count === 0)
         iconBackground: true
         window: webView
 
         CoverAction {
             iconSource: "image://theme/icon-cover-new"
             onTriggered: activateNewTabView()
-        }
-    }
-
-    // TODO: remove once we move to sailfish 2.0
-    CoverActionList {
-        enabled: browserPage.status === PageStatus.Active && webView.contentItem && (Private.Config.sailfishVersion < 2.0)
-        iconBackground: true
-        window: webView
-
-        CoverAction {
-            iconSource: "image://theme/icon-cover-new"
-            onTriggered: activateNewTabView()
-        }
-
-        CoverAction {
-            iconSource: webView.loading ? "image://theme/icon-cover-cancel" : "image://theme/icon-cover-refresh"
-            onTriggered: {
-                if (webView.loading) {
-                    webView.stop()
-                } else {
-                    webView.reload()
-                }
-            }
         }
     }
 
