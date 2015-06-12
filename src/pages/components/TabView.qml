@@ -28,6 +28,10 @@ SilicaGridView {
 
     readonly property int columns: portrait ? (largeScreen ? 2 : 1) : 3
 
+    //: Tabs
+    //% "Tabs"
+    property string tabText: qsTrId("sailfish_browser-he-tabs")
+
     cellWidth: parent.width / columns
     // Only small screen in portrait has one column. Use then none square tab.
     cellHeight: columns === 1 ? Screen.width / 2 : cellWidth
