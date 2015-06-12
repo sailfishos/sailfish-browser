@@ -84,8 +84,6 @@ Page {
 
         if (status == PageStatus.Inactive && overlay.visible) {
             overlay.animator.hide()
-        } else if (status == PageStatus.Active && webView.contentItem && !overlay.enteringNewTabUrl && !webView.contentItem.fullscreen) {
-            overlay.animator.showChrome()
         }
     }
 
@@ -236,6 +234,12 @@ Page {
         browserPage: browserPage
 
         onEnteringNewTabUrlChanged: window.opaqueBackground = overlay.enteringNewTabUrl
+    }
+
+    onActiveChanged: {
+        if (active && webView.contentItem && !overlay.enteringNewTabUrl && !webView.contentItem.fullscreen) {
+            overlay.animator.showChrome()
+        }
     }
 
     CoverActionList {
