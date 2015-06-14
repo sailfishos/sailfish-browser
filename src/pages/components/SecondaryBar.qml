@@ -42,7 +42,7 @@ Item {
             id: forwardButton
             expandedWidth: iconWidth
             icon.source: "image://theme/icon-m-forward"
-            active: webView.canGoForward
+            active: webView.contentItem && webView.contentItem.canGoForward
             onTapped: webView.goForward()
         }
 

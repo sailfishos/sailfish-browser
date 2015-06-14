@@ -157,7 +157,7 @@ Column {
             id: backIcon
             expandedWidth: toolsRow.iconWidth
             icon.source: "image://theme/icon-m-back"
-            active: webView.canGoBack && !toolBarRow.secondaryToolsActive && !findInPageActive
+            active: webView.contentItem && webView.contentItem.canGoBack && !toolBarRow.secondaryToolsActive && !findInPageActive
             onTapped: webView.goBack()
         }
 

@@ -126,7 +126,7 @@ PanelBackground {
                     webView.tabModel.newTab(enteredPage.url, enteredPage.title)
                     enteredPage = null
                 } else if (!toolBar.findInPageActive) {
-                    searchField.resetUrl(webView.url)
+                    searchField.resetUrl(webView.contentItem.url)
                 }
 
                 favoriteGrid.positionViewAtBeginning()
@@ -147,10 +147,14 @@ PanelBackground {
                 toolBar.resetFind()
             }
         }
+    }
+
+    Connections {
+        target: webView.contentItem
 
         onUrlChanged: {
             if (!toolBar.findInPageActive && !searchField.enteringNewTabUrl && !searchField.edited) {
-                searchField.resetUrl(webView.url)
+                searchField.resetUrl(webView.contentItem.url)
             }
         }
     }
@@ -208,7 +212,7 @@ PanelBackground {
         Item {
             id: historyContainer
 
-            readonly property bool showFavorites: (!searchField.edited && searchField.text === webView.url || !searchField.text)
+            readonly property bool showFavorites: (!searchField.edited && webView.contentItem && searchField.text == webView.contentItem.url || !searchField.text)
 
             width: parent.width
             height: toolBar.toolsHeight + historyList.height
@@ -223,13 +227,13 @@ PanelBackground {
 
                 url: webView.contentItem && webView.contentItem.url || ""
                 findText: searchField.text
-                bookmarked: bookmarkModel.count && bookmarkModel.contains(webView.url)
+                bookmarked: webView.contentItem && bookmarkModel.count && bookmarkModel.contains(webView.contentItem.url)
                 opacity: (overlay.y - webView.fullscreenHeight/2)  / (webView.fullscreenHeight/2 - toolBar.height)
                 visible: opacity > 0.0
                 secondaryToolsActive: overlayAnimator.secondaryTools
 
                 onShowOverlay: {
-                    searchField.resetUrl(webView.url)
+                    searchField.resetUrl(webView.contentItem.url)
                     overlayAnimator.showOverlay()
                 }
                 onShowTabs: {
@@ -259,12 +263,12 @@ PanelBackground {
                 }
                 onShareActivePage: {
                     pageStack.push(Qt.resolvedUrl("../ShareLinkPage.qml"), {
-                                       "link" : webView.url,
+                                       "link" : webView.contentItem.url,
                                        "linkTitle": webView.title
                                    })
                 }
                 onBookmarkActivePage: favoriteGrid.fetchAndSaveBookmark()
-                onRemoveActivePageFromBookmarks: bookmarkModel.removeBookmark(webView.url)
+                onRemoveActivePageFromBookmarks: bookmarkModel.removeBookmark(webView.contentItem.url)
             }
 
             SearchField {
@@ -331,7 +335,7 @@ PanelBackground {
                 }
 
                 onTextChanged: {
-                    if (!edited && text !== webView.url) {
+                    if (!edited && text !== webView.contentItem.url) {
                         edited = true
                     }
                 }
@@ -380,7 +384,7 @@ PanelBackground {
                 visible: !overlayAnimator.atBottom && !toolBar.findInPageActive && opacity > 0.0
 
                 onMovingChanged: if (moving) historyList.focus = true
-                onSearchChanged: if (search !== webView.url) historyModel.search(search)
+                onSearchChanged: if (search !== webView.contentItem.url) historyModel.search(search)
                 onLoad: overlay.loadPage(url, title)
 
                 Behavior on opacity { FadeAnimation {} }

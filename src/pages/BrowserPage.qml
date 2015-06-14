@@ -26,8 +26,8 @@ Page {
     property alias tabs: webView.tabModel
     property alias history: historyModel
     property alias viewLoading: webView.loading
-    property alias url: webView.url
-    property alias title: webView.title
+    property string url: webView.contentItem ? webView.contentItem.url : ""
+    property string title: webView.contentItem ? webView.contentItem.title : ""
     property alias webView: webView
 
     function load(url, title) {

@@ -18,8 +18,10 @@
 #include <QPointer>
 #include <quickmozview.h>
 #include <QRgb>
+#include "tab.h"
 
 class DeclarativeWebContainer;
+class Link;
 
 class DeclarativeWebPage : public QuickMozView {
     Q_OBJECT
@@ -54,13 +56,10 @@ public:
     bool urlHasChanged() const;
     void setUrlHasChanged(bool urlHasChanged);
 
-    void setInitialUrl(const QString &url);
+    void setInitialTab(const Tab &tab);
 
     void bindToModel();
     bool boundToModel();
-
-    bool backForwardNavigation() const;
-    void setBackForwardNavigation(bool backForwardNavigation);
 
     bool viewReady() const;
 
@@ -95,30 +94,35 @@ protected:
 private slots:
     void setFullscreen(const bool fullscreen);
     void onRecvAsyncMessage(const QString& message, const QVariant& data);
+    void onTabHistoryAvailable(const int& tabId, const QList<Link>& links);
     void onViewInitialized();
     void grabResultReady();
     void grabWritten();
     void thumbnailReady();
+    void restoreHistory();
 
 private:
     QString saveToFile(QImage image, QRect cropBounds);
+    void setupWebPage();
 
     QPointer<DeclarativeWebContainer> m_container;
     int m_tabId;
     bool m_viewReady;
+    bool m_viewInitialized;
+    bool m_tabHistoryReady;
     bool m_userHasDraggedWhileLoading;
     bool m_fullscreen;
     bool m_forcedChrome;
     bool m_domContentLoaded;
     bool m_urlHasChanged;
-    bool m_backForwardNavigation;
     bool m_boundToModel;
-    QString m_initialUrl;
+    Tab m_initialTab;
     QString m_favicon;
     QVariant m_resurrectedContentRect;
     QSharedPointer<QQuickItemGrabResult> m_grabResult;
     QSharedPointer<QQuickItemGrabResult> m_thumbnailResult;
     QFutureWatcher<QString> m_grabWritter;
+    QList<Link> m_restoredTabHistory;
 
     qreal m_fullScreenHeight;
     qreal m_toolbarHeight;

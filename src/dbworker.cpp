@@ -541,7 +541,7 @@ int DBWorker::getNextLinkIdFromTabHistory(int tabHistoryId)
 HistoryResult DBWorker::addToBrowserHistory(QString url, QString title)
 {
 #if DEBUG_LOGS
-    qDebug() << "link id:" << linkId;
+    qDebug() << "url:" << url;
 #endif
 
     // Skip adding any urls with 'about:' prefix
