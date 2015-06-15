@@ -234,11 +234,11 @@ Page {
         browserPage: browserPage
 
         onEnteringNewTabUrlChanged: window.opaqueBackground = overlay.enteringNewTabUrl
-    }
 
-    onActiveChanged: {
-        if (active && webView.contentItem && !overlay.enteringNewTabUrl && !webView.contentItem.fullscreen) {
-            overlay.animator.showChrome()
+        onActiveChanged: {
+            if (active && webView.contentItem && !overlay.enteringNewTabUrl && !webView.contentItem.fullscreen) {
+                overlay.animator.showChrome()
+            }
         }
     }
 
