@@ -485,7 +485,6 @@ bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
             context.doneCurrent();
             m_hasBeenExposed = true;
             m_windowExposed.wakeAll();
-
         } else if (!isExposed() && !m_allowHiding) {
             return true;
         }
@@ -494,6 +493,15 @@ bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
         // after the window has been closed.
         m_webPage->suspendView();
     }
+
+    // Emit chrome exposed when both chrome window and browser window has been exposed. This way chrome
+    // window can be raised to the foreground if needed.
+    static bool hasExposedChrome = false;
+    if (!hasExposedChrome && event->type() == QEvent::Show && m_chromeWindow && m_chromeWindow->isExposed() && isExposed()) {
+        emit chromeExposed();
+        hasExposedChrome = true;
+    }
+
     return QObject::eventFilter(obj, event);
 }
 

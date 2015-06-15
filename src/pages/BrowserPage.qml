@@ -38,16 +38,16 @@ Page {
         webView.load(url, title)
     }
 
-    function bringToForeground() {
-        if (!Qt.application.active) {
-            webView.raise()
+    function bringToForeground(window) {
+        if (!Qt.application.active && window) {
+            window.raise()
         }
     }
 
     function activateNewTabView() {
         pageStack.pop(browserPage, PageStackAction.Immediate);
         overlay.enterNewTabUrl(PageStackAction.Immediate)
-        bringToForeground()
+        bringToForeground(webView.chromeWindow)
         // after bringToForeground, webView has focus => activate chrome
         window.activate()
     }
@@ -155,6 +155,12 @@ Page {
 
         tabModel.onCountChanged: window.opaqueBackground = tabModel.count == 0
 
+        onChromeExposed: {
+            if (overlay.animator.atTop && overlay.searchField.focus && !WebUtils.firstUseDone) {
+                webView.chromeWindow.raise()
+            }
+        }
+
         function applyContentOrientation(orientation) {
             switch (orientation) {
             case Orientation.None:
@@ -259,7 +265,7 @@ Page {
             // Url is empty when user tapped icon when browser was already open.
             // In case first use not done show the overlay immediately.
             if (url == "") {
-                bringToForeground()
+                bringToForeground(webView.chromeWindow)
                 if (!WebUtils.firstUseDone) {
                     overlay.animator.showOverlay(true)
                 }
@@ -277,7 +283,7 @@ Page {
                 webView.load(url)
                 overlay.animator.showChrome(true)
             }
-            bringToForeground()
+            bringToForeground(webView)
         }
         onActivateNewTabViewRequested: {
             activateNewTabView()

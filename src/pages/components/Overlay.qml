@@ -26,6 +26,7 @@ Background {
     property alias progressBar: progressBar
     property alias animator: overlayAnimator
     property alias dragArea: dragArea
+    property alias searchField: searchField
     readonly property alias enteringNewTabUrl: searchField.enteringNewTabUrl
 
     property var enteredPage
