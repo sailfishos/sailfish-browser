@@ -199,7 +199,7 @@ Item {
                             atTop = true
                         }
 
-                        if (webView.contentItem) {
+                        if (webView.contentItem && !webView.contentItem.fullscreen) {
                             webView.contentItem.chrome = animator.state !== "fullscreenWebPage"
                         }
                         _immediate = false
