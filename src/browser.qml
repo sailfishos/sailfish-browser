@@ -46,7 +46,7 @@ ApplicationWindow {
     _defaultPageOrientations: Orientation.All
     _defaultLabelFormat: Text.PlainText
     _clippingItem.opacity: 1.0
-    _resizeContent: false
+    _resizeContent: !window.rootPage.active
     cover: null
     initialPage: Component {
         BrowserPage {
@@ -114,8 +114,8 @@ ApplicationWindow {
                 }
             }
 
-            width: pageContainer ? pageContainer.width : 0
-            height: pageContainer ? pageContainer.height : 0
+            width: height
+            height: Math.max(Screen.height, Screen.width)
             x: pageContainer && page && page.isPortrait ? pageContainer.x : 0
             y: pageContainer && page && page.isLandscape ? pageContainer.y : 0
             // Page can have longer life-cycle than page container in case
