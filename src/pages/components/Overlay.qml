@@ -78,7 +78,7 @@ Background {
 
     Private.VirtualKeyboardObserver {
         id: virtualKeyboardObserver
-        active: !overlayAnimator.atBottom
+        active: overlay.active && !overlayAnimator.atBottom
         orientation: browserPage.orientation
     }
 
@@ -409,15 +409,6 @@ Background {
         Page {
             id: tabPage
             property int activeTabIndex
-
-            orientationTransitions: Private.PageOrientationTransition {
-                fadeTarget: tabViewItem
-                targetPage: tabPage
-            }
-
-            Browser.Background {
-                anchors.fill: parent
-            }
 
             Browser.TabView {
                 id: tabViewItem

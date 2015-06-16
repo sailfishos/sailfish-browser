@@ -12,17 +12,11 @@
 
 import QtQuick 2.2
 import Sailfish.Silica 1.0
-import Sailfish.Silica.private 1.0 as Private
 
 Dialog {
     id: configDialog
 
     property var changedConfigs: ({})
-
-    orientationTransitions: Private.PageOrientationTransition {
-        fadeTarget: prefsList
-        targetPage: configDialog
-    }
 
     // Get all the preferences
     Component.onCompleted: MozContext.sendObserve("embedui:allprefs", {})
@@ -70,10 +64,6 @@ Dialog {
 
     ListModel {
         id: filterListModel
-    }
-
-    Background {
-        anchors.fill: parent
     }
 
     SilicaListView {

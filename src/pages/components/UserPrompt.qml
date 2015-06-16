@@ -11,22 +11,12 @@
 
 import QtQuick 2.0
 import Sailfish.Silica 1.0
-import Sailfish.Silica.private 1.0 as Private
 
 Dialog {
     id: dialog
     property alias acceptText: header.acceptText
     property alias title: header.title
     default property alias defaultContent: promptContent.children
-
-    orientationTransitions: Private.PageOrientationTransition {
-        fadeTarget: flickable
-        targetPage: dialog
-    }
-
-    Background {
-        anchors.fill: parent
-    }
 
     SilicaFlickable {
         id: flickable
