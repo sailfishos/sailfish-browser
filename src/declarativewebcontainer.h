@@ -159,6 +159,7 @@ signals:
 
     void webPageComponentChanged();
     void chromeWindowChanged();
+    void chromeExposed();
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event);
