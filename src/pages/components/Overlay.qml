@@ -52,7 +52,6 @@ Background {
                 }
                 webView.tabModel.waitingForNewTab = true
             }
-            //webView.focus = true
         }
 
         overlayAnimator.showChrome()

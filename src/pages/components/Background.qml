@@ -30,7 +30,10 @@ Item {
             anchors.fill: parent
             color: "white"
             opacity: window.opaqueBackground ? 1 : 0
-            Behavior on opacity { FadeAnimation { } }
+            Behavior on opacity {
+                enabled: window.rootPage.active
+                FadeAnimation { }
+            }
         }
 
         Rectangle {

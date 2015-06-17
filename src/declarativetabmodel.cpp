@@ -70,8 +70,6 @@ void DeclarativeTabModel::addTab(const QString& url, const QString &title) {
 
     m_nextTabId = ++tabId;
     emit nextTabIdChanged();
-
-    setWaitingForNewTab(false);
 }
 
 int DeclarativeTabModel::nextTabId() const
@@ -116,7 +114,7 @@ void DeclarativeTabModel::clear()
         removeTab(m_tabs.at(i).tabId(), m_tabs.at(i).thumbnailPath(), i);
     }
 
-    setWaitingForNewTab(false);
+    setWaitingForNewTab(true);
 }
 
 bool DeclarativeTabModel::activateTab(const QString& url)
@@ -337,6 +335,8 @@ void DeclarativeTabModel::updateActiveTab(const Tab &activeTab, bool loadActiveT
     if (m_activeTab != activeTab) {
         int oldTabId = m_activeTab.tabId();
         m_activeTab = activeTab;
+
+        setWaitingForNewTab(true);
 
         // If tab has changed, update active tab role.
         int tabIndex = activeTabIndex();

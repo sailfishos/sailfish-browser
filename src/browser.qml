@@ -22,7 +22,6 @@ ApplicationWindow {
 
     property bool opaqueBackground
     property var rootPage
-
     property var backgrounds: []
 
     function setBrowserCover(model) {
