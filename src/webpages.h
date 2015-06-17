@@ -18,6 +18,7 @@
 #include <QPointer>
 
 class QQmlComponent;
+class QDBusPendingCallWatcher;
 class DeclarativeWebContainer;
 class DeclarativeWebPage;
 
@@ -57,6 +58,7 @@ public:
 private slots:
     void handleMemNotify(const QString &memoryLevel);
     void updateBackgroundTimestamp();
+    void initialMemoryLevel(QDBusPendingCallWatcher *watcher);
 
 private:
     void updateStates(DeclarativeWebPage *oldActivePage, DeclarativeWebPage *newActivePage);
@@ -66,6 +68,7 @@ private:
     // Contains both virtual and real
     WebPageQueue m_activePages;
     qint64 m_backgroundTimestamp;
+    QString m_memoryLevel;
 
     friend class tst_webview;
 };
