@@ -380,12 +380,8 @@ void DeclarativeTabModel::updateTabUrl(int tabId, bool activeTab, const QString 
         updateDb = true;
     }
 
-    if (updateDb) {
-        if (!navigate) {
-            updateTab(tabId, url, "", "");
-        } else {
-            navigateTo(tabId, url, "", "");
-        }
+    if (updateDb && navigate) {
+        navigateTo(tabId, url, "", "");
     }
 
 }
