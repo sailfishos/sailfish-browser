@@ -840,7 +840,7 @@ void DeclarativeWebContainer::onPageUrlChanged()
         // Cleanup this.
         bool initialLoad = !webPage->initialLoadHasHappened();
         // Virtualized pages need to be checked from the model.
-        if (webPage->boundToModel() || m_model->contains(tabId)) {
+        if (!initialLoad || m_model->contains(tabId)) {
             m_model->updateUrl(tabId, activeTab, url, webPage->backForwardNavigation(), initialLoad);
         } else {
             // Adding tab to the model is delayed so that url resolved to download link do not get added
@@ -849,7 +849,6 @@ void DeclarativeWebContainer::onPageUrlChanged()
             // should not be emitted when link clicking started downloading or opened (will open) a new window.
             m_model->addTab(url, "");
         }
-        webPage->bindToModel();
         webPage->setInitialLoadHasHappened();
 
         bool wasBackForwardNavigation = webPage->backForwardNavigation();

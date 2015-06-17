@@ -62,7 +62,6 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
     , m_domContentLoaded(false)
     , m_initialLoadHasHappened(false)
     , m_backForwardNavigation(false)
-    , m_boundToModel(false)
 {
     addMessageListener(gFullScreenMessage);
     addMessageListener(gDomContentLoadedMessage);
@@ -138,16 +137,6 @@ bool DeclarativeWebPage::initialLoadHasHappened() const
 void DeclarativeWebPage::setInitialLoadHasHappened()
 {
     m_initialLoadHasHappened = true;
-}
-
-void DeclarativeWebPage::bindToModel()
-{
-    m_boundToModel = true;
-}
-
-bool DeclarativeWebPage::boundToModel()
-{
-    return m_boundToModel;
 }
 
 bool DeclarativeWebPage::backForwardNavigation() const

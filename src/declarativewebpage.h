@@ -54,9 +54,6 @@ public:
     bool initialLoadHasHappened() const;
     void setInitialLoadHasHappened();
 
-    void bindToModel();
-    bool boundToModel();
-
     bool backForwardNavigation() const;
     void setBackForwardNavigation(bool backForwardNavigation);
 
@@ -102,7 +99,6 @@ private:
     bool m_domContentLoaded;
     bool m_initialLoadHasHappened;
     bool m_backForwardNavigation;
-    bool m_boundToModel;
     QString m_favicon;
     QVariant m_resurrectedContentRect;
     QSharedPointer<QMozGrabResult> m_grabResult;
