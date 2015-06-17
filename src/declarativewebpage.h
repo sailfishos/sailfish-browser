@@ -51,8 +51,8 @@ public:
     bool forcedChrome() const;
     bool domContentLoaded() const;
 
-    bool urlHasChanged() const;
-    void setUrlHasChanged(bool urlHasChanged);
+    bool initialLoadHasHappened() const;
+    void setInitialLoadHasHappened();
 
     void bindToModel();
     bool boundToModel();
@@ -100,7 +100,7 @@ private:
     bool m_fullscreen;
     bool m_forcedChrome;
     bool m_domContentLoaded;
-    bool m_urlHasChanged;
+    bool m_initialLoadHasHappened;
     bool m_backForwardNavigation;
     bool m_boundToModel;
     QString m_favicon;

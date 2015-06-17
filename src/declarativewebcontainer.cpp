@@ -831,14 +831,14 @@ void DeclarativeWebContainer::onPageUrlChanged()
         int tabId = webPage->tabId();
         bool activeTab = isActiveTab(tabId);
         // Update initial back / forward navigation state
-        if (activeTab && !webPage->urlHasChanged()) {
+        if (activeTab && !webPage->initialLoadHasHappened()) {
             const Tab &tab = m_model->activeTab();
             updateNavigationStatus(tab);
         }
 
         // Initial url should not be considered as navigation request that increases navigation history.
         // Cleanup this.
-        bool initialLoad = !webPage->urlHasChanged();
+        bool initialLoad = !webPage->initialLoadHasHappened();
         // Virtualized pages need to be checked from the model.
         if (webPage->boundToModel() || m_model->contains(tabId)) {
             m_model->updateUrl(tabId, activeTab, url, webPage->backForwardNavigation(), initialLoad);
@@ -850,7 +850,7 @@ void DeclarativeWebContainer::onPageUrlChanged()
             m_model->addTab(url, "");
         }
         webPage->bindToModel();
-        webPage->setUrlHasChanged(true);
+        webPage->setInitialLoadHasHappened();
 
         bool wasBackForwardNavigation = webPage->backForwardNavigation();
         webPage->setBackForwardNavigation(false);

@@ -60,7 +60,7 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
     , m_fullscreen(false)
     , m_forcedChrome(false)
     , m_domContentLoaded(false)
-    , m_urlHasChanged(false)
+    , m_initialLoadHasHappened(false)
     , m_backForwardNavigation(false)
     , m_boundToModel(false)
 {
@@ -130,14 +130,14 @@ bool DeclarativeWebPage::domContentLoaded() const
     return m_domContentLoaded;
 }
 
-bool DeclarativeWebPage::urlHasChanged() const
+bool DeclarativeWebPage::initialLoadHasHappened() const
 {
-    return m_urlHasChanged;
+    return m_initialLoadHasHappened;
 }
 
-void DeclarativeWebPage::setUrlHasChanged(bool urlHasChanged)
+void DeclarativeWebPage::setInitialLoadHasHappened()
 {
-    m_urlHasChanged = urlHasChanged;
+    m_initialLoadHasHappened = true;
 }
 
 void DeclarativeWebPage::bindToModel()
