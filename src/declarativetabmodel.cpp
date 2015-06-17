@@ -256,14 +256,9 @@ bool DeclarativeTabModel::contains(int tabId) const
     return findTabIndex(tabId) >= 0;
 }
 
-void DeclarativeTabModel::updateUrl(int tabId, bool activeTab, QString url, bool backForwardNavigation, bool initialLoad)
+void DeclarativeTabModel::updateUrl(int tabId, bool activeTab, QString url, bool initialLoad)
 {
-    if (backForwardNavigation)
-    {
-        updateTabUrl(tabId, activeTab, url, false);
-    } else {
-        updateTabUrl(tabId, activeTab, url, !initialLoad);
-    }
+    updateTabUrl(tabId, activeTab, url, !initialLoad);
 }
 
 void DeclarativeTabModel::updateTitle(int tabId, bool activeTab, QString url, QString title)

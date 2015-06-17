@@ -11,6 +11,7 @@
 
 #include "declarativewebpage.h"
 #include "declarativewebcontainer.h"
+#include "dbmanager.h"
 
 #include <QtConcurrent>
 #include <QStandardPaths>
@@ -55,13 +56,13 @@ bool allBlack(const QImage &image)
 DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
     : QOpenGLWebPage(parent)
     , m_container(0)
-    , m_tabId(0)
     , m_userHasDraggedWhileLoading(false)
     , m_fullscreen(false)
     , m_forcedChrome(false)
     , m_domContentLoaded(false)
     , m_initialLoadHasHappened(false)
-    , m_backForwardNavigation(false)
+    , m_tabHistoryReady(false)
+    , m_urlReady(false)
 {
     addMessageListener(gFullScreenMessage);
     addMessageListener(gDomContentLoadedMessage);
@@ -88,6 +89,7 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
     connect(&m_grabWritter, SIGNAL(finished()), this, SLOT(grabWritten()));
     connect(this, SIGNAL(contentHeightChanged()), this, SLOT(resetHeight()));
     connect(this, SIGNAL(scrollableOffsetChanged()), this, SLOT(resetHeight()));
+    connect(this, SIGNAL(urlChanged()), this, SLOT(onUrlChanged()));
 }
 
 DeclarativeWebPage::~DeclarativeWebPage()
@@ -113,15 +115,67 @@ void DeclarativeWebPage::setContainer(DeclarativeWebContainer *container)
 
 int DeclarativeWebPage::tabId() const
 {
-    return m_tabId;
+    return m_tab.tabId();
 }
 
-void DeclarativeWebPage::setTabId(int tabId)
+void DeclarativeWebPage::setTab(const Tab& tab)
 {
-    if (m_tabId != tabId) {
-        m_tabId = tabId;
-        emit tabIdChanged();
+    Q_ASSERT(m_tab.tabId() == 0);
+
+    m_tab = tab;
+    emit tabIdChanged();
+    connect(DBManager::instance(), SIGNAL(tabHistoryAvailable(int, QList<Link>)),
+            this, SLOT(onTabHistoryAvailable(int, QList<Link>)));
+    DBManager::instance()->getTabHistory(m_tab.tabId());
+}
+
+void DeclarativeWebPage::onUrlChanged()
+{
+    disconnect(this, SIGNAL(urlChanged()), this, SLOT(onUrlChanged()));
+    m_urlReady = true;
+    restoreHistory();
+}
+
+void DeclarativeWebPage::onTabHistoryAvailable(const int& tabId, const QList<Link>& links)
+{
+    if (tabId == m_tab.tabId()) {
+        m_restoredTabHistory = links;
+
+        // reverse the list
+        for(int k=0, s=m_restoredTabHistory.size(), max=(s/2); k<max; k++) {
+            m_restoredTabHistory.swap(k,s-(1+k));
+        }
+        DBManager::instance()->disconnect(this);
+        m_tabHistoryReady = true;
+        restoreHistory();
     }
+}
+
+void DeclarativeWebPage::restoreHistory() {
+    if (!m_urlReady || !m_tabHistoryReady) {
+        return;
+    }
+
+    QList<QString> urls;
+    int index(-1);
+    int i(0);
+    foreach (Link link, m_restoredTabHistory) {
+        urls << link.url();
+        if (link.linkId() == m_tab.currentLink()) {
+            index = i;
+        }
+        i++;
+    }
+
+    if (index < 0) {
+        urls << url().toString();
+        index = urls.count() - 1;
+    }
+
+    QVariantMap data;
+    data.insert(QString("links"), QVariant(urls));
+    data.insert(QString("index"), QVariant(index));
+    sendAsyncMessage("embedui:addhistory", QVariant(data));
 }
 
 bool DeclarativeWebPage::domContentLoaded() const
@@ -137,16 +191,6 @@ bool DeclarativeWebPage::initialLoadHasHappened() const
 void DeclarativeWebPage::setInitialLoadHasHappened()
 {
     m_initialLoadHasHappened = true;
-}
-
-bool DeclarativeWebPage::backForwardNavigation() const
-{
-    return m_backForwardNavigation;
-}
-
-void DeclarativeWebPage::setBackForwardNavigation(bool backForwardNavigation)
-{
-    m_backForwardNavigation = backForwardNavigation;
 }
 
 QVariant DeclarativeWebPage::resurrectedContentRect() const
@@ -283,7 +327,7 @@ QString DeclarativeWebPage::saveToFile(QImage image)
     }
 
     // 75% quality jpg produces small and good enough capture.
-    QString path = QString("%1/tab-%2-thumb.jpg").arg(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)).arg(m_tabId);
+    QString path = QString("%1/tab-%2-thumb.jpg").arg(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)).arg(m_tab.tabId());
     return !allBlack(image) && image.save(path, "jpg", 75) ? path : "";
 }
 

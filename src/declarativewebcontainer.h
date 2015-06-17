@@ -13,7 +13,6 @@
 #define DECLARATIVEWEBCONTAINER_H
 
 #include "settingmanager.h"
-#include "tab.h"
 #include "webpages.h"
 
 #include <qqml.h>
@@ -33,6 +32,7 @@ class QInputMethodEvent;
 class QTimerEvent;
 class DeclarativeTabModel;
 class DeclarativeWebPage;
+class Tab;
 
 class DeclarativeWebContainer : public QWindow, public QQmlParserStatus, protected QOpenGLFunctions {
     Q_OBJECT
@@ -102,10 +102,7 @@ public:
     bool imOpened() const;
 
     bool canGoForward() const;
-    void setCanGoForward(bool canGoForward);
-
     bool canGoBack() const;
-    void setCanGoBack(bool canGoBack);
 
     QObject *chromeWindow() const;
     void setChromeWindow(QObject *chromeWindow);
@@ -116,7 +113,7 @@ public:
     QString thumbnailPath() const;
 
     bool isActiveTab(int tabId);
-    bool activatePage(int tabId, bool force = false, int parentId = 0);
+    bool activatePage(const Tab& tab, bool force = false, int parentId = 0);
 
     Q_INVOKABLE void load(QString url = "", QString title = "", bool force = false);
     Q_INVOKABLE void reload(bool force = true);
@@ -212,12 +209,9 @@ private:
     void setWebPage(DeclarativeWebPage *webPage);
     qreal contentHeight() const;
     int parentTabId(int tabId) const;
-    void updateNavigationStatus(const Tab &tab);
     void updateVkbHeight();
-    void updateUrl(const QString &newUrl);
-    void updateTitle(const QString &newTitle);
     bool canInitialize() const;
-    void loadTab(int tabId, QString url, QString title, bool force);
+    void loadTab(const Tab& tab, bool force);
     void updateMode();
     void setActiveTabRendered(bool rendered);
 
@@ -250,18 +244,13 @@ private:
     // or qml component is not yet completed (completed property is still false). So cache url/title for later use.
     // Problem is visible with a download url as it does not trigger urlChange for the loaded page (correct behavior).
     // Once downloading has been started and if we have existing tabs we reset
-    // back to the active tab and load it. In case we didn't not have tabs open when downloading was
+    // back to the active tab and load it. In case we did not have tabs open when downloading was
     // triggered we just clear these.
-    // The exposed url/title are always coming from the active web page.
-    QString m_url;
-    QString m_title;
     int m_tabId;
+    QString m_initialUrl;
 
     bool m_loading;
     int m_loadProgress;
-    bool m_canGoForward;
-    bool m_canGoBack;
-    bool m_realNavigation;
 
     bool m_completed;
     bool m_initialized;

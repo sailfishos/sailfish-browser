@@ -19,7 +19,10 @@
 #include <qopenglwebpage.h>
 #include <qmozgrabresult.h>
 
+#include "tab.h"
+
 class DeclarativeWebContainer;
+class Link;
 
 class DeclarativeWebPage : public QOpenGLWebPage {
     Q_OBJECT
@@ -42,7 +45,7 @@ public:
     void setContainer(DeclarativeWebContainer *container);
 
     int tabId() const;
-    void setTabId(int tabId);
+    void setTab(const Tab& tab);
 
     QVariant resurrectedContentRect() const;
     void setResurrectedContentRect(QVariant resurrectedContentRect);
@@ -53,9 +56,6 @@ public:
 
     bool initialLoadHasHappened() const;
     void setInitialLoadHasHappened();
-
-    bool backForwardNavigation() const;
-    void setBackForwardNavigation(bool backForwardNavigation);
 
     Q_INVOKABLE void loadTab(QString newUrl, bool force);
     Q_INVOKABLE void grabToFile(const QSize& size);
@@ -84,26 +84,31 @@ signals:
 private slots:
     void setFullscreen(const bool fullscreen);
     void onRecvAsyncMessage(const QString& message, const QVariant& data);
+    void onTabHistoryAvailable(const int& tabId, const QList<Link>& links);
+    void onUrlChanged();
     void grabResultReady();
     void grabWritten();
     void thumbnailReady();
 
 private:
     QString saveToFile(QImage image);
+    void restoreHistory();
 
     QPointer<DeclarativeWebContainer> m_container;
-    int m_tabId;
+    Tab m_tab;
     bool m_userHasDraggedWhileLoading;
     bool m_fullscreen;
     bool m_forcedChrome;
     bool m_domContentLoaded;
     bool m_initialLoadHasHappened;
-    bool m_backForwardNavigation;
+    bool m_tabHistoryReady;
+    bool m_urlReady;
     QString m_favicon;
     QVariant m_resurrectedContentRect;
     QSharedPointer<QMozGrabResult> m_grabResult;
     QSharedPointer<QMozGrabResult> m_thumbnailResult;
     QFutureWatcher<QString> m_grabWritter;
+    QList<Link> m_restoredTabHistory;
 
     qreal m_fullScreenHeight;
     qreal m_toolbarHeight;

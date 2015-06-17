@@ -73,7 +73,7 @@ public:
 
     bool contains(int tabId) const;
 
-    void updateUrl(int tabId, bool activeTab, QString url, bool backForwardNavigation, bool initialLoad = false);
+    void updateUrl(int tabId, bool activeTab, QString url, bool initialLoad);
     void updateTitle(int tabId, bool activeTab, QString url, QString title);
 
 public slots:

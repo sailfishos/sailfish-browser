@@ -288,7 +288,9 @@ void tst_webview::testCloseActiveTab()
     int previousTabId = webContainer->webPage()->tabId();
     tabModel->closeActiveTab();
     // Updates contentItem to match index zero.
-    webContainer->activatePage(webContainer->tabId());
+    Tab tab;
+    tab.setTabId(webContainer->tabId());
+    webContainer->activatePage(tab);
     QCOMPARE(activeTabChangedSpy.count(), 1);
     QCOMPARE(tabClosedSpy.count(), 1);
     QList<QVariant> arguments = tabClosedSpy.takeFirst();

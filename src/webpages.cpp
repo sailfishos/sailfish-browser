@@ -125,8 +125,9 @@ bool WebPages::alive(int tabId) const
     return m_activePages.alive(tabId);
 }
 
-WebPageActivationData WebPages::page(int tabId, int parentId)
+WebPageActivationData WebPages::page(const Tab& tab, int parentId)
 {
+    const int tabId = tab.tabId();
     if (!m_webPageComponent) {
         qWarning() << "TabModel not initialized!";
         return WebPageActivationData(0, false);
@@ -139,7 +140,7 @@ WebPageActivationData WebPages::page(int tabId, int parentId)
     }
 
 #if DEBUG_LOGS
-    qDebug() << "about to create a new tab or activate old:" << tabId;
+    qDebug() << "about to create a new tab or activate old:" << tab.tabId();
 #endif
 
     DeclarativeWebPage *webPage = 0;
@@ -155,7 +156,7 @@ WebPageActivationData WebPages::page(int tabId, int parentId)
             if (webPage) {
                 webPage->setParentID(parentId);
                 webPage->setPrivateMode(m_webContainer->privateMode());
-                webPage->setTabId(tabId);
+                webPage->setTab(tab);
                 webPage->setContainer(m_webContainer);
                 webPage->initialize();
                 m_webPageComponent->completeCreate();
