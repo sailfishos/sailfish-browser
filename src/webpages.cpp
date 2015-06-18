@@ -15,7 +15,11 @@
 #include "qmozcontext.h"
 
 #include <QDateTime>
+#include <QDBusServiceWatcher>
 #include <QDBusConnection>
+#include <QDBusInterface>
+#include <QDBusPendingCallWatcher>
+#include <QDBusPendingReply>
 #include <QQmlComponent>
 #include <QQmlEngine>
 #include <QQmlContext>
@@ -35,14 +39,30 @@ static const qint64 gMemoryPressureTimeout = 600 * 1000; // 600 sec
 // In normal cases gLowMemoryEnabled is true. Can be disabled e.g. for test runs.
 static const bool gLowMemoryEnabled = qgetenv("LOW_MEMORY_DISABLED").isEmpty();
 
+static const QString MemNormal = QStringLiteral("normal");
+static const QString MemWarning = QStringLiteral("warning");
+static const QString MemCritical = QStringLiteral("critical");
+
 WebPages::WebPages(QObject *parent)
     : QObject(parent)
     , m_backgroundTimestamp(0)
+    , m_memoryLevel(MemNormal)
 {
     if (gLowMemoryEnabled) {
-        QDBusConnection::systemBus().connect("com.nokia.mce", "/com/nokia/mce/signal",
-                                             "com.nokia.mce.signal", "sig_memory_level_ind",
-                                             this, SLOT(handleMemNotify(QString)));
+        QDBusConnection systemBus = QDBusConnection::systemBus();
+        systemBus.connect("com.nokia.mce", "/com/nokia/mce/signal",
+                          "com.nokia.mce.signal", "sig_memory_level_ind",
+                          this, SLOT(handleMemNotify(QString)));
+
+        QDBusInterface mceRequest("com.nokia.mce",
+                                  "/com/nokia/mce/request",
+                                  "com.nokia.mce.request",
+                                  systemBus);
+
+        QDBusPendingCall pendingLowMemory = mceRequest.asyncCall("get_memory_level");
+        QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(pendingLowMemory, this);
+        QObject::connect(watcher, SIGNAL(finished(QDBusPendingCallWatcher*)),
+                         this, SLOT(initialMemoryLevel(QDBusPendingCallWatcher*)));
     }
 }
 
@@ -65,6 +85,19 @@ void WebPages::updateBackgroundTimestamp()
     if (!m_webContainer->foreground()) {
         m_backgroundTimestamp = QDateTime::currentMSecsSinceEpoch();
     }
+}
+
+void WebPages::initialMemoryLevel(QDBusPendingCallWatcher *watcher)
+{
+    if (watcher->isValid() && watcher->isFinished()) {
+        QDBusPendingReply<QString> reply = *watcher;
+        m_memoryLevel = reply.value();
+        if (m_memoryLevel == MemCritical) {
+            handleMemNotify(MemCritical);
+        }
+    }
+
+    watcher->deleteLater();
 }
 
 bool WebPages::initialized() const
@@ -148,6 +181,10 @@ WebPageActivationData WebPages::page(int tabId, int parentId)
     dumpPages();
 #endif
 
+    if (m_memoryLevel == MemCritical) {
+        handleMemNotify(m_memoryLevel);
+    }
+
     return WebPageActivationData(newActiveWebPage, true);
 }
 
@@ -195,11 +232,14 @@ void WebPages::dumpPages() const
 
 void WebPages::handleMemNotify(const QString &memoryLevel)
 {
+    // Keep track of memory notification signals.
+    m_memoryLevel = memoryLevel;
+
     if (!m_webContainer || !m_webContainer->completed()) {
         return;
     }
 
-    if (memoryLevel == QString("warning") || memoryLevel == QString("critical")) {
+    if (m_memoryLevel == MemWarning || m_memoryLevel == MemCritical) {
         m_activePages.virtualizeInactive();
 
         if (!m_webContainer->foreground() &&
