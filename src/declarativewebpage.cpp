@@ -163,6 +163,13 @@ void DeclarativeWebPage::restoreHistory() {
         urls << link.url();
         if (link.linkId() == m_tab.currentLink()) {
             index = i;
+            if (link.url() != m_tab.url()) {
+                // The browser was started with an initial URL as a cmdline parameter -> reset tab history
+                urls << m_tab.url();
+                index++;
+                DBManager::instance()->navigateTo(m_tab.tabId(), m_tab.url(), "", "");
+                break;
+            }
         }
         i++;
     }
