@@ -196,7 +196,9 @@ Page {
 
         baseColor: overlay.baseColor
         baseOpacity: overlay.baseOpacity
-        dimmerOpacity: 0.9 - (overlay.y / (webView.fullscreenHeight - overlay.toolBar.toolsHeight)) * 0.9
+        dimmerOpacity: overlay.animator.atBottom
+                       ? 0.0
+                       : 0.9 - (overlay.y / (webView.fullscreenHeight - overlay.toolBar.toolsHeight)) * 0.9
 
         MouseArea {
             anchors.fill: parent
