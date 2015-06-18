@@ -245,6 +245,10 @@ Page {
             if (active && webView.contentItem && !overlay.enteringNewTabUrl && !webView.contentItem.fullscreen) {
                 overlay.animator.showChrome()
             }
+
+            if (!active && webView.chromeWindow) {
+                webView.chromeWindow.raise()
+            }
         }
     }
 
