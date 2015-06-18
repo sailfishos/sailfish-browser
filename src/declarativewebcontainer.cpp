@@ -76,6 +76,9 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     setSurfaceType(QWindow::OpenGLSurface);
 
     QSurfaceFormat format(requestedFormat());
+    format.setRedBufferSize(5);
+    format.setGreenBufferSize(6);
+    format.setBlueBufferSize(5);
     format.setAlphaBufferSize(0);
     setFormat(format);
 
