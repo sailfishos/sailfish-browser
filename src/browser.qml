@@ -113,7 +113,7 @@ ApplicationWindow {
                 }
             }
 
-            width: height
+            width: page ? (page.isPortrait ? Screen.width : Screen.height) : 0
             height: Math.max(Screen.height, Screen.width)
             x: pageContainer && page && page.isPortrait ? pageContainer.x : 0
             y: pageContainer && page && page.isLandscape ? pageContainer.y : 0
