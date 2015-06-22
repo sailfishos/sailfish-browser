@@ -55,7 +55,7 @@ Page {
     function inputMaskForOrientation(orientation) {
         // mask is in portrait window coordinates
         var mask = Qt.rect(0, 0, Screen.width, Screen.height)
-        if (webView.enabled && browserPage.active && !webView.popupActive) {
+        if (!window.opaqueBackground && webView.enabled && browserPage.active && !webView.popupActive) {
             var overlayVisibleHeight = browserPage.height - overlay.y
 
             switch (orientation) {
@@ -153,7 +153,7 @@ Page {
         rotationHandler: browserPage
         imOpened: virtualKeyboardObserver.opened
 
-        tabModel.onCountChanged: window.opaqueBackground = tabModel.count == 0
+        tabModel.onWaitingForNewTabChanged: window.opaqueBackground = tabModel.waitingForNewTab
 
         onChromeExposed: {
             if (overlay.animator.atTop && overlay.searchField.focus && !WebUtils.firstUseDone) {
@@ -191,6 +191,9 @@ Page {
 
     Browser.DimmerEffect {
         id: contentDimmer
+
+        readonly property bool canOpenContentDimmer: webView.activeTabRendered && overlay.animator.atBottom
+
         width: browserPage.width
         height: Math.ceil(overlay.y)
 
@@ -210,6 +213,12 @@ Page {
             id: privateModeTexture
             anchors.fill: contentDimmer
             visible: webView.privateMode && !overlay.animator.allowContentUse
+        }
+
+        onCanOpenContentDimmerChanged: {
+            if (canOpenContentDimmer) {
+                webView.tabModel.waitingForNewTab = false
+            }
         }
     }
 
@@ -241,7 +250,7 @@ Page {
         historyModel: historyModel
         browserPage: browserPage
 
-        onEnteringNewTabUrlChanged: window.opaqueBackground = overlay.enteringNewTabUrl
+        onEnteringNewTabUrlChanged: window.opaqueBackground = webView.tabModel.waitingForNewTab || enteringNewTabUrl
 
         onActiveChanged: {
             if (active && webView.contentItem && !overlay.enteringNewTabUrl && !webView.contentItem.fullscreen) {

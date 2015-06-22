@@ -68,6 +68,7 @@ class DeclarativeWebContainer : public QWindow, public QQmlParserStatus, protect
     Q_PROPERTY(QString url READ url NOTIFY urlChanged FINAL)
 
     Q_PROPERTY(bool privateMode READ privateMode WRITE setPrivateMode NOTIFY privateModeChanged FINAL)
+    Q_PROPERTY(bool activeTabRendered READ activeTabRendered NOTIFY activeTabRenderedChanged FINAL)
 
     Q_PROPERTY(QQmlComponent* webPageComponent MEMBER m_webPageComponent NOTIFY webPageComponentChanged FINAL)
     Q_PROPERTY(QObject *chromeWindow READ chromeWindow WRITE setChromeWindow NOTIFY chromeWindowChanged FINAL)
@@ -90,6 +91,8 @@ public:
 
     bool privateMode() const;
     void setPrivateMode(bool);
+
+    bool activeTabRendered();
 
     bool loading() const;
 
@@ -156,6 +159,7 @@ signals:
     void urlChanged();
     void thumbnailPathChanged();
     void privateModeChanged();
+    void activeTabRenderedChanged();
 
     void webPageComponentChanged();
     void chromeWindowChanged();
@@ -193,6 +197,7 @@ private slots:
     void onPageTitleChanged();
     void updateLoadProgress();
     void updateLoading();
+    void updateActiveTabRendered();
     void setActiveTabData();
 
     void updateWindowFlags();
@@ -214,6 +219,7 @@ private:
     bool canInitialize() const;
     void loadTab(int tabId, QString url, QString title, bool force);
     void updateMode();
+    void setActiveTabRendered(bool rendered);
 
     QPointer<QQuickItem> m_rotationHandler;
     QPointer<DeclarativeWebPage> m_webPage;
@@ -262,6 +268,7 @@ private:
     bool m_initialized;
 
     bool m_privateMode;
+    bool m_activeTabRendered;
     bool m_hasBeenExposed;
 
     QMutex m_exposedMutex;

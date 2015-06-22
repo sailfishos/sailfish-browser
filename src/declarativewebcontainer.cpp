@@ -147,8 +147,10 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
                 updateContentOrientation(m_chromeWindow->contentOrientation());
             }
             m_tabId = m_webPage->tabId();
+            setActiveTabRendered(m_webPage->isPainted());
         } else {
             m_tabId = 0;
+            setActiveTabRendered(false);
         }
         m_activatingTab = false;
 
@@ -242,6 +244,11 @@ void DeclarativeWebContainer::setPrivateMode(bool privateMode)
         updateMode();
         emit privateModeChanged();
     }
+}
+
+bool DeclarativeWebContainer::activeTabRendered()
+{
+    return m_activeTabRendered;
 }
 
 bool DeclarativeWebContainer::loading() const
@@ -418,6 +425,7 @@ bool DeclarativeWebContainer::activatePage(int tabId, bool force, int parentId)
     m_webPages->initialize(this, m_webPageComponent.data());
     if ((m_model->loaded() || force) && tabId > 0 && m_webPages->initialized()) {
         WebPageActivationData activationData = m_webPages->page(tabId, parentId);
+        setActiveTabRendered(false);
         setWebPage(activationData.webPage);
         // Reset always height so that orentation change is taken into account.
         m_webPage->forceChrome(false);
@@ -433,6 +441,8 @@ bool DeclarativeWebContainer::activatePage(int tabId, bool force, int parentId)
         connect(m_webPage, SIGNAL(heightChanged()), this, SLOT(sendVkbOpenCompositionMetrics()), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(widthChanged()), this, SLOT(sendVkbOpenCompositionMetrics()), Qt::UniqueConnection);
         connect(m_webPage, SIGNAL(requestGLContext()), this, SLOT(createGLContext()), Qt::DirectConnection);
+        // Intentionally not a direct connect as signal is emitted from gecko compositor thread.
+        connect(m_webPage, SIGNAL(afterRendering(QRect)), this, SLOT(updateActiveTabRendered()), Qt::UniqueConnection);
         return activationData.activated;
     }
     return false;
@@ -454,6 +464,14 @@ void DeclarativeWebContainer::updateMode()
     } else {
         setWebPage(NULL);
         emit contentItemChanged();
+    }
+}
+
+void DeclarativeWebContainer::setActiveTabRendered(bool rendered)
+{
+    if (m_activeTabRendered != rendered) {
+        m_activeTabRendered = rendered;
+        emit activeTabRenderedChanged();
     }
 }
 
@@ -885,6 +903,13 @@ void DeclarativeWebContainer::updateLoading()
     }
 
     emit loadingChanged();
+}
+
+void DeclarativeWebContainer::updateActiveTabRendered()
+{
+    setActiveTabRendered(true);
+    // One frame rendered so let's disconnect.
+    disconnect(m_webPage, SIGNAL(afterRendering(QRect)), this, SLOT(updateActiveTabRendered()));
 }
 
 void DeclarativeWebContainer::setActiveTabData()
