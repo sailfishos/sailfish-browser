@@ -157,6 +157,10 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
         emit tabIdChanged();
         emit loadingChanged();
         emit focusObjectChanged(m_webPage);
+        emit canGoBackChanged();
+        emit canGoForwardChanged();
+        emit urlChanged();
+        emit titleChanged();
 
         setLoadProgress(m_webPage ? m_webPage->loadProgress() : 0);
     }
@@ -729,16 +733,8 @@ void DeclarativeWebContainer::releasePage(int tabId, bool virtualize)
     if (m_webPages) {
         m_webPages->release(tabId, virtualize);
         // Successfully destroyed. Emit relevant property changes.
-        if (!m_webPage || m_model->count() == 0) {
-
-            if (m_tabId != 0) {
-                m_tabId = 0;
-                emit tabIdChanged();
-            }
-
-            emit contentItemChanged();
-            emit loadingChanged();
-            setLoadProgress(0);
+        if (m_model->count() == 0) {
+            setWebPage(NULL);
         }
     }
 }
