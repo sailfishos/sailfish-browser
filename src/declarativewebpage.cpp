@@ -141,10 +141,7 @@ void DeclarativeWebPage::onTabHistoryAvailable(const int& tabId, const QList<Lin
     if (tabId == m_tab.tabId()) {
         m_restoredTabHistory = links;
 
-        // reverse the list
-        for(int k=0, s=m_restoredTabHistory.size(), max=(s/2); k<max; k++) {
-            m_restoredTabHistory.swap(k,s-(1+k));
-        }
+        std::reverse(m_restoredTabHistory.begin(), m_restoredTabHistory.end());
         DBManager::instance()->disconnect(this);
         m_tabHistoryReady = true;
         restoreHistory();
