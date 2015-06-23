@@ -125,8 +125,7 @@ void tst_declarativetabmodel::validTabs_data()
     QTest::addColumn<int>("count");
 
     for (int i = 0; i < originalTabOrder.count(); ++i) {
-        const char *newName = QString("%1-tab").arg(i+1).toLatin1().constData();
-        QTest::newRow(newName) << originalTabOrder.at(i).url << originalTabOrder.at(i).title << i+1;
+        QTest::newRow(QString("%1-tab").arg(i+1).toLatin1()) << originalTabOrder.at(i).url << originalTabOrder.at(i).title << i+1;
     }
 }
 
