@@ -213,8 +213,8 @@ SilicaGridView {
             property string icon
             property var bookmarkWriter
 
-            //: Title of the "Add to launcher" dialog.
-            //% "Add to launcher"
+            //: Title of the "Add to App Grid" dialog.
+            //% "Add to App Grid"
             title: qsTrId("sailfish_browser-he-add_bookmark_to_launcher")
             canAccept: editedUrl !== "" && editedTitle !== ""
             onAccepted: {
