@@ -138,8 +138,8 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
         m_webPage = webPage;
 
         if (m_webPage) {
-            connect(m_webPage, SIGNAL(navigationHistoryChanged()), this, SIGNAL(canGoForwardChanged()), Qt::UniqueConnection);
-            connect(m_webPage, SIGNAL(navigationHistoryChanged()), this, SIGNAL(canGoBackChanged()), Qt::UniqueConnection);
+            connect(m_webPage, SIGNAL(canGoBackChanged()), this, SIGNAL(canGoBackChanged()), Qt::UniqueConnection);
+            connect(m_webPage, SIGNAL(canGoForwardChanged()), this, SIGNAL(canGoForwardChanged()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(urlChanged()), this, SIGNAL(urlChanged()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(urlChanged()), this, SLOT(onPageUrlChanged()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(titleChanged()), this, SIGNAL(titleChanged()), Qt::UniqueConnection);
