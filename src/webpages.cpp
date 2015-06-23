@@ -189,8 +189,10 @@ WebPageActivationData WebPages::page(const Tab& tab, int parentId)
     return WebPageActivationData(newActiveWebPage, true);
 }
 
-void WebPages::release(int tabId, bool virtualize)
+void WebPages::release(int tabId)
 {
+    // Web pages are released only upon closing a tab thus don't need virtualizing.
+    bool virtualize(false);
     m_activePages.release(tabId, virtualize);
 }
 

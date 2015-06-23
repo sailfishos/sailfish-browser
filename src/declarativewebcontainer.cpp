@@ -728,10 +728,10 @@ int DeclarativeWebContainer::parentTabId(int tabId) const
     return 0;
 }
 
-void DeclarativeWebContainer::releasePage(int tabId, bool virtualize)
+void DeclarativeWebContainer::releasePage(int tabId)
 {
     if (m_webPages) {
-        m_webPages->release(tabId, virtualize);
+        m_webPages->release(tabId);
         // Successfully destroyed. Emit relevant property changes.
         if (m_model->count() == 0) {
             setWebPage(NULL);
