@@ -138,10 +138,23 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
         m_webPage = webPage;
 
         if (m_webPage) {
-            connect(m_webPage, SIGNAL(navigationHistoryChanged()), this, SIGNAL(canGoForwardChanged()));
-            connect(m_webPage, SIGNAL(navigationHistoryChanged()), this, SIGNAL(canGoBackChanged()));
-            connect(m_webPage, SIGNAL(urlChanged()), this, SIGNAL(urlChanged()));
-            connect(m_webPage, SIGNAL(titleChanged()), this, SIGNAL(titleChanged()));
+            connect(m_webPage, SIGNAL(navigationHistoryChanged()), this, SIGNAL(canGoForwardChanged()), Qt::UniqueConnection);
+            connect(m_webPage, SIGNAL(navigationHistoryChanged()), this, SIGNAL(canGoBackChanged()), Qt::UniqueConnection);
+            connect(m_webPage, SIGNAL(urlChanged()), this, SIGNAL(urlChanged()), Qt::UniqueConnection);
+            connect(m_webPage, SIGNAL(urlChanged()), this, SLOT(onPageUrlChanged()), Qt::UniqueConnection);
+            connect(m_webPage, SIGNAL(titleChanged()), this, SIGNAL(titleChanged()), Qt::UniqueConnection);
+            connect(m_webPage, SIGNAL(titleChanged()), this, SLOT(onPageTitleChanged()), Qt::UniqueConnection);
+            connect(m_webPage, SIGNAL(imeNotification(int,bool,int,int,QString)),
+                    this, SLOT(imeNotificationChanged(int,bool,int,int,QString)), Qt::UniqueConnection);
+            connect(m_webPage, SIGNAL(windowCloseRequested()), this, SLOT(closeWindow()), Qt::UniqueConnection);
+            connect(m_webPage, SIGNAL(loadingChanged()), this, SLOT(updateLoading()), Qt::UniqueConnection);
+            connect(m_webPage, SIGNAL(loadProgressChanged()), this, SLOT(updateLoadProgress()), Qt::UniqueConnection);
+            connect(m_webPage, SIGNAL(domContentLoadedChanged()), this, SLOT(sendVkbOpenCompositionMetrics()), Qt::UniqueConnection);
+            connect(m_webPage, SIGNAL(heightChanged()), this, SLOT(sendVkbOpenCompositionMetrics()), Qt::UniqueConnection);
+            connect(m_webPage, SIGNAL(widthChanged()), this, SLOT(sendVkbOpenCompositionMetrics()), Qt::UniqueConnection);
+            connect(m_webPage, SIGNAL(requestGLContext()), this, SLOT(createGLContext()), Qt::DirectConnection);
+            // Intentionally not a direct connect as signal is emitted from gecko compositor thread.
+            connect(m_webPage, SIGNAL(afterRendering(QRect)), this, SLOT(updateActiveTabRendered()), Qt::UniqueConnection);
             m_webPage->setWindow(this);
             if (m_chromeWindow) {
                 updateContentOrientation(m_chromeWindow->contentOrientation());
@@ -391,19 +404,6 @@ bool DeclarativeWebContainer::activatePage(const Tab& tab, bool force, int paren
         // Reset always height so that orentation change is taken into account.
         m_webPage->forceChrome(false);
         m_webPage->setChrome(true);
-        connect(m_webPage, SIGNAL(imeNotification(int,bool,int,int,QString)),
-                this, SLOT(imeNotificationChanged(int,bool,int,int,QString)), Qt::UniqueConnection);
-        connect(m_webPage, SIGNAL(windowCloseRequested()), this, SLOT(closeWindow()), Qt::UniqueConnection);
-        connect(m_webPage, SIGNAL(urlChanged()), this, SLOT(onPageUrlChanged()), Qt::UniqueConnection);
-        connect(m_webPage, SIGNAL(loadingChanged()), this, SLOT(updateLoading()), Qt::UniqueConnection);
-        connect(m_webPage, SIGNAL(loadProgressChanged()), this, SLOT(updateLoadProgress()), Qt::UniqueConnection);
-        connect(m_webPage, SIGNAL(titleChanged()), this, SLOT(onPageTitleChanged()), Qt::UniqueConnection);
-        connect(m_webPage, SIGNAL(domContentLoadedChanged()), this, SLOT(sendVkbOpenCompositionMetrics()), Qt::UniqueConnection);
-        connect(m_webPage, SIGNAL(heightChanged()), this, SLOT(sendVkbOpenCompositionMetrics()), Qt::UniqueConnection);
-        connect(m_webPage, SIGNAL(widthChanged()), this, SLOT(sendVkbOpenCompositionMetrics()), Qt::UniqueConnection);
-        connect(m_webPage, SIGNAL(requestGLContext()), this, SLOT(createGLContext()), Qt::DirectConnection);
-        // Intentionally not a direct connect as signal is emitted from gecko compositor thread.
-        connect(m_webPage, SIGNAL(afterRendering(QRect)), this, SLOT(updateActiveTabRendered()), Qt::UniqueConnection);
         return activationData.activated;
     }
     return false;
