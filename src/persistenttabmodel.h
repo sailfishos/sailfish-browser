@@ -29,7 +29,6 @@ protected:
     virtual void updateThumbPath(int tabId, QString path);
 
 private slots:
-    void tabChanged(const Tab &tab);
     void saveActiveTab() const;
 
 public slots:

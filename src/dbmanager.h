@@ -42,7 +42,6 @@ public:
 
     void clearHistory();
     void getHistory(const QString &filter = "");
-    void clearTabHistory(int tabId);
     void getTabHistory(int tabId);
 
     void saveSetting(QString name, QString value);
@@ -56,7 +55,6 @@ public slots:
     void tabListAvailable(QList<Tab> tabs);
 
 signals:
-    void tabChanged(Tab tab);
     void tabAvailable(Tab tab);
     void tabsAvailable(QList<Tab> tab);
     void historyAvailable(QList<Link> links);

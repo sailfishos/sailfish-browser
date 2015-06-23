@@ -448,9 +448,7 @@ void DBWorker::goForward(int tabId) {
     }
 
     if (historyId > 0) {
-        if (updateTab(tabId, historyId)) {
-            emit tabChanged(getTabData(tabId, historyId));
-        }
+        updateTab(tabId, historyId);
     }
 }
 
@@ -468,9 +466,7 @@ void DBWorker::goBack(int tabId) {
     }
 
     if (historyId > 0) {
-        if (updateTab(tabId, historyId)) {
-            emit tabChanged(getTabData(tabId, historyId));
-        }
+        updateTab(tabId, historyId);
     }
 }
 
@@ -610,27 +606,6 @@ int DBWorker::addToTabHistory(int tabId, int linkId)
     qDebug() << "tab:" << tabId << "link:" << linkId << "tab history id" << query.lastInsertId();
 #endif
     return lastId.toInt();
-}
-
-void DBWorker::clearTabHistory(int tabId)
-{
-    // Remove urls that are only related to this tab
-    QSqlQuery query = prepare("DELETE FROM link WHERE link_id IN "
-                              "(SELECT DISTINCT link_id FROM tab_history WHERE tab_id = ? "
-                              "AND link_id NOT IN (SELECT link_id FROM tab_history WHERE tab_id != ? "
-                              "UNION SELECT link_id FROM tab_history WHERE id IN (SELECT tab_history_id FROM tab WHERE tab_id = ?)));");
-    query.bindValue(0, tabId);
-    query.bindValue(1, tabId);
-    query.bindValue(2, tabId);
-    execute(query);
-
-    query = prepare("DELETE FROM tab_history WHERE tab_id = ? "
-                    "AND id NOT IN (SELECT tab_history_id FROM tab WHERE tab_id = ?);");
-    query.bindValue(0, tabId);
-    query.bindValue(1, tabId);
-    execute(query);
-
-    emit tabChanged(getTabData(tabId));
 }
 
 int DBWorker::createLink(QString url, QString title, QString thumbPath)

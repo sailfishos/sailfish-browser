@@ -20,8 +20,6 @@ PersistentTabModel::PersistentTabModel(QObject *parent)
 {
     connect(DBManager::instance(), SIGNAL(tabsAvailable(QList<Tab>)),
             this, SLOT(tabsAvailable(QList<Tab>)));
-    connect(DBManager::instance(), SIGNAL(tabChanged(Tab)),
-            this, SLOT(tabChanged(Tab)));
     connect(DeclarativeWebUtils::instance(), SIGNAL(beforeShutdown()),
             this, SLOT(saveActiveTab()));
 
@@ -71,41 +69,6 @@ void PersistentTabModel::tabsAvailable(QList<Tab> tabs)
     if (!m_loaded) {
         m_loaded = true;
         emit loadedChanged();
-    }
-}
-
-void PersistentTabModel::tabChanged(const Tab &tab)
-{
-#if DEBUG_LOGS
-    qDebug() << "new tab data:" << &tab;
-#endif
-    if (m_tabs.isEmpty()) {
-        qWarning() << "No tabs!";
-        return;
-    }
-
-    int i = findTabIndex(tab.tabId());
-    if (i > -1) {
-        QVector<int> roles;
-        Tab oldTab = m_tabs[i];
-        if (oldTab.url() != tab.url()) {
-            roles << UrlRole;
-        }
-        if (oldTab.title() != tab.title()) {
-            roles << TitleRole;
-        }
-        if (oldTab.thumbnailPath() != tab.thumbnailPath()) {
-            roles << ThumbPathRole;
-        }
-        m_tabs[i] = tab;
-        QModelIndex start = index(i, 0);
-        QModelIndex end = index(i, 0);
-        emit dataChanged(start, end, roles);
-    }
-
-    if (tab.tabId() == m_activeTab.tabId()) {
-        m_activeTab = tab;
-        emit activeTabChanged(tab.tabId(), tab.tabId(), true);
     }
 }
 
