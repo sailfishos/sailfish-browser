@@ -5,4 +5,8 @@
 SOURCES += ../common/declarativewebutils.cpp
 HEADERS += ../common/declarativewebutils.h
 
-PKGCONFIG += qt5embedwidget
+isEmpty(QTEMBED_LIB) {
+  PKGCONFIG += qt5embedwidget
+} else {
+  LIBS+=$$QTEMBED_LIB
+}
