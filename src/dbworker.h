@@ -70,7 +70,6 @@ signals:
 private:
     Link getLink(int linkId);
     Link getLink(QString url);
-    void updateLink(int linkId, QString url, QString title, QString thumbPath);
     HistoryResult addToBrowserHistory(QString url, QString title);
     int addToTabHistory(int tabId, int linkId);
     Link getLinkFromTabHistory(int tabHistoryId);
