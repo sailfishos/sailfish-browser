@@ -102,7 +102,6 @@ protected:
     virtual void updateTitle(int tabId, int linkId, QString url, QString title) = 0;
     virtual void removeTab(int tabId) = 0;
     virtual int nextLinkId() = 0;
-    virtual void updateTab(int tabId, QString url, QString title, QString path) = 0;
     virtual void navigateTo(int tabId, QString url, QString title, QString path) = 0;
     virtual void updateThumbPath(int tabId, QString path) = 0;
 

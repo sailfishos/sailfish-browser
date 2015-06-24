@@ -421,19 +421,6 @@ void DBWorker::navigateTo(int tabId, QString url, QString title, QString path) {
 #endif
 }
 
-void DBWorker::updateTab(int tabId, QString url, QString title, QString path)
-{
-    Link currentLink = getCurrentLink(tabId);
-    if (!currentLink.isValid()) {
-        qWarning() << "attempt to update url that is not stored in db." << tabId << title << url << path << currentLink.linkId() << currentLink.url();
-        return;
-    }
-#if DEBUG_LOGS
-    qDebug() << tabId << title << url << path;
-#endif
-    updateLink(currentLink.linkId(), url, title, path);
-}
-
 void DBWorker::goForward(int tabId) {
     QSqlQuery query = prepare("SELECT id FROM tab_history WHERE tab_id = ? AND id > (SELECT tab_history_id FROM tab WHERE tab_id = ?) ORDER BY id ASC LIMIT 1;");
     query.bindValue(0, tabId);

@@ -41,7 +41,6 @@ public slots:
     void getTab(int tabId);
     void getAllTabs();
     void navigateTo(int tabId, QString url, QString title, QString path);
-    void updateTab(int tabId, QString url, QString title, QString path);
     int getMaxTabId();
     int getMaxLinkId();
 
