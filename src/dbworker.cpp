@@ -765,22 +765,3 @@ Link DBWorker::getLink(int linkId)
     }
     return Link();
 }
-
-Link DBWorker::getLink(QString url)
-{
-    if (url.isEmpty()) {
-        return Link();
-    }
-
-    QSqlQuery query = prepare("SELECT link_id, url, thumb_path, title FROM link WHERE url = ?;");
-    query.bindValue(0, url);
-    if (execute(query)) {
-        if (query.first()) {
-            return Link(query.value(0).toInt(),
-                       query.value(1).toString(),
-                       query.value(2).toString(),
-                       query.value(3).toString());
-        }
-    }
-    return Link();
-}
