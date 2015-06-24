@@ -73,7 +73,7 @@ public:
 
     bool contains(int tabId) const;
 
-    void updateUrl(int tabId, bool activeTab, QString url, bool initialLoad);
+    void updateUrl(int tabId, bool activeTab, const QString &url, bool initialLoad);
     void updateTitle(int tabId, bool activeTab, QString url, QString title);
 
 public slots:
@@ -96,7 +96,6 @@ protected:
     void removeTab(int tabId, const QString &thumbnail, int index);
     int findTabIndex(int tabId) const;
     void updateActiveTab(const Tab &activeTab, bool loadActiveTab);
-    void updateTabUrl(int tabId, bool activeTab, const QString &url, bool navigate);
 
     virtual int createTab() = 0;
     virtual int createLink(int tabId, QString url, QString title) = 0;

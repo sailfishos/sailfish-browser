@@ -256,9 +256,42 @@ bool DeclarativeTabModel::contains(int tabId) const
     return findTabIndex(tabId) >= 0;
 }
 
-void DeclarativeTabModel::updateUrl(int tabId, bool activeTab, QString url, bool initialLoad)
+void DeclarativeTabModel::updateUrl(int tabId, bool activeTab, const QString &url, bool initialLoad)
 {
-    updateTabUrl(tabId, activeTab, url, !initialLoad);
+    if (!LinkValidator::navigable(QUrl(url))) {
+#if DEBUG_LOGS
+        qDebug() << "invalid url: " << url;
+#endif
+        return;
+    }
+
+    int tabIndex = findTabIndex(tabId);
+    bool updateDb = false;
+    if (tabIndex >= 0 && (m_tabs.at(tabIndex).url() != url || activeTab)) {
+        QVector<int> roles;
+        roles << UrlRole << TitleRole << ThumbPathRole;
+        m_tabs[tabIndex].setUrl(url);
+
+        if (!initialLoad) {
+            m_tabs[tabIndex].setNextLink(0);
+            int currentLinkId = m_tabs.at(tabIndex).currentLink();
+            m_tabs[tabIndex].setPreviousLink(currentLinkId);
+            m_tabs[tabIndex].setCurrentLink(nextLinkId());
+            updateDb = true;
+        }
+        m_tabs[tabIndex].setTitle("");
+        m_tabs[tabIndex].setThumbnailPath("");
+
+        if (tabId == m_activeTab.tabId()) {
+            m_activeTab = m_tabs[tabIndex];
+        }
+
+        emit dataChanged(index(tabIndex, 0), index(tabIndex, 0), roles);
+    }
+
+    if (updateDb) {
+        navigateTo(tabId, url, "", "");
+    }
 }
 
 void DeclarativeTabModel::updateTitle(int tabId, bool activeTab, QString url, QString title)
@@ -345,45 +378,6 @@ void DeclarativeTabModel::updateActiveTab(const Tab &activeTab, bool loadActiveT
         // contentItem of WebView.
         emit activeTabChanged(oldTabId, activeTab.tabId(), loadActiveTab);
     }
-}
-
-void DeclarativeTabModel::updateTabUrl(int tabId, bool activeTab, const QString &url, bool navigate)
-{
-    if (!LinkValidator::navigable(QUrl(url))) {
-#if DEBUG_LOGS
-        qDebug() << "invalid url: " << url;
-#endif
-        return;
-    }
-
-    int tabIndex = findTabIndex(tabId);
-    bool updateDb = false;
-    if (tabIndex >= 0 && (m_tabs.at(tabIndex).url() != url || activeTab)) {
-        QVector<int> roles;
-        roles << UrlRole << TitleRole << ThumbPathRole;
-        m_tabs[tabIndex].setUrl(url);
-
-        if (navigate) {
-            m_tabs[tabIndex].setNextLink(0);
-            int currentLinkId = m_tabs.at(tabIndex).currentLink();
-            m_tabs[tabIndex].setPreviousLink(currentLinkId);
-            m_tabs[tabIndex].setCurrentLink(nextLinkId());
-        }
-        m_tabs[tabIndex].setTitle("");
-        m_tabs[tabIndex].setThumbnailPath("");
-
-        if (tabId == m_activeTab.tabId()) {
-            m_activeTab = m_tabs[tabIndex];
-        }
-
-        emit dataChanged(index(tabIndex, 0), index(tabIndex, 0), roles);
-        updateDb = true;
-    }
-
-    if (updateDb && navigate) {
-        navigateTo(tabId, url, "", "");
-    }
-
 }
 
 void DeclarativeTabModel::updateThumbnailPath(int tabId, QString path)
