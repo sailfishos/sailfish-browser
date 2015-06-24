@@ -247,7 +247,7 @@ int DBWorker::createLink(int tabId, QString url, QString title)
     return linkId;
 }
 
-bool DBWorker::updateTab(int tabId, int tabHistoryId)
+void DBWorker::updateTab(int tabId, int tabHistoryId)
 {
 #if DEBUG_LOGS
     qDebug() << "tab:" << tabId << "tab history id:" << tabHistoryId;
@@ -255,7 +255,7 @@ bool DBWorker::updateTab(int tabId, int tabHistoryId)
     QSqlQuery query = prepare("UPDATE tab SET tab_history_id = ? WHERE tab_id = ?;");
     query.bindValue(0, tabHistoryId);
     query.bindValue(1, tabId);
-    return execute(query);
+    execute(query);
 }
 
 Tab DBWorker::getTabData(int tabId, int historyId)
@@ -419,19 +419,6 @@ void DBWorker::navigateTo(int tabId, QString url, QString title, QString path) {
 #if DEBUG_LOGS
     qDebug() << "emit tab changed:" << tabId << historyId << title << url;
 #endif
-}
-
-void DBWorker::updateTab(int tabId, QString url, QString title, QString path)
-{
-    Link currentLink = getCurrentLink(tabId);
-    if (!currentLink.isValid()) {
-        qWarning() << "attempt to update url that is not stored in db." << tabId << title << url << path << currentLink.linkId() << currentLink.url();
-        return;
-    }
-#if DEBUG_LOGS
-    qDebug() << tabId << title << url << path;
-#endif
-    updateLink(currentLink.linkId(), url, title, path);
 }
 
 void DBWorker::goForward(int tabId) {
@@ -777,72 +764,4 @@ Link DBWorker::getLink(int linkId)
         }
     }
     return Link();
-}
-
-Link DBWorker::getLink(QString url)
-{
-    if (url.isEmpty()) {
-        return Link();
-    }
-
-    QSqlQuery query = prepare("SELECT link_id, url, thumb_path, title FROM link WHERE url = ?;");
-    query.bindValue(0, url);
-    if (execute(query)) {
-        if (query.first()) {
-            return Link(query.value(0).toInt(),
-                       query.value(1).toString(),
-                       query.value(2).toString(),
-                       query.value(3).toString());
-        }
-    }
-    return Link();
-}
-
-void DBWorker::updateLink(int linkId, QString url, QString title, QString thumbPath)
-{
-    // todo: check if an url in the db already contains url, then replace url
-    QString queryBase = "UPDATE link SET ";
-    int index = 0;
-    int urlIndex = -1;
-    int titleIndex = -1;
-    int thumbIndex = -1;
-    if (!url.isEmpty()) {
-        queryBase.append("url = ?");
-        urlIndex = index;
-        index++;
-    }
-    if (!title.isEmpty()) {
-        if (index > 0) {
-            queryBase.append(", ");
-        }
-        queryBase.append("title = ?");
-        titleIndex = index;
-        index++;
-    }
-    if (!thumbPath.isEmpty()) {
-        if (index > 0) {
-            queryBase.append(", ");
-        }
-        queryBase.append("thumb_path = ?");
-        thumbIndex = index;
-        index++;
-    }
-    queryBase.append(" WHERE link_id = ?;");
-
-    if (index == 0) {
-        qWarning() << Q_FUNC_INFO << "empty paramters, doing nothing";
-        return;
-    }
-    QSqlQuery query = prepare(queryBase.toUtf8().constData());
-    if (urlIndex > -1) {
-        query.bindValue(urlIndex, url);
-    }
-    if (titleIndex > -1) {
-        query.bindValue(titleIndex, title);
-    }
-    if (thumbIndex > -1) {
-        query.bindValue(thumbIndex, thumbPath);
-    }
-    query.bindValue(index, linkId);
-    execute(query);
 }

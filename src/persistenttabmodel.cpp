@@ -94,13 +94,6 @@ int PersistentTabModel::nextLinkId() {
     return DBManager::instance()->nextLinkId();
 }
 
-void PersistentTabModel::updateTab(int tabId, QString url, QString title, QString path) {
-    Q_UNUSED(title)
-    Q_UNUSED(path)
-
-    DBManager::instance()->updateTab(tabId, url, "", "");
-}
-
 void PersistentTabModel::navigateTo(int tabId, QString url, QString title, QString path) {
     Q_UNUSED(title)
     Q_UNUSED(path)

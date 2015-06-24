@@ -98,13 +98,6 @@ void DBManager::navigateTo(int tabId, QString url, QString title, QString path)
                               Q_ARG(QString, title), Q_ARG(QString, path));
 }
 
-void DBManager::updateTab(int tabId, QString url, QString title, QString path)
-{
-    QMetaObject::invokeMethod(worker, "updateTab", Qt::QueuedConnection,
-                              Q_ARG(int, tabId), Q_ARG(QString, url),
-                              Q_ARG(QString, title), Q_ARG(QString, path));
-}
-
 void DBManager::goForward(int tabId)
 {
     QMetaObject::invokeMethod(worker, "goForward", Qt::BlockingQueuedConnection,

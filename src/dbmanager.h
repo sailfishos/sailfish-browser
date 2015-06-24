@@ -33,7 +33,6 @@ public:
     void getAllTabs();
     void removeTab(int tabId);
     void navigateTo(int tabId, QString url, QString title = "", QString path = "");
-    void updateTab(int tabId, QString url, QString title = "", QString path = "");
     void goForward(int tabId);
     void goBack(int tabId);
 

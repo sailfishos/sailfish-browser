@@ -92,7 +92,7 @@ public:
     bool privateMode() const;
     void setPrivateMode(bool);
 
-    bool activeTabRendered();
+    bool activeTabRendered() const;
 
     bool loading() const;
 

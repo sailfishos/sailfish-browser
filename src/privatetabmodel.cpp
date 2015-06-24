@@ -57,13 +57,6 @@ int PrivateTabModel::nextLinkId() {
     return m_nextLinkId;
 }
 
-void PrivateTabModel::updateTab(int tabId, QString url, QString title, QString path) {
-    Q_UNUSED(tabId)
-    Q_UNUSED(url)
-    Q_UNUSED(title)
-    Q_UNUSED(path)
-}
-
 void PrivateTabModel::navigateTo(int tabId, QString url, QString title, QString path) {
     Q_UNUSED(tabId)
     Q_UNUSED(url)
