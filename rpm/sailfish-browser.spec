@@ -26,7 +26,7 @@ BuildRequires:  oneshot
 Requires: sailfishsilica-qt5 >= 0.21.13
 Requires: jolla-ambient >= 0.4.18
 Requires: xulrunner-qt5 >= 31.7.0.16
-Requires: embedlite-components-qt5 >= 1.8.5
+Requires: embedlite-components-qt5 >= 1.8.7
 Requires: qtmozembed-qt5 >= 1.12.18
 Requires: sailfish-browser-settings = %{version}
 Requires: qt5-plugin-imageformat-ico

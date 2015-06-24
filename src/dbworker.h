@@ -53,7 +53,6 @@ public slots:
     void getHistory(const QString &filter);
     void getTabHistory(int tabId);
     void clearHistory();
-    void clearTabHistory(int tabId);
 
     void saveSetting(QString name, QString value);
     SettingsMap getSettings();
@@ -61,7 +60,6 @@ public slots:
 
 signals:
     void tabAvailable(Tab tab);
-    void tabChanged(Tab tab);
     void tabsAvailable(QList<Tab> tabs);
     void thumbPathChanged(int tabId, QString path);
     void titleChanged(int tabId, int linkId, QString url, QString title);

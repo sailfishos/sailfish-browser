@@ -288,7 +288,9 @@ void tst_webview::testCloseActiveTab()
     int previousTabId = webContainer->webPage()->tabId();
     tabModel->closeActiveTab();
     // Updates contentItem to match index zero.
-    webContainer->activatePage(webContainer->tabId());
+    Tab tab;
+    tab.setTabId(webContainer->tabId());
+    webContainer->activatePage(tab);
     QCOMPARE(activeTabChangedSpy.count(), 1);
     QCOMPARE(tabClosedSpy.count(), 1);
     QList<QVariant> arguments = tabClosedSpy.takeFirst();
@@ -297,9 +299,7 @@ void tst_webview::testCloseActiveTab()
     QCOMPARE(tabModel->count(), 3);
     QCOMPARE(webContainer->m_webPages->count(), 3);
     QCOMPARE(webContainer->m_webPages->m_activePages.count(), 3);
-    // Two signals: closeActiveTab causes contentItem to be destroyed and second signal comes
-    // when the first item from model is made as active tab.
-    QCOMPARE(contentItemSpy.count(), 2);
+    QCOMPARE(contentItemSpy.count(), 1);
     // Tab already loaded.
     QVERIFY(!webContainer->webPage()->loading());
     QCOMPARE(webContainer->webPage()->loadProgress(), 100);
@@ -315,11 +315,8 @@ void tst_webview::testCloseActiveTab()
     QVERIFY(webContainer->url().endsWith("testselect.html"));
     QCOMPARE(webContainer->title(), newActiveTitle);
     QCOMPARE(webContainer->title(), QString("TestSelect"));
-    // Two signals: closeActiveTab causes contentItem to be destroyed. Thus, both url and title
-    // are update signaled. Second url/title changed signal comes
-    // when the first item from model is made as active tab.
-    QCOMPARE(urlChangedSpy.count(), 2);
-    QCOMPARE(titleChangedSpy.count(), 2);
+    QCOMPARE(urlChangedSpy.count(), 1);
+    QCOMPARE(titleChangedSpy.count(), 1);
     QCOMPARE(webContainer->webPage()->url().toString(), newActiveUrl);
     QVERIFY(webContainer->webPage()->url().toString().endsWith("testselect.html"));
     QCOMPARE(webContainer->webPage()->title(), newActiveTitle);
@@ -588,9 +585,7 @@ void tst_webview::forwardBackwardNavigation()
     goBack();
 
     QCOMPARE(forwardSpy.count(), 3);
-    // When goBack / goForward is called respected navigation direction is blocked immediately.
-    // Only after information is returned from database we might unlock navigation direction.
-    QCOMPARE(backSpy.count(), 4);
+    QCOMPARE(backSpy.count(), 2);
     QCOMPARE(urlChangedSpy.count(), 4);
     QCOMPARE(titleChangedSpy.count(), 4);
     QCOMPARE(webContainer->url(), formatUrl("testurlscheme.html"));
@@ -602,7 +597,7 @@ void tst_webview::forwardBackwardNavigation()
     goBack();
 
     QCOMPARE(forwardSpy.count(), 3);
-    QCOMPARE(backSpy.count(), 5);
+    QCOMPARE(backSpy.count(), 3);
     QCOMPARE(urlChangedSpy.count(), 5);
     QCOMPARE(titleChangedSpy.count(), 5);
     QCOMPARE(webContainer->url(), formatUrl("testwebprompts.html"));
