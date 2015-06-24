@@ -38,45 +38,38 @@ WebContainer {
         contentItem.sendAsyncMessage(name, data)
     }
 
+    function thumbnailCaptureSize() {
+        var ratio = Screen.width / browserPage.thumbnailSize.width
+        var height = browserPage.thumbnailSize.height * ratio
+
+        return Qt.size(Screen.width, height)
+    }
+
     function grabActivePage() {
         if (webView.contentItem) {
-            webView.privateMode ? webView.contentItem.grabThumbnail() : webView.contentItem.grabToFile()
+            webView.privateMode ? webView.contentItem.grabThumbnail(thumbnailCaptureSize())
+                                : webView.contentItem.grabToFile(thumbnailCaptureSize())
         }
     }
 
-    width: parent.width
-    height: portrait ? Screen.height : Screen.width
     foreground: Qt.application.active
     allowHiding: !resourceController.videoActive && !resourceController.audioActive
-    inputPanelHeight: window.pageStack.panelSize
-    inputPanelOpenHeight: window.pageStack.imSize
     fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) ||
                     (contentItem && contentItem.fullscreen)
 
     favicon: contentItem ? contentItem.favicon : ""
-
-    webPageComponent: webPageComponent
-
     onTabModelChanged: {
         // BrowserContextMenu created in PopupHandler needs to maintain correct tabModel.
         PopupHandler.tabModel = tabModel
     }
 
-    WebViewCreator {
-        activeWebView: contentItem
+    property var webPageCreator: WebPageCreator {
+        activeWebPage: contentItem
         // onNewWindowRequested is always handled as synchronous operation (not through newTab).
         onNewWindowRequested: tabModel.newTab(url, "", parentId)
     }
 
-    Rectangle {
-        id: background
-        anchors.fill: parent
-        visible: foreground || contentItem
-        color: contentItem && contentItem.bgcolor ? contentItem.bgcolor : "white"
-    }
-
-    Component {
-        id: webPageComponent
+    webPageComponent: Component {
         WebPage {
             id: webPage
 
@@ -88,26 +81,16 @@ WebContainer {
             toolbarHeight: container.toolbarHeight
 
             enabled: webView.enabled
-            // Active could pause e.g. video in cover by anding
-            // Qt.application.active to visible
-            // TODO: This should still be futher investigated.
-            // Guarding of suspend/resume & gc combo
-            // Page loading should finish even if it would be at background.
-            // Slow network (2G). Maybe we need something like
-            // suspend() { if (loaded) { suspendView() } } for suspend calls.
-            active: visible || activeWebPage
 
             // There needs to be enough content for enabling chrome gesture
             chromeGestureThreshold: toolbarHeight / 2
-            chromeGestureEnabled: (contentHeight > fullscreenHeight + toolbarHeight) && !forcedChrome
+            chromeGestureEnabled: (contentHeight > fullscreenHeight + toolbarHeight) && !forcedChrome && enabled && !webView.imOpened
 
             signal selectionRangeUpdated(variant data)
             signal selectionCopied(variant data)
             signal contextMenuRequested(variant data)
 
-            focus: true
-            width: container.width
-            state: ""
+            width: container.rotationHandler && container.rotationHandler.width || 0
 
             onClearGrabResult: tabModel.updateThumbnailPath(tabId, "")
             onGrabResult: tabModel.updateThumbnailPath(tabId, fileName)
@@ -169,13 +152,13 @@ WebContainer {
                 }
 
                 // Refresh timers (if any) keep working even for suspended views. Hence
-                // suspend the view again explicitly if app window is in background.
-                if (loaded && webView.background) {
+                // suspend the view again explicitly if browser content window is in not visible (background).
+                if (loaded && !webView.visible) {
                     suspendView();
                 }
 
                 if (loaded) {
-                    webView.privateMode ? grabThumbnail() : grabToFile()
+                    webView.privateMode ? grabThumbnail(thumbnailCaptureSize()) : grabToFile(thumbnailCaptureSize())
                 }
             }
 
@@ -290,69 +273,54 @@ WebContainer {
                 }
             }
 
-            Behavior on opacity { FadeAnimation {} }
-
             // We decided to disable "text selection" until we understand how it
             // should look like in Sailfish.
             // TextSelectionController {}
-            states: State {
-                name: "boundHeightControl"
-                when: container.inputPanelVisible && container.enabled
-                PropertyChanges {
-                    target: webPage
-                    // was floor
-                    height: Math.ceil(container.parent.height)
-                }
-            }
         }
     }
 
-    Rectangle {
-        id: verticalScrollDecorator
+//    Rectangle {
+//        id: verticalScrollDecorator
 
-        width: 5
-        height: contentItem ? contentItem.verticalScrollDecorator.size : 0
-        y: contentItem ? contentItem.verticalScrollDecorator.position : 0
-        z: 1
-        anchors.right: contentItem ? contentItem.right: undefined
-        color: _decoratorColor
-        smooth: true
-        radius: 2.5
-        visible: contentItem && contentItem.contentHeight > contentItem.height && !contentItem.pinching && !popupActive
-        opacity: contentItem && contentItem.verticalScrollDecorator.moving ? 1.0 : 0.0
-        Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
-    }
+//        width: 5
+//        height: contentItem ? contentItem.verticalScrollDecorator.size : 0
+//        y: contentItem ? contentItem.verticalScrollDecorator.position : 0
+//        z: 1
+//        anchors.right: contentItem ? contentItem.right: undefined
+//        color: _decoratorColor
+//        smooth: true
+//        radius: 2.5
+//        visible: contentItem && contentItem.contentHeight > contentItem.height && !contentItem.pinching && !popupActive
+//        opacity: contentItem && contentItem.verticalScrollDecorator.moving ? 1.0 : 0.0
+//        Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
+//    }
 
-    Rectangle {
-        id: horizontalScrollDecorator
+//    Rectangle {
+//        id: horizontalScrollDecorator
 
-        width: contentItem ? contentItem.horizontalScrollDecorator.size : 0
-        height: 5
-        x: contentItem ? contentItem.horizontalScrollDecorator.position : 0
-        y: webView.height - height
-        z: 1
-        color: _decoratorColor
-        smooth: true
-        radius: 2.5
-        visible: contentItem && contentItem.contentWidth > contentItem.width && !contentItem.pinching && !popupActive
-        opacity: contentItem && contentItem.horizontalScrollDecorator.moving ? 1.0 : 0.0
-        Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
-    }
+//        width: contentItem ? contentItem.horizontalScrollDecorator.size : 0
+//        height: 5
+//        x: contentItem ? contentItem.horizontalScrollDecorator.position : 0
+//        y: webView.height - height
+//        z: 1
+//        color: _decoratorColor
+//        smooth: true
+//        radius: 2.5
+//        visible: contentItem && contentItem.contentWidth > contentItem.width && !contentItem.pinching && !popupActive
+//        opacity: contentItem && contentItem.horizontalScrollDecorator.moving ? 1.0 : 0.0
+//        Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
+//    }
 
-    ResourceController {
-        id: resourceController
+    property var resourceController: ResourceController {
         webView: contentItem
-        background: webView.background
+        background: !webView.visible
     }
 
-    Timer {
-        id: auxTimer
-
+    property Timer auxTimer: Timer {
         interval: 1000
     }
 
-    Component {
-        id: pickerCreator
+    property Component pickerCreator: Component {
         PickerCreator {}
     }
 
@@ -360,6 +328,7 @@ WebContainer {
         PopupHandler.auxTimer = auxTimer
         PopupHandler.pageStack = pageStack
         PopupHandler.webView = webView
+        PopupHandler.browserPage = browserPage
         PopupHandler.resourceController = resourceController
         PopupHandler.WebUtils = WebUtils
         PopupHandler.tabModel = tabModel

@@ -70,8 +70,6 @@ void DeclarativeTabModel::addTab(const QString& url, const QString &title) {
 
     m_nextTabId = ++tabId;
     emit nextTabIdChanged();
-
-    setWaitingForNewTab(false);
 }
 
 int DeclarativeTabModel::nextTabId() const
@@ -116,7 +114,7 @@ void DeclarativeTabModel::clear()
         removeTab(m_tabs.at(i).tabId(), m_tabs.at(i).thumbnailPath(), i);
     }
 
-    setWaitingForNewTab(false);
+    setWaitingForNewTab(true);
 }
 
 bool DeclarativeTabModel::activateTab(const QString& url)
@@ -258,14 +256,9 @@ bool DeclarativeTabModel::contains(int tabId) const
     return findTabIndex(tabId) >= 0;
 }
 
-void DeclarativeTabModel::updateUrl(int tabId, bool activeTab, QString url, bool backForwardNavigation, bool initialLoad)
+void DeclarativeTabModel::updateUrl(int tabId, bool activeTab, QString url, bool initialLoad)
 {
-    if (backForwardNavigation)
-    {
-        updateTabUrl(tabId, activeTab, url, false);
-    } else {
-        updateTabUrl(tabId, activeTab, url, !initialLoad);
-    }
+    updateTabUrl(tabId, activeTab, url, !initialLoad);
 }
 
 void DeclarativeTabModel::updateTitle(int tabId, bool activeTab, QString url, QString title)
@@ -338,6 +331,8 @@ void DeclarativeTabModel::updateActiveTab(const Tab &activeTab, bool loadActiveT
         int oldTabId = m_activeTab.tabId();
         m_activeTab = activeTab;
 
+        setWaitingForNewTab(true);
+
         // If tab has changed, update active tab role.
         int tabIndex = activeTabIndex();
         if (oldTabId != m_activeTab.tabId() && tabIndex >= 0) {
@@ -385,12 +380,8 @@ void DeclarativeTabModel::updateTabUrl(int tabId, bool activeTab, const QString 
         updateDb = true;
     }
 
-    if (updateDb) {
-        if (!navigate) {
-            updateTab(tabId, url, "", "");
-        } else {
-            navigateTo(tabId, url, "", "");
-        }
+    if (updateDb && navigate) {
+        navigateTo(tabId, url, "", "");
     }
 
 }

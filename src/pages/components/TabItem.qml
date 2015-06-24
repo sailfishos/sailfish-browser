@@ -17,11 +17,7 @@ BackgroundItem {
 
     property bool activeTab: activeTabIndex === index
     // Expose ListView for all items
-    property Item view: GridView.view
-    property real topMargin
-    property real leftMargin
-    property real rightMargin
-    property real bottomMargin
+    property Item view: ListView.view
     property bool destroying
 
     // In direction so that we can break this binding when closing a tab
@@ -30,19 +26,13 @@ BackgroundItem {
 
     enabled: !destroying
 
-    clip: true
     layer.effect: PressEffect {}
     layer.enabled: _showPress
 
-    // Rounded background item that is also a placeholder for a tab not having
+    // Background item that is also a placeholder for a tab not having
     // thumbnail image.
-    contentItem.visible: false
-    contentItem.color: Theme.rgba(Theme.highlightBackgroundColor, Theme.highlightBackgroundOpacity)
-    contentItem.radius: 2/3 * Theme.paddingMedium
-    contentItem.x: root.leftMargin
-    contentItem.y: root.topMargin
-    contentItem.width: root.implicitWidth - root.leftMargin - root.rightMargin
-    contentItem.height: root.implicitHeight - root.topMargin - root.bottomMargin
+    contentItem.width: root.implicitWidth
+    contentItem.height: root.implicitHeight
 
     onClicked: view.activateTab(index)
 
@@ -53,71 +43,29 @@ BackgroundItem {
             id: image
 
             source: thumbnailPath
-            cache: false
-            visible: false
-            asynchronous: true
-            smooth: true
-        },
-        ShaderEffectSource {
-            id: textureSource
             width: root.implicitWidth
             height: root.implicitHeight
-            live: false
-            visible: false
-            sourceItem: image
-            sourceRect: Qt.rect(0, 0, mask.width, mask.height)
+            cache: false
+            asynchronous: true
         },
-        ShaderEffectSource {
-            id: mask
-            anchors.fill: contentItem
-            live: textureSource.live
-            hideSource: true
-            visible: false
-            sourceItem: Rectangle {
-                x: contentItem.x
-                y: contentItem.y
-                width: contentItem.width
-                height: contentItem.height
-                radius: contentItem.radius
-                color: "white"
+
+        Rectangle {
+            anchors.bottom: parent.bottom
+            width: parent.width
+            height: Math.max(close.height, titleLabel.height) + Theme.paddingLarge * 2
+
+            gradient: Gradient {
+                GradientStop { position: 0.0; color: "transparent" }
+                GradientStop { position: 0.45; color: Qt.rgba(0, 0, 0, 0.5)}
+                GradientStop { position: 0.9; color: Qt.rgba(0, 0, 0, 0.8)}
             }
-        },
-        ShaderEffect {
-            id: roundingItem
-            property variant source: textureSource
-            property variant maskSource: mask
-
-            anchors.fill: mask
-            smooth: true
-
-            fragmentShader: "
-                varying highp vec2 qt_TexCoord0;
-                uniform highp float qt_Opacity;
-                uniform lowp sampler2D source;
-                uniform lowp sampler2D maskSource;
-                void main(void) {
-                    gl_FragColor = texture2D(source, qt_TexCoord0.st) * (texture2D(maskSource, qt_TexCoord0.st).a) * qt_Opacity;
-                }"
-        },
-        OpacityRampEffect {
-            id: ramp
-            slope: 2.6
-            offset: 0.6
-            opacity: 1.0
-            enabled: Qt.application.active
-
-            sourceItem: roundingItem
-            anchors.fill: mask
-            direction: OpacityRamp.TopToBottom
         },
         IconButton {
             id: close
 
-            visible: ramp.enabled
             anchors {
-                left: mask.left
+                left: parent.left
                 bottom: parent.bottom
-                bottomMargin: -root.bottomMargin
             }
             highlighted: down || activeTab
             icon.source: "image://theme/icon-m-tab-close"
@@ -142,14 +90,15 @@ BackgroundItem {
             onTriggered: view.closeTab(index)
         },
         Label {
+            id: titleLabel
+
             anchors {
                 left: close.right
-                right: mask.right
+                right: parent.right
                 rightMargin: Theme.paddingMedium
                 verticalCenter: close.verticalCenter
             }
 
-            visible: ramp.enabled
             text: title
             truncationMode: TruncationMode.Fade
             color: down || activeTab ? Theme.highlightColor : Theme.primaryColor

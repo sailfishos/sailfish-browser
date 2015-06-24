@@ -6,6 +6,7 @@
     <file>pages/ShareLinkPage.qml</file>
     <file>pages/components/AlertDialog.qml</file>
     <file>pages/components/AuthDialog.qml</file>
+    <file>pages/components/Background.qml</file>
     <file>pages/components/BookmarkEditDialog.qml</file>
     <file>pages/components/BrowserContextMenu.qml</file>
     <file>pages/components/BrowserNotification.qml</file>
@@ -41,10 +42,10 @@
     <file>pages/components/SecondaryBar.qml</file>
     <file>pages/components/TabButton.qml</file>
     <file>pages/components/TabView.qml</file>
+    <file>pages/components/DimmerEffect.qml</file>
+    <file>pages/components/OrientationFader.qml</file>
     <file>pages/components/PressEffect.qml</file>
     <file>pages/components/ExpandingButton.qml</file>
-    <file>pages/components/DisplaceTransition.qml</file>
-    <file>pages/components/RemoveTransition.qml</file>
     <file>pages/components/PrivateModeTexture.qml</file>
     <file>pages/components/pickers/ContentPicker.qml</file>
     <file>pages/components/pickers/ImagePicker.qml</file>

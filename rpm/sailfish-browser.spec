@@ -1,7 +1,7 @@
 Name:       sailfish-browser
 
 Summary:    Sailfish Browser
-Version:    1.2.39
+Version:    1.3.11
 Release:    1
 Group:      Applications/Internet
 License:    MPLv2
@@ -11,7 +11,7 @@ BuildRequires:  pkgconfig(Qt5Core)
 BuildRequires:  pkgconfig(Qt5Qml)
 BuildRequires:  pkgconfig(Qt5Gui)
 BuildRequires:  pkgconfig(Qt5Quick)
-BuildRequires:  pkgconfig(qt5embedwidget) >= 1.9.4
+BuildRequires:  pkgconfig(qt5embedwidget) >= 1.12.22
 BuildRequires:  pkgconfig(Qt5DBus)
 BuildRequires:  pkgconfig(Qt5Concurrent)
 BuildRequires:  pkgconfig(Qt5Sql)
@@ -23,10 +23,11 @@ BuildRequires:  qt5-qttools-linguist
 BuildRequires:  gdb
 BuildRequires:  oneshot
 
-Requires: sailfishsilica-qt5 >= 0.13.44
+Requires: sailfishsilica-qt5 >= 0.21.13
 Requires: jolla-ambient >= 0.4.18
-Requires: xulrunner-qt5 >= 29.0.1.9
-Requires: embedlite-components-qt5 >= 1.6.4
+Requires: xulrunner-qt5 >= 31.7.0.20
+Requires: embedlite-components-qt5 >= 1.8.7
+Requires: qtmozembed-qt5 >= 1.12.22
 Requires: sailfish-browser-settings = %{version}
 Requires: qt5-plugin-imageformat-ico
 Requires: qt5-plugin-imageformat-gif
@@ -39,6 +40,7 @@ Requires: nemo-qml-plugin-contextkit-qt5
 Requires: nemo-qml-plugin-connectivity
 Requires: nemo-qml-plugin-policy-qt5 >= 0.0.4
 Requires: sailfish-components-media-qt5
+Requires: sailfish-components-pickers-qt5 >= 0.1.7
 
 %{_oneshot_requires_post}
 

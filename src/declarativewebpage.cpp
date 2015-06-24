@@ -11,6 +11,7 @@
 
 #include "declarativewebpage.h"
 #include "declarativewebcontainer.h"
+#include "dbmanager.h"
 
 #include <QtConcurrent>
 #include <QStandardPaths>
@@ -52,25 +53,43 @@ bool allBlack(const QImage &image)
     return true;
 }
 
-DeclarativeWebPage::DeclarativeWebPage(QQuickItem *parent)
-    : QuickMozView(parent)
+DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
+    : QOpenGLWebPage(parent)
     , m_container(0)
-    , m_tabId(0)
-    , m_viewReady(false)
     , m_userHasDraggedWhileLoading(false)
     , m_fullscreen(false)
     , m_forcedChrome(false)
     , m_domContentLoaded(false)
-    , m_urlHasChanged(false)
-    , m_backForwardNavigation(false)
-    , m_boundToModel(false)
+    , m_initialLoadHasHappened(false)
+    , m_tabHistoryReady(false)
+    , m_urlReady(false)
 {
-    connect(this, SIGNAL(viewInitialized()), this, SLOT(onViewInitialized()));
+    addMessageListener(gFullScreenMessage);
+    addMessageListener(gDomContentLoadedMessage);
+
+    addMessageListener(gLinkAddedMessage);
+    addMessageListener(gAlertMessage);
+    addMessageListener(gConfirmMessage);
+    addMessageListener(gPromptMessage);
+    addMessageListener(gAuthMessage);
+    addMessageListener(gLoginMessage);
+    addMessageListener(gFindMessage);
+    addMessageListener(gPermissionsMessage);
+    addMessageListener(gContextMenuMessage);
+    addMessageListener(gSelectionRangeMessage);
+    addMessageListener(gSelectionCopiedMessage);
+    addMessageListener(gSelectAsyncMessage);
+    addMessageListener(gFilePickerMessage);
+
+    loadFrameScript("chrome://embedlite/content/SelectAsyncHelper.js");
+    loadFrameScript("chrome://embedlite/content/embedhelper.js");
+
     connect(this, SIGNAL(recvAsyncMessage(const QString, const QVariant)),
             this, SLOT(onRecvAsyncMessage(const QString&, const QVariant&)));
     connect(&m_grabWritter, SIGNAL(finished()), this, SLOT(grabWritten()));
     connect(this, SIGNAL(contentHeightChanged()), this, SLOT(resetHeight()));
     connect(this, SIGNAL(scrollableOffsetChanged()), this, SLOT(resetHeight()));
+    connect(this, SIGNAL(urlChanged()), this, SLOT(onUrlChanged()));
 }
 
 DeclarativeWebPage::~DeclarativeWebPage()
@@ -96,15 +115,71 @@ void DeclarativeWebPage::setContainer(DeclarativeWebContainer *container)
 
 int DeclarativeWebPage::tabId() const
 {
-    return m_tabId;
+    return m_tab.tabId();
 }
 
-void DeclarativeWebPage::setTabId(int tabId)
+void DeclarativeWebPage::setTab(const Tab& tab)
 {
-    if (m_tabId != tabId) {
-        m_tabId = tabId;
-        emit tabIdChanged();
+    Q_ASSERT(m_tab.tabId() == 0);
+
+    m_tab = tab;
+    emit tabIdChanged();
+    connect(DBManager::instance(), SIGNAL(tabHistoryAvailable(int, QList<Link>)),
+            this, SLOT(onTabHistoryAvailable(int, QList<Link>)));
+    DBManager::instance()->getTabHistory(m_tab.tabId());
+}
+
+void DeclarativeWebPage::onUrlChanged()
+{
+    disconnect(this, SIGNAL(urlChanged()), this, SLOT(onUrlChanged()));
+    m_urlReady = true;
+    restoreHistory();
+}
+
+void DeclarativeWebPage::onTabHistoryAvailable(const int& tabId, const QList<Link>& links)
+{
+    if (tabId == m_tab.tabId()) {
+        m_restoredTabHistory = links;
+
+        std::reverse(m_restoredTabHistory.begin(), m_restoredTabHistory.end());
+        DBManager::instance()->disconnect(this);
+        m_tabHistoryReady = true;
+        restoreHistory();
     }
+}
+
+void DeclarativeWebPage::restoreHistory() {
+    if (!m_urlReady || !m_tabHistoryReady) {
+        return;
+    }
+
+    QList<QString> urls;
+    int index(-1);
+    int i(0);
+    foreach (Link link, m_restoredTabHistory) {
+        urls << link.url();
+        if (link.linkId() == m_tab.currentLink()) {
+            index = i;
+            if (link.url() != m_tab.url()) {
+                // The browser was started with an initial URL as a cmdline parameter -> reset tab history
+                urls << m_tab.url();
+                index++;
+                DBManager::instance()->navigateTo(m_tab.tabId(), m_tab.url(), "", "");
+                break;
+            }
+        }
+        i++;
+    }
+
+    if (index < 0) {
+        urls << url().toString();
+        index = urls.count() - 1;
+    }
+
+    QVariantMap data;
+    data.insert(QString("links"), QVariant(urls));
+    data.insert(QString("index"), QVariant(index));
+    sendAsyncMessage("embedui:addhistory", QVariant(data));
 }
 
 bool DeclarativeWebPage::domContentLoaded() const
@@ -112,44 +187,14 @@ bool DeclarativeWebPage::domContentLoaded() const
     return m_domContentLoaded;
 }
 
-bool DeclarativeWebPage::urlHasChanged() const
+bool DeclarativeWebPage::initialLoadHasHappened() const
 {
-    return m_urlHasChanged;
+    return m_initialLoadHasHappened;
 }
 
-void DeclarativeWebPage::setUrlHasChanged(bool urlHasChanged)
+void DeclarativeWebPage::setInitialLoadHasHappened()
 {
-    m_urlHasChanged = urlHasChanged;
-}
-
-void DeclarativeWebPage::setInitialUrl(const QString &url)
-{
-    m_initialUrl = url;
-}
-
-void DeclarativeWebPage::bindToModel()
-{
-    m_boundToModel = true;
-}
-
-bool DeclarativeWebPage::boundToModel()
-{
-    return m_boundToModel;
-}
-
-bool DeclarativeWebPage::backForwardNavigation() const
-{
-    return m_backForwardNavigation;
-}
-
-void DeclarativeWebPage::setBackForwardNavigation(bool backForwardNavigation)
-{
-    m_backForwardNavigation = backForwardNavigation;
-}
-
-bool DeclarativeWebPage::viewReady() const
-{
-    return m_viewReady;
+    m_initialLoadHasHappened = true;
 }
 
 QVariant DeclarativeWebPage::resurrectedContentRect() const
@@ -177,23 +222,27 @@ void DeclarativeWebPage::loadTab(QString newUrl, bool force)
     }
 }
 
-void DeclarativeWebPage::grabToFile()
+void DeclarativeWebPage::grabToFile(const QSize &size)
 {
-    if (!m_viewReady || backForwardNavigation() || !active() || !isPainted())
-        return;
-
     emit clearGrabResult();
     // grabToImage handles invalid geometry.
-    m_grabResult = grabToImage();
-    if (m_grabResult.data()) {
-        connect(m_grabResult.data(), SIGNAL(ready()), this, SLOT(grabResultReady()));
+    m_grabResult = grabToImage(size);
+    if (m_grabResult) {
+        if (!m_grabResult->isReady()) {
+            connect(m_grabResult.data(), SIGNAL(ready()), this, SLOT(grabResultReady()));
+        } else {
+            grabResultReady();
+        }
     }
 }
 
-void DeclarativeWebPage::grabThumbnail()
+
+void DeclarativeWebPage::grabThumbnail(const QSize &size)
 {
-    m_thumbnailResult = grabToImage();
-    connect(m_thumbnailResult.data(), SIGNAL(ready()), this, SLOT(thumbnailReady()));
+    m_thumbnailResult = grabToImage(size);
+    if (m_thumbnailResult) {
+        connect(m_thumbnailResult.data(), SIGNAL(ready()), this, SLOT(thumbnailReady()));
+    }
 }
 
 /**
@@ -224,7 +273,8 @@ void DeclarativeWebPage::forceChrome(bool forcedChrome)
 
 void DeclarativeWebPage::resetHeight(bool respectContentHeight)
 {
-    if (!state().isEmpty()) {
+    // Input panel is fully open.
+    if (m_container->imOpened()) {
         return;
     }
 
@@ -246,53 +296,11 @@ void DeclarativeWebPage::resetHeight(bool respectContentHeight)
     }
 }
 
-void DeclarativeWebPage::componentComplete()
-{
-    QuickMozView::componentComplete();
-}
-
-void DeclarativeWebPage::onViewInitialized()
-{
-    addMessageListener(gFullScreenMessage);
-    addMessageListener(gDomContentLoadedMessage);
-
-    addMessageListener(gLinkAddedMessage);
-    addMessageListener(gAlertMessage);
-    addMessageListener(gConfirmMessage);
-    addMessageListener(gPromptMessage);
-    addMessageListener(gAuthMessage);
-    addMessageListener(gLoginMessage);
-    addMessageListener(gFindMessage);
-    addMessageListener(gPermissionsMessage);
-    addMessageListener(gContextMenuMessage);
-    addMessageListener(gSelectionRangeMessage);
-    addMessageListener(gSelectionCopiedMessage);
-    addMessageListener(gSelectAsyncMessage);
-    addMessageListener(gFilePickerMessage);
-
-    loadFrameScript("chrome://embedlite/content/SelectAsyncHelper.js");
-    loadFrameScript("chrome://embedlite/content/embedhelper.js");
-
-    // This is the only place that is allowed to change this to true.
-    m_viewReady = true;
-    emit viewReadyChanged();
-
-    if (!m_initialUrl.isEmpty()) {
-        loadTab(m_initialUrl, false);
-        m_initialUrl = "";
-    }
-}
-
 void DeclarativeWebPage::grabResultReady()
 {
     QImage image = m_grabResult->image();
     m_grabResult.clear();
-    int w = qMin(width(), height());
-    int h = qMax(width(), height());
-    h = qMax(h / 3, w / 2);
-    QRect cropBounds(0, 0, w, h);
-
-    m_grabWritter.setFuture(QtConcurrent::run(this, &DeclarativeWebPage::saveToFile, image, cropBounds));
+    m_grabWritter.setFuture(QtConcurrent::run(this, &DeclarativeWebPage::saveToFile, image));
 }
 
 void DeclarativeWebPage::grabWritten()
@@ -305,10 +313,6 @@ void DeclarativeWebPage::thumbnailReady()
 {
     QImage image = m_thumbnailResult->image();
     m_thumbnailResult.clear();
-    int size = qMin(width(), height());
-    QRect cropBounds(0, 0, size, size);
-
-    image = image.copy(cropBounds);
     QByteArray iconData;
     QBuffer buffer(&iconData);
     buffer.open(QIODevice::WriteOnly);
@@ -320,15 +324,14 @@ void DeclarativeWebPage::thumbnailReady()
     }
 }
 
-QString DeclarativeWebPage::saveToFile(QImage image, QRect cropBounds)
+QString DeclarativeWebPage::saveToFile(QImage image)
 {
     if (image.isNull()) {
         return "";
     }
 
     // 75% quality jpg produces small and good enough capture.
-    QString path = QString("%1/tab-%2-thumb.jpg").arg(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)).arg(m_tabId);
-    image = image.copy(cropBounds);
+    QString path = QString("%1/tab-%2-thumb.jpg").arg(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)).arg(m_tab.tabId());
     return !allBlack(image) && image.save(path, "jpg", 75) ? path : "";
 }
 
@@ -368,7 +371,7 @@ QDebug operator<<(QDebug dbg, const DeclarativeWebPage *page)
     }
 
     dbg.nospace() << "DeclarativeWebPage(url = " << page->url() << ", title = " << page->title() << ", width = " << page->width()
-                  << ", height = " << page->height() << ", opacity = " << page->opacity()
-                  << ", visible = " << page->isVisible() << ", enabled = " << page->isEnabled() << ")";
+                  << ", height = " << page->height() << ", opacity = " //<< page->opacity()
+                  << ", active = " << page->active() << ", enabled = " << page->enabled() << ")";
     return dbg.space();
 }

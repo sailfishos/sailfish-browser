@@ -19,7 +19,10 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QDateTime>
+#include <QScreen>
 #include <QStandardPaths>
+#include <QtMath>
+#include <math.h>
 #include "declarativewebutils.h"
 #include "qmozcontext.h"
 #include "opensearchconfigs.h"
@@ -31,6 +34,14 @@ static DeclarativeWebUtils *gSingleton = 0;
 static const qreal gCssPixelRatioRoundingFactor = 0.5;
 static const qreal gCssDefaultPixelRatio = 1.5;
 
+
+bool testScreenDimensions(qreal pixelRatio) {
+    QScreen *screen = QGuiApplication::primaryScreen();
+    qreal w = screen->size().width() / pixelRatio;
+    qreal h = screen->size().height() / pixelRatio;
+
+    return fmod(w, 1.0) == 0 && fmod(h, 1.0) == 0;
+}
 
 DeclarativeWebUtils::DeclarativeWebUtils()
     : QObject()
@@ -146,9 +157,6 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     mozContext->setPref(QString("ui.click_hold_context_menus.delay"), QVariant(800));
     mozContext->setPref(QString("apz.fling_stopped_threshold"), QString("0.13f"));
 
-    // Don't force 16bit color depth
-    mozContext->setPref(QString("gfx.qt.rgb16.force"), QVariant(false));
-
     mozContext->setPref(QString("media.resource_handler_disabled"), QVariant(true));
 
     // Disable asmjs
@@ -168,6 +176,7 @@ void DeclarativeWebUtils::updateWebEngineSettings()
 
     // Scale up content size
     setContentScaling();
+    setRenderingPreferences();
 
     // Theme.fontSizeSmall
     mozContext->setPref(QStringLiteral("embedlite.inputItemSize"), QVariant(m_inputItemSize));
@@ -403,6 +412,40 @@ void DeclarativeWebUtils::setContentScaling()
     qreal mozCssPixelRatio = gCssDefaultPixelRatio * m_silicaPixelRatio;
     // Round to nearest even rounding factor
     mozCssPixelRatio = qRound(mozCssPixelRatio / gCssPixelRatioRoundingFactor) * gCssPixelRatioRoundingFactor;
+
+    // If we're on hdpi and calcaluted pixel ratio doesn't result integer dimensions, let's try to floor it.
+    if (mozCssPixelRatio >= 2.0 && !testScreenDimensions(mozCssPixelRatio)) {
+        qreal tempPixelRatio = qFloor(mozCssPixelRatio);
+        if (testScreenDimensions(tempPixelRatio)) {
+            mozCssPixelRatio = tempPixelRatio;
+        }
+    }
+
     mozContext->setPixelRatio(mozCssPixelRatio);
     emit cssPixelRatioChanged();
+}
+
+void DeclarativeWebUtils::setRenderingPreferences()
+{
+    QMozContext* mozContext = QMozContext::GetInstance();
+    Q_ASSERT(mozContext->initialized());
+
+    // Don't force 16bit color depth
+    mozContext->setPref(QString("gfx.qt.rgb16.force"), QVariant(false));
+
+    // Use external Qt window for rendering content
+    mozContext->setPref(QString("gfx.compositor.external-window"), QVariant(true));
+    mozContext->setPref(QString("gfx.compositor.clear-context"), QVariant(false));
+
+    // Enable progressive painting.
+    mozContext->setPref(QString("layers.progressive-paint"), QVariant(true));
+    mozContext->setPref(QString("layers.low-precision-buffer"), QVariant(true));
+
+    if (mozContext->pixelRatio() >= 2.0) {
+        mozContext->setPref(QString("layers.tile-width"), QVariant(512));
+        mozContext->setPref(QString("layers.tile-height"), QVariant(512));
+        // Don't use too small low precision buffers for high dpi devices. This reduces
+        // a bit the blurriness.
+        mozContext->setPref(QString("layers.low-precision-resolution"), QString("0.5f"));
+    }
 }
