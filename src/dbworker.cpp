@@ -247,7 +247,7 @@ int DBWorker::createLink(int tabId, QString url, QString title)
     return linkId;
 }
 
-bool DBWorker::updateTab(int tabId, int tabHistoryId)
+void DBWorker::updateTab(int tabId, int tabHistoryId)
 {
 #if DEBUG_LOGS
     qDebug() << "tab:" << tabId << "tab history id:" << tabHistoryId;
@@ -255,7 +255,7 @@ bool DBWorker::updateTab(int tabId, int tabHistoryId)
     QSqlQuery query = prepare("UPDATE tab SET tab_history_id = ? WHERE tab_id = ?;");
     query.bindValue(0, tabHistoryId);
     query.bindValue(1, tabId);
-    return execute(query);
+    execute(query);
 }
 
 Tab DBWorker::getTabData(int tabId, int historyId)
