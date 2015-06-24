@@ -259,7 +259,7 @@ void DeclarativeWebContainer::setPrivateMode(bool privateMode)
     }
 }
 
-bool DeclarativeWebContainer::activeTabRendered()
+bool DeclarativeWebContainer::activeTabRendered() const
 {
     return m_activeTabRendered;
 }
