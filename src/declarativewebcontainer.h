@@ -16,6 +16,7 @@
 #include "webpages.h"
 
 #include <qqml.h>
+#include <qmozcontext.h>
 #include <QtGui/QWindow>
 #include <QtGui/QOpenGLFunctions>
 #include <QPointer>
@@ -24,7 +25,6 @@
 #include <QQmlComponent>
 #include <QQuickView>
 #include <QQuickItem>
-
 #include <QMutex>
 #include <QWaitCondition>
 
@@ -166,6 +166,7 @@ signals:
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event);
+    virtual void exposeEvent(QExposeEvent *event);
     virtual void touchEvent(QTouchEvent *event);
     virtual QVariant inputMethodQuery(Qt::InputMethodQuery property) const;
     virtual void inputMethodEvent(QInputMethodEvent *event);
@@ -178,13 +179,11 @@ protected:
     virtual void classBegin();
     virtual void componentComplete();
 
-
 public slots:
     void resetHeight(bool respectContentHeight = true);
     void updateContentOrientation(Qt::ScreenOrientation orientation);
 
 private slots:
-    void updateWindowState(Qt::WindowState windowState);
     void imeNotificationChanged(int state, bool open, int cause, int focusChange, const QString& type);
     void initialize();
     void onActiveTabChanged(int oldTabId, int activeTabId, bool loadActiveTab);
@@ -216,10 +215,18 @@ private:
     void updateMode();
     void setActiveTabRendered(bool rendered);
 
+    // Clears window surface on the compositor thread. Can be called even when there are
+    // no active views. In case this function is called too early during gecko initialization,
+    // before compositor thread has actually been started the function returns false.
+    bool postClearWindowSurfaceTask();
+    static void clearWindowSurfaceTask(void* data);
+    void clearWindowSurface();
+
     QPointer<QQuickItem> m_rotationHandler;
     QPointer<DeclarativeWebPage> m_webPage;
     QPointer<QQuickView> m_chromeWindow;
     QOpenGLContext *m_context;
+    QMutex m_contextMutex;
 
     QPointer<DeclarativeTabModel> m_model;
     QPointer<QQmlComponent> m_webPageComponent;
@@ -258,10 +265,9 @@ private:
 
     bool m_privateMode;
     bool m_activeTabRendered;
-    bool m_hasBeenExposed;
 
-    QMutex m_exposedMutex;
-    QWaitCondition m_windowExposed;
+    QMutex m_clearSurfaceTaskMutex;
+    QMozContext::TaskHandle m_clearSurfaceTask;
 
     friend class tst_webview;
 };
