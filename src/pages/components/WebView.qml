@@ -79,6 +79,7 @@ WebContainer {
 
             fullscreenHeight: container.fullscreenHeight
             toolbarHeight: container.toolbarHeight
+            throttlePainting: !foreground && !resourceController.videoActive
 
             enabled: webView.enabled
 
