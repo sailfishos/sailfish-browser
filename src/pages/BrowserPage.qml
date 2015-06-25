@@ -162,6 +162,12 @@ Page {
             }
         }
 
+        onForegroundChanged: {
+            if (foreground && webView.chromeWindow) {
+                webView.chromeWindow.raise()
+            }
+        }
+
         function applyContentOrientation(orientation) {
             switch (orientation) {
             case Orientation.None:
@@ -277,7 +283,7 @@ Page {
                 overlay.animator.showChrome()
             }
 
-            if (!active && webView.chromeWindow) {
+            if (!active && webView.chromeWindow && webView.foreground) {
                 webView.chromeWindow.raise()
             }
         }
