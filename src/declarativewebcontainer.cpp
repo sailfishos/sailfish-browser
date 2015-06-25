@@ -141,7 +141,6 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
             connect(m_webPage, SIGNAL(canGoBackChanged()), this, SIGNAL(canGoBackChanged()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(canGoForwardChanged()), this, SIGNAL(canGoForwardChanged()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(urlChanged()), this, SIGNAL(urlChanged()), Qt::UniqueConnection);
-            connect(m_webPage, SIGNAL(urlChanged()), this, SLOT(onPageUrlChanged()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(titleChanged()), this, SIGNAL(titleChanged()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(titleChanged()), this, SLOT(onPageTitleChanged()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(imeNotification(int,bool,int,int,QString)),
@@ -155,6 +154,9 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
             connect(m_webPage, SIGNAL(requestGLContext()), this, SLOT(createGLContext()), Qt::DirectConnection);
             // Intentionally not a direct connect as signal is emitted from gecko compositor thread.
             connect(m_webPage, SIGNAL(afterRendering(QRect)), this, SLOT(updateActiveTabRendered()), Qt::UniqueConnection);
+            // NB: this signal is not disconnected upon setting current m_webPage.
+            connect(m_webPage, SIGNAL(urlChanged()), m_model, SLOT(onUrlChanged()), Qt::UniqueConnection);
+
             m_webPage->setWindow(this);
             if (m_chromeWindow) {
                 updateContentOrientation(m_chromeWindow->contentOrientation());
@@ -749,31 +751,6 @@ void DeclarativeWebContainer::closeWindow()
             m_model->activateTabById(parentPageTabId);
             m_model->removeTabById(webPage->tabId(), isActiveTab(webPage->tabId()));
         }
-    }
-}
-
-void DeclarativeWebContainer::onPageUrlChanged()
-{
-    DeclarativeWebPage *webPage = qobject_cast<DeclarativeWebPage *>(sender());
-    if (webPage && m_model) {
-        QString url = webPage->url().toString();
-        int tabId = webPage->tabId();
-        bool activeTab = isActiveTab(tabId);
-
-        // Initial url should not be considered as navigation request that increases navigation history.
-        // Cleanup this.
-        bool initialLoad = !webPage->initialLoadHasHappened();
-        // Virtualized pages need to be checked from the model.
-        if (!initialLoad || m_model->contains(tabId)) {
-            m_model->updateUrl(tabId, activeTab, url, initialLoad);
-        } else {
-            // Adding tab to the model is delayed so that url resolved to download link do not get added
-            // to the model. We should have downloadStatus(status) and linkClicked(url) signals in QmlMozView.
-            // To distinguish linkClicked(url) from downloadStatus(status) the downloadStatus(status) signal
-            // should not be emitted when link clicking started downloading or opened (will open) a new window.
-            m_model->addTab(url, "");
-        }
-        webPage->setInitialLoadHasHappened();
     }
 }
 
