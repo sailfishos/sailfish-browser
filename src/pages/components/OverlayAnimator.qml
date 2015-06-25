@@ -110,18 +110,6 @@ Item {
         }
     }
 
-    Connections {
-        target: webView && webView.tabModel || null
-        ignoreUnknownSignals: true
-        onCountChanged: {
-            if (webView.completed && webView.tabModel.count === 0) {
-                updateState("fullscreenOverlay")
-            }
-
-            window.setBrowserCover(webView.tabModel)
-        }
-    }
-
     states: [
         State {
             name: "fullscreenWebPage"

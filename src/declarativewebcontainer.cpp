@@ -191,6 +191,7 @@ void DeclarativeWebContainer::setTabModel(DeclarativeTabModel *model)
         if (m_model) {
             disconnect(m_model, 0, 0, 0);
             oldCount = m_model->count();
+            m_model->setWaitingForNewTab(false);
         }
 
         m_model = model;
@@ -205,6 +206,11 @@ void DeclarativeWebContainer::setTabModel(DeclarativeTabModel *model)
         emit tabModelChanged();
         if (oldCount != newCount) {
             emit m_model->countChanged();
+        }
+
+        // Set waiting for a tab.
+        if (m_model) {
+            m_model->setWaitingForNewTab(true);
         }
     }
 }

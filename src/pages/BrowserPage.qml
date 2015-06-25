@@ -153,7 +153,8 @@ Page {
         rotationHandler: browserPage
         imOpened: virtualKeyboardObserver.opened
 
-        tabModel.onWaitingForNewTabChanged: window.opaqueBackground = tabModel.waitingForNewTab
+        // Show overlay immediately at top if needed.
+        onTabModelChanged: handleModelChanges(true)
 
         onChromeExposed: {
             if (overlay.animator.atTop && overlay.searchField.focus && !WebUtils.firstUseDone) {
@@ -179,6 +180,24 @@ Page {
             }
             resetHeight()
         }
+
+        // Both model change and model count change are connected to this.
+        function handleModelChanges(openOverlayImmediately) {
+            if (webView.completed && (!webView.tabModel || webView.tabModel.count === 0)) {
+                overlay.animator.showOverlay(openOverlayImmediately)
+            }
+
+            window.setBrowserCover(webView.tabModel)
+        }
+    }
+
+    // Use Connections so that target updates when model changes.
+    Connections {
+        target: webView && webView.tabModel || null
+        ignoreUnknownSignals: true
+        // Animate overlay to top if needed.
+        onCountChanged: webView.handleModelChanges(false)
+        onWaitingForNewTabChanged: window.opaqueBackground = webView.tabModel.waitingForNewTab
     }
 
     InputRegion {
@@ -206,7 +225,7 @@ Page {
         MouseArea {
             anchors.fill: parent
             enabled: overlay.animator.atTop && webView.tabModel.count > 0
-            onClicked: overlay.dismiss()
+            onClicked: overlay.dismiss(true)
         }
 
         Browser.PrivateModeTexture {
@@ -218,6 +237,7 @@ Page {
         onCanOpenContentDimmerChanged: {
             if (canOpenContentDimmer) {
                 webView.tabModel.waitingForNewTab = false
+                window.opaqueBackground = false
             }
         }
     }

@@ -63,14 +63,17 @@ Background {
         overlayAnimator.showOverlay(action === PageStackAction.Immediate)
     }
 
-    function dismiss() {
+    function dismiss(canShowChrome) {
         toolBar.resetFind()
         if (webView.contentItem && webView.contentItem.fullscreen) {
             // Web content is in fullscreen mode thus we don't show chrome
             overlay.animator.updateState("fullscreenWebPage")
-        } else {
+        } else if (canShowChrome) {
             overlay.animator.showChrome()
+        } else {
+            overlay.animator.hide()
         }
+        searchField.enteringNewTabUrl = false
     }
 
     y: webView.fullscreenHeight - toolBar.toolsHeight
@@ -165,7 +168,7 @@ Background {
                 if (overlay.y < dragThreshold) {
                     overlayAnimator.showOverlay(false)
                 } else {
-                    dismiss()
+                    dismiss(true)
                 }
             } else {
                 // Store previous end state
@@ -426,7 +429,9 @@ Background {
                         overlay.enterNewTabUrl(PageStackAction.Immediate)
                     } else if (!overlayAnimator.atBottom) {
                         // Hide overlay while switching to non-empty tabmodel
-                        dismiss()
+                        // Dismiss overlay so that chrome gets hidden.
+                        // Chrome is animated back when BrowserPage's activates.
+                        dismiss(false)
                     }
                 }
 
