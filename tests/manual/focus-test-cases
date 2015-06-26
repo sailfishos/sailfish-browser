@@ -1,0 +1,33 @@
+Different kind of focus handling cases.
+
+No tabs:
+- external link                         => external link loaded
+- launch browser from the app grid      => home page loaded
+- launch a favorite from the app grid   => favorite loaded
+- search from web                       => overlay open, focused, and vkb open
+- cover new tab action                  => overlay open, focused, and vkb open
+- tap cover area (not new tab action)   => overlay open, focused, and vkb open
+
+Browser has tabs:
+- external link                         => external link loaded
+- launch browser from the app grid      => previous tab loaded
+- launch a favorite from the app grid   => favorite loaded
+- search from web                       => overlay open, focused, and vkb open
+- cover new tab action                  => overlay open, focused, and vkb open
+- tap cover area (not new tab action)   => chrome visible, no vkb
+
+A web page kicks in a sub page like m.aamulehti.fi:
+- Enter m.aamulehti.fi as a url
+- Push browser to switcher
+- Wait that loading completes (for a while), new tab action disappears when sub page pushed to the pagestack
+==> Cover showing the web page
+==> Tapping the cover area brings up the browser and sub page visible
+
+The package sailfish-browser-tests contains following manual test case:
+- xdg-open /opt/tests/sailfish-browser/manual/testwebprompts.html
+1) Focus the text input containing a text: "Focus and press enter to trigger prompt"
+2) Press enter to trigger prompt :)
+   ==> "A word or two" silica text field is roughly at center of the screen and focused
+   ==> Virtual keyboard is open
+3) Pop the prompts from the page stack
+4) Repeat steps from 1) to 3)
