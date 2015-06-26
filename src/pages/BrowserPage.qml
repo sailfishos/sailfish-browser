@@ -270,8 +270,6 @@ Page {
         historyModel: historyModel
         browserPage: browserPage
 
-        onEnteringNewTabUrlChanged: window.opaqueBackground = webView.tabModel.waitingForNewTab || enteringNewTabUrl
-
         onActiveChanged: {
             if (active && webView.contentItem && !overlay.enteringNewTabUrl && !webView.contentItem.fullscreen) {
                 overlay.animator.showChrome()
