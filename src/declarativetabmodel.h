@@ -78,6 +78,7 @@ public:
 
 public slots:
     void updateThumbnailPath(int tabId, QString path);
+    void onUrlChanged();
 
 signals:
     void activeTabIndexChanged();

@@ -149,7 +149,7 @@ void DeclarativeWebPage::onTabHistoryAvailable(const int& tabId, const QList<Lin
 }
 
 void DeclarativeWebPage::restoreHistory() {
-    if (!m_urlReady || !m_tabHistoryReady) {
+    if (!m_urlReady || !m_tabHistoryReady || m_restoredTabHistory.count() == 0) {
         return;
     }
 

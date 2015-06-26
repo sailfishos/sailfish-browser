@@ -13,6 +13,7 @@
 #include "declarativetabmodel.h"
 #include "linkvalidator.h"
 #include "declarativewebutils.h"
+#include "declarativewebpage.h"
 
 #include <QFile>
 #include <QDebug>
@@ -398,5 +399,30 @@ void DeclarativeTabModel::updateThumbnailPath(int tabId, QString path)
             emit dataChanged(start, end, roles);
             updateThumbPath(tabId, path);
         }
+    }
+}
+
+void DeclarativeTabModel::onUrlChanged()
+{
+    DeclarativeWebPage *webPage = qobject_cast<DeclarativeWebPage *>(sender());
+    if (webPage) {
+        QString url = webPage->url().toString();
+        int tabId = webPage->tabId();
+        bool activeTab = m_activeTab.tabId() == tabId;
+
+        // Initial url should not be considered as navigation request that increases navigation history.
+        // Cleanup this.
+        bool initialLoad = !webPage->initialLoadHasHappened();
+        // Virtualized pages need to be checked from the model.
+        if (!initialLoad || contains(tabId)) {
+            updateUrl(tabId, activeTab, url, initialLoad);
+        } else {
+            // Adding tab to the model is delayed so that url resolved to download link do not get added
+            // to the model. We should have downloadStatus(status) and linkClicked(url) signals in QmlMozView.
+            // To distinguish linkClicked(url) from downloadStatus(status) the downloadStatus(status) signal
+            // should not be emitted when link clicking started downloading or opened (will open) a new window.
+            addTab(url, "");
+        }
+        webPage->setInitialLoadHasHappened();
     }
 }
