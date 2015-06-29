@@ -24,14 +24,34 @@ public:
     DBusAdaptor(BrowserService *browserService);
 
 public slots:
+    // these two calls are kept in this service for compatibility
+    // but any calls that require the UI to be shown should be added to
+    // the UIServiceDBusAdaptor org.sailfishos.browser.ui service instead
     void openUrl(QStringList args);
     void activateNewTabView();
+
     void cancelTransfer(int transferId);
     void restartTransfer(int transferId);
     void dumpMemoryInfo(QString fileName);
 
 private:
     BrowserService *m_BrowserService;
+};
+
+class UIServiceDBusAdaptor : public QDBusAbstractAdaptor
+{
+    Q_OBJECT
+    Q_CLASSINFO("D-Bus Interface", "org.sailfishos.browser.ui")
+
+public:
+    UIServiceDBusAdaptor(BrowserUIService *browserService);
+
+public slots:
+    void openUrl(QStringList args);
+    void activateNewTabView();
+
+private:
+    BrowserUIService *m_BrowserService;
 };
 
 #endif // DBUSADAPTOR_H
