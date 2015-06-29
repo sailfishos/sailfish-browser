@@ -55,6 +55,15 @@ ApplicationWindow {
                 window.webView = webView
                 window.rootPage = browserPage
             }
+
+            Component.onDestruction: {
+                window.webView = null
+                if (!!_coverWindow) {
+                    // Make sure the cover window won't be resolving dangling pointer upon exit
+                    // as the line above doesn't guaranty nullifying _coverWindow.mainWindow.
+                    _coverWindow.mainWindow = null
+                }
+            }
         }
     }
 
