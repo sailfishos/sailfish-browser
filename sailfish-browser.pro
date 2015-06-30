@@ -5,7 +5,8 @@ SUBDIRS += src tests settings
 desktop.files = sailfish-browser.desktop open-url.desktop
 desktop.path = /usr/share/applications
 
-dbus_service.files = org.sailfishos.browser.service
+dbus_service.files = org.sailfishos.browser.service \
+                     org.sailfishos.browser.ui.service
 dbus_service.path = /usr/share/dbus-1/services
 
 chrome_scripts.files = chrome/*.js

@@ -110,6 +110,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
         return 0;
     }
 
+    BrowserUIService *uiService = new BrowserUIService(app.data());
+
     QString translationPath("/usr/share/translations/");
     QTranslator engineeringEnglish;
     engineeringEnglish.load("sailfish-browser_eng_en", translationPath);
@@ -153,6 +155,11 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     utils->connect(service, SIGNAL(dumpMemoryInfoRequested(QString)),
                    utils, SLOT(handleDumpMemoryInfoRequest(QString)));
 
+    utils->connect(uiService, SIGNAL(openUrlRequested(QString)),
+                   utils, SIGNAL(openUrlRequested(QString)));
+    utils->connect(uiService, SIGNAL(activateNewTabViewRequested()),
+                   utils, SIGNAL(activateNewTabViewRequested()));
+
     utils->clearStartupCacheIfNeeded();
     view->rootContext()->setContextProperty("WebUtils", utils);
     view->rootContext()->setContextProperty("MozContext", QMozContext::GetInstance());
@@ -169,6 +176,11 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     QObject::connect(service, SIGNAL(openUrlRequested(QString)),
                      clsEventFilter, SLOT(cancelStopApplication()));
     QObject::connect(service, SIGNAL(activateNewTabViewRequested()),
+                     clsEventFilter, SLOT(cancelStopApplication()));
+
+    QObject::connect(uiService, SIGNAL(openUrlRequested(QString)),
+                     clsEventFilter, SLOT(cancelStopApplication()));
+    QObject::connect(uiService, SIGNAL(activateNewTabViewRequested()),
                      clsEventFilter, SLOT(cancelStopApplication()));
 
 #ifdef USE_RESOURCES

@@ -41,3 +41,20 @@ void DBusAdaptor::dumpMemoryInfo(QString fileName)
 {
     m_BrowserService->dumpMemoryInfo(fileName);
 }
+
+
+UIServiceDBusAdaptor::UIServiceDBusAdaptor(BrowserUIService *browserService)
+    : QDBusAbstractAdaptor(browserService)
+    , m_BrowserService(browserService)
+{
+}
+
+void UIServiceDBusAdaptor::openUrl(QStringList args)
+{
+    m_BrowserService->openUrl(args);
+}
+
+void UIServiceDBusAdaptor::activateNewTabView()
+{
+    m_BrowserService->activateNewTabView();
+}
