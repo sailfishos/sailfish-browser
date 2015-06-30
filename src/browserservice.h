@@ -24,8 +24,12 @@ public:
     QString serviceName() const;
 
 public slots:
+    // these two calls are kept in this service for compatibility
+    // but any calls that require the UI to be shown should be added to
+    // the BrowserUIService service instead
     void openUrl(QStringList args);
     void activateNewTabView();
+
     void cancelTransfer(int transferId);
     void restartTransfer(int transferId);
     void dumpMemoryInfo(QString fileName);
@@ -36,6 +40,26 @@ signals:
     void cancelTransferRequested(int transferId);
     void restartTransferRequested(int transferId);
     void dumpMemoryInfoRequested(QString fileName);
+
+private:
+    bool m_registered;
+};
+
+class BrowserUIService : public QObject
+{
+    Q_OBJECT
+public:
+    BrowserUIService(QObject * parent);
+    bool registered() const;
+    QString serviceName() const;
+
+public slots:
+    void openUrl(QStringList args);
+    void activateNewTabView();
+
+signals:
+    void openUrlRequested(QString url);
+    void activateNewTabViewRequested();
 
 private:
     bool m_registered;

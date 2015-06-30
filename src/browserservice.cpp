@@ -14,6 +14,7 @@
 #include <QDBusConnection>
 
 #define SAILFISH_BROWSER_SERVICE QLatin1String("org.sailfishos.browser")
+#define SAILFISH_BROWSER_UI_SERVICE QLatin1String("org.sailfishos.browser.ui")
 
 BrowserService::BrowserService(QObject * parent)
     : QObject(parent)
@@ -64,4 +65,41 @@ void BrowserService::restartTransfer(int transferId)
 void BrowserService::dumpMemoryInfo(QString fileName)
 {
     emit dumpMemoryInfoRequested(fileName);
+}
+
+
+BrowserUIService::BrowserUIService(QObject * parent)
+    : QObject(parent)
+    , m_registered(true)
+{
+    new UIServiceDBusAdaptor(this);
+    QDBusConnection connection = QDBusConnection::sessionBus();
+    if(!connection.registerService(SAILFISH_BROWSER_UI_SERVICE) ||
+            !connection.registerObject("/", this)) {
+        m_registered = false;
+    }
+}
+
+bool BrowserUIService::registered() const
+{
+    return m_registered;
+}
+
+QString BrowserUIService::serviceName() const
+{
+    return SAILFISH_BROWSER_UI_SERVICE;
+}
+
+void BrowserUIService::openUrl(QStringList args)
+{
+    if(args.count() > 0) {
+        emit openUrlRequested(args.first());
+    } else {
+        emit openUrlRequested(QString());
+    }
+}
+
+void BrowserUIService::activateNewTabView()
+{
+    emit activateNewTabViewRequested();
 }
