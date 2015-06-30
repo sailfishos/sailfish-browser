@@ -27,10 +27,7 @@
 #include <QGuiApplication>
 #include <QScreen>
 #include <QMetaMethod>
-
 #include <QOpenGLFunctions_ES2>
-
-#include <qmozcontext.h>
 #include <QGuiApplication>
 
 #include <qpa/qplatformnativeinterface.h>
@@ -64,7 +61,8 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     , m_completed(false)
     , m_initialized(false)
     , m_privateMode(m_settingManager->autostartPrivateBrowsing())
-    , m_hasBeenExposed(false)
+    , m_activeTabRendered(false)
+    , m_clearSurfaceTask(0)
 {
 
     QSize screenSize = QGuiApplication::primaryScreen()->size();
@@ -105,7 +103,6 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     qApp->installEventFilter(this);
 
     showFullScreen();
-    connect(this, SIGNAL(windowStateChanged(Qt::WindowState)), this, SLOT(updateWindowState(Qt::WindowState)));
 }
 
 DeclarativeWebContainer::~DeclarativeWebContainer()
@@ -113,6 +110,11 @@ DeclarativeWebContainer::~DeclarativeWebContainer()
     // Disconnect all signal slot connections
     if (m_webPage) {
         disconnect(m_webPage, 0, 0, 0);
+    }
+
+    QMutexLocker lock(&m_clearSurfaceTaskMutex);
+    if (m_clearSurfaceTask) {
+        QMozContext::GetInstance()->CancelTask(m_clearSurfaceTask);
     }
 }
 
@@ -438,6 +440,38 @@ void DeclarativeWebContainer::setActiveTabRendered(bool rendered)
     }
 }
 
+bool DeclarativeWebContainer::postClearWindowSurfaceTask()
+{
+    QMutexLocker lock(&m_clearSurfaceTaskMutex);
+    if (m_clearSurfaceTask) {
+        return true;
+    }
+    m_clearSurfaceTask = QMozContext::GetInstance()->PostCompositorTask(
+        &DeclarativeWebContainer::clearWindowSurfaceTask, this);
+    return m_clearSurfaceTask != 0;
+}
+
+void DeclarativeWebContainer::clearWindowSurfaceTask(void *data)
+{
+    DeclarativeWebContainer* that = static_cast<DeclarativeWebContainer*>(data);
+    QMutexLocker lock(&that->m_clearSurfaceTaskMutex);
+    that->clearWindowSurface();
+    that->m_clearSurfaceTask = 0;
+}
+
+void DeclarativeWebContainer::clearWindowSurface()
+{
+    Q_ASSERT(m_context);
+    // The GL context should always be used from the same thread in which it was created.
+    Q_ASSERT(m_context->thread() == QThread::currentThread());
+    m_context->makeCurrent(this);
+    QOpenGLFunctions_ES2* funcs = m_context->versionFunctions<QOpenGLFunctions_ES2>();
+    Q_ASSERT(funcs);
+    funcs->glClearColor(1.0, 1.0, 1.0, 0.0);
+    funcs->glClear(GL_COLOR_BUFFER_BIT);
+    m_context->swapBuffers(this);
+}
+
 void DeclarativeWebContainer::dumpPages() const
 {
     m_webPages->dumpPages();
@@ -450,32 +484,12 @@ QObject *DeclarativeWebContainer::focusObject() const
 
 bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
 {
-    // Hiding stops rendering. Don't pass it through if hiding is not allowed.
-    if (event->type() == QEvent::Expose) {
-        if (isExposed() && !m_hasBeenExposed) {
-            QMutexLocker lock(&m_exposedMutex);
-            QOpenGLContext context;
-            context.setFormat(requestedFormat());
-            context.create();
-            context.makeCurrent(this);
-
-            QOpenGLFunctions_ES2* funcs = context.versionFunctions<QOpenGLFunctions_ES2>();
-            if (funcs) {
-                funcs->glClearColor(1.0, 1.0, 1.0, 0.0);
-                funcs->glClear(GL_COLOR_BUFFER_BIT);
-            }
-
-            context.swapBuffers(this);
-            context.doneCurrent();
-            m_hasBeenExposed = true;
-            m_windowExposed.wakeAll();
-        } else if (!isExposed() && !m_allowHiding) {
-            return true;
-        }
-    } else if (event->type() == QEvent::Close && m_webPage) {
+    if (event->type() == QEvent::Close && m_webPage) {
         // Make sure gecko does not use GL context we gave it in ::createGLContext
         // after the window has been closed.
         m_webPage->suspendView();
+    } else if (event->type() == QEvent::Expose && !isExposed() && !m_allowHiding) {
+        return true;
     }
 
     // Emit chrome exposed when both chrome window and browser window has been exposed. This way chrome
@@ -500,6 +514,46 @@ bool DeclarativeWebContainer::event(QEvent *event)
         native->setWindowProperty(windowHandle, QStringLiteral("HAS_CHILD_WINDOWS"), true);
     }
     return QWindow::event(event);
+}
+
+void DeclarativeWebContainer::exposeEvent(QExposeEvent*)
+{
+    // Filter out extra expose event spam. We often get 3-4 expose events
+    // in a row. For all of them isExposed returns true. We only want to
+    // clear the compositing surface once in such case.
+    static bool alreadyExposed = false;
+
+    if (isExposed() && !alreadyExposed) {
+        if (m_chromeWindow) {
+            m_chromeWindow->update();
+        }
+
+        if (m_webPage) {
+            m_webPage->update();
+        } else {
+            if (postClearWindowSurfaceTask()) {
+                alreadyExposed = true;
+                return;
+            }
+
+            // The compositor thread has not been created on gecko side, yet.
+            // We can use temporary GL context to clear the contents of the
+            // surface.
+            QMutexLocker lock(&m_contextMutex);
+            if (!m_context) {
+                QOpenGLContext context;
+                context.setFormat(requestedFormat());
+                context.create();
+
+                m_context = &context;
+                clearWindowSurface();
+                m_context = 0;
+
+                context.doneCurrent();
+            }
+        }
+    }
+    alreadyExposed = isExposed();
 }
 
 void DeclarativeWebContainer::touchEvent(QTouchEvent *event)
@@ -601,13 +655,6 @@ void DeclarativeWebContainer::updateContentOrientation(Qt::ScreenOrientation ori
     }
 
     reportContentOrientationChange(orientation);
-}
-
-void DeclarativeWebContainer::updateWindowState(Qt::WindowState windowState)
-{
-    if (m_webPage && windowState >= Qt::WindowMaximized) {
-        m_webPage->update();
-    }
 }
 
 void DeclarativeWebContainer::imeNotificationChanged(int state, bool open, int cause, int focusChange, const QString &type)
@@ -750,6 +797,7 @@ void DeclarativeWebContainer::releasePage(int tabId)
         // Successfully destroyed. Emit relevant property changes.
         if (m_model->count() == 0) {
             setWebPage(NULL);
+            postClearWindowSurfaceTask();
         }
     }
 }
@@ -909,11 +957,7 @@ void DeclarativeWebContainer::sendVkbOpenCompositionMetrics()
 
 void DeclarativeWebContainer::createGLContext()
 {
-    QMutexLocker lock(&m_exposedMutex);
-    if (!m_hasBeenExposed) {
-        m_windowExposed.wait(&m_exposedMutex);
-    }
-
+    QMutexLocker lock(&m_contextMutex);
     if (!m_context) {
         m_context = new QOpenGLContext();
         m_context->setFormat(requestedFormat());
@@ -922,5 +966,9 @@ void DeclarativeWebContainer::createGLContext()
         initializeOpenGLFunctions();
     } else {
         m_context->makeCurrent(this);
+    }
+
+    if (!m_activeTabRendered) {
+        clearWindowSurface();
     }
 }
