@@ -128,6 +128,8 @@ public:
 
     QObject *focusObject() const;
 
+    bool event(QEvent *event);
+
 signals:
     void rotationHandlerChanged();
     void contentItemChanged();

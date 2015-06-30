@@ -78,13 +78,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     format.setAlphaBufferSize(0);
     setFormat(format);
 
-    create();
     setObjectName("WebView");
-
-    if (QPlatformWindow *windowHandle = handle()) {
-        QPlatformNativeInterface *native = QGuiApplication::platformNativeInterface();
-        native->setWindowProperty(windowHandle, QStringLiteral("BACKGROUND_VISIBLE"), false);
-    }
 
     QMozContext::GetInstance()->setPixelRatio(2.0);
 
@@ -493,6 +487,19 @@ bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
     }
 
     return QObject::eventFilter(obj, event);
+}
+
+bool DeclarativeWebContainer::event(QEvent *event)
+{
+    QPlatformWindow *windowHandle;
+    if (event->type() == QEvent::PlatformSurface
+                && static_cast<QPlatformSurfaceEvent *>(event)->surfaceEventType() == QPlatformSurfaceEvent::SurfaceCreated
+                && (windowHandle = handle())) {
+        QPlatformNativeInterface *native = QGuiApplication::platformNativeInterface();
+        native->setWindowProperty(windowHandle, QStringLiteral("BACKGROUND_VISIBLE"), false);
+        native->setWindowProperty(windowHandle, QStringLiteral("HAS_CHILD_WINDOWS"), true);
+    }
+    return QWindow::event(event);
 }
 
 void DeclarativeWebContainer::touchEvent(QTouchEvent *event)
