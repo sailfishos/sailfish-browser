@@ -66,6 +66,10 @@ Dialog {
         id: filterListModel
     }
 
+    Background {
+        anchors.fill: parent
+    }
+
     SilicaListView {
         id: prefsList
         model: prefsListModel
