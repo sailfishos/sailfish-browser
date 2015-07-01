@@ -73,8 +73,6 @@ private:
     int addToTabHistory(int tabId, int linkId);
     Link getLinkFromTabHistory(int tabHistoryId);
     Link getCurrentLink(int tabId);
-    int getNextLinkIdFromTabHistory(int tabHistoryId);
-    int getPreviousLinkIdFromTabHistory(int tabHistoryId);
     void clearDeprecatedTabHistory(int tabId, int currentLinkId);
     int createLink(QString url, QString title = "", QString thumbPath = "");
     void updateTab(int tabId, int tabHistoryId);
