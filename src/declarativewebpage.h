@@ -45,7 +45,7 @@ public:
     void setContainer(DeclarativeWebContainer *container);
 
     int tabId() const;
-    void setTab(const Tab& tab);
+    void setInitialTab(const Tab& tab);
 
     QVariant resurrectedContentRect() const;
     void setResurrectedContentRect(QVariant resurrectedContentRect);
@@ -84,7 +84,7 @@ signals:
 private slots:
     void setFullscreen(const bool fullscreen);
     void onRecvAsyncMessage(const QString& message, const QVariant& data);
-    void onTabHistoryAvailable(const int& tabId, const QList<Link>& links);
+    void onTabHistoryAvailable(const int& historyTabId, const QList<Link>& links);
     void onUrlChanged();
     void grabResultReady();
     void grabWritten();
@@ -95,7 +95,8 @@ private:
     void restoreHistory();
 
     QPointer<DeclarativeWebContainer> m_container;
-    Tab m_tab;
+    // Tab data fetched upon web page initialization. It never changes afterwards.
+    Tab m_initialTab;
     bool m_userHasDraggedWhileLoading;
     bool m_fullscreen;
     bool m_forcedChrome;
