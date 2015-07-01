@@ -157,6 +157,10 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     mozContext->setPref(QString("ui.click_hold_context_menus.delay"), QVariant(800));
     mozContext->setPref(QString("apz.fling_stopped_threshold"), QString("0.13f"));
 
+    // TODO: remove this line when the value adjusted for different DPIs makes
+    // its way to Gecko's default prefs.
+    mozContext->setPref(QString("apz.touch_start_tolerance"), QString("0.0555555f"));
+
     mozContext->setPref(QString("media.resource_handler_disabled"), QVariant(true));
 
     // Disable asmjs
