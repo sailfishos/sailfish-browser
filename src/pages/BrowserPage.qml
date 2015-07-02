@@ -349,7 +349,7 @@ Page {
         }
 
         if (WebUtils.debugMode) {
-            component = Qt.createComponent(Qt.resolvedUrl("components/DebugOverlay.qml"))
+            var component = Qt.createComponent(Qt.resolvedUrl("components/DebugOverlay.qml"))
             if (component.status === Component.Ready) {
                 debug = component.createObject(browserPage)
             } else {
