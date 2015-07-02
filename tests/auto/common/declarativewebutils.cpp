@@ -66,6 +66,8 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     // Use external Qt window for rendering content
     mozContext->setPref(QString("gfx.compositor.external-window"), QVariant(true));
     mozContext->setPref(QString("gfx.compositor.clear-context"), QVariant(false));
+    mozContext->setPref(QString("embedlite.compositor.external_gl_context"), QVariant(true));
+    mozContext->setPref(QString("embedlite.compositor.request_external_gl_context_early"), QVariant(true));
 
     // Progressive painting.
     mozContext->setPref(QString("layers.progressive-paint"), QVariant(true));
