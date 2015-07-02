@@ -412,6 +412,8 @@ Background {
             id: tabPage
             property int activeTabIndex
 
+            onStatusChanged: browserPage.tabPageActive = (status == PageStatus.Active)
+
             Browser.TabView {
                 id: tabViewItem
 
