@@ -281,11 +281,13 @@ Background {
                                      //% "Type URL or search"
                                      qsTrId("sailfish_browser-ph-type_url_or_search")
                 EnterKey.onClicked: {
+                    if (!text) {
+                        return
+                    }
+
                     if (toolBar.findInPageActive) {
-                        if (text) {
-                            webView.sendAsyncMessage("embedui:find", { text: text, backwards: false, again: false })
-                            overlayAnimator.showChrome()
-                        }
+                        webView.sendAsyncMessage("embedui:find", { text: text, backwards: false, again: false })
+                        overlayAnimator.showChrome()
                     } else {
                         overlay.loadPage(text)
                     }
