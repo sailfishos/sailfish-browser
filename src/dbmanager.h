@@ -29,7 +29,6 @@ public:
 
     int createTab();
     int createLink(int tabId, QString url, QString title);
-    void getTab(int tabId);
     void getAllTabs();
     void removeTab(int tabId);
     void navigateTo(int tabId, QString url, QString title = "", QString path = "");
@@ -54,7 +53,6 @@ public slots:
     void tabListAvailable(QList<Tab> tabs);
 
 signals:
-    void tabAvailable(Tab tab);
     void tabsAvailable(QList<Tab> tab);
     void historyAvailable(QList<Link> links);
     void tabHistoryAvailable(int tabId, QList<Link> links);

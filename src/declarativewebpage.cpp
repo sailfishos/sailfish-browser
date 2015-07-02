@@ -115,18 +115,18 @@ void DeclarativeWebPage::setContainer(DeclarativeWebContainer *container)
 
 int DeclarativeWebPage::tabId() const
 {
-    return m_tab.tabId();
+    return m_initialTab.tabId();
 }
 
-void DeclarativeWebPage::setTab(const Tab& tab)
+void DeclarativeWebPage::setInitialTab(const Tab& tab)
 {
-    Q_ASSERT(m_tab.tabId() == 0);
+    Q_ASSERT(m_initialTab.tabId() == 0);
 
-    m_tab = tab;
+    m_initialTab = tab;
     emit tabIdChanged();
     connect(DBManager::instance(), SIGNAL(tabHistoryAvailable(int, QList<Link>)),
             this, SLOT(onTabHistoryAvailable(int, QList<Link>)));
-    DBManager::instance()->getTabHistory(m_tab.tabId());
+    DBManager::instance()->getTabHistory(tabId());
 }
 
 void DeclarativeWebPage::onUrlChanged()
@@ -136,9 +136,9 @@ void DeclarativeWebPage::onUrlChanged()
     restoreHistory();
 }
 
-void DeclarativeWebPage::onTabHistoryAvailable(const int& tabId, const QList<Link>& links)
+void DeclarativeWebPage::onTabHistoryAvailable(const int& historyTabId, const QList<Link>& links)
 {
-    if (tabId == m_tab.tabId()) {
+    if (historyTabId == tabId()) {
         m_restoredTabHistory = links;
 
         std::reverse(m_restoredTabHistory.begin(), m_restoredTabHistory.end());
@@ -158,13 +158,13 @@ void DeclarativeWebPage::restoreHistory() {
     int i(0);
     foreach (Link link, m_restoredTabHistory) {
         urls << link.url();
-        if (link.linkId() == m_tab.currentLink()) {
+        if (link.linkId() == m_initialTab.currentLink()) {
             index = i;
-            if (link.url() != m_tab.url()) {
+            if (link.url() != m_initialTab.url()) {
                 // The browser was started with an initial URL as a cmdline parameter -> reset tab history
-                urls << m_tab.url();
+                urls << m_initialTab.url();
                 index++;
-                DBManager::instance()->navigateTo(m_tab.tabId(), m_tab.url(), "", "");
+                DBManager::instance()->navigateTo(tabId(), m_initialTab.url(), "", "");
                 break;
             }
         }
@@ -331,7 +331,7 @@ QString DeclarativeWebPage::saveToFile(QImage image)
     }
 
     // 75% quality jpg produces small and good enough capture.
-    QString path = QString("%1/tab-%2-thumb.jpg").arg(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)).arg(m_tab.tabId());
+    QString path = QString("%1/tab-%2-thumb.jpg").arg(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)).arg(tabId());
     return !allBlack(image) && image.save(path, "jpg", 75) ? path : "";
 }
 

@@ -274,12 +274,10 @@ Tab DBWorker::getTabData(int tabId, int historyId)
     }
 
     Link link = getLinkFromTabHistory(hId);
-    int nextId = getNextLinkIdFromTabHistory(hId);
-    int previousId = getPreviousLinkIdFromTabHistory(hId);
 #if DEBUG_LOGS
-    qDebug() << tabId << historyId << "next link id:" << nextId << "previous link id:" << previousId << link.linkId()<< link.title() << link.url();
+    qDebug() << tabId << historyId << link.linkId()<< link.title() << link.url();
 #endif
-    return Tab(tabId, link, nextId, previousId);
+    return Tab(tabId, link);
 }
 
 void DBWorker::removeTab(int tabId)
@@ -329,23 +327,6 @@ void DBWorker::removeAllTabs()
     QList<Tab> tabList;
     if (oldTabCount != 0) {
         emit tabsAvailable(tabList);
-    }
-}
-
-void DBWorker::getTab(int tabId)
-{
-    QSqlQuery query = prepare("SELECT tab_id, tab_history_id FROM tab WHERE tab_id = ?;");
-    query.bindValue(0, tabId);
-    if (!execute(query)) {
-        return;
-    }
-
-    if (query.first()) {
-#if DEBUG_LOGS
-        Tab tab = getTabData(query.value(0).toInt(), query.value(1).toInt());
-        qDebug() << query.value(0).toInt() << query.value(1).toInt() << tab.title() << tab.url();
-#endif
-        emit tabAvailable(getTabData(query.value(0).toInt(), query.value(1).toInt()));
     }
 }
 
@@ -484,19 +465,6 @@ Link DBWorker::getLinkFromTabHistory(int tabHistoryId)
     return Link();
 }
 
-int DBWorker::getPreviousLinkIdFromTabHistory(int tabHistoryId)
-{
-    QSqlQuery query = prepare("SELECT link_id FROM tab_history WHERE tab_id = (SELECT tab_id FROM tab_history WHERE id = ?) AND id < ? ORDER BY id DESC LIMIT 1;");
-    query.bindValue(0, tabHistoryId);
-    query.bindValue(1, tabHistoryId);
-    if (execute(query)) {
-        if (query.first()) {
-            return query.value(0).toInt();
-        }
-    }
-    return 0;
-}
-
 void DBWorker::clearDeprecatedTabHistory(int tabId, int currentLinkId) {
 #if DEBUG_LOGS
     qDebug() << "tab id:" << tabId << "current link id:" << currentLinkId;
@@ -505,19 +473,6 @@ void DBWorker::clearDeprecatedTabHistory(int tabId, int currentLinkId) {
     query.bindValue(0, tabId);
     query.bindValue(1, currentLinkId);
     execute(query);
-}
-
-int DBWorker::getNextLinkIdFromTabHistory(int tabHistoryId)
-{
-    QSqlQuery query = prepare("SELECT link_id FROM tab_history WHERE tab_id = (SELECT tab_id FROM tab_history WHERE id = ?) AND id > ? ORDER BY id ASC LIMIT 1;");
-    query.bindValue(0, tabHistoryId);
-    query.bindValue(1, tabHistoryId);
-    if (execute(query)) {
-        if (query.first()) {
-            return query.value(0).toInt();
-        }
-    }
-    return 0;
 }
 
 // Adds url to table history if it is not already there

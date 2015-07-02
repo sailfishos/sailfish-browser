@@ -53,7 +53,7 @@ void DeclarativeTabModel::addTab(const QString& url, const QString &title) {
     int tabId = createTab();
     int linkId = createLink(tabId, url, title);
 
-    Tab tab(tabId, Link(linkId, url, "", title), 0, 0);
+    Tab tab(tabId, Link(linkId, url, "", title));
 #if DEBUG_LOGS
     qDebug() << "new tab data:" << &tab;
 #endif
@@ -274,9 +274,6 @@ void DeclarativeTabModel::updateUrl(int tabId, bool activeTab, const QString &ur
         m_tabs[tabIndex].setUrl(url);
 
         if (!initialLoad) {
-            m_tabs[tabIndex].setNextLink(0);
-            int currentLinkId = m_tabs.at(tabIndex).currentLink();
-            m_tabs[tabIndex].setPreviousLink(currentLinkId);
             m_tabs[tabIndex].setCurrentLink(nextLinkId());
             updateDb = true;
         }

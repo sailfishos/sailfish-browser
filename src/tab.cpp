@@ -11,13 +11,13 @@
 
 #include "tab.h"
 
-Tab::Tab(int tabId, Link currentLink, int nextLinkId, int previousLinkId) :
-    m_tabId(tabId), m_currentLink(currentLink), m_nextLinkId(nextLinkId), m_previousLinkId(previousLinkId)
+Tab::Tab(int tabId, Link currentLink) :
+    m_tabId(tabId), m_currentLink(currentLink)
 {
 }
 
 Tab::Tab() :
-    m_tabId(0), m_nextLinkId(0), m_previousLinkId(0)
+    m_tabId(0)
 {
 }
 
@@ -39,16 +39,6 @@ int Tab::currentLink() const
 void Tab::setCurrentLink(int currentLinkId)
 {
     m_currentLink.setLinkId(currentLinkId);
-}
-
-int Tab::nextLink() const
-{
-    return m_nextLinkId;
-}
-
-void Tab::setNextLink(int nextLinkId)
-{
-    m_nextLinkId = nextLinkId;
 }
 
 QString Tab::url() const
@@ -86,21 +76,9 @@ bool Tab::isValid() const
     return m_tabId > 0;
 }
 
-int Tab::previousLink() const
-{
-    return m_previousLinkId;
-}
-
-void Tab::setPreviousLink(int previousLinkId)
-{
-    m_previousLinkId = previousLinkId;
-}
-
 bool Tab::operator==(const Tab &other) const
 {
     return (m_tabId == other.tabId() &&
-            m_previousLinkId == other.m_previousLinkId &&
-            m_nextLinkId == other.m_nextLinkId &&
             m_currentLink == other.m_currentLink);
 }
 
@@ -115,7 +93,6 @@ QDebug operator<<(QDebug dbg, const Tab *tab) {
     }
 
     dbg.nospace() << "Tab(tabId = " << tab->tabId() << ", isValid = " << tab->isValid() << ", linkId = " << tab->currentLink()
-                  << ", previousLink = " << tab->previousLink() << ", nextLink = " << tab->nextLink()
                   << ", url = " << tab->url() << ", title = " << tab->title() << ", thumbnailPath = " << tab->thumbnailPath() << ")";
     return dbg.space();
 }

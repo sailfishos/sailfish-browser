@@ -449,40 +449,30 @@ void tst_declarativetabmodel::reloadModel()
     QCOMPARE(tabModel->activeTab().url(), tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString());
     QCOMPARE(tabModel->activeTab().title(), tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString());
     QCOMPARE(tabModel->activeTab().currentLink(), tabModel->m_tabs.at(activeTabIndex).currentLink());
-    QCOMPARE(tabModel->activeTab().previousLink(), tabModel->m_tabs.at(activeTabIndex).previousLink());
-    QCOMPARE(tabModel->activeTab().nextLink(), tabModel->m_tabs.at(activeTabIndex).nextLink());
 
     modelIndex = tabModel->createIndex(0, 0);
     QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), QString("https://sailfishos.org/sailfish-silica/index.html"));
     QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), QString("Creating applications with Sailfish Silica | Sailfish Silica 1.0"));
     QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt(), 3);
     QCOMPARE(tabModel->m_tabs.at(0).currentLink(), 3);
-    QCOMPARE(tabModel->m_tabs.at(0).previousLink(), 0);
-    QCOMPARE(tabModel->m_tabs.at(0).nextLink(), 0);
 
     modelIndex = tabModel->createIndex(1, 0);
     QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), QString("foo/bar/index.html"));
     QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), QString("A title something"));
     QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt(), 4);
     QCOMPARE(tabModel->m_tabs.at(1).currentLink(), 12);
-    QCOMPARE(tabModel->m_tabs.at(1).previousLink(), 11);
-    QCOMPARE(tabModel->m_tabs.at(1).nextLink(), 0);
 
     modelIndex = tabModel->createIndex(2, 0);
     QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), QString("http://foobar"));
     QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), QString("FooBar non active tab"));
     QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt(), 7);
     QCOMPARE(tabModel->m_tabs.at(2).currentLink(), 13);
-    QCOMPARE(tabModel->m_tabs.at(2).previousLink(), 0);
-    QCOMPARE(tabModel->m_tabs.at(2).nextLink(), 0);
 
     modelIndex = tabModel->createIndex(3, 0);
     QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), QString("http://foobar"));
     QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), QString("FooBar Two"));
     QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt(), 8);
     QCOMPARE(tabModel->m_tabs.at(3).currentLink(), 14);
-    QCOMPARE(tabModel->m_tabs.at(3).previousLink(), 0);
-    QCOMPARE(tabModel->m_tabs.at(3).nextLink(), 0);
 }
 
 void tst_declarativetabmodel::changeTabAndLoad()
@@ -494,17 +484,13 @@ void tst_declarativetabmodel::changeTabAndLoad()
     tabModel->activateTab(1);
     QCOMPARE(currentTabId(), 4);
 
-    // Current link becomes previous after url update ("link clicked")
-    int previousLink = tabModel->activeTab().currentLink();
-    QCOMPARE(previousLink, 12);
+    QCOMPARE(tabModel->activeTab().currentLink(), 12);
     QString url = "http://www.foobar.com/something";
     tabModel->updateUrl(currentTabId(), true, url, false);
     QTest::qWait(1000);
 
     QCOMPARE(tabModel->activeTab().tabId(), 4);
     QCOMPARE(tabModel->activeTab().currentLink(), nextLinkId);
-    QCOMPARE(tabModel->activeTab().previousLink(), previousLink);
-    QCOMPARE(tabModel->activeTab().nextLink(), 0);
     QCOMPARE(tabModel->activeTab().url(), url);
     QCOMPARE(tabModel->activeTab().title(), QString(""));
 }

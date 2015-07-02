@@ -156,7 +156,7 @@ WebPageActivationData WebPages::page(const Tab& tab, int parentId)
             if (webPage) {
                 webPage->setParentID(parentId);
                 webPage->setPrivateMode(m_webContainer->privateMode());
-                webPage->setTab(tab);
+                webPage->setInitialTab(tab);
                 webPage->setContainer(m_webContainer);
                 webPage->initialize();
                 m_webPageComponent->completeCreate();
