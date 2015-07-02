@@ -254,7 +254,7 @@ Background {
             SearchField {
                 id: searchField
 
-                readonly property bool overlayAtTop: overlayAnimator.atTop
+                readonly property bool requestingFocus: overlayAnimator.atTop && browserPage.active
                 property bool edited
                 property bool enteringNewTabUrl
 
@@ -294,8 +294,8 @@ Background {
                 background: null
                 opacity: toolBar.opacity * -1.0
                 visible: opacity > 0.0
-                onOverlayAtTopChanged: {
-                    if (overlayAtTop) {
+                onRequestingFocusChanged: {
+                    if (requestingFocus) {
                         forceActiveFocus()
                     } else {
                         focus = false
