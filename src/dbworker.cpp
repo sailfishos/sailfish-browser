@@ -330,23 +330,6 @@ void DBWorker::removeAllTabs()
     }
 }
 
-void DBWorker::getTab(int tabId)
-{
-    QSqlQuery query = prepare("SELECT tab_id, tab_history_id FROM tab WHERE tab_id = ?;");
-    query.bindValue(0, tabId);
-    if (!execute(query)) {
-        return;
-    }
-
-    if (query.first()) {
-#if DEBUG_LOGS
-        Tab tab = getTabData(query.value(0).toInt(), query.value(1).toInt());
-        qDebug() << query.value(0).toInt() << query.value(1).toInt() << tab.title() << tab.url();
-#endif
-        emit tabAvailable(getTabData(query.value(0).toInt(), query.value(1).toInt()));
-    }
-}
-
 void DBWorker::getAllTabs()
 {
     QList<Tab> tabList;

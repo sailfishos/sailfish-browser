@@ -38,7 +38,6 @@ public slots:
     void createTab(int tabId);
     int createLink(int tabId, QString url, QString title);
     void removeTab(int tabId);
-    void getTab(int tabId);
     void getAllTabs();
     void navigateTo(int tabId, QString url, QString title, QString path);
     int getMaxTabId();
@@ -58,7 +57,6 @@ public slots:
     void deleteSetting(QString name);
 
 signals:
-    void tabAvailable(Tab tab);
     void tabsAvailable(QList<Tab> tabs);
     void thumbPathChanged(int tabId, QString path);
     void titleChanged(int tabId, int linkId, QString url, QString title);
