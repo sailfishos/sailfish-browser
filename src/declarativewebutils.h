@@ -74,7 +74,6 @@ signals:
     void activateNewTabViewRequested();
     void firstUseDoneChanged();
     void dumpMemoryInfo(QString fileName);
-    void beforeShutdown();
     void cssPixelRatioChanged();
     void silicaPixelRatioChanged();
     void touchSideRadiusChanged();

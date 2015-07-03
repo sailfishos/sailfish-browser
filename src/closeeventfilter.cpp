@@ -37,7 +37,6 @@ bool CloseEventFilter::eventFilter(QObject *obj, QEvent *event)
 
 void CloseEventFilter::stopApplication()
 {
-    emit DeclarativeWebUtils::instance()->beforeShutdown();
     QMozContext::GetInstance()->stopEmbedding();
     qApp->quit();
  }

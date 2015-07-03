@@ -39,7 +39,6 @@ public:
 signals:
     void homePageChanged();
     void firstUseDoneChanged();
-    void beforeShutdown();
 
 private slots:
     void updateWebEngineSettings();
