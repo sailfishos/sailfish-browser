@@ -20,8 +20,6 @@ PersistentTabModel::PersistentTabModel(QObject *parent)
 {
     connect(DBManager::instance(), SIGNAL(tabsAvailable(QList<Tab>)),
             this, SLOT(tabsAvailable(QList<Tab>)));
-    connect(DeclarativeWebUtils::instance(), SIGNAL(beforeShutdown()),
-            this, SLOT(saveActiveTab()));
 
     DBManager::instance()->getAllTabs();
 }
@@ -70,6 +68,9 @@ void PersistentTabModel::tabsAvailable(QList<Tab> tabs)
         m_loaded = true;
         emit loadedChanged();
     }
+
+    connect(this, SIGNAL(activeTabIndexChanged()),
+            this, SLOT(saveActiveTab()), Qt::UniqueConnection);
 }
 
 int PersistentTabModel::createTab() {
