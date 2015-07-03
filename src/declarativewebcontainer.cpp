@@ -53,7 +53,6 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     , m_fullScreenMode(false)
     , m_fullScreenHeight(0.0)
     , m_imOpened(false)
-    , m_inputPanelOpenHeight(0.0)
     , m_toolbarHeight(0.0)
     , m_tabId(0)
     , m_loading(false)
@@ -145,9 +144,8 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
             connect(m_webPage, SIGNAL(loadingChanged()), this, SLOT(updateLoading()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(loadProgressChanged()), this, SLOT(updateLoadProgress()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(domContentLoadedChanged()), this, SLOT(sendVkbOpenCompositionMetrics()), Qt::UniqueConnection);
-            connect(m_webPage, SIGNAL(heightChanged()), this, SLOT(sendVkbOpenCompositionMetrics()), Qt::UniqueConnection);
-            connect(m_webPage, SIGNAL(widthChanged()), this, SLOT(sendVkbOpenCompositionMetrics()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(requestGLContext()), this, SLOT(createGLContext()), Qt::DirectConnection);
+            connect(qApp->inputMethod(), SIGNAL(visibleChanged()), this, SLOT(sendVkbOpenCompositionMetrics()), Qt::UniqueConnection);
             // Intentionally not a direct connect as signal is emitted from gecko compositor thread.
             connect(m_webPage, SIGNAL(afterRendering(QRect)), this, SLOT(updateActiveTabRendered()), Qt::UniqueConnection);
             // NB: this signal is not disconnected upon setting current m_webPage.
@@ -897,27 +895,6 @@ void DeclarativeWebContainer::updatePageFocus(bool focus)
     }
 }
 
-void DeclarativeWebContainer::updateVkbHeight()
-{
-    qreal vkbHeight = 0;
-    // Keyboard rect is updated too late, when vkb hidden we cannot yet get size.
-    // We need to send correct information to embedlite-components before virtual keyboard is open
-    // so that when input element is focused contect is zoomed to the correct target (available area).
-#if 0
-    if (qGuiApp->inputMethod()) {
-        vkbHeight = qGuiApp->inputMethod()->keyboardRectangle().height();
-    }
-#else
-    // TODO: remove once keyboard height is not zero when hidden and take above #if 0 block into use.
-    vkbHeight = 440;
-    if (width() > height()) {
-        vkbHeight = 340;
-    }
-    vkbHeight *= DeclarativeWebUtils::instance()->silicaPixelRatio();
-#endif
-    m_inputPanelOpenHeight = vkbHeight;
-}
-
 bool DeclarativeWebContainer::canInitialize() const
 {
     return QMozContext::GetInstance()->initialized() && DownloadManager::instance()->initialized() && m_model && m_model->loaded();
@@ -935,24 +912,38 @@ void DeclarativeWebContainer::loadTab(const Tab& tab, bool force)
 
 void DeclarativeWebContainer::sendVkbOpenCompositionMetrics()
 {
-    updateVkbHeight();
+    if (!m_webPage) {
+        return;
+    }
 
-    QVariantMap map;
+    int vkbRectHeight(0);
+    int winHeight(0);
+    int winWidth(0);
+
+    if (m_portrait) {
+        vkbRectHeight = qGuiApp->inputMethod()->keyboardRectangle().height();
+        winHeight = height();
+        winWidth = width();
+    } else {
+        vkbRectHeight = qGuiApp->inputMethod()->keyboardRectangle().width();
+        winHeight = width();
+        winWidth = height();
+    }
 
     // Round values to even numbers.
-    int vkbOpenCompositionHeight = height() - m_inputPanelOpenHeight;
-    int vkbOpenMaxCssCompositionWidth = width() / QMozContext::GetInstance()->pixelRatio();
-    int vkbOpenMaxCssCompositionHeight = vkbOpenCompositionHeight / QMozContext::GetInstance()->pixelRatio();
+    int compositionHeight = winHeight - vkbRectHeight;
+    int vkbOpenMaxCssCompositionWidth = winWidth / QMozContext::GetInstance()->pixelRatio();
+    int vkbOpenMaxCssCompositionHeight = compositionHeight / QMozContext::GetInstance()->pixelRatio();
 
-    map.insert("compositionHeight", vkbOpenCompositionHeight);
+    QVariantMap map;
+    map.insert("imOpen", vkbRectHeight > 0);
+    map.insert("resolution", m_webPage->resolution());
+    map.insert("compositionHeight", compositionHeight);
     map.insert("maxCssCompositionWidth", vkbOpenMaxCssCompositionWidth);
     map.insert("maxCssCompositionHeight", vkbOpenMaxCssCompositionHeight);
 
     QVariant data(map);
-
-    if (m_webPage) {
-        m_webPage->sendAsyncMessage("embedui:vkbOpenCompositionMetrics", data);
-    }
+    m_webPage->sendAsyncMessage("embedui:vkbOpenCompositionMetrics", data);
 }
 
 void DeclarativeWebContainer::createGLContext()
