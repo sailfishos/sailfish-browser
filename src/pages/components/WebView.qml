@@ -189,21 +189,20 @@ WebContainer {
                             if (size) {
                                 sizes.push(size)
                             }
-                        } else {
-                            sizes = data.href.match(/\d+/)
                         }
 
                         for (var i in sizes) {
                             var faviconSize = parseInt(sizes[i])
                             // Accept largest icon but one that is still smaller than Theme.itemSizeExtraLarge.
-                            if (faviconSize && faviconSize > iconSize && faviconSize <= Theme.itemSizeExtraLarge) {
+                            if (faviconSize && faviconSize > iconSize && faviconSize <= Theme.itemSizeExtraLarge * 2) {
                                 iconSize = faviconSize
                                 parsedFavicon = true
                             }
                         }
                     }
 
-                    if (!acceptedTouchIcon && (data.rel === "shortcut icon" || acceptableTouchIcon || parsedFavicon)) {
+                    // Always pick at least one touch icon, parsed favicons are always based on size (good enough quality)
+                    if (!acceptedTouchIcon && acceptableTouchIcon || parsedFavicon) {
                         favicon = data.href
                         iconType = iconSize >= Theme.iconSizeMedium ? data.rel : ""
                     }
