@@ -35,7 +35,7 @@ public :
 
     bool setMaxLivePages(int count);
     int maxLivePages() const;
-    void virtualizeInactive();
+    bool virtualizeInactive();
 
     void dumpPages() const;
 

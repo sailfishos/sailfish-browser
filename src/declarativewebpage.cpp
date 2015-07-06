@@ -371,7 +371,7 @@ QDebug operator<<(QDebug dbg, const DeclarativeWebPage *page)
     }
 
     dbg.nospace() << "DeclarativeWebPage(url = " << page->url() << ", title = " << page->title() << ", width = " << page->width()
-                  << ", height = " << page->height() << ", opacity = " //<< page->opacity()
+                  << ", height = " << page->height() << ", completed = " << page->completed()
                   << ", active = " << page->active() << ", enabled = " << page->enabled() << ")";
     return dbg.space();
 }
