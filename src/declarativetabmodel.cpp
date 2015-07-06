@@ -292,29 +292,6 @@ void DeclarativeTabModel::updateUrl(int tabId, bool activeTab, const QString &ur
     }
 }
 
-void DeclarativeTabModel::updateTitle(int tabId, bool activeTab, QString url, QString title)
-{
-    int tabIndex = findTabIndex(tabId);
-    bool updateDb = false;
-    int linkId = 0;
-    if (tabIndex >= 0 && (m_tabs.at(tabIndex).title() != title || activeTab)) {
-        QVector<int> roles;
-        roles << TitleRole;
-        m_tabs[tabIndex].setTitle(title);
-        linkId = m_tabs.at(tabIndex).currentLink();
-        emit dataChanged(index(tabIndex, 0), index(tabIndex, 0), roles);
-        updateDb = true;
-
-        if (tabId == m_activeTab.tabId() && activeTab) {
-            m_activeTab.setTitle(title);
-        }
-    }
-
-    if (updateDb) {
-        updateTitle(tabId, linkId, url, title);
-    }
-}
-
 void DeclarativeTabModel::removeTab(int tabId, const QString &thumbnail, int index)
 {
 #if DEBUG_LOGS
@@ -421,5 +398,25 @@ void DeclarativeTabModel::onUrlChanged()
             addTab(url, "");
         }
         webPage->setInitialLoadHasHappened();
+    }
+}
+
+void DeclarativeTabModel::onTitleChanged()
+{
+    DeclarativeWebPage *webPage = qobject_cast<DeclarativeWebPage *>(sender());
+    if (webPage) {
+        QString title = webPage->title();
+        int tabId = webPage->tabId();
+        int tabIndex = findTabIndex(tabId);
+        if (tabIndex >= 0 && (m_tabs.at(tabIndex).title() != title)) {
+            QVector<int> roles;
+            roles << TitleRole;
+            m_tabs[tabIndex].setTitle(title);
+            emit dataChanged(index(tabIndex, 0), index(tabIndex, 0), roles);
+            if (tabId == m_activeTab.tabId()) {
+                m_activeTab.setTitle(title);
+            }
+            updateTitle(tabId, m_tabs.at(tabIndex).currentLink(), webPage->url().toString(), title);
+        }
     }
 }

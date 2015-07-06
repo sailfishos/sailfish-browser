@@ -137,7 +137,6 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
             connect(m_webPage, SIGNAL(canGoForwardChanged()), this, SIGNAL(canGoForwardChanged()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(urlChanged()), this, SIGNAL(urlChanged()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(titleChanged()), this, SIGNAL(titleChanged()), Qt::UniqueConnection);
-            connect(m_webPage, SIGNAL(titleChanged()), this, SLOT(onPageTitleChanged()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(imeNotification(int,bool,int,int,QString)),
                     this, SLOT(imeNotificationChanged(int,bool,int,int,QString)), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(windowCloseRequested()), this, SLOT(closeWindow()), Qt::UniqueConnection);
@@ -148,8 +147,9 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
             connect(qApp->inputMethod(), SIGNAL(visibleChanged()), this, SLOT(sendVkbOpenCompositionMetrics()), Qt::UniqueConnection);
             // Intentionally not a direct connect as signal is emitted from gecko compositor thread.
             connect(m_webPage, SIGNAL(afterRendering(QRect)), this, SLOT(updateActiveTabRendered()), Qt::UniqueConnection);
-            // NB: this signal is not disconnected upon setting current m_webPage.
+            // NB: these signals are not disconnected upon setting current m_webPage.
             connect(m_webPage, SIGNAL(urlChanged()), m_model, SLOT(onUrlChanged()), Qt::UniqueConnection);
+            connect(m_webPage, SIGNAL(titleChanged()), m_model, SLOT(onTitleChanged()), Qt::UniqueConnection);
 
             m_webPage->setWindow(this);
             if (m_chromeWindow) {
@@ -810,18 +810,6 @@ void DeclarativeWebContainer::closeWindow()
             m_model->activateTabById(parentPageTabId);
             m_model->removeTabById(webPage->tabId(), isActiveTab(webPage->tabId()));
         }
-    }
-}
-
-void DeclarativeWebContainer::onPageTitleChanged()
-{
-    DeclarativeWebPage *webPage = qobject_cast<DeclarativeWebPage *>(sender());
-    if (webPage && m_model) {
-        QString url = webPage->url().toString();
-        QString title = webPage->title();
-        int tabId = webPage->tabId();
-        bool activeTab = isActiveTab(tabId);
-        m_model->updateTitle(tabId, activeTab, url, title);
     }
 }
 

@@ -191,7 +191,6 @@ private slots:
     void onNewTabRequested(QString url, QString title, int parentId);
     void releasePage(int tabId);
     void closeWindow();
-    void onPageTitleChanged();
     void updateLoadProgress();
     void updateLoading();
     void updateActiveTabRendered();

@@ -74,11 +74,11 @@ public:
     bool contains(int tabId) const;
 
     void updateUrl(int tabId, bool activeTab, const QString &url, bool initialLoad);
-    void updateTitle(int tabId, bool activeTab, QString url, QString title);
 
 public slots:
     void updateThumbnailPath(int tabId, QString path);
     void onUrlChanged();
+    void onTitleChanged();
 
 signals:
     void activeTabIndexChanged();
