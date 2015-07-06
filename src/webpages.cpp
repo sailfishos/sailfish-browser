@@ -100,6 +100,12 @@ void WebPages::initialMemoryLevel(QDBusPendingCallWatcher *watcher)
     watcher->deleteLater();
 }
 
+void WebPages::delayVirtualization()
+{
+    handleMemNotify(m_memoryLevel);
+    disconnect(m_activePages.activeWebPage(), SIGNAL(completedChanged()), this, SLOT(delayVirtualization()));
+}
+
 bool WebPages::initialized() const
 {
     return m_webContainer && m_webPageComponent;
@@ -243,7 +249,10 @@ void WebPages::handleMemNotify(const QString &memoryLevel)
     }
 
     if (m_memoryLevel == MemWarning || m_memoryLevel == MemCritical) {
-        m_activePages.virtualizeInactive();
+
+        if (!m_activePages.virtualizeInactive() && m_activePages.activeWebPage() && !m_activePages.activeWebPage()->completed()) {
+            connect(m_activePages.activeWebPage(), SIGNAL(completedChanged()), this, SLOT(delayVirtualization()), Qt::UniqueConnection);
+        }
 
         if (!m_webContainer->foreground() &&
                 (QDateTime::currentMSecsSinceEpoch() - m_backgroundTimestamp) > gMemoryPressureTimeout) {

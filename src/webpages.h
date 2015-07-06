@@ -60,6 +60,7 @@ private slots:
     void handleMemNotify(const QString &memoryLevel);
     void updateBackgroundTimestamp();
     void initialMemoryLevel(QDBusPendingCallWatcher *watcher);
+    void delayVirtualization();
 
 private:
     void updateStates(DeclarativeWebPage *oldActivePage, DeclarativeWebPage *newActivePage);
