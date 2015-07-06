@@ -10,11 +10,12 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "privatetabmodel.h"
+#include "declarativewebcontainer.h"
 #include "declarativewebutils.h"
 #include "dbmanager.h"
 
-PrivateTabModel::PrivateTabModel(QObject *parent)
-    : DeclarativeTabModel(DBManager::instance()->getMaxTabId() + 10000, parent),
+PrivateTabModel::PrivateTabModel(DeclarativeWebContainer *webContainer)
+    : DeclarativeTabModel(DBManager::instance()->getMaxTabId() + 10000, webContainer),
       m_nextLinkId(1)
 {
     // Startup should be synced to this.

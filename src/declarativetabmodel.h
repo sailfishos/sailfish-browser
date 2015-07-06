@@ -18,6 +18,8 @@
 
 #include "tab.h"
 
+class DeclarativeWebContainer;
+
 class DeclarativeTabModel : public QAbstractListModel
 {
     Q_OBJECT
@@ -30,7 +32,7 @@ protected:
     Q_PROPERTY(bool waitingForNewTab READ waitingForNewTab WRITE setWaitingForNewTab NOTIFY waitingForNewTabChanged FINAL)
 
 public:
-    DeclarativeTabModel(int nextTabId = 1, QObject *parent = 0);
+    DeclarativeTabModel(int nextTabId = 1, DeclarativeWebContainer *webContainer = 0);
     ~DeclarativeTabModel();
     
     enum TabRoles {
@@ -44,7 +46,7 @@ public:
     Q_INVOKABLE void remove(int index);
     Q_INVOKABLE void clear();
     Q_INVOKABLE bool activateTab(const QString &url);
-    Q_INVOKABLE bool activateTab(int index, bool loadActiveTab = true);
+    Q_INVOKABLE void activateTab(int index, bool loadActiveTab = true);
     Q_INVOKABLE void closeActiveTab();
     Q_INVOKABLE void newTab(const QString &url, const QString &title, int parentId = 0);
 
@@ -53,7 +55,6 @@ public:
     int activeTabIndex() const;
     int activeTabId() const;
     int count() const;
-    void addTab(const QString &url, const QString &title);
     bool activateTabById(int tabId);
     void removeTabById(int tabId, bool activeTab);
 
@@ -94,6 +95,7 @@ signals:
     void newTabRequested(QString url, QString title, int parentId = 0);
 
 protected:
+    void addTab(const QString &url, const QString &title, int index);
     void removeTab(int tabId, const QString &thumbnail, int index);
     int findTabIndex(int tabId) const;
     void updateActiveTab(const Tab &activeTab, bool loadActiveTab);
@@ -107,6 +109,11 @@ protected:
     virtual void navigateTo(int tabId, QString url, QString title, QString path) = 0;
     virtual void updateThumbPath(int tabId, QString path) = 0;
 
+    int nextActiveTabIndex(int index);
+
+    // Used from the tab model unit tests only.
+    void setWebContainer(DeclarativeWebContainer *webContainer);
+
     int m_activeTabId;
     QList<Tab> m_tabs;
 
@@ -114,6 +121,9 @@ protected:
     bool m_waitingForNewTab;
     int m_nextTabId;
 
+    QPointer<DeclarativeWebContainer> m_webContainer;
+
+    friend class tst_declarativehistorymodel;
     friend class tst_declarativetabmodel;
     friend class tst_webview;
 };

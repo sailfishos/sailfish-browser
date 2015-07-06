@@ -114,6 +114,7 @@ public:
 
     bool isActiveTab(int tabId);
     bool activatePage(const Tab& tab, bool force = false, int parentId = 0);
+    int findParentTabId(int tabId) const;
 
     Q_INVOKABLE void load(QString url = "", QString title = "", bool force = false);
     Q_INVOKABLE void reload(bool force = true);
@@ -206,7 +207,6 @@ private slots:
 private:
     void setWebPage(DeclarativeWebPage *webPage);
     qreal contentHeight() const;
-    int parentTabId(int tabId) const;
     bool canInitialize() const;
     void loadTab(const Tab& tab, bool force);
     void updateMode();

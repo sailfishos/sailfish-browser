@@ -13,10 +13,11 @@
 
 #include "persistenttabmodel.h"
 #include "dbmanager.h"
+#include "declarativewebcontainer.h"
 #include "declarativewebutils.h"
 
-PersistentTabModel::PersistentTabModel(QObject *parent)
-    : DeclarativeTabModel(DBManager::instance()->getMaxTabId() + 1, parent)
+PersistentTabModel::PersistentTabModel(DeclarativeWebContainer *webContainer)
+    : DeclarativeTabModel(DBManager::instance()->getMaxTabId() + 1, webContainer)
 {
     connect(DBManager::instance(), SIGNAL(tabsAvailable(QList<Tab>)),
             this, SLOT(tabsAvailable(QList<Tab>)));

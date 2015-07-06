@@ -46,6 +46,8 @@ private:
 
         DeclarativeWebPage *webPage;
         int tabId;
+        int uniqueId;
+        int parentId;
         QRectF *cssContentRect;
         bool allowPageDelete;
     };
