@@ -1,7 +1,7 @@
 Name:       sailfish-browser
 
 Summary:    Sailfish Browser
-Version:    1.13.21
+Version:    1.13.25
 Release:    1
 Group:      Applications/Internet
 License:    MPLv2
@@ -26,7 +26,7 @@ BuildRequires:  oneshot
 Requires: sailfishsilica-qt5 >= 0.21.13
 Requires: jolla-ambient >= 0.7.12
 Requires: xulrunner-qt5 >= 31.7.0.22
-Requires: embedlite-components-qt5 >= 1.8.7
+Requires: embedlite-components-qt5 >= 1.8.10
 Requires: qtmozembed-qt5 >= 1.12.26
 Requires: sailfish-browser-settings = %{version}
 Requires: qt5-plugin-imageformat-ico

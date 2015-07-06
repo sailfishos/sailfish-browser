@@ -209,7 +209,6 @@ private:
     void setWebPage(DeclarativeWebPage *webPage);
     qreal contentHeight() const;
     int parentTabId(int tabId) const;
-    void updateVkbHeight();
     bool canInitialize() const;
     void loadTab(const Tab& tab, bool force);
     void updateMode();
@@ -243,7 +242,6 @@ private:
     bool m_fullScreenMode;
     qreal m_fullScreenHeight;
     bool m_imOpened;
-    qreal m_inputPanelOpenHeight;
     qreal m_toolbarHeight;
 
     QString m_favicon;
