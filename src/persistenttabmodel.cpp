@@ -46,7 +46,7 @@ void PersistentTabModel::tabsAvailable(QList<Tab> tabs)
             m_activeTabId = tabId;
         } else {
             // Fallback for browser update as this "activeTabId" is a new setting.
-            m_activeTabId = 0;
+            m_activeTabId = m_tabs.at(0).tabId();
         }
         emit activeTabIndexChanged();
     }
