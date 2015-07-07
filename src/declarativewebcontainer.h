@@ -194,7 +194,6 @@ private slots:
     void updateLoadProgress();
     void updateLoading();
     void updateActiveTabRendered();
-    void setActiveTabData();
 
     void updateWindowFlags();
 
@@ -251,7 +250,6 @@ private:
     // Once downloading has been started and if we have existing tabs we reset
     // back to the active tab and load it. In case we did not have tabs open when downloading was
     // triggered we just clear these.
-    int m_tabId;
     QString m_initialUrl;
 
     bool m_loading;

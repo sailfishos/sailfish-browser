@@ -50,6 +50,7 @@ public:
     Q_INVOKABLE void dumpTabs() const;
 
     int activeTabIndex() const;
+    int activeTabId() const;
     int count() const;
     void addTab(const QString &url, const QString &title);
     bool activateTabById(int tabId);

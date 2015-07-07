@@ -190,6 +190,11 @@ int DeclarativeTabModel::activeTabIndex() const
     return findTabIndex(m_activeTabId);
 }
 
+int DeclarativeTabModel::activeTabId() const
+{
+    return m_activeTabId;
+}
+
 int DeclarativeTabModel::count() const
 {
     return m_tabs.count();
