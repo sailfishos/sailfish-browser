@@ -186,16 +186,14 @@ public slots:
 private slots:
     void imeNotificationChanged(int state, bool open, int cause, int focusChange, const QString& type);
     void initialize();
-    void onActiveTabChanged(int oldTabId, int activeTabId, bool loadActiveTab);
+    void onActiveTabChanged(int activeTabId, bool loadActiveTab);
     void onDownloadStarted();
     void onNewTabRequested(QString url, QString title, int parentId);
     void releasePage(int tabId);
     void closeWindow();
-    void onPageTitleChanged();
     void updateLoadProgress();
     void updateLoading();
     void updateActiveTabRendered();
-    void setActiveTabData();
 
     void updateWindowFlags();
 
@@ -252,7 +250,6 @@ private:
     // Once downloading has been started and if we have existing tabs we reset
     // back to the active tab and load it. In case we did not have tabs open when downloading was
     // triggered we just clear these.
-    int m_tabId;
     QString m_initialUrl;
 
     bool m_loading;

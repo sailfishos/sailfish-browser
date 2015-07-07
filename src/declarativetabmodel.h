@@ -50,6 +50,7 @@ public:
     Q_INVOKABLE void dumpTabs() const;
 
     int activeTabIndex() const;
+    int activeTabId() const;
     int count() const;
     void addTab(const QString &url, const QString &title);
     bool activateTabById(int tabId);
@@ -73,17 +74,15 @@ public:
 
     bool contains(int tabId) const;
 
-    void updateUrl(int tabId, bool activeTab, const QString &url, bool initialLoad);
-    void updateTitle(int tabId, bool activeTab, QString url, QString title);
-
 public slots:
     void updateThumbnailPath(int tabId, QString path);
     void onUrlChanged();
+    void onTitleChanged();
 
 signals:
     void activeTabIndexChanged();
     void countChanged();
-    void activeTabChanged(int oldTabId, int activeTabId, bool loadActiveTab = true);
+    void activeTabChanged(int activeTabId, bool loadActiveTab = true);
     // TODO: Update test to use activeTabChanged instead. Currently this is here
     // only for testing purposes.
     void tabAdded(int tabId);
@@ -97,6 +96,7 @@ protected:
     void removeTab(int tabId, const QString &thumbnail, int index);
     int findTabIndex(int tabId) const;
     void updateActiveTab(const Tab &activeTab, bool loadActiveTab);
+    void updateUrl(int tabId, const QString &url, bool initialLoad);
 
     virtual int createTab() = 0;
     virtual int createLink(int tabId, QString url, QString title) = 0;
@@ -106,8 +106,7 @@ protected:
     virtual void navigateTo(int tabId, QString url, QString title, QString path) = 0;
     virtual void updateThumbPath(int tabId, QString path) = 0;
 
-    // This should be replaced by m_activeTabIndex
-    Tab m_activeTab;
+    int m_activeTabId;
     QList<Tab> m_tabs;
 
     bool m_loaded;

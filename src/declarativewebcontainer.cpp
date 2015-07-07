@@ -54,7 +54,6 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     , m_fullScreenHeight(0.0)
     , m_imOpened(false)
     , m_toolbarHeight(0.0)
-    , m_tabId(0)
     , m_loading(false)
     , m_loadProgress(0)
     , m_completed(false)
@@ -137,7 +136,6 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
             connect(m_webPage, SIGNAL(canGoForwardChanged()), this, SIGNAL(canGoForwardChanged()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(urlChanged()), this, SIGNAL(urlChanged()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(titleChanged()), this, SIGNAL(titleChanged()), Qt::UniqueConnection);
-            connect(m_webPage, SIGNAL(titleChanged()), this, SLOT(onPageTitleChanged()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(imeNotification(int,bool,int,int,QString)),
                     this, SLOT(imeNotificationChanged(int,bool,int,int,QString)), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(windowCloseRequested()), this, SLOT(closeWindow()), Qt::UniqueConnection);
@@ -148,17 +146,16 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
             connect(qApp->inputMethod(), SIGNAL(visibleChanged()), this, SLOT(sendVkbOpenCompositionMetrics()), Qt::UniqueConnection);
             // Intentionally not a direct connect as signal is emitted from gecko compositor thread.
             connect(m_webPage, SIGNAL(afterRendering(QRect)), this, SLOT(updateActiveTabRendered()), Qt::UniqueConnection);
-            // NB: this signal is not disconnected upon setting current m_webPage.
+            // NB: these signals are not disconnected upon setting current m_webPage.
             connect(m_webPage, SIGNAL(urlChanged()), m_model, SLOT(onUrlChanged()), Qt::UniqueConnection);
+            connect(m_webPage, SIGNAL(titleChanged()), m_model, SLOT(onTitleChanged()), Qt::UniqueConnection);
 
             m_webPage->setWindow(this);
             if (m_chromeWindow) {
                 updateContentOrientation(m_chromeWindow->contentOrientation());
             }
-            m_tabId = m_webPage->tabId();
             setActiveTabRendered(m_webPage->isPainted());
         } else {
-            m_tabId = 0;
             setActiveTabRendered(false);
         }
 
@@ -193,7 +190,8 @@ void DeclarativeWebContainer::setTabModel(DeclarativeTabModel *model)
         m_model = model;
         int newCount = 0;
         if (m_model) {
-            connect(m_model, SIGNAL(activeTabChanged(int,int,bool)), this, SLOT(onActiveTabChanged(int,int,bool)));
+            connect(m_model, SIGNAL(activeTabChanged(int,bool)), this, SLOT(onActiveTabChanged(int,bool)));
+            connect(m_model, SIGNAL(activeTabChanged(int,bool)), this, SIGNAL(tabIdChanged()));
             connect(m_model, SIGNAL(loadedChanged()), this, SLOT(initialize()));
             connect(m_model, SIGNAL(tabClosed(int)), this, SLOT(releasePage(int)));
             connect(m_model, SIGNAL(newTabRequested(QString,QString,int)), this, SLOT(onNewTabRequested(QString,QString,int)));
@@ -325,7 +323,8 @@ void DeclarativeWebContainer::setChromeWindow(QObject *chromeWindow)
 
 int DeclarativeWebContainer::tabId() const
 {
-    return m_tabId;
+    Q_ASSERT(!!m_model);
+    return m_model->activeTabId();
 }
 
 QString DeclarativeWebContainer::title() const
@@ -366,8 +365,9 @@ void DeclarativeWebContainer::load(QString url, QString title, bool force)
  */
 void DeclarativeWebContainer::reload(bool force)
 {
-    if (m_tabId > 0) {
-        if (force && m_webPage && m_webPage->completed() && m_webPage->tabId() == m_tabId) {
+    int activeTabId = tabId();
+    if (activeTabId > 0) {
+        if (force && m_webPage && m_webPage->completed() && m_webPage->tabId() == activeTabId) {
             // Reload live active tab directly.
             m_webPage->reload();
         } else {
@@ -419,7 +419,7 @@ bool DeclarativeWebContainer::alive(int tabId)
 void DeclarativeWebContainer::updateMode()
 {
     setTabModel(privateMode() ? m_privateTabModel.data() : m_persistentTabModel.data());
-    setActiveTabData();
+    emit tabIdChanged();
 
     // Reload active tab from new mode
     if (m_model->count() > 0) {
@@ -680,21 +680,17 @@ qreal DeclarativeWebContainer::contentHeight() const
     }
 }
 
-void DeclarativeWebContainer::onActiveTabChanged(int oldTabId, int activeTabId, bool loadActiveTab)
+void DeclarativeWebContainer::onActiveTabChanged(int activeTabId, bool loadActiveTab)
 {
     if (activeTabId <= 0) {
         return;
     }
-    setActiveTabData();
 
     if (!loadActiveTab) {
         return;
     }
 
-    // Switch to different tab.
-    if (oldTabId != activeTabId) {
-        reload(false);
-    }
+    reload(false);
 }
 
 void DeclarativeWebContainer::initialize()
@@ -813,18 +809,6 @@ void DeclarativeWebContainer::closeWindow()
     }
 }
 
-void DeclarativeWebContainer::onPageTitleChanged()
-{
-    DeclarativeWebPage *webPage = qobject_cast<DeclarativeWebPage *>(sender());
-    if (webPage && m_model) {
-        QString url = webPage->url().toString();
-        QString title = webPage->title();
-        int tabId = webPage->tabId();
-        bool activeTab = isActiveTab(tabId);
-        m_model->updateTitle(tabId, activeTab, url, title);
-    }
-}
-
 void DeclarativeWebContainer::updateLoadProgress()
 {
     if (!m_webPage || (m_loadProgress == 0 && m_webPage->loadProgress() == 50)) {
@@ -851,19 +835,6 @@ void DeclarativeWebContainer::updateActiveTabRendered()
     setActiveTabRendered(true);
     // One frame rendered so let's disconnect.
     disconnect(m_webPage, SIGNAL(afterRendering(QRect)), this, SLOT(updateActiveTabRendered()));
-}
-
-void DeclarativeWebContainer::setActiveTabData()
-{
-    const Tab &tab = m_model->activeTab();
-#if DEBUG_LOGS
-    qDebug() << &tab;
-#endif
-
-    if (m_tabId != tab.tabId()) {
-        m_tabId = tab.tabId();
-        emit tabIdChanged();
-    }
 }
 
 void DeclarativeWebContainer::updateWindowFlags()

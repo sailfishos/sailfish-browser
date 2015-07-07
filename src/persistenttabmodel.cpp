@@ -43,10 +43,10 @@ void PersistentTabModel::tabsAvailable(QList<Tab> tabs)
         int tabId = activeTabId.toInt(&ok);
         int index = findTabIndex(tabId);
         if (index >= 0) {
-            m_activeTab = m_tabs[index];
+            m_activeTabId = tabId;
         } else {
             // Fallback for browser update as this "activeTabId" is a new setting.
-            m_activeTab = m_tabs[0];
+            m_activeTabId = 0;
         }
         emit activeTabIndexChanged();
     }
@@ -109,5 +109,5 @@ void PersistentTabModel::updateThumbPath(int tabId, QString path)
 
 void PersistentTabModel::saveActiveTab() const
 {
-    DBManager::instance()->saveSetting("activeTabId", QString("%1").arg(m_activeTab.tabId()));
+    DBManager::instance()->saveSetting("activeTabId", QString("%1").arg(m_activeTabId));
 }
