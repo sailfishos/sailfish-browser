@@ -843,13 +843,13 @@ void DeclarativeWebContainer::updateActiveTabRendered()
 
 void DeclarativeWebContainer::setActiveTabData()
 {
-    const Tab &tab = m_model->activeTab();
+    const int tabId = (m_model->count() > 0) ? m_model->activeTab().tabId() : 0;
 #if DEBUG_LOGS
-    qDebug() << &tab;
+    qDebug() << "Active tabId" << tabId;
 #endif
 
-    if (m_tabId != tab.tabId()) {
-        m_tabId = tab.tabId();
+    if (m_tabId != tabId) {
+        m_tabId = tabId;
         emit tabIdChanged();
     }
 }
