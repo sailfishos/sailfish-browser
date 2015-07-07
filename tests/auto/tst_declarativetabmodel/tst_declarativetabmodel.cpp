@@ -58,8 +58,6 @@ private slots:
     void invalidTabs_data();
     void invalidTabs();
 
-    void updateTitle();
-
     void reloadModel();
     void changeTabAndLoad();
 
@@ -283,9 +281,6 @@ void tst_declarativetabmodel::multipleTabsWithSameUrls()
     QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), page2Tab1Url);
     QVERIFY(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString().isEmpty());
 
-    tabModel->updateTitle(tab2, true, page2Tab2Url, page2Tab2Title);
-    QCOMPARE(tabModel->activeTab().title(), page2Tab2Title);
-
     QTest::qWait(1000);
 
     QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,int)));
@@ -363,71 +358,6 @@ void tst_declarativetabmodel::invalidTabs()
     QCOMPARE(activeTabChangedSpy.count(), 0);
 }
 
-void tst_declarativetabmodel::updateTitle()
-{
-    QSignalSpy titleChangeSpy(DBManager::instance(), SIGNAL(titleChanged(int,int,QString,QString)));
-    int tabId = currentTabId();
-    QString title = "A title something";
-    tabModel->updateTitle(tabId, true, currentTabUrl(), title);
-    waitSignals(titleChangeSpy, 1);
-
-    QCOMPARE(tabModel->activeTab().title(), title);
-
-    QString url = "http://foobar";
-    tabModel->addTab(url, "");
-    int tab1 = currentTabId();
-    QVERIFY(tabModel->activeTab().title().isEmpty());
-    QCOMPARE(tabModel->activeTab().url(), url);
-
-    title = "FooBar Title";
-    tabModel->updateTitle(tab1, true, url, title);
-    waitSignals(titleChangeSpy, 2);
-    QCOMPARE(tabModel->activeTab().title(), title);
-
-    int changedIndex = tabModel->findTabIndex(tab1);
-    QModelIndex modelIndex = tabModel->createIndex(changedIndex, 0);
-    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), title);
-
-    tabModel->updateTitle(tab1, true, currentTabUrl(), "");
-    waitSignals(titleChangeSpy, 3);
-    QVERIFY(tabModel->activeTab().title().isEmpty());
-    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), QString(""));
-
-    // Add a new tab with same url and change title "" -> "FooBar"
-    title = "FooBar";
-    tabModel->addTab(url, title);
-    int tab2 = currentTabId();
-    QCOMPARE(tab2, currentTabId());
-    QCOMPARE(tabModel->activeTab().title(), title);
-    QCOMPARE(tabModel->activeTab().url(), url);
-
-    changedIndex = tabModel->findTabIndex(tab2);
-    modelIndex = tabModel->createIndex(changedIndex, 0);
-    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), url);
-    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), title);
-
-    title = "FooBar Two";
-    tabModel->updateTitle(tab2, true, url, title);
-    waitSignals(titleChangeSpy, 4);
-    QCOMPARE(tabModel->activeTab().title(), title);
-
-    modelIndex = tabModel->createIndex(changedIndex, 0);
-    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), url);
-    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), title);
-
-    QString activeTabTitle = tabModel->activeTab().title();
-
-    title = "FooBar non active tab";
-    tabModel->updateTitle(tab1, false, url, title);
-    waitSignals(titleChangeSpy, 5);
-    QCOMPARE(tabModel->activeTab().title(), activeTabTitle);
-
-    changedIndex = tabModel->findTabIndex(tab1);
-    modelIndex = tabModel->createIndex(changedIndex, 0);
-    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), url);
-    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), title);
-}
-
 void tst_declarativetabmodel::reloadModel()
 {
     tabModel->deleteLater();
@@ -441,7 +371,7 @@ void tst_declarativetabmodel::reloadModel()
     QVERIFY(tabModel);
     waitSignals(loadedSpy, 1);
 
-    QCOMPARE(tabModel->count(), 4);
+    QCOMPARE(tabModel->count(), 2);
 
     int activeTabIndex = tabModel->findTabIndex(tabModel->activeTab().tabId());
     QModelIndex modelIndex = tabModel->createIndex(activeTabIndex, 0);
@@ -458,28 +388,15 @@ void tst_declarativetabmodel::reloadModel()
 
     modelIndex = tabModel->createIndex(1, 0);
     QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), QString("foo/bar/index.html"));
-    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), QString("A title something"));
     QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt(), 4);
     QCOMPARE(tabModel->m_tabs.at(1).currentLink(), 12);
-
-    modelIndex = tabModel->createIndex(2, 0);
-    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), QString("http://foobar"));
-    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), QString("FooBar non active tab"));
-    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt(), 7);
-    QCOMPARE(tabModel->m_tabs.at(2).currentLink(), 13);
-
-    modelIndex = tabModel->createIndex(3, 0);
-    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), QString("http://foobar"));
-    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), QString("FooBar Two"));
-    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt(), 8);
-    QCOMPARE(tabModel->m_tabs.at(3).currentLink(), 14);
 }
 
 void tst_declarativetabmodel::changeTabAndLoad()
 {
     // Highest linkId of available tabs is 18
     int nextLinkId = DBManager::instance()->nextLinkId();
-    QCOMPARE(nextLinkId, 15);
+    QCOMPARE(nextLinkId, 13);
 
     tabModel->activateTab(1);
     QCOMPARE(currentTabId(), 4);
