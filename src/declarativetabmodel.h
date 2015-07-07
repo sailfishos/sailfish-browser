@@ -105,7 +105,6 @@ protected:
     virtual void navigateTo(int tabId, QString url, QString title, QString path) = 0;
     virtual void updateThumbPath(int tabId, QString path) = 0;
 
-    // This should be replaced by m_activeTabIndex
     int m_activeTabId;
     QList<Tab> m_tabs;
 
