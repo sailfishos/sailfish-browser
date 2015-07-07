@@ -43,6 +43,7 @@ QHash<int, QByteArray> DeclarativeTabModel::roleNames() const
     roles[ThumbPathRole] = "thumbnailPath";
     roles[TitleRole] = "title";
     roles[UrlRole] = "url";
+    roles[ActiveRole] = "activeTab";
     roles[TabIdRole] = "tabId";
     return roles;
 }
@@ -216,6 +217,8 @@ QVariant DeclarativeTabModel::data(const QModelIndex & index, int role) const {
         return tab.title();
     } else if (role == UrlRole) {
         return tab.url();
+    } else if (role == ActiveRole) {
+        return tab.tabId() == m_activeTabId;
     } else if (role == TabIdRole) {
         return tab.tabId();
     }
@@ -340,6 +343,7 @@ void DeclarativeTabModel::updateActiveTab(const Tab &activeTab, bool loadActiveT
     }
 
     if (m_activeTabId != activeTab.tabId()) {
+        int oldTabId = m_activeTabId;
         m_activeTabId = activeTab.tabId();
 
         setWaitingForNewTab(true);
@@ -347,6 +351,13 @@ void DeclarativeTabModel::updateActiveTab(const Tab &activeTab, bool loadActiveT
         // If tab has changed, update active tab role.
         int tabIndex = activeTabIndex();
         if (tabIndex >= 0) {
+            QVector<int> roles;
+            roles << ActiveRole;
+            int oldIndex = findTabIndex(oldTabId);
+            if (oldIndex >= 0) {
+                emit dataChanged(index(oldIndex), index(oldIndex), roles);
+            }
+            emit dataChanged(index(tabIndex), index(tabIndex), roles);
             emit activeTabIndexChanged();
         }
         // To avoid blinking we don't expose "activeTabIndex" as a model role because

@@ -221,9 +221,7 @@ Background {
                     // Push the currently active tab index.
                     // Changing of active tab cannot cause blinking.
                     webView.grabActivePage()
-                    pageStack.push(tabView, {
-                                       "activeTabIndex": webView.tabModel.activeTabIndex
-                                   })
+                    pageStack.push(tabView)
                 }
                 onShowSecondaryTools: overlayAnimator.showSecondaryTools()
                 onShowChrome: overlayAnimator.showChrome()
@@ -412,7 +410,6 @@ Background {
         id: tabView
         Page {
             id: tabPage
-            property int activeTabIndex
 
             onStatusChanged: browserPage.tabPageActive = (status == PageStatus.Active)
 
@@ -427,8 +424,6 @@ Background {
 
                 onPrivateModeChanged: {
                     webView.privateMode = privateMode
-                    tabPage.activeTabIndex =  webView.tabModel.activeTabIndex
-
                     if (webView.tabModel.count === 0) {
                         overlay.enterNewTabUrl(PageStackAction.Immediate)
                     } else if (!overlayAnimator.atBottom) {
@@ -460,7 +455,7 @@ Background {
                 }
 
                 Component.onCompleted: {
-                    positionViewAtIndex(tabPage.activeTabIndex, ListView.Center)
+                    positionViewAtIndex(webView.tabModel.activeTabIndex, ListView.Center)
                     window.setBrowserCover(webView.tabModel)
                 }
 

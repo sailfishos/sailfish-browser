@@ -15,7 +15,6 @@ import Sailfish.Silica 1.0
 BackgroundItem {
     id: root
 
-    property bool activeTab: activeTabIndex === index
     // Expose ListView for all items
     property Item view: ListView.view
     property bool destroying
@@ -76,11 +75,6 @@ BackgroundItem {
                 root.implicitWidth = root.width
 
                 destroying = true
-                // Break binding to prevent texture source to change.
-                if (activeTab) {
-                    activeTab = true
-                }
-                activeTabIndex = -1
                 removeTimer.running = true
             }
         },
