@@ -186,7 +186,7 @@ public slots:
 private slots:
     void imeNotificationChanged(int state, bool open, int cause, int focusChange, const QString& type);
     void initialize();
-    void onActiveTabChanged(int oldTabId, int activeTabId, bool loadActiveTab);
+    void onActiveTabChanged(int activeTabId, bool loadActiveTab);
     void onDownloadStarted();
     void onNewTabRequested(QString url, QString title, int parentId);
     void releasePage(int tabId);

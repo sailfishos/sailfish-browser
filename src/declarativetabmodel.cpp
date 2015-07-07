@@ -340,14 +340,13 @@ void DeclarativeTabModel::updateActiveTab(const Tab &activeTab, bool loadActiveT
     }
 
     if (m_activeTabId != activeTab.tabId()) {
-        int oldTabId = m_activeTabId;
         m_activeTabId = activeTab.tabId();
 
         setWaitingForNewTab(true);
 
         // If tab has changed, update active tab role.
         int tabIndex = activeTabIndex();
-        if (oldTabId != m_activeTabId && tabIndex >= 0) {
+        if (tabIndex >= 0) {
             emit activeTabIndexChanged();
         }
         // To avoid blinking we don't expose "activeTabIndex" as a model role because
@@ -355,7 +354,7 @@ void DeclarativeTabModel::updateActiveTab(const Tab &activeTab, bool loadActiveT
         // Instead, we pass current contentItem and activeTabIndex
         // when pushing the TabPage to the PageStack. This is the signal changes the
         // contentItem of WebView.
-        emit activeTabChanged(oldTabId, activeTab.tabId(), loadActiveTab);
+        emit activeTabChanged(activeTab.tabId(), loadActiveTab);
     }
 }
 

@@ -155,7 +155,7 @@ void tst_declarativetabmodel::activateTabs()
     // "file:///opt/tests/sailfish-browser/manual/testpage.html"
     // "https://sailfishos.org/sailfish-silica/index.html"
     // "http://www.jolla.com"
-    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,int)));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
     for (int i = 0; i < originalTabOrder.count(); ++i) {
         tabModel->activateTab(i, true);
         QCOMPARE(activeTabChangedSpy.count(), 1);
@@ -182,7 +182,7 @@ void tst_declarativetabmodel::activateTabs()
 
 void tst_declarativetabmodel::remove()
 {
-    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,int)));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
     QSignalSpy tabCountSpy(tabModel, SIGNAL(countChanged()));
     QCOMPARE(tabModel->count(), originalTabOrder.count());
     QCOMPARE(tabModel->activeTab().url(), originalTabOrder.at(0).url);
@@ -203,7 +203,7 @@ void tst_declarativetabmodel::remove()
 
 void tst_declarativetabmodel::closeActiveTab()
 {
-    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,int)));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
     QSignalSpy tabCountSpy(tabModel, SIGNAL(countChanged()));
 
     // 2nd tab will be the new active tab. 1st tab is currently active.
@@ -283,7 +283,7 @@ void tst_declarativetabmodel::multipleTabsWithSameUrls()
 
     QTest::qWait(1000);
 
-    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,int)));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
     int expectedCount = tabModel->count() - 2;
     tabModel->removeTabById(tab1, true);
     waitSignals(activeTabChangedSpy, 1);
@@ -346,7 +346,7 @@ void tst_declarativetabmodel::invalidTabs_data()
 void tst_declarativetabmodel::invalidTabs()
 {
     QSignalSpy countChangeSpy(tabModel, SIGNAL(countChanged()));
-    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,int)));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
 
     QFETCH(QString, url);
     QFETCH(QString, title);

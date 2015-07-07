@@ -82,7 +82,7 @@ public slots:
 signals:
     void activeTabIndexChanged();
     void countChanged();
-    void activeTabChanged(int oldTabId, int activeTabId, bool loadActiveTab = true);
+    void activeTabChanged(int activeTabId, bool loadActiveTab = true);
     // TODO: Update test to use activeTabChanged instead. Currently this is here
     // only for testing purposes.
     void tabAdded(int tabId);
