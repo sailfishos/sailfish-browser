@@ -37,6 +37,7 @@ public:
         ThumbPathRole = Qt::UserRole + 1,
         TitleRole,
         UrlRole,
+        ActiveRole,
         TabIdRole
     };
 
