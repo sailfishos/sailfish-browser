@@ -239,7 +239,7 @@ void tst_declarativetabmodel::multipleTabsWithSameUrls()
     QTest::qWait(1000);
 
     QString page2Tab1Url = "http://www.foobar.com/page2";
-    tabModel->updateUrl(tab1, true, page2Tab1Url, false);
+    tabModel->updateUrl(tab1, page2Tab1Url, false);
     QTest::qWait(1000);
     QCOMPARE(tabModel->activeTab().url(), page2Tab1Url);
     // This is a bit problematic. From model point of view only url has changed.
@@ -271,7 +271,7 @@ void tst_declarativetabmodel::multipleTabsWithSameUrls()
 
     QString page2Tab2Url = page2Tab1Url;
     QString page2Tab2Title = "Second Page Too";
-    tabModel->updateUrl(tab2, true, page2Tab2Url, false);
+    tabModel->updateUrl(tab2, page2Tab2Url, false);
 
     QTest::qWait(1000);
 
@@ -309,7 +309,7 @@ void tst_declarativetabmodel::updateInvalidUrls()
 {
     QFETCH(QString, expectedUrl);
     QFETCH(QString, url);
-    tabModel->updateUrl(currentTabId(), true, url, false);
+    tabModel->updateUrl(currentTabId(), url, false);
     QTest::qWait(1000);
     QCOMPARE(tabModel->activeTab().url(), expectedUrl);
 }
@@ -328,7 +328,7 @@ void tst_declarativetabmodel::updateValidUrls()
     QFETCH(QString, url);
 
     int tabId = currentTabId();
-    tabModel->updateUrl(tabId, true, url, false);
+    tabModel->updateUrl(tabId, url, false);
     QCOMPARE(tabModel->activeTab().url(), url);
     QTest::qWait(1000);
 }
@@ -403,7 +403,7 @@ void tst_declarativetabmodel::changeTabAndLoad()
 
     QCOMPARE(tabModel->activeTab().currentLink(), 12);
     QString url = "http://www.foobar.com/something";
-    tabModel->updateUrl(currentTabId(), true, url, false);
+    tabModel->updateUrl(currentTabId(), url, false);
     QTest::qWait(1000);
 
     QCOMPARE(tabModel->activeTab().tabId(), 4);

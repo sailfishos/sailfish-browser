@@ -26,6 +26,7 @@
 
 DeclarativeTabModel::DeclarativeTabModel(int nextTabId, QObject *parent)
     : QAbstractListModel(parent)
+    , m_activeTabId(0)
     , m_loaded(false)
     , m_waitingForNewTab(false)
     , m_nextTabId(nextTabId)
@@ -161,7 +162,7 @@ void DeclarativeTabModel::closeActiveTab()
 {
     if (!m_tabs.isEmpty()) {
         int index = activeTabIndex();
-        removeTab(m_activeTab.tabId(), m_activeTab.thumbnailPath(), index);
+        removeTab(m_activeTabId, m_tabs.at(index).thumbnailPath(), index);
 
         if (index >= m_tabs.count()) {
             --index;
@@ -186,7 +187,7 @@ void DeclarativeTabModel::dumpTabs() const
 
 int DeclarativeTabModel::activeTabIndex() const
 {
-    return findTabIndex(m_activeTab.tabId());
+    return findTabIndex(m_activeTabId);
 }
 
 int DeclarativeTabModel::count() const
@@ -249,7 +250,8 @@ const QList<Tab> &DeclarativeTabModel::tabs() const
 
 const Tab &DeclarativeTabModel::activeTab() const
 {
-    return m_activeTab;
+    Q_ASSERT(contains(m_activeTabId));
+    return m_tabs.at(findTabIndex(m_activeTabId));
 }
 
 bool DeclarativeTabModel::contains(int tabId) const
@@ -257,7 +259,7 @@ bool DeclarativeTabModel::contains(int tabId) const
     return findTabIndex(tabId) >= 0;
 }
 
-void DeclarativeTabModel::updateUrl(int tabId, bool activeTab, const QString &url, bool initialLoad)
+void DeclarativeTabModel::updateUrl(int tabId, const QString &url, bool initialLoad)
 {
     if (!LinkValidator::navigable(QUrl(url))) {
 #if DEBUG_LOGS
@@ -267,8 +269,9 @@ void DeclarativeTabModel::updateUrl(int tabId, bool activeTab, const QString &ur
     }
 
     int tabIndex = findTabIndex(tabId);
+    bool isActiveTab = m_activeTabId == tabId;
     bool updateDb = false;
-    if (tabIndex >= 0 && (m_tabs.at(tabIndex).url() != url || activeTab)) {
+    if (tabIndex >= 0 && (m_tabs.at(tabIndex).url() != url || isActiveTab)) {
         QVector<int> roles;
         roles << UrlRole << TitleRole << ThumbPathRole;
         m_tabs[tabIndex].setUrl(url);
@@ -279,10 +282,6 @@ void DeclarativeTabModel::updateUrl(int tabId, bool activeTab, const QString &ur
         }
         m_tabs[tabIndex].setTitle("");
         m_tabs[tabIndex].setThumbnailPath("");
-
-        if (tabId == m_activeTab.tabId()) {
-            m_activeTab = m_tabs[tabIndex];
-        }
 
         emit dataChanged(index(tabIndex, 0), index(tabIndex, 0), roles);
     }
@@ -305,7 +304,7 @@ void DeclarativeTabModel::removeTab(int tabId, const QString &thumbnail, int ind
 
     if (index >= 0) {
         if (activeTabIndex() == index) {
-            m_activeTab.setTabId(0);
+            m_activeTabId = 0;
         }
         beginRemoveRows(QModelIndex(), index, index);
         m_tabs.removeAt(index);
@@ -329,21 +328,21 @@ int DeclarativeTabModel::findTabIndex(int tabId) const
 void DeclarativeTabModel::updateActiveTab(const Tab &activeTab, bool loadActiveTab)
 {
 #if DEBUG_LOGS
-    qDebug() << "new active tab:" << &activeTab << "old active tab:" << &m_activeTab << "count:" << m_tabs.count();
+    qDebug() << "new active tab:" << &activeTab << "old active tab:" << m_activeTabId << "count:" << m_tabs.count();
 #endif
     if (m_tabs.isEmpty()) {
         return;
     }
 
-    if (m_activeTab != activeTab) {
-        int oldTabId = m_activeTab.tabId();
-        m_activeTab = activeTab;
+    if (m_activeTabId != activeTab.tabId()) {
+        int oldTabId = m_activeTabId;
+        m_activeTabId = activeTab.tabId();
 
         setWaitingForNewTab(true);
 
         // If tab has changed, update active tab role.
         int tabIndex = activeTabIndex();
-        if (oldTabId != m_activeTab.tabId() && tabIndex >= 0) {
+        if (oldTabId != m_activeTabId && tabIndex >= 0) {
             emit activeTabIndexChanged();
         }
         // To avoid blinking we don't expose "activeTabIndex" as a model role because
@@ -382,14 +381,13 @@ void DeclarativeTabModel::onUrlChanged()
     if (webPage) {
         QString url = webPage->url().toString();
         int tabId = webPage->tabId();
-        bool activeTab = m_activeTab.tabId() == tabId;
 
         // Initial url should not be considered as navigation request that increases navigation history.
         // Cleanup this.
         bool initialLoad = !webPage->initialLoadHasHappened();
         // Virtualized pages need to be checked from the model.
         if (!initialLoad || contains(tabId)) {
-            updateUrl(tabId, activeTab, url, initialLoad);
+            updateUrl(tabId, url, initialLoad);
         } else {
             // Adding tab to the model is delayed so that url resolved to download link do not get added
             // to the model. We should have downloadStatus(status) and linkClicked(url) signals in QmlMozView.
@@ -413,9 +411,6 @@ void DeclarativeTabModel::onTitleChanged()
             roles << TitleRole;
             m_tabs[tabIndex].setTitle(title);
             emit dataChanged(index(tabIndex, 0), index(tabIndex, 0), roles);
-            if (tabId == m_activeTab.tabId()) {
-                m_activeTab.setTitle(title);
-            }
             updateTitle(tabId, m_tabs.at(tabIndex).currentLink(), webPage->url().toString(), title);
         }
     }

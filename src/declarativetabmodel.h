@@ -73,8 +73,6 @@ public:
 
     bool contains(int tabId) const;
 
-    void updateUrl(int tabId, bool activeTab, const QString &url, bool initialLoad);
-
 public slots:
     void updateThumbnailPath(int tabId, QString path);
     void onUrlChanged();
@@ -97,6 +95,7 @@ protected:
     void removeTab(int tabId, const QString &thumbnail, int index);
     int findTabIndex(int tabId) const;
     void updateActiveTab(const Tab &activeTab, bool loadActiveTab);
+    void updateUrl(int tabId, const QString &url, bool initialLoad);
 
     virtual int createTab() = 0;
     virtual int createLink(int tabId, QString url, QString title) = 0;
@@ -107,7 +106,7 @@ protected:
     virtual void updateThumbPath(int tabId, QString path) = 0;
 
     // This should be replaced by m_activeTabIndex
-    Tab m_activeTab;
+    int m_activeTabId;
     QList<Tab> m_tabs;
 
     bool m_loaded;
