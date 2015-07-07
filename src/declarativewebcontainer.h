@@ -40,7 +40,7 @@ class DeclarativeWebContainer : public QWindow, public QQmlParserStatus, protect
 
     Q_PROPERTY(QQuickItem *rotationHandler MEMBER m_rotationHandler NOTIFY rotationHandlerChanged FINAL)
     Q_PROPERTY(DeclarativeWebPage *contentItem READ webPage NOTIFY contentItemChanged FINAL)
-    Q_PROPERTY(DeclarativeTabModel *tabModel READ tabModel WRITE setTabModel NOTIFY tabModelChanged FINAL)
+    Q_PROPERTY(DeclarativeTabModel *tabModel READ tabModel NOTIFY tabModelChanged FINAL)
     Q_PROPERTY(bool completed READ completed NOTIFY completedChanged FINAL)
     Q_PROPERTY(bool enabled MEMBER m_enabled NOTIFY enabledChanged FINAL)
     Q_PROPERTY(bool foreground READ foreground WRITE setForeground NOTIFY foregroundChanged FINAL)
@@ -79,7 +79,6 @@ public:
     DeclarativeWebPage *webPage() const;
 
     DeclarativeTabModel *tabModel() const;
-    void setTabModel(DeclarativeTabModel *model);
 
     bool completed() const;
 
@@ -206,6 +205,7 @@ private slots:
 
 private:
     void setWebPage(DeclarativeWebPage *webPage);
+    void setTabModel(DeclarativeTabModel *model);
     qreal contentHeight() const;
     bool canInitialize() const;
     void loadTab(const Tab& tab, bool force);

@@ -795,7 +795,7 @@ int main(int argc, char *argv[])
 
     qmlRegisterType<DeclarativeHistoryModel>("Sailfish.Browser", 1, 0, "HistoryModel");
     qmlRegisterUncreatableType<DeclarativeTabModel>("Sailfish.Browser", 1, 0, "TabModel", "TabModel is abstract!");
-    qmlRegisterType<PersistentTabModel>("Sailfish.Browser", 1, 0, "PersistentTabModel");
+    qmlRegisterUncreatableType<PersistentTabModel>("Sailfish.Browser", 1, 0, "PersistentTabModel", "");
     qmlRegisterType<DeclarativeWebContainer>("Sailfish.Browser", 1, 0, "WebContainer");
     qmlRegisterType<DeclarativeWebPage>("Sailfish.Browser", 1, 0, "WebPage");
     qmlRegisterType<DeclarativeWebPageCreator>("Sailfish.Browser", 1, 0, "WebPageCreator");
