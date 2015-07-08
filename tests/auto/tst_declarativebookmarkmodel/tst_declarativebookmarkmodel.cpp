@@ -62,7 +62,7 @@ void tst_declarativebookmarkmodel::initTestCase()
     QVERIFY(bookmarkModel);
 
     // Preload bookmarks
-    QCOMPARE(bookmarkModel->rowCount(), 6);
+    QCOMPARE(bookmarkModel->rowCount(), 4);
 }
 
 void tst_declarativebookmarkmodel::addBookmark()
