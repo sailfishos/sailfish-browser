@@ -14,6 +14,8 @@
 
 #include "declarativetabmodel.h"
 
+class DeclarativeWebContainer;
+
 class PrivateTabModel : public DeclarativeTabModel
 {
     Q_OBJECT
@@ -28,7 +30,7 @@ protected:
     virtual void updateThumbPath(int tabId, QString path);
 
 public:
-    PrivateTabModel(QObject *parent = 0);
+    PrivateTabModel(DeclarativeWebContainer *webContainer = 0);
     ~PrivateTabModel();
 
 private:

@@ -411,6 +411,14 @@ bool DeclarativeWebContainer::activatePage(const Tab& tab, bool force, int paren
     return false;
 }
 
+int DeclarativeWebContainer::findParentTabId(int tabId) const
+{
+    if (m_webPages) {
+        return m_webPages->parentTabId(tabId);
+    }
+    return 0;
+}
+
 bool DeclarativeWebContainer::alive(int tabId)
 {
     return m_webPages->alive(tabId);
@@ -776,14 +784,6 @@ void DeclarativeWebContainer::onNewTabRequested(QString url, QString title, int 
     }
 }
 
-int DeclarativeWebContainer::parentTabId(int tabId) const
-{
-    if (m_webPages) {
-        return m_webPages->parentTabId(tabId);
-    }
-    return 0;
-}
-
 void DeclarativeWebContainer::releasePage(int tabId)
 {
     if (m_webPages) {
@@ -800,7 +800,7 @@ void DeclarativeWebContainer::closeWindow()
 {
     DeclarativeWebPage *webPage = qobject_cast<DeclarativeWebPage *>(sender());
     if (webPage && m_model) {
-        int parentPageTabId = parentTabId(webPage->tabId());
+        int parentPageTabId = findParentTabId(webPage->tabId());
         // Closing only allowed if window was created by script
         if (parentPageTabId > 0) {
             m_model->activateTabById(parentPageTabId);

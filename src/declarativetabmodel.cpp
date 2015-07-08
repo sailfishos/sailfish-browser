@@ -13,6 +13,7 @@
 #include "declarativetabmodel.h"
 #include "linkvalidator.h"
 #include "declarativewebutils.h"
+#include "declarativewebcontainer.h"
 #include "declarativewebpage.h"
 
 #include <QFile>
@@ -24,12 +25,13 @@
 #define DEBUG_LOGS 0
 #endif
 
-DeclarativeTabModel::DeclarativeTabModel(int nextTabId, QObject *parent)
-    : QAbstractListModel(parent)
+DeclarativeTabModel::DeclarativeTabModel(int nextTabId, DeclarativeWebContainer *webContainer)
+    : QAbstractListModel(webContainer)
     , m_activeTabId(0)
     , m_loaded(false)
     , m_waitingForNewTab(false)
     , m_nextTabId(nextTabId)
+    , m_webContainer(webContainer)
 {
 }
 
@@ -48,10 +50,13 @@ QHash<int, QByteArray> DeclarativeTabModel::roleNames() const
     return roles;
 }
 
-void DeclarativeTabModel::addTab(const QString& url, const QString &title) {
+void DeclarativeTabModel::addTab(const QString& url, const QString &title, int index) {
     if (!LinkValidator::navigable(QUrl(url))) {
         return;
     }
+
+    Q_ASSERT(index >= 0 && index <= m_tabs.count());
+
     int tabId = createTab();
     int linkId = createLink(tabId, url, title);
 
@@ -59,9 +64,8 @@ void DeclarativeTabModel::addTab(const QString& url, const QString &title) {
 #if DEBUG_LOGS
     qDebug() << "new tab data:" << &tab;
 #endif
-    int index = m_tabs.count();
     beginInsertRows(QModelIndex(), index, index);
-    m_tabs.append(tab);
+    m_tabs.insert(index, tab);
     endInsertRows();
     // We should trigger this only when
     // tab is added through new window request. In all other
@@ -83,13 +87,14 @@ int DeclarativeTabModel::nextTabId() const
 void DeclarativeTabModel::remove(int index) {
     if (!m_tabs.isEmpty() && index >= 0 && index < m_tabs.count()) {
         bool removingActiveTab = activeTabIndex() == index;
+        int newActiveIndex = 0;
+        if (removingActiveTab) {
+            newActiveIndex = nextActiveTabIndex(index);
+        }
+
         removeTab(m_tabs.at(index).tabId(), m_tabs.at(index).thumbnailPath(), index);
         if (removingActiveTab) {
-            if (index >= m_tabs.count()) {
-                --index;
-            }
-
-            activateTab(index, false);
+            activateTab(newActiveIndex, false);
         }
     }
 }
@@ -124,31 +129,33 @@ bool DeclarativeTabModel::activateTab(const QString& url)
 {
     for (int i = 0; i < m_tabs.size(); i++) {
         if (m_tabs.at(i).url() == url) {
-            return activateTab(i);
+            activateTab(i);
+            return true;
         }
     }
     return false;
 }
 
-bool DeclarativeTabModel::activateTab(int index, bool loadActiveTab)
+void DeclarativeTabModel::activateTab(int index, bool loadActiveTab)
 {
-    if (index >= 0 && index < m_tabs.count()) {
-        const Tab &newActiveTab = m_tabs.at(index);
-#if DEBUG_LOGS
-        qDebug() << "activate tab: " << index << &newActiveTab;
-#endif
-        updateActiveTab(newActiveTab, loadActiveTab);
-        return true;
-    } else {
-        return false;
+    if (m_tabs.isEmpty()) {
+        return;
     }
+
+    index = qBound<int>(0, index, m_tabs.count() - 1);
+    const Tab &newActiveTab = m_tabs.at(index);
+#if DEBUG_LOGS
+    qDebug() << "activate tab: " << index << &newActiveTab;
+#endif
+    updateActiveTab(newActiveTab, loadActiveTab);
 }
 
 bool DeclarativeTabModel::activateTabById(int tabId)
 {
     int index = findTabIndex(tabId);
     if (index >= 0) {
-        return activateTab(index);
+        activateTab(index);
+        return true;
     }
     return false;
 }
@@ -163,13 +170,9 @@ void DeclarativeTabModel::closeActiveTab()
 {
     if (!m_tabs.isEmpty()) {
         int index = activeTabIndex();
+        int newActiveIndex = nextActiveTabIndex(index);
         removeTab(m_activeTabId, m_tabs.at(index).thumbnailPath(), index);
-
-        if (index >= m_tabs.count()) {
-            --index;
-        }
-
-        activateTab(index, true);
+        activateTab(newActiveIndex, true);
     }
 }
 
@@ -369,6 +372,22 @@ void DeclarativeTabModel::updateActiveTab(const Tab &activeTab, bool loadActiveT
     }
 }
 
+void DeclarativeTabModel::setWebContainer(DeclarativeWebContainer *webContainer)
+{
+    m_webContainer = webContainer;
+}
+
+int DeclarativeTabModel::nextActiveTabIndex(int index)
+{
+    if (m_webContainer && m_webContainer->webPage() && m_webContainer->webPage()->parentId() > 0) {
+        int newActiveTabId = m_webContainer->findParentTabId(m_webContainer->webPage()->tabId());
+        index = findTabIndex(newActiveTabId);
+    } else {
+        --index;
+    }
+    return index;
+}
+
 void DeclarativeTabModel::updateThumbnailPath(int tabId, QString path)
 {
     if (tabId <= 0)
@@ -408,7 +427,12 @@ void DeclarativeTabModel::onUrlChanged()
             // to the model. We should have downloadStatus(status) and linkClicked(url) signals in QmlMozView.
             // To distinguish linkClicked(url) from downloadStatus(status) the downloadStatus(status) signal
             // should not be emitted when link clicking started downloading or opened (will open) a new window.
-            addTab(url, "");
+            if (webPage->parentId() > 0) {
+                int parentTabId = m_webContainer->findParentTabId(tabId);
+                addTab(url, "", findTabIndex(parentTabId) + 1);
+            } else {
+                addTab(url, "", m_tabs.count());
+            }
         }
         webPage->setInitialLoadHasHappened();
     }

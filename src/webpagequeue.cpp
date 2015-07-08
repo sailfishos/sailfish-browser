@@ -121,6 +121,8 @@ void WebPageQueue::prepend(int tabId, DeclarativeWebPage *webPage)
     } else {
         pageEntry->webPage = webPage;
         pageEntry->tabId = tabId;
+        pageEntry->parentId = webPage->parentId();
+        pageEntry->uniqueId = webPage->uniqueID();
         pageEntry->webPage->setResurrectedContentRect(*pageEntry->cssContentRect);
         if (pageEntry->cssContentRect) {
             delete pageEntry->cssContentRect;
@@ -153,12 +155,12 @@ int WebPageQueue::parentTabId(int tabId) const
     // Ported from webpages.cpp.
     int index = 0;
     WebPageEntry *childPageEntry = find(tabId, index);
-    if (childPageEntry && childPageEntry->webPage) {
-        int parentId = childPageEntry->webPage->parentId();
+    if (childPageEntry) {
+        int parentId = childPageEntry->parentId;
         for (int i = 0; i < m_queue.count(); ++i) {
             WebPageEntry *parentPageEntry = m_queue.at(i);
-            if (parentPageEntry->webPage && (int)parentPageEntry->webPage->uniqueID() == parentId) {
-                return parentPageEntry->webPage->tabId();
+            if (parentPageEntry && (int)parentPageEntry->uniqueId == parentId) {
+                return parentPageEntry->tabId;
             }
         }
     }
@@ -238,6 +240,8 @@ WebPageQueue::WebPageEntry *WebPageQueue::find(int tabId, int &index) const
 WebPageQueue::WebPageEntry::WebPageEntry(DeclarativeWebPage *webPage, QRectF *cssContentRect)
     : webPage(webPage)
     , tabId(webPage ? webPage->tabId() : 0)
+    , uniqueId(webPage ? webPage->uniqueID() : 0)
+    , parentId(webPage ? webPage->parentId() : 0)
     , cssContentRect(cssContentRect)
     , allowPageDelete(false)
 {

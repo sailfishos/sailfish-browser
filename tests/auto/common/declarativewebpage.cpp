@@ -16,6 +16,28 @@ DeclarativeWebPage::DeclarativeWebPage()
 {
 }
 
+void DeclarativeWebPage::setContainer(DeclarativeWebContainer *)
+{
+}
+
+
+void DeclarativeWebPage::setResurrectedContentRect(QVariant)
+{
+
+}
+
+void DeclarativeWebPage::setInitialTab(const Tab&)
+{
+}
+
+void DeclarativeWebPage::resetHeight(bool)
+{
+}
+
+void DeclarativeWebPage::forceChrome(bool)
+{
+}
+
 int DeclarativeWebPage::tabId() const
 {
     return 0;
@@ -28,4 +50,17 @@ bool DeclarativeWebPage::initialLoadHasHappened() const
 
 void DeclarativeWebPage::setInitialLoadHasHappened()
 {
+}
+
+void DeclarativeWebPage::loadTab(QString newUrl, bool force)
+{
+    Q_UNUSED(newUrl)
+    Q_UNUSED(force);
+}
+
+QDebug operator<<(QDebug dbg, const DeclarativeWebPage *page)
+{
+    Q_UNUSED(page);
+
+    return dbg;
 }

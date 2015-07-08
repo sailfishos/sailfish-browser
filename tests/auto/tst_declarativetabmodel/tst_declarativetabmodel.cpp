@@ -15,6 +15,7 @@
 #include <QQuickView>
 #include <QHash>
 
+#include "declarativewebcontainer.h"
 #include "persistenttabmodel.h"
 #include "dbmanager.h"
 #include "testobject.h"
@@ -60,6 +61,7 @@ private slots:
 
     void reloadModel();
     void changeTabAndLoad();
+    void insertTab();
 
     void clear();
 
@@ -70,6 +72,7 @@ private:
     QString currentTabUrl() const;
 
     DeclarativeTabModel *tabModel;
+    DeclarativeWebContainer *webContainer;
     QList<TestTab> originalTabOrder;
 };
 
@@ -77,6 +80,9 @@ tst_declarativetabmodel::tst_declarativetabmodel()
     : TestObject(QML_SNIPPET)
 {
     tabModel = TestObject::qmlObject<DeclarativeTabModel>("tabModel");
+    webContainer = new DeclarativeWebContainer(this);
+    tabModel->setWebContainer(webContainer);
+
     originalTabOrder.append(TestTab("http://sailfishos.org", "SailfishOS.org"));
     originalTabOrder.append(TestTab("file:///opt/tests/sailfish-browser/manual/testpage.html", "Test Page"));
     originalTabOrder.append(TestTab("https://sailfishos.org/sailfish-silica/index.html", "Creating applications with Sailfish Silica | Sailfish Silica 1.0"));
@@ -128,7 +134,7 @@ void tst_declarativetabmodel::validTabs()
     QFETCH(QString, title);
     QFETCH(int, count);
 
-    tabModel->addTab(url, title);
+    tabModel->addTab(url, title, tabModel->count());
     QCOMPARE(tabModel->count(), count);
     QCOMPARE(countChangeSpy.count(), 1);
     QCOMPARE(tabModel->activeTab().url(), url);
@@ -231,7 +237,7 @@ void tst_declarativetabmodel::multipleTabsWithSameUrls()
     QString page1Tab1Url = "http://www.foobar.com/page1";
     QString page1Tab1Title = "First Page";
     // tab1: page1 ("First Page") and page2 ("")
-    tabModel->addTab(page1Tab1Url, page1Tab1Title);
+    tabModel->addTab(page1Tab1Url, page1Tab1Title, tabModel->count());
     int tab1 = currentTabId();
     QCOMPARE(tabModel->activeTab().url(), page1Tab1Url);
     QCOMPARE(tabModel->activeTab().title(), page1Tab1Title);
@@ -253,7 +259,7 @@ void tst_declarativetabmodel::multipleTabsWithSameUrls()
     // tab2: page1 ("First Page Too") and page2 ("Second Page Too")
     QString page1Tab2Url = page1Tab1Url;
     QString page1Tab2Title = "First Page Too";
-    tabModel->addTab(page1Tab2Url, page1Tab2Title);
+    tabModel->addTab(page1Tab2Url, page1Tab2Title, tabModel->count());
     int tab2 = currentTabId();
     QVERIFY(tab1 != tab2);
     QCOMPARE(tabModel->activeTab().url(), page1Tab2Url);
@@ -351,7 +357,7 @@ void tst_declarativetabmodel::invalidTabs()
     QFETCH(QString, url);
     QFETCH(QString, title);
     int originalCount = tabModel->count();
-    tabModel->addTab(url, title);
+    tabModel->addTab(url, title, originalCount);
 
     QCOMPARE(tabModel->count(), originalCount);
     QCOMPARE(countChangeSpy.count(), 0);
@@ -394,7 +400,7 @@ void tst_declarativetabmodel::reloadModel()
 
 void tst_declarativetabmodel::changeTabAndLoad()
 {
-    // Highest linkId of available tabs is 18
+    // Highest linkId of available tabs is 13
     int nextLinkId = DBManager::instance()->nextLinkId();
     QCOMPARE(nextLinkId, 13);
 
@@ -410,6 +416,34 @@ void tst_declarativetabmodel::changeTabAndLoad()
     QCOMPARE(tabModel->activeTab().currentLink(), nextLinkId);
     QCOMPARE(tabModel->activeTab().url(), url);
     QCOMPARE(tabModel->activeTab().title(), QString(""));
+}
+
+void tst_declarativetabmodel::insertTab()
+{
+    QString url("http://foobar/tab2");
+    QString title("tab2");
+    int oldCount = tabModel->count();
+    QVERIFY(oldCount == 2);
+    tabModel->addTab(url, title, 1);
+
+    QModelIndex modelIndex = tabModel->createIndex(0, 0);
+    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), QString("https://sailfishos.org/sailfish-silica/index.html"));
+    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), QString("Creating applications with Sailfish Silica | Sailfish Silica 1.0"));
+    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt(), 3);
+    QCOMPARE(tabModel->m_tabs.at(0).currentLink(), 3);
+
+    modelIndex = tabModel->createIndex(1, 0);
+    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), QString("http://foobar/tab2"));
+    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), QString("tab2"));
+    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt(), 7);
+    QCOMPARE(tabModel->m_tabs.at(1).currentLink(), 14);
+
+    modelIndex = tabModel->createIndex(2, 0);
+    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), QString("http://www.foobar.com/something"));
+    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), QString(""));
+    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt(), 4);
+    QCOMPARE(tabModel->m_tabs.at(2).currentLink(), 13);
+    QVERIFY(oldCount+1 == tabModel->count());
 }
 
 void tst_declarativetabmodel::clear()

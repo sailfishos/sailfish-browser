@@ -13,6 +13,10 @@
 #define DECLARATIVEWEBPAGE_H
 
 #include <QObject>
+#include <QDebug>
+
+class Tab;
+class DeclarativeWebContainer;
 
 class DeclarativeWebPage : public QObject
 {
@@ -21,9 +25,31 @@ class DeclarativeWebPage : public QObject
 public:
     explicit DeclarativeWebPage();
 
+    void setContainer(DeclarativeWebContainer *);
+
+    void setResurrectedContentRect(QVariant);
+    void setInitialTab(const Tab&);
+
+    void resetHeight(bool);
+    void forceChrome(bool);
+
     int tabId() const;
     bool initialLoadHasHappened() const;
     void setInitialLoadHasHappened();
+
+    Q_INVOKABLE void loadTab(QString newUrl, bool force);
+signals:
+    void containerChanged();
+    void tabIdChanged();
+    void forcedChromeChanged();
+    void fullscreenChanged();
+    void domContentLoadedChanged();
+    void resurrectedContentRectChanged();
+    void clearGrabResult();
+    void grabResult(QString fileName);
+    void thumbnailResult(QString data);
 };
+
+QDebug operator<<(QDebug, const DeclarativeWebPage *);
 
 #endif

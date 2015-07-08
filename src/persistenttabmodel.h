@@ -14,6 +14,8 @@
 
 #include "declarativetabmodel.h"
 
+class DeclarativeWebContainer;
+
 class PersistentTabModel : public DeclarativeTabModel
 {
     Q_OBJECT
@@ -35,7 +37,7 @@ public slots:
     void tabsAvailable(QList<Tab> tabs);
 
 public:
-    PersistentTabModel(QObject *parent = 0);
+    PersistentTabModel(DeclarativeWebContainer *webContainer = 0);
     ~PersistentTabModel();
 };
 

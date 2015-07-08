@@ -100,7 +100,7 @@ void tst_declarativehistorymodel::addNonSameHistoryEntries()
     QFETCH(QString, searchTerm);
     QFETCH(int, expectedCount);
 
-    tabModel->addTab(url, title);
+    tabModel->addTab(url, title, tabModel->count());
 
     historyModel->search("");
     QTest::qWait(1000);
@@ -131,7 +131,7 @@ void tst_declarativehistorymodel::addDuplicateHistoryEntries()
 
     QSignalSpy countChangeSpy(historyModel, SIGNAL(countChanged()));
 
-    tabModel->addTab(url, title);
+    tabModel->addTab(url, title, tabModel->count());
 
     historyModel->search("");
     waitSignals(countChangeSpy, 1);
@@ -174,7 +174,7 @@ void tst_declarativehistorymodel::sortedHistoryEntries()
     QFETCH(QStringList, order);
     QFETCH(int, expectedCount);
 
-    tabModel->addTab(url, title);
+    tabModel->addTab(url, title, tabModel->count());
 
     historyModel->search(searchTerm);
     waitSignals(countChangeSpy, 2);
@@ -207,7 +207,7 @@ void tst_declarativehistorymodel::emptyTitles()
     QFETCH(QString, url);
     QFETCH(QString, searchTerm);
     QFETCH(int, expectedCount);
-    tabModel->addTab(url, "");
+    tabModel->addTab(url, "", tabModel->count());
 
     historyModel->search(searchTerm);
     waitSignals(countChangeSpy, 2);
@@ -245,7 +245,7 @@ void tst_declarativehistorymodel::searchWithSpecialChars()
     QFETCH(QString, searchTerm);
     QFETCH(int, expectedCount);
 
-    tabModel->addTab(url, title);
+    tabModel->addTab(url, title, tabModel->count());
     historyModel->search(searchTerm);
     waitSignals(countChangeSpy, 2);
 
