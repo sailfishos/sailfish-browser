@@ -44,6 +44,8 @@ private slots:
     void removeBookmark();
     void contains();
     void editBookmark();
+    void activeUrlBookmarked();
+    void removeByIndex();
     void clearBookmarks();
 
 private:
@@ -137,6 +139,51 @@ void tst_declarativebookmarkmodel::editBookmark()
     QCOMPARE(url, constUrl);
 
     QCOMPARE(count, bookmarkModel->rowCount());
+}
+
+void tst_declarativebookmarkmodel::activeUrlBookmarked()
+{
+    QString newUrl = "http://www.test6.jolla.com";
+    bookmarkModel->setActiveUrl(newUrl);
+    QVERIFY(!bookmarkModel->activeUrlBookmarked());
+    QSignalSpy activeUrlBookmarkedChangedSpy(bookmarkModel, SIGNAL(activeUrlBookmarkedChanged()));
+    bookmarkModel->add(newUrl, "jolla", "");
+    waitSignals(activeUrlBookmarkedChangedSpy, 1);
+    QVERIFY(bookmarkModel->activeUrlBookmarked());
+
+    bookmarkModel->edit(bookmarkModel->rowCount() - 1, "http://www.test6.not.bookmarked.jolla.com", "jolla");
+    waitSignals(activeUrlBookmarkedChangedSpy, 2);
+    QVERIFY(!bookmarkModel->activeUrlBookmarked());
+
+    bookmarkModel->edit(bookmarkModel->rowCount() - 1, newUrl, "jolla");
+    waitSignals(activeUrlBookmarkedChangedSpy, 3);
+    QVERIFY(bookmarkModel->activeUrlBookmarked());
+
+    bookmarkModel->setActiveUrl("http://www.test6.not.bookmarked.jolla.com");
+    waitSignals(activeUrlBookmarkedChangedSpy, 4);
+    QVERIFY(!bookmarkModel->activeUrlBookmarked());
+
+    bookmarkModel->setActiveUrl(newUrl);
+    waitSignals(activeUrlBookmarkedChangedSpy, 5);
+    QVERIFY(bookmarkModel->activeUrlBookmarked());
+
+    bookmarkModel->remove(bookmarkModel->rowCount() - 1);
+    waitSignals(activeUrlBookmarkedChangedSpy, 6);
+    QVERIFY(!bookmarkModel->activeUrlBookmarked());
+    bookmarkModel->setActiveUrl("");
+}
+
+void tst_declarativebookmarkmodel::removeByIndex()
+{
+    // Remove all items one-by-one
+    bookmarkModel->add("http://www.test-something.jolla.com", "jolla", "");
+    while (bookmarkModel->rowCount() > 0) {
+        int expectedCount = bookmarkModel->rowCount() - 1;
+        QSignalSpy countChangeSpy(bookmarkModel, SIGNAL(countChanged()));
+        bookmarkModel->remove(0);
+        waitSignals(countChangeSpy, 1);
+        QCOMPARE(bookmarkModel->rowCount(), expectedCount);
+    }
 }
 
 void tst_declarativebookmarkmodel::cleanupTestCase()
