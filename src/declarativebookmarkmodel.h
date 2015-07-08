@@ -21,7 +21,9 @@
 class DeclarativeBookmarkModel : public QAbstractListModel
 {
     Q_OBJECT
-    Q_PROPERTY(int count READ rowCount NOTIFY countChanged)
+    Q_PROPERTY(int count READ rowCount NOTIFY countChanged FINAL)
+    Q_PROPERTY(QString activeUrl READ activeUrl WRITE setActiveUrl NOTIFY activeUrlChanged FINAL)
+    Q_PROPERTY(bool activeUrlBookmarked READ activeUrlBookmarked NOTIFY activeUrlBookmarkedChanged FINAL)
 public:
     DeclarativeBookmarkModel(QObject *parent = 0);
     
@@ -34,8 +36,15 @@ public:
 
     Q_INVOKABLE void add(const QString& url, const QString& title, const QString& favicon, bool touchIcon = false);
     Q_INVOKABLE void remove(const QString& url);
+    Q_INVOKABLE void remove(int index);
+    Q_INVOKABLE void updateFavoriteIcon(const QString& url, const QString& favicon, bool touchIcon);
     Q_INVOKABLE bool contains(const QString& url) const;
     Q_INVOKABLE void edit(int index, const QString& url, const QString& title);
+
+    QString activeUrl() const;
+    void setActiveUrl(const QString& url);
+
+    bool activeUrlBookmarked() const;
 
     // From QAbstractListModel
     int rowCount(const QModelIndex & parent = QModelIndex()) const;
@@ -47,9 +56,13 @@ private slots:
 
 signals:
     void countChanged();
+    void activeUrlChanged();
+    void activeUrlBookmarkedChanged();
 
 private:
     void save();
+
+    QString m_activeUrl;
 
     QList<Bookmark*> bookmarks;
     // This map accelerates access to the `bookmarks` list's elements by their URL.

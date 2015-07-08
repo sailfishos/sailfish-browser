@@ -21,7 +21,8 @@ DeclarativeBookmarkModel::DeclarativeBookmarkModel(QObject *parent) :
     // Generate mapping URL -> bookmark's index in the loaded list.
     int index(0);
     foreach (Bookmark* bookmark, bookmarks) {
-        bookmarkIndexes.insert(bookmark->url(), index);
+        // Use multi insert as there might be multiple bookmark instances with the same url.
+        bookmarkIndexes.insertMulti(bookmark->url(), index);
         index++;
     }
 }
@@ -42,8 +43,10 @@ void DeclarativeBookmarkModel::add(const QString& url, const QString& title, con
     bookmarkIndexes.insert(url, bookmarks.count());
     bookmarks.append(new Bookmark(title, url, favicon, touchIcon));
     endInsertRows();
-
     emit countChanged();
+    // Getter will check if active page is still bookmarked.
+    emit activeUrlBookmarkedChanged();
+
     save();
 }
 
@@ -53,16 +56,28 @@ void DeclarativeBookmarkModel::remove(const QString& url)
         return;
     }
 
-    if (bookmarkIndexes.keys().contains(url)) {
-        int index = bookmarkIndexes.value(url);
+    int index = bookmarkIndexes.value(url, -1);
+    remove(index);
+}
+
+void DeclarativeBookmarkModel::remove(int index)
+{
+    if (index >= 0 && index < bookmarks.count()) {
         beginRemoveRows(QModelIndex(), index, index);
         Bookmark* bookmark = bookmarks.takeAt(index);
         delete bookmark;
 
         // Remove index mapping and update remaining indices
-        bookmarkIndexes.remove(url);
         QMap<QString, int>::iterator i = bookmarkIndexes.begin();
         while (i != bookmarkIndexes.end()) {
+            if (i.value() == index) {
+                i = bookmarkIndexes.erase(i);
+                // Erased item was the last one.
+                if (i == bookmarkIndexes.end()) {
+                    break;
+                }
+            }
+
             if (i.value() > index) {
                 i.value()--;
             }
@@ -72,7 +87,30 @@ void DeclarativeBookmarkModel::remove(const QString& url)
         endRemoveRows();
 
         emit countChanged();
+        // Getter will check if active page is still bookmarked.
+        emit activeUrlBookmarkedChanged();
         save();
+    }
+}
+
+void DeclarativeBookmarkModel::updateFavoriteIcon(const QString &url, const QString &favicon, bool touchIcon)
+{
+    int bookmarkIndex = bookmarkIndexes.value(url, -1);
+    if (bookmarkIndex >= 0) {
+        Bookmark *bookmark = bookmarks[bookmarkIndex];
+        QVector<int> roles;
+        if (bookmark->favicon() != favicon) {
+            roles << FaviconRole;
+            bookmark->setFavicon(favicon);
+        }
+        if (bookmark->hasTouchIcon() != touchIcon) {
+            roles << TouchIconRole;
+            bookmark->setHasTouchIcon(touchIcon);
+        }
+        if (roles.count() > 0) {
+            emit dataChanged(index(bookmarkIndex), index(bookmarkIndex), roles);
+            save();
+        }
     }
 }
 
@@ -86,6 +124,21 @@ void DeclarativeBookmarkModel::edit(int index, const QString& url, const QString
     if (url != bookmark->url()) {
         bookmark->setUrl(url);
         roles << UrlRole;
+
+        // Update key indexes
+        QMap<QString, int>::iterator i = bookmarkIndexes.begin();
+        while (i != bookmarkIndexes.end()) {
+            if (i.value() == index) {
+                i = bookmarkIndexes.erase(i);
+                break;
+            }
+            ++i;
+        }
+        // Use multi insert here as the url might be already bookmarked.
+        bookmarkIndexes.insertMulti(url, index);
+
+        // Getter will check if active page is still bookmarked.
+        emit activeUrlBookmarkedChanged();
     }
     if (title != bookmark->title()) {
         bookmark->setTitle(title);
@@ -96,6 +149,26 @@ void DeclarativeBookmarkModel::edit(int index, const QString& url, const QString
         emit dataChanged(modelIndex, modelIndex, roles);
         save();
     }
+}
+
+QString DeclarativeBookmarkModel::activeUrl() const
+{
+    return m_activeUrl;
+}
+
+void DeclarativeBookmarkModel::setActiveUrl(const QString &url)
+{
+    if (m_activeUrl != url) {
+        m_activeUrl = url;
+        // Getter will check if active page is still bookmarked.
+        emit activeUrlBookmarkedChanged();
+        emit activeUrlChanged();
+    }
+}
+
+bool DeclarativeBookmarkModel::activeUrlBookmarked() const
+{
+    return contains(m_activeUrl);
 }
 
 void DeclarativeBookmarkModel::clearBookmarks()
