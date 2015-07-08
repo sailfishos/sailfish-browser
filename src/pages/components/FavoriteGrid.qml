@@ -171,7 +171,7 @@ SilicaGridView {
             function handleGrabbedThumbnail(data) {
                 // If web page changed, switch to default icon.
                 data = sameWebPage ? data : defaultIcon
-                bookmarkModel.addBookmark(url, title || url, data, false)
+                bookmarkModel.add(url, title || url, data, false)
                 webPage.onThumbnailResult.disconnect(handleGrabbedThumbnail)
                 fetcher.destroy()
             }
@@ -182,7 +182,7 @@ SilicaGridView {
                 var canDestroy = true
 
                 if (hasAcceptedTouchIcon) {
-                    bookmarkModel.addBookmark(url, title || url, data, hasAcceptedTouchIcon)
+                    bookmarkModel.add(url, title || url, data, hasAcceptedTouchIcon)
                 } else if (sameWebPage) {
                     // We are still at same web page but no accepted touch icon. Let's grab thumbnail.
                     canDestroy = false
@@ -190,7 +190,7 @@ SilicaGridView {
                     webPage.grabThumbnail(Qt.size(favoriteGrid.cellHeight, favoriteGrid.cellWidth))
                 } else {
                     // Use default icon.
-                    bookmarkModel.addBookmark(url, title || url, defaultIcon, false)
+                    bookmarkModel.add(url, title || url, defaultIcon, false)
                 }
 
                 if (canDestroy) {
@@ -203,7 +203,7 @@ SilicaGridView {
     Component {
         id: editDialog
         BookmarkEditDialog {
-            onAccepted: bookmarkModel.editBookmark(index, editedUrl, editedTitle)
+            onAccepted: bookmarkModel.edit(index, editedUrl, editedTitle)
         }
     }
 

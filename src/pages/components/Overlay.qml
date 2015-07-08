@@ -246,7 +246,7 @@ Background {
                                    })
                 }
                 onBookmarkActivePage: favoriteGrid.fetchAndSaveBookmark()
-                onRemoveActivePageFromBookmarks: bookmarkModel.removeBookmark(webView.url)
+                onRemoveActivePageFromBookmarks: bookmarkModel.remove(webView.url)
             }
 
             SearchField {

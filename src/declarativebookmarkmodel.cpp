@@ -36,7 +36,7 @@ QHash<int, QByteArray> DeclarativeBookmarkModel::roleNames() const
     return roles;
 }
 
-void DeclarativeBookmarkModel::addBookmark(const QString& url, const QString& title, const QString& favicon, bool touchIcon)
+void DeclarativeBookmarkModel::add(const QString& url, const QString& title, const QString& favicon, bool touchIcon)
 {
     beginInsertRows(QModelIndex(), rowCount(), rowCount());
     bookmarkIndexes.insert(url, bookmarks.count());
@@ -47,7 +47,7 @@ void DeclarativeBookmarkModel::addBookmark(const QString& url, const QString& ti
     save();
 }
 
-void DeclarativeBookmarkModel::removeBookmark(const QString& url)
+void DeclarativeBookmarkModel::remove(const QString& url)
 {
     if (!contains(url)) {
         return;
@@ -76,7 +76,7 @@ void DeclarativeBookmarkModel::removeBookmark(const QString& url)
     }
 }
 
-void DeclarativeBookmarkModel::editBookmark(int index, const QString& url, const QString& title)
+void DeclarativeBookmarkModel::edit(int index, const QString& url, const QString& title)
 {
     if (index < 0 || index > bookmarks.count())
         return;
