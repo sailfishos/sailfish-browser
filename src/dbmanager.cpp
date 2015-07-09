@@ -15,12 +15,14 @@
 
 #include "dbworker.h"
 
+static DBManager *gDbManager = 0;
+
 DBManager *DBManager::instance()
 {
-    static DBManager *dbManager;
-    if (!dbManager)
-        dbManager = new DBManager();
-    return dbManager;
+    if (!gDbManager) {
+        gDbManager = new DBManager();
+    }
+    return gDbManager;
 }
 
 DBManager::DBManager(QObject *parent)
@@ -52,6 +54,14 @@ DBManager::DBManager(QObject *parent)
     m_nextLinkId = ++maxLinkId;
     QMetaObject::invokeMethod(worker, "getSettings", Qt::BlockingQueuedConnection,
                               Q_RETURN_ARG(SettingsMap, m_settings));
+}
+
+DBManager::~DBManager()
+{
+    workerThread.exit();
+    // Use timeout of 500ms to guaranty we won't block
+    workerThread.wait(500);
+    gDbManager = 0;
 }
 
 int DBManager::getMaxTabId()
