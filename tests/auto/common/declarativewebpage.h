@@ -16,6 +16,7 @@
 #include <QDebug>
 
 class Tab;
+class QUrl;
 class DeclarativeWebContainer;
 
 class DeclarativeWebPage : public QObject
@@ -23,7 +24,7 @@ class DeclarativeWebPage : public QObject
     Q_OBJECT
 
 public:
-    explicit DeclarativeWebPage();
+    explicit DeclarativeWebPage(QObject *parent = 0);
 
     void setContainer(DeclarativeWebContainer *);
 
@@ -34,13 +35,23 @@ public:
     void forceChrome(bool);
 
     int tabId() const;
+
     bool initialLoadHasHappened() const;
     void setInitialLoadHasHappened();
 
+    virtual QUrl url() const;
+
+    virtual QString title() const;
+    void setTitle(const QString &title);
+
     Q_INVOKABLE void loadTab(QString newUrl, bool force);
+
+    int m_tabId;
+
 signals:
     void containerChanged();
     void tabIdChanged();
+    void titleChanged();
     void forcedChromeChanged();
     void fullscreenChanged();
     void domContentLoadedChanged();
@@ -48,6 +59,9 @@ signals:
     void clearGrabResult();
     void grabResult(QString fileName);
     void thumbnailResult(QString data);
+
+private:
+    QString m_title;
 };
 
 QDebug operator<<(QDebug, const DeclarativeWebPage *);

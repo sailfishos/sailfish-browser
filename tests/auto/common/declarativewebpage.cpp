@@ -9,10 +9,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include <QUrl>
 #include "declarativewebpage.h"
 
-DeclarativeWebPage::DeclarativeWebPage()
-    : QObject()
+DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
+    : QObject(parent)
 {
 }
 
@@ -40,7 +41,7 @@ void DeclarativeWebPage::forceChrome(bool)
 
 int DeclarativeWebPage::tabId() const
 {
-    return 0;
+    return m_tabId;
 }
 
 bool DeclarativeWebPage::initialLoadHasHappened() const
@@ -50,6 +51,25 @@ bool DeclarativeWebPage::initialLoadHasHappened() const
 
 void DeclarativeWebPage::setInitialLoadHasHappened()
 {
+}
+
+QUrl DeclarativeWebPage::url() const
+{
+    QUrl url;
+    return url;
+}
+
+QString DeclarativeWebPage::title() const
+{
+    return m_title;
+}
+
+void DeclarativeWebPage::setTitle(const QString &title)
+{
+    if (title != m_title) {
+        m_title = title;
+        emit titleChanged();
+    }
 }
 
 void DeclarativeWebPage::loadTab(QString newUrl, bool force)

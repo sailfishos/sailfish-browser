@@ -126,5 +126,6 @@ protected:
     friend class tst_declarativehistorymodel;
     friend class tst_declarativetabmodel;
     friend class tst_webview;
+    friend class tst_persistenttabmodel;
 };
 #endif // DECLARATIVETABMODEL_H
