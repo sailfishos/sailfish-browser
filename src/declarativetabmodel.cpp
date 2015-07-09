@@ -101,15 +101,13 @@ void DeclarativeTabModel::remove(int index) {
 
 void DeclarativeTabModel::removeTabById(int tabId, bool activeTab)
 {
-    int index = -1;
-    if (!activeTab) {
-        index = findTabIndex(tabId);
-    }
-
     if (activeTab) {
         closeActiveTab();
-    } else if (index >= 0){
-        remove(index);
+    } else {
+        int index = findTabIndex(tabId);
+        if (index >= 0) {
+            remove(index);
+        }
     }
 }
 
