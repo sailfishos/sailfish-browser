@@ -224,7 +224,6 @@ void DeclarativeWebPage::loadTab(QString newUrl, bool force)
 
 void DeclarativeWebPage::grabToFile(const QSize &size)
 {
-    emit clearGrabResult();
     // grabToImage handles invalid geometry.
     m_grabResult = grabToImage(size);
     if (m_grabResult) {

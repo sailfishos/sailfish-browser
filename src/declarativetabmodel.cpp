@@ -179,6 +179,15 @@ void DeclarativeTabModel::newTab(const QString &url, const QString &title, int p
     emit newTabRequested(url, title, parentId);
 }
 
+QString DeclarativeTabModel::url(int tabId) const
+{
+    int index = findTabIndex(tabId);
+    if (index >= 0) {
+        return m_tabs.at(index).url();
+    }
+    return "";
+}
+
 void DeclarativeTabModel::dumpTabs() const
 {
     for (int i = 0; i < m_tabs.size(); i++) {
@@ -281,16 +290,21 @@ void DeclarativeTabModel::updateUrl(int tabId, const QString &url, bool initialL
     bool updateDb = false;
     if (tabIndex >= 0 && (m_tabs.at(tabIndex).url() != url || isActiveTab)) {
         QVector<int> roles;
-        roles << UrlRole << TitleRole << ThumbPathRole;
+        roles << UrlRole;
+        bool urlHasChanged = m_tabs.at(tabIndex).url() != url;
         m_tabs[tabIndex].setUrl(url);
 
         if (!initialLoad) {
             m_tabs[tabIndex].setCurrentLink(nextLinkId());
             updateDb = true;
         }
-        m_tabs[tabIndex].setTitle("");
-        m_tabs[tabIndex].setThumbnailPath("");
 
+        // Do not clear title if url didn't change. The onTitleChanged
+        // will handle title change.
+        if (urlHasChanged) {
+            m_tabs[tabIndex].setTitle("");
+            roles << TitleRole;
+        }
         emit dataChanged(index(tabIndex, 0), index(tabIndex, 0), roles);
     }
 
@@ -393,13 +407,15 @@ void DeclarativeTabModel::updateThumbnailPath(int tabId, QString path)
     QVector<int> roles;
     roles << ThumbPathRole;
     for (int i = 0; i < m_tabs.count(); i++) {
-        if (m_tabs.at(i).tabId() == tabId && m_tabs.at(i).thumbnailPath() != path) {
+        if (m_tabs.at(i).tabId() == tabId) {
 #if DEBUG_LOGS
             qDebug() << "model tab thumbnail updated: " << path << i << tabId;
 #endif
-            m_tabs[i].setThumbnailPath(path);
             QModelIndex start = index(i, 0);
             QModelIndex end = index(i, 0);
+            m_tabs[i].setThumbnailPath("");
+            emit dataChanged(start, end, roles);
+            m_tabs[i].setThumbnailPath(path);
             emit dataChanged(start, end, roles);
             updateThumbPath(tabId, path);
         }

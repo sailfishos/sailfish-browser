@@ -248,10 +248,7 @@ void tst_declarativetabmodel::multipleTabsWithSameUrls()
     tabModel->updateUrl(tab1, page2Tab1Url, false);
     QTest::qWait(1000);
     QCOMPARE(tabModel->activeTab().url(), page2Tab1Url);
-    // This is a bit problematic. From model point of view only url has changed.
-    // In real life between url change and title change there is a short moment
-    // when a wrong title / url can slip into the model. Title changes only
-    // after engine report the title.
+    // Title is cleared in the model when the url changes.
     QVERIFY(tabModel->activeTab().title().isEmpty());
 
     QTest::qWait(1000);

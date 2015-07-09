@@ -65,7 +65,7 @@ WebContainer {
     }
 
     function grabActivePage() {
-        if (webView.contentItem) {
+        if (webView.contentItem && webView.activeTabRendered) {
             webView.privateMode ? webView.contentItem.grabThumbnail(thumbnailCaptureSize())
                                 : webView.contentItem.grabToFile(thumbnailCaptureSize())
         }
@@ -88,11 +88,19 @@ WebContainer {
 
             property int iconSize
             property string iconType
+            property int frameCounter
+            property bool rendered
             readonly property bool activeWebPage: container.tabId == tabId
 
             signal selectionRangeUpdated(variant data)
             signal selectionCopied(variant data)
             signal contextMenuRequested(variant data)
+
+            function grabItem() {
+                if (rendered && activeWebPage && active) {
+                    webView.privateMode ? grabThumbnail(thumbnailCaptureSize()) : grabToFile(thumbnailCaptureSize())
+                }
+            }
 
             width: container.rotationHandler && container.rotationHandler.width || 0
             fullscreenHeight: container.fullscreenHeight
@@ -104,7 +112,6 @@ WebContainer {
             chromeGestureThreshold: toolbarHeight / 2
             chromeGestureEnabled: (contentHeight > fullscreenHeight + toolbarHeight) && !forcedChrome && enabled && !webView.imOpened
 
-            onClearGrabResult: tabModel.updateThumbnailPath(tabId, "")
             onGrabResult: tabModel.updateThumbnailPath(tabId, fileName)
 
             // Image data is base64 encoded which can be directly used as source in Image element
@@ -114,6 +121,17 @@ WebContainer {
                 if (url == "about:blank") return
 
                 webView.findInPageHasResult = false
+                var modelUrl = tabModel.url(tabId)
+
+                rendered = false
+                frameCounter = 0
+
+                // If url has changed or url doesn't exists in the model,
+                // clear the thumbnail. Preserve the thumbnails in the model
+                // if it has the same url (restarting browser / resurrecting a tab).
+                if (!modelUrl || modelUrl != url) {
+                    tabModel.updateThumbnailPath(tabId, "")
+                }
             }
 
             onBgcolorChanged: {
@@ -143,26 +161,25 @@ WebContainer {
             }
 
             onLoadedChanged: {
-                if (loaded && !userHasDraggedWhileLoading) {
-                    resetHeight(false)
-                    if (resurrectedContentRect) {
-                        sendAsyncMessage("embedui:zoomToRect",
-                                         {
-                                             "x": resurrectedContentRect.x, "y": resurrectedContentRect.y,
-                                             "width": resurrectedContentRect.width, "height": resurrectedContentRect.height
-                                         })
-                        resurrectedContentRect = null
+                if (loaded) {
+                    if (!userHasDraggedWhileLoading) {
+                        resetHeight(false)
+                        if (resurrectedContentRect) {
+                            sendAsyncMessage("embedui:zoomToRect",
+                                             {
+                                                 "x": resurrectedContentRect.x, "y": resurrectedContentRect.y,
+                                                 "width": resurrectedContentRect.width, "height": resurrectedContentRect.height
+                                             })
+                            resurrectedContentRect = null
+                        }
                     }
+                    grabItem()
                 }
 
                 // Refresh timers (if any) keep working even for suspended views. Hence
                 // suspend the view again explicitly if browser content window is in not visible (background).
                 if (loaded && !webView.visible) {
                     suspendView();
-                }
-
-                if (loaded) {
-                    webView.privateMode ? grabThumbnail(thumbnailCaptureSize()) : grabToFile(thumbnailCaptureSize())
                 }
             }
 
@@ -173,8 +190,17 @@ WebContainer {
                     favicon = ""
                     iconType = ""
                     iconSize = 0
-
                     resetHeight(false)
+                }
+            }
+
+            onAfterRendering: {
+                // Try to capture something else than glClear color.
+                if (frameCounter < 3) {
+                    ++frameCounter
+                } else if (!rendered) {
+                    rendered = true
+                    grabItem()
                 }
             }
 

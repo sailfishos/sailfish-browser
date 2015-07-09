@@ -38,14 +38,31 @@ BackgroundItem {
     // contentItem is hidden so this cannot be children of the contentItem.
     // So, making them as siblings of the contentItem.
     data: [
+        Rectangle {
+            color: "gray"
+            width: root.implicitWidth
+            height: root.implicitHeight
+            opacity: 0.2
+            // Intentional binding to an animator opacity.
+            visible: image.opacity < 1.0
+        },
         Image {
             id: image
 
             source: thumbnailPath
             width: root.implicitWidth
             height: root.implicitHeight
+
+            sourceSize {
+                width: root.implicitWidth
+                height: root.implicitHeight
+            }
+
             cache: false
             asynchronous: true
+            opacity: status !== Image.Ready && source !== "" ? 0.0 : 1.0
+
+            Behavior on opacity { FadeAnimator {} }
         },
 
         Rectangle {
