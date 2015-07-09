@@ -207,7 +207,7 @@ Background {
 
                 url: webView.contentItem && webView.contentItem.url || ""
                 findText: searchField.text
-                bookmarked: bookmarkModel.count && bookmarkModel.contains(webView.url)
+                bookmarked: bookmarkModel.activeUrlBookmarked
                 opacity: (overlay.y - webView.fullscreenHeight/2)  / (webView.fullscreenHeight/2 - toolBar.height)
                 visible: opacity > 0.0
                 secondaryToolsActive: overlayAnimator.secondaryTools
@@ -246,7 +246,7 @@ Background {
                                    })
                 }
                 onBookmarkActivePage: favoriteGrid.fetchAndSaveBookmark()
-                onRemoveActivePageFromBookmarks: bookmarkModel.removeBookmark(webView.url)
+                onRemoveActivePageFromBookmarks: bookmarkModel.remove(webView.url)
             }
 
             SearchField {
@@ -387,6 +387,7 @@ Background {
 
                 model: BookmarkModel {
                     id: bookmarkModel
+                    activeUrl: toolBar.url
                 }
 
                 onMovingChanged: if (moving) favoriteGrid.focus = true

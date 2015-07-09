@@ -130,7 +130,8 @@ SilicaGridView {
                                     "view": favoriteGrid,
                                     "delegate": container,
                                     "title": model.title,
-                                    "url": model.url
+                                    "url": model.url,
+                                    "index": model.index
                                 })
                 }
             }
@@ -169,9 +170,10 @@ SilicaGridView {
             readonly property bool sameWebPage: webPage && title === webPage.title && url === webPage.url
 
             function handleGrabbedThumbnail(data) {
-                // If web page changed, switch to default icon.
-                data = sameWebPage ? data : defaultIcon
-                bookmarkModel.addBookmark(url, title || url, data, false)
+                // If on the same web page, update thumbnail data.
+                if (sameWebPage) {
+                    bookmarkModel.updateFavoriteIcon(url, data, false)
+                }
                 webPage.onThumbnailResult.disconnect(handleGrabbedThumbnail)
                 fetcher.destroy()
             }
@@ -180,22 +182,24 @@ SilicaGridView {
 
             onDataChanged: {
                 var canDestroy = true
-
                 if (hasAcceptedTouchIcon) {
-                    bookmarkModel.addBookmark(url, title || url, data, hasAcceptedTouchIcon)
+                    bookmarkModel.updateFavoriteIcon(url, data, hasAcceptedTouchIcon)
                 } else if (sameWebPage) {
                     // We are still at same web page but no accepted touch icon. Let's grab thumbnail.
                     canDestroy = false
                     webPage.onThumbnailResult.connect(handleGrabbedThumbnail)
                     webPage.grabThumbnail(Qt.size(favoriteGrid.cellHeight, favoriteGrid.cellWidth))
-                } else {
-                    // Use default icon.
-                    bookmarkModel.addBookmark(url, title || url, defaultIcon, false)
                 }
 
                 if (canDestroy) {
                     fetcher.destroy()
                 }
+            }
+
+            Component.onCompleted: {
+                // Add bookmark immediately with the defaultIcon. Update the favorite
+                // asynchronously.
+                bookmarkModel.add(url, title || url, defaultIcon, true)
             }
         }
     }
@@ -203,7 +207,7 @@ SilicaGridView {
     Component {
         id: editDialog
         BookmarkEditDialog {
-            onAccepted: bookmarkModel.editBookmark(index, editedUrl, editedTitle)
+            onAccepted: bookmarkModel.edit(index, editedUrl, editedTitle)
         }
     }
 
