@@ -27,6 +27,16 @@ static const QByteArray QML_SNIPPET = \
         "   PersistentTabModel { id: model }\n" \
         "}\n";
 
+struct TabTuple {
+    TabTuple(QString url, QString title) : url(url), title(title) {}
+    TabTuple() {}
+
+    QString url;
+    QString title;
+};
+
+Q_DECLARE_METATYPE(TabTuple)
+
 class tst_persistenttabmodel : public QObject
 {
     Q_OBJECT
@@ -37,6 +47,7 @@ private slots:
     void init();
     void cleanup();
 
+    void addTab_data();
     void addTab();
     void remove();
     void removeTabById_data();
@@ -63,7 +74,6 @@ private:
 
 void tst_persistenttabmodel::initTestCase()
 {
-    qGuiApp->setAttribute(Qt::AA_Use96Dpi, true);
     qmlRegisterUncreatableType<DeclarativeTabModel>("Sailfish.Browser", 1, 0, "TabModel",
                                                     "TabModel is abstract!");
     qmlRegisterType<PersistentTabModel>("Sailfish.Browser", 1, 0, "PersistentTabModel");
@@ -102,8 +112,36 @@ void tst_persistenttabmodel::cleanup()
     QVERIFY(dbFile.remove());
 }
 
+
+void tst_persistenttabmodel::addTab_data()
+{
+    QTest::addColumn<QList<TabTuple> >("initialTabs");
+    QTest::addColumn<TabTuple>("tabToAdd");
+    QTest::addColumn<int>("insertToIndex");
+
+    QList<TabTuple> emptyList;
+
+    QList<TabTuple> list {
+        TabTuple(QString("http://example.com"), QString("Test title1")),
+        TabTuple(QString("file:///opt/tests/testpage.html"), QString("Test title2")),
+        TabTuple(QString("https://example.com"), QString("Test title3"))
+    };
+    QTest::newRow("append_to_end") << list << TabTuple(QString("http://example2.com"), QString("Test title4")) << 3;
+    QTest::newRow("insert_to_start") << list << TabTuple(QString("http://example2.com"), QString("Test title4")) << 0;
+    QTest::newRow("insert_to_empty_model") << emptyList << TabTuple(QString("http://example2.com"), QString("Test title4")) << 0;
+}
+
 void tst_persistenttabmodel::addTab()
 {
+    QFETCH(QList<TabTuple>, initialTabs);
+    QFETCH(TabTuple, tabToAdd);
+    QFETCH(int, insertToIndex);
+
+    // initialize the case
+    for (int i = 0; i < initialTabs.count(); i++) {
+        tabModel->addTab(initialTabs.at(i).url, initialTabs.at(i).title, i);
+    }
+
     QSignalSpy countChangeSpy(tabModel, SIGNAL(countChanged()));
     QSignalSpy tabAddedSpy(tabModel, SIGNAL(tabAdded(int)));
     QSignalSpy nextTabIdChangedSpy(tabModel, SIGNAL(nextTabIdChanged()));
@@ -111,65 +149,51 @@ void tst_persistenttabmodel::addTab()
     QSignalSpy activeTabIndexChangedSpy(tabModel, SIGNAL(activeTabIndexChanged()));
     QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
 
-    QList<QString> urls, titles;
-    urls << "http://example.com" << "file:///opt/tests/testpage.html" << "https://example.com";
-    titles << "Test title1" << "Test title2" << "Test title3";
+    // actual test
+    tabModel->addTab(tabToAdd.url, tabToAdd.title, insertToIndex);
 
-    QList<QVariant> arguments;
+    QCOMPARE(countChangeSpy.count(), 1);
 
-    // append tab
-    for (int i = 0; i < urls.count(); i++) {
-        tabModel->addTab(urls.at(i), titles.at(i), tabModel->count());
-        QCOMPARE(countChangeSpy.count(), i+1);
+    QCOMPARE(tabAddedSpy.count(), 1);
+    QList<QVariant> arguments = tabAddedSpy.at(0);
+    QCOMPARE(arguments.at(0).toInt(), initialTabs.count() + 1);
 
-        QCOMPARE(tabAddedSpy.count(), i+1);
-        arguments = tabAddedSpy.at(i);
-        QCOMPARE(arguments.at(0).toInt(), i+1);
+    QCOMPARE(nextTabIdChangedSpy.count(), 1);
+    QCOMPARE(tabModel->nextTabId(), initialTabs.count() + 2);
 
-        QCOMPARE(nextTabIdChangedSpy.count(), i+1);
-        QCOMPARE(tabModel->nextTabId(), i+2);
-        // when model is not empty two dataChanged signals are emitted;
-        int dataChangedCount = i == 0 ? 1 : (i * 2) + 1;
-        QCOMPARE(dataChangedSpy.count(), dataChangedCount);
-        QCOMPARE(activeTabIndexChangedSpy.count(), i+1);
-
-        QCOMPARE(activeTabChangedSpy.count(), i+1);
-        arguments = activeTabChangedSpy.at(i);
-        QCOMPARE(arguments.at(0).toInt(), i+1);
-        QCOMPARE(arguments.at(1).toBool(), true);
-
-        QCOMPARE(tabModel->activeTab().url(), urls.at(i));
-        QCOMPARE(tabModel->activeTab().title(), titles.at(i));
-    }
-
-    // insert tab
-    tabModel->addTab(QString("http://inserted.tab"), QString("Inserted tab"), 1);
-    QCOMPARE(countChangeSpy.count(), 4);
-    QCOMPARE(tabAddedSpy.count(), 4);
-    arguments = tabAddedSpy.at(3);
-    QCOMPARE(arguments.at(0).toInt(), 4);
-    QCOMPARE(activeTabChangedSpy.count(), 4);
-    arguments = activeTabChangedSpy.at(3);
-    QCOMPARE(arguments.at(0).toInt(), 4);
+    QCOMPARE(activeTabChangedSpy.count(), 1);
+    arguments = activeTabChangedSpy.at(0);
+    QCOMPARE(arguments.at(0).toInt(), initialTabs.count() + 1);
     QCOMPARE(arguments.at(1).toBool(), true);
 
-    QModelIndex modelIndex = tabModel->createIndex(0, 0);
-    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), QString("http://example.com"));
-    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), QString("Test title1"));
-    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt(), 1);
-    QCOMPARE(tabModel->m_tabs.at(0).currentLink(), 1);
+    QCOMPARE(tabModel->activeTab().url(), tabToAdd.url);
+    QCOMPARE(tabModel->activeTab().title(), tabToAdd.title);
 
-    modelIndex = tabModel->createIndex(1, 0);
-    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), QString("http://inserted.tab"));
-    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), QString("Inserted tab"));
-    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt(), 4);
-    QCOMPARE(tabModel->m_tabs.at(1).currentLink(), 4);
+    // when model is not empty two dataChanged signals are emitted;
+    int dataChangedCount = initialTabs.count() == 0 ? 1 : 2;
+    QCOMPARE(dataChangedSpy.count(), dataChangedCount);
 
-    modelIndex = tabModel->createIndex(2, 0);
-    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), QString("file:///opt/tests/testpage.html"));
-    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), QString("Test title2"));
-    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt(), 2);
-    QCOMPARE(tabModel->m_tabs.at(2).currentLink(), 2);
+    QCOMPARE(activeTabIndexChangedSpy.count(), 1);
+
+    QModelIndex modelIndex = tabModel->createIndex(insertToIndex, 0);
+    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), tabToAdd.url);
+    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), tabToAdd.title);
+    QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt(), initialTabs.count() + 1);
+    QCOMPARE(tabModel->m_tabs.at(insertToIndex).currentLink(), initialTabs.count() + 1);
+
+    if (insertToIndex > 0) {
+        modelIndex = tabModel->createIndex(insertToIndex - 1, 0);
+        QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), initialTabs.at(insertToIndex - 1).url);
+        QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), initialTabs.at(insertToIndex - 1).title);
+        QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt(), insertToIndex);
+        QCOMPARE(tabModel->m_tabs.at(insertToIndex - 1).currentLink(), insertToIndex);
+    } else if (insertToIndex < initialTabs.count()) {
+        modelIndex = tabModel->createIndex(insertToIndex + 1, 0);
+        QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), initialTabs.at(insertToIndex).url);
+        QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), initialTabs.at(insertToIndex).title);
+        QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt(), insertToIndex + 1);
+        QCOMPARE(tabModel->m_tabs.at(insertToIndex + 1).currentLink(), insertToIndex + 1);
+    }
 }
 
 void tst_persistenttabmodel::remove()
