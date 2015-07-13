@@ -24,6 +24,25 @@ WebContainer {
 
     property bool findInPageHasResult
 
+    property var resourceController: ResourceController {
+        webView: contentItem
+        background: !webView.visible
+    }
+
+    property Timer auxTimer: Timer {
+        interval: 1000
+    }
+
+    property var _webPageCreator: WebPageCreator {
+        activeWebPage: contentItem
+        // onNewWindowRequested is always handled as synchronous operation (not through newTab).
+        onNewWindowRequested: tabModel.newTab(url, "", parentId)
+    }
+
+    property Component _pickerCreator: Component {
+        PickerCreator {}
+    }
+
     function stop() {
         if (contentItem) {
             contentItem.stop()
@@ -63,12 +82,6 @@ WebContainer {
         PopupHandler.tabModel = tabModel
     }
 
-    property var webPageCreator: WebPageCreator {
-        activeWebPage: contentItem
-        // onNewWindowRequested is always handled as synchronous operation (not through newTab).
-        onNewWindowRequested: tabModel.newTab(url, "", parentId)
-    }
-
     webPageComponent: Component {
         WebPage {
             id: webPage
@@ -77,21 +90,19 @@ WebContainer {
             property string iconType
             readonly property bool activeWebPage: container.tabId == tabId
 
-            fullscreenHeight: container.fullscreenHeight
-            toolbarHeight: container.toolbarHeight
-            throttlePainting: !foreground && !resourceController.videoActive
-
-            enabled: webView.enabled
-
-            // There needs to be enough content for enabling chrome gesture
-            chromeGestureThreshold: toolbarHeight / 2
-            chromeGestureEnabled: (contentHeight > fullscreenHeight + toolbarHeight) && !forcedChrome && enabled && !webView.imOpened
-
             signal selectionRangeUpdated(variant data)
             signal selectionCopied(variant data)
             signal contextMenuRequested(variant data)
 
             width: container.rotationHandler && container.rotationHandler.width || 0
+            fullscreenHeight: container.fullscreenHeight
+            toolbarHeight: container.toolbarHeight
+            throttlePainting: !foreground && !resourceController.videoActive
+            enabled: webView.enabled
+
+            // There needs to be enough content for enabling chrome gesture
+            chromeGestureThreshold: toolbarHeight / 2
+            chromeGestureEnabled: (contentHeight > fullscreenHeight + toolbarHeight) && !forcedChrome && enabled && !webView.imOpened
 
             onClearGrabResult: tabModel.updateThumbnailPath(tabId, "")
             onGrabResult: tabModel.updateThumbnailPath(tabId, fileName)
@@ -313,19 +324,6 @@ WebContainer {
 //        Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
 //    }
 
-    property var resourceController: ResourceController {
-        webView: contentItem
-        background: !webView.visible
-    }
-
-    property Timer auxTimer: Timer {
-        interval: 1000
-    }
-
-    property Component pickerCreator: Component {
-        PickerCreator {}
-    }
-
     Component.onCompleted: {
         PopupHandler.auxTimer = auxTimer
         PopupHandler.pageStack = pageStack
@@ -334,6 +332,6 @@ WebContainer {
         PopupHandler.resourceController = resourceController
         PopupHandler.WebUtils = WebUtils
         PopupHandler.tabModel = tabModel
-        PopupHandler.pickerCreator = pickerCreator
+        PopupHandler.pickerCreator = _pickerCreator
     }
 }
