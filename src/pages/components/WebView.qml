@@ -225,7 +225,9 @@ WebContainer {
                     break
                 }
                 case "embed:permissions": {
-                    if (data.title === "geolocation") {
+                    if (data.title === "geolocation"
+                            && locationSettings.locationEnabled
+                            && gpsTechModel.powered) {
                         PopupHandler.openLocationDialog(data)
                     } else {
                         // Currently we don't support other permission requests.
