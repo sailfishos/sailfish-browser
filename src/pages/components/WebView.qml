@@ -103,14 +103,6 @@ WebContainer {
                 if (url == "about:blank") return
 
                 webView.findInPageHasResult = false
-
-                if (!PopupHandler.isRejectedGeolocationUrl(url)) {
-                    PopupHandler.rejectedGeolocationUrl = ""
-                }
-
-                if (!PopupHandler.isAcceptedGeolocationUrl(url)) {
-                    PopupHandler.acceptedGeolocationUrl = ""
-                }
             }
 
             onBgcolorChanged: {
@@ -233,7 +225,17 @@ WebContainer {
                     break
                 }
                 case "embed:permissions": {
-                    PopupHandler.openLocationDialog(data)
+                    if (data.title === "geolocation") {
+                        PopupHandler.openLocationDialog(data)
+                    } else {
+                        // Currently we don't support other permission requests.
+                        sendAsyncMessage("embedui:premissions",
+                                         {
+                                             allow: false,
+                                             checkedDontAsk: false,
+                                             id: data.id
+                                         })
+                    }
                     break
                 }
                 case "embed:login": {
