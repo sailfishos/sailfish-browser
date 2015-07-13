@@ -11,10 +11,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include <declarativewebcontainer.h>
+
 #include "persistenttabmodel.h"
 #include "dbmanager.h"
-#include "declarativewebcontainer.h"
-#include "declarativewebutils.h"
 
 PersistentTabModel::PersistentTabModel(DeclarativeWebContainer *webContainer)
     : DeclarativeTabModel(DBManager::instance()->getMaxTabId() + 1, webContainer)

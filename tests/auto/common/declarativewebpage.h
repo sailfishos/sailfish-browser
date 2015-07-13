@@ -44,6 +44,8 @@ public:
     virtual QString title() const;
     void setTitle(const QString &title);
 
+    int parentId() const;
+
     Q_INVOKABLE void loadTab(QString newUrl, bool force);
 
     int m_tabId;

@@ -72,6 +72,11 @@ void DeclarativeWebPage::setTitle(const QString &title)
     }
 }
 
+int DeclarativeWebPage::parentId() const
+{
+    return 0;
+}
+
 void DeclarativeWebPage::loadTab(QString newUrl, bool force)
 {
     Q_UNUSED(newUrl)
