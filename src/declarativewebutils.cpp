@@ -193,6 +193,10 @@ void DeclarativeWebUtils::updateWebEngineSettings()
 
     // Disable SSLv3
     mozContext->setPref(QString("security.tls.version.min"), QVariant(1));
+
+    // Content Security Policy is enabled by default,
+    // this enables the spec compliant mode.
+    mozContext->setPref(QString("security.csp.speccompliant"), QVariant(true));
 }
 
 void DeclarativeWebUtils::setFirstUseDone(bool firstUseDone) {
