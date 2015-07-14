@@ -10,16 +10,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "declarativetabmodel.h"
-#include "linkvalidator.h"
-#include "declarativewebutils.h"
-#include "declarativewebcontainer.h"
-#include "declarativewebpage.h"
-
 #include <QFile>
 #include <QDebug>
 #include <QStringList>
 #include <QUrl>
+
+#include <declarativewebcontainer.h>
+#include <declarativewebpage.h>
+#include "declarativetabmodel.h"
+#include "linkvalidator.h"
 
 #ifndef DEBUG_LOGS
 #define DEBUG_LOGS 0
@@ -101,15 +100,13 @@ void DeclarativeTabModel::remove(int index) {
 
 void DeclarativeTabModel::removeTabById(int tabId, bool activeTab)
 {
-    int index = -1;
-    if (!activeTab) {
-        index = findTabIndex(tabId);
-    }
-
     if (activeTab) {
         closeActiveTab();
-    } else if (index >= 0){
-        remove(index);
+    } else {
+        int index = findTabIndex(tabId);
+        if (index >= 0) {
+            remove(index);
+        }
     }
 }
 

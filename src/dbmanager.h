@@ -26,6 +26,7 @@ class DBManager : public QObject
     Q_OBJECT
 public:
     static DBManager *instance();
+    virtual ~DBManager();
 
     int createTab();
     int createLink(int tabId, QString url, QString title);
