@@ -35,6 +35,9 @@ Background {
         if (url == "about:config") {
             pageStack.push(Qt.resolvedUrl("ConfigWarning.qml"), {"browserPage": browserPage});
         } else {
+            if (webView && webView.tabModel.count === 0) {
+                webView.clearSurface();
+            }
             // let gecko figure out how to handle malformed URLs
             var pageUrl = url
             var pageTitle = title || ""
