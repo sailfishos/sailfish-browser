@@ -169,7 +169,7 @@ int WebPageQueue::parentTabId(int tabId) const
 
 bool WebPageQueue::setMaxLivePages(int count)
 {
-    if (m_maxLiveCount != count) {
+    if (m_maxLiveCount != count && count > 0) {
         m_maxLiveCount = count;
         updateLivePages();
         return true;
