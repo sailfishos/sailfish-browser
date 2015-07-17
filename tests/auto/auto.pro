@@ -5,6 +5,7 @@ SUBDIRS += tst_dbmanager \
     tst_declarativebookmarkmodel \
     tst_declarativehistorymodel \
     tst_declarativetabmodel \
+    tst_declarativewebcontainer \
     tst_persistenttabmodel \
     tst_desktopbookmarkwriter \
     tst_linkvalidator \
