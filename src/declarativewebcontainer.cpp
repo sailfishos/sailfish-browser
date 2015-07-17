@@ -198,7 +198,7 @@ void DeclarativeWebContainer::setTabModel(DeclarativeTabModel *model)
             newCount = m_model->count();
         }
         emit tabModelChanged();
-        if (oldCount != newCount) {
+        if (m_model && oldCount != newCount) {
             emit m_model->countChanged();
         }
 
