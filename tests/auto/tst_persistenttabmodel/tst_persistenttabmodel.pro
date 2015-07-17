@@ -1,11 +1,14 @@
 TARGET = tst_persistenttabmodel
 
-CONFIG   += c++11
+CONFIG += c++11
 
-NO_COMMON_INCLUDES=1
+QT += quick qml sql
+
+INCLUDEPATH += $$PWD/../common
+include(../test_common.pri)
 include(../common/declarativewebpage_mock.pri)
 include(../common/declarativewebcontainer_mock.pri)
-include(../test_common.pri)
-include(../../../src/history.pri)
+
+include(../../../src/history/history.pri)
 
 SOURCES += tst_persistenttabmodel.cpp

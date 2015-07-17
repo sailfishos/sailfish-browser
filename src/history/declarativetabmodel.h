@@ -34,7 +34,7 @@ protected:
 public:
     DeclarativeTabModel(int nextTabId = 1, DeclarativeWebContainer *webContainer = 0);
     ~DeclarativeTabModel();
-    
+
     enum TabRoles {
         ThumbPathRole = Qt::UserRole + 1,
         TitleRole,
@@ -126,6 +126,7 @@ protected:
     friend class tst_declarativehistorymodel;
     friend class tst_declarativetabmodel;
     friend class tst_webview;
+    friend class tst_declarativewebcontainer;
     friend class tst_persistenttabmodel;
 };
 #endif // DECLARATIVETABMODEL_H

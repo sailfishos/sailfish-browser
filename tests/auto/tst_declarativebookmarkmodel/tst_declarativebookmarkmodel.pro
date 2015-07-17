@@ -1,8 +1,11 @@
 TARGET = tst_declarativebookmarkmodel
-NO_COMMON_INCLUDES=1
+
+QT += quick concurrent
+
 include(../test_common.pri)
 include(../common/testobject.pri)
-include(../../../src/bookmarks.pri)
+include(../../../src/bookmarks/bookmarks.pri)
+
 
 # C++ sources
 SOURCES += tst_declarativebookmarkmodel.cpp

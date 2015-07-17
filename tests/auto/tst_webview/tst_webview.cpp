@@ -19,7 +19,7 @@
 #include "declarativewebpage.h"
 #include "declarativewebpagecreator.h"
 #include "declarativewebutils.h"
-#include "testobject.h"
+#include "../common/testobject.h"
 
 class tst_webview : public TestObject
 {

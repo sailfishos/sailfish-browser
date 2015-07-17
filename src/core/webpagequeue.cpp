@@ -261,4 +261,3 @@ WebPageQueue::WebPageEntry::~WebPageEntry()
     cssContentRect = 0;
     webPage = 0;
 }
-
