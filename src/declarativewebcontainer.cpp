@@ -473,6 +473,8 @@ void DeclarativeWebContainer::clearWindowSurface()
     m_context->makeCurrent(this);
     QOpenGLFunctions_ES2* funcs = m_context->versionFunctions<QOpenGLFunctions_ES2>();
     Q_ASSERT(funcs);
+    QSize s = m_context->surface()->size();
+    funcs->glScissor(0, 0, s.width(), s.height());
     funcs->glClearColor(1.0, 1.0, 1.0, 0.0);
     funcs->glClear(GL_COLOR_BUFFER_BIT);
     m_context->swapBuffers(this);
