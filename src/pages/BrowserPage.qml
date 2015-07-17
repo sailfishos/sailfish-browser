@@ -203,7 +203,7 @@ Page {
         target: webView && webView.tabModel || null
         ignoreUnknownSignals: true
         // Animate overlay to top if needed.
-        onCountChanged: webView.handleModelChanges(false)
+        //onCountChanged: webView.handleModelChanges(false)
         onWaitingForNewTabChanged: window.opaqueBackground = webView.tabModel.waitingForNewTab
     }
 

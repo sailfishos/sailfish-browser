@@ -467,13 +467,15 @@ void DeclarativeWebContainer::clearWindowSurfaceTask(void *data)
 
 void DeclarativeWebContainer::clearWindowSurface()
 {
+    qDebug() << "clear and swap!";
+
     Q_ASSERT(m_context);
     // The GL context should always be used from the same thread in which it was created.
     Q_ASSERT(m_context->thread() == QThread::currentThread());
     m_context->makeCurrent(this);
     QOpenGLFunctions_ES2* funcs = m_context->versionFunctions<QOpenGLFunctions_ES2>();
     Q_ASSERT(funcs);
-    funcs->glClearColor(1.0, 1.0, 1.0, 0.0);
+    funcs->glClearColor(1.0, 0.0, 1.0, 0.0);
     funcs->glClear(GL_COLOR_BUFFER_BIT);
     m_context->swapBuffers(this);
 }
@@ -791,7 +793,7 @@ void DeclarativeWebContainer::releasePage(int tabId)
         // Successfully destroyed. Emit relevant property changes.
         if (m_model->count() == 0) {
             setWebPage(NULL);
-            postClearWindowSurfaceTask();
+//            postClearWindowSurfaceTask();
         }
     }
 }

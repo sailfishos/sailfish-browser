@@ -228,9 +228,14 @@ Background {
 
                 onCloseActiveTab: {
                     // Activates (loads) the tab next to the currect active.
+
+
+
                     webView.tabModel.closeActiveTab()
+                    console.log("TAb count:", webView.tabModel.count)
                     if (webView.tabModel.count == 0) {
-                        overlay.enterNewTabUrl()
+//                        //overlay.enterNewTabUrl()
+                        foobar.restart()
                     }
                 }
 
@@ -247,6 +252,12 @@ Background {
                 }
                 onBookmarkActivePage: favoriteGrid.fetchAndSaveBookmark()
                 onRemoveActivePageFromBookmarks: bookmarkModel.remove(webView.url)
+            }
+
+            Timer {
+                id: foobar
+                interval: 15000
+                onTriggered: webView.clearSurface()
             }
 
             SearchField {
