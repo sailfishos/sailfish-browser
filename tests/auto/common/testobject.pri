@@ -1,3 +1,5 @@
-SOURCES += ../common/testobject.cpp
-HEADERS += ../common/testobject.h
+INCLUDEPATH += $$PWD
+
+SOURCES += $$PWD/testobject.cpp
+HEADERS += $$PWD/testobject.h
 

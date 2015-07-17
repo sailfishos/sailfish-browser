@@ -11,7 +11,7 @@
 
 #include <QtTest>
 #include "dbmanager.h"
-#include "../common/testobject.h"
+#include "testobject.h"
 
 class tst_dbmanager : public TestObject
 {

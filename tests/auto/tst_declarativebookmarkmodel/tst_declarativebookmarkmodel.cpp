@@ -16,7 +16,7 @@
 #include <QDesktopServices>
 #include <QGuiApplication>
 #include "declarativebookmarkmodel.h"
-#include "../common/testobject.h"
+#include "testobject.h"
 #include "bookmarkmanager.h"
 
 static const QByteArray QML_SNIPPET = \

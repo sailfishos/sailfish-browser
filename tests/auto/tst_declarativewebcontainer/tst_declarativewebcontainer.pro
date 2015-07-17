@@ -13,11 +13,7 @@ include(../../../src/qtmozembed/qtmozembed.pri)
 # TODO: drop this include (decouple SettingManager from bookmarks)
 include(../../../src/bookmarks/bookmarks.pri)
 
-include(../common/declarativewebutils_mock.pri)
+include(../mocks/declarativewebutils/declarativewebutils_mock.pri)
+include(../mocks/downloadmanager/downloadmanager_mock.pri)
 
-INCLUDEPATH += ../../../src
-
-SOURCES += tst_declarativewebcontainer.cpp \
-           ../../../src/downloadmanager.cpp
-
-HEADERS += ../../../src/downloadmanager.h
+SOURCES += tst_declarativewebcontainer.cpp

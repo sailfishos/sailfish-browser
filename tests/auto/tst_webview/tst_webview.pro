@@ -6,11 +6,9 @@ PKGCONFIG += nemotransferengine-qt5 mlite5
 
 QT += quick concurrent sql gui-private
 
-INCLUDEPATH += ../../../src
-
 include(../test_common.pri)
-include(../common/downloadmanager_mock.pri)
-include(../common/declarativewebutils_mock.pri)
+include(../mocks/downloadmanager/downloadmanager_mock.pri)
+include(../mocks/declarativewebutils/declarativewebutils_mock.pri)
 include(../common/testobject.pri)
 include(../../../src/core/core.pri)
 include(../../../src/qtmozembed/qtmozembed.pri)
