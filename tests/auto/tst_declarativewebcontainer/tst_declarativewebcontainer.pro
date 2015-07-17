@@ -4,13 +4,6 @@ CONFIG += link_pkgconfig
 
 PKGCONFIG += mlite5 nemotransferengine-qt5
 
-# Include qtmozembed
-isEmpty(QTEMBED_LIB) {
-  PKGCONFIG += qt5embedwidget
-} else {
-  LIBS+=$$QTEMBED_LIB
-}
-
 QT += quick qml concurrent sql gui-private
 
 include(../test_common.pri)

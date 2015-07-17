@@ -39,20 +39,11 @@ packagesExist(sailfishsilica) {
     PKGCONFIG += sailfishsilica
 }
 
-# Include qtmozembed
-isEmpty(QTEMBED_LIB) {
-  PKGCONFIG += qt5embedwidget
-} else {
-  LIBS+=$$QTEMBED_LIB
-}
-
 # Translations
 TS_PATH = $$PWD
 TS_FILE = $$OUT_PWD/sailfish-browser.ts
 EE_QM = $$OUT_PWD/sailfish-browser_eng_en.qm
 include(../translations/translations.pri)
-
-INCLUDEPATH += $$PWD
 
 include(../defaults.pri)
 include(core/core.pri)
