@@ -2,6 +2,8 @@
 
 QT += testlib
 
+include(../../defaults.pri)
+
 # Put a file named gcov_enabled to this directory in order to enable code coverage
 exists(gcov_enabled) {
     message("GCOV instrumentalization enabled")

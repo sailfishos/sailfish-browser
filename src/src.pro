@@ -46,8 +46,6 @@ isEmpty(QTEMBED_LIB) {
   LIBS+=$$QTEMBED_LIB
 }
 
-include(common.pri)
-
 # Translations
 TS_PATH = $$PWD
 TS_FILE = $$OUT_PWD/sailfish-browser.ts
@@ -56,6 +54,7 @@ include(../translations/translations.pri)
 
 INCLUDEPATH += $$PWD
 
+include(../defaults.pri)
 include(core/core.pri)
 include(history/history.pri)
 include(bookmarks/bookmarks.pri)
