@@ -18,7 +18,6 @@ Item {
     property QtObject webView
     property bool portrait
     property bool atTop
-    property bool atMiddle
     property bool atBottom: true
     property int transitionDuration: !_immediate ? 400 : 0
     property real openYPosition: portrait ? overlay.toolBar.toolsHeight : 0
@@ -88,8 +87,6 @@ Item {
             atTop = false
         } if (state !== "chromeVisible" && state !== "fullscreenWebPage" && state !== "doubleToolBar") {
             atBottom = false
-        } if (state !== "loadProgressOverlay") {
-            atMiddle = false
         }
     }
 
