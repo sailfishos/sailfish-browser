@@ -160,7 +160,7 @@ Background {
         drag.filterChildren: true
         drag.axis: Drag.YAxis
         // Favorite grid first row offset is negative. So, increase minumumY drag by that.
-        drag.minimumY: (browserPage.isPortrait ? toolBar.toolsHeight : 0) - favoriteGrid.firstRowOffset
+        drag.minimumY: browserPage.isPortrait ? toolBar.toolsHeight : 0
         drag.maximumY: webView.fullscreenHeight - toolBar.toolsHeight
 
         drag.onActiveChanged: {
@@ -375,7 +375,7 @@ Background {
             Browser.FavoriteGrid {
                 id: favoriteGrid
 
-                height: historyList.height - favoriteGrid.firstRowOffset
+                height: historyList.height
                 opacity: historyContainer.showFavorites ? 1.0 : 0.0
                 enabled: overlayAnimator.atTop
                 visible: !overlayAnimator.atBottom && !toolBar.findInPageActive && opacity > 0.0
