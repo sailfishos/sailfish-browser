@@ -124,6 +124,14 @@ Background {
                 if (!WebUtils.firstUseDone) {
                     WebUtils.firstUseDone = true
                 }
+
+                dragArea.moved = false
+            }
+        }
+
+        onAtTopChanged: {
+            if (!atTop) {
+                dragArea.moved = true
             }
         }
     }
@@ -147,6 +155,7 @@ Background {
     MouseArea {
         id: dragArea
 
+        property bool moved
         property int dragThreshold: state === "fullscreenOverlay" ? toolBar.toolsHeight * 1.5 :
                                                                     state === "doubleToolBar" ?
                                                                         (webView.fullscreenHeight - toolBar.toolsHeight * 4) :
@@ -192,11 +201,16 @@ Background {
         Item {
             id: historyContainer
 
-            readonly property bool showFavorites: (!searchField.edited && searchField.text === webView.url || !searchField.text)
+            readonly property bool showFavorites: !overlayAnimator.atBottom && (!searchField.edited && searchField.text === webView.url || !searchField.text)
 
             width: parent.width
             height: toolBar.toolsHeight + historyList.height
-            clip: true
+            // Clip only when content has been moved and we're at top or animating downwards.
+            clip: (overlayAnimator.atTop ||
+                   overlayAnimator.direction === "downwards" ||
+                   overlayAnimator.direction === "upwards" ||
+                   favoriteGrid.opacity != 0.0 ||
+                   historyList.opacity != 0.0) && searchField.y < 0
 
             PrivateModeTexture {
                 opacity: toolBar.visible && webView.privateMode ? toolBar.opacity : 0.0
@@ -252,7 +266,7 @@ Background {
             SearchField {
                 id: searchField
 
-                readonly property bool requestingFocus: overlayAnimator.atTop && browserPage.active
+                readonly property bool requestingFocus: overlayAnimator.atTop && browserPage.active && !dragArea.moved
                 property bool edited
                 property bool enteringNewTabUrl
 
@@ -293,7 +307,14 @@ Background {
 
                 background: null
                 opacity: toolBar.opacity * -1.0
-                visible: opacity > 0.0
+                visible: opacity > 0.0 && y >= -searchField.height
+
+                onYChanged: {
+                    if (y < 0) {
+                        dragArea.moved = true
+                    }
+                }
+
                 onRequestingFocusChanged: {
                     if (requestingFocus) {
                         forceActiveFocus()
@@ -361,24 +382,24 @@ Background {
                 }
 
                 search: searchField.text
-                opacity: historyContainer.showFavorites ? 0.0 : 1.0
+                opacity: historyContainer.showFavorites || toolBar.opacity > 0.9 ? 0.0 : 1.0
                 enabled: overlayAnimator.atTop
-                visible: !overlayAnimator.atBottom && !toolBar.findInPageActive && opacity > 0.0
+                visible: !overlayAnimator.atBottom && !toolBar.findInPageActive && !historyContainer.showFavorites
 
                 onMovingChanged: if (moving) historyList.focus = true
                 onSearchChanged: if (search !== webView.url) historyModel.search(search)
                 onLoad: overlay.loadPage(url, title)
 
-                Behavior on opacity { FadeAnimation {} }
+                Behavior on opacity { FadeAnimator {} }
             }
 
             Browser.FavoriteGrid {
                 id: favoriteGrid
 
                 height: historyList.height
-                opacity: historyContainer.showFavorites ? 1.0 : 0.0
+                opacity: historyContainer.showFavorites && toolBar.opacity < 0.9 ? 1.0 : 0.0
                 enabled: overlayAnimator.atTop
-                visible: !overlayAnimator.atBottom && !toolBar.findInPageActive && opacity > 0.0
+                visible: !overlayAnimator.atBottom && !toolBar.findInPageActive && historyContainer.showFavorites
 
                 header: Item {
                     width: parent.width
@@ -402,7 +423,7 @@ Background {
 
                 onShare: pageStack.push(Qt.resolvedUrl("../ShareLinkPage.qml"), {"link" : url, "linkTitle": title})
 
-                Behavior on opacity { FadeAnimation {} }
+                Behavior on opacity { FadeAnimator {} }
             }
         }
     }
