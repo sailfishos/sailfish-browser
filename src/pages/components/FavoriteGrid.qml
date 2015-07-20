@@ -26,9 +26,6 @@ SilicaGridView {
     readonly property int minOffsetIndex: contextMenu ? currentIndex - (currentIndex % columns) + columns : 0
     readonly property int yOffset: contextMenu ? contextMenu.height : 0
 
-    // Reduced/canceled from container.offsetY
-    readonly property real firstRowOffset: browserPage.largeScreen ? -Theme.paddingLarge * 2 : 0
-
     readonly property int rows: Math.floor(pageHeight / minimumCellHeight)
     readonly property int columns: Math.floor(browserPage.width / minimumCellWidth)
 
@@ -58,7 +55,6 @@ SilicaGridView {
         }
     }
 
-    y: firstRowOffset
     width: cellWidth * columns
     currentIndex: -1
     anchors.horizontalCenter: parent.horizontalCenter
@@ -77,8 +73,8 @@ SilicaGridView {
         id: container
 
         property real offsetY: browserPage.largeScreen
-                               ? (((y % (favoriteGrid.pageHeight-container.contentHeight+1)) / (favoriteGrid.pageHeight-container.contentHeight+1)) - 0.5) * (Theme.paddingLarge*4)
-                               : 0
+                 ? - (((-favoriteGrid.originY+container.contentHeight/2)%favoriteGrid.pageHeight)/favoriteGrid.pageHeight - 0.5) * (Theme.paddingLarge*4)
+                 : 0
 
         signal addToLauncher
         signal editBookmark
@@ -118,7 +114,7 @@ SilicaGridView {
 
             width: favoriteGrid.cellWidth
             height: favoriteGrid.cellHeight
-            y: (index >= favoriteGrid.minOffsetIndex ? favoriteGrid.yOffset : 0.0) - container.offsetY
+            y: index >= favoriteGrid.minOffsetIndex ? favoriteGrid.yOffset : 0.0
 
             onClicked: favoriteGrid.load(model.url, model.title)
             onShowContextMenuChanged: {
@@ -149,7 +145,6 @@ SilicaGridView {
         parent: favoriteGrid
         anchors.rightMargin: -(browserPage.width - favoriteGrid.width) / 2
         flickable: favoriteGrid
-        _headerSpacing: -firstRowOffset
     }
 
     Component {
