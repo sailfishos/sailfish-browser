@@ -23,7 +23,7 @@ BuildRequires:  qt5-qttools-linguist
 BuildRequires:  gdb
 BuildRequires:  oneshot
 
-Requires: sailfishsilica-qt5 >= 0.21.13
+Requires: sailfishsilica-qt5 >= 0.21.34
 Requires: jolla-ambient >= 0.7.12
 Requires: xulrunner-qt5 >= 31.7.0.22
 Requires: embedlite-components-qt5 >= 1.8.11
