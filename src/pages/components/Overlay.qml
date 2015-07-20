@@ -298,7 +298,8 @@ Background {
 
                 background: null
                 opacity: toolBar.opacity * -1.0
-                visible: opacity > 0.0
+                visible: opacity > 0.0 && y >= -searchField.height
+
                 onRequestingFocusChanged: {
                     if (requestingFocus) {
                         forceActiveFocus()
