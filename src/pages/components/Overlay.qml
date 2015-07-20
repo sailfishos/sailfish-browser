@@ -196,7 +196,12 @@ Background {
 
             width: parent.width
             height: toolBar.toolsHeight + historyList.height
-            clip: true
+            // Clip only when content has been moved and we're at top or animating downwards.
+            clip: (overlayAnimator.atTop ||
+                   overlayAnimator.direction === "downwards" ||
+                   overlayAnimator.direction === "upwards" ||
+                   favoriteGrid.opacity != 0.0 ||
+                   historyList.opacity != 0.0) && searchField.y < 0
 
             PrivateModeTexture {
                 opacity: toolBar.visible && webView.privateMode ? toolBar.opacity : 0.0
