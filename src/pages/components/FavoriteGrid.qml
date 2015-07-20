@@ -62,6 +62,7 @@ SilicaGridView {
     cellHeight: Math.round(pageHeight / rows)
 
     displaced: Transition { NumberAnimation { properties: "x,y"; easing.type: Easing.InOutQuad; duration: 200 } }
+    cacheBuffer: cellHeight * 2
 
     onVisibleChanged: {
         if (!visible && contextMenuActive) {
