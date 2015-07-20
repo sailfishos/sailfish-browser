@@ -92,6 +92,15 @@ public:
     MOCK_METHOD2(Q_INVOKABLE loadTab, void(QString newUrl, bool force));
 
 signals:
+    void canGoBackChanged();
+    void canGoForwardChanged();
+    void imeNotification(int, bool, int, int, const QString&);
+    void windowCloseRequested();
+    void loadingChanged();
+    void loadProgressChanged();
+    void afterRendering(const QRect&);
+    void requestGLContext();
+
     void containerChanged();
     void tabIdChanged();
     void urlChanged();

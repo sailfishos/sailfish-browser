@@ -99,8 +99,6 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     connect(this, SIGNAL(foregroundChanged()), this, SLOT(updateWindowFlags()));
 
     qApp->installEventFilter(this);
-
-    showFullScreen();
 }
 
 DeclarativeWebContainer::~DeclarativeWebContainer()
@@ -641,6 +639,8 @@ void DeclarativeWebContainer::classBegin()
 
 void DeclarativeWebContainer::componentComplete()
 {
+    showFullScreen();
+
     if (m_initialized && !m_completed) {
         m_completed = true;
         emit completedChanged();
