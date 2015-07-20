@@ -124,6 +124,14 @@ Background {
                 if (!WebUtils.firstUseDone) {
                     WebUtils.firstUseDone = true
                 }
+
+                dragArea.moved = false
+            }
+        }
+
+        onAtTopChanged: {
+            if (!atTop) {
+                dragArea.moved = true
             }
         }
     }
@@ -147,6 +155,7 @@ Background {
     MouseArea {
         id: dragArea
 
+        property bool moved
         property int dragThreshold: state === "fullscreenOverlay" ? toolBar.toolsHeight * 1.5 :
                                                                     state === "doubleToolBar" ?
                                                                         (webView.fullscreenHeight - toolBar.toolsHeight * 4) :
@@ -257,7 +266,7 @@ Background {
             SearchField {
                 id: searchField
 
-                readonly property bool requestingFocus: overlayAnimator.atTop && browserPage.active
+                readonly property bool requestingFocus: overlayAnimator.atTop && browserPage.active && !dragArea.moved
                 property bool edited
                 property bool enteringNewTabUrl
 
@@ -299,6 +308,12 @@ Background {
                 background: null
                 opacity: toolBar.opacity * -1.0
                 visible: opacity > 0.0 && y >= -searchField.height
+
+                onYChanged: {
+                    if (y < 0) {
+                        dragArea.moved = true
+                    }
+                }
 
                 onRequestingFocusChanged: {
                     if (requestingFocus) {
