@@ -192,7 +192,7 @@ Background {
         Item {
             id: historyContainer
 
-            readonly property bool showFavorites: (!searchField.edited && searchField.text === webView.url || !searchField.text)
+            readonly property bool showFavorites: !overlayAnimator.atBottom && (!searchField.edited && searchField.text === webView.url || !searchField.text)
 
             width: parent.width
             height: toolBar.toolsHeight + historyList.height
@@ -361,24 +361,24 @@ Background {
                 }
 
                 search: searchField.text
-                opacity: historyContainer.showFavorites ? 0.0 : 1.0
+                opacity: historyContainer.showFavorites || toolBar.opacity > 0.9 ? 0.0 : 1.0
                 enabled: overlayAnimator.atTop
-                visible: !overlayAnimator.atBottom && !toolBar.findInPageActive && opacity > 0.0
+                visible: !overlayAnimator.atBottom && !toolBar.findInPageActive && !historyContainer.showFavorites
 
                 onMovingChanged: if (moving) historyList.focus = true
                 onSearchChanged: if (search !== webView.url) historyModel.search(search)
                 onLoad: overlay.loadPage(url, title)
 
-                Behavior on opacity { FadeAnimation {} }
+                Behavior on opacity { FadeAnimator {} }
             }
 
             Browser.FavoriteGrid {
                 id: favoriteGrid
 
                 height: historyList.height
-                opacity: historyContainer.showFavorites ? 1.0 : 0.0
+                opacity: historyContainer.showFavorites && toolBar.opacity < 0.9 ? 1.0 : 0.0
                 enabled: overlayAnimator.atTop
-                visible: !overlayAnimator.atBottom && !toolBar.findInPageActive && opacity > 0.0
+                visible: !overlayAnimator.atBottom && !toolBar.findInPageActive && historyContainer.showFavorites
 
                 header: Item {
                     width: parent.width
@@ -402,7 +402,7 @@ Background {
 
                 onShare: pageStack.push(Qt.resolvedUrl("../ShareLinkPage.qml"), {"link" : url, "linkTitle": title})
 
-                Behavior on opacity { FadeAnimation {} }
+                Behavior on opacity { FadeAnimator {} }
             }
         }
     }
