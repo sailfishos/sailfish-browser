@@ -9,11 +9,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "declarativewebpage.h"
+#include "qmozcontext.h"
 
-QDebug operator<<(QDebug dbg, const DeclarativeWebPage *page)
+static QMozContext* gSingleton = 0;
+
+QMozContext* QMozContext::GetInstance()
 {
-    Q_UNUSED(page);
-
-    return dbg;
+    if (!gSingleton) {
+        gSingleton = new QMozContext();
+    }
+    return gSingleton;
 }

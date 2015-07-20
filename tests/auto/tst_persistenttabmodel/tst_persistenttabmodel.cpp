@@ -18,6 +18,8 @@
 #include "dbmanager.h"
 #include "declarativewebpage.h"
 
+using ::testing::Return;
+
 static const QByteArray QML_SNIPPET = \
         "import QtQuick 2.0\n" \
         "import Sailfish.Browser 1.0\n" \
@@ -74,6 +76,9 @@ private:
 
 void tst_persistenttabmodel::initTestCase()
 {
+    int argc(0);
+    char* argv[0] = {};
+    ::testing::InitGoogleMock(&argc, argv);
     qmlRegisterUncreatableType<DeclarativeTabModel>("Sailfish.Browser", 1, 0, "TabModel",
                                                     "TabModel is abstract!");
     qmlRegisterType<PersistentTabModel>("Sailfish.Browser", 1, 0, "PersistentTabModel");
@@ -428,8 +433,12 @@ void tst_persistenttabmodel::onTitleChanged()
 
     QSignalSpy dataChangedSpy(tabModel, SIGNAL(dataChanged(QModelIndex, QModelIndex, QVector<int>)));
 
-    mockPage.m_tabId = 1;
-    mockPage.setTitle("Hello world");
+    EXPECT_CALL(mockPage, tabId()).WillOnce(Return(1));
+    QUrl url;
+    EXPECT_CALL(mockPage, url()).WillOnce(Return(url));
+    EXPECT_CALL(mockPage, title()).WillOnce(Return(QString("Hello world")));
+    emit mockPage.titleChanged();
+
     QCOMPARE(dataChangedSpy.count(), 1);
 }
 

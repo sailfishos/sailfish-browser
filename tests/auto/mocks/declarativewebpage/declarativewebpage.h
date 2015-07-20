@@ -14,9 +14,17 @@
 
 #include <QObject>
 #include <QDebug>
+#include <QUrl>
+#include <QRectF>
+#include <QWindow>
+#include <QTouchEvent>
+#include <QVariant>
 
-class Tab;
-class QUrl;
+#include "gtest/gtest.h"
+#include "gmock/gmock.h"
+
+#include "tab.h"
+
 class DeclarativeWebContainer;
 
 class DeclarativeWebPage : public QObject
@@ -24,35 +32,69 @@ class DeclarativeWebPage : public QObject
     Q_OBJECT
 
 public:
-    explicit DeclarativeWebPage(QObject *parent = 0);
+    explicit DeclarativeWebPage(QObject *parent = 0) : QObject(parent) {};
 
-    void setContainer(DeclarativeWebContainer *);
+    MOCK_CONST_METHOD0(contentRect, QRectF());
+    MOCK_METHOD1(setWindow, void(QWindow *));
+    MOCK_CONST_METHOD0(completed, bool());
+    MOCK_CONST_METHOD0(uniqueID, quint32());
+    MOCK_CONST_METHOD0(isPainted, bool());
+    MOCK_CONST_METHOD0(loadProgress, int());
+    MOCK_CONST_METHOD0(loading, bool());
+    MOCK_CONST_METHOD0(canGoForward, bool());
+    MOCK_CONST_METHOD0(canGoBack, bool());
+    MOCK_METHOD0(reload, void());
+    MOCK_METHOD0(goForward, void());
+    MOCK_METHOD0(goBack, void());
+    MOCK_METHOD1(setChrome, void(bool));
+    MOCK_METHOD0(suspendView, void());
+    MOCK_METHOD0(resumeView, void());
+    MOCK_METHOD0(update, void());
+    MOCK_METHOD0(initialize, void());
+    MOCK_METHOD0(stop, void());
+    MOCK_METHOD1(touchEvent, void(QTouchEvent *));
+    MOCK_CONST_METHOD1(inputMethodQuery, QVariant(Qt::InputMethodQuery));
+    MOCK_METHOD1(inputMethodEvent, void(QInputMethodEvent *));
+    MOCK_METHOD1(keyPressEvent, void(QKeyEvent *));
+    MOCK_METHOD1(keyReleaseEvent, void(QKeyEvent *));
+    MOCK_METHOD1(focusInEvent, void(QFocusEvent *));
+    MOCK_METHOD1(focusOutEvent, void(QFocusEvent *));
+    MOCK_METHOD1(timerEvent, void(QTimerEvent *));
+    MOCK_METHOD1(updateContentOrientation, void(Qt::ScreenOrientation));
+    MOCK_CONST_METHOD0(contentHeight, qreal());
+    MOCK_CONST_METHOD0(resolution, float());
+    MOCK_METHOD2(sendAsyncMessage, void(const QString&, const QVariant&));
+    MOCK_METHOD1(setParentID, void(unsigned));
+    MOCK_METHOD1(setActive, void(bool));
 
-    void setResurrectedContentRect(QVariant);
-    void setInitialTab(const Tab&);
+    MOCK_METHOD1(setContainer, void(DeclarativeWebContainer *));
 
-    void resetHeight(bool);
-    void forceChrome(bool);
+    MOCK_METHOD1(setResurrectedContentRect, void(QVariant));
+    MOCK_METHOD1(setInitialTab, void(const Tab&));
 
-    int tabId() const;
+    MOCK_METHOD1(resetHeight, void(bool));
+    MOCK_METHOD1(forceChrome, void(bool));
 
-    bool initialLoadHasHappened() const;
-    void setInitialLoadHasHappened();
+    MOCK_CONST_METHOD0(tabId, int());
 
-    virtual QUrl url() const;
+    MOCK_CONST_METHOD0(initialLoadHasHappened, bool());
+    MOCK_METHOD0(setInitialLoadHasHappened, void());
 
-    virtual QString title() const;
-    void setTitle(const QString &title);
+    MOCK_CONST_METHOD0(url, QUrl());
 
-    int parentId() const;
+    MOCK_CONST_METHOD0(title, QString());
+    MOCK_METHOD1(setTitle, void(const QString &title));
 
-    Q_INVOKABLE void loadTab(QString newUrl, bool force);
+    MOCK_CONST_METHOD0(parentId, int());
 
-    int m_tabId;
+    MOCK_METHOD1(setPrivateMode, void(bool));
+
+    MOCK_METHOD2(Q_INVOKABLE loadTab, void(QString newUrl, bool force));
 
 signals:
     void containerChanged();
     void tabIdChanged();
+    void urlChanged();
     void titleChanged();
     void forcedChromeChanged();
     void fullscreenChanged();
@@ -61,9 +103,6 @@ signals:
     void clearGrabResult();
     void grabResult(QString fileName);
     void thumbnailResult(QString data);
-
-private:
-    QString m_title;
 };
 
 QDebug operator<<(QDebug, const DeclarativeWebPage *);

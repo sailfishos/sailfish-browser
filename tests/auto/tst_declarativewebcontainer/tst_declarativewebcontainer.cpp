@@ -239,7 +239,11 @@ void tst_declarativewebcontainer::load()
 {
     m_webContainer->load(QString(), QString(), true);
     QCOMPARE(m_webContainer->m_initialUrl, QString("about:blank"));
+
     // TODO: figure out how to test initialized web container
+    DeclarativeWebPage page;
+    m_webContainer->setWebPage(&page);
+    m_webContainer->load(QString(), QString(), true);
 }
 
 void tst_declarativewebcontainer::reload()
