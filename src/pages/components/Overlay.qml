@@ -400,6 +400,7 @@ Background {
                 opacity: historyContainer.showFavorites && toolBar.opacity < 0.9 ? 1.0 : 0.0
                 enabled: overlayAnimator.atTop
                 visible: !overlayAnimator.atBottom && !toolBar.findInPageActive && historyContainer.showFavorites
+                _quickScrollRightMargin: -(browserPage.width - width) / 2
 
                 header: Item {
                     width: parent.width
