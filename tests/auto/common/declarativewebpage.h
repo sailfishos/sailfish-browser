@@ -58,7 +58,6 @@ signals:
     void fullscreenChanged();
     void domContentLoadedChanged();
     void resurrectedContentRectChanged();
-    void clearGrabResult();
     void grabResult(QString fileName);
     void thumbnailResult(QString data);
 
