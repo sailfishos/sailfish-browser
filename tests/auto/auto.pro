@@ -15,5 +15,5 @@ OTHER_FILES += \
     *.xml
 
 common.path = /opt/tests/sailfish-browser/auto
-common.files = tests.xml
+common.files = tests.xml runtests.sh
 INSTALLS += common
