@@ -14,6 +14,9 @@
 
 #include <QObject>
 
+#include "gtest/gtest.h"
+#include "gmock/gmock.h"
+
 class DeclarativeWebPage;
 
 class DeclarativeWebContainer : public QObject
@@ -24,7 +27,7 @@ public:
     explicit DeclarativeWebContainer(QObject *parent = 0);
 
     int findParentTabId(int) const;
-    DeclarativeWebPage *webPage() const;
+    MOCK_CONST_METHOD0(webPage, DeclarativeWebPage*());
 };
 
 

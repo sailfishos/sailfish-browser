@@ -17,6 +17,7 @@
 #include "persistenttabmodel.h"
 #include "dbmanager.h"
 #include "declarativewebpage.h"
+#include "declarativewebcontainer.h"
 
 using ::testing::Return;
 
@@ -62,7 +63,11 @@ private slots:
     void closeActiveTab();
     void updateUrl_data();
     void updateUrl();
+    void updateThumbnailPath();
+    void onUrlChanged();
     void onTitleChanged();
+    void nextActiveTabIndex();
+    void misc();
 
 private:
     void addThreeTabs();
@@ -423,6 +428,62 @@ void tst_persistenttabmodel::updateUrl()
     }
 }
 
+void tst_persistenttabmodel::updateThumbnailPath()
+{
+    // set up environment
+    tabModel->addTab("http://example.com", "initial title", 0);
+    QSignalSpy dataChangedSpy(tabModel, SIGNAL(dataChanged(QModelIndex, QModelIndex, QVector<int>)));
+
+    QString path("/path/to/thumbnail");
+    tabModel->updateThumbnailPath(1, path);
+    QCOMPARE(dataChangedSpy.count(), 1);
+    QCOMPARE(tabModel->m_tabs.at(0).thumbnailPath(), path);
+}
+
+void tst_persistenttabmodel::onUrlChanged()
+{
+    // set up environment
+    tabModel->addTab("http://example.com", "initial title", 0);
+
+    DeclarativeWebPage mockPage;
+    connect(&mockPage, SIGNAL(urlChanged()), tabModel, SLOT(onUrlChanged()));
+
+    QSignalSpy dataChangedSpy(tabModel, SIGNAL(dataChanged(QModelIndex, QModelIndex, QVector<int>)));
+    QSignalSpy tabAddedSpy(tabModel, SIGNAL(tabAdded(int)));
+
+    // 1. a web page is loaded in an existing tab => update model data
+    QUrl url("http://newurl.com");
+    EXPECT_CALL(mockPage, tabId()).WillOnce(Return(1));
+    EXPECT_CALL(mockPage, url()).WillOnce(Return(url));
+    EXPECT_CALL(mockPage, initialLoadHasHappened()).WillOnce(Return(true));
+    EXPECT_CALL(mockPage, setInitialLoadHasHappened()); // TODO: this call can be optimized out
+    emit mockPage.urlChanged();
+    QCOMPARE(dataChangedSpy.count(), 1);
+    QCOMPARE(tabAddedSpy.count(), 0);
+
+    // 2. a web page hasn't been loaded yet into a new tab => add tab
+    EXPECT_CALL(mockPage, tabId()).WillOnce(Return(2));
+    EXPECT_CALL(mockPage, url()).WillOnce(Return(url));
+    EXPECT_CALL(mockPage, parentId()).WillOnce(Return(0));
+    EXPECT_CALL(mockPage, initialLoadHasHappened()).WillOnce(Return(false));
+    EXPECT_CALL(mockPage, setInitialLoadHasHappened());
+    emit mockPage.urlChanged();
+    QCOMPARE(tabAddedSpy.count(), 1);
+    QList<QVariant> arguments = tabAddedSpy.at(0);
+    QCOMPARE(arguments.at(0).toInt(), 2);
+
+    // 3. an existing page requested to open another one => add tab next to parent
+    EXPECT_CALL(mockPage, tabId()).WillOnce(Return(3));
+    EXPECT_CALL(mockPage, url()).WillOnce(Return(url));
+    EXPECT_CALL(mockPage, parentId()).WillOnce(Return(1));
+    EXPECT_CALL(mockPage, initialLoadHasHappened()).WillOnce(Return(false));
+    EXPECT_CALL(mockPage, setInitialLoadHasHappened());
+    emit mockPage.urlChanged();
+    QCOMPARE(tabAddedSpy.count(), 2);
+    arguments = tabAddedSpy.at(1);
+    QCOMPARE(arguments.at(0).toInt(), 3);
+}
+
 void tst_persistenttabmodel::onTitleChanged()
 {
     // set up environment
@@ -440,6 +501,36 @@ void tst_persistenttabmodel::onTitleChanged()
     emit mockPage.titleChanged();
 
     QCOMPARE(dataChangedSpy.count(), 1);
+}
+
+void tst_persistenttabmodel::nextActiveTabIndex()
+{
+    DeclarativeWebContainer container;
+    DeclarativeWebPage page;
+    tabModel->setWebContainer(&container);
+
+    EXPECT_CALL(container, webPage()).WillRepeatedly(Return(&page));
+    EXPECT_CALL(page, parentId()).WillOnce(Return(1));
+    EXPECT_CALL(page, tabId()).WillOnce(Return(2));
+    tabModel->nextActiveTabIndex(0);
+}
+
+void tst_persistenttabmodel::misc()
+{
+    // Call simple methods to increase coverage
+
+    tabModel->roleNames();
+    QCOMPARE(tabModel->waitingForNewTab(), false);
+
+    QSignalSpy loadedChangedSpy(tabModel, SIGNAL(loadedChanged()));
+    tabModel->m_loaded = true;
+    tabModel->setUnloaded();
+    QCOMPARE(loadedChangedSpy.count(), 1);
+
+    QSignalSpy newTabRequestedSpy(tabModel, SIGNAL(newTabRequested(QString, QString, int)));
+    tabModel->newTab(QString("http://example.com"), QString("Test"), 0);
+    QCOMPARE(newTabRequestedSpy.count(), 1);
+    QCOMPARE(tabModel->waitingForNewTab(), true);
 }
 
 void tst_persistenttabmodel::addThreeTabs()
