@@ -4,8 +4,7 @@ QT += testlib
 
 include(../../defaults.pri)
 
-# Put a file named gcov_enabled to this directory in order to enable code coverage
-exists(gcov_enabled) {
+CONFIG(gcov) {
     message("GCOV instrumentalization enabled")
     QMAKE_CXXFLAGS += -fprofile-arcs -ftest-coverage -O0
     QMAKE_LFLAGS += -lgcov -coverage
