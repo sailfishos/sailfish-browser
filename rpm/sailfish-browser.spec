@@ -22,6 +22,8 @@ BuildRequires:  qt5-qttools
 BuildRequires:  qt5-qttools-linguist
 BuildRequires:  gdb
 BuildRequires:  oneshot
+BuildRequires:  gtest-devel
+BuildRequires:  libgmock-devel
 
 Requires: sailfishsilica-qt5 >= 0.21.34
 Requires: jolla-ambient >= 0.7.12
