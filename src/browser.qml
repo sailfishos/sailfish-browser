@@ -28,6 +28,9 @@ ApplicationWindow {
         if (!model || model.count === 0) {
             cover = Qt.resolvedUrl("cover/NoTabsCover.qml")
         } else {
+            if (cover != null && window.webView) {
+              window.webView.clearSurface();
+            }
             cover = null
         }
     }
