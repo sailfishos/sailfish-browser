@@ -26,7 +26,7 @@ class DeclarativeHistoryModel : public QAbstractListModel, public QQmlParserStat
     Q_PROPERTY(int count READ rowCount NOTIFY countChanged)
 public:
     DeclarativeHistoryModel(QObject *parent = 0);
-    
+
     enum UrlRoles {
         UrlRole = Qt::UserRole + 1,
         TitleRole

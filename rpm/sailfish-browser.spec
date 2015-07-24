@@ -44,6 +44,9 @@ Requires: sailfish-components-pickers-qt5 >= 0.1.7
 
 %{_oneshot_requires_post}
 
+%{!?qtc_qmake5:%define qtc_qmake5 %qmake5}
+%{!?qtc_make:%define qtc_make make}
+
 %description
 Sailfish Web Browser
 
@@ -87,9 +90,8 @@ Unit tests and additional data needed for functional tests
 # >> build pre
 # << build pre
 
-%qmake5
-
-make %{_smp_mflags}
+%qtc_qmake5 -r VERSION=%{version}
+%qtc_make %{?_smp_mflags}
 
 # >> build post
 # << build post

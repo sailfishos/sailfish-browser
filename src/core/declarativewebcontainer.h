@@ -266,6 +266,7 @@ private:
     QMozContext::TaskHandle m_clearSurfaceTask;
 
     friend class tst_webview;
+    friend class tst_declarativewebcontainer;
 };
 
 QML_DECLARE_TYPE(DeclarativeWebContainer)

@@ -26,8 +26,6 @@ isEmpty(USE_RESOURCES) {
 
 PKGCONFIG +=  nemotransferengine-qt5 mlite5
 
-INCLUDEPATH += "../common/"
-
 packagesExist(qdeclarative5-boostable) {
     message("Building with qdeclarative-boostable support")
     DEFINES += HAS_BOOSTER
@@ -41,59 +39,34 @@ packagesExist(sailfishsilica) {
     PKGCONFIG += sailfishsilica
 }
 
-# Include qtmozembed
-isEmpty(QTEMBED_LIB) {
-  PKGCONFIG += qt5embedwidget
-} else {
-  LIBS+=$$QTEMBED_LIB
-}
-
-include(common.pri)
-
 # Translations
 TS_PATH = $$PWD
 TS_FILE = $$OUT_PWD/sailfish-browser.ts
 EE_QM = $$OUT_PWD/sailfish-browser_eng_en.qm
 include(../translations/translations.pri)
-include(history.pri)
-include(bookmarks.pri)
-include(../common/common.pri)
+
+include(../defaults.pri)
+include(core/core.pri)
+include(history/history.pri)
+include(bookmarks/bookmarks.pri)
+include(qtmozembed/qtmozembed.pri)
 
 # C++ sources
 SOURCES += \
-    inputregion.cpp \
     sailfishbrowser.cpp \
-    declarativewebcontainer.cpp \
-    declarativewebpage.cpp \
-    declarativewebutils.cpp \
-    declarativewebpagecreator.cpp \
     browserservice.cpp \
     dbusadaptor.cpp \
-    downloadmanager.cpp \
-    iconfetcher.cpp \
-    settingmanager.cpp \
     closeeventfilter.cpp \
-    webpagequeue.cpp \
-    webpages.cpp
+    downloadmanager.cpp \
+    declarativewebutils.cpp
 
 # C++ headers
 HEADERS += \
-    inputregion.h \
-    inputregion_p.h \
-    declarativewebcontainer.h \
-    declarativewebpage.h \
-    declarativewebutils.h \
-    declarativewebpagecreator.h \
     browserservice.h \
     dbusadaptor.h \
-    downloadmanager.h \
-    iconfetcher.h \
-    settingmanager.h \
     closeeventfilter.h \
-    webpagequeue.h \
-    webpages.h \
-    declarativefileuploadmode.h \
-    declarativefileuploadfilter.h
+    downloadmanager.h \
+    declarativewebutils.h
 
 OTHER_FILES = *.qml \
               cover/*.qml \

@@ -31,6 +31,9 @@
            <case manual="false" name="persistenttabmodel">
                <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_persistenttabmodel</step>
            </case>
+           <case manual="false" name="declarativewebcontainer">
+               <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_declarativewebcontainer</step>
+           </case>
            <post_steps>
                <step>/usr/sbin/mcetool -jdisabled -Doff</step>
            </post_steps>

@@ -26,7 +26,7 @@ class DeclarativeBookmarkModel : public QAbstractListModel
     Q_PROPERTY(bool activeUrlBookmarked READ activeUrlBookmarked NOTIFY activeUrlBookmarkedChanged FINAL)
 public:
     DeclarativeBookmarkModel(QObject *parent = 0);
-    
+
     enum BookmarkRoles {
            UrlRole = Qt::UserRole + 1,
            TitleRole,

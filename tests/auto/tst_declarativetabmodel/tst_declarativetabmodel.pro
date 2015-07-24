@@ -1,7 +1,11 @@
 TARGET = tst_declarativetabmodel
-include(../common/declarativewebpage_mock.pri)
-include(../common/declarativewebcontainer_mock.pri)
+
+QT += quick sql
+
 include(../test_common.pri)
+include(../mocks/declarativewebpage//declarativewebpage_mock.pri)
+include(../mocks/declarativewebcontainer/declarativewebcontainer_mock.pri)
 include(../common/testobject.pri)
+include(../../../src/history/history.pri)
 
 SOURCES += tst_declarativetabmodel.cpp

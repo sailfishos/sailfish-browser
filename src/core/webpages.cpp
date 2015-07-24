@@ -9,11 +9,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "webpages.h"
-#include "declarativewebcontainer.h"
-#include "declarativewebpage.h"
-#include "qmozcontext.h"
-
 #include <QDateTime>
 #include <QDBusServiceWatcher>
 #include <QDBusConnection>
@@ -26,6 +21,12 @@
 #include <QMapIterator>
 #include <QRectF>
 #include <qqmlinfo.h>
+
+#include "webpages.h"
+#include "declarativewebcontainer.h"
+#include "declarativewebpage.h"
+#include "qmozcontext.h"
+#include "tab.h"
 
 #ifndef DEBUG_LOGS
 #define DEBUG_LOGS 0

@@ -15,8 +15,8 @@
 #include <QStringList>
 #include <QUrl>
 
-#include <declarativewebcontainer.h>
-#include <declarativewebpage.h>
+#include "declarativewebcontainer.h"
+#include "declarativewebpage.h"
 #include "declarativetabmodel.h"
 #include "linkvalidator.h"
 
