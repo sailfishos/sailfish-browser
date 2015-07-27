@@ -127,9 +127,8 @@ Background {
                 if (!WebUtils.firstUseDone) {
                     WebUtils.firstUseDone = true
                 }
-
-                dragArea.moved = false
             }
+            dragArea.moved = false
         }
 
         onAtTopChanged: {
@@ -270,6 +269,11 @@ Background {
                 id: searchField
 
                 readonly property bool requestingFocus: overlayAnimator.atTop && browserPage.active && !dragArea.moved
+
+                // Release focus when ever history list or favorite grid is moved and overlay itself starts moving
+                // from the top. After moving the overlay or the content, search field can be focused by tapping.
+                readonly property bool focusOut: dragArea.moved
+
                 property bool edited
                 property bool enteringNewTabUrl
 
@@ -321,8 +325,12 @@ Background {
                 onRequestingFocusChanged: {
                     if (requestingFocus) {
                         forceActiveFocus()
-                    } else {
-                        focus = false
+                    }
+                }
+
+                onFocusOutChanged: {
+                    if (focusOut) {
+                        overlay.focus = true
                     }
                 }
 
@@ -335,6 +343,7 @@ Background {
                         } else {
                             searchField.selectAll()
                         }
+                        dragArea.moved = false
                     }
                 }
 
