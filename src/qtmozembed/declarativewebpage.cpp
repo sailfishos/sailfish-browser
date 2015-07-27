@@ -160,11 +160,12 @@ void DeclarativeWebPage::restoreHistory() {
         urls << link.url();
         if (link.linkId() == m_initialTab.currentLink()) {
             index = i;
-            if (link.url() != m_initialTab.url()) {
+            QString currentUrl(url().toString());
+            if (link.url() != currentUrl) {
                 // The browser was started with an initial URL as a cmdline parameter -> reset tab history
-                urls << m_initialTab.url();
+                urls << currentUrl;
                 index++;
-                DBManager::instance()->navigateTo(tabId(), m_initialTab.url(), "", "");
+                DBManager::instance()->navigateTo(tabId(), currentUrl, "", "");
                 break;
             }
         }
