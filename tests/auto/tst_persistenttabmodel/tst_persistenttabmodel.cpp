@@ -52,6 +52,8 @@ private slots:
 
     void addTab_data();
     void addTab();
+    void addTabInvalidInput_data();
+    void addTabInvalidInput();
     void remove();
     void removeTabById_data();
     void removeTabById();
@@ -208,6 +210,30 @@ void tst_persistenttabmodel::addTab()
         QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt(), insertToIndex + 1);
         QCOMPARE(tabModel->m_tabs.at(insertToIndex + 1).currentLink(), insertToIndex + 1);
     }
+}
+
+void tst_persistenttabmodel::addTabInvalidInput_data()
+{
+    QTest::addColumn<QString>("url");
+    QTest::addColumn<QString>("title");
+    QTest::newRow("tel") << "tel:+123456798" << "tel";
+    QTest::newRow("sms") << "sms:+123456798" << "sms";
+    QTest::newRow("mailto") << "mailto:joe@example.com" << "mailto1";
+    QTest::newRow("mailto query does not count") << "mailto:joe@example.com?cc=bob@example.com&body=hello1" << "mailto2";
+}
+
+void tst_persistenttabmodel::addTabInvalidInput()
+{
+    QSignalSpy countChangeSpy(tabModel, SIGNAL(countChanged()));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
+
+    QFETCH(QString, url);
+    QFETCH(QString, title);
+    tabModel->addTab(url, title, 0);
+
+    QCOMPARE(tabModel->count(), 0);
+    QCOMPARE(countChangeSpy.count(), 0);
+    QCOMPARE(activeTabChangedSpy.count(), 0);
 }
 
 void tst_persistenttabmodel::remove()
