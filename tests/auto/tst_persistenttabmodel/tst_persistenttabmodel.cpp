@@ -333,11 +333,14 @@ void tst_persistenttabmodel::clear()
 void tst_persistenttabmodel::activateTabByUrl_data()
 {
     QTest::addColumn<QString>("url");
-    QTest::addColumn<bool>("isExpectedToActivate");
+    QTest::addColumn<int>("expectedChanges");
+    QTest::addColumn<int>("expectedTabId");
+    QTest::addColumn<QString>("expectedUrl");
+    QTest::addColumn<QString>("expectedTitle");
 
-    QTest::newRow("url_for_inactive_tab") << QString("file:///opt/tests/testpahe.html") << true;
-    QTest::newRow("url_for_active_tab") << QString("https://example.com") << false;
-    QTest::newRow("non_existing_url") << QString("http://some.non.existing.url") << false;
+    QTest::newRow("url_for_inactive_tab") << QString("file:///opt/tests/testpahe.html") << 1 << 2 << QString("file:///opt/tests/testpahe.html") << QString("Test title2");
+    QTest::newRow("url_for_active_tab") << QString("https://example.com") << 0 << 3 << QString("https://example.com") << QString("Test title3");
+    QTest::newRow("non_existing_url") << QString("http://some.non.existing.url") << 0 << 3 << QString("https://example.com") << QString("Test title3");
 }
 
 void tst_persistenttabmodel::activateTabByUrl()
@@ -345,31 +348,33 @@ void tst_persistenttabmodel::activateTabByUrl()
     addThreeTabs();
 
     QFETCH(QString, url);
-    QFETCH(bool, isExpectedToActivate);
+    QFETCH(int, expectedChanges);
+    QFETCH(int, expectedTabId);
+    QFETCH(QString, expectedUrl);
+    QFETCH(QString, expectedTitle);
 
     QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
 
-    int oldActiveTabId = tabModel->activeTabId();
     tabModel->activateTab(url);
 
-    if (isExpectedToActivate) {
-        QCOMPARE(activeTabChangedSpy.count(), 1);
-        QVERIFY(tabModel->activeTabId() != oldActiveTabId);
-    } else {
-        QCOMPARE(activeTabChangedSpy.count(), 0);
-        QCOMPARE(tabModel->activeTabId(), oldActiveTabId);
-    }
+    QCOMPARE(tabModel->activeTabId(), expectedTabId);
+    QCOMPARE(tabModel->activeTab().url(), expectedUrl);
+    QCOMPARE(tabModel->activeTab().title(), expectedTitle);
+    QCOMPARE(activeTabChangedSpy.count(), expectedChanges);
 }
 
 void tst_persistenttabmodel::activateTabById_data()
 {
     QTest::addColumn<int>("tabId");
-    QTest::addColumn<bool>("isExpectedToActivate");
+    QTest::addColumn<int>("expectedChanges");
+    QTest::addColumn<int>("expectedTabId");
+    QTest::addColumn<QString>("expectedUrl");
+    QTest::addColumn<QString>("expectedTitle");
 
-    QTest::newRow("inactive_tab")   << 2    << true;
-    QTest::newRow("active_tab")     << 3    << false;
-    QTest::newRow("out_of_range_1") << -1   << false;
-    QTest::newRow("out_of_range_2") << 1000 << false;
+    QTest::newRow("inactive_tab") << 2 << 1 << 2 << QString("file:///opt/tests/testpahe.html") << QString("Test title2");
+    QTest::newRow("active_tab") << 3 << 0 << 3 << QString("https://example.com") << QString("Test title3");
+    QTest::newRow("out_of_range_1") << -1 << 0 << 3 << QString("https://example.com") << QString("Test title3");
+    QTest::newRow("out_of_range_2") << 1000 << 0 << 3 << QString("https://example.com") << QString("Test title3");
 }
 
 void tst_persistenttabmodel::activateTabById()
@@ -377,20 +382,19 @@ void tst_persistenttabmodel::activateTabById()
     addThreeTabs();
 
     QFETCH(int, tabId);
-    QFETCH(bool, isExpectedToActivate);
+    QFETCH(int, expectedChanges);
+    QFETCH(int, expectedTabId);
+    QFETCH(QString, expectedUrl);
+    QFETCH(QString, expectedTitle);
 
     QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
 
-    int oldActiveTabId = tabModel->activeTabId();
     tabModel->activateTabById(tabId);
 
-    if (isExpectedToActivate) {
-        QCOMPARE(activeTabChangedSpy.count(), 1);
-        QCOMPARE(tabModel->activeTabId(), tabId);
-    } else {
-        QCOMPARE(activeTabChangedSpy.count(), 0);
-        QCOMPARE(tabModel->activeTabId(), oldActiveTabId);
-    }
+    QCOMPARE(tabModel->activeTabId(), expectedTabId);
+    QCOMPARE(tabModel->activeTab().url(), expectedUrl);
+    QCOMPARE(tabModel->activeTab().title(), expectedTitle);
+    QCOMPARE(activeTabChangedSpy.count(), expectedChanges);
 }
 
 void tst_persistenttabmodel::closeActiveTab()
