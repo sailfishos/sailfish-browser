@@ -62,6 +62,8 @@ private slots:
     void activateTabByUrl();
     void activateTabById_data();
     void activateTabById();
+    void activateTabByIndex_data();
+    void activateTabByIndex();
     void closeActiveTab();
     void updateUrl_data();
     void updateUrl();
@@ -390,6 +392,40 @@ void tst_persistenttabmodel::activateTabById()
     QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
 
     tabModel->activateTabById(tabId);
+
+    QCOMPARE(tabModel->activeTabId(), expectedTabId);
+    QCOMPARE(tabModel->activeTab().url(), expectedUrl);
+    QCOMPARE(tabModel->activeTab().title(), expectedTitle);
+    QCOMPARE(activeTabChangedSpy.count(), expectedChanges);
+}
+
+void tst_persistenttabmodel::activateTabByIndex_data()
+{
+    QTest::addColumn<int>("tabIndex");
+    QTest::addColumn<int>("expectedChanges");
+    QTest::addColumn<int>("expectedTabId");
+    QTest::addColumn<QString>("expectedUrl");
+    QTest::addColumn<QString>("expectedTitle");
+
+    QTest::newRow("inactive_tab") << 1 << 1 << 2 << QString("file:///opt/tests/testpahe.html") << QString("Test title2");
+    QTest::newRow("active_tab") << 2 << 0 << 3 << QString("https://example.com") << QString("Test title3");
+    QTest::newRow("out_of_range_1") << -1 << 1 << 1 << QString("http://example.com") << QString("Test title1");
+    QTest::newRow("out_of_range_2") << 1000 << 0 << 3 << QString("https://example.com") << QString("Test title3");
+}
+
+void tst_persistenttabmodel::activateTabByIndex()
+{
+    addThreeTabs();
+
+    QFETCH(int, tabIndex);
+    QFETCH(int, expectedChanges);
+    QFETCH(int, expectedTabId);
+    QFETCH(QString, expectedUrl);
+    QFETCH(QString, expectedTitle);
+
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
+
+    tabModel->activateTab(tabIndex);
 
     QCOMPARE(tabModel->activeTabId(), expectedTabId);
     QCOMPARE(tabModel->activeTab().url(), expectedUrl);
