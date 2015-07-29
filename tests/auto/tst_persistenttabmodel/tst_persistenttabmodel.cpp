@@ -58,8 +58,8 @@ private slots:
     void removeTabById_data();
     void removeTabById();
     void clear();
-    void activateTab_by_url_data();
-    void activateTab_by_url();
+    void activateTabByUrl_data();
+    void activateTabByUrl();
     void activateTabById_data();
     void activateTabById();
     void closeActiveTab();
@@ -287,9 +287,9 @@ void tst_persistenttabmodel::removeTabById_data()
     QTest::newRow("first_tab")       << 1 << false << true;
     QTest::newRow("middle_tab")      << 2 << false << true;
     QTest::newRow("last_tab")        << 3 << false << true;
-    QTest::newRow("igmore_tabId_1")  << 1 << true  << true;
-    QTest::newRow("igmore_tabId_2")  << 2 << true  << true;
-    QTest::newRow("igmore_tabId_3")  << 2 << true  << true;
+    QTest::newRow("ignore_tabId_1")  << 1 << true  << true;
+    QTest::newRow("ignore_tabId_2")  << 2 << true  << true;
+    QTest::newRow("ignore_tabId_3")  << 2 << true  << true;
     QTest::newRow("invalid_tabId_1") << 0 << false << false;
     QTest::newRow("invalid_tabId_2") << 9 << false << false;
     QTest::newRow("invalid_tabId_3") << -1 << false << false;
@@ -330,7 +330,7 @@ void tst_persistenttabmodel::clear()
     QCOMPARE(tabModel->count(), 0);
 }
 
-void tst_persistenttabmodel::activateTab_by_url_data()
+void tst_persistenttabmodel::activateTabByUrl_data()
 {
     QTest::addColumn<QString>("url");
     QTest::addColumn<bool>("isExpectedToActivate");
@@ -340,7 +340,7 @@ void tst_persistenttabmodel::activateTab_by_url_data()
     QTest::newRow("non_existing_url") << QString("http://some.non.existing.url") << false;
 }
 
-void tst_persistenttabmodel::activateTab_by_url()
+void tst_persistenttabmodel::activateTabByUrl()
 {
     addThreeTabs();
 
@@ -426,12 +426,12 @@ void tst_persistenttabmodel::updateUrl_data()
     QTest::newRow("update_inactive_tab_file") << 1 << "file:///foo/bar/index.html" << false << true;
     QTest::newRow("update_inactive_tab_relative") << 1 << "foo/bar/index.html" << false << true;
     QTest::newRow("update_active_tab") << 3 << "http://some.real.site" << false << true;
-    QTest::newRow("invalide_url_tel") << 3 << "tel:+123456798" << false << false;
-    QTest::newRow("invalide_url_sms") << 3 << "sms:+123456798" << false << false;
-    QTest::newRow("invalide_url_mailto_1") << 3 << "mailto:joe@example.com" << false << false;
-    QTest::newRow("invalide_url_mailto_2") << 3 << "mailto:joe@example.com?cc=bob@example.com&body=hello1" << false << false;
-    QTest::newRow("invalide_url_geo") << 3 << "geo:61.49464,23.77513" << false << false;
-    QTest::newRow("invalide_url_geo://") << 3 << "geo://61.49464,23.77513" << false << false;
+    QTest::newRow("invalid_url_tel") << 3 << "tel:+123456798" << false << false;
+    QTest::newRow("invalid_url_sms") << 3 << "sms:+123456798" << false << false;
+    QTest::newRow("invalid_url_mailto_1") << 3 << "mailto:joe@example.com" << false << false;
+    QTest::newRow("invalid_url_mailto_2") << 3 << "mailto:joe@example.com?cc=bob@example.com&body=hello1" << false << false;
+    QTest::newRow("invalid_url_geo") << 3 << "geo:61.49464,23.77513" << false << false;
+    QTest::newRow("invalid_url_geo://") << 3 << "geo://61.49464,23.77513" << false << false;
 }
 
 void tst_persistenttabmodel::updateUrl()
