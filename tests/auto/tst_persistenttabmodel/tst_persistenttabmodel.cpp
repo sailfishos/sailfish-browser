@@ -67,7 +67,11 @@ private slots:
     void onUrlChanged();
     void onTitleChanged();
     void nextActiveTabIndex();
-    void misc();
+    void roleNames();
+    void data_data();
+    void data();
+    void setUnloaded();
+    void newTab();
 
 private:
     void addThreeTabs();
@@ -515,20 +519,65 @@ void tst_persistenttabmodel::nextActiveTabIndex()
     tabModel->nextActiveTabIndex(0);
 }
 
-void tst_persistenttabmodel::misc()
+void tst_persistenttabmodel::roleNames()
 {
-    // Call simple methods to increase coverage
-
+    // Here we test the method doesn't explode when called.
     tabModel->roleNames();
-    QCOMPARE(tabModel->waitingForNewTab(), false);
+}
 
+void tst_persistenttabmodel::data_data()
+{
+    QTest::addColumn<QModelIndex>("index");
+    QTest::addColumn<int>("role");
+    QTest::addColumn<bool>("isValid");
+
+    QModelIndex modelIndex = tabModel->createIndex(-1, 0);
+    QTest::newRow("invalid_index_1") << modelIndex << (int)DeclarativeTabModel::TabIdRole << false;
+    modelIndex = tabModel->createIndex(1000, 0);
+    QTest::newRow("invalid_index_2") << modelIndex << (int)DeclarativeTabModel::TabIdRole << false;
+    modelIndex = tabModel->createIndex(1, 0);
+    QTest::newRow("TabIdRole") << modelIndex  << (int)DeclarativeTabModel::TabIdRole << true;
+    QTest::newRow("ActiveRole") << modelIndex  << (int)DeclarativeTabModel::ActiveRole << true;
+    QTest::newRow("UrlRole") << modelIndex  << (int)DeclarativeTabModel::UrlRole << true;
+    QTest::newRow("TitleRole") << modelIndex  << (int)DeclarativeTabModel::TitleRole << true;
+    QTest::newRow("ThumbPathRole") << modelIndex  << (int)DeclarativeTabModel::ThumbPathRole << true;
+    QTest::newRow("InvalidRole") << modelIndex  << -10000 << false;
+}
+
+void tst_persistenttabmodel::data()
+{
+    // Set up environment
+    addThreeTabs();
+
+    QFETCH(QModelIndex, index);
+    QFETCH(int, role);
+    QFETCH(bool, isValid);
+
+    QVariant data = tabModel->data(index, role);
+    if (!isValid) {
+        QCOMPARE(data, QVariant());
+    } else if (role == DeclarativeTabModel::UrlRole) {
+        QCOMPARE(data.toString(), QString("file:///opt/tests/testpahe.html"));
+    } else if (role == DeclarativeTabModel::TitleRole) {
+        QCOMPARE(data.toString(), QString("Test title2"));
+    } else if (role == DeclarativeTabModel::TabIdRole) {
+        QCOMPARE(data.toInt(), 2);
+    } else if (role == DeclarativeTabModel::ActiveRole) {
+        QCOMPARE(data.toBool(), false);
+    }
+}
+
+void tst_persistenttabmodel::setUnloaded()
+{
     QSignalSpy loadedChangedSpy(tabModel, SIGNAL(loadedChanged()));
-    tabModel->m_loaded = true;
     tabModel->setUnloaded();
     QCOMPARE(loadedChangedSpy.count(), 1);
+}
 
+void tst_persistenttabmodel::newTab()
+{
     QSignalSpy newTabRequestedSpy(tabModel, SIGNAL(newTabRequested(QString, QString, int)));
-    tabModel->newTab(QString("http://example.com"), QString("Test"), 0);
+    tabModel->newTab(QString(), QString(), 0);
     QCOMPARE(newTabRequestedSpy.count(), 1);
     QCOMPARE(tabModel->waitingForNewTab(), true);
 }
