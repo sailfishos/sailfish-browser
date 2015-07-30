@@ -2,6 +2,8 @@ TARGET = tst_persistenttabmodel
 
 CONFIG += c++11
 
+QMAKE_LFLAGS += -lgtest -lgmock
+
 QT += quick qml sql
 
 include(../test_common.pri)

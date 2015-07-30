@@ -17,6 +17,9 @@
 #include "persistenttabmodel.h"
 #include "dbmanager.h"
 #include "declarativewebpage.h"
+#include "declarativewebcontainer.h"
+
+using ::testing::Return;
 
 static const QByteArray QML_SNIPPET = \
         "import QtQuick 2.0\n" \
@@ -49,18 +52,30 @@ private slots:
 
     void addTab_data();
     void addTab();
+    void addTabInvalidInput_data();
+    void addTabInvalidInput();
     void remove();
     void removeTabById_data();
     void removeTabById();
     void clear();
-    void activateTab_by_url_data();
-    void activateTab_by_url();
+    void activateTabByUrl_data();
+    void activateTabByUrl();
     void activateTabById_data();
     void activateTabById();
+    void activateTabByIndex_data();
+    void activateTabByIndex();
     void closeActiveTab();
     void updateUrl_data();
     void updateUrl();
+    void updateThumbnailPath();
+    void onUrlChanged();
     void onTitleChanged();
+    void nextActiveTabIndex();
+    void roleNames();
+    void data_data();
+    void data();
+    void setUnloaded();
+    void newTab();
 
 private:
     void addThreeTabs();
@@ -74,6 +89,9 @@ private:
 
 void tst_persistenttabmodel::initTestCase()
 {
+    int argc(0);
+    char* argv[0] = {};
+    ::testing::InitGoogleMock(&argc, argv);
     qmlRegisterUncreatableType<DeclarativeTabModel>("Sailfish.Browser", 1, 0, "TabModel",
                                                     "TabModel is abstract!");
     qmlRegisterType<PersistentTabModel>("Sailfish.Browser", 1, 0, "PersistentTabModel");
@@ -196,6 +214,30 @@ void tst_persistenttabmodel::addTab()
     }
 }
 
+void tst_persistenttabmodel::addTabInvalidInput_data()
+{
+    QTest::addColumn<QString>("url");
+    QTest::addColumn<QString>("title");
+    QTest::newRow("tel") << "tel:+123456798" << "tel";
+    QTest::newRow("sms") << "sms:+123456798" << "sms";
+    QTest::newRow("mailto") << "mailto:joe@example.com" << "mailto1";
+    QTest::newRow("mailto query does not count") << "mailto:joe@example.com?cc=bob@example.com&body=hello1" << "mailto2";
+}
+
+void tst_persistenttabmodel::addTabInvalidInput()
+{
+    QSignalSpy countChangeSpy(tabModel, SIGNAL(countChanged()));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
+
+    QFETCH(QString, url);
+    QFETCH(QString, title);
+    tabModel->addTab(url, title, 0);
+
+    QCOMPARE(tabModel->count(), 0);
+    QCOMPARE(countChangeSpy.count(), 0);
+    QCOMPARE(activeTabChangedSpy.count(), 0);
+}
+
 void tst_persistenttabmodel::remove()
 {
     addThreeTabs();
@@ -247,9 +289,9 @@ void tst_persistenttabmodel::removeTabById_data()
     QTest::newRow("first_tab")       << 1 << false << true;
     QTest::newRow("middle_tab")      << 2 << false << true;
     QTest::newRow("last_tab")        << 3 << false << true;
-    QTest::newRow("igmore_tabId_1")  << 1 << true  << true;
-    QTest::newRow("igmore_tabId_2")  << 2 << true  << true;
-    QTest::newRow("igmore_tabId_3")  << 2 << true  << true;
+    QTest::newRow("ignore_tabId_1")  << 1 << true  << true;
+    QTest::newRow("ignore_tabId_2")  << 2 << true  << true;
+    QTest::newRow("ignore_tabId_3")  << 2 << true  << true;
     QTest::newRow("invalid_tabId_1") << 0 << false << false;
     QTest::newRow("invalid_tabId_2") << 9 << false << false;
     QTest::newRow("invalid_tabId_3") << -1 << false << false;
@@ -290,46 +332,51 @@ void tst_persistenttabmodel::clear()
     QCOMPARE(tabModel->count(), 0);
 }
 
-void tst_persistenttabmodel::activateTab_by_url_data()
+void tst_persistenttabmodel::activateTabByUrl_data()
 {
     QTest::addColumn<QString>("url");
-    QTest::addColumn<bool>("isExpectedToActivate");
+    QTest::addColumn<int>("expectedChanges");
+    QTest::addColumn<int>("expectedTabId");
+    QTest::addColumn<QString>("expectedUrl");
+    QTest::addColumn<QString>("expectedTitle");
 
-    QTest::newRow("url_for_inactive_tab") << QString("file:///opt/tests/testpahe.html") << true;
-    QTest::newRow("url_for_active_tab") << QString("https://example.com") << false;
-    QTest::newRow("non_existing_url") << QString("http://some.non.existing.url") << false;
+    QTest::newRow("url_for_inactive_tab") << QString("file:///opt/tests/testpahe.html") << 1 << 2 << QString("file:///opt/tests/testpahe.html") << QString("Test title2");
+    QTest::newRow("url_for_active_tab") << QString("https://example.com") << 0 << 3 << QString("https://example.com") << QString("Test title3");
+    QTest::newRow("non_existing_url") << QString("http://some.non.existing.url") << 0 << 3 << QString("https://example.com") << QString("Test title3");
 }
 
-void tst_persistenttabmodel::activateTab_by_url()
+void tst_persistenttabmodel::activateTabByUrl()
 {
     addThreeTabs();
 
     QFETCH(QString, url);
-    QFETCH(bool, isExpectedToActivate);
+    QFETCH(int, expectedChanges);
+    QFETCH(int, expectedTabId);
+    QFETCH(QString, expectedUrl);
+    QFETCH(QString, expectedTitle);
 
     QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
 
-    int oldActiveTabId = tabModel->activeTabId();
     tabModel->activateTab(url);
 
-    if (isExpectedToActivate) {
-        QCOMPARE(activeTabChangedSpy.count(), 1);
-        QVERIFY(tabModel->activeTabId() != oldActiveTabId);
-    } else {
-        QCOMPARE(activeTabChangedSpy.count(), 0);
-        QCOMPARE(tabModel->activeTabId(), oldActiveTabId);
-    }
+    QCOMPARE(tabModel->activeTabId(), expectedTabId);
+    QCOMPARE(tabModel->activeTab().url(), expectedUrl);
+    QCOMPARE(tabModel->activeTab().title(), expectedTitle);
+    QCOMPARE(activeTabChangedSpy.count(), expectedChanges);
 }
 
 void tst_persistenttabmodel::activateTabById_data()
 {
     QTest::addColumn<int>("tabId");
-    QTest::addColumn<bool>("isExpectedToActivate");
+    QTest::addColumn<int>("expectedChanges");
+    QTest::addColumn<int>("expectedTabId");
+    QTest::addColumn<QString>("expectedUrl");
+    QTest::addColumn<QString>("expectedTitle");
 
-    QTest::newRow("inactive_tab")   << 2    << true;
-    QTest::newRow("active_tab")     << 3    << false;
-    QTest::newRow("out_of_range_1") << -1   << false;
-    QTest::newRow("out_of_range_2") << 1000 << false;
+    QTest::newRow("inactive_tab") << 2 << 1 << 2 << QString("file:///opt/tests/testpahe.html") << QString("Test title2");
+    QTest::newRow("active_tab") << 3 << 0 << 3 << QString("https://example.com") << QString("Test title3");
+    QTest::newRow("out_of_range_1") << -1 << 0 << 3 << QString("https://example.com") << QString("Test title3");
+    QTest::newRow("out_of_range_2") << 1000 << 0 << 3 << QString("https://example.com") << QString("Test title3");
 }
 
 void tst_persistenttabmodel::activateTabById()
@@ -337,20 +384,53 @@ void tst_persistenttabmodel::activateTabById()
     addThreeTabs();
 
     QFETCH(int, tabId);
-    QFETCH(bool, isExpectedToActivate);
+    QFETCH(int, expectedChanges);
+    QFETCH(int, expectedTabId);
+    QFETCH(QString, expectedUrl);
+    QFETCH(QString, expectedTitle);
 
     QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
 
-    int oldActiveTabId = tabModel->activeTabId();
     tabModel->activateTabById(tabId);
 
-    if (isExpectedToActivate) {
-        QCOMPARE(activeTabChangedSpy.count(), 1);
-        QCOMPARE(tabModel->activeTabId(), tabId);
-    } else {
-        QCOMPARE(activeTabChangedSpy.count(), 0);
-        QCOMPARE(tabModel->activeTabId(), oldActiveTabId);
-    }
+    QCOMPARE(tabModel->activeTabId(), expectedTabId);
+    QCOMPARE(tabModel->activeTab().url(), expectedUrl);
+    QCOMPARE(tabModel->activeTab().title(), expectedTitle);
+    QCOMPARE(activeTabChangedSpy.count(), expectedChanges);
+}
+
+void tst_persistenttabmodel::activateTabByIndex_data()
+{
+    QTest::addColumn<int>("tabIndex");
+    QTest::addColumn<int>("expectedChanges");
+    QTest::addColumn<int>("expectedTabId");
+    QTest::addColumn<QString>("expectedUrl");
+    QTest::addColumn<QString>("expectedTitle");
+
+    QTest::newRow("inactive_tab") << 1 << 1 << 2 << QString("file:///opt/tests/testpahe.html") << QString("Test title2");
+    QTest::newRow("active_tab") << 2 << 0 << 3 << QString("https://example.com") << QString("Test title3");
+    QTest::newRow("out_of_range_1") << -1 << 1 << 1 << QString("http://example.com") << QString("Test title1");
+    QTest::newRow("out_of_range_2") << 1000 << 0 << 3 << QString("https://example.com") << QString("Test title3");
+}
+
+void tst_persistenttabmodel::activateTabByIndex()
+{
+    addThreeTabs();
+
+    QFETCH(int, tabIndex);
+    QFETCH(int, expectedChanges);
+    QFETCH(int, expectedTabId);
+    QFETCH(QString, expectedUrl);
+    QFETCH(QString, expectedTitle);
+
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
+
+    tabModel->activateTab(tabIndex);
+
+    QCOMPARE(tabModel->activeTabId(), expectedTabId);
+    QCOMPARE(tabModel->activeTab().url(), expectedUrl);
+    QCOMPARE(tabModel->activeTab().title(), expectedTitle);
+    QCOMPARE(activeTabChangedSpy.count(), expectedChanges);
 }
 
 void tst_persistenttabmodel::closeActiveTab()
@@ -386,12 +466,12 @@ void tst_persistenttabmodel::updateUrl_data()
     QTest::newRow("update_inactive_tab_file") << 1 << "file:///foo/bar/index.html" << false << true;
     QTest::newRow("update_inactive_tab_relative") << 1 << "foo/bar/index.html" << false << true;
     QTest::newRow("update_active_tab") << 3 << "http://some.real.site" << false << true;
-    QTest::newRow("invalide_url_tel") << 3 << "tel:+123456798" << false << false;
-    QTest::newRow("invalide_url_sms") << 3 << "sms:+123456798" << false << false;
-    QTest::newRow("invalide_url_mailto_1") << 3 << "mailto:joe@example.com" << false << false;
-    QTest::newRow("invalide_url_mailto_2") << 3 << "mailto:joe@example.com?cc=bob@example.com&body=hello1" << false << false;
-    QTest::newRow("invalide_url_geo") << 3 << "geo:61.49464,23.77513" << false << false;
-    QTest::newRow("invalide_url_geo://") << 3 << "geo://61.49464,23.77513" << false << false;
+    QTest::newRow("invalid_url_tel") << 3 << "tel:+123456798" << false << false;
+    QTest::newRow("invalid_url_sms") << 3 << "sms:+123456798" << false << false;
+    QTest::newRow("invalid_url_mailto_1") << 3 << "mailto:joe@example.com" << false << false;
+    QTest::newRow("invalid_url_mailto_2") << 3 << "mailto:joe@example.com?cc=bob@example.com&body=hello1" << false << false;
+    QTest::newRow("invalid_url_geo") << 3 << "geo:61.49464,23.77513" << false << false;
+    QTest::newRow("invalid_url_geo://") << 3 << "geo://61.49464,23.77513" << false << false;
 }
 
 void tst_persistenttabmodel::updateUrl()
@@ -418,6 +498,62 @@ void tst_persistenttabmodel::updateUrl()
     }
 }
 
+void tst_persistenttabmodel::updateThumbnailPath()
+{
+    // set up environment
+    tabModel->addTab("http://example.com", "initial title", 0);
+    QSignalSpy dataChangedSpy(tabModel, SIGNAL(dataChanged(QModelIndex, QModelIndex, QVector<int>)));
+
+    QString path("/path/to/thumbnail");
+    tabModel->updateThumbnailPath(1, path);
+    QCOMPARE(dataChangedSpy.count(), 1);
+    QCOMPARE(tabModel->m_tabs.at(0).thumbnailPath(), path);
+}
+
+void tst_persistenttabmodel::onUrlChanged()
+{
+    // set up environment
+    tabModel->addTab("http://example.com", "initial title", 0);
+
+    DeclarativeWebPage mockPage;
+    connect(&mockPage, SIGNAL(urlChanged()), tabModel, SLOT(onUrlChanged()));
+
+    QSignalSpy dataChangedSpy(tabModel, SIGNAL(dataChanged(QModelIndex, QModelIndex, QVector<int>)));
+    QSignalSpy tabAddedSpy(tabModel, SIGNAL(tabAdded(int)));
+
+    // 1. a web page is loaded in an existing tab => update model data
+    QUrl url("http://newurl.com");
+    EXPECT_CALL(mockPage, tabId()).WillOnce(Return(1));
+    EXPECT_CALL(mockPage, url()).WillOnce(Return(url));
+    EXPECT_CALL(mockPage, initialLoadHasHappened()).WillOnce(Return(true));
+    EXPECT_CALL(mockPage, setInitialLoadHasHappened()); // TODO: this call can be optimized out
+    emit mockPage.urlChanged();
+    QCOMPARE(dataChangedSpy.count(), 1);
+    QCOMPARE(tabAddedSpy.count(), 0);
+
+    // 2. a web page hasn't been loaded yet into a new tab => add tab
+    EXPECT_CALL(mockPage, tabId()).WillOnce(Return(2));
+    EXPECT_CALL(mockPage, url()).WillOnce(Return(url));
+    EXPECT_CALL(mockPage, parentId()).WillOnce(Return(0));
+    EXPECT_CALL(mockPage, initialLoadHasHappened()).WillOnce(Return(false));
+    EXPECT_CALL(mockPage, setInitialLoadHasHappened());
+    emit mockPage.urlChanged();
+    QCOMPARE(tabAddedSpy.count(), 1);
+    QList<QVariant> arguments = tabAddedSpy.at(0);
+    QCOMPARE(arguments.at(0).toInt(), 2);
+
+    // 3. an existing page requested to open another one => add tab next to parent
+    EXPECT_CALL(mockPage, tabId()).WillOnce(Return(3));
+    EXPECT_CALL(mockPage, url()).WillOnce(Return(url));
+    EXPECT_CALL(mockPage, parentId()).WillOnce(Return(1));
+    EXPECT_CALL(mockPage, initialLoadHasHappened()).WillOnce(Return(false));
+    EXPECT_CALL(mockPage, setInitialLoadHasHappened());
+    emit mockPage.urlChanged();
+    QCOMPARE(tabAddedSpy.count(), 2);
+    arguments = tabAddedSpy.at(1);
+    QCOMPARE(arguments.at(0).toInt(), 3);
+}
+
 void tst_persistenttabmodel::onTitleChanged()
 {
     // set up environment
@@ -428,9 +564,88 @@ void tst_persistenttabmodel::onTitleChanged()
 
     QSignalSpy dataChangedSpy(tabModel, SIGNAL(dataChanged(QModelIndex, QModelIndex, QVector<int>)));
 
-    mockPage.m_tabId = 1;
-    mockPage.setTitle("Hello world");
+    EXPECT_CALL(mockPage, tabId()).WillOnce(Return(1));
+    QUrl url;
+    EXPECT_CALL(mockPage, url()).WillOnce(Return(url));
+    EXPECT_CALL(mockPage, title()).WillOnce(Return(QString("Hello world")));
+    emit mockPage.titleChanged();
+
     QCOMPARE(dataChangedSpy.count(), 1);
+}
+
+void tst_persistenttabmodel::nextActiveTabIndex()
+{
+    DeclarativeWebContainer container;
+    DeclarativeWebPage page;
+    tabModel->setWebContainer(&container);
+
+    EXPECT_CALL(container, webPage()).WillRepeatedly(Return(&page));
+    EXPECT_CALL(page, parentId()).WillOnce(Return(1));
+    EXPECT_CALL(page, tabId()).WillOnce(Return(2));
+    tabModel->nextActiveTabIndex(0);
+}
+
+void tst_persistenttabmodel::roleNames()
+{
+    // Here we test the method doesn't explode when called.
+    tabModel->roleNames();
+}
+
+void tst_persistenttabmodel::data_data()
+{
+    QTest::addColumn<QModelIndex>("index");
+    QTest::addColumn<int>("role");
+    QTest::addColumn<bool>("isValid");
+
+    QModelIndex modelIndex = tabModel->createIndex(-1, 0);
+    QTest::newRow("invalid_index_1") << modelIndex << (int)DeclarativeTabModel::TabIdRole << false;
+    modelIndex = tabModel->createIndex(1000, 0);
+    QTest::newRow("invalid_index_2") << modelIndex << (int)DeclarativeTabModel::TabIdRole << false;
+    modelIndex = tabModel->createIndex(1, 0);
+    QTest::newRow("TabIdRole") << modelIndex  << (int)DeclarativeTabModel::TabIdRole << true;
+    QTest::newRow("ActiveRole") << modelIndex  << (int)DeclarativeTabModel::ActiveRole << true;
+    QTest::newRow("UrlRole") << modelIndex  << (int)DeclarativeTabModel::UrlRole << true;
+    QTest::newRow("TitleRole") << modelIndex  << (int)DeclarativeTabModel::TitleRole << true;
+    QTest::newRow("ThumbPathRole") << modelIndex  << (int)DeclarativeTabModel::ThumbPathRole << true;
+    QTest::newRow("InvalidRole") << modelIndex  << -10000 << false;
+}
+
+void tst_persistenttabmodel::data()
+{
+    // Set up environment
+    addThreeTabs();
+
+    QFETCH(QModelIndex, index);
+    QFETCH(int, role);
+    QFETCH(bool, isValid);
+
+    QVariant data = tabModel->data(index, role);
+    if (!isValid) {
+        QCOMPARE(data, QVariant());
+    } else if (role == DeclarativeTabModel::UrlRole) {
+        QCOMPARE(data.toString(), QString("file:///opt/tests/testpahe.html"));
+    } else if (role == DeclarativeTabModel::TitleRole) {
+        QCOMPARE(data.toString(), QString("Test title2"));
+    } else if (role == DeclarativeTabModel::TabIdRole) {
+        QCOMPARE(data.toInt(), 2);
+    } else if (role == DeclarativeTabModel::ActiveRole) {
+        QCOMPARE(data.toBool(), false);
+    }
+}
+
+void tst_persistenttabmodel::setUnloaded()
+{
+    QSignalSpy loadedChangedSpy(tabModel, SIGNAL(loadedChanged()));
+    tabModel->setUnloaded();
+    QCOMPARE(loadedChangedSpy.count(), 1);
+}
+
+void tst_persistenttabmodel::newTab()
+{
+    QSignalSpy newTabRequestedSpy(tabModel, SIGNAL(newTabRequested(QString, QString, int)));
+    tabModel->newTab(QString(), QString(), 0);
+    QCOMPARE(newTabRequestedSpy.count(), 1);
+    QCOMPARE(tabModel->waitingForNewTab(), true);
 }
 
 void tst_persistenttabmodel::addThreeTabs()

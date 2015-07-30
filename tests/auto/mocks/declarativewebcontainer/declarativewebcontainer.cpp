@@ -20,8 +20,3 @@ int DeclarativeWebContainer::findParentTabId(int) const
 {
     return 0;
 }
-
-DeclarativeWebPage *DeclarativeWebContainer::webPage() const
-{
-    return 0;
-}

@@ -17,12 +17,16 @@
 #include "settingmanager.h"
 #include "tab.h"
 
+using ::testing::Return;
+using ::testing::_;
+
 class tst_declarativewebcontainer : public QObject
 {
     Q_OBJECT
 
 private slots:
     void initTestCase();
+    void cleanupTestCase();
     void init();
     void cleanup();
 
@@ -48,9 +52,15 @@ void tst_declarativewebcontainer::initTestCase()
 {
 }
 
+void tst_declarativewebcontainer::cleanupTestCase()
+{
+    delete QMozContext::GetInstance();
+}
+
 void tst_declarativewebcontainer::init()
 {
     SettingManager::instance()->setAutostartPrivateBrowsing(false);
+    EXPECT_CALL(*QMozContext::GetInstance(), setPixelRatio(_));
     m_webContainer = new DeclarativeWebContainer();
 }
 
@@ -76,6 +86,10 @@ void tst_declarativewebcontainer::setWebPage()
     QSignalSpy titleChangedSpy(m_webContainer, SIGNAL(titleChanged()));
 
     // Setting page
+    EXPECT_CALL(page, setWindow(m_webContainer.data()));
+    EXPECT_CALL(page, updateContentOrientation(_));
+    EXPECT_CALL(page, isPainted()).WillOnce(Return(true));
+    EXPECT_CALL(page, loadProgress()).WillOnce(Return(0));
     m_webContainer->setWebPage(&page);
     QCOMPARE(m_webContainer->m_webPage.data(), &page);
     QCOMPARE(contentItemChangedSpy.count(), 1);
@@ -191,9 +205,6 @@ void tst_declarativewebcontainer::setPrivateMode()
     QCOMPARE(m_webContainer->m_settingManager->autostartPrivateBrowsing(), true);
     QCOMPARE(privateModeChangedSpy.count(), 1);
 
-    // Let dconf finish its work
-    QTest::qWait(500);
-
     QSignalSpy tabIdChangedSpy(m_webContainer, SIGNAL(tabIdChanged()));
     m_webContainer->setPrivateMode(false);
     QCOMPARE(m_webContainer->privateMode(), false);
@@ -214,7 +225,11 @@ void tst_declarativewebcontainer::loading()
     QCOMPARE(m_webContainer->loading(), false);
 
     // Page is not loading => false
+    EXPECT_CALL(page, setWindow(m_webContainer.data()));
+    EXPECT_CALL(page, isPainted());
+    EXPECT_CALL(page, loadProgress());
     m_webContainer->setWebPage(&page);
+    EXPECT_CALL(page, loading()).WillOnce(Return(false));
     QCOMPARE(m_webContainer->loading(), false);
 
     // No page, but non-empty model => true
@@ -237,9 +252,34 @@ void tst_declarativewebcontainer::setChromeWindow()
 
 void tst_declarativewebcontainer::load()
 {
+    // No page and no model set => set initial url
+    EXPECT_CALL(*QMozContext::GetInstance(), initialized()).WillOnce(Return(false));
     m_webContainer->load(QString(), QString(), true);
     QCOMPARE(m_webContainer->m_initialUrl, QString("about:blank"));
-    // TODO: figure out how to test initialized web container
+
+    // Test the path for uninitialized container => set initial url
+    DeclarativeWebPage page;
+    EXPECT_CALL(page, setWindow(m_webContainer.data()));
+    EXPECT_CALL(page, isPainted());
+    EXPECT_CALL(page, loadProgress());
+    m_webContainer->setWebPage(&page);
+    EXPECT_CALL(page, completed()).WillOnce(Return(false));
+    EXPECT_CALL(*QMozContext::GetInstance(), initialized()).WillOnce(Return(false));
+    m_webContainer->load(QString("http://example1.com"), QString(), true);
+    QCOMPARE(m_webContainer->m_initialUrl, QString("http://example1.com"));
+
+    // Initialized container, empty model => add new tab to model
+    PrivateTabModel model;
+    m_webContainer->setTabModel(&model);
+    EXPECT_CALL(*QMozContext::GetInstance(), initialized()).WillOnce(Return(true));
+    EXPECT_CALL(page, completed()).WillOnce(Return(false));
+    m_webContainer->load(QString(), QString(), true);
+
+    // There is a complete web page => page->loadTab()
+    EXPECT_CALL(page, completed()).WillOnce(Return(true));
+    QString testurl("http://example2.com");
+    EXPECT_CALL(page, loadTab(testurl, true));
+    m_webContainer->load(testurl, QString(), true);
 }
 
 void tst_declarativewebcontainer::reload()
@@ -273,6 +313,7 @@ void tst_declarativewebcontainer::activatePage()
 
 void tst_declarativewebcontainer::releasePage()
 {
+    EXPECT_CALL(*QMozContext::GetInstance(), PostCompositorTask(_, m_webContainer.data()));
     m_webContainer->releasePage(1);
 }
 

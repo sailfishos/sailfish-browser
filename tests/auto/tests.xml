@@ -10,9 +10,6 @@
            <case manual="false" name="declarativebookmarkmodel">
                <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_declarativebookmarkmodel -platform wayland-egl</step>
            </case>
-           <case manual="false" name="declarativetabmodel">
-               <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_declarativetabmodel -platform wayland-egl</step>
-           </case>
            <case manual="false" name="declarativehistorymodel">
                <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_declarativehistorymodel -platform wayland-egl</step>
            </case>
