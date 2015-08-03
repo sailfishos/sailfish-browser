@@ -100,6 +100,8 @@ void tst_persistenttabmodel::initTestCase()
     mDbFile = QString("%1/%2")
             .arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation))
             .arg(QLatin1String(DB_NAME));
+    QFile dbFile(mDbFile);
+    dbFile.remove();
 }
 
 void tst_persistenttabmodel::cleanupTestCase()
