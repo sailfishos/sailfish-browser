@@ -35,8 +35,7 @@ public:
 
 public slots:
     void init();
-    void createTab(int tabId);
-    int createLink(int tabId, QString url, QString title);
+    Tab createTab(int tabId, QString url, QString title);
     void removeTab(int tabId);
     void getAllTabs();
     void navigateTo(int tabId, QString url, QString title, QString path);

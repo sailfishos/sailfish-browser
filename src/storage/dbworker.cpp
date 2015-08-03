@@ -211,7 +211,7 @@ bool DBWorker::execute(QSqlQuery &query)
     return true;
 }
 
-void DBWorker::createTab(int tabId)
+Tab DBWorker::createTab(int tabId, QString url, QString title)
 {
 #if DEBUG_LOGS
     qDebug() << "new tab id: " << tabId;
@@ -220,12 +220,9 @@ void DBWorker::createTab(int tabId)
     query.bindValue(0, tabId);
     query.bindValue(1, 0);
     execute(query);
-}
 
-int DBWorker::createLink(int tabId, QString url, QString title)
-{
     if (url.isEmpty()) {
-        return 0;
+        return Tab();
     }
 
     int linkId = createLink(url, title, "");
@@ -244,7 +241,8 @@ int DBWorker::createLink(int tabId, QString url, QString title)
 #if DEBUG_LOGS
     qDebug() << "created link:" << linkId << "with history id:" << historyId << "for tab:" << tabId << url;
 #endif
-    return linkId;
+
+    return Tab(tabId, Link(linkId, url, "", title));
 }
 
 void DBWorker::updateTab(int tabId, int tabHistoryId)

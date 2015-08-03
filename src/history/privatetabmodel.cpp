@@ -28,16 +28,8 @@ PrivateTabModel::~PrivateTabModel()
 {
 }
 
-int PrivateTabModel::createTab() {
-    return nextTabId();
-}
-
-int PrivateTabModel::createLink(int tabId, QString url, QString title) {
-    Q_UNUSED(tabId)
-    Q_UNUSED(url)
-    Q_UNUSED(title)
-
-    return m_nextLinkId++;
+Tab PrivateTabModel::createTab(QString url, QString title) {
+    return Tab(nextTabId(), Link(m_nextLinkId++, url, "", title));
 }
 
 void PrivateTabModel::updateTitle(int tabId, int linkId, QString url, QString title)

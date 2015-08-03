@@ -21,8 +21,7 @@ class PrivateTabModel : public DeclarativeTabModel
     Q_OBJECT
 
 protected:
-    virtual int createTab();
-    virtual int createLink(int tabId, QString url, QString title);
+    virtual Tab createTab(QString url, QString title);
     virtual void updateTitle(int tabId, int linkId, QString url, QString title);
     virtual void removeTab(int tabId);
     virtual int nextLinkId();

@@ -77,24 +77,16 @@ int DBManager::nextLinkId()
     return m_nextLinkId;
 }
 
-int DBManager::createTab()
+Tab DBManager::createTab(QString url, QString title)
 {
-    QMetaObject::invokeMethod(worker, "createTab", Qt::QueuedConnection, Q_ARG(int, ++m_maxTabId));
-    return m_maxTabId;
-}
-
-int DBManager::createLink(int tabId, QString url, QString title)
-{
-    int linkId;
-    QMetaObject::invokeMethod(worker, "createLink", Qt::BlockingQueuedConnection,
-                              Q_RETURN_ARG(int, linkId), Q_ARG(int, tabId),
-                              Q_ARG(QString, url), Q_ARG(QString, title));
-
-    if (linkId == m_nextLinkId) {
+    Tab newTab;
+    QMetaObject::invokeMethod(worker, "createTab", Qt::BlockingQueuedConnection,
+                              Q_RETURN_ARG(Tab, newTab),
+                              Q_ARG(int, ++m_maxTabId), Q_ARG(QString, url), Q_ARG(QString, title));
+    if (newTab.currentLink() == m_nextLinkId) {
         ++m_nextLinkId;
     }
-
-    return linkId;
+    return newTab;
 }
 
 void DBManager::navigateTo(int tabId, QString url, QString title, QString path)

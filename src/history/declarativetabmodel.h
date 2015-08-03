@@ -101,8 +101,7 @@ protected:
     void updateActiveTab(const Tab &activeTab, bool loadActiveTab);
     void updateUrl(int tabId, const QString &url, bool initialLoad);
 
-    virtual int createTab() = 0;
-    virtual int createLink(int tabId, QString url, QString title) = 0;
+    virtual Tab createTab(QString url, QString title) = 0;
     virtual void updateTitle(int tabId, int linkId, QString url, QString title) = 0;
     virtual void removeTab(int tabId) = 0;
     virtual int nextLinkId() = 0;

@@ -56,10 +56,8 @@ void DeclarativeTabModel::addTab(const QString& url, const QString &title, int i
 
     Q_ASSERT(index >= 0 && index <= m_tabs.count());
 
-    int tabId = createTab();
-    int linkId = createLink(tabId, url, title);
+    Tab tab = createTab(url, title);
 
-    Tab tab(tabId, Link(linkId, url, "", title));
 #if DEBUG_LOGS
     qDebug() << "new tab data:" << &tab;
 #endif
@@ -72,9 +70,9 @@ void DeclarativeTabModel::addTab(const QString& url, const QString &title, int i
     updateActiveTab(tab, true);
 
     emit countChanged();
-    emit tabAdded(tabId);
+    emit tabAdded(tab.tabId());
 
-    m_nextTabId = ++tabId;
+    m_nextTabId = tab.tabId() + 1;
     emit nextTabIdChanged();
 }
 

@@ -28,8 +28,7 @@ public:
     static DBManager *instance();
     virtual ~DBManager();
 
-    int createTab();
-    int createLink(int tabId, QString url, QString title);
+    Tab createTab(QString url, QString title);
     void getAllTabs();
     void removeTab(int tabId);
     void navigateTo(int tabId, QString url, QString title = "", QString path = "");
