@@ -66,7 +66,6 @@ void PersistentTabModel::tabsAvailable(QList<Tab> tabs)
 
     if (m_nextTabId != maxTabId + 1) {
         m_nextTabId = maxTabId + 1;
-        emit nextTabIdChanged();
     }
 
     // Startup should be synced to this.

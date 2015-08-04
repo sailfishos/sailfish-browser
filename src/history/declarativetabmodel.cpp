@@ -73,7 +73,6 @@ void DeclarativeTabModel::addTab(const QString& url, const QString &title, int i
     emit tabAdded(tab.tabId());
 
     m_nextTabId = tab.tabId() + 1;
-    emit nextTabIdChanged();
 }
 
 int DeclarativeTabModel::nextTabId() const

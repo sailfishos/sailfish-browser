@@ -27,7 +27,6 @@ class DeclarativeTabModel : public QAbstractListModel
 protected:
     Q_PROPERTY(int activeTabIndex READ activeTabIndex NOTIFY activeTabIndexChanged FINAL)
     Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
-    Q_PROPERTY(int nextTabId READ nextTabId NOTIFY nextTabIdChanged FINAL)
     Q_PROPERTY(bool loaded READ loaded NOTIFY loadedChanged FINAL)
     Q_PROPERTY(bool waitingForNewTab READ waitingForNewTab WRITE setWaitingForNewTab NOTIFY waitingForNewTabChanged FINAL)
 
@@ -89,7 +88,6 @@ signals:
     // only for testing purposes.
     void tabAdded(int tabId);
     void tabClosed(int tabId);
-    void nextTabIdChanged();
     void loadedChanged();
     void waitingForNewTabChanged();
     void newTabRequested(QString url, QString title, int parentId = 0);

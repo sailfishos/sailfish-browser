@@ -136,7 +136,6 @@ void tst_persistenttabmodel::addTab()
 
     QSignalSpy countChangeSpy(tabModel, SIGNAL(countChanged()));
     QSignalSpy tabAddedSpy(tabModel, SIGNAL(tabAdded(int)));
-    QSignalSpy nextTabIdChangedSpy(tabModel, SIGNAL(nextTabIdChanged()));
     QSignalSpy dataChangedSpy(tabModel, SIGNAL(dataChanged(QModelIndex, QModelIndex, QVector<int>)));
     QSignalSpy activeTabIndexChangedSpy(tabModel, SIGNAL(activeTabIndexChanged()));
     QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
@@ -150,7 +149,6 @@ void tst_persistenttabmodel::addTab()
     QList<QVariant> arguments = tabAddedSpy.at(0);
     QCOMPARE(arguments.at(0).toInt(), initialTabs.count() + 1);
 
-    QCOMPARE(nextTabIdChangedSpy.count(), 1);
     QCOMPARE(tabModel->nextTabId(), initialTabs.count() + 2);
 
     QCOMPARE(activeTabChangedSpy.count(), 1);
