@@ -27,7 +27,6 @@ DBManager *DBManager::instance()
 
 DBManager::DBManager(QObject *parent)
     : QObject(parent)
-    , m_maxTabId(0)
 {
     qRegisterMetaType<QList<Tab> >("QList<Tab>");
     qRegisterMetaType<QList<Link> >("QList<Link>");
@@ -46,8 +45,6 @@ DBManager::DBManager(QObject *parent)
     workerThread.start();
 
     QMetaObject::invokeMethod(worker, "init", Qt::BlockingQueuedConnection);
-    QMetaObject::invokeMethod(worker, "getMaxTabId", Qt::BlockingQueuedConnection,
-                              Q_RETURN_ARG(int, m_maxTabId));
     int maxLinkId;
     QMetaObject::invokeMethod(worker, "getMaxLinkId", Qt::BlockingQueuedConnection,
                               Q_RETURN_ARG(int, maxLinkId));
@@ -69,7 +66,10 @@ DBManager::~DBManager()
 
 int DBManager::getMaxTabId()
 {
-    return m_maxTabId;
+    int maxTabId;
+    QMetaObject::invokeMethod(worker, "getMaxTabId", Qt::BlockingQueuedConnection,
+                              Q_RETURN_ARG(int, maxTabId));
+    return maxTabId;
 }
 
 int DBManager::nextLinkId()
@@ -77,12 +77,12 @@ int DBManager::nextLinkId()
     return m_nextLinkId;
 }
 
-Tab DBManager::createTab(QString url, QString title)
+Tab DBManager::createTab(int tabId, QString url, QString title)
 {
     Tab newTab;
     QMetaObject::invokeMethod(worker, "createTab", Qt::BlockingQueuedConnection,
                               Q_RETURN_ARG(Tab, newTab),
-                              Q_ARG(int, ++m_maxTabId), Q_ARG(QString, url), Q_ARG(QString, title));
+                              Q_ARG(int, tabId), Q_ARG(QString, url), Q_ARG(QString, title));
     if (newTab.currentLink() == m_nextLinkId) {
         ++m_nextLinkId;
     }
@@ -133,7 +133,6 @@ void DBManager::updateThumbPath(int tabId, QString path)
 
 void DBManager::clearHistory()
 {
-    m_maxTabId = 0;
     QMetaObject::invokeMethod(worker, "clearHistory", Qt::QueuedConnection);
 }
 
@@ -176,9 +175,6 @@ void DBManager::deleteSetting(QString name)
 
 void DBManager::tabListAvailable(QList<Tab> tabs)
 {
-    if (tabs.isEmpty()) {
-        m_maxTabId = 0;
-    }
     emit tabsAvailable(tabs);
 }
 

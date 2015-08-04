@@ -15,8 +15,8 @@
 #include "persistenttabmodel.h"
 #include "dbmanager.h"
 
-PersistentTabModel::PersistentTabModel(DeclarativeWebContainer *webContainer)
-    : DeclarativeTabModel(DBManager::instance()->getMaxTabId() + 1, webContainer)
+PersistentTabModel::PersistentTabModel(int nextTabId, DeclarativeWebContainer *webContainer)
+    : DeclarativeTabModel(nextTabId, webContainer)
 {
     connect(DBManager::instance(), SIGNAL(tabsAvailable(QList<Tab>)),
             this, SLOT(tabsAvailable(QList<Tab>)));
@@ -57,7 +57,13 @@ void PersistentTabModel::tabsAvailable(QList<Tab> tabs)
         emit countChanged();
     }
 
-    int maxTabId = DBManager::instance()->getMaxTabId();
+    int maxTabId(0);
+    foreach (Tab tab, tabs) {
+        if (maxTabId < tab.tabId()) {
+            maxTabId = tab.tabId();
+        }
+    }
+
     if (m_nextTabId != maxTabId + 1) {
         m_nextTabId = maxTabId + 1;
         emit nextTabIdChanged();
@@ -73,8 +79,8 @@ void PersistentTabModel::tabsAvailable(QList<Tab> tabs)
             this, SLOT(saveActiveTab()), Qt::UniqueConnection);
 }
 
-Tab PersistentTabModel::createTab(QString url, QString title) {
-    return DBManager::instance()->createTab(url, title);
+Tab PersistentTabModel::createTab(int tabId, QString url, QString title) {
+    return DBManager::instance()->createTab(tabId, url, title);
 }
 
 void PersistentTabModel::updateTitle(int tabId, int linkId, QString url, QString title)

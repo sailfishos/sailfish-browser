@@ -13,8 +13,8 @@
 #include "privatetabmodel.h"
 #include "dbmanager.h"
 
-PrivateTabModel::PrivateTabModel(DeclarativeWebContainer *webContainer)
-    : DeclarativeTabModel(DBManager::instance()->getMaxTabId() + 10000, webContainer),
+PrivateTabModel::PrivateTabModel(int nextTabId, DeclarativeWebContainer *webContainer)
+    : DeclarativeTabModel(nextTabId, webContainer),
       m_nextLinkId(1)
 {
     // Startup should be synced to this.
@@ -28,8 +28,8 @@ PrivateTabModel::~PrivateTabModel()
 {
 }
 
-Tab PrivateTabModel::createTab(QString url, QString title) {
-    return Tab(nextTabId(), Link(m_nextLinkId++, url, "", title));
+Tab PrivateTabModel::createTab(int tabId, QString url, QString title) {
+    return Tab(tabId, Link(m_nextLinkId++, url, "", title));
 }
 
 void PrivateTabModel::updateTitle(int tabId, int linkId, QString url, QString title)

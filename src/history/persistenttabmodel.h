@@ -21,7 +21,7 @@ class PersistentTabModel : public DeclarativeTabModel
     Q_OBJECT
 
 protected:
-    virtual Tab createTab(QString url, QString title);
+    virtual Tab createTab(int tabId, QString url, QString title);
     virtual void updateTitle(int tabId, int linkId, QString url, QString title);
     virtual void removeTab(int tabId);
     virtual int nextLinkId();
@@ -36,7 +36,7 @@ public slots:
     void tabsAvailable(QList<Tab> tabs);
 
 public:
-    PersistentTabModel(DeclarativeWebContainer *webContainer = 0);
+    PersistentTabModel(int nextTabId, DeclarativeWebContainer *webContainer = 0);
     ~PersistentTabModel();
 };
 

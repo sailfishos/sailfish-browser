@@ -28,7 +28,7 @@ public:
     static DBManager *instance();
     virtual ~DBManager();
 
-    Tab createTab(QString url, QString title);
+    Tab createTab(int tabId, QString url, QString title);
     void getAllTabs();
     void removeTab(int tabId);
     void navigateTo(int tabId, QString url, QString title = "", QString path = "");
@@ -66,7 +66,6 @@ private slots:
 private:
     DBManager(QObject *parent = 0);
 
-    int m_maxTabId;
     int m_nextLinkId;
     QMap<QString, QString> m_settings;
 
