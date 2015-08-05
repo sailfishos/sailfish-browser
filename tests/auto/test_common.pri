@@ -2,6 +2,8 @@
 
 QT += testlib
 
+CONFIG += c++11
+
 include(../../defaults.pri)
 
 CONFIG(gcov) {
