@@ -78,8 +78,8 @@ void PersistentTabModel::tabsAvailable(QList<Tab> tabs)
             this, SLOT(saveActiveTab()), Qt::UniqueConnection);
 }
 
-Tab PersistentTabModel::createTab(int tabId, QString url, QString title) {
-    return DBManager::instance()->createTab(tabId, url, title);
+void PersistentTabModel::createTab(const Tab &tab) {
+    DBManager::instance()->createTab(tab);
 }
 
 void PersistentTabModel::updateTitle(int tabId, QString url, QString title)

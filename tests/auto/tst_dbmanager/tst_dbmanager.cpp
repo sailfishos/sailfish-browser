@@ -120,7 +120,7 @@ void tst_dbmanager::cleanupTestCase()
 
 void tst_dbmanager::createTab(QString url, QString title)
 {
-    DBManager::instance()->createTab(1000, url, title);
+    DBManager::instance()->createTab(Tab(1000, url, title, ""));
 }
 
 int main(int argc, char *argv[])

@@ -27,8 +27,8 @@ PrivateTabModel::~PrivateTabModel()
 {
 }
 
-Tab PrivateTabModel::createTab(int tabId, QString url, QString title) {
-    return Tab(tabId, url, title, "");
+void PrivateTabModel::createTab(const Tab &tab) {
+    Q_UNUSED(tab);
 }
 
 void PrivateTabModel::updateTitle(int tabId, QString url, QString title)

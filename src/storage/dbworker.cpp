@@ -211,38 +211,36 @@ bool DBWorker::execute(QSqlQuery &query)
     return true;
 }
 
-Tab DBWorker::createTab(int tabId, QString url, QString title)
+void DBWorker::createTab(const Tab &tab)
 {
 #if DEBUG_LOGS
-    qDebug() << "new tab id: " << tabId;
+    qDebug() << "new tab id: " << tab.tabId();
 #endif
     QSqlQuery query = prepare("INSERT INTO tab (tab_id, tab_history_id) VALUES (?,?);");
-    query.bindValue(0, tabId);
+    query.bindValue(0, tab.tabId());
     query.bindValue(1, 0);
     execute(query);
 
-    if (url.isEmpty()) {
-        return Tab();
+    if (tab.url().isEmpty()) {
+        return;
     }
 
-    int linkId = createLink(url, title, "");
+    int linkId = createLink(tab.url(), tab.title(), tab.thumbnailPath());
 
-    if (addToBrowserHistory(url, title) == Error) {
-        qWarning() << Q_FUNC_INFO << "failed to add url to history" << url;
+    if (addToBrowserHistory(tab.url(), tab.title()) == Error) {
+        qWarning() << Q_FUNC_INFO << "failed to add url to history" << tab.url();
     }
 
-    int historyId = addToTabHistory(tabId, linkId);
+    int historyId = addToTabHistory(tab.tabId(), linkId);
     if (historyId > 0) {
-        updateTab(tabId, historyId);
+        updateTab(tab.tabId(), historyId);
     } else {
-        qWarning() << Q_FUNC_INFO << "failed to add url to tab history" << url;
+        qWarning() << Q_FUNC_INFO << "failed to add url to tab history" << tab.url();
     }
 
 #if DEBUG_LOGS
-    qDebug() << "created link:" << linkId << "with history id:" << historyId << "for tab:" << tabId << url;
+    qDebug() << "created link:" << linkId << "with history id:" << historyId << "for tab:" << tab.tabId() << tab.url();
 #endif
-
-    return Tab(tabId, url, title, "");
 }
 
 void DBWorker::updateTab(int tabId, int tabHistoryId)

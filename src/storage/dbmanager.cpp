@@ -67,13 +67,10 @@ int DBManager::getMaxTabId()
     return maxTabId;
 }
 
-Tab DBManager::createTab(int tabId, QString url, QString title)
+void DBManager::createTab(const Tab &tab)
 {
-    Tab newTab;
-    QMetaObject::invokeMethod(worker, "createTab", Qt::BlockingQueuedConnection,
-                              Q_RETURN_ARG(Tab, newTab),
-                              Q_ARG(int, tabId), Q_ARG(QString, url), Q_ARG(QString, title));
-    return newTab;
+    QMetaObject::invokeMethod(worker, "createTab", Qt::QueuedConnection,
+                              Q_ARG(Tab, tab));
 }
 
 void DBManager::navigateTo(int tabId, QString url, QString title, QString path)

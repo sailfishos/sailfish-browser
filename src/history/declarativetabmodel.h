@@ -99,7 +99,7 @@ protected:
     void updateActiveTab(const Tab &activeTab, bool loadActiveTab);
     void updateUrl(int tabId, const QString &url, bool initialLoad);
 
-    virtual Tab createTab(int tabId, QString url, QString title) = 0;
+    virtual void createTab(const Tab &tab) = 0;
     virtual void updateTitle(int tabId, QString url, QString title) = 0;
     virtual void removeTab(int tabId) = 0;
     virtual void navigateTo(int tabId, QString url, QString title, QString path) = 0;

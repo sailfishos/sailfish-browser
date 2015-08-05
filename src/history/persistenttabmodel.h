@@ -21,7 +21,7 @@ class PersistentTabModel : public DeclarativeTabModel
     Q_OBJECT
 
 protected:
-    virtual Tab createTab(int tabId, QString url, QString title);
+    virtual void createTab(const Tab &tab);
     virtual void updateTitle(int tabId, QString url, QString title);
     virtual void removeTab(int tabId);
     virtual void navigateTo(int tabId, QString url, QString title, QString path);
