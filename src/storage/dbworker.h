@@ -63,15 +63,12 @@ signals:
     void error(QString query);
 
 private:
-    Link getLink(int linkId);
     HistoryResult addToBrowserHistory(QString url, QString title);
     int addToTabHistory(int tabId, int linkId);
-    Link getLinkFromTabHistory(int tabHistoryId);
     Link getCurrentLink(int tabId);
     void clearDeprecatedTabHistory(int tabId, int currentLinkId);
     int createLink(QString url, QString title = "", QString thumbPath = "");
     void updateTab(int tabId, int tabHistoryId);
-    Tab getTabData(int tabId, int historyId = 0);
     int tabCount();
     int integerQuery(const QString &statement);
     void migrateTo_1();

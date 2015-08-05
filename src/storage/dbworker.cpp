@@ -256,28 +256,6 @@ void DBWorker::updateTab(int tabId, int tabHistoryId)
     execute(query);
 }
 
-Tab DBWorker::getTabData(int tabId, int historyId)
-{
-    int hId = historyId;
-    if (historyId == 0) {
-        QSqlQuery query = prepare("SELECT tab_history_id FROM tab WHERE tab_id = ?;");
-        query.bindValue(0, tabId);
-        if (execute(query)) {
-            if (query.first()) {
-                hId = query.value(0).toInt();
-            }
-        } else {
-            return Tab();
-        }
-    }
-
-    Link link = getLinkFromTabHistory(hId);
-#if DEBUG_LOGS
-    qDebug() << tabId << historyId << link.linkId()<< link.title() << link.url();
-#endif
-    return Tab(tabId, link);
-}
-
 void DBWorker::removeTab(int tabId)
 {
 #if DEBUG_LOGS
@@ -331,13 +309,20 @@ void DBWorker::removeAllTabs()
 void DBWorker::getAllTabs()
 {
     QList<Tab> tabList;
-    QSqlQuery query = prepare("SELECT tab_id, tab_history_id FROM tab;");
+    QSqlQuery query = prepare("SELECT tab.tab_id, link.link_id, link.url, link.thumb_path, link.title "
+                              "FROM tab "
+                              "INNER JOIN tab_history ON tab_history.id = tab.tab_history_id "
+                              "INNER JOIN link ON tab_history.link_id = link.link_id;");
     if (!execute(query)) {
         return;
     }
 
     while (query.next()) {
-        tabList.append(getTabData(query.value(0).toInt(), query.value(1).toInt()));
+        tabList.append(Tab(query.value(0).toInt(),
+                           Link(query.value(1).toInt(),
+                                query.value(2).toString(),
+                                query.value(3).toString(),
+                                query.value(4).toString())));
     }
     emit tabsAvailable(tabList);
 }
@@ -433,26 +418,18 @@ void DBWorker::goBack(int tabId) {
 
 Link DBWorker::getCurrentLink(int tabId)
 {
-    int historyId = 0;
-    QSqlQuery query = prepare("SELECT tab_history_id FROM tab WHERE tab_id = ?;");
+    QSqlQuery query = prepare("SELECT link.link_id, link.url, link.thumb_path, link.title "
+                              "FROM tab "
+                              "INNER JOIN tab_history ON tab_history.id = tab.tab_history_id "
+                              "INNER JOIN link ON tab_history.link_id = link.link_id "
+                              "WHERE tab.tab_id = ?;");
     query.bindValue(0, tabId);
     if (execute(query)) {
         if (query.first()) {
-            historyId = query.value(0).toInt();
-        }
-    } else {
-        return Link();
-    }
-    return getLinkFromTabHistory(historyId);
-}
-
-Link DBWorker::getLinkFromTabHistory(int tabHistoryId)
-{
-    QSqlQuery query = prepare("SELECT link_id FROM tab_history WHERE id = ?;");
-    query.bindValue(0, tabHistoryId);
-    if (execute(query)) {
-        if (query.first()) {
-            return getLink(query.value(0).toInt());
+            return Link(query.value(0).toInt(),
+                        query.value(1).toString(),
+                        query.value(2).toString(),
+                        query.value(3).toString());
         }
     }
     return Link();
@@ -717,20 +694,4 @@ void DBWorker::deleteSetting(QString name)
     QSqlQuery query = prepare("DELETE FROM settings WHERE name = ?");
     query.bindValue(0, name);
     execute(query);
-}
-
-
-Link DBWorker::getLink(int linkId)
-{
-    QSqlQuery query = prepare("SELECT link_id, url, thumb_path, title FROM link WHERE link_id = ?;");
-    query.bindValue(0, linkId);
-    if (execute(query)) {
-        if (query.first()) {
-            return Link(query.value(0).toInt(),
-                       query.value(1).toString(),
-                       query.value(2).toString(),
-                       query.value(3).toString());
-        }
-    }
-    return Link();
 }
