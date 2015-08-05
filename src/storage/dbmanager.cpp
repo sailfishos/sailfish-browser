@@ -38,7 +38,7 @@ DBManager::DBManager(QObject *parent)
     connect(&workerThread, SIGNAL(finished()), worker, SLOT(deleteLater()));
     connect(worker, SIGNAL(tabsAvailable(QList<Tab>)), this, SLOT(tabListAvailable(QList<Tab>)));
     connect(worker, SIGNAL(historyAvailable(QList<Link>)), this, SIGNAL(historyAvailable(QList<Link>)));
-    connect(worker, SIGNAL(tabHistoryAvailable(int,QList<Link>)), this, SIGNAL(tabHistoryAvailable(int,QList<Link>)));
+    connect(worker, SIGNAL(tabHistoryAvailable(int,QList<Link>,int)), this, SIGNAL(tabHistoryAvailable(int,QList<Link>,int)));
     connect(worker, SIGNAL(titleChanged(QString,QString)), this, SIGNAL(titleChanged(QString,QString)));
     connect(worker, SIGNAL(thumbPathChanged(int,QString)), this, SIGNAL(thumbPathChanged(int,QString)));
     workerThread.start();

@@ -605,10 +605,10 @@ void DBWorker::getHistory(const QString &filter)
 
 void DBWorker::getTabHistory(int tabId)
 {
-    QSqlQuery query = prepare("SELECT link.link_id, link.url, link.thumb_path, link.title "
+    QSqlQuery query = prepare("SELECT link.link_id, link.url, link.thumb_path, link.title, (tab_history.id == tab.tab_history_id) AS current "
                               "FROM tab_history "
-                              "INNER JOIN link "
-                              "ON tab_history.link_id=link.link_id "
+                              "INNER JOIN tab ON tab.tab_id = tab_history.tab_id "
+                              "INNER JOIN link ON tab_history.link_id = link.link_id "
                               "WHERE tab_history.tab_id = ? "
                               "ORDER BY tab_history.id DESC;");
     query.bindValue(0, tabId);
@@ -617,15 +617,20 @@ void DBWorker::getTabHistory(int tabId)
     }
 
     QList<Link> linkList;
+    int currentLinkId(-1);
     while (query.next()) {
-        Link tmp(query.value(0).toInt(),
+        int linkId = query.value(0).toInt();
+        Link tmp(linkId,
                 query.value(1).toString(),
                 query.value(2).toString(),
                 query.value(3).toString());
         linkList.append(tmp);
+        if (query.value(4).toBool()) {
+            currentLinkId = linkId;
+        }
     }
 
-    emit tabHistoryAvailable(tabId, linkList);
+    emit tabHistoryAvailable(tabId, linkList, currentLinkId);
 }
 
 void DBWorker::updateThumbPath(int tabId, QString path)

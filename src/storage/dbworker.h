@@ -58,7 +58,7 @@ signals:
     void tabsAvailable(QList<Tab> tabs);
     void thumbPathChanged(int tabId, QString path);
     void titleChanged(QString url, QString title);
-    void tabHistoryAvailable(int tabId, QList<Link>);
+    void tabHistoryAvailable(int tabId, QList<Link>, int currentLinkId);
     void historyAvailable(QList<Link>);
     void error(QString query);
 

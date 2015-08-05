@@ -54,7 +54,7 @@ public slots:
 signals:
     void tabsAvailable(QList<Tab> tab);
     void historyAvailable(QList<Link> links);
-    void tabHistoryAvailable(int tabId, QList<Link> links);
+    void tabHistoryAvailable(int tabId, QList<Link> links, int currentLinkId);
     void thumbPathChanged(int tabId, QString path);
     void titleChanged(QString url, QString title);
     void settingsChanged();
