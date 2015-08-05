@@ -13,8 +13,6 @@
 #include "privatetabmodel.h"
 #include "dbmanager.h"
 
-#define LINK_ID 1000
-
 PrivateTabModel::PrivateTabModel(int nextTabId, DeclarativeWebContainer *webContainer)
     : DeclarativeTabModel(nextTabId, webContainer)
 {
@@ -30,7 +28,7 @@ PrivateTabModel::~PrivateTabModel()
 }
 
 Tab PrivateTabModel::createTab(int tabId, QString url, QString title) {
-    return Tab(tabId, Link(LINK_ID, url, "", title));
+    return Tab(tabId, url, title, "");
 }
 
 void PrivateTabModel::updateTitle(int tabId, QString url, QString title)

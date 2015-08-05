@@ -15,12 +15,10 @@
 #include <QString>
 #include <QDebug>
 
-#include "link.h"
-
 class Tab
 {
 public:
-    explicit Tab(int tabId, Link link);
+    explicit Tab(int tabId, QString url, QString title, QString thumbPath);
     explicit Tab();
 
     int tabId() const;
@@ -42,7 +40,9 @@ public:
 
 private:
     int m_tabId;
-    Link m_link;
+    QString m_url;
+    QString m_title;
+    QString m_thumbPath;
 };
 
 QDebug operator<<(QDebug, const Tab *);

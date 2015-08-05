@@ -11,8 +11,8 @@
 
 #include "tab.h"
 
-Tab::Tab(int tabId, Link link) :
-    m_tabId(tabId), m_link(link)
+Tab::Tab(int tabId, QString url, QString title, QString thumbPath) :
+    m_tabId(tabId), m_url(url), m_title(title), m_thumbPath(thumbPath)
 {
 }
 
@@ -33,32 +33,32 @@ void Tab::setTabId(int tabId)
 
 QString Tab::url() const
 {
-    return m_link.url();
+    return m_url;
 }
 
 void Tab::setUrl(const QString &url)
 {
-    m_link.setUrl(url);
+    m_url = url;
 }
 
 QString Tab::thumbnailPath() const
 {
-    return m_link.thumbPath();
+    return m_thumbPath;
 }
 
 void Tab::setThumbnailPath(const QString &thumbnailPath)
 {
-    m_link.setThumbPath(thumbnailPath);
+    m_thumbPath = thumbnailPath;
 }
 
 QString Tab::title() const
 {
-    return m_link.title();
+    return m_title;
 }
 
 void Tab::setTitle(const QString &title)
 {
-    m_link.setTitle(title);
+    m_title = title;
 }
 
 bool Tab::isValid() const
@@ -69,7 +69,9 @@ bool Tab::isValid() const
 bool Tab::operator==(const Tab &other) const
 {
     return (m_tabId == other.tabId() &&
-            m_link == other.m_link);
+            m_url == other.url() &&
+            m_title == other.title() &&
+            m_thumbPath == other.thumbnailPath());
 }
 
 bool Tab::operator!=(const Tab &other) const

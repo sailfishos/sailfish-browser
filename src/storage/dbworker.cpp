@@ -242,7 +242,7 @@ Tab DBWorker::createTab(int tabId, QString url, QString title)
     qDebug() << "created link:" << linkId << "with history id:" << historyId << "for tab:" << tabId << url;
 #endif
 
-    return Tab(tabId, Link(linkId, url, "", title));
+    return Tab(tabId, url, title, "");
 }
 
 void DBWorker::updateTab(int tabId, int tabHistoryId)
@@ -309,7 +309,7 @@ void DBWorker::removeAllTabs()
 void DBWorker::getAllTabs()
 {
     QList<Tab> tabList;
-    QSqlQuery query = prepare("SELECT tab.tab_id, link.link_id, link.url, link.thumb_path, link.title "
+    QSqlQuery query = prepare("SELECT tab.tab_id, link.url, link.title, link.thumb_path "
                               "FROM tab "
                               "INNER JOIN tab_history ON tab_history.id = tab.tab_history_id "
                               "INNER JOIN link ON tab_history.link_id = link.link_id;");
@@ -319,10 +319,9 @@ void DBWorker::getAllTabs()
 
     while (query.next()) {
         tabList.append(Tab(query.value(0).toInt(),
-                           Link(query.value(1).toInt(),
-                                query.value(2).toString(),
-                                query.value(3).toString(),
-                                query.value(4).toString())));
+                           query.value(1).toString(),
+                           query.value(2).toString(),
+                           query.value(3).toString()));
     }
     emit tabsAvailable(tabList);
 }
