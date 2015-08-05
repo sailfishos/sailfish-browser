@@ -169,20 +169,17 @@ void tst_persistenttabmodel::addTab()
     QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), tabToAdd.url);
     QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), tabToAdd.title);
     QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt(), initialTabs.count() + 1);
-    QCOMPARE(tabModel->m_tabs.at(insertToIndex).currentLink(), initialTabs.count() + 1);
 
     if (insertToIndex > 0) {
         modelIndex = tabModel->createIndex(insertToIndex - 1, 0);
         QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), initialTabs.at(insertToIndex - 1).url);
         QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), initialTabs.at(insertToIndex - 1).title);
         QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt(), insertToIndex);
-        QCOMPARE(tabModel->m_tabs.at(insertToIndex - 1).currentLink(), insertToIndex);
     } else if (insertToIndex < initialTabs.count()) {
         modelIndex = tabModel->createIndex(insertToIndex + 1, 0);
         QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), initialTabs.at(insertToIndex).url);
         QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), initialTabs.at(insertToIndex).title);
         QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt(), insertToIndex + 1);
-        QCOMPARE(tabModel->m_tabs.at(insertToIndex + 1).currentLink(), insertToIndex + 1);
     }
 }
 
@@ -463,7 +460,6 @@ void tst_persistenttabmodel::updateUrl()
         QCOMPARE(dataChangedSpy.count(), 1);
         Tab tab = tabModel->tabs().at(tabModel->findTabIndex(tabId));
         QCOMPARE(tab.url(), url);
-        QCOMPARE(tab.currentLink(), 4);
         QCOMPARE(tab.title(), QString(""));
     } else {
         QCOMPARE(dataChangedSpy.count(), 0);
