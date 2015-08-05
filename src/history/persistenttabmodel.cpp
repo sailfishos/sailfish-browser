@@ -82,18 +82,14 @@ Tab PersistentTabModel::createTab(int tabId, QString url, QString title) {
     return DBManager::instance()->createTab(tabId, url, title);
 }
 
-void PersistentTabModel::updateTitle(int tabId, int linkId, QString url, QString title)
+void PersistentTabModel::updateTitle(int tabId, QString url, QString title)
 {
-    DBManager::instance()->updateTitle(tabId, linkId, url, title);
+    DBManager::instance()->updateTitle(tabId, url, title);
 }
 
 void PersistentTabModel::removeTab(int tabId)
 {
     DBManager::instance()->removeTab(tabId);
-}
-
-int PersistentTabModel::nextLinkId() {
-    return DBManager::instance()->nextLinkId();
 }
 
 void PersistentTabModel::navigateTo(int tabId, QString url, QString title, QString path) {

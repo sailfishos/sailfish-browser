@@ -282,7 +282,6 @@ void DeclarativeTabModel::updateUrl(int tabId, const QString &url, bool initialL
         m_tabs[tabIndex].setUrl(url);
 
         if (!initialLoad) {
-            m_tabs[tabIndex].setCurrentLink(nextLinkId());
             updateDb = true;
         }
         m_tabs[tabIndex].setThumbnailPath("");
@@ -443,7 +442,7 @@ void DeclarativeTabModel::onTitleChanged()
             roles << TitleRole;
             m_tabs[tabIndex].setTitle(title);
             emit dataChanged(index(tabIndex, 0), index(tabIndex, 0), roles);
-            updateTitle(tabId, m_tabs.at(tabIndex).currentLink(), webPage->url().toString(), title);
+            updateTitle(tabId, webPage->url().toString(), title);
         }
     }
 }

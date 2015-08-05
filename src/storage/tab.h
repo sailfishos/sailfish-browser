@@ -46,7 +46,6 @@ public:
 private:
     int m_tabId;
     Link m_currentLink;
-    int m_nextLinkId;
 };
 
 QDebug operator<<(QDebug, const Tab *);

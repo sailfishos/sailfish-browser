@@ -13,9 +13,10 @@
 #include "privatetabmodel.h"
 #include "dbmanager.h"
 
+#define LINK_ID 1000
+
 PrivateTabModel::PrivateTabModel(int nextTabId, DeclarativeWebContainer *webContainer)
-    : DeclarativeTabModel(nextTabId, webContainer),
-      m_nextLinkId(1)
+    : DeclarativeTabModel(nextTabId, webContainer)
 {
     // Startup should be synced to this.
     if (!m_loaded) {
@@ -29,13 +30,12 @@ PrivateTabModel::~PrivateTabModel()
 }
 
 Tab PrivateTabModel::createTab(int tabId, QString url, QString title) {
-    return Tab(tabId, Link(m_nextLinkId++, url, "", title));
+    return Tab(tabId, Link(LINK_ID, url, "", title));
 }
 
-void PrivateTabModel::updateTitle(int tabId, int linkId, QString url, QString title)
+void PrivateTabModel::updateTitle(int tabId, QString url, QString title)
 {
     Q_UNUSED(tabId)
-    Q_UNUSED(linkId)
     Q_UNUSED(url)
     Q_UNUSED(title)
 }
@@ -43,10 +43,6 @@ void PrivateTabModel::updateTitle(int tabId, int linkId, QString url, QString ti
 void PrivateTabModel::removeTab(int tabId)
 {
     Q_UNUSED(tabId)
-}
-
-int PrivateTabModel::nextLinkId() {
-    return m_nextLinkId;
 }
 
 void PrivateTabModel::navigateTo(int tabId, QString url, QString title, QString path) {

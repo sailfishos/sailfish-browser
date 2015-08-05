@@ -18,8 +18,8 @@ DeclarativeHistoryModel::DeclarativeHistoryModel(QObject *parent)
 {
     connect(DBManager::instance(), SIGNAL(historyAvailable(QList<Link>)),
             this, SLOT(historyAvailable(QList<Link>)));
-    connect(DBManager::instance(), SIGNAL(titleChanged(int,int,QString,QString)),
-            this, SLOT(updateTitle(int,int,QString,QString)));
+    connect(DBManager::instance(), SIGNAL(titleChanged(QString,QString)),
+            this, SLOT(updateTitle(QString,QString)));
 }
 
 QHash<int, QByteArray> DeclarativeHistoryModel::roleNames() const
@@ -114,10 +114,8 @@ void DeclarativeHistoryModel::updateModel(QList<Link> linkList)
     }
 }
 
-void DeclarativeHistoryModel::updateTitle(int tabId, int linkId, QString url, QString title)
+void DeclarativeHistoryModel::updateTitle(QString url, QString title)
 {
-    Q_UNUSED(tabId);
-    Q_UNUSED(linkId);
     QVector<int> roles;
     roles << TitleRole;
     for (int i = 0; i < m_links.count(); i++) {

@@ -347,11 +347,6 @@ int DBWorker::getMaxTabId()
     return integerQuery("SELECT MAX(tab_id) FROM tab;");
 }
 
-int DBWorker::getMaxLinkId()
-{
-    return integerQuery("SELECT MAX(link_id) FROM link;");
-}
-
 int DBWorker::tabCount()
 {
     return integerQuery("SELECT COUNT(*) FROM tab;");
@@ -566,8 +561,6 @@ int DBWorker::createLink(QString url, QString title, QString thumbPath)
     qDebug() << title << url << thumbPath << lastId.toInt();
 #endif
     int linkId = lastId.toInt();
-
-    emit nextLinkId(linkId + 1);
     return linkId;
 }
 
@@ -644,16 +637,34 @@ void DBWorker::updateThumbPath(int tabId, QString path)
     }
 }
 
-void DBWorker::updateTitle(int tabId, int linkId, QString url, QString title)
+void DBWorker::updateTitle(int tabId, QString url, QString title)
 {
-    Link link = getLink(linkId);
-    QSqlQuery query = prepare("UPDATE link SET title = ? WHERE link_id = ?;");
-    query.bindValue(0, title);
-    query.bindValue(1, linkId);
-    if (execute(query)) {
-        if (link.isValid() && link.title() != title) {
-            // For browsing history
-            emit titleChanged(tabId, linkId, link.url(), title);
+    // TODO: add DB indices
+    QSqlQuery query = prepare("SELECT link.link_id, link.url, link.title FROM tab "
+                              "INNER JOIN tab_history ON tab.tab_history_id = tab_history.id "
+                              "INNER JOIN link ON tab_history.link_id = link.link_id "
+                              "WHERE tab_history.tab_id = ?;");
+    query.bindValue(0, tabId);
+    if (!execute(query)) {
+        qWarning() << "No link found for tabId" << tabId;
+        return;
+    }
+
+    if (query.first()) {
+        int linkId = query.value(0).toInt();
+        QString oldUrl = query.value(1).toString();
+        QString oldTitle = query.value(2).toString();
+
+        if (linkId > 0 && oldUrl.length() > 0 && oldTitle != title) {
+            query = prepare("UPDATE link SET title = ? WHERE link_id = ?;");
+            query.bindValue(0, title);
+            query.bindValue(1, linkId);
+            if (execute(query)) {
+                // For browsing history
+                emit titleChanged(url, title);
+            } else {
+                qWarning() << "Failed to update link's title";
+            }
         }
     }
 

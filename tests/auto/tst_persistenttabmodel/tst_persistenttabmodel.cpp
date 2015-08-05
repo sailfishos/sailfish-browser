@@ -464,6 +464,7 @@ void tst_persistenttabmodel::updateUrl()
         Tab tab = tabModel->tabs().at(tabModel->findTabIndex(tabId));
         QCOMPARE(tab.url(), url);
         QCOMPARE(tab.currentLink(), 4);
+        QCOMPARE(tab.title(), QString(""));
     } else {
         QCOMPARE(dataChangedSpy.count(), 0);
     }
