@@ -12,6 +12,8 @@ isEmpty(USER_OPENSEARCH_PATH) {
 
 INCLUDEPATH += $$PWD
 
+CONFIG += c++11
+
 # C++ sources
 SOURCES += \
     $$PWD/opensearchconfigs.cpp
