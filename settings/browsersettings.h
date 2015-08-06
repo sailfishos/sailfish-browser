@@ -20,12 +20,16 @@ class BrowserSettings: public QObject
     Q_OBJECT
 
     Q_PROPERTY(QStringList searchEngineList READ getSearchEngineList CONSTANT)
+    Q_PROPERTY(QString defaultUA MEMBER m_defaultUA CONSTANT)
 
 public:
     explicit BrowserSettings(QObject *parent = 0);
     virtual ~BrowserSettings();
 
     const QStringList getSearchEngineList() const;
+
+private:
+    const QString m_defaultUA;
 };
 
 #endif

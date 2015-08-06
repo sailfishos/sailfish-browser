@@ -14,6 +14,7 @@
 
 BrowserSettings::BrowserSettings(QObject *parent)
     : QObject(parent)
+    , m_defaultUA(DEFAULT_USER_AGENT)
 {
 }
 

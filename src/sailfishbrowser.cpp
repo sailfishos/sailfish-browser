@@ -71,11 +71,6 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     QByteArray binaryPath = QCoreApplication::applicationDirPath().toLocal8Bit();
     setenv("GRE_HOME", binaryPath.constData(), 1);
 
-    // Don't set custom user agent string when the environment already contains CUSTOM_UA.
-    if (qgetenv("CUSTOM_UA").isEmpty()) {
-        setenv("CUSTOM_UA", "Mozilla/5.0 (Maemo; Linux; U; Jolla; Sailfish; Mobile; rv:31.0) Gecko/31.0 Firefox/31.0 SailfishBrowser/1.0", 1);
-    }
-
     BrowserService *service = new BrowserService(app.data());
     // Handle command line launch
     if (!service->registered()) {

@@ -32,6 +32,7 @@ SettingManager::SettingManager(QObject *parent)
     m_searchEngineConfItem = new MGConfItem("/apps/sailfish-browser/settings/search_engine", this);
     m_doNotTrackConfItem = new MGConfItem("/apps/sailfish-browser/settings/do_not_track", this);
     m_autostartPrivateBrowsing = new MGConfItem("/apps/sailfish-browser/settings/autostart_private_browsing", this);
+    m_userAgentOverrideItem = new MGConfItem("/apps/sailfish-browser/settings/user_agent_override", this);
 
     // Look and feel related settings
     m_toolbarSmall = new MGConfItem("/apps/sailfish-browser/settings/toolbar_small", this);
@@ -62,6 +63,7 @@ bool SettingManager::initialize()
     }
     setSearchEngine();
     doNotTrack();
+    setUserAgent();
 
     connect(m_clearPrivateDataConfItem, SIGNAL(valueChanged()),
             this, SLOT(clearPrivateData()));
@@ -79,6 +81,8 @@ bool SettingManager::initialize()
             this, SLOT(setSearchEngine()));
     connect(m_doNotTrackConfItem, SIGNAL(valueChanged()),
             this, SLOT(doNotTrack()));
+    connect(m_userAgentOverrideItem, SIGNAL(valueChanged()),
+            this, SLOT(setUserAgent()));
 
     m_initialized = true;
     return clearedData;
@@ -187,4 +191,16 @@ void SettingManager::setAutostartPrivateBrowsing(bool privateMode)
 bool SettingManager::autostartPrivateBrowsing() const
 {
     return m_autostartPrivateBrowsing->value(false).toBool();
+}
+
+void SettingManager::setUserAgent()
+{
+    QString customUA = qgetenv("CUSTOM_UA");
+
+    QVariant userAgent = customUA.isEmpty() ? m_userAgentOverrideItem->value(QVariant(QString(""))) : QVariant(customUA);
+
+    if (userAgent.toString().isEmpty()) {
+        userAgent = QVariant(QString(DEFAULT_USER_AGENT));
+    }
+    QMozContext::GetInstance()->setPref(QString("general.useragent.override"), userAgent);
 }

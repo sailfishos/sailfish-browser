@@ -22,7 +22,7 @@ HEADERS += \
         browsersettings.h
 
 qmlpages.path = /usr/share/jolla-settings/pages/browser
-qmlpages.files = browser.qml Privacy.qml
+qmlpages.files = browser.qml Privacy.qml UserAgent.qml
 
 plugin_entry.path = /usr/share/jolla-settings/entries
 plugin_entry.files = browser.json

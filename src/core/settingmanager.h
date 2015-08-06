@@ -47,6 +47,7 @@ private slots:
     bool clearBookmarks();
     void setSearchEngine();
     void doNotTrack();
+    void setUserAgent();
 
 private:
     explicit SettingManager(QObject *parent = 0);
@@ -63,6 +64,8 @@ private:
 
     MGConfItem *m_toolbarSmall;
     MGConfItem *m_toolbarLarge;
+
+    MGConfItem *m_userAgentOverrideItem;
 
     bool m_initialized;
 };

@@ -10,6 +10,12 @@ isEmpty(USER_OPENSEARCH_PATH) {
   DEFINES += USER_OPENSEARCH_PATH=\"\\\"$$USER_OPENSEARCH_PATH\\\"\"
 }
 
+isEmpty(DEFAULT_USER_AGENT) {
+  DEFINES += DEFAULT_USER_AGENT='"\\\"Mozilla/5.0 (Maemo; Linux; U; Jolla; Sailfish; Mobile; rv:31.0) Gecko/31.0 Firefox/31.0 SailfishBrowser/1.0\\\""'
+} else {
+  DEFINES += DEFAULT_USER_AGENT=\"\\\"$$DEFAULT_USER_AGENT\\\"\"
+}
+
 INCLUDEPATH += $$PWD
 
 CONFIG += c++11

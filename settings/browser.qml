@@ -103,6 +103,14 @@ Page {
                 text: qsTrId("settings_browser-bt-privacy")
                 onClicked: pageStack.push(Qt.resolvedUrl("Privacy.qml"))
             }
+
+            Button {
+                anchors.horizontalCenter: parent.horizontalCenter
+                //: Button for opening User Agent settings page.
+                //% "User Agent overrides"
+                text: qsTrId("settings_browser-bt-useragent")
+                onClicked: pageStack.push(Qt.resolvedUrl("UserAgent.qml"))
+            }
         }
     }
 
