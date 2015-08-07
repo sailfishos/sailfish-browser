@@ -110,6 +110,7 @@ void DeclarativeWebPage::setContainer(DeclarativeWebContainer *container)
 {
     if (m_container != container) {
         m_container = container;
+        setMozWindow(container->mozWindow());
         emit containerChanged();
     }
 }

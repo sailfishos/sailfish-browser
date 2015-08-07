@@ -30,6 +30,8 @@
 #include <QMetaMethod>
 #include <QOpenGLFunctions_ES2>
 #include <QGuiApplication>
+#include <qmozwindow.h>
+
 #include <qpa/qplatformnativeinterface.h>
 
 #ifndef DEBUG_LOGS
@@ -38,6 +40,7 @@
 
 DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     : QWindow(parent)
+    , m_mozWindow(nullptr)
     , m_rotationHandler(0)
     , m_webPage(0)
     , m_context(0)
@@ -123,6 +126,11 @@ DeclarativeWebPage *DeclarativeWebContainer::webPage() const
     return m_webPage;
 }
 
+QMozWindow *DeclarativeWebContainer::mozWindow() const
+{
+    return m_mozWindow;
+}
+
 void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
 {
     if (m_webPage != webPage) {
@@ -144,15 +152,14 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
             connect(m_webPage, SIGNAL(loadingChanged()), this, SLOT(updateLoading()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(loadProgressChanged()), this, SLOT(updateLoadProgress()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(domContentLoadedChanged()), this, SLOT(sendVkbOpenCompositionMetrics()), Qt::UniqueConnection);
-            connect(m_webPage, SIGNAL(requestGLContext()), this, SLOT(createGLContext()), Qt::DirectConnection);
             connect(qApp->inputMethod(), SIGNAL(visibleChanged()), this, SLOT(sendVkbOpenCompositionMetrics()), Qt::UniqueConnection);
-            // Intentionally not a direct connect as signal is emitted from gecko compositor thread.
-            connect(m_webPage, SIGNAL(afterRendering(QRect)), this, SLOT(updateActiveTabRendered()), Qt::UniqueConnection);
             // NB: these signals are not disconnected upon setting current m_webPage.
             connect(m_webPage, SIGNAL(urlChanged()), m_model, SLOT(onUrlChanged()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(titleChanged()), m_model, SLOT(onTitleChanged()), Qt::UniqueConnection);
 
-            m_webPage->setWindow(this);
+            connect(m_mozWindow.data(), &QMozWindow::compositingFinished,
+                    this, &DeclarativeWebContainer::updateActiveTabRendered, Qt::UniqueConnection);
+
             if (m_chromeWindow) {
                 updateContentOrientation(m_chromeWindow->contentOrientation());
             }
@@ -721,6 +728,13 @@ void DeclarativeWebContainer::initialize()
         return;
     }
 
+    m_mozWindow = new QMozWindow(this);
+    m_mozWindow->setSize(QWindow::size());
+    connect(m_mozWindow.data(), &QMozWindow::requestGLContext,
+            this, &DeclarativeWebContainer::createGLContext, Qt::DirectConnection);
+    connect(m_mozWindow.data(), &QMozWindow::drawUnderlay,
+            this, &DeclarativeWebContainer::drawUnderlay, Qt::DirectConnection);
+
     bool clearTabs = m_settingManager->clearHistoryRequested();
     int oldCount = m_model->count();
 
@@ -846,7 +860,8 @@ void DeclarativeWebContainer::updateActiveTabRendered()
 {
     setActiveTabRendered(true);
     // One frame rendered so let's disconnect.
-    disconnect(m_webPage, SIGNAL(afterRendering(QRect)), this, SLOT(updateActiveTabRendered()));
+    disconnect(m_mozWindow.data(), &QMozWindow::compositingFinished,
+               this, &DeclarativeWebContainer::updateActiveTabRendered);
 }
 
 void DeclarativeWebContainer::updateWindowFlags()
@@ -944,5 +959,22 @@ void DeclarativeWebContainer::createGLContext()
 
     if (!m_activeTabRendered) {
         clearWindowSurface();
+    }
+}
+
+void DeclarativeWebContainer::drawUnderlay()
+{
+    Q_ASSERT(m_context);
+
+    if (!m_webPage) {
+       return;
+    }
+
+    m_context->makeCurrent(this);
+    QOpenGLFunctions_ES2* funcs = m_context->versionFunctions<QOpenGLFunctions_ES2>();
+    if (funcs) {
+        QColor bgColor = m_webPage->backgroundColor();
+        funcs->glClearColor(bgColor.redF(), bgColor.greenF(), bgColor.blueF(), 0.0);
+        funcs->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 }

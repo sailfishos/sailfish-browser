@@ -29,6 +29,7 @@
 #include <QWaitCondition>
 
 class QInputMethodEvent;
+class QMozWindow;
 class QTimerEvent;
 class DeclarativeTabModel;
 class DeclarativeWebPage;
@@ -77,6 +78,7 @@ public:
     ~DeclarativeWebContainer();
 
     DeclarativeWebPage *webPage() const;
+    QMozWindow *mozWindow() const;
 
     DeclarativeTabModel *tabModel() const;
 
@@ -203,7 +205,9 @@ private slots:
     // matching composition metrics.
     void sendVkbOpenCompositionMetrics();
 
+    // QMozWindow related slots:
     void createGLContext();
+    void drawUnderlay();
 
 private:
     void setWebPage(DeclarativeWebPage *webPage);
@@ -221,6 +225,7 @@ private:
     static void clearWindowSurfaceTask(void* data);
     void clearWindowSurface();
 
+    QPointer<QMozWindow> m_mozWindow;
     QPointer<QQuickItem> m_rotationHandler;
     QPointer<DeclarativeWebPage> m_webPage;
     QPointer<QQuickView> m_chromeWindow;

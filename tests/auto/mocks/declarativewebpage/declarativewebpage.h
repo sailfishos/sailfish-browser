@@ -98,7 +98,6 @@ signals:
     void windowCloseRequested();
     void loadingChanged();
     void loadProgressChanged();
-    void afterRendering(const QRect&);
     void requestGLContext();
 
     void containerChanged();
