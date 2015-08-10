@@ -281,6 +281,7 @@ void DeclarativeWebPage::resetHeight(bool respectContentHeight)
         return;
     }
 
+#if 0 // TODO: Add support for settings extra marings for EmbedLiteView
     // fullscreen() below in the fullscreen request coming from the web content.
     if (respectContentHeight && (!m_forcedChrome || fullscreen())) {
         // Handle webPage height over here, BrowserPage.qml loading
@@ -297,6 +298,9 @@ void DeclarativeWebPage::resetHeight(bool respectContentHeight)
     } else {
         setHeight(m_fullScreenHeight - m_toolbarHeight);
     }
+#else
+    setHeight(m_fullScreenHeight);
+#endif
 }
 
 void DeclarativeWebPage::grabResultReady()

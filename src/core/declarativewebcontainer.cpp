@@ -9,23 +9,19 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "declarativewebpage.h"
 #include "declarativewebcontainer.h"
 #include "persistenttabmodel.h"
 #include "privatetabmodel.h"
-#include "declarativewebpage.h"
 #include "dbmanager.h"
 #include "downloadmanager.h"
 #include "declarativewebutils.h"
 #include "webpagefactory.h"
+#include "webpages.h"
 
-#include <QPointer>
 #include <QTimerEvent>
-#include <QQuickWindow>
 #include <QDir>
-#include <QTransform>
 #include <QStandardPaths>
-#include <QtConcurrentRun>
-#include <QGuiApplication>
 #include <QScreen>
 #include <QMetaMethod>
 #include <QOpenGLFunctions_ES2>
@@ -159,10 +155,6 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
 
             connect(m_mozWindow.data(), &QMozWindow::compositingFinished,
                     this, &DeclarativeWebContainer::updateActiveTabRendered, Qt::UniqueConnection);
-
-            if (m_chromeWindow) {
-                updateContentOrientation(m_chromeWindow->contentOrientation());
-            }
             setActiveTabRendered(m_webPage->isPainted());
         } else {
             setActiveTabRendered(false);
@@ -337,7 +329,8 @@ void DeclarativeWebContainer::setChromeWindow(QObject *chromeWindow)
             m_chromeWindow->setTransientParent(this);
             m_chromeWindow->showFullScreen();
             updateContentOrientation(m_chromeWindow->contentOrientation());
-            connect(m_chromeWindow, SIGNAL(contentOrientationChanged(Qt::ScreenOrientation)), this, SLOT(updateContentOrientation(Qt::ScreenOrientation)));
+            connect(m_chromeWindow.data(), &QWindow::contentOrientationChanged,
+                    this, &DeclarativeWebContainer::updateContentOrientation);
         }
         emit chromeWindowChanged();
     }
@@ -675,10 +668,9 @@ void DeclarativeWebContainer::resetHeight(bool respectContentHeight)
 
 void DeclarativeWebContainer::updateContentOrientation(Qt::ScreenOrientation orientation)
 {
-    if (m_webPage) {
-        m_webPage->updateContentOrientation(orientation);
+    if (m_mozWindow) {
+        m_mozWindow->setContentOrientation(orientation);
     }
-
     reportContentOrientationChange(orientation);
 }
 
@@ -730,6 +722,9 @@ void DeclarativeWebContainer::initialize()
 
     m_mozWindow = new QMozWindow(this);
     m_mozWindow->setSize(QWindow::size());
+    if (m_chromeWindow) {
+        updateContentOrientation(m_chromeWindow->contentOrientation());
+    }
     connect(m_mozWindow.data(), &QMozWindow::requestGLContext,
             this, &DeclarativeWebContainer::createGLContext, Qt::DirectConnection);
     connect(m_mozWindow.data(), &QMozWindow::drawUnderlay,
@@ -773,7 +768,6 @@ void DeclarativeWebContainer::initialize()
         emit completedChanged();
     }
     m_initialized = true;
-    disconnect(m_chromeWindow, SIGNAL(contentOrientationChanged(Qt::ScreenOrientation)), this, SLOT(updateContentOrientation(Qt::ScreenOrientation)));
 }
 
 void DeclarativeWebContainer::onDownloadStarted()
@@ -973,7 +967,7 @@ void DeclarativeWebContainer::drawUnderlay()
     m_context->makeCurrent(this);
     QOpenGLFunctions_ES2* funcs = m_context->versionFunctions<QOpenGLFunctions_ES2>();
     if (funcs) {
-        QColor bgColor = m_webPage->backgroundColor();
+        QColor bgColor = m_webPage->bgcolor();
         funcs->glClearColor(bgColor.redF(), bgColor.greenF(), bgColor.blueF(), 0.0);
         funcs->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }

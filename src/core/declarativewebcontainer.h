@@ -13,14 +13,11 @@
 #define DECLARATIVEWEBCONTAINER_H
 
 #include "settingmanager.h"
-#include "webpages.h"
 
-#include <qqml.h>
 #include <qmozcontext.h>
 #include <QtGui/QWindow>
 #include <QtGui/QOpenGLFunctions>
 #include <QPointer>
-#include <QImage>
 #include <QFutureWatcher>
 #include <QQmlComponent>
 #include <QQuickView>
@@ -33,6 +30,7 @@ class QMozWindow;
 class QTimerEvent;
 class DeclarativeTabModel;
 class DeclarativeWebPage;
+class WebPages;
 class Tab;
 
 class DeclarativeWebContainer : public QWindow, public QQmlParserStatus, protected QOpenGLFunctions {

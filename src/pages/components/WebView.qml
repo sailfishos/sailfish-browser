@@ -102,7 +102,6 @@ WebContainer {
                 }
             }
 
-            width: container.rotationHandler && container.rotationHandler.width || 0
             fullscreenHeight: container.fullscreenHeight
             toolbarHeight: container.toolbarHeight
             throttlePainting: !foreground && !resourceController.videoActive && webView.visible || resourceController.displayOff
