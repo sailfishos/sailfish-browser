@@ -19,6 +19,7 @@
 #include <QWindow>
 #include <QTouchEvent>
 #include <QVariant>
+#include <QColor>
 
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
@@ -52,6 +53,7 @@ public:
     MOCK_METHOD0(update, void());
     MOCK_METHOD0(initialize, void());
     MOCK_METHOD0(stop, void());
+    MOCK_METHOD0(bgcolor, QColor());
     MOCK_METHOD1(touchEvent, void(QTouchEvent *));
     MOCK_CONST_METHOD1(inputMethodQuery, QVariant(Qt::InputMethodQuery));
     MOCK_METHOD1(inputMethodEvent, void(QInputMethodEvent *));
