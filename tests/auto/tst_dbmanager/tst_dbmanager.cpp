@@ -11,124 +11,474 @@
 
 #include <QtTest>
 #include "dbmanager.h"
-#include "testobject.h"
 
-class tst_dbmanager : public TestObject
+Q_DECLARE_METATYPE(QList<Tab>)
+Q_DECLARE_METATYPE(QList<Link>)
+
+class tst_dbmanager : public QObject
 {
     Q_OBJECT
 
-public:
-    tst_dbmanager();
-
-
-public slots:
-    void tabsAvailableChanged(QList<Tab> tabs);
-
 private slots:
-    void addTabs_data();
-    void addTabs();
-    void getTabs();
-    void updateThumbnailNonBlocking();
-    void updateThumbnailBlocking();
+    void initTestCase();
+    void cleanup();
 
-    void cleanupTestCase();
+    void createTab();
+    void getAllTabs_data();
+    void getAllTabs();
+    void removeTab_data();
+    void removeTab();
+    void clearHistory_data();
+    void clearHistory();
+    void navigateTo();
+    void goBack();
+    void goForward();
+    void updateThumbPath();
+    void updateTitle();
+    void getHistory();
+    void getTabHistory();
+    void saveSetting();
+    void deleteSetting();
+    void getMaxTabId();
 
 private:
-    void createTab(QString url, QString title);
-
-    QList<Tab> currentTabs;
+    QString mDbFile;
 };
 
-
-tst_dbmanager::tst_dbmanager()
-    : TestObject(EMPTY_QML)
+void tst_dbmanager::initTestCase()
 {
-    connect(DBManager::instance(), SIGNAL(tabsAvailable(QList<Tab>)), this, SLOT(tabsAvailableChanged(QList<Tab>)));
-}
-
-void tst_dbmanager::tabsAvailableChanged(QList<Tab> tabs)
-{
-    currentTabs = tabs;
-}
-
-void tst_dbmanager::addTabs_data()
-{
-    QTest::addColumn<QString>("url");
-    QTest::addColumn<QString>("title");
-    QTest::newRow("http") << "http://foobar" << "FooBar 1";
-    QTest::newRow("https") << "https://foobar" << "FooBar 2";
-    QTest::newRow("file") << "file://foo/bar" << "FooBar 3";
-}
-
-void tst_dbmanager::addTabs()
-{
-    QFETCH(QString, url);
-    QFETCH(QString, title);
-
-    QBENCHMARK {
-        createTab(url, title);
-    }
-}
-
-void tst_dbmanager::getTabs()
-{
-    QSignalSpy tabsAvailableSpy(DBManager::instance(), SIGNAL(tabsAvailable(QList<Tab>)));
-    QBENCHMARK {
-        DBManager::instance()->getAllTabs();
-    }
-    waitSignals(tabsAvailableSpy, 1);
-}
-
-void tst_dbmanager::updateThumbnailNonBlocking()
-{
-    QVERIFY(currentTabs.count() > 0);
-    int tabId = currentTabs.at(0).tabId();
-    int counter = 0;
-
-    QBENCHMARK {
-        QString thumbnailPath = QString("foobar-%1.png").arg(counter);
-        DBManager::instance()->updateThumbPath(tabId, thumbnailPath);
-        ++counter;
-    }
-}
-
-void tst_dbmanager::updateThumbnailBlocking()
-{
-    QVERIFY(currentTabs.count() > 0);
-    int tabId = currentTabs.at(0).tabId();
-    int counter = 0;
-
-    QBENCHMARK {
-        QSignalSpy thumbPathChangedSpy(DBManager::instance(), SIGNAL(thumbPathChanged(int,QString)));
-        QString thumbnailPath = QString("foobar-%1.png").arg(counter);
-        DBManager::instance()->updateThumbPath(tabId, thumbnailPath);
-        waitSignals(thumbPathChangedSpy, 1);
-        ++counter;
-    }
-}
-
-void tst_dbmanager::cleanupTestCase()
-{
-    // Wait for event loop of db manager
-    QTest::qWait(1000);
-    QString dbFileName = QString("%1/%2")
+    mDbFile = QString("%1/%2")
             .arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation))
             .arg(QLatin1String(DB_NAME));
-    QFile dbFile(dbFileName);
+    QFile dbFile(mDbFile);
+    dbFile.remove();
+}
+
+void tst_dbmanager::cleanup()
+{
+    delete DBManager::instance();
+    QFile dbFile(mDbFile);
     QVERIFY(dbFile.remove());
 }
 
-void tst_dbmanager::createTab(QString url, QString title)
+void tst_dbmanager::createTab()
 {
-    DBManager::instance()->createTab(Tab(1000, url, title, ""));
+    const Tab tab(1, "http://example.com", "Test title", "");
+    DBManager::instance()->createTab(tab);
+
+    // Check that we have really inserted the tab.
+    // Since all DB operations go through a single thread we don't
+    // have to wait until DBWorker completes tab creation.
+    QSignalSpy tabsAvailableSpy(DBManager::instance(),
+                                SIGNAL(tabsAvailable(QList<Tab>)));
+    DBManager::instance()->getAllTabs();
+    QVERIFY(tabsAvailableSpy.wait(5000));
+    QCOMPARE(tabsAvailableSpy.count(), 1);
+    QList<QVariant> arguments = tabsAvailableSpy.at(0);
+    Tab newTab = arguments.at(0).value<QList<Tab> >().at(0);
+    QCOMPARE(newTab.url(), tab.url());
+    QCOMPARE(newTab.tabId(), 1);
+
+    // create one more identical tab
+    DBManager::instance()->createTab(Tab(2, "http://example.com", "Test title", ""));
+    DBManager::instance()->getAllTabs();
+    QVERIFY(tabsAvailableSpy.wait(5000));
+    QCOMPARE(tabsAvailableSpy.count(), 2);
+    arguments = tabsAvailableSpy.at(1);
+    QCOMPARE(arguments.at(0).value<QList<Tab> >().count(), 2);
+
+    // and one more identical tab, but with empty title
+    DBManager::instance()->createTab(Tab(3, "http://example.com", "", ""));
+    DBManager::instance()->getAllTabs();
+    QVERIFY(tabsAvailableSpy.wait(5000));
+    QCOMPARE(tabsAvailableSpy.count(), 3);
+    arguments = tabsAvailableSpy.at(2);
+    QCOMPARE(arguments.at(0).value<QList<Tab> >().count(), 3);
 }
 
-int main(int argc, char *argv[])
+void tst_dbmanager::getAllTabs_data()
 {
-    QGuiApplication app(argc, argv);
-    app.setAttribute(Qt::AA_Use96Dpi, true);
-    tst_dbmanager testcase;
-    return QTest::qExec(&testcase, argc, argv); \
+    QTest::addColumn<QList<Tab> >("initialTabs");
+
+    QList<Tab> emptyList;
+
+    QList<Tab> list {
+        Tab(1, "http://example1.com", "Test title 1", ""),
+        Tab(2, "http://example2.com", "Test title 2", ""),
+        Tab(3, "http://example3.com", "Test title 3", ""),
+    };
+
+    QTest::newRow("no_inital_tabs") << emptyList;
+    QTest::newRow("three_initial_tabs") << list;
 }
 
+void tst_dbmanager::getAllTabs()
+{
+    QFETCH(QList<Tab>, initialTabs);
+
+    // initialize the case
+    foreach (Tab tab, initialTabs) {
+        DBManager::instance()->createTab(tab);
+    }
+
+    QSignalSpy tabsAvailableSpy(DBManager::instance(),
+                                SIGNAL(tabsAvailable(QList<Tab>)));
+
+    // actual test
+    DBManager::instance()->getAllTabs();
+    QVERIFY(tabsAvailableSpy.wait(5000));
+    QCOMPARE(tabsAvailableSpy.count(), 1);
+    QList<QVariant> arguments = tabsAvailableSpy.at(0);
+    QCOMPARE(arguments.at(0).value<QList<Tab> >().count(), initialTabs.count());
+}
+
+void tst_dbmanager::removeTab_data()
+{
+    QTest::addColumn<QList<Tab> >("initialTabs");
+    QTest::addColumn<int>("tabId");
+    QTest::addColumn<int>("expectedTabsAvailable");
+
+    QList<Tab> emptyList;
+
+    QList<Tab> oneTab {
+        Tab(1, "http://example1.com", "Test title 1", "")
+    };
+
+    QList<Tab> threeTabs {
+        Tab(1, "http://example1.com", "Test title 1", ""),
+        Tab(2, "http://example2.com", "Test title 2", ""),
+        Tab(3, "http://example3.com", "Test title 3", "")
+    };
+
+    QTest::newRow("no_inital_tabs") << emptyList << 1 << 1;
+    QTest::newRow("one_inital_tab") << oneTab << 1 << 1;
+    QTest::newRow("one_inital_tab_but_wrong_tabId") << oneTab << 2 << 0;
+    QTest::newRow("three_initial_tabs") << threeTabs << 2 << 0;
+    QTest::newRow("three_initial_tabs_but_wrong_tabId") << threeTabs << 5 << 0;
+}
+
+void tst_dbmanager::removeTab()
+{
+    QFETCH(QList<Tab>, initialTabs);
+    QFETCH(int, tabId);
+    QFETCH(int, expectedTabsAvailable);
+
+    // initialize the case
+    foreach (Tab tab, initialTabs) {
+        DBManager::instance()->createTab(tab);
+    }
+
+    QSignalSpy tabsAvailableSpy(DBManager::instance(),
+                                SIGNAL(tabsAvailable(QList<Tab>)));
+
+    // actual test
+    DBManager::instance()->removeTab(tabId);
+    tabsAvailableSpy.wait(1000);
+    QCOMPARE(tabsAvailableSpy.count(), expectedTabsAvailable);
+}
+
+void tst_dbmanager::clearHistory_data()
+{
+    QTest::addColumn<QList<Tab> >("initialTabs");
+    QTest::addColumn<int>("expectedTabsAvailable");
+
+    QList<Tab> emptyList;
+
+    QList<Tab> oneTab {
+        Tab(1, "http://example1.com", "Test title 1", "")
+    };
+
+    QList<Tab> threeTabs {
+        Tab(1, "http://example1.com", "Test title 1", ""),
+        Tab(2, "http://example2.com", "Test title 2", ""),
+        Tab(3, "http://example3.com", "Test title 3", "")
+    };
+
+    QTest::newRow("no_inital_tabs") << emptyList << 0;
+    QTest::newRow("one_inital_tab") << oneTab << 1;
+    QTest::newRow("three_initial_tabs") << threeTabs << 1;
+}
+
+void tst_dbmanager::clearHistory()
+{
+    QFETCH(QList<Tab>, initialTabs);
+    QFETCH(int, expectedTabsAvailable);
+
+    // initialize the case
+    foreach (Tab tab, initialTabs) {
+        DBManager::instance()->createTab(tab);
+    }
+
+    QSignalSpy tabsAvailableSpy(DBManager::instance(),
+                                SIGNAL(tabsAvailable(QList<Tab>)));
+    QSignalSpy historyAvailableSpy(DBManager::instance(),
+                                   SIGNAL(historyAvailable(QList<Link>)));
+
+    // actual test
+    DBManager::instance()->clearHistory();
+    QVERIFY(historyAvailableSpy.wait(5000));
+    QCOMPARE(historyAvailableSpy.count(), 1);
+    QCOMPARE(tabsAvailableSpy.count(), expectedTabsAvailable);
+}
+
+void tst_dbmanager::navigateTo()
+{
+    Tab tab(1, "http://example1.com", "Test title 1", "");
+    DBManager::instance()->createTab(tab);
+
+    // 1. Navigate to new URLs
+    DBManager::instance()->navigateTo(1, "http://example2.com", "Test title 2", "");
+    DBManager::instance()->navigateTo(1, "http://example3.com", "Test title 3", "");
+
+    QSignalSpy tabHistoryAvailableSpy(DBManager::instance(),
+                                      SIGNAL(tabHistoryAvailable(int,QList<Link>,int)));
+    DBManager::instance()->getTabHistory(1);
+    QVERIFY(tabHistoryAvailableSpy.wait(5000));
+
+    QList<QVariant> arguments = tabHistoryAvailableSpy.at(0);
+    QList<Link> links = arguments.at(1).value<QList<Link> >();
+    int currentLinkId = arguments.at(2).toInt();
+    QCOMPARE(links.count(), 3);
+    QCOMPARE(currentLinkId, 3);
+    QCOMPARE(links.at(0).url(), QString("http://example3.com"));
+
+    // 2. Go back and navigate to another URL. Check the obsolete URL got overriden.
+    DBManager::instance()->goBack(1);
+    DBManager::instance()->navigateTo(1, "http://example4.com", "Test title 4", "");
+
+    DBManager::instance()->getTabHistory(1);
+    QVERIFY(tabHistoryAvailableSpy.wait(5000));
+
+    arguments = tabHistoryAvailableSpy.at(1);
+    links = arguments.at(1).value<QList<Link> >();
+    currentLinkId = arguments.at(2).toInt();
+    QCOMPARE(links.count(), 3);
+    QCOMPARE(currentLinkId, 4);
+    QCOMPARE(links.at(0).url(), QString("http://example4.com"));
+
+    QSignalSpy historyAvailableSpy(DBManager::instance(),
+                                   SIGNAL(historyAvailable(QList<Link>)));
+    DBManager::instance()->getHistory("example");
+
+    QVERIFY(historyAvailableSpy.wait(5000));
+    arguments = historyAvailableSpy.at(0);
+    links = arguments.at(0).value<QList<Link> >();
+    QCOMPARE(links.count(), 4);
+}
+
+void tst_dbmanager::goBack()
+{
+    // initialize test case
+    Tab tab(1, "http://example1.com", "Test title 1", "");
+    DBManager::instance()->createTab(tab);
+    DBManager::instance()->navigateTo(1, "http://example2.com", "Test title 2", "");
+    DBManager::instance()->navigateTo(1, "http://example3.com", "Test title 3", "");
+
+    // actual test
+    DBManager::instance()->goBack(1);
+
+    QSignalSpy tabHistoryAvailableSpy(DBManager::instance(),
+                                      SIGNAL(tabHistoryAvailable(int,QList<Link>,int)));
+    DBManager::instance()->getTabHistory(1);
+    QVERIFY(tabHistoryAvailableSpy.wait(5000));
+
+    QList<QVariant> arguments = tabHistoryAvailableSpy.at(0);
+    QList<Link> links = arguments.at(1).value<QList<Link> >();
+    int currentLinkId = arguments.at(2).toInt();
+    QCOMPARE(links.count(), 3);
+    QCOMPARE(currentLinkId, 2);
+}
+
+void tst_dbmanager::goForward()
+{
+    // initialize test case
+    Tab tab(1, "http://example1.com", "Test title 1", "");
+    DBManager::instance()->createTab(tab);
+    DBManager::instance()->navigateTo(1, "http://example2.com", "Test title 2", "");
+    DBManager::instance()->navigateTo(1, "http://example3.com", "Test title 3", "");
+
+    // actual test
+    DBManager::instance()->goBack(1);
+    DBManager::instance()->goForward(1);
+
+    QSignalSpy tabHistoryAvailableSpy(DBManager::instance(),
+                                      SIGNAL(tabHistoryAvailable(int,QList<Link>,int)));
+    DBManager::instance()->getTabHistory(1);
+    QVERIFY(tabHistoryAvailableSpy.wait(5000));
+
+    QList<QVariant> arguments = tabHistoryAvailableSpy.at(0);
+    QList<Link> links = arguments.at(1).value<QList<Link> >();
+    int currentLinkId = arguments.at(2).toInt();
+    QCOMPARE(links.count(), 3);
+    QCOMPARE(currentLinkId, 3);
+}
+
+void tst_dbmanager::updateThumbPath()
+{
+    // initialize test case
+    Tab tab(1, "http://example1.com", "Test title 1", "");
+    DBManager::instance()->createTab(tab);
+
+    QSignalSpy thumbPathChangedSpy(DBManager::instance(),
+                                   SIGNAL(thumbPathChanged(int,QString)));
+    QString thumbPath("/path/to/thumbnail");
+
+    // actual test
+    DBManager::instance()->updateThumbPath(1, thumbPath);
+
+    QVERIFY(thumbPathChangedSpy.wait(5000));
+    QList<QVariant> arguments = thumbPathChangedSpy.at(0);
+    QCOMPARE(arguments.at(1).toString(), thumbPath);
+
+    // check that thumbnail made its way to DB
+    QSignalSpy tabsAvailableSpy(DBManager::instance(),
+                                SIGNAL(tabsAvailable(QList<Tab>)));
+    DBManager::instance()->getAllTabs();
+    QVERIFY(tabsAvailableSpy.wait(5000));
+    QCOMPARE(tabsAvailableSpy.count(), 1);
+    arguments = tabsAvailableSpy.at(0);
+    QCOMPARE(arguments.at(0).value<QList<Tab> >().at(0).thumbnailPath(), thumbPath);
+}
+
+void tst_dbmanager::updateTitle()
+{
+    // initialize test case
+    QString url("http://example1.com");
+    Tab tab(1, url, "Test title 1", "");
+    DBManager::instance()->createTab(tab);
+
+    QSignalSpy titleChangedSpy(DBManager::instance(),
+                               SIGNAL(titleChanged(QString,QString)));
+    QString newTitle("New Test Title 2");
+
+    // actual test
+    DBManager::instance()->updateTitle(1, url, newTitle);
+
+    QVERIFY(titleChangedSpy.wait(5000));
+    QList<QVariant> arguments = titleChangedSpy.at(0);
+    QCOMPARE(arguments.at(1).toString(), newTitle);
+
+    // check that title made its way to DB
+    QSignalSpy tabsAvailableSpy(DBManager::instance(),
+                                SIGNAL(tabsAvailable(QList<Tab>)));
+    DBManager::instance()->getAllTabs();
+    QVERIFY(tabsAvailableSpy.wait(5000));
+    QCOMPARE(tabsAvailableSpy.count(), 1);
+    arguments = tabsAvailableSpy.at(0);
+    QCOMPARE(arguments.at(0).value<QList<Tab> >().at(0).title(), newTitle);
+}
+
+void tst_dbmanager::getHistory()
+{
+    // initialize test case
+    Tab tab1(1, "http://example1.com", "Test title 1", "");
+    DBManager::instance()->createTab(tab1);
+    DBManager::instance()->navigateTo(1, "http://example3-long.com", "Test title 2", "");
+    DBManager::instance()->navigateTo(1, "http://unneeded1.net", "Test title 3", "");
+    Tab tab2(2, "http://example2.com", "Test title 4", "");
+    DBManager::instance()->createTab(tab2);
+    Tab tab3(3, "http://unneeded2.net", "Test title 5", "");
+    DBManager::instance()->createTab(tab3);
+
+    QSignalSpy historyAvailableSpy(DBManager::instance(),
+                                   SIGNAL(historyAvailable(QList<Link>)));
+
+    // actual test
+    // 1. non empty filter
+    DBManager::instance()->getHistory(QString("example"));
+    QVERIFY(historyAvailableSpy.wait(5000));
+    QCOMPARE(historyAvailableSpy.count(), 1);
+    QList<QVariant> arguments = historyAvailableSpy.at(0);
+    QList<Link> links = arguments.at(0).value<QList<Link> >();
+    QCOMPARE(links.count(), 3);
+    QCOMPARE(links.at(0).url(), QString("http://example1.com"));
+    QCOMPARE(links.at(1).url(), QString("http://example2.com"));
+    QCOMPARE(links.at(2).url(), QString("http://example3-long.com"));
+
+    // 2. empty filter
+    DBManager::instance()->getHistory(QString());
+    QVERIFY(historyAvailableSpy.wait(5000));
+    QCOMPARE(historyAvailableSpy.count(), 2);
+    arguments = historyAvailableSpy.at(1);
+    links = arguments.at(0).value<QList<Link> >();
+    QCOMPARE(links.count(), 5);
+    QCOMPARE(links.at(0).url(), QString("http://example1.com"));
+    QCOMPARE(links.at(1).url(), QString("http://example3-long.com"));
+    QCOMPARE(links.at(2).url(), QString("http://unneeded1.net"));
+    QCOMPARE(links.at(3).url(), QString("http://example2.com"));
+    QCOMPARE(links.at(4).url(), QString("http://unneeded2.net"));
+}
+
+void tst_dbmanager::getTabHistory()
+{
+    // initialize test case
+    Tab tab(1, "http://example1.com", "Test title 1", "");
+    DBManager::instance()->createTab(tab);
+    DBManager::instance()->navigateTo(1, "http://example2.com", "Test title 2", "");
+    DBManager::instance()->navigateTo(1, "http://example3.com", "Test title 3", "");
+
+    QSignalSpy tabHistoryAvailableSpy(DBManager::instance(),
+            SIGNAL(tabHistoryAvailable(int,QList<Link>,int)));
+
+    // actual test
+    DBManager::instance()->getTabHistory(1);
+
+    QVERIFY(tabHistoryAvailableSpy.wait(5000));
+    QList<QVariant> arguments = tabHistoryAvailableSpy.at(0);
+    QList<Link> links = arguments.at(1).value<QList<Link> >();
+    int currentLinkId = arguments.at(2).toInt();
+    QCOMPARE(links.count(), 3);
+    QCOMPARE(currentLinkId, 3);
+}
+
+void tst_dbmanager::saveSetting()
+{
+    QSignalSpy settingChangedSpy1(DBManager::instance(), SIGNAL(settingsChanged()));
+
+    // insert new setting
+    DBManager::instance()->saveSetting("test_key", "test_value");
+
+    QCOMPARE(settingChangedSpy1.count(), 1);
+
+    // delete to make sure the data is persistent and check
+    delete DBManager::instance();
+    QCOMPARE(DBManager::instance()->getSetting("test_key"), QString("test_value"));
+    QCOMPARE(DBManager::instance()->getSetting("nonexisting_key"), QString(""));
+
+    QSignalSpy settingChangedSpy2(DBManager::instance(), SIGNAL(settingsChanged()));
+
+    // update the setting and check
+    DBManager::instance()->saveSetting("test_key", "test_new_value");
+    QCOMPARE(DBManager::instance()->getSetting("test_key"), QString("test_new_value"));
+    QCOMPARE(settingChangedSpy2.count(), 1);
+    delete DBManager::instance();
+    QCOMPARE(DBManager::instance()->getSetting("test_key"), QString("test_new_value"));
+}
+
+void tst_dbmanager::deleteSetting()
+{
+    DBManager::instance()->saveSetting("test_key", "test_value");
+    QCOMPARE(DBManager::instance()->getSetting("test_key"), QString("test_value"));
+
+    QSignalSpy settingChangedSpy(DBManager::instance(), SIGNAL(settingsChanged()));
+    DBManager::instance()->deleteSetting("test_key");
+    QCOMPARE(DBManager::instance()->getSetting("test_key"), QString(""));
+    QCOMPARE(settingChangedSpy.count(), 1);
+
+    // delete to make sure the data was deleted persistently and check
+    delete DBManager::instance();
+    QCOMPARE(DBManager::instance()->getSetting("test_key"), QString(""));
+}
+
+void tst_dbmanager::getMaxTabId()
+{
+    QCOMPARE(DBManager::instance()->getMaxTabId(), 0);
+
+    const Tab tab(1, "http://example.com", "Test title", "");
+    DBManager::instance()->createTab(tab);
+
+    QCOMPARE(DBManager::instance()->getMaxTabId(), 1);
+}
+
+QTEST_MAIN(tst_dbmanager)
 #include "tst_dbmanager.moc"
