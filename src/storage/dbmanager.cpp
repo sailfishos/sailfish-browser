@@ -36,7 +36,7 @@ DBManager::DBManager(QObject *parent)
     worker->moveToThread(&workerThread);
 
     connect(&workerThread, SIGNAL(finished()), worker, SLOT(deleteLater()));
-    connect(worker, SIGNAL(tabsAvailable(QList<Tab>)), this, SLOT(tabListAvailable(QList<Tab>)));
+    connect(worker, SIGNAL(tabsAvailable(QList<Tab>)), this, SIGNAL(tabsAvailable(QList<Tab>)));
     connect(worker, SIGNAL(historyAvailable(QList<Link>)), this, SIGNAL(historyAvailable(QList<Link>)));
     connect(worker, SIGNAL(tabHistoryAvailable(int,QList<Link>,int)), this, SIGNAL(tabHistoryAvailable(int,QList<Link>,int)));
     connect(worker, SIGNAL(titleChanged(QString,QString)), this, SIGNAL(titleChanged(QString,QString)));
@@ -155,9 +155,4 @@ void DBManager::deleteSetting(QString name)
         QMetaObject::invokeMethod(worker, "deleteSetting", Qt::BlockingQueuedConnection,
                                   Q_ARG(QString, name));
     }
-}
-
-void DBManager::tabListAvailable(QList<Tab> tabs)
-{
-    emit tabsAvailable(tabs);
 }

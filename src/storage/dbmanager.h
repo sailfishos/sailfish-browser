@@ -48,9 +48,6 @@ public:
 
     int getMaxTabId();
 
-public slots:
-    void tabListAvailable(QList<Tab> tabs);
-
 signals:
     void tabsAvailable(QList<Tab> tab);
     void historyAvailable(QList<Link> links);
