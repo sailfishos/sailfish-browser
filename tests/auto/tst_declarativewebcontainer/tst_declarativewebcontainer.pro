@@ -16,8 +16,6 @@ include(../mocks/downloadmanager/downloadmanager_mock.pri)
 include(../test_common.pri)
 include(../../../src/core/core.pri)
 include(../../../src/history/history.pri)
-# TODO: drop this include (decouple SettingManager from bookmarks)
-include(../../../src/bookmarks/bookmarks.pri)
 
 SOURCES += tst_declarativewebcontainer.cpp
 

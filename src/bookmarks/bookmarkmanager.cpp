@@ -19,11 +19,19 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QRegularExpression>
+#include <MGConfItem>
 
 #include "bookmark.h"
 
 BookmarkManager::BookmarkManager()
+  : QObject(nullptr)
 {
+    m_clearBookmarksConfItem = new MGConfItem("/apps/sailfish-browser/actions/clear_bookmarks", this);
+
+    clearBookmarks();
+
+    connect(m_clearBookmarksConfItem, SIGNAL(valueChanged()),
+            this, SLOT(clearBookmarks()));
 }
 
 BookmarkManager* BookmarkManager::instance()
@@ -111,4 +119,12 @@ QList<Bookmark*> BookmarkManager::load() {
     }
     file->close();
     return bookmarks;
+}
+
+void BookmarkManager::clearBookmarks()
+{
+    if (m_clearBookmarksConfItem->value(false).toBool()) {
+        clear();
+        m_clearBookmarksConfItem->set(false);
+    }
 }
