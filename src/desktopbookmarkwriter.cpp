@@ -90,10 +90,10 @@ QString DesktopBookmarkWriter::write(QString url, QString title, QString icon)
 {
     QString fileName = uniqueDesktopFileName(title);
     QString desktopFileData = QString("[Desktop Entry]\n" \
-                                      "Type=Link\n" \
+                                      "Type=Application\n" \
                                       "Name=%1\n" \
                                       "Icon=%2\n" \
-                                      "URL=%3\n" \
+                                      "Exec=invoker -s --type=browser /usr/bin/sailfish-browser %3\n" \
                                       "Comment=%4\n").arg(title.trimmed(), icon,
                                                           url.trimmed(), title.trimmed());
     QFile desktopFile(fileName);
