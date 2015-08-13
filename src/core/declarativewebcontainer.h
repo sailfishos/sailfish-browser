@@ -123,8 +123,6 @@ public:
     Q_INVOKABLE void updatePageFocus(bool focus);
     Q_INVOKABLE void clearSurface() {  postClearWindowSurfaceTask(); }
 
-    Q_INVOKABLE bool alive(int tabId);
-
     Q_INVOKABLE void dumpPages() const;
 
     QObject *focusObject() const;

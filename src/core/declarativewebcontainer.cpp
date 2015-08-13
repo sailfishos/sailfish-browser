@@ -418,11 +418,6 @@ int DeclarativeWebContainer::findParentTabId(int tabId) const
     return 0;
 }
 
-bool DeclarativeWebContainer::alive(int tabId)
-{
-    return m_webPages->alive(tabId);
-}
-
 void DeclarativeWebContainer::updateMode()
 {
     setTabModel(privateMode() ? m_privateTabModel.data() : m_persistentTabModel.data());
