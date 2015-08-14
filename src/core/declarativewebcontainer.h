@@ -182,11 +182,9 @@ protected:
     virtual void componentComplete();
 
 public slots:
-    void resetHeight(bool respectContentHeight = true);
     void updateContentOrientation(Qt::ScreenOrientation orientation);
 
 private slots:
-    void imeNotificationChanged(int state, bool open, int cause, int focusChange, const QString& type);
     void initialize();
     void onActiveTabChanged(int activeTabId, bool loadActiveTab);
     void onDownloadStarted();

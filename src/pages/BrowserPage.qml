@@ -132,7 +132,7 @@ Page {
             when: virtualKeyboardObserver.opened && webView.enabled
             PropertyChanges {
                 target: webView.contentItem
-                height: browserPage.height - virtualKeyboardObserver.panelSize
+                virtualKeyboardMargin: virtualKeyboardObserver.panelSize
             }
         }
     }
@@ -146,8 +146,6 @@ Page {
         portrait: browserPage.isPortrait
         maxLiveTabCount: 3
         toolbarHeight: overlay.toolBar.toolsHeight
-        width: window.width
-        height: window.height
         rotationHandler: browserPage
         imOpened: virtualKeyboardObserver.opened
 
@@ -182,7 +180,6 @@ Page {
                 updateContentOrientation(Qt.InvertedLandscapeOrientation)
                 break
             }
-            resetHeight()
         }
 
         // Both model change and model count change are connected to this.

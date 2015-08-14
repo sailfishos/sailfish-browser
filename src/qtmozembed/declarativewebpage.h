@@ -35,7 +35,8 @@ class DeclarativeWebPage : public QOpenGLWebPage {
     Q_PROPERTY(QVariant resurrectedContentRect READ resurrectedContentRect WRITE setResurrectedContentRect NOTIFY resurrectedContentRectChanged)
 
     Q_PROPERTY(qreal fullscreenHeight MEMBER m_fullScreenHeight NOTIFY fullscreenHeightChanged FINAL)
-    Q_PROPERTY(qreal toolbarHeight MEMBER m_toolbarHeight NOTIFY toolbarHeightChanged FINAL)
+    Q_PROPERTY(qreal toolbarHeight READ toolbarHeight WRITE setToolbarHeight NOTIFY toolbarHeightChanged FINAL)
+    Q_PROPERTY(qreal virtualKeyboardMargin WRITE setVirtualKeyboardMargin READ virtualKeyboardMargin NOTIFY virtualKeyboardMarginChanged FINAL)
 
 public:
     DeclarativeWebPage(QObject *parent = 0);
@@ -50,6 +51,12 @@ public:
     QVariant resurrectedContentRect() const;
     void setResurrectedContentRect(QVariant resurrectedContentRect);
 
+    qreal toolbarHeight() const;
+    void setToolbarHeight(qreal);
+
+    qreal virtualKeyboardMargin() const;
+    void setVirtualKeyboardMargin(qreal);
+
     bool fullscreen() const;
     bool forcedChrome() const;
     bool domContentLoaded() const;
@@ -61,9 +68,6 @@ public:
     Q_INVOKABLE void grabToFile(const QSize& size);
     Q_INVOKABLE void grabThumbnail(const QSize& size);
     Q_INVOKABLE void forceChrome(bool forcedChrome);
-
-public slots:
-    void resetHeight(bool respectContentHeight = true);
 
 signals:
     void containerChanged();
@@ -79,6 +83,7 @@ signals:
 
     void fullscreenHeightChanged();
     void toolbarHeightChanged();
+    void virtualKeyboardMarginChanged();
 
 private slots:
     void setFullscreen(const bool fullscreen);
@@ -88,6 +93,7 @@ private slots:
     void grabResultReady();
     void grabWritten();
     void thumbnailReady();
+    void updateViewMargins();
 
 private:
     QString saveToFile(QImage image);
@@ -113,6 +119,7 @@ private:
 
     qreal m_fullScreenHeight;
     qreal m_toolbarHeight;
+    qreal m_virtualKeyboardMargin;
 };
 
 QDebug operator<<(QDebug, const DeclarativeWebPage *);

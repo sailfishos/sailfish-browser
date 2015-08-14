@@ -162,16 +162,13 @@ WebContainer {
 
             onLoadedChanged: {
                 if (loaded) {
-                    if (!userHasDraggedWhileLoading) {
-                        resetHeight(false)
-                        if (resurrectedContentRect) {
-                            sendAsyncMessage("embedui:zoomToRect",
-                                             {
-                                                 "x": resurrectedContentRect.x, "y": resurrectedContentRect.y,
-                                                 "width": resurrectedContentRect.width, "height": resurrectedContentRect.height
-                                             })
-                            resurrectedContentRect = null
-                        }
+                    if (!userHasDraggedWhileLoading && resurrectedContentRect) {
+                        sendAsyncMessage("embedui:zoomToRect",
+                                         {
+                                             "x": resurrectedContentRect.x, "y": resurrectedContentRect.y,
+                                             "width": resurrectedContentRect.width, "height": resurrectedContentRect.height
+                                         })
+                        resurrectedContentRect = null
                     }
                     grabItem()
                 }
@@ -190,7 +187,6 @@ WebContainer {
                     favicon = ""
                     iconType = ""
                     iconSize = 0
-                    resetHeight(false)
                 }
             }
 

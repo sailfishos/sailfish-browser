@@ -90,7 +90,6 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     connect(DownloadManager::instance(), SIGNAL(initializedChanged()), this, SLOT(initialize()));
     connect(DownloadManager::instance(), SIGNAL(downloadStarted()), this, SLOT(onDownloadStarted()));
     connect(QMozContext::GetInstance(), SIGNAL(onInitialized()), this, SLOT(initialize()));
-    connect(this, SIGNAL(portraitChanged()), this, SLOT(resetHeight()));
 
     QString cacheLocation = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
     QDir dir(cacheLocation);
@@ -142,8 +141,6 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
             connect(m_webPage, SIGNAL(canGoForwardChanged()), this, SIGNAL(canGoForwardChanged()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(urlChanged()), this, SIGNAL(urlChanged()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(titleChanged()), this, SIGNAL(titleChanged()), Qt::UniqueConnection);
-            connect(m_webPage, SIGNAL(imeNotification(int,bool,int,int,QString)),
-                    this, SLOT(imeNotificationChanged(int,bool,int,int,QString)), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(windowCloseRequested()), this, SLOT(closeWindow()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(loadingChanged()), this, SLOT(updateLoading()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(loadProgressChanged()), this, SLOT(updateLoadProgress()), Qt::UniqueConnection);
@@ -224,11 +221,6 @@ void DeclarativeWebContainer::setForeground(bool active)
 {
     if (m_foreground != active) {
         m_foreground = active;
-
-        if (!m_foreground) {
-            // Respect content height when browser brought back from home
-            resetHeight(true);
-        }
         emit foregroundChanged();
     }
 }
@@ -657,37 +649,12 @@ void DeclarativeWebContainer::componentComplete()
     }
 }
 
-void DeclarativeWebContainer::resetHeight(bool respectContentHeight)
-{
-    if (!m_webPage) {
-        return;
-    }
-
-    m_webPage->resetHeight(respectContentHeight);
-}
-
 void DeclarativeWebContainer::updateContentOrientation(Qt::ScreenOrientation orientation)
 {
     if (m_mozWindow) {
         m_mozWindow->setContentOrientation(orientation);
     }
     reportContentOrientationChange(orientation);
-}
-
-void DeclarativeWebContainer::imeNotificationChanged(int state, bool open, int cause, int focusChange, const QString &type)
-{
-    Q_UNUSED(open)
-    Q_UNUSED(cause)
-    Q_UNUSED(focusChange)
-    Q_UNUSED(type)
-
-    // QmlMozView's input context open is actually intention (0 closed, 1 opened).
-    // cause 3 equals InputContextAction::CAUSE_MOUSE nsIWidget.h
-    if (state == 1 && cause == 3) {
-        // For safety reset height based on contentHeight before going to "boundHeightControl" state
-        // so that when vkb is closed we get correctly reset height back.
-        resetHeight(true);
-    }
 }
 
 qreal DeclarativeWebContainer::contentHeight() const

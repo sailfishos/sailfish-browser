@@ -74,7 +74,6 @@ public:
     MOCK_METHOD1(setResurrectedContentRect, void(QVariant));
     MOCK_METHOD1(setInitialTab, void(const Tab&));
 
-    MOCK_METHOD1(resetHeight, void(bool));
     MOCK_METHOD1(forceChrome, void(bool));
 
     MOCK_CONST_METHOD0(tabId, int());
