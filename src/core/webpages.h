@@ -18,6 +18,7 @@
 #include <QPointer>
 
 class QQmlComponent;
+class WebPageFactory;
 class QDBusPendingCallWatcher;
 class DeclarativeWebContainer;
 class DeclarativeWebPage;
@@ -38,10 +39,10 @@ class WebPages : public QObject
     Q_OBJECT
 
 public:
-    explicit WebPages(QObject *parent = 0);
+    explicit WebPages(WebPageFactory *pageFactory, QObject *parent = 0);
     ~WebPages();
 
-    void initialize(DeclarativeWebContainer *webContainer, QQmlComponent *webPageComponent);
+    void initialize(DeclarativeWebContainer *webContainer);
     bool initialized() const;
     int count() const;
 
@@ -66,13 +67,14 @@ private:
     void updateStates(DeclarativeWebPage *oldActivePage, DeclarativeWebPage *newActivePage);
 
     QPointer<DeclarativeWebContainer> m_webContainer;
-    QPointer<QQmlComponent> m_webPageComponent;
+    QPointer<WebPageFactory> m_pageFactory;
     // Contains both virtual and real
     WebPageQueue m_activePages;
     qint64 m_backgroundTimestamp;
     QString m_memoryLevel;
 
     friend class tst_webview;
+    friend class tst_webpages;
 };
 
 #endif

@@ -31,6 +31,12 @@
            <case manual="false" name="webutils">
                <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_webutils</step>
            </case>
+           <case manual="false" name="webpages">
+               <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_webpages</step>
+           </case>
+           <case manual="false" name="webpagefactory">
+               <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_webpagefactory</step>
+           </case>
            <case manual="false" name="declarativewebcontainer">
                <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_declarativewebcontainer</step>
            </case>

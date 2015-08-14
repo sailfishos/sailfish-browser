@@ -1,4 +1,3 @@
-# TODO: Change this to subdirs once we get first C++ test
 TEMPLATE = subdirs
 
 SUBDIRS += tst_dbmanager \
@@ -9,6 +8,8 @@ SUBDIRS += tst_dbmanager \
     tst_desktopbookmarkwriter \
     tst_linkvalidator \
     tst_webutils \
+    tst_webpages \
+    tst_webpagefactory \
     tst_webview
 
 OTHER_FILES += \
