@@ -75,7 +75,7 @@ BrowserUIService::BrowserUIService(QObject * parent)
     new UIServiceDBusAdaptor(this);
     QDBusConnection connection = QDBusConnection::sessionBus();
     if(!connection.registerService(SAILFISH_BROWSER_UI_SERVICE) ||
-            !connection.registerObject("/", this)) {
+            !connection.registerObject("/ui", this)) {
         m_registered = false;
     }
 }
