@@ -13,6 +13,7 @@
 #define WEBPAGEQUEUE_H
 
 #include <QQueue>
+#include <QPointer>
 
 class QRectF;
 class DeclarativeWebPage;
@@ -44,7 +45,7 @@ private:
         WebPageEntry(DeclarativeWebPage *webPage, QRectF *cssContentRect);
         ~WebPageEntry();
 
-        DeclarativeWebPage *webPage;
+        QPointer<DeclarativeWebPage> webPage;
         int tabId;
         int uniqueId;
         int parentId;
