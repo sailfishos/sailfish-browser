@@ -123,11 +123,6 @@ Page {
         orientation: browserPage.orientation
 
         onWindowChanged: webView.chromeWindow = window
-        onClosedChanged: {
-            if (closed) {
-                webView.updatePageFocus(false)
-            }
-        }
 
         // Update content height only after virtual keyboard fully opened.
         states: State {
