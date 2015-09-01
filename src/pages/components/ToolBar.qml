@@ -193,7 +193,7 @@ Column {
                         //% "Type URL or search"
                         return qsTrId("sailfish_browser-ph-type_url_or_search")
                     } else if (url) {
-                        return parseDisplayableUrl(url)
+                        return WebUtils.displayableUrl(url)
                     } else {
                         //: Loading text that is visible when url is not yet resolved.
                         //% "Loading"
@@ -205,20 +205,6 @@ Column {
 
                 opacity: showFindButtons ? 0.0 : 1.0
                 Behavior on opacity { FadeAnimation {} }
-
-                function parseDisplayableUrl(url) {
-                    var returnUrl = WebUtils.displayableUrl(url)
-                    returnUrl = returnUrl.substring(returnUrl.lastIndexOf("/") + 1) // Strip protocol
-                    if (returnUrl.indexOf("www.") === 0) {
-                        returnUrl = returnUrl.substring(4)
-                    } else if (returnUrl.indexOf("m.") === 0 && returnUrl.length > 2) {
-                        returnUrl = returnUrl.substring(2)
-                    } else if (returnUrl.indexOf("mobile.") === 0 && returnUrl.length > 7) {
-                        returnUrl = returnUrl.substring(7)
-                    }
-
-                    return returnUrl || url
-                }
             }
 
             Browser.ExpandingButton {

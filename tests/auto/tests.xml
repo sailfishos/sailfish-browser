@@ -28,6 +28,9 @@
            <case manual="false" name="persistenttabmodel">
                <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_persistenttabmodel</step>
            </case>
+           <case manual="false" name="webutils">
+               <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_webutils</step>
+           </case>
            <case manual="false" name="declarativewebcontainer">
                <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_declarativewebcontainer</step>
            </case>

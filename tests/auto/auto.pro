@@ -8,6 +8,7 @@ SUBDIRS += tst_dbmanager \
     tst_persistenttabmodel \
     tst_desktopbookmarkwriter \
     tst_linkvalidator \
+    tst_webutils \
     tst_webview
 
 OTHER_FILES += \
