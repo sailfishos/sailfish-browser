@@ -281,14 +281,13 @@ void DeclarativeTabModel::updateUrl(int tabId, const QString &url, bool initialL
     bool updateDb = false;
     if (tabIndex >= 0 && (m_tabs.at(tabIndex).url() != url || isActiveTab)) {
         QVector<int> roles;
-        roles << UrlRole << TitleRole << ThumbPathRole;
+        roles << UrlRole << ThumbPathRole;
         m_tabs[tabIndex].setUrl(url);
 
         if (!initialLoad) {
             m_tabs[tabIndex].setCurrentLink(nextLinkId());
             updateDb = true;
         }
-        m_tabs[tabIndex].setTitle("");
         m_tabs[tabIndex].setThumbnailPath("");
 
         emit dataChanged(index(tabIndex, 0), index(tabIndex, 0), roles);
