@@ -35,6 +35,8 @@ SilicaListView {
     }
     footer: spacer
 
+    spacing: Theme.paddingMedium
+
     delegate: TabItem {
         id: tabItem
 
