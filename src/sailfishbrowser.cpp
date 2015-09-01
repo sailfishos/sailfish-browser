@@ -11,6 +11,7 @@
 
 #include <QGuiApplication>
 #include <QQuickView>
+#include <qqmldebug.h>
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QtQml>
@@ -56,6 +57,10 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     setlocale(LC_NUMERIC, "C");
 
     QQuickWindow::setDefaultAlphaBuffer(true);
+
+    if (!qgetenv("QML_DEBUGGING_ENABLED").isEmpty()) {
+        QQmlDebuggingEnabler qmlDebuggingEnabler;
+    }
 
 #ifdef HAS_BOOSTER
     QScopedPointer<QGuiApplication> app(MDeclarativeCache::qApplication(argc, argv));
