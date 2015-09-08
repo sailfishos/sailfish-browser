@@ -494,8 +494,6 @@ bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
         // Make sure gecko does not use GL context we gave it in ::createGLContext
         // after the window has been closed.
         m_webPage->suspendView();
-    } else if (event->type() == QEvent::Expose && !isExposed() && !m_allowHiding) {
-        return true;
     }
 
     // Emit chrome exposed when both chrome window and browser window has been exposed. This way chrome

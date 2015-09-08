@@ -20,6 +20,7 @@ Item {
     property QtObject webView
     property bool videoActive
     property bool audioActive
+    readonly property alias displayOff: screenBlanked.value
     property bool background
 
     property string _mediaState: "pause"
