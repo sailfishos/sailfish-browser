@@ -193,6 +193,7 @@ private slots:
     void closeWindow();
     void updateLoadProgress();
     void updateLoading();
+    void onFirstPaint(int dx, int dy);
     void updateActiveTabRendered();
 
     void updateWindowFlags();

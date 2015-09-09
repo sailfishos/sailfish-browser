@@ -114,6 +114,7 @@ void DeclarativeWebPage::setContainer(DeclarativeWebContainer *container)
 {
     if (m_container != container) {
         m_container = container;
+        Q_ASSERT(container->mozWindow());
         setMozWindow(container->mozWindow());
         emit containerChanged();
     }

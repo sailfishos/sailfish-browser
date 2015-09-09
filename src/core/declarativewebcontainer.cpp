@@ -150,8 +150,7 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
             connect(m_webPage, SIGNAL(urlChanged()), m_model, SLOT(onUrlChanged()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(titleChanged()), m_model, SLOT(onTitleChanged()), Qt::UniqueConnection);
 
-            connect(m_mozWindow.data(), &QMozWindow::compositingFinished,
-                    this, &DeclarativeWebContainer::updateActiveTabRendered, Qt::UniqueConnection);
+            connect(m_webPage, SIGNAL(firstPaint(int, int)), this, SLOT(onFirstPaint(int, int)), Qt::UniqueConnection);
             setActiveTabRendered(m_webPage->isPainted());
         } else {
             setActiveTabRendered(false);
@@ -681,21 +680,23 @@ void DeclarativeWebContainer::onActiveTabChanged(int activeTabId, bool loadActiv
 
 void DeclarativeWebContainer::initialize()
 {
+    if (QMozContext::GetInstance()->initialized() && !m_mozWindow) {
+        m_mozWindow = new QMozWindow(this);
+        m_mozWindow->setSize(QWindow::size());
+        connect(m_mozWindow.data(), &QMozWindow::requestGLContext,
+                this, &DeclarativeWebContainer::createGLContext, Qt::DirectConnection);
+        connect(m_mozWindow.data(), &QMozWindow::drawUnderlay,
+                this, &DeclarativeWebContainer::drawUnderlay, Qt::DirectConnection);
+        if (m_chromeWindow) {
+            updateContentOrientation(m_chromeWindow->contentOrientation());
+        }
+    }
+
     // This signal handler is responsible for activating
     // the first page.
     if (!canInitialize() || m_initialized) {
         return;
     }
-
-    m_mozWindow = new QMozWindow(this);
-    m_mozWindow->setSize(QWindow::size());
-    if (m_chromeWindow) {
-        updateContentOrientation(m_chromeWindow->contentOrientation());
-    }
-    connect(m_mozWindow.data(), &QMozWindow::requestGLContext,
-            this, &DeclarativeWebContainer::createGLContext, Qt::DirectConnection);
-    connect(m_mozWindow.data(), &QMozWindow::drawUnderlay,
-            this, &DeclarativeWebContainer::drawUnderlay, Qt::DirectConnection);
 
     bool clearTabs = m_settingManager->clearHistoryRequested();
     int oldCount = m_model->count();
@@ -815,6 +816,11 @@ void DeclarativeWebContainer::updateLoading()
     }
 
     emit loadingChanged();
+}
+
+void DeclarativeWebContainer::onFirstPaint(int, int)
+{
+    updateActiveTabRendered();
 }
 
 void DeclarativeWebContainer::updateActiveTabRendered()
