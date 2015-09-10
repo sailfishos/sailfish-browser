@@ -71,6 +71,8 @@ class DeclarativeWebContainer : public QWindow, public QQmlParserStatus, protect
 
     Q_PROPERTY(QQmlComponent* webPageComponent READ webPageComponent WRITE setWebPageComponent NOTIFY webPageComponentChanged FINAL)
     Q_PROPERTY(QObject *chromeWindow READ chromeWindow WRITE setChromeWindow NOTIFY chromeWindowChanged FINAL)
+    Q_PROPERTY(bool readyToPaint READ readyToPaint WRITE setReadyToPaint NOTIFY readyToPaintChanged FINAL)
+
 public:
     DeclarativeWebContainer(QWindow *parent = 0);
     ~DeclarativeWebContainer();
@@ -108,6 +110,9 @@ public:
 
     QObject *chromeWindow() const;
     void setChromeWindow(QObject *chromeWindow);
+
+    bool readyToPaint() const;
+    void setReadyToPaint(bool ready);
 
     int tabId() const;
     QString title() const;
@@ -165,6 +170,7 @@ signals:
     void webPageComponentChanged(QQmlComponent *newComponent);
     void chromeWindowChanged();
     void chromeExposed();
+    void readyToPaintChanged();
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event);

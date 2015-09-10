@@ -72,6 +72,7 @@ WebContainer {
     }
 
     foreground: Qt.application.active
+    readyToPaint: resourceController.videoActive ? webView.visible && !resourceController.displayOff : webView.visible
     allowHiding: !resourceController.videoActive && !resourceController.audioActive
     fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) ||
                     (contentItem && contentItem.fullscreen)
@@ -105,7 +106,6 @@ WebContainer {
             fullscreenHeight: container.fullscreenHeight
             toolbarHeight: container.toolbarHeight
             throttlePainting: !foreground && !resourceController.videoActive && webView.visible || resourceController.displayOff
-            readyToPaint: resourceController.videoActive ? webView.visible && !resourceController.displayOff : webView.visible
             enabled: webView.enabled
 
             // There needs to be enough content for enabling chrome gesture

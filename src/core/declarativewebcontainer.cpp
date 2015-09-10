@@ -327,6 +327,18 @@ void DeclarativeWebContainer::setChromeWindow(QObject *chromeWindow)
     }
 }
 
+bool DeclarativeWebContainer::readyToPaint() const
+{
+     return m_mozWindow ? m_mozWindow->readyToPaint() : true;
+}
+
+void DeclarativeWebContainer::setReadyToPaint(bool ready)
+{
+    if (m_mozWindow && m_mozWindow->setReadyToPaint(ready)) {
+        emit readyToPaintChanged();
+    }
+}
+
 int DeclarativeWebContainer::tabId() const
 {
     Q_ASSERT(!!m_model);
@@ -493,10 +505,10 @@ QObject *DeclarativeWebContainer::focusObject() const
 
 bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
 {
-    if (event->type() == QEvent::Close && m_webPage) {
-        // Make sure gecko does not use GL context we gave it in ::createGLContext
-        // after the window has been closed.
-        m_webPage->suspendView();
+    if (event->type() == QEvent::Close && m_mozWindow) {
+        m_mozWindow->suspendRendering();
+        m_webPages->clear();
+        m_mozWindow = nullptr;
     }
 
     // Emit chrome exposed when both chrome window and browser window has been exposed. This way chrome
