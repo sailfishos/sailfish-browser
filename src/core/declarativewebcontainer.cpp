@@ -693,7 +693,7 @@ void DeclarativeWebContainer::onActiveTabChanged(int activeTabId, bool loadActiv
 void DeclarativeWebContainer::initialize()
 {
     if (QMozContext::GetInstance()->initialized() && !m_mozWindow) {
-        m_mozWindow = new QMozWindow(this);
+        m_mozWindow = new QMozWindow;
         m_mozWindow->setSize(QWindow::size());
         connect(m_mozWindow.data(), &QMozWindow::requestGLContext,
                 this, &DeclarativeWebContainer::createGLContext, Qt::DirectConnection);
