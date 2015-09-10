@@ -18,6 +18,10 @@ CloseEventFilter::CloseEventFilter(DownloadManager *dlMgr, QObject *parent)
     : QObject(parent),
       m_downloadManager(dlMgr)
 {
+    connect(QMozContext::GetInstance(), &QMozContext::destroyed,
+            this, &CloseEventFilter::onApplicationDestroyed);
+    connect(&m_shutdownWatchdog, &QTimer::timeout,
+            this, &CloseEventFilter::onWatchdogTimeout);
 }
 
 bool CloseEventFilter::eventFilter(QObject *obj, QEvent *event)
@@ -38,11 +42,22 @@ bool CloseEventFilter::eventFilter(QObject *obj, QEvent *event)
 void CloseEventFilter::stopApplication()
 {
     QMozContext::GetInstance()->stopEmbedding();
+    m_shutdownWatchdog.start(10000);
+}
+
+void CloseEventFilter::onApplicationDestroyed()
+{
     qApp->quit();
- }
+}
+
+void CloseEventFilter::onWatchdogTimeout()
+{
+    qFatal("Browser failed to terminate in acceptable time!");
+}
 
 void CloseEventFilter::cancelStopApplication()
 {
     disconnect(m_downloadManager, SIGNAL(allTransfersCompleted()),
                this, SLOT(stopApplication()));
+    m_shutdownWatchdog.stop();
 }

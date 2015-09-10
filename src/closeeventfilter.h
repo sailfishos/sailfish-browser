@@ -14,6 +14,7 @@
 
 #include <QObject>
 #include <QEvent>
+#include <QTimer>
 #include "downloadmanager.h"
 #include "browserservice.h"
 
@@ -32,9 +33,12 @@ protected:
 
 private slots:
     void stopApplication();
+    void onApplicationDestroyed();
+    void onWatchdogTimeout();
 
 private:
     DownloadManager *m_downloadManager;
+    QTimer m_shutdownWatchdog;
 };
 
 #endif
