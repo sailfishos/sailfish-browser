@@ -391,9 +391,13 @@ void tst_dbmanager::getHistory()
     QList<QVariant> arguments = historyAvailableSpy.at(0);
     QList<Link> links = arguments.at(0).value<QList<Link> >();
     QCOMPARE(links.count(), 3);
-    QCOMPARE(links.at(0).url(), QString("http://example1.com"));
-    QCOMPARE(links.at(1).url(), QString("http://example2.com"));
-    QCOMPARE(links.at(2).url(), QString("http://example3-long.com"));
+    QSet<QString> linkset;
+    for (Link link : links) {
+        linkset.insert(link.url());
+    }
+    QVERIFY(linkset.contains(QString("http://example1.com")));
+    QVERIFY(linkset.contains(QString("http://example2.com")));
+    QVERIFY(linkset.contains(QString("http://example3-long.com")));
 
     // 2. empty filter
     DBManager::instance()->getHistory(QString());
@@ -402,11 +406,15 @@ void tst_dbmanager::getHistory()
     arguments = historyAvailableSpy.at(1);
     links = arguments.at(0).value<QList<Link> >();
     QCOMPARE(links.count(), 5);
-    QCOMPARE(links.at(0).url(), QString("http://example1.com"));
-    QCOMPARE(links.at(1).url(), QString("http://example3-long.com"));
-    QCOMPARE(links.at(2).url(), QString("http://unneeded1.net"));
-    QCOMPARE(links.at(3).url(), QString("http://example2.com"));
-    QCOMPARE(links.at(4).url(), QString("http://unneeded2.net"));
+    linkset.clear();
+    for (Link link : links) {
+        linkset.insert(link.url());
+    }
+    QVERIFY(linkset.contains(QString("http://example1.com")));
+    QVERIFY(linkset.contains(QString("http://example2.com")));
+    QVERIFY(linkset.contains(QString("http://example3-long.com")));
+    QVERIFY(linkset.contains(QString("http://unneeded1.net")));
+    QVERIFY(linkset.contains(QString("http://unneeded2.net")));
 }
 
 void tst_dbmanager::getTabHistory()
