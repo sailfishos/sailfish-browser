@@ -183,7 +183,6 @@ protected:
     virtual void focusInEvent(QFocusEvent *event);
     virtual void focusOutEvent(QFocusEvent *event);
     virtual void timerEvent(QTimerEvent *event);
-
     virtual void classBegin();
     virtual void componentComplete();
 
@@ -201,6 +200,7 @@ private slots:
     void updateLoading();
     void onFirstPaint(int dx, int dy);
     void updateActiveTabRendered();
+    void onLastViewDestroyed();
 
     void updateWindowFlags();
 
@@ -228,7 +228,7 @@ private:
     static void clearWindowSurfaceTask(void* data);
     void clearWindowSurface();
 
-    QPointer<QMozWindow> m_mozWindow;
+    QScopedPointer<QMozWindow> m_mozWindow;
     QPointer<QQuickItem> m_rotationHandler;
     QPointer<DeclarativeWebPage> m_webPage;
     QPointer<QQuickView> m_chromeWindow;
@@ -273,6 +273,8 @@ private:
 
     QMutex m_clearSurfaceTaskMutex;
     QMozContext::TaskHandle m_clearSurfaceTask;
+
+    bool m_closing;
 
     friend class tst_webview;
     friend class tst_declarativewebcontainer;

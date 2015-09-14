@@ -18,36 +18,35 @@ CloseEventFilter::CloseEventFilter(DownloadManager *dlMgr, QObject *parent)
     : QObject(parent),
       m_downloadManager(dlMgr)
 {
+    connect(QMozContext::GetInstance(), &QMozContext::lastWindowDestroyed,
+            this, &CloseEventFilter::onLastWindowDestroyed);
     connect(QMozContext::GetInstance(), &QMozContext::destroyed,
-            this, &CloseEventFilter::onApplicationDestroyed);
+            this, &CloseEventFilter::onContextDestroyed);
     connect(&m_shutdownWatchdog, &QTimer::timeout,
             this, &CloseEventFilter::onWatchdogTimeout);
-}
-
-bool CloseEventFilter::eventFilter(QObject *obj, QEvent *event)
-{
-    if (event->type() == QEvent::Close) {
-        if (m_downloadManager->existActiveTransfers()) {
-            connect(m_downloadManager, SIGNAL(allTransfersCompleted()),
-                    this, SLOT(stopApplication()));
-        } else {
-            stopApplication();
-        }
-        return false;
-    } else {
-        return QObject::eventFilter(obj, event);
-    }
 }
 
 void CloseEventFilter::stopApplication()
 {
     QMozContext::GetInstance()->stopEmbedding();
-    m_shutdownWatchdog.start(10000);
+    // Give the engine 5 seconds to shut down. If it fails terminate
+    // with a fatal error.
+    m_shutdownWatchdog.start(5000);
 }
 
-void CloseEventFilter::onApplicationDestroyed()
+void CloseEventFilter::onLastWindowDestroyed()
 {
-    qApp->quit();
+    if (m_downloadManager->existActiveTransfers()) {
+        connect(m_downloadManager, SIGNAL(allTransfersCompleted()),
+                this, SLOT(stopApplication()));
+    } else {
+        stopApplication();
+    }
+}
+
+void CloseEventFilter::onContextDestroyed()
+{
+    qApp->exit();
 }
 
 void CloseEventFilter::onWatchdogTimeout()

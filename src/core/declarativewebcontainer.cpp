@@ -59,6 +59,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     , m_privateMode(m_settingManager->autostartPrivateBrowsing())
     , m_activeTabRendered(false)
     , m_clearSurfaceTask(0)
+    , m_closing(false)
 {
 
     QSize screenSize = QGuiApplication::primaryScreen()->size();
@@ -90,6 +91,8 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     connect(DownloadManager::instance(), SIGNAL(initializedChanged()), this, SLOT(initialize()));
     connect(DownloadManager::instance(), SIGNAL(downloadStarted()), this, SLOT(onDownloadStarted()));
     connect(QMozContext::GetInstance(), SIGNAL(onInitialized()), this, SLOT(initialize()));
+    connect(QMozContext::GetInstance(), &QMozContext::lastViewDestroyed,
+            this, &DeclarativeWebContainer::onLastViewDestroyed);
 
     QString cacheLocation = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
     QDir dir(cacheLocation);
@@ -123,7 +126,7 @@ DeclarativeWebPage *DeclarativeWebContainer::webPage() const
 
 QMozWindow *DeclarativeWebContainer::mozWindow() const
 {
-    return m_mozWindow;
+    return m_mozWindow.data();
 }
 
 void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
@@ -505,8 +508,8 @@ bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
 {
     if (event->type() == QEvent::Close && m_mozWindow) {
         m_mozWindow->suspendRendering();
+        m_closing = true;
         m_webPages->clear();
-        m_mozWindow = nullptr;
     }
 
     // Emit chrome exposed when both chrome window and browser window has been exposed. This way chrome
@@ -691,7 +694,7 @@ void DeclarativeWebContainer::onActiveTabChanged(int activeTabId, bool loadActiv
 void DeclarativeWebContainer::initialize()
 {
     if (QMozContext::GetInstance()->initialized() && !m_mozWindow) {
-        m_mozWindow = new QMozWindow;
+        m_mozWindow.reset(new QMozWindow);
         m_mozWindow->setSize(QWindow::size());
         connect(m_mozWindow.data(), &QMozWindow::requestGLContext,
                 this, &DeclarativeWebContainer::createGLContext, Qt::DirectConnection);
@@ -839,6 +842,13 @@ void DeclarativeWebContainer::updateActiveTabRendered()
     // One frame rendered so let's disconnect.
     disconnect(m_mozWindow.data(), &QMozWindow::compositingFinished,
                this, &DeclarativeWebContainer::updateActiveTabRendered);
+}
+
+void DeclarativeWebContainer::onLastViewDestroyed()
+{
+    if (m_closing) {
+        m_mozWindow.reset();
+    }
 }
 
 void DeclarativeWebContainer::updateWindowFlags()

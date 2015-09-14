@@ -28,12 +28,10 @@ public:
 public slots:
     void cancelStopApplication();
 
-protected:
-    bool eventFilter(QObject *obj, QEvent *event);
-
 private slots:
     void stopApplication();
-    void onApplicationDestroyed();
+    void onLastWindowDestroyed();
+    void onContextDestroyed();
     void onWatchdogTimeout();
 
 private:

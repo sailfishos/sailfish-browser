@@ -180,17 +180,16 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     dlMgr->connect(service, SIGNAL(restartTransferRequested(int)),
             dlMgr, SLOT(restartTransfer(int)));
 
-    CloseEventFilter * clsEventFilter = new CloseEventFilter(dlMgr, app.data());
-    view->installEventFilter(clsEventFilter);
+    QScopedPointer<CloseEventFilter> clsEventFilter(new CloseEventFilter(dlMgr, app.data()));
     QObject::connect(service, SIGNAL(openUrlRequested(QString)),
-                     clsEventFilter, SLOT(cancelStopApplication()));
+                     clsEventFilter.data(), SLOT(cancelStopApplication()));
     QObject::connect(service, SIGNAL(activateNewTabViewRequested()),
-                     clsEventFilter, SLOT(cancelStopApplication()));
+                     clsEventFilter.data(), SLOT(cancelStopApplication()));
 
     QObject::connect(uiService, SIGNAL(openUrlRequested(QString)),
-                     clsEventFilter, SLOT(cancelStopApplication()));
+                     clsEventFilter.data(), SLOT(cancelStopApplication()));
     QObject::connect(uiService, SIGNAL(activateNewTabViewRequested()),
-                     clsEventFilter, SLOT(cancelStopApplication()));
+                     clsEventFilter.data(), SLOT(cancelStopApplication()));
 
 #ifdef USE_RESOURCES
     view->setSource(QUrl("qrc:///browser.qml"));
