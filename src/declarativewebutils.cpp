@@ -356,11 +356,21 @@ QString DeclarativeWebUtils::displayableUrl(QString fullUrl) const
 {
     QUrl url(fullUrl);
     // Leaving only the scheme, host address, and port (if present).
-    return url.toDisplayString(QUrl::RemoveUserInfo |
-                               QUrl::RemovePath |
-                               QUrl::RemoveQuery |
-                               QUrl::RemoveFragment |
-                               QUrl::StripTrailingSlash);
+    QString returnUrl = url.toDisplayString(QUrl::RemoveUserInfo |
+                                         QUrl::RemovePath |
+                                         QUrl::RemoveQuery |
+                                         QUrl::RemoveFragment |
+                                         QUrl::StripTrailingSlash);
+    returnUrl.remove(0, returnUrl.lastIndexOf("/") + 1);
+    if (returnUrl.indexOf("www.") == 0) {
+        return returnUrl.remove(0, 4);
+    } else if (returnUrl.indexOf("m.") == 0 && returnUrl.length() > 2) {
+        return returnUrl.remove(0, 2);
+    } else if (returnUrl.indexOf("mobile.") == 0 && returnUrl.length() > 7) {
+        return returnUrl.remove(0, 7);
+    }
+
+    return !returnUrl.isEmpty() ? returnUrl : fullUrl;
 }
 
 void DeclarativeWebUtils::handleObserve(const QString message, const QVariant data)

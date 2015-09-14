@@ -36,9 +36,14 @@ public:
     MOCK_METHOD1(CancelTask, void(void*));
     MOCK_METHOD2(PostCompositorTask, TaskHandle(TaskCallback, void*));
     MOCK_METHOD2(sendObserve, void(const QString&, const QString&));
+    MOCK_METHOD2(sendObserve, void(const QString&, const QVariant&));
+
+    MOCK_METHOD1(addObserver, void(const QString&));
+    MOCK_METHOD1(addObservers, void(const QStringList&));
 
 signals:
     void onInitialized();
+    void recvObserve(const QString, const QVariant);
 };
 
 #endif /* qmozcontext_h */

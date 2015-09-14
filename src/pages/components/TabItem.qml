@@ -93,7 +93,7 @@ BackgroundItem {
                 verticalCenter: close.verticalCenter
             }
 
-            text: title
+            text: title || WebUtils.displayableUrl(url)
             truncationMode: TruncationMode.Fade
             color: down || activeTab ? Theme.highlightColor : Theme.primaryColor
         }
