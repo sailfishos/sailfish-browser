@@ -28,7 +28,7 @@ PersistentTabModel::~PersistentTabModel()
 {
 }
 
-void PersistentTabModel::tabsAvailable(QList<Tab> tabs)
+void PersistentTabModel::tabsAvailable(const QList<Tab> &tabs)
 {
     beginResetModel();
     int oldCount = count();
@@ -58,7 +58,7 @@ void PersistentTabModel::tabsAvailable(QList<Tab> tabs)
     }
 
     int maxTabId(0);
-    foreach (Tab tab, tabs) {
+    foreach (const Tab &tab, tabs) {
         if (maxTabId < tab.tabId()) {
             maxTabId = tab.tabId();
         }

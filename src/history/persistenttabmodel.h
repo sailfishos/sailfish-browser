@@ -29,10 +29,7 @@ protected:
 
 private slots:
     void saveActiveTab() const;
-
-public slots:
-    // TODO: Move to be private
-    void tabsAvailable(QList<Tab> tabs);
+    void tabsAvailable(const QList<Tab> &tabs);
 
 public:
     PersistentTabModel(int nextTabId, DeclarativeWebContainer *webContainer = 0);
