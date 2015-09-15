@@ -56,10 +56,9 @@ void DeclarativeTabModel::addTab(const QString& url, const QString &title, int i
 
     Q_ASSERT(index >= 0 && index <= m_tabs.count());
 
-    int tabId = createTab();
-    int linkId = createLink(tabId, url, title);
+    const Tab tab(m_nextTabId, url, title, "");
+    createTab(tab);
 
-    Tab tab(tabId, Link(linkId, url, "", title));
 #if DEBUG_LOGS
     qDebug() << "new tab data:" << &tab;
 #endif
@@ -72,10 +71,9 @@ void DeclarativeTabModel::addTab(const QString& url, const QString &title, int i
     updateActiveTab(tab, true);
 
     emit countChanged();
-    emit tabAdded(tabId);
+    emit tabAdded(tab.tabId());
 
-    m_nextTabId = ++tabId;
-    emit nextTabIdChanged();
+    m_nextTabId = tab.tabId() + 1;
 }
 
 int DeclarativeTabModel::nextTabId() const
@@ -285,7 +283,6 @@ void DeclarativeTabModel::updateUrl(int tabId, const QString &url, bool initialL
         m_tabs[tabIndex].setUrl(url);
 
         if (!initialLoad) {
-            m_tabs[tabIndex].setCurrentLink(nextLinkId());
             updateDb = true;
         }
         m_tabs[tabIndex].setThumbnailPath("");
@@ -446,7 +443,7 @@ void DeclarativeTabModel::onTitleChanged()
             roles << TitleRole;
             m_tabs[tabIndex].setTitle(title);
             emit dataChanged(index(tabIndex, 0), index(tabIndex, 0), roles);
-            updateTitle(tabId, m_tabs.at(tabIndex).currentLink(), webPage->url().toString(), title);
+            updateTitle(tabId, webPage->url().toString(), title);
         }
     }
 }

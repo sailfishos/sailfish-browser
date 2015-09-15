@@ -10,9 +10,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include <QtTest/QtTest>
-#include <QQmlEngine>
-#include <QQmlComponent>
-#include <QQuickView>
 
 #include "persistenttabmodel.h"
 #include "dbmanager.h"
@@ -20,15 +17,6 @@
 #include "declarativewebcontainer.h"
 
 using ::testing::Return;
-
-static const QByteArray QML_SNIPPET = \
-        "import QtQuick 2.0\n" \
-        "import Sailfish.Browser 1.0\n" \
-        "Item {\n" \
-        "   width: 100; height: 100\n" \
-        "   property alias tabModel: model\n" \
-        "   PersistentTabModel { id: model }\n" \
-        "}\n";
 
 struct TabTuple {
     TabTuple(QString url, QString title) : url(url), title(title) {}
@@ -46,7 +34,6 @@ class tst_persistenttabmodel : public QObject
 
 private slots:
     void initTestCase();
-    void cleanupTestCase();
     void init();
     void cleanup();
 
@@ -81,9 +68,6 @@ private:
     void addThreeTabs();
 
     PersistentTabModel* tabModel;
-    QQuickView mView;
-    QPointer<QQmlComponent> mComponent;
-    QObject* mRootObject;
     QString mDbFile;
 };
 
@@ -92,27 +76,17 @@ void tst_persistenttabmodel::initTestCase()
     int argc(0);
     char* argv[0] = {};
     ::testing::InitGoogleMock(&argc, argv);
-    qmlRegisterUncreatableType<DeclarativeTabModel>("Sailfish.Browser", 1, 0, "TabModel",
-                                                    "TabModel is abstract!");
-    qmlRegisterType<PersistentTabModel>("Sailfish.Browser", 1, 0, "PersistentTabModel");
-    mComponent = new QQmlComponent(mView.engine());
-    mComponent->setData(QML_SNIPPET, QUrl());
     mDbFile = QString("%1/%2")
             .arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation))
             .arg(QLatin1String(DB_NAME));
-}
-
-void tst_persistenttabmodel::cleanupTestCase()
-{
-    delete mComponent;
+    QFile dbFile(mDbFile);
+    dbFile.remove();
 }
 
 void tst_persistenttabmodel::init()
 {
-    mRootObject = mComponent->create(mView.engine()->rootContext());
-    QVariant var = mRootObject->property("tabModel");
-    tabModel = qobject_cast<PersistentTabModel*>(qvariant_cast<QObject*>(var));
-    QVERIFY(tabModel);
+    int nextTabId = DBManager::instance()->getMaxTabId() + 1;
+    tabModel = new PersistentTabModel(nextTabId);
 
     if (!tabModel->loaded()) {
         QSignalSpy loadedSpy(tabModel, SIGNAL(loadedChanged()));
@@ -124,7 +98,7 @@ void tst_persistenttabmodel::init()
 
 void tst_persistenttabmodel::cleanup()
 {
-    delete mRootObject;
+    delete tabModel;
     delete DBManager::instance();
     QFile dbFile(mDbFile);
     QVERIFY(dbFile.remove());
@@ -162,7 +136,6 @@ void tst_persistenttabmodel::addTab()
 
     QSignalSpy countChangeSpy(tabModel, SIGNAL(countChanged()));
     QSignalSpy tabAddedSpy(tabModel, SIGNAL(tabAdded(int)));
-    QSignalSpy nextTabIdChangedSpy(tabModel, SIGNAL(nextTabIdChanged()));
     QSignalSpy dataChangedSpy(tabModel, SIGNAL(dataChanged(QModelIndex, QModelIndex, QVector<int>)));
     QSignalSpy activeTabIndexChangedSpy(tabModel, SIGNAL(activeTabIndexChanged()));
     QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
@@ -176,7 +149,6 @@ void tst_persistenttabmodel::addTab()
     QList<QVariant> arguments = tabAddedSpy.at(0);
     QCOMPARE(arguments.at(0).toInt(), initialTabs.count() + 1);
 
-    QCOMPARE(nextTabIdChangedSpy.count(), 1);
     QCOMPARE(tabModel->nextTabId(), initialTabs.count() + 2);
 
     QCOMPARE(activeTabChangedSpy.count(), 1);
@@ -197,20 +169,17 @@ void tst_persistenttabmodel::addTab()
     QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), tabToAdd.url);
     QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), tabToAdd.title);
     QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt(), initialTabs.count() + 1);
-    QCOMPARE(tabModel->m_tabs.at(insertToIndex).currentLink(), initialTabs.count() + 1);
 
     if (insertToIndex > 0) {
         modelIndex = tabModel->createIndex(insertToIndex - 1, 0);
         QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), initialTabs.at(insertToIndex - 1).url);
         QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), initialTabs.at(insertToIndex - 1).title);
         QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt(), insertToIndex);
-        QCOMPARE(tabModel->m_tabs.at(insertToIndex - 1).currentLink(), insertToIndex);
     } else if (insertToIndex < initialTabs.count()) {
         modelIndex = tabModel->createIndex(insertToIndex + 1, 0);
         QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString(), initialTabs.at(insertToIndex).url);
         QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString(), initialTabs.at(insertToIndex).title);
         QCOMPARE(tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt(), insertToIndex + 1);
-        QCOMPARE(tabModel->m_tabs.at(insertToIndex + 1).currentLink(), insertToIndex + 1);
     }
 }
 
@@ -491,7 +460,6 @@ void tst_persistenttabmodel::updateUrl()
         QCOMPARE(dataChangedSpy.count(), 1);
         Tab tab = tabModel->tabs().at(tabModel->findTabIndex(tabId));
         QCOMPARE(tab.url(), url);
-        QCOMPARE(tab.currentLink(), 4);
     } else {
         QCOMPARE(dataChangedSpy.count(), 0);
     }

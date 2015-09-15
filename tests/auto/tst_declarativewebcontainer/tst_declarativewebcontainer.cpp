@@ -17,6 +17,8 @@
 #include "settingmanager.h"
 #include "tab.h"
 
+#define NEXT_TAB_ID 1000
+
 using ::testing::Return;
 using ::testing::_;
 
@@ -120,7 +122,7 @@ void tst_declarativewebcontainer::setWebPage()
 void tst_declarativewebcontainer::setTabModel()
 {
     // Set up
-    PrivateTabModel model;
+    PrivateTabModel model(NEXT_TAB_ID);
     model.setWaitingForNewTab(false);
     Tab tab;
     model.m_tabs.append(tab);
@@ -188,7 +190,7 @@ void tst_declarativewebcontainer::setPrivateMode()
     QSignalSpy privateModeChangedSpy(m_webContainer, SIGNAL(privateModeChanged()));
     QSignalSpy contentItemChangedSpy(m_webContainer, SIGNAL(contentItemChanged()));
 
-    PrivateTabModel model;
+    PrivateTabModel model(NEXT_TAB_ID);
     Tab tab;
     model.m_tabs.append(tab);
     m_webContainer->m_privateTabModel = &model;
@@ -217,7 +219,7 @@ void tst_declarativewebcontainer::setPrivateMode()
 void tst_declarativewebcontainer::loading()
 {
     DeclarativeWebPage page;
-    PrivateTabModel model;
+    PrivateTabModel model(NEXT_TAB_ID);
     Tab tab;
     model.m_tabs.append(tab);
 
@@ -269,7 +271,7 @@ void tst_declarativewebcontainer::load()
     QCOMPARE(m_webContainer->m_initialUrl, QString("http://example1.com"));
 
     // Initialized container, empty model => add new tab to model
-    PrivateTabModel model;
+    PrivateTabModel model(NEXT_TAB_ID);
     m_webContainer->setTabModel(&model);
     EXPECT_CALL(*QMozContext::GetInstance(), initialized()).WillOnce(Return(true));
     EXPECT_CALL(page, completed()).WillOnce(Return(false));
@@ -285,7 +287,7 @@ void tst_declarativewebcontainer::load()
 void tst_declarativewebcontainer::reload()
 {
     // Set up
-    PrivateTabModel model;
+    PrivateTabModel model(NEXT_TAB_ID);
     model.addTab(QString("http://example.com"), QString("Test title"), 0);
     m_webContainer->setTabModel(&model);
 
@@ -303,7 +305,7 @@ void tst_declarativewebcontainer::goBackAndGoForward()
 
 void tst_declarativewebcontainer::activatePage()
 {
-    PrivateTabModel model;
+    PrivateTabModel model(NEXT_TAB_ID);
     Tab tab;
     tab.setTabId(1);
 

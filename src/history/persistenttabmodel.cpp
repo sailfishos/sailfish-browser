@@ -15,8 +15,8 @@
 #include "persistenttabmodel.h"
 #include "dbmanager.h"
 
-PersistentTabModel::PersistentTabModel(DeclarativeWebContainer *webContainer)
-    : DeclarativeTabModel(DBManager::instance()->getMaxTabId() + 1, webContainer)
+PersistentTabModel::PersistentTabModel(int nextTabId, DeclarativeWebContainer *webContainer)
+    : DeclarativeTabModel(nextTabId, webContainer)
 {
     connect(DBManager::instance(), SIGNAL(tabsAvailable(QList<Tab>)),
             this, SLOT(tabsAvailable(QList<Tab>)));
@@ -28,7 +28,7 @@ PersistentTabModel::~PersistentTabModel()
 {
 }
 
-void PersistentTabModel::tabsAvailable(QList<Tab> tabs)
+void PersistentTabModel::tabsAvailable(const QList<Tab> &tabs)
 {
     beginResetModel();
     int oldCount = count();
@@ -57,10 +57,15 @@ void PersistentTabModel::tabsAvailable(QList<Tab> tabs)
         emit countChanged();
     }
 
-    int maxTabId = DBManager::instance()->getMaxTabId();
+    int maxTabId(0);
+    foreach (const Tab &tab, tabs) {
+        if (maxTabId < tab.tabId()) {
+            maxTabId = tab.tabId();
+        }
+    }
+
     if (m_nextTabId != maxTabId + 1) {
         m_nextTabId = maxTabId + 1;
-        emit nextTabIdChanged();
     }
 
     // Startup should be synced to this.
@@ -73,26 +78,18 @@ void PersistentTabModel::tabsAvailable(QList<Tab> tabs)
             this, SLOT(saveActiveTab()), Qt::UniqueConnection);
 }
 
-int PersistentTabModel::createTab() {
-    return DBManager::instance()->createTab();
+void PersistentTabModel::createTab(const Tab &tab) {
+    DBManager::instance()->createTab(tab);
 }
 
-int PersistentTabModel::createLink(int tabId, QString url, QString title) {
-    return DBManager::instance()->createLink(tabId, url, title);
-}
-
-void PersistentTabModel::updateTitle(int tabId, int linkId, QString url, QString title)
+void PersistentTabModel::updateTitle(int tabId, QString url, QString title)
 {
-    DBManager::instance()->updateTitle(tabId, linkId, url, title);
+    DBManager::instance()->updateTitle(tabId, url, title);
 }
 
 void PersistentTabModel::removeTab(int tabId)
 {
     DBManager::instance()->removeTab(tabId);
-}
-
-int PersistentTabModel::nextLinkId() {
-    return DBManager::instance()->nextLinkId();
 }
 
 void PersistentTabModel::navigateTo(int tabId, QString url, QString title, QString path) {

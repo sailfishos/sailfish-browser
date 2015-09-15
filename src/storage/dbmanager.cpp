@@ -27,7 +27,6 @@ DBManager *DBManager::instance()
 
 DBManager::DBManager(QObject *parent)
     : QObject(parent)
-    , m_maxTabId(0)
 {
     qRegisterMetaType<QList<Tab> >("QList<Tab>");
     qRegisterMetaType<QList<Link> >("QList<Link>");
@@ -37,21 +36,14 @@ DBManager::DBManager(QObject *parent)
     worker->moveToThread(&workerThread);
 
     connect(&workerThread, SIGNAL(finished()), worker, SLOT(deleteLater()));
-    connect(worker, SIGNAL(tabsAvailable(QList<Tab>)), this, SLOT(tabListAvailable(QList<Tab>)));
+    connect(worker, SIGNAL(tabsAvailable(QList<Tab>)), this, SIGNAL(tabsAvailable(QList<Tab>)));
     connect(worker, SIGNAL(historyAvailable(QList<Link>)), this, SIGNAL(historyAvailable(QList<Link>)));
-    connect(worker, SIGNAL(tabHistoryAvailable(int,QList<Link>)), this, SIGNAL(tabHistoryAvailable(int,QList<Link>)));
-    connect(worker, SIGNAL(titleChanged(int,int,QString,QString)), this, SIGNAL(titleChanged(int,int,QString,QString)));
+    connect(worker, SIGNAL(tabHistoryAvailable(int,QList<Link>,int)), this, SIGNAL(tabHistoryAvailable(int,QList<Link>,int)));
+    connect(worker, SIGNAL(titleChanged(QString,QString)), this, SIGNAL(titleChanged(QString,QString)));
     connect(worker, SIGNAL(thumbPathChanged(int,QString)), this, SIGNAL(thumbPathChanged(int,QString)));
-    connect(worker, SIGNAL(nextLinkId(int)), this, SLOT(updateNextLinkId(int)));
     workerThread.start();
 
     QMetaObject::invokeMethod(worker, "init", Qt::BlockingQueuedConnection);
-    QMetaObject::invokeMethod(worker, "getMaxTabId", Qt::BlockingQueuedConnection,
-                              Q_RETURN_ARG(int, m_maxTabId));
-    int maxLinkId;
-    QMetaObject::invokeMethod(worker, "getMaxLinkId", Qt::BlockingQueuedConnection,
-                              Q_RETURN_ARG(int, maxLinkId));
-    m_nextLinkId = ++maxLinkId;
     QMetaObject::invokeMethod(worker, "getSettings", Qt::BlockingQueuedConnection,
                               Q_RETURN_ARG(SettingsMap, m_settings));
 }
@@ -69,32 +61,16 @@ DBManager::~DBManager()
 
 int DBManager::getMaxTabId()
 {
-    return m_maxTabId;
+    int maxTabId;
+    QMetaObject::invokeMethod(worker, "getMaxTabId", Qt::BlockingQueuedConnection,
+                              Q_RETURN_ARG(int, maxTabId));
+    return maxTabId;
 }
 
-int DBManager::nextLinkId()
+void DBManager::createTab(const Tab &tab)
 {
-    return m_nextLinkId;
-}
-
-int DBManager::createTab()
-{
-    QMetaObject::invokeMethod(worker, "createTab", Qt::QueuedConnection, Q_ARG(int, ++m_maxTabId));
-    return m_maxTabId;
-}
-
-int DBManager::createLink(int tabId, QString url, QString title)
-{
-    int linkId;
-    QMetaObject::invokeMethod(worker, "createLink", Qt::BlockingQueuedConnection,
-                              Q_RETURN_ARG(int, linkId), Q_ARG(int, tabId),
-                              Q_ARG(QString, url), Q_ARG(QString, title));
-
-    if (linkId == m_nextLinkId) {
-        ++m_nextLinkId;
-    }
-
-    return linkId;
+    QMetaObject::invokeMethod(worker, "createTab", Qt::QueuedConnection,
+                              Q_ARG(Tab, tab));
 }
 
 void DBManager::navigateTo(int tabId, QString url, QString title, QString path)
@@ -127,10 +103,10 @@ void DBManager::removeTab(int tabId)
                               Q_ARG(int, tabId));
 }
 
-void DBManager::updateTitle(int tabId, int linkId, QString url, QString title)
+void DBManager::updateTitle(int tabId, QString url, QString title)
 {
     QMetaObject::invokeMethod(worker, "updateTitle", Qt::QueuedConnection,
-                              Q_ARG(int, tabId), Q_ARG(int, linkId), Q_ARG(QString, url), Q_ARG(QString, title));
+                              Q_ARG(int, tabId), Q_ARG(QString, url), Q_ARG(QString, title));
 }
 
 void DBManager::updateThumbPath(int tabId, QString path)
@@ -141,7 +117,6 @@ void DBManager::updateThumbPath(int tabId, QString path)
 
 void DBManager::clearHistory()
 {
-    m_maxTabId = 0;
     QMetaObject::invokeMethod(worker, "clearHistory", Qt::QueuedConnection);
 }
 
@@ -180,17 +155,4 @@ void DBManager::deleteSetting(QString name)
         QMetaObject::invokeMethod(worker, "deleteSetting", Qt::BlockingQueuedConnection,
                                   Q_ARG(QString, name));
     }
-}
-
-void DBManager::tabListAvailable(QList<Tab> tabs)
-{
-    if (tabs.isEmpty()) {
-        m_maxTabId = 0;
-    }
-    emit tabsAvailable(tabs);
-}
-
-void DBManager::updateNextLinkId(int linkId)
-{
-    m_nextLinkId = linkId;
 }

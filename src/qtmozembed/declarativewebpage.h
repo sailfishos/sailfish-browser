@@ -84,7 +84,7 @@ signals:
 private slots:
     void setFullscreen(const bool fullscreen);
     void onRecvAsyncMessage(const QString& message, const QVariant& data);
-    void onTabHistoryAvailable(const int& historyTabId, const QList<Link>& links);
+    void onTabHistoryAvailable(const int& historyTabId, const QList<Link>& links, int currentLinkId);
     void onUrlChanged();
     void grabResultReady();
     void grabWritten();
@@ -110,6 +110,7 @@ private:
     QSharedPointer<QMozGrabResult> m_thumbnailResult;
     QFutureWatcher<QString> m_grabWritter;
     QList<Link> m_restoredTabHistory;
+    int m_restoredCurrentLinkId;
 
     qreal m_fullScreenHeight;
     qreal m_toolbarHeight;

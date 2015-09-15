@@ -13,9 +13,8 @@
 #include "privatetabmodel.h"
 #include "dbmanager.h"
 
-PrivateTabModel::PrivateTabModel(DeclarativeWebContainer *webContainer)
-    : DeclarativeTabModel(DBManager::instance()->getMaxTabId() + 10000, webContainer),
-      m_nextLinkId(1)
+PrivateTabModel::PrivateTabModel(int nextTabId, DeclarativeWebContainer *webContainer)
+    : DeclarativeTabModel(nextTabId, webContainer)
 {
     // Startup should be synced to this.
     if (!m_loaded) {
@@ -28,22 +27,13 @@ PrivateTabModel::~PrivateTabModel()
 {
 }
 
-int PrivateTabModel::createTab() {
-    return nextTabId();
+void PrivateTabModel::createTab(const Tab &tab) {
+    Q_UNUSED(tab);
 }
 
-int PrivateTabModel::createLink(int tabId, QString url, QString title) {
-    Q_UNUSED(tabId)
-    Q_UNUSED(url)
-    Q_UNUSED(title)
-
-    return m_nextLinkId++;
-}
-
-void PrivateTabModel::updateTitle(int tabId, int linkId, QString url, QString title)
+void PrivateTabModel::updateTitle(int tabId, QString url, QString title)
 {
     Q_UNUSED(tabId)
-    Q_UNUSED(linkId)
     Q_UNUSED(url)
     Q_UNUSED(title)
 }
@@ -51,10 +41,6 @@ void PrivateTabModel::updateTitle(int tabId, int linkId, QString url, QString ti
 void PrivateTabModel::removeTab(int tabId)
 {
     Q_UNUSED(tabId)
-}
-
-int PrivateTabModel::nextLinkId() {
-    return m_nextLinkId;
 }
 
 void PrivateTabModel::navigateTo(int tabId, QString url, QString title, QString path) {

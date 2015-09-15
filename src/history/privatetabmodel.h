@@ -21,20 +21,15 @@ class PrivateTabModel : public DeclarativeTabModel
     Q_OBJECT
 
 protected:
-    virtual int createTab();
-    virtual int createLink(int tabId, QString url, QString title);
-    virtual void updateTitle(int tabId, int linkId, QString url, QString title);
+    virtual void createTab(const Tab &tab);
+    virtual void updateTitle(int tabId, QString url, QString title);
     virtual void removeTab(int tabId);
-    virtual int nextLinkId();
     virtual void navigateTo(int tabId, QString url, QString title, QString path);
     virtual void updateThumbPath(int tabId, QString path);
 
 public:
-    PrivateTabModel(DeclarativeWebContainer *webContainer = 0);
+    PrivateTabModel(int nextTabId, DeclarativeWebContainer *webContainer = 0);
     ~PrivateTabModel();
-
-private:
-    int m_nextLinkId;
 };
 
 #endif // PRIVATETABMODEL_H

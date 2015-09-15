@@ -79,8 +79,9 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     QMozContext::GetInstance()->setPixelRatio(2.0);
 
     m_webPages = new WebPages(this);
-    m_persistentTabModel = new PersistentTabModel(this);
-    m_privateTabModel = new PrivateTabModel(this);
+    int maxTabid = DBManager::instance()->getMaxTabId();
+    m_persistentTabModel = new PersistentTabModel(maxTabid + 1, this);
+    m_privateTabModel = new PrivateTabModel(maxTabid + 1001, this);
 
     setTabModel(privateMode() ? m_privateTabModel.data() : m_persistentTabModel.data());
 

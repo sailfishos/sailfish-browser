@@ -63,6 +63,7 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
     , m_initialLoadHasHappened(false)
     , m_tabHistoryReady(false)
     , m_urlReady(false)
+    , m_restoredCurrentLinkId(-1)
 {
     addMessageListener(gFullScreenMessage);
     addMessageListener(gDomContentLoadedMessage);
@@ -124,8 +125,8 @@ void DeclarativeWebPage::setInitialTab(const Tab& tab)
 
     m_initialTab = tab;
     emit tabIdChanged();
-    connect(DBManager::instance(), SIGNAL(tabHistoryAvailable(int, QList<Link>)),
-            this, SLOT(onTabHistoryAvailable(int, QList<Link>)));
+    connect(DBManager::instance(), SIGNAL(tabHistoryAvailable(int, QList<Link>,int)),
+            this, SLOT(onTabHistoryAvailable(int, QList<Link>,int)));
     DBManager::instance()->getTabHistory(tabId());
 }
 
@@ -136,10 +137,11 @@ void DeclarativeWebPage::onUrlChanged()
     restoreHistory();
 }
 
-void DeclarativeWebPage::onTabHistoryAvailable(const int& historyTabId, const QList<Link>& links)
+void DeclarativeWebPage::onTabHistoryAvailable(const int& historyTabId, const QList<Link>& links, int currentLinkId)
 {
     if (historyTabId == tabId()) {
         m_restoredTabHistory = links;
+        m_restoredCurrentLinkId = currentLinkId; // FIXME: consider storing isCurrent flag in Link struct instead to reduce DeclarativeWebPage's state
 
         std::reverse(m_restoredTabHistory.begin(), m_restoredTabHistory.end());
         DBManager::instance()->disconnect(this);
@@ -158,7 +160,7 @@ void DeclarativeWebPage::restoreHistory() {
     int i(0);
     foreach (Link link, m_restoredTabHistory) {
         urls << link.url();
-        if (link.linkId() == m_initialTab.currentLink()) {
+        if (link.linkId() == m_restoredCurrentLinkId) {
             index = i;
             QString currentUrl(url().toString());
             if (link.url() != currentUrl) {

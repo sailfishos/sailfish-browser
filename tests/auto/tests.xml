@@ -17,7 +17,7 @@
                <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_linkvalidator</step>
            </case>
            <case manual="false" name="dbmanager">
-               <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_dbmanager -platform wayland-egl -iterations 10</step>
+               <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_dbmanager</step>
            </case>
            <case manual="false" timeout="300" name="webview">
                <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; LOW_MEMORY_DISABLED=1 ./tst_webview -platform wayland-egl</step>
