@@ -8,7 +8,7 @@
            </pre_steps>
            <description>Sailfish Browser UI unit tests</description>
            <case manual="false" name="declarativebookmarkmodel">
-               <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_declarativebookmarkmodel -platform wayland-egl</step>
+               <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_declarativebookmarkmodel</step>
            </case>
            <case manual="false" name="declarativehistorymodel">
                <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_declarativehistorymodel -platform wayland-egl</step>
