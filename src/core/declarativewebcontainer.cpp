@@ -247,6 +247,11 @@ void DeclarativeWebContainer::setMaxLiveTabCount(int count)
     }
 }
 
+QQmlComponent* DeclarativeWebContainer::webPageComponent() const
+{
+    return m_webPageComponent;
+}
+
 void DeclarativeWebContainer::setWebPageComponent(QQmlComponent *qmlComponent)
 {
     if (m_webPageComponent.data() != qmlComponent) {
