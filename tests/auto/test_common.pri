@@ -15,3 +15,12 @@ CONFIG(gcov) {
 # install the test
 target.path = /opt/tests/sailfish-browser/auto
 INSTALLS += target
+
+unitTestData.path = $$target.path/content
+
+# define test data path
+CONFIG(desktop) {
+    DEFINES += TEST_DATA=\\\"$$PWD/content\\\"
+} else {
+    DEFINES += TEST_DATA=\\\"$$unitTestData.path\\\"
+}

@@ -1,0 +1,14 @@
+[
+    {
+        "favicon": "image://theme/icon-launcher-jollacom",
+        "hasTouchIcon": true,
+        "title": "Default Bookmark 1",
+        "url": "http://www.default1.jolla.com"
+    },
+    {
+        "favicon": "image://theme/icon-launcher-jollashop",
+        "hasTouchIcon": true,
+        "title": "Default Bookmark 1",
+        "url": "http://default2.jolla.com/"
+    }
+]
