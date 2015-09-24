@@ -38,10 +38,8 @@ public slots:
     void createTab(int tabId);
     int createLink(int tabId, QString url, QString title);
     void removeTab(int tabId);
-    void getTab(int tabId);
     void getAllTabs();
     void navigateTo(int tabId, QString url, QString title, QString path);
-    void updateTab(int tabId, QString url, QString title, QString path);
     int getMaxTabId();
     int getMaxLinkId();
 
@@ -53,15 +51,12 @@ public slots:
     void getHistory(const QString &filter);
     void getTabHistory(int tabId);
     void clearHistory();
-    void clearTabHistory(int tabId);
 
     void saveSetting(QString name, QString value);
     SettingsMap getSettings();
     void deleteSetting(QString name);
 
 signals:
-    void tabAvailable(Tab tab);
-    void tabChanged(Tab tab);
     void tabsAvailable(QList<Tab> tabs);
     void thumbPathChanged(int tabId, QString path);
     void titleChanged(int tabId, int linkId, QString url, QString title);
@@ -72,17 +67,13 @@ signals:
 
 private:
     Link getLink(int linkId);
-    Link getLink(QString url);
-    void updateLink(int linkId, QString url, QString title, QString thumbPath);
     HistoryResult addToBrowserHistory(QString url, QString title);
     int addToTabHistory(int tabId, int linkId);
     Link getLinkFromTabHistory(int tabHistoryId);
     Link getCurrentLink(int tabId);
-    int getNextLinkIdFromTabHistory(int tabHistoryId);
-    int getPreviousLinkIdFromTabHistory(int tabHistoryId);
     void clearDeprecatedTabHistory(int tabId, int currentLinkId);
     int createLink(QString url, QString title = "", QString thumbPath = "");
-    bool updateTab(int tabId, int tabHistoryId);
+    void updateTab(int tabId, int tabHistoryId);
     Tab getTabData(int tabId, int historyId = 0);
     int tabCount();
     int integerQuery(const QString &statement);

@@ -16,9 +16,30 @@ import Sailfish.Browser 1.0
 SilicaGridView {
     id: favoriteGrid
 
-    // browserPage.isPortrait ? 4 : 7
-    readonly property int columns: Math.floor(parent.width / Theme.itemSizeExtraLarge)
-    readonly property int initialCellWidth: (parent.width - Theme.paddingLarge * 2) / columns
+    readonly property real pageHeight: Math.ceil(browserPage.height + pageStack.panelSize)
+
+    readonly property Item contextMenu: currentItem ? currentItem._menuItem : null
+    readonly property bool contextMenuActive: contextMenu && contextMenu.active
+
+    // Figure out which delegates need to be moved down to make room
+    // for the context menu when it's open.
+    readonly property int minOffsetIndex: contextMenu ? currentIndex - (currentIndex % columns) + columns : 0
+    readonly property int yOffset: contextMenu ? contextMenu.height : 0
+
+    readonly property int rows: Math.floor(pageHeight / minimumCellHeight)
+    readonly property int columns: Math.floor(browserPage.width / minimumCellWidth)
+
+    readonly property int horizontalMargin: browserPage.largeScreen ? 6 * Theme.paddingLarge : Theme.paddingLarge
+    readonly property int initialCellWidth: (browserPage.width - 2*horizontalMargin) / columns
+
+    // The multipliers below for Large screens are magic. They look good on Jolla tablet.
+    readonly property real minimumCellWidth: browserPage.largeScreen ? Theme.itemSizeExtraLarge * 1.6 : Theme.itemSizeExtraLarge
+    // phone reference row height: 960 / 6
+    readonly property real minimumCellHeight: browserPage.largeScreen ? Theme.itemSizeExtraLarge * 1.6 : Theme.pixelRatio * 160
+
+    signal load(string url, string title)
+    signal newTab(string url, string title)
+    signal share(string url, string title)
 
     function fetchAndSaveBookmark() {
         var webPage = webView && webView.contentItem
@@ -34,15 +55,12 @@ SilicaGridView {
         }
     }
 
-    signal load(string url, string title)
-    signal newTab(string url, string title)
-    signal share(string url, string title)
-
     width: cellWidth * columns
     currentIndex: -1
-
+    anchors.horizontalCenter: parent.horizontalCenter
     cellWidth: Math.round(initialCellWidth + (initialCellWidth - Theme.iconSizeLauncher) / (columns - 1))
-    cellHeight: Math.round(Screen.height / 6)
+    cellHeight: Math.round(pageHeight / rows)
+
     displaced: Transition { NumberAnimation { properties: "x,y"; easing.type: Easing.InOutQuad; duration: 200 } }
 
     onVisibleChanged: {
@@ -51,15 +69,12 @@ SilicaGridView {
         }
     }
 
-    readonly property bool contextMenuActive: contextMenu && contextMenu.active
-    property Item contextMenu: currentItem ? currentItem._menuItem : null
-    // Figure out which delegates need to be moved down to make room
-    // for the context menu when it's open.
-    property int minOffsetIndex: contextMenu ? currentIndex - (currentIndex % columns) + columns : 0
-    property int yOffset: contextMenu ? contextMenu.height : 0
-
     delegate: ListItem {
         id: container
+
+        property real offsetY: browserPage.largeScreen
+                 ? - (((-favoriteGrid.originY+container.contentHeight/2)%favoriteGrid.pageHeight)/favoriteGrid.pageHeight - 0.5) * (Theme.paddingLarge*4)
+                 : 0
 
         signal addToLauncher
         signal editBookmark
@@ -73,15 +88,6 @@ SilicaGridView {
         // Do not capture mouse events here. This ListItem only handles
         // menu creation and destruction.
         enabled: false
-
-        // Update menu position upon orientation change. Delegate's x might change when
-        // orientation changes as there are 4 columns in portrait and 7 in landscape.
-        // This breaks binding that exists in ContextMenu.
-        onXChanged: {
-            if (_menuItem && _menuItem.active) {
-                _menuItem.x = -x
-            }
-        }
 
         onAddToLauncher: {
             // url, title, favicon
@@ -136,6 +142,7 @@ SilicaGridView {
 
     VerticalScrollDecorator {
         parent: favoriteGrid
+        anchors.rightMargin: -(browserPage.width - favoriteGrid.width) / 2
         flickable: favoriteGrid
     }
 
@@ -153,7 +160,7 @@ SilicaGridView {
             id: fetcher
             property url url
             property string title
-            property Item webPage
+            property var webPage
             readonly property bool sameWebPage: webPage && title === webPage.title && url === webPage.url
 
             function handleGrabbedThumbnail(data) {
@@ -175,7 +182,7 @@ SilicaGridView {
                     // We are still at same web page but no accepted touch icon. Let's grab thumbnail.
                     canDestroy = false
                     webPage.onThumbnailResult.connect(handleGrabbedThumbnail)
-                    webPage.grabThumbnail()
+                    webPage.grabThumbnail(Qt.size(favoriteGrid.cellHeight, favoriteGrid.cellWidth))
                 } else {
                     // Use default icon.
                     bookmarkModel.addBookmark(url, title || url, defaultIcon, false)
@@ -201,8 +208,8 @@ SilicaGridView {
             property string icon
             property var bookmarkWriter
 
-            //: Title of the "Add to launcher" dialog.
-            //% "Add to launcher"
+            //: Title of the "Add to App Grid" dialog.
+            //% "Add to App Grid"
             title: qsTrId("sailfish_browser-he-add_bookmark_to_launcher")
             canAccept: editedUrl !== "" && editedTitle !== ""
             onAccepted: {

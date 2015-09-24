@@ -247,7 +247,7 @@ int DBWorker::createLink(int tabId, QString url, QString title)
     return linkId;
 }
 
-bool DBWorker::updateTab(int tabId, int tabHistoryId)
+void DBWorker::updateTab(int tabId, int tabHistoryId)
 {
 #if DEBUG_LOGS
     qDebug() << "tab:" << tabId << "tab history id:" << tabHistoryId;
@@ -255,7 +255,7 @@ bool DBWorker::updateTab(int tabId, int tabHistoryId)
     QSqlQuery query = prepare("UPDATE tab SET tab_history_id = ? WHERE tab_id = ?;");
     query.bindValue(0, tabHistoryId);
     query.bindValue(1, tabId);
-    return execute(query);
+    execute(query);
 }
 
 Tab DBWorker::getTabData(int tabId, int historyId)
@@ -274,12 +274,10 @@ Tab DBWorker::getTabData(int tabId, int historyId)
     }
 
     Link link = getLinkFromTabHistory(hId);
-    int nextId = getNextLinkIdFromTabHistory(hId);
-    int previousId = getPreviousLinkIdFromTabHistory(hId);
 #if DEBUG_LOGS
-    qDebug() << tabId << historyId << "next link id:" << nextId << "previous link id:" << previousId << link.linkId()<< link.title() << link.url();
+    qDebug() << tabId << historyId << link.linkId()<< link.title() << link.url();
 #endif
-    return Tab(tabId, link, nextId, previousId);
+    return Tab(tabId, link);
 }
 
 void DBWorker::removeTab(int tabId)
@@ -329,23 +327,6 @@ void DBWorker::removeAllTabs()
     QList<Tab> tabList;
     if (oldTabCount != 0) {
         emit tabsAvailable(tabList);
-    }
-}
-
-void DBWorker::getTab(int tabId)
-{
-    QSqlQuery query = prepare("SELECT tab_id, tab_history_id FROM tab WHERE tab_id = ?;");
-    query.bindValue(0, tabId);
-    if (!execute(query)) {
-        return;
-    }
-
-    if (query.first()) {
-#if DEBUG_LOGS
-        Tab tab = getTabData(query.value(0).toInt(), query.value(1).toInt());
-        qDebug() << query.value(0).toInt() << query.value(1).toInt() << tab.title() << tab.url();
-#endif
-        emit tabAvailable(getTabData(query.value(0).toInt(), query.value(1).toInt()));
     }
 }
 
@@ -421,19 +402,6 @@ void DBWorker::navigateTo(int tabId, QString url, QString title, QString path) {
 #endif
 }
 
-void DBWorker::updateTab(int tabId, QString url, QString title, QString path)
-{
-    Link currentLink = getCurrentLink(tabId);
-    if (!currentLink.isValid()) {
-        qWarning() << "attempt to update url that is not stored in db." << tabId << title << url << path << currentLink.linkId() << currentLink.url();
-        return;
-    }
-#if DEBUG_LOGS
-    qDebug() << tabId << title << url << path;
-#endif
-    updateLink(currentLink.linkId(), url, title, path);
-}
-
 void DBWorker::goForward(int tabId) {
     QSqlQuery query = prepare("SELECT id FROM tab_history WHERE tab_id = ? AND id > (SELECT tab_history_id FROM tab WHERE tab_id = ?) ORDER BY id ASC LIMIT 1;");
     query.bindValue(0, tabId);
@@ -448,9 +416,7 @@ void DBWorker::goForward(int tabId) {
     }
 
     if (historyId > 0) {
-        if (updateTab(tabId, historyId)) {
-            emit tabChanged(getTabData(tabId, historyId));
-        }
+        updateTab(tabId, historyId);
     }
 }
 
@@ -468,9 +434,7 @@ void DBWorker::goBack(int tabId) {
     }
 
     if (historyId > 0) {
-        if (updateTab(tabId, historyId)) {
-            emit tabChanged(getTabData(tabId, historyId));
-        }
+        updateTab(tabId, historyId);
     }
 }
 
@@ -501,19 +465,6 @@ Link DBWorker::getLinkFromTabHistory(int tabHistoryId)
     return Link();
 }
 
-int DBWorker::getPreviousLinkIdFromTabHistory(int tabHistoryId)
-{
-    QSqlQuery query = prepare("SELECT link_id FROM tab_history WHERE tab_id = (SELECT tab_id FROM tab_history WHERE id = ?) AND id < ? ORDER BY id DESC LIMIT 1;");
-    query.bindValue(0, tabHistoryId);
-    query.bindValue(1, tabHistoryId);
-    if (execute(query)) {
-        if (query.first()) {
-            return query.value(0).toInt();
-        }
-    }
-    return 0;
-}
-
 void DBWorker::clearDeprecatedTabHistory(int tabId, int currentLinkId) {
 #if DEBUG_LOGS
     qDebug() << "tab id:" << tabId << "current link id:" << currentLinkId;
@@ -522,19 +473,6 @@ void DBWorker::clearDeprecatedTabHistory(int tabId, int currentLinkId) {
     query.bindValue(0, tabId);
     query.bindValue(1, currentLinkId);
     execute(query);
-}
-
-int DBWorker::getNextLinkIdFromTabHistory(int tabHistoryId)
-{
-    QSqlQuery query = prepare("SELECT link_id FROM tab_history WHERE tab_id = (SELECT tab_id FROM tab_history WHERE id = ?) AND id > ? ORDER BY id ASC LIMIT 1;");
-    query.bindValue(0, tabHistoryId);
-    query.bindValue(1, tabHistoryId);
-    if (execute(query)) {
-        if (query.first()) {
-            return query.value(0).toInt();
-        }
-    }
-    return 0;
 }
 
 // Adds url to table history if it is not already there
@@ -610,27 +548,6 @@ int DBWorker::addToTabHistory(int tabId, int linkId)
     qDebug() << "tab:" << tabId << "link:" << linkId << "tab history id" << query.lastInsertId();
 #endif
     return lastId.toInt();
-}
-
-void DBWorker::clearTabHistory(int tabId)
-{
-    // Remove urls that are only related to this tab
-    QSqlQuery query = prepare("DELETE FROM link WHERE link_id IN "
-                              "(SELECT DISTINCT link_id FROM tab_history WHERE tab_id = ? "
-                              "AND link_id NOT IN (SELECT link_id FROM tab_history WHERE tab_id != ? "
-                              "UNION SELECT link_id FROM tab_history WHERE id IN (SELECT tab_history_id FROM tab WHERE tab_id = ?)));");
-    query.bindValue(0, tabId);
-    query.bindValue(1, tabId);
-    query.bindValue(2, tabId);
-    execute(query);
-
-    query = prepare("DELETE FROM tab_history WHERE tab_id = ? "
-                    "AND id NOT IN (SELECT tab_history_id FROM tab WHERE tab_id = ?);");
-    query.bindValue(0, tabId);
-    query.bindValue(1, tabId);
-    execute(query);
-
-    emit tabChanged(getTabData(tabId));
 }
 
 int DBWorker::createLink(QString url, QString title, QString thumbPath)
@@ -802,72 +719,4 @@ Link DBWorker::getLink(int linkId)
         }
     }
     return Link();
-}
-
-Link DBWorker::getLink(QString url)
-{
-    if (url.isEmpty()) {
-        return Link();
-    }
-
-    QSqlQuery query = prepare("SELECT link_id, url, thumb_path, title FROM link WHERE url = ?;");
-    query.bindValue(0, url);
-    if (execute(query)) {
-        if (query.first()) {
-            return Link(query.value(0).toInt(),
-                       query.value(1).toString(),
-                       query.value(2).toString(),
-                       query.value(3).toString());
-        }
-    }
-    return Link();
-}
-
-void DBWorker::updateLink(int linkId, QString url, QString title, QString thumbPath)
-{
-    // todo: check if an url in the db already contains url, then replace url
-    QString queryBase = "UPDATE link SET ";
-    int index = 0;
-    int urlIndex = -1;
-    int titleIndex = -1;
-    int thumbIndex = -1;
-    if (!url.isEmpty()) {
-        queryBase.append("url = ?");
-        urlIndex = index;
-        index++;
-    }
-    if (!title.isEmpty()) {
-        if (index > 0) {
-            queryBase.append(", ");
-        }
-        queryBase.append("title = ?");
-        titleIndex = index;
-        index++;
-    }
-    if (!thumbPath.isEmpty()) {
-        if (index > 0) {
-            queryBase.append(", ");
-        }
-        queryBase.append("thumb_path = ?");
-        thumbIndex = index;
-        index++;
-    }
-    queryBase.append(" WHERE link_id = ?;");
-
-    if (index == 0) {
-        qWarning() << Q_FUNC_INFO << "empty paramters, doing nothing";
-        return;
-    }
-    QSqlQuery query = prepare(queryBase.toUtf8().constData());
-    if (urlIndex > -1) {
-        query.bindValue(urlIndex, url);
-    }
-    if (titleIndex > -1) {
-        query.bindValue(titleIndex, title);
-    }
-    if (thumbIndex > -1) {
-        query.bindValue(thumbIndex, thumbPath);
-    }
-    query.bindValue(index, linkId);
-    execute(query);
 }

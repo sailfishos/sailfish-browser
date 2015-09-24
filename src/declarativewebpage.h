@@ -14,14 +14,17 @@
 
 #include <qqml.h>
 #include <QFutureWatcher>
-#include <QQuickItemGrabResult>
 #include <QPointer>
-#include <quickmozview.h>
 #include <QRgb>
+#include <qopenglwebpage.h>
+#include <qmozgrabresult.h>
+
+#include "tab.h"
 
 class DeclarativeWebContainer;
+class Link;
 
-class DeclarativeWebPage : public QuickMozView {
+class DeclarativeWebPage : public QOpenGLWebPage {
     Q_OBJECT
     Q_PROPERTY(DeclarativeWebContainer* container READ container NOTIFY containerChanged FINAL)
     Q_PROPERTY(int tabId READ tabId NOTIFY tabIdChanged FINAL)
@@ -35,14 +38,14 @@ class DeclarativeWebPage : public QuickMozView {
     Q_PROPERTY(qreal toolbarHeight MEMBER m_toolbarHeight NOTIFY toolbarHeightChanged FINAL)
 
 public:
-    DeclarativeWebPage(QQuickItem *parent = 0);
+    DeclarativeWebPage(QObject *parent = 0);
     ~DeclarativeWebPage();
 
     DeclarativeWebContainer* container() const;
     void setContainer(DeclarativeWebContainer *container);
 
     int tabId() const;
-    void setTabId(int tabId);
+    void setInitialTab(const Tab& tab);
 
     QVariant resurrectedContentRect() const;
     void setResurrectedContentRect(QVariant resurrectedContentRect);
@@ -51,22 +54,12 @@ public:
     bool forcedChrome() const;
     bool domContentLoaded() const;
 
-    bool urlHasChanged() const;
-    void setUrlHasChanged(bool urlHasChanged);
-
-    void setInitialUrl(const QString &url);
-
-    void bindToModel();
-    bool boundToModel();
-
-    bool backForwardNavigation() const;
-    void setBackForwardNavigation(bool backForwardNavigation);
-
-    bool viewReady() const;
+    bool initialLoadHasHappened() const;
+    void setInitialLoadHasHappened();
 
     Q_INVOKABLE void loadTab(QString newUrl, bool force);
-    Q_INVOKABLE void grabToFile();
-    Q_INVOKABLE void grabThumbnail();
+    Q_INVOKABLE void grabToFile(const QSize& size);
+    Q_INVOKABLE void grabThumbnail(const QSize& size);
     Q_INVOKABLE void forceChrome(bool forcedChrome);
 
 public slots:
@@ -75,7 +68,6 @@ public slots:
 signals:
     void containerChanged();
     void tabIdChanged();
-    void viewReadyChanged();
     void userHasDraggedWhileLoadingChanged();
     void fullscreenChanged();
     void forcedChromeChanged();
@@ -89,36 +81,35 @@ signals:
     void fullscreenHeightChanged();
     void toolbarHeightChanged();
 
-protected:
-    void componentComplete();
-
 private slots:
     void setFullscreen(const bool fullscreen);
     void onRecvAsyncMessage(const QString& message, const QVariant& data);
-    void onViewInitialized();
+    void onTabHistoryAvailable(const int& historyTabId, const QList<Link>& links);
+    void onUrlChanged();
     void grabResultReady();
     void grabWritten();
     void thumbnailReady();
 
 private:
-    QString saveToFile(QImage image, QRect cropBounds);
+    QString saveToFile(QImage image);
+    void restoreHistory();
 
     QPointer<DeclarativeWebContainer> m_container;
-    int m_tabId;
-    bool m_viewReady;
+    // Tab data fetched upon web page initialization. It never changes afterwards.
+    Tab m_initialTab;
     bool m_userHasDraggedWhileLoading;
     bool m_fullscreen;
     bool m_forcedChrome;
     bool m_domContentLoaded;
-    bool m_urlHasChanged;
-    bool m_backForwardNavigation;
-    bool m_boundToModel;
-    QString m_initialUrl;
+    bool m_initialLoadHasHappened;
+    bool m_tabHistoryReady;
+    bool m_urlReady;
     QString m_favicon;
     QVariant m_resurrectedContentRect;
-    QSharedPointer<QQuickItemGrabResult> m_grabResult;
-    QSharedPointer<QQuickItemGrabResult> m_thumbnailResult;
+    QSharedPointer<QMozGrabResult> m_grabResult;
+    QSharedPointer<QMozGrabResult> m_thumbnailResult;
     QFutureWatcher<QString> m_grabWritter;
+    QList<Link> m_restoredTabHistory;
 
     qreal m_fullScreenHeight;
     qreal m_toolbarHeight;

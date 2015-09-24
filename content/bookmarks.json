@@ -1,32 +1,26 @@
 [
     {
-        "favicon": "image://theme/icon-m-service-jolla",
+        "favicon": "image://theme/icon-launcher-jollacom",
+        "hasTouchIcon": true,
         "title": "Jolla",
         "url": "http://jolla.com/"
     },
     {
-        "favicon": "image://theme/icon-m-service-jolla",
-        "title": "How-to videos",
-        "url": "https://www.youtube.com/playlist?list=PLQgR2jhO_J0zrl6kLWusekAFr9aHR9jcH"
+        "favicon": "image://theme/icon-launcher-jollashop",
+        "hasTouchIcon": true,
+        "title": "Online Shop",
+        "url": "http://shop.jolla.com/"
     },
     {
-        "favicon": "image://theme/icon-m-service-jolla",
-        "title": "Service and Support",
-        "url": "http://jolla.com/care"
+        "favicon": "image://theme/icon-launcher-jollacare",
+        "hasTouchIcon": true,
+        "title": "Support",
+        "url": "http://jolla.com/support/"
     },
     {
-        "favicon": "image://theme/icon-m-service-jolla",
-        "title": "Help Center",
-        "url": "https://jolla.zendesk.com/"
-    },
-    {
-        "favicon": "image://theme/icon-m-service-jolla",
-        "title": "User Guide",
-        "url": "http://jolla.com/guide/"
-    },
-    {
-        "favicon": "image://theme/icon-m-service-jolla",
-        "title": "Community forum",
+        "favicon": "image://theme/icon-launcher-jollacommunity",
+        "hasTouchIcon": true,
+        "title": "Community",
         "url": "https://together.jolla.com/questions/"
     }
 ]

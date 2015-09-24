@@ -45,6 +45,7 @@ UserPrompt {
             id: username
 
             width: parent.width
+            focus: true
             visible: !passwordOnly
             //% "Enter your user name"
             placeholderText: qsTrId("sailfish_browser-la-enter_username")

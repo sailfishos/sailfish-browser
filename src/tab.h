@@ -20,7 +20,7 @@
 class Tab
 {
 public:
-    explicit Tab(int tabId, Link currentLink, int nextLinkId, int previousLinkId);
+    explicit Tab(int tabId, Link currentLink);
     explicit Tab();
 
     int tabId() const;
@@ -28,12 +28,6 @@ public:
 
     int currentLink() const;
     void setCurrentLink(int currentLinkId);
-
-    int previousLink() const;
-    void setPreviousLink(int previousLinkId);
-
-    int nextLink() const;
-    void setNextLink(int nextLinkId);
 
     QString url() const;
     void setUrl(const QString &url);
@@ -53,7 +47,6 @@ private:
     int m_tabId;
     Link m_currentLink;
     int m_nextLinkId;
-    int m_previousLinkId;
 };
 
 QDebug operator<<(QDebug, const Tab *);

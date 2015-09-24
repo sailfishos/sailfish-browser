@@ -13,13 +13,6 @@ import QtQuick 2.1
 import Sailfish.Silica 1.0
 
 CoverBackground {
-    CoverActionList {
-        CoverAction {
-            iconSource: "image://theme/icon-cover-new"
-            onTriggered: window.newTab()
-        }
-    }
-
     CoverPlaceholder {
         //: Create a new tab cover text
         //% "Create a new tab"

@@ -17,7 +17,7 @@
 #include "persistenttabmodel.h"
 #include "declarativewebcontainer.h"
 #include "declarativewebpage.h"
-#include "declarativewebviewcreator.h"
+#include "declarativewebpagecreator.h"
 #include "declarativewebutils.h"
 #include "testobject.h"
 
@@ -68,6 +68,9 @@ tst_webview::tst_webview()
 
 void tst_webview::initTestCase()
 {
+    // Create singleton.
+    DeclarativeWebUtils::instance();
+
     init(QUrl("qrc:///tst_webview.qml"));
     webContainer = TestObject::qmlObject<DeclarativeWebContainer>("webView");
     QVERIFY(webContainer);
@@ -75,6 +78,7 @@ void tst_webview::initTestCase()
     QSignalSpy loadingChanged(webContainer, SIGNAL(loadingChanged()));
     QSignalSpy urlChanged(webContainer, SIGNAL(urlChanged()));
     QSignalSpy titleChanged(webContainer, SIGNAL(titleChanged()));
+    QSignalSpy testSetupReadyChanged(rootObject(), SIGNAL(testSetupReadyChanged()));
 
     tabModel = TestObject::qmlObject<DeclarativeTabModel>("tabModel");
     QVERIFY(tabModel);
@@ -88,6 +92,10 @@ void tst_webview::initTestCase()
     waitSignals(tabAddedSpy, 1);
     waitSignals(urlChanged, 1);
     waitSignals(titleChanged, 1);
+    waitSignals(testSetupReadyChanged, 1);
+
+    QVERIFY(rootObject()->property("testSetupReady").toBool());
+    QTest::qWait(500);
 
     DeclarativeWebPage *webPage = webContainer->webPage();
     QVERIFY(webPage);
@@ -280,7 +288,9 @@ void tst_webview::testCloseActiveTab()
     int previousTabId = webContainer->webPage()->tabId();
     tabModel->closeActiveTab();
     // Updates contentItem to match index zero.
-    webContainer->activatePage(webContainer->tabId());
+    Tab tab;
+    tab.setTabId(webContainer->tabId());
+    webContainer->activatePage(tab);
     QCOMPARE(activeTabChangedSpy.count(), 1);
     QCOMPARE(tabClosedSpy.count(), 1);
     QList<QVariant> arguments = tabClosedSpy.takeFirst();
@@ -289,9 +299,7 @@ void tst_webview::testCloseActiveTab()
     QCOMPARE(tabModel->count(), 3);
     QCOMPARE(webContainer->m_webPages->count(), 3);
     QCOMPARE(webContainer->m_webPages->m_activePages.count(), 3);
-    // Two signals: closeActiveTab causes contentItem to be destroyed and second signal comes
-    // when the first item from model is made as active tab.
-    QCOMPARE(contentItemSpy.count(), 2);
+    QCOMPARE(contentItemSpy.count(), 1);
     // Tab already loaded.
     QVERIFY(!webContainer->webPage()->loading());
     QCOMPARE(webContainer->webPage()->loadProgress(), 100);
@@ -307,11 +315,8 @@ void tst_webview::testCloseActiveTab()
     QVERIFY(webContainer->url().endsWith("testselect.html"));
     QCOMPARE(webContainer->title(), newActiveTitle);
     QCOMPARE(webContainer->title(), QString("TestSelect"));
-    // Two signals: closeActiveTab causes contentItem to be destroyed. Thus, both url and title
-    // are update signaled. Second url/title changed signal comes
-    // when the first item from model is made as active tab.
-    QCOMPARE(urlChangedSpy.count(), 2);
-    QCOMPARE(titleChangedSpy.count(), 2);
+    QCOMPARE(urlChangedSpy.count(), 1);
+    QCOMPARE(titleChangedSpy.count(), 1);
     QCOMPARE(webContainer->webPage()->url().toString(), newActiveUrl);
     QVERIFY(webContainer->webPage()->url().toString().endsWith("testselect.html"));
     QCOMPARE(webContainer->webPage()->title(), newActiveTitle);
@@ -580,9 +585,7 @@ void tst_webview::forwardBackwardNavigation()
     goBack();
 
     QCOMPARE(forwardSpy.count(), 3);
-    // When goBack / goForward is called respected navigation direction is blocked immediately.
-    // Only after information is returned from database we might unlock navigation direction.
-    QCOMPARE(backSpy.count(), 4);
+    QCOMPARE(backSpy.count(), 2);
     QCOMPARE(urlChangedSpy.count(), 4);
     QCOMPARE(titleChangedSpy.count(), 4);
     QCOMPARE(webContainer->url(), formatUrl("testurlscheme.html"));
@@ -594,7 +597,7 @@ void tst_webview::forwardBackwardNavigation()
     goBack();
 
     QCOMPARE(forwardSpy.count(), 3);
-    QCOMPARE(backSpy.count(), 5);
+    QCOMPARE(backSpy.count(), 3);
     QCOMPARE(urlChangedSpy.count(), 5);
     QCOMPARE(titleChangedSpy.count(), 5);
     QCOMPARE(webContainer->url(), formatUrl("testwebprompts.html"));
@@ -606,6 +609,8 @@ void tst_webview::forwardBackwardNavigation()
     QCOMPARE(tabModel->count(), 7);
     QCOMPARE(webContainer->m_webPages->count(), webContainer->maxLiveTabCount());
     QCOMPARE(webContainer->m_webPages->m_activePages.count(), webContainer->maxLiveTabCount());
+
+    QTest::qWait(1000);
 }
 
 void tst_webview::clear()
@@ -623,6 +628,8 @@ void tst_webview::clear()
     QVERIFY(webContainer->m_webPages->m_activePages.count() == 0);
     QVERIFY(!webContainer->m_webPages->m_activePages.activeWebPage());
     QVERIFY(!webContainer->m_webPage);
+
+    QTest::qWait(5000);
 }
 
 void tst_webview::restart()
@@ -630,7 +637,7 @@ void tst_webview::restart()
     // Title "TestPage"
     QString testPageUrl = formatUrl("testpage.html");
     tabModel->newTab(testPageUrl, "");
-    QTest::qWait(1000);
+    QTest::qWait(5000);
 
     QCOMPARE(tabModel->activeTab().url(), testPageUrl);
     QCOMPARE(webContainer->url(), testPageUrl);
@@ -663,11 +670,11 @@ void tst_webview::restart()
     delete webContainer;
     webContainer = 0;
 
-    QTest::qWait(1000);
+    QTest::qWait(5000);
 
     setTestData(EMPTY_QML);
     setTestUrl(QUrl("qrc:///tst_webview.qml"));
-    QTest::qWait(1000);
+    QTest::qWait(5000);
 
     webContainer = TestObject::qmlObject<DeclarativeWebContainer>("webView");
     historyModel = TestObject::qmlObject<DeclarativeHistoryModel>("historyModel");
@@ -791,7 +798,7 @@ int main(int argc, char *argv[])
     qmlRegisterType<PersistentTabModel>("Sailfish.Browser", 1, 0, "PersistentTabModel");
     qmlRegisterType<DeclarativeWebContainer>("Sailfish.Browser", 1, 0, "WebContainer");
     qmlRegisterType<DeclarativeWebPage>("Sailfish.Browser", 1, 0, "WebPage");
-    qmlRegisterType<DeclarativeWebViewCreator>("Sailfish.Browser", 1, 0, "WebViewCreator");
+    qmlRegisterType<DeclarativeWebPageCreator>("Sailfish.Browser", 1, 0, "WebPageCreator");
 
     QString componentPath(DEFAULT_COMPONENTS_PATH);
     QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/components/EmbedLiteBinComponents.manifest"));

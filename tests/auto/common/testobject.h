@@ -42,6 +42,7 @@ public:
     void setTestUrl(const QUrl &url);
     void setContextProperty(const QString &name, QObject *value);
     int random(int min, int max);
+    QObject *rootObject() const;
 
     template <typename T> T *qmlObject(const char *propertyName) {
         QVariant var = mRootObject->property(propertyName);

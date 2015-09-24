@@ -13,6 +13,7 @@
 #include "declarativetabmodel.h"
 #include "linkvalidator.h"
 #include "declarativewebutils.h"
+#include "declarativewebpage.h"
 
 #include <QFile>
 #include <QDebug>
@@ -52,7 +53,7 @@ void DeclarativeTabModel::addTab(const QString& url, const QString &title) {
     int tabId = createTab();
     int linkId = createLink(tabId, url, title);
 
-    Tab tab(tabId, Link(linkId, url, "", title), 0, 0);
+    Tab tab(tabId, Link(linkId, url, "", title));
 #if DEBUG_LOGS
     qDebug() << "new tab data:" << &tab;
 #endif
@@ -70,8 +71,6 @@ void DeclarativeTabModel::addTab(const QString& url, const QString &title) {
 
     m_nextTabId = ++tabId;
     emit nextTabIdChanged();
-
-    setWaitingForNewTab(false);
 }
 
 int DeclarativeTabModel::nextTabId() const
@@ -116,7 +115,7 @@ void DeclarativeTabModel::clear()
         removeTab(m_tabs.at(i).tabId(), m_tabs.at(i).thumbnailPath(), i);
     }
 
-    setWaitingForNewTab(false);
+    setWaitingForNewTab(true);
 }
 
 bool DeclarativeTabModel::activateTab(const QString& url)
@@ -258,13 +257,38 @@ bool DeclarativeTabModel::contains(int tabId) const
     return findTabIndex(tabId) >= 0;
 }
 
-void DeclarativeTabModel::updateUrl(int tabId, bool activeTab, QString url, bool backForwardNavigation, bool initialLoad)
+void DeclarativeTabModel::updateUrl(int tabId, bool activeTab, const QString &url, bool initialLoad)
 {
-    if (backForwardNavigation)
-    {
-        updateTabUrl(tabId, activeTab, url, false);
-    } else {
-        updateTabUrl(tabId, activeTab, url, !initialLoad);
+    if (!LinkValidator::navigable(QUrl(url))) {
+#if DEBUG_LOGS
+        qDebug() << "invalid url: " << url;
+#endif
+        return;
+    }
+
+    int tabIndex = findTabIndex(tabId);
+    bool updateDb = false;
+    if (tabIndex >= 0 && (m_tabs.at(tabIndex).url() != url || activeTab)) {
+        QVector<int> roles;
+        roles << UrlRole << TitleRole << ThumbPathRole;
+        m_tabs[tabIndex].setUrl(url);
+
+        if (!initialLoad) {
+            m_tabs[tabIndex].setCurrentLink(nextLinkId());
+            updateDb = true;
+        }
+        m_tabs[tabIndex].setTitle("");
+        m_tabs[tabIndex].setThumbnailPath("");
+
+        if (tabId == m_activeTab.tabId()) {
+            m_activeTab = m_tabs[tabIndex];
+        }
+
+        emit dataChanged(index(tabIndex, 0), index(tabIndex, 0), roles);
+    }
+
+    if (updateDb) {
+        navigateTo(tabId, url, "", "");
     }
 }
 
@@ -338,6 +362,8 @@ void DeclarativeTabModel::updateActiveTab(const Tab &activeTab, bool loadActiveT
         int oldTabId = m_activeTab.tabId();
         m_activeTab = activeTab;
 
+        setWaitingForNewTab(true);
+
         // If tab has changed, update active tab role.
         int tabIndex = activeTabIndex();
         if (oldTabId != m_activeTab.tabId() && tabIndex >= 0) {
@@ -350,49 +376,6 @@ void DeclarativeTabModel::updateActiveTab(const Tab &activeTab, bool loadActiveT
         // contentItem of WebView.
         emit activeTabChanged(oldTabId, activeTab.tabId(), loadActiveTab);
     }
-}
-
-void DeclarativeTabModel::updateTabUrl(int tabId, bool activeTab, const QString &url, bool navigate)
-{
-    if (!LinkValidator::navigable(QUrl(url))) {
-#if DEBUG_LOGS
-        qDebug() << "invalid url: " << url;
-#endif
-        return;
-    }
-
-    int tabIndex = findTabIndex(tabId);
-    bool updateDb = false;
-    if (tabIndex >= 0 && (m_tabs.at(tabIndex).url() != url || activeTab)) {
-        QVector<int> roles;
-        roles << UrlRole << TitleRole << ThumbPathRole;
-        m_tabs[tabIndex].setUrl(url);
-
-        if (navigate) {
-            m_tabs[tabIndex].setNextLink(0);
-            int currentLinkId = m_tabs.at(tabIndex).currentLink();
-            m_tabs[tabIndex].setPreviousLink(currentLinkId);
-            m_tabs[tabIndex].setCurrentLink(nextLinkId());
-        }
-        m_tabs[tabIndex].setTitle("");
-        m_tabs[tabIndex].setThumbnailPath("");
-
-        if (tabId == m_activeTab.tabId()) {
-            m_activeTab = m_tabs[tabIndex];
-        }
-
-        emit dataChanged(index(tabIndex, 0), index(tabIndex, 0), roles);
-        updateDb = true;
-    }
-
-    if (updateDb) {
-        if (!navigate) {
-            updateTab(tabId, url, "", "");
-        } else {
-            navigateTo(tabId, url, "", "");
-        }
-    }
-
 }
 
 void DeclarativeTabModel::updateThumbnailPath(int tabId, QString path)
@@ -413,5 +396,30 @@ void DeclarativeTabModel::updateThumbnailPath(int tabId, QString path)
             emit dataChanged(start, end, roles);
             updateThumbPath(tabId, path);
         }
+    }
+}
+
+void DeclarativeTabModel::onUrlChanged()
+{
+    DeclarativeWebPage *webPage = qobject_cast<DeclarativeWebPage *>(sender());
+    if (webPage) {
+        QString url = webPage->url().toString();
+        int tabId = webPage->tabId();
+        bool activeTab = m_activeTab.tabId() == tabId;
+
+        // Initial url should not be considered as navigation request that increases navigation history.
+        // Cleanup this.
+        bool initialLoad = !webPage->initialLoadHasHappened();
+        // Virtualized pages need to be checked from the model.
+        if (!initialLoad || contains(tabId)) {
+            updateUrl(tabId, activeTab, url, initialLoad);
+        } else {
+            // Adding tab to the model is delayed so that url resolved to download link do not get added
+            // to the model. We should have downloadStatus(status) and linkClicked(url) signals in QmlMozView.
+            // To distinguish linkClicked(url) from downloadStatus(status) the downloadStatus(status) signal
+            // should not be emitted when link clicking started downloading or opened (will open) a new window.
+            addTab(url, "");
+        }
+        webPage->setInitialLoadHasHappened();
     }
 }

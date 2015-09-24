@@ -13,7 +13,7 @@ import QtQuick 2.1
 import Sailfish.Silica 1.0
 import "." as Browser
 
-SilicaGridView {
+SilicaListView {
     id: tabView
 
     property bool portrait
@@ -25,39 +25,29 @@ SilicaGridView {
     signal closeTab(int index)
     signal closeAll
 
-    cellWidth: portrait ? parent.width : parent.width / 3
-    cellHeight: portrait ? Screen.width / 2 : cellWidth
-
     width: parent.width
     height: parent.height
     currentIndex: -1
-    header: spacer
+    header: PageHeader {
+        //: Tabs
+        //% "Tabs"
+        title: qsTrId("sailfish_browser-he-tabs")
+    }
     footer: spacer
-    // If approved to Silica, remove these transitions from browser.
-    displaced: Browser.DisplaceTransition {}
-    remove: Browser.RemoveTransition {}
 
     delegate: TabItem {
         id: tabItem
 
-        width: tabView.cellWidth
-        height: tabView.cellHeight
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: browserPage.thumbnailSize.width
+        height: browserPage.thumbnailSize.height
 
-        topMargin: Theme.paddingMedium
-        leftMargin: (portrait || index % 3 === 0) ? Theme.paddingLarge : Theme.paddingMedium
-        rightMargin: (portrait || index % 3 === 2) ? Theme.paddingLarge : Theme.paddingMedium
-        bottomMargin: Theme.paddingMedium
-
-        Behavior on width {
-            enabled: !tabItem.destroying
-            NumberAnimation { easing.type: Easing.InOutQuad; duration: 150 }
+        ListView.onAdd: AddAnimation {
+            target: tabItem
         }
-        Behavior on height {
-            enabled: !tabItem.destroying
-            NumberAnimation { easing.type: Easing.InOutQuad; duration: 150 }
+        ListView.onRemove: RemoveAnimation {
+            target: tabItem
         }
-
-        GridView.onAdd: AddAnimation {}
     }
 
     // Behind tab delegates

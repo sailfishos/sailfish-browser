@@ -38,8 +38,6 @@ DBManager::DBManager(QObject *parent)
     connect(worker, SIGNAL(tabsAvailable(QList<Tab>)), this, SLOT(tabListAvailable(QList<Tab>)));
     connect(worker, SIGNAL(historyAvailable(QList<Link>)), this, SIGNAL(historyAvailable(QList<Link>)));
     connect(worker, SIGNAL(tabHistoryAvailable(int,QList<Link>)), this, SIGNAL(tabHistoryAvailable(int,QList<Link>)));
-    connect(worker, SIGNAL(tabChanged(Tab)), this, SIGNAL(tabChanged(Tab)));
-    connect(worker, SIGNAL(tabAvailable(Tab)), this, SIGNAL(tabAvailable(Tab)));
     connect(worker, SIGNAL(titleChanged(int,int,QString,QString)), this, SIGNAL(titleChanged(int,int,QString,QString)));
     connect(worker, SIGNAL(thumbPathChanged(int,QString)), this, SIGNAL(thumbPathChanged(int,QString)));
     connect(worker, SIGNAL(nextLinkId(int)), this, SLOT(updateNextLinkId(int)));
@@ -86,22 +84,9 @@ int DBManager::createLink(int tabId, QString url, QString title)
     return linkId;
 }
 
-void DBManager::getTab(int tabId)
-{
-    QMetaObject::invokeMethod(worker, "getTab", Qt::QueuedConnection,
-                              Q_ARG(int, tabId));
-}
-
 void DBManager::navigateTo(int tabId, QString url, QString title, QString path)
 {
     QMetaObject::invokeMethod(worker, "navigateTo", Qt::QueuedConnection,
-                              Q_ARG(int, tabId), Q_ARG(QString, url),
-                              Q_ARG(QString, title), Q_ARG(QString, path));
-}
-
-void DBManager::updateTab(int tabId, QString url, QString title, QString path)
-{
-    QMetaObject::invokeMethod(worker, "updateTab", Qt::QueuedConnection,
                               Q_ARG(int, tabId), Q_ARG(QString, url),
                               Q_ARG(QString, title), Q_ARG(QString, path));
 }
@@ -150,11 +135,6 @@ void DBManager::clearHistory()
 void DBManager::getHistory(const QString &filter)
 {
     QMetaObject::invokeMethod(worker, "getHistory", Qt::QueuedConnection, Q_ARG(QString, filter));
-}
-
-void DBManager::clearTabHistory(int tabId)
-{
-    QMetaObject::invokeMethod(worker, "clearTabHistory", Qt::QueuedConnection, Q_ARG(int, tabId));
 }
 
 void DBManager::getTabHistory(int tabId)

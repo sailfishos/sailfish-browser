@@ -15,7 +15,11 @@
 #include "qmozcontext.h"
 
 #include <QDateTime>
+#include <QDBusServiceWatcher>
 #include <QDBusConnection>
+#include <QDBusInterface>
+#include <QDBusPendingCallWatcher>
+#include <QDBusPendingReply>
 #include <QQmlComponent>
 #include <QQmlEngine>
 #include <QQmlContext>
@@ -35,14 +39,30 @@ static const qint64 gMemoryPressureTimeout = 600 * 1000; // 600 sec
 // In normal cases gLowMemoryEnabled is true. Can be disabled e.g. for test runs.
 static const bool gLowMemoryEnabled = qgetenv("LOW_MEMORY_DISABLED").isEmpty();
 
+static const QString MemNormal = QStringLiteral("normal");
+static const QString MemWarning = QStringLiteral("warning");
+static const QString MemCritical = QStringLiteral("critical");
+
 WebPages::WebPages(QObject *parent)
     : QObject(parent)
     , m_backgroundTimestamp(0)
+    , m_memoryLevel(MemNormal)
 {
     if (gLowMemoryEnabled) {
-        QDBusConnection::systemBus().connect("com.nokia.mce", "/com/nokia/mce/signal",
-                                             "com.nokia.mce.signal", "sig_memory_level_ind",
-                                             this, SLOT(handleMemNotify(QString)));
+        QDBusConnection systemBus = QDBusConnection::systemBus();
+        systemBus.connect("com.nokia.mce", "/com/nokia/mce/signal",
+                          "com.nokia.mce.signal", "sig_memory_level_ind",
+                          this, SLOT(handleMemNotify(QString)));
+
+        QDBusInterface mceRequest("com.nokia.mce",
+                                  "/com/nokia/mce/request",
+                                  "com.nokia.mce.request",
+                                  systemBus);
+
+        QDBusPendingCall pendingLowMemory = mceRequest.asyncCall("get_memory_level");
+        QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(pendingLowMemory, this);
+        QObject::connect(watcher, SIGNAL(finished(QDBusPendingCallWatcher*)),
+                         this, SLOT(initialMemoryLevel(QDBusPendingCallWatcher*)));
     }
 }
 
@@ -65,6 +85,25 @@ void WebPages::updateBackgroundTimestamp()
     if (!m_webContainer->foreground()) {
         m_backgroundTimestamp = QDateTime::currentMSecsSinceEpoch();
     }
+}
+
+void WebPages::initialMemoryLevel(QDBusPendingCallWatcher *watcher)
+{
+    if (watcher->isValid() && watcher->isFinished()) {
+        QDBusPendingReply<QString> reply = *watcher;
+        m_memoryLevel = reply.value();
+        if (m_memoryLevel == MemCritical) {
+            handleMemNotify(MemCritical);
+        }
+    }
+
+    watcher->deleteLater();
+}
+
+void WebPages::delayVirtualization()
+{
+    handleMemNotify(m_memoryLevel);
+    disconnect(m_activePages.activeWebPage(), SIGNAL(completedChanged()), this, SLOT(delayVirtualization()));
 }
 
 bool WebPages::initialized() const
@@ -92,8 +131,9 @@ bool WebPages::alive(int tabId) const
     return m_activePages.alive(tabId);
 }
 
-WebPageActivationData WebPages::page(int tabId, int parentId)
+WebPageActivationData WebPages::page(const Tab& tab, int parentId)
 {
+    const int tabId = tab.tabId();
     if (!m_webPageComponent) {
         qWarning() << "TabModel not initialized!";
         return WebPageActivationData(0, false);
@@ -102,12 +142,11 @@ WebPageActivationData WebPages::page(int tabId, int parentId)
     if (m_activePages.active(tabId)) {
         DeclarativeWebPage *activePage = m_activePages.activeWebPage();
         activePage->resumeView();
-        activePage->setVisible(true);
         return WebPageActivationData(activePage, false);
     }
 
 #if DEBUG_LOGS
-    qDebug() << "about to create a new tab or activate old:" << tabId;
+    qDebug() << "about to create a new tab or activate old:" << tab.tabId();
 #endif
 
     DeclarativeWebPage *webPage = 0;
@@ -121,11 +160,11 @@ WebPageActivationData WebPages::page(int tabId, int parentId)
             object->setParent(m_webContainer);
             webPage = qobject_cast<DeclarativeWebPage *>(object);
             if (webPage) {
-                webPage->setParentItem(m_webContainer);
                 webPage->setParentID(parentId);
                 webPage->setPrivateMode(m_webContainer->privateMode());
-                webPage->setTabId(tabId);
+                webPage->setInitialTab(tab);
                 webPage->setContainer(m_webContainer);
+                webPage->initialize();
                 m_webPageComponent->completeCreate();
 #if DEBUG_LOGS
                 qDebug() << "New view id:" << webPage->uniqueID() << "parentId:" << webPage->parentId() << "tab id:" << webPage->tabId();
@@ -149,11 +188,17 @@ WebPageActivationData WebPages::page(int tabId, int parentId)
     dumpPages();
 #endif
 
+    if (m_memoryLevel == MemCritical) {
+        handleMemNotify(m_memoryLevel);
+    }
+
     return WebPageActivationData(newActiveWebPage, true);
 }
 
-void WebPages::release(int tabId, bool virtualize)
+void WebPages::release(int tabId)
 {
+    // Web pages are released only upon closing a tab thus don't need virtualizing.
+    bool virtualize(false);
     m_activePages.release(tabId, virtualize);
 }
 
@@ -170,21 +215,22 @@ int WebPages::parentTabId(int tabId) const
 void WebPages::updateStates(DeclarativeWebPage *oldActivePage, DeclarativeWebPage *newActivePage)
 {
     if (oldActivePage) {
-        oldActivePage->setVisible(false);
-        oldActivePage->setOpacity(1.0);
-
         // Allow suspending only the current active page if it is not the creator (parent).
         if (newActivePage->parentId() != (int)oldActivePage->uniqueID()) {
             if (oldActivePage->loading()) {
                 oldActivePage->stop();
             }
             oldActivePage->suspendView();
+        } else {
+            // Sets parent to inactive and suspends rendering keeping
+            // timeouts running.
+            oldActivePage->setActive(false);
         }
     }
 
     if (newActivePage) {
         newActivePage->resumeView();
-        newActivePage->setVisible(true);
+        newActivePage->update();
     }
 }
 
@@ -195,12 +241,18 @@ void WebPages::dumpPages() const
 
 void WebPages::handleMemNotify(const QString &memoryLevel)
 {
+    // Keep track of memory notification signals.
+    m_memoryLevel = memoryLevel;
+
     if (!m_webContainer || !m_webContainer->completed()) {
         return;
     }
 
-    if (memoryLevel == QString("warning") || memoryLevel == QString("critical")) {
-        m_activePages.virtualizeInactive();
+    if (m_memoryLevel == MemWarning || m_memoryLevel == MemCritical) {
+
+        if (!m_activePages.virtualizeInactive() && m_activePages.activeWebPage() && !m_activePages.activeWebPage()->completed()) {
+            connect(m_activePages.activeWebPage(), SIGNAL(completedChanged()), this, SLOT(delayVirtualization()), Qt::UniqueConnection);
+        }
 
         if (!m_webContainer->foreground() &&
                 (QDateTime::currentMSecsSinceEpoch() - m_backgroundTimestamp) > gMemoryPressureTimeout) {

@@ -10,16 +10,21 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 
-import QtQuick 2.0
+import QtQuick 2.1
+import QtQuick.Window 2.1 as QtWindow
 import Sailfish.Silica 1.0
+import Sailfish.Silica.private 1.0 as Private
 import Sailfish.Browser 1.0
 import "components" as Browser
-
 
 Page {
     id: browserPage
 
-    property Item firstUseOverlay
+    readonly property rect inputMask: inputMaskForOrientation(orientation)
+    readonly property bool active: status == PageStatus.Active
+    property bool tabPageActive
+    readonly property bool largeScreen: Screen.sizeCategory > Screen.Medium
+    readonly property size thumbnailSize: Qt.size((Screen.width - (largeScreen ? (2 * Theme.horizontalPageMargin) : 0)), (largeScreen ? Theme.itemSizeExtraLarge + (2 * Theme.paddingLarge) : Screen.height / 5))
     property Item debug
     property Component tabPageComponent
 
@@ -34,78 +39,105 @@ Page {
         webView.load(url, title)
     }
 
-    function bringToForeground() {
-        if (!window.applicationActive) {
-            window.activate()
+    function bringToForeground(window) {
+        if (!Qt.application.active && window) {
+            window.raise()
         }
     }
 
     function activateNewTabView() {
         pageStack.pop(browserPage, PageStackAction.Immediate);
         overlay.enterNewTabUrl(PageStackAction.Immediate)
-        bringToForeground()
+        bringToForeground(webView.chromeWindow)
+        // after bringToForeground, webView has focus => activate chrome
+        window.activate()
     }
 
-    // Safety clipping. There is clipping in ApplicationWindow that should react upon focus changes.
-    // This clipping can handle also clipping of QmlMozView. When this page is active we do not need to clip
-    // if input method is not visible.
-    clip: status != PageStatus.Active || webView.inputPanelVisible
+    function inputMaskForOrientation(orientation) {
+        // mask is in portrait window coordinates
+        var mask = Qt.rect(0, 0, Screen.width, Screen.height)
+        if (!window.opaqueBackground && webView.enabled && browserPage.active && !webView.popupActive && !downloadPopup.visible) {
+            var overlayVisibleHeight = browserPage.height - overlay.y
 
-    orientationTransitions: Transition {
-        to: 'Portrait,Landscape,LandscapeInverted'
-        from: 'Portrait,Landscape,LandscapeInverted'
-        SequentialAnimation {
-            PropertyAction {
-                target: browserPage
-                property: 'orientationTransitionRunning'
-                value: true
-            }
-            ParallelAnimation {
-                FadeAnimation {
-                    target: webView.contentItem
-                    to: 0
-                    duration: 150
-                }
-                FadeAnimation {
-                    target: !webView.fullscreenMode ? overlay : null
-                    to: 0
-                    duration: 150
-                }
-            }
-            PropertyAction {
-                target: browserPage
-                properties: 'width,height,rotation,orientation'
-            }
-            ScriptAction {
-                script: {
-                    // Restores the Bindings to width, height and rotation
-                    _defaultTransition = false
-                    webView.resetHeight()
-                    _defaultTransition = true
-                }
-            }
-            FadeAnimation {
-                target: !webView.fullscreenMode ? overlay : null
-                to: 1
-                duration: 150
-            }
-            // End-2-end implementation for OnUpdateDisplayPort should
-            // give better solution and reduce visible relayoutting.
-            FadeAnimation {
-                target: webView.contentItem
-                to: 1
-                duration: 850
-            }
-            PropertyAction {
-                target: browserPage
-                property: 'orientationTransitionRunning'
-                value: false
+            switch (orientation) {
+            case Orientation.None:
+            case Orientation.Portrait:
+                mask.y = overlay.y
+                // fallthrough
+            case Orientation.PortraitInverted:
+                mask.height = overlayVisibleHeight
+                break
+
+            case Orientation.LandscapeInverted:
+                mask.x = overlay.y
+                // fallthrough
+            case Orientation.Landscape:
+                mask.width = overlayVisibleHeight
             }
         }
+        return mask
+    }
+
+    onStatusChanged: {
+        if (overlay.enteringNewTabUrl) {
+            return
+        }
+
+        if (status == PageStatus.Inactive && overlay.visible) {
+            overlay.animator.hide()
+        }
+    }
+
+    property int pageOrientation: pageStack.currentPage._windowOrientation
+    onPageOrientationChanged: {
+        // When on other pages update immediately.
+        if (!active) {
+            webView.applyContentOrientation(pageOrientation)
+        }
+    }
+
+    orientationTransitions: orientationFader.orientationTransition
+
+    Browser.OrientationFader {
+        id: orientationFader
+
+        visible: webView.contentItem
+        page: browserPage
+        fadeTarget: overlay.animator.allowContentUse ? overlay : overlay.dragArea
+        color: webView.contentItem ? (webView.resourceController.videoActive &&
+                                      webView.contentItem.fullscreen ? "black" : webView.contentItem.bgcolor)
+                                   : "white"
+
+        onApplyContentOrientation: webView.applyContentOrientation(browserPage.orientation)
     }
 
     HistoryModel {
         id: historyModel
+    }
+
+    Private.VirtualKeyboardObserver {
+        id: virtualKeyboardObserver
+
+        active: webView.enabled
+        transpose: window._transpose
+        orientation: browserPage.orientation
+
+        onWindowChanged: webView.chromeWindow = window
+        onClosedChanged: {
+            if (closed) {
+                webView.updatePageFocus(false)
+            }
+        }
+
+        // Update content height only after virtual keyboard fully opened.
+        states: State {
+            name: "boundHeightControl"
+            when: virtualKeyboardObserver.opened && webView.enabled
+            PropertyChanges {
+                target: webView.contentItem
+                height: browserPage.height - virtualKeyboardObserver.panelSize
+            }
+        }
     }
 
     Browser.DownloadRemorsePopup { id: downloadPopup }
@@ -117,26 +149,107 @@ Page {
         portrait: browserPage.isPortrait
         maxLiveTabCount: 3
         toolbarHeight: overlay.toolBar.toolsHeight
-        clip: true
+        width: window.width
+        height: window.height
+        rotationHandler: browserPage
+        imOpened: virtualKeyboardObserver.opened
+
+        // Show overlay immediately at top if needed.
+        onTabModelChanged: handleModelChanges(true)
+
+        onChromeExposed: {
+            if (overlay.animator.atTop && overlay.searchField.focus && !WebUtils.firstUseDone) {
+                webView.chromeWindow.raise()
+            }
+        }
+
+        onForegroundChanged: {
+            if (foreground && webView.chromeWindow) {
+                webView.chromeWindow.raise()
+            }
+        }
+
+        function applyContentOrientation(orientation) {
+            switch (orientation) {
+            case Orientation.None:
+            case Orientation.Portrait:
+                updateContentOrientation(Qt.PortraitOrientation)
+                break
+            case Orientation.Landscape:
+                updateContentOrientation(Qt.LandscapeOrientation)
+                break
+            case Orientation.PortraitInverted:
+                updateContentOrientation(Qt.InvertedPortraitOrientation)
+                break
+            case Orientation.LandscapeInverted:
+                updateContentOrientation(Qt.InvertedLandscapeOrientation)
+                break
+            }
+            resetHeight()
+        }
+
+        // Both model change and model count change are connected to this.
+        function handleModelChanges(openOverlayImmediately) {
+            if (webView.completed && (!webView.tabModel || webView.tabModel.count === 0)) {
+                overlay.animator.showOverlay(openOverlayImmediately)
+            }
+
+            window.setBrowserCover(webView.tabModel)
+        }
     }
 
-    Rectangle {
+    // Use Connections so that target updates when model changes.
+    Connections {
+        target: webView && webView.tabModel || null
+        ignoreUnknownSignals: true
+        // Animate overlay to top if needed.
+        onCountChanged: webView.handleModelChanges(false)
+        onWaitingForNewTabChanged: window.opaqueBackground = webView.tabModel.waitingForNewTab
+    }
+
+    InputRegion {
+        window: webView.chromeWindow
+        x: inputMask.x
+        y: inputMask.y
+        width: inputMask.width
+        height: inputMask.height
+    }
+
+    Browser.DimmerEffect {
         id: contentDimmer
-        width: webView.width
-        height: Math.ceil(webView.height)
-        opacity: 0.9 - (overlay.y / (webView.fullscreenHeight - overlay.toolBar.toolsHeight)) * 0.9
-        color: Theme.highlightDimmerColor
+
+        readonly property bool canOpenContentDimmer: webView.activeTabRendered && overlay.animator.atBottom
+
+        width: browserPage.width
+        height: Math.ceil(overlay.y)
+
+        baseColor: overlay.baseColor
+        baseOpacity: overlay.baseOpacity
+        dimmerOpacity: overlay.animator.atBottom
+                       ? 0.0
+                       : 0.9 - (overlay.y / (webView.fullscreenHeight - overlay.toolBar.toolsHeight)) * 0.9
 
         MouseArea {
             anchors.fill: parent
-            enabled: overlay.animator.atTop && (webView.tabModel.count > 0 || firstUseOverlay)
-            onClicked: overlay.dismiss()
+            enabled: overlay.animator.atTop && webView.tabModel.count > 0
+            onClicked: {
+                overlay.dismiss(true)
+                // trigger overlay.onActiveChanged() handler to activate a web page in case it's inactive
+                overlay.activeChanged()
+            }
         }
 
         Browser.PrivateModeTexture {
             id: privateModeTexture
             anchors.fill: contentDimmer
             visible: webView.privateMode && !overlay.animator.allowContentUse
+        }
+
+        onCanOpenContentDimmerChanged: {
+            if (canOpenContentDimmer) {
+                webView.tabModel.waitingForNewTab = false
+                window.opaqueBackground = false
+            }
         }
     }
 
@@ -167,41 +280,43 @@ Page {
         webView: webView
         historyModel: historyModel
         browserPage: browserPage
+
+        onEnteringNewTabUrlChanged: window.opaqueBackground = webView.tabModel.waitingForNewTab || enteringNewTabUrl
+
+        onActiveChanged: {
+            if (active && webView.contentItem && !overlay.enteringNewTabUrl && !webView.contentItem.fullscreen) {
+                overlay.animator.showChrome()
+            }
+
+            if (!active && webView.chromeWindow && webView.foreground) {
+                webView.chromeWindow.raise()
+            }
+        }
     }
 
     CoverActionList {
-        enabled: browserPage.status === PageStatus.Active && webView.contentItem
+        enabled: (browserPage.status === PageStatus.Active || browserPage.tabPageActive || !webView.tabModel || webView.tabModel.count === 0)
         iconBackground: true
+        window: webView
 
         CoverAction {
             iconSource: "image://theme/icon-cover-new"
             onTriggered: activateNewTabView()
-        }
-
-        CoverAction {
-            iconSource: webView.loading ? "image://theme/icon-cover-cancel" : "image://theme/icon-cover-refresh"
-            onTriggered: {
-                if (webView.loading) {
-                    webView.stop()
-                } else {
-                    webView.reload()
-                }
-            }
         }
     }
 
     Connections {
         target: WebUtils
         onOpenUrlRequested: {
-            // url is empty when user tapped icon when browser was already open.
+            // Url is empty when user tapped icon when browser was already open.
+            // In case first use not done show the overlay immediately.
             if (url == "") {
-                bringToForeground()
-                return
-            }
+                bringToForeground(webView.chromeWindow)
+                if (!WebUtils.firstUseDone) {
+                    overlay.animator.showOverlay(true)
+                }
 
-            // We have incoming URL so let's show it
-            if (firstUseOverlay) {
-                firstUseOverlay.dismiss()
+                return
             }
 
             if (browserPage.status !== PageStatus.Active) {
@@ -214,7 +329,7 @@ Page {
                 webView.load(url)
                 overlay.animator.showChrome(true)
             }
-            bringToForeground()
+            bringToForeground(webView)
         }
         onActivateNewTabViewRequested: {
             activateNewTabView()
@@ -230,22 +345,11 @@ Page {
         WebUtils.zoomMargin = Theme.paddingMedium
 
         if (!WebUtils.firstUseDone) {
-            var component = Qt.createComponent(Qt.resolvedUrl("components/FirstUseOverlay.qml"))
-            if (component.status == Component.Ready) {
-                // Parent to browserPage so that FirstUseOverlay is visible as WebView is invisible
-                // when FirstUseOverlay is visible.
-                firstUseOverlay = component.createObject(browserPage, {
-                                                             "width": webView.width,
-                                                             "height": webView.height,
-                                                             "fullscreenHeight": browserPage.height,
-                                                             "gestureThreshold" : webView.toolbarHeight / 2});
-            } else {
-                console.log("FirstUseOverlay create failed " + component.errorString())
-            }
+            window.setBrowserCover(webView.tabModel)
         }
 
         if (WebUtils.debugMode) {
-            component = Qt.createComponent(Qt.resolvedUrl("components/DebugOverlay.qml"))
+            var component = Qt.createComponent(Qt.resolvedUrl("components/DebugOverlay.qml"))
             if (component.status === Component.Ready) {
                 debug = component.createObject(browserPage)
             } else {

@@ -20,10 +20,6 @@ PersistentTabModel::PersistentTabModel(QObject *parent)
 {
     connect(DBManager::instance(), SIGNAL(tabsAvailable(QList<Tab>)),
             this, SLOT(tabsAvailable(QList<Tab>)));
-    connect(DBManager::instance(), SIGNAL(tabChanged(Tab)),
-            this, SLOT(tabChanged(Tab)));
-    connect(DeclarativeWebUtils::instance(), SIGNAL(beforeShutdown()),
-            this, SLOT(saveActiveTab()));
 
     DBManager::instance()->getAllTabs();
 }
@@ -72,41 +68,9 @@ void PersistentTabModel::tabsAvailable(QList<Tab> tabs)
         m_loaded = true;
         emit loadedChanged();
     }
-}
 
-void PersistentTabModel::tabChanged(const Tab &tab)
-{
-#if DEBUG_LOGS
-    qDebug() << "new tab data:" << &tab;
-#endif
-    if (m_tabs.isEmpty()) {
-        qWarning() << "No tabs!";
-        return;
-    }
-
-    int i = findTabIndex(tab.tabId());
-    if (i > -1) {
-        QVector<int> roles;
-        Tab oldTab = m_tabs[i];
-        if (oldTab.url() != tab.url()) {
-            roles << UrlRole;
-        }
-        if (oldTab.title() != tab.title()) {
-            roles << TitleRole;
-        }
-        if (oldTab.thumbnailPath() != tab.thumbnailPath()) {
-            roles << ThumbPathRole;
-        }
-        m_tabs[i] = tab;
-        QModelIndex start = index(i, 0);
-        QModelIndex end = index(i, 0);
-        emit dataChanged(start, end, roles);
-    }
-
-    if (tab.tabId() == m_activeTab.tabId()) {
-        m_activeTab = tab;
-        emit activeTabChanged(tab.tabId(), tab.tabId(), true);
-    }
+    connect(this, SIGNAL(activeTabIndexChanged()),
+            this, SLOT(saveActiveTab()), Qt::UniqueConnection);
 }
 
 int PersistentTabModel::createTab() {
@@ -129,13 +93,6 @@ void PersistentTabModel::removeTab(int tabId)
 
 int PersistentTabModel::nextLinkId() {
     return DBManager::instance()->nextLinkId();
-}
-
-void PersistentTabModel::updateTab(int tabId, QString url, QString title, QString path) {
-    Q_UNUSED(title)
-    Q_UNUSED(path)
-
-    DBManager::instance()->updateTab(tabId, url, "", "");
 }
 
 void PersistentTabModel::navigateTo(int tabId, QString url, QString title, QString path) {

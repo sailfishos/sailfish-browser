@@ -29,6 +29,8 @@ Dialog {
 
             DialogHeader {
                 id: header
+                dialog: dialog
+                _glassOnly: true
             }
 
             Item {

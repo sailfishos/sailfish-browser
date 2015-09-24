@@ -39,7 +39,9 @@ public:
 signals:
     void homePageChanged();
     void firstUseDoneChanged();
-    void beforeShutdown();
+
+private slots:
+    void updateWebEngineSettings();
 
 private:
     QString m_homePage;

@@ -13,24 +13,36 @@
 #define DECLARATIVEWEBCONTAINER_H
 
 #include "settingmanager.h"
-#include "tab.h"
 #include "webpages.h"
 
-#include <QQuickItem>
+#include <qqml.h>
+#include <qmozcontext.h>
+#include <QtGui/QWindow>
+#include <QtGui/QOpenGLFunctions>
 #include <QPointer>
 #include <QImage>
 #include <QFutureWatcher>
+#include <QQmlComponent>
+#include <QQuickView>
+#include <QQuickItem>
+#include <QMutex>
+#include <QWaitCondition>
 
+class QInputMethodEvent;
 class QTimerEvent;
 class DeclarativeTabModel;
 class DeclarativeWebPage;
+class Tab;
 
-class DeclarativeWebContainer : public QQuickItem {
+class DeclarativeWebContainer : public QWindow, public QQmlParserStatus, protected QOpenGLFunctions {
     Q_OBJECT
+    Q_INTERFACES(QQmlParserStatus)
 
+    Q_PROPERTY(QQuickItem *rotationHandler MEMBER m_rotationHandler NOTIFY rotationHandlerChanged FINAL)
     Q_PROPERTY(DeclarativeWebPage *contentItem READ webPage NOTIFY contentItemChanged FINAL)
     Q_PROPERTY(DeclarativeTabModel *tabModel READ tabModel WRITE setTabModel NOTIFY tabModelChanged FINAL)
     Q_PROPERTY(bool completed READ completed NOTIFY completedChanged FINAL)
+    Q_PROPERTY(bool enabled MEMBER m_enabled NOTIFY enabledChanged FINAL)
     Q_PROPERTY(bool foreground READ foreground WRITE setForeground NOTIFY foregroundChanged FINAL)
     Q_PROPERTY(int maxLiveTabCount READ maxLiveTabCount WRITE setMaxLiveTabCount NOTIFY maxLiveTabCountChanged FINAL)
     // This property should cover all possible popus
@@ -38,11 +50,8 @@ class DeclarativeWebContainer : public QQuickItem {
     Q_PROPERTY(bool portrait MEMBER m_portrait NOTIFY portraitChanged FINAL)
     Q_PROPERTY(bool fullscreenMode MEMBER m_fullScreenMode NOTIFY fullscreenModeChanged FINAL)
     Q_PROPERTY(qreal fullscreenHeight MEMBER m_fullScreenHeight NOTIFY fullscreenHeightChanged FINAL)
-    Q_PROPERTY(bool inputPanelVisible READ inputPanelVisible NOTIFY inputPanelVisibleChanged FINAL)
-    Q_PROPERTY(qreal inputPanelHeight READ inputPanelHeight WRITE setInputPanelHeight NOTIFY inputPanelHeightChanged FINAL)
-    Q_PROPERTY(qreal inputPanelOpenHeight MEMBER m_inputPanelOpenHeight NOTIFY inputPanelOpenHeightChanged FINAL)
+    Q_PROPERTY(bool imOpened MEMBER m_imOpened NOTIFY imOpenedChanged FINAL)
     Q_PROPERTY(qreal toolbarHeight MEMBER m_toolbarHeight NOTIFY toolbarHeightChanged FINAL)
-    Q_PROPERTY(bool background READ background NOTIFY backgroundChanged FINAL)
     Q_PROPERTY(bool allowHiding MEMBER m_allowHiding NOTIFY allowHidingChanged FINAL)
 
     Q_PROPERTY(QString favicon MEMBER m_favicon NOTIFY faviconChanged)
@@ -59,11 +68,12 @@ class DeclarativeWebContainer : public QQuickItem {
     Q_PROPERTY(QString url READ url NOTIFY urlChanged FINAL)
 
     Q_PROPERTY(bool privateMode READ privateMode WRITE setPrivateMode NOTIFY privateModeChanged FINAL)
+    Q_PROPERTY(bool activeTabRendered READ activeTabRendered NOTIFY activeTabRenderedChanged FINAL)
 
     Q_PROPERTY(QQmlComponent* webPageComponent MEMBER m_webPageComponent NOTIFY webPageComponentChanged FINAL)
-
+    Q_PROPERTY(QObject *chromeWindow READ chromeWindow WRITE setChromeWindow NOTIFY chromeWindowChanged FINAL)
 public:
-    DeclarativeWebContainer(QQuickItem *parent = 0);
+    DeclarativeWebContainer(QWindow *parent = 0);
     ~DeclarativeWebContainer();
 
     DeclarativeWebPage *webPage() const;
@@ -82,23 +92,20 @@ public:
     bool privateMode() const;
     void setPrivateMode(bool);
 
-    bool background() const;
+    bool activeTabRendered() const;
 
     bool loading() const;
 
     int loadProgress() const;
     void setLoadProgress(int loadProgress);
 
-    bool inputPanelVisible() const;
-
-    qreal inputPanelHeight() const;
-    void setInputPanelHeight(qreal height);
+    bool imOpened() const;
 
     bool canGoForward() const;
-    void setCanGoForward(bool canGoForward);
-
     bool canGoBack() const;
-    void setCanGoBack(bool canGoBack);
+
+    QObject *chromeWindow() const;
+    void setChromeWindow(QObject *chromeWindow);
 
     int tabId() const;
     QString title() const;
@@ -106,32 +113,38 @@ public:
     QString thumbnailPath() const;
 
     bool isActiveTab(int tabId);
-    bool activatePage(int tabId, bool force = false, int parentId = 0);
+    bool activatePage(const Tab& tab, bool force = false, int parentId = 0);
 
     Q_INVOKABLE void load(QString url = "", QString title = "", bool force = false);
     Q_INVOKABLE void reload(bool force = true);
     Q_INVOKABLE void goForward();
     Q_INVOKABLE void goBack();
+
+    Q_INVOKABLE void updatePageFocus(bool focus);
+    Q_INVOKABLE void clearSurface() {  postClearWindowSurfaceTask(); }
+
     Q_INVOKABLE bool alive(int tabId);
 
     Q_INVOKABLE void dumpPages() const;
 
+    QObject *focusObject() const;
+
+    bool event(QEvent *event);
+
 signals:
+    void rotationHandlerChanged();
     void contentItemChanged();
     void tabModelChanged();
     void completedChanged();
-    void pageStackChanged();
+    void enabledChanged();
     void foregroundChanged();
-    void backgroundChanged();
     void allowHidingChanged();
     void maxLiveTabCountChanged();
     void popupActiveChanged();
     void portraitChanged();
     void fullscreenModeChanged();
     void fullscreenHeightChanged();
-    void inputPanelVisibleChanged();
-    void inputPanelHeightChanged();
-    void inputPanelOpenHeightChanged();
+    void imOpenedChanged();
     void toolbarHeightChanged();
 
     void faviconChanged();
@@ -146,29 +159,43 @@ signals:
     void urlChanged();
     void thumbnailPathChanged();
     void privateModeChanged();
+    void activeTabRenderedChanged();
 
     void webPageComponentChanged();
+    void chromeWindowChanged();
+    void chromeExposed();
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event);
-    void componentComplete();
+    virtual void exposeEvent(QExposeEvent *event);
+    virtual void touchEvent(QTouchEvent *event);
+    virtual QVariant inputMethodQuery(Qt::InputMethodQuery property) const;
+    virtual void inputMethodEvent(QInputMethodEvent *event);
+    virtual void keyPressEvent(QKeyEvent *event);
+    virtual void keyReleaseEvent(QKeyEvent *event);
+    virtual void focusInEvent(QFocusEvent *event);
+    virtual void focusOutEvent(QFocusEvent *event);
+    virtual void timerEvent(QTimerEvent *event);
+
+    virtual void classBegin();
+    virtual void componentComplete();
 
 public slots:
     void resetHeight(bool respectContentHeight = true);
+    void updateContentOrientation(Qt::ScreenOrientation orientation);
 
 private slots:
     void imeNotificationChanged(int state, bool open, int cause, int focusChange, const QString& type);
-    void handleEnabledChanged();
     void initialize();
     void onActiveTabChanged(int oldTabId, int activeTabId, bool loadActiveTab);
     void onDownloadStarted();
     void onNewTabRequested(QString url, QString title, int parentId);
-    void releasePage(int tabId, bool virtualize = false);
+    void releasePage(int tabId);
     void closeWindow();
-    void onPageUrlChanged();
     void onPageTitleChanged();
     void updateLoadProgress();
     void updateLoading();
+    void updateActiveTabRendered();
     void setActiveTabData();
 
     void updateWindowFlags();
@@ -177,19 +204,30 @@ private slots:
     // matching composition metrics.
     void sendVkbOpenCompositionMetrics();
 
+    void createGLContext();
+
 private:
     void setWebPage(DeclarativeWebPage *webPage);
     qreal contentHeight() const;
     int parentTabId(int tabId) const;
-    void updateNavigationStatus(const Tab &tab);
-    void updateVkbHeight();
-    void updateUrl(const QString &newUrl);
-    void updateTitle(const QString &newTitle);
     bool canInitialize() const;
-    void loadTab(int tabId, QString url, QString title, bool force);
+    void loadTab(const Tab& tab, bool force);
     void updateMode();
+    void setActiveTabRendered(bool rendered);
 
+    // Clears window surface on the compositor thread. Can be called even when there are
+    // no active views. In case this function is called too early during gecko initialization,
+    // before compositor thread has actually been started the function returns false.
+    bool postClearWindowSurfaceTask();
+    static void clearWindowSurfaceTask(void* data);
+    void clearWindowSurface();
+
+    QPointer<QQuickItem> m_rotationHandler;
     QPointer<DeclarativeWebPage> m_webPage;
+    QPointer<QQuickView> m_chromeWindow;
+    QOpenGLContext *m_context;
+    QMutex m_contextMutex;
+
     QPointer<DeclarativeTabModel> m_model;
     QPointer<QQmlComponent> m_webPageComponent;
     QPointer<SettingManager> m_settingManager;
@@ -197,17 +235,14 @@ private:
     QPointer<DeclarativeTabModel> m_persistentTabModel;
     QPointer<DeclarativeTabModel> m_privateTabModel;
 
-
+    bool m_enabled;
     bool m_foreground;
     bool m_allowHiding;
     bool m_popupActive;
     bool m_portrait;
     bool m_fullScreenMode;
-    bool m_activatingTab;
     qreal m_fullScreenHeight;
-    bool m_inputPanelVisible;
-    qreal m_inputPanelHeight;
-    qreal m_inputPanelOpenHeight;
+    bool m_imOpened;
     qreal m_toolbarHeight;
 
     QString m_favicon;
@@ -216,23 +251,22 @@ private:
     // or qml component is not yet completed (completed property is still false). So cache url/title for later use.
     // Problem is visible with a download url as it does not trigger urlChange for the loaded page (correct behavior).
     // Once downloading has been started and if we have existing tabs we reset
-    // back to the active tab and load it. In case we didn't not have tabs open when downloading was
+    // back to the active tab and load it. In case we did not have tabs open when downloading was
     // triggered we just clear these.
-    // The exposed url/title are always coming from the active web page.
-    QString m_url;
-    QString m_title;
     int m_tabId;
+    QString m_initialUrl;
 
     bool m_loading;
     int m_loadProgress;
-    bool m_canGoForward;
-    bool m_canGoBack;
-    bool m_realNavigation;
 
     bool m_completed;
     bool m_initialized;
 
     bool m_privateMode;
+    bool m_activeTabRendered;
+
+    QMutex m_clearSurfaceTaskMutex;
+    QMozContext::TaskHandle m_clearSurfaceTask;
 
     friend class tst_webview;
 };

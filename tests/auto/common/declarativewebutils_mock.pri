@@ -4,3 +4,9 @@
 # are at the same level in the file hierarchy.
 SOURCES += ../common/declarativewebutils.cpp
 HEADERS += ../common/declarativewebutils.h
+
+isEmpty(QTEMBED_LIB) {
+  PKGCONFIG += qt5embedwidget
+} else {
+  LIBS+=$$QTEMBED_LIB
+}

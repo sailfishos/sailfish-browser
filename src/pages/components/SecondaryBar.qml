@@ -85,7 +85,7 @@ Item {
         Browser.IconButton {
             id: downloadsButton
             width: iconWidth + horizontalOffset
-            icon.source: "image://theme/icon-m-mobile-network"
+            icon.source: "image://theme/icon-m-transfer"
             icon.anchors.horizontalCenterOffset: -horizontalOffset
             onTapped: settingsApp.call("showTransfers", [])
         }

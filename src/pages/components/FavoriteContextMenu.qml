@@ -20,6 +20,9 @@ Component {
         property string title
         property string url
 
+        // FavoriteGrid doesn't fill the entire page thus set width to FavoriteGrid's parent
+        width: _flickable !== null ? _flickable.parent.width : (parent ? parent.width : 0)
+
         MenuItem {
             //% "Open in new tab"
             text: qsTrId("sailfish_browser-me-open_new_tab")
@@ -34,8 +37,8 @@ Component {
         }
 
         MenuItem {
-            //: Add bookmark to launcher menu item. This should be relatively short to fit to the menu.
-            //% "Add to launcher"
+            //: Add bookmark to App Grid menu item. This should be relatively short to fit to the menu.
+            //% "Add to App Grid"
             text: qsTrId("sailfish_browser-me-add_to_launcher")
             onClicked: delegate.addToLauncher()
         }

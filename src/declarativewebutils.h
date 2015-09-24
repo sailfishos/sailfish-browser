@@ -74,7 +74,6 @@ signals:
     void activateNewTabViewRequested();
     void firstUseDoneChanged();
     void dumpMemoryInfo(QString fileName);
-    void beforeShutdown();
     void cssPixelRatioChanged();
     void silicaPixelRatioChanged();
     void touchSideRadiusChanged();
@@ -91,6 +90,7 @@ private:
     explicit DeclarativeWebUtils();
     ~DeclarativeWebUtils();
     void setContentScaling();
+    void setRenderingPreferences();
 
     MGConfItem m_homePage;
     bool m_firstUseDone;

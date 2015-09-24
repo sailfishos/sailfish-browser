@@ -90,11 +90,11 @@ void WebPageQueue::release(int tabId,  bool virtualize)
             if (virtualize) {
                 pageEntry->cssContentRect = new QRectF(pageEntry->webPage->contentRect());
             }
-            if (pageEntry->webPage->viewReady()) {
+            if (pageEntry->webPage->completed()) {
                 pageEntry->webPage->setParent(0);
                 delete pageEntry->webPage;
             } else {
-                QObject::connect(pageEntry->webPage, SIGNAL(viewReadyChanged()), pageEntry->webPage, SLOT(deleteLater()));
+                QObject::connect(pageEntry->webPage, SIGNAL(completedChanged()), pageEntry->webPage, SLOT(deleteLater()));
             }
         }
 
@@ -180,11 +180,11 @@ int WebPageQueue::maxLivePages() const
     return m_maxLiveCount;
 }
 
-void WebPageQueue::virtualizeInactive()
+bool WebPageQueue::virtualizeInactive()
 {
-    if (!m_livePagePrepended || m_queue.isEmpty() || !m_queue.at(0)->webPage) {
-        // no need to iterate through a queue of only one or zero live pages
-        return;
+    if (!m_livePagePrepended || m_queue.isEmpty() || !m_queue.at(0)->webPage || !m_queue.at(0)->webPage->completed()) {
+        // no need to iterate through the queue if only one page alive or zero live pages
+        return false;
     }
 
     DeclarativeWebPage* livePage = m_queue.at(0)->webPage;
@@ -198,6 +198,7 @@ void WebPageQueue::virtualizeInactive()
     }
 
     m_livePagePrepended = false;
+    return true;
 }
 
 void WebPageQueue::dumpPages() const
@@ -248,7 +249,7 @@ WebPageQueue::WebPageEntry::~WebPageEntry()
         delete cssContentRect;
     }
 
-    if (webPage && (webPage->viewReady() || allowPageDelete)) {
+    if (webPage && (webPage->completed() || allowPageDelete)) {
         webPage->setParent(0);
         delete webPage;
     }

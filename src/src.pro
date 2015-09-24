@@ -1,4 +1,4 @@
-QT += qml quick dbus concurrent sql
+QT += qml quick gui gui-private dbus concurrent sql
 # The name of your app
 TARGET = sailfish-browser
 
@@ -61,11 +61,12 @@ include(../common/common.pri)
 
 # C++ sources
 SOURCES += \
+    inputregion.cpp \
     sailfishbrowser.cpp \
     declarativewebcontainer.cpp \
     declarativewebpage.cpp \
     declarativewebutils.cpp \
-    declarativewebviewcreator.cpp \
+    declarativewebpagecreator.cpp \
     browserservice.cpp \
     dbusadaptor.cpp \
     downloadmanager.cpp \
@@ -77,10 +78,12 @@ SOURCES += \
 
 # C++ headers
 HEADERS += \
+    inputregion.h \
+    inputregion_p.h \
     declarativewebcontainer.h \
     declarativewebpage.h \
     declarativewebutils.h \
-    declarativewebviewcreator.h \
+    declarativewebpagecreator.h \
     browserservice.h \
     dbusadaptor.h \
     downloadmanager.h \

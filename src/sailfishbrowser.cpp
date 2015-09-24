@@ -35,10 +35,11 @@
 #include "declarativehistorymodel.h"
 #include "declarativewebcontainer.h"
 #include "declarativewebpage.h"
-#include "declarativewebviewcreator.h"
+#include "declarativewebpagecreator.h"
 #include "declarativefileuploadmode.h"
 #include "declarativefileuploadfilter.h"
 #include "iconfetcher.h"
+#include "inputregion.h"
 
 #ifdef HAS_BOOSTER
 #include <MDeclarativeCache>
@@ -48,7 +49,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 {
     setenv("USE_ASYNC", "1", 1);
     setenv("USE_NEMO_GSTREAMER", "1", 1);
-    setenv("MOZ_LAYERS_PREFER_OFFSCREEN", "1", 1);
+    setenv("NO_LIMIT_ONE_GST_DECODER", "1", 1);
 
     // Workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=929879
     setenv("LC_NUMERIC", "C", 1);
@@ -131,11 +132,12 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     qmlRegisterType<DeclarativeHistoryModel>("Sailfish.Browser", 1, 0, "HistoryModel");
     qmlRegisterType<DeclarativeWebContainer>("Sailfish.Browser", 1, 0, "WebContainer");
     qmlRegisterType<DeclarativeWebPage>("Sailfish.Browser", 1, 0, "WebPage");
-    qmlRegisterType<DeclarativeWebViewCreator>("Sailfish.Browser", 1, 0, "WebViewCreator");
+    qmlRegisterType<DeclarativeWebPageCreator>("Sailfish.Browser", 1, 0, "WebPageCreator");
     qmlRegisterType<DeclarativeFileUploadMode>("Sailfish.Browser", 1, 0, "FileUploadMode");
     qmlRegisterType<DeclarativeFileUploadFilter>("Sailfish.Browser", 1, 0, "FileUploadFilter");
     qmlRegisterType<DesktopBookmarkWriter>("Sailfish.Browser", 1, 0, "DesktopBookmarkWriter");
     qmlRegisterType<IconFetcher>("Sailfish.Browser", 1, 0, "IconFetcher");
+    qmlRegisterType<InputRegion>("Sailfish.Browser", 1, 0, "InputRegion");
 
     QString componentPath(DEFAULT_COMPONENTS_PATH);
     QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/components/EmbedLiteBinComponents.manifest"));
@@ -196,13 +198,13 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     view->setSource(QUrl::fromLocalFile(path+"browser.qml"));
 #endif
 
-    view->showFullScreen();
-
     // Setup embedding
     QTimer::singleShot(0, QMozContext::GetInstance(), SLOT(runEmbedding()));
 
     if (qApp->arguments().count() > 1) {
         emit utils->openUrlRequested(qApp->arguments().last());
+    } else if (!utils->firstUseDone()) {
+        emit utils->openUrlRequested("");
     }
 
     return app->exec();

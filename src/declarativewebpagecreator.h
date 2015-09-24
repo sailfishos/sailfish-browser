@@ -9,35 +9,34 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef DECLARATIVEWEBVIEWCREATOR_H
-#define DECLARATIVEWEBVIEWCREATOR_H
+#ifndef DECLARATIVEWEBPAGECREATOR_H
+#define DECLARATIVEWEBPAGECREATOR_H
 
 #include <QPointer>
 #include <qmozviewcreator.h>
 
-class QQuickItem;
-class QuickMozView;
+class DeclarativeWebPage;
 
-class DeclarativeWebViewCreator : public QMozViewCreator {
+class DeclarativeWebPageCreator : public QMozViewCreator {
     Q_OBJECT
 
-    Q_PROPERTY(QuickMozView *activeWebView READ activeWebView WRITE setActiveWebView NOTIFY activeWebViewChanged FINAL)
+    Q_PROPERTY(DeclarativeWebPage *activeWebPage READ activeWebPage WRITE setActiveWebPage NOTIFY activeWebPageChanged FINAL)
 
 public:
-    DeclarativeWebViewCreator(QObject *parent = 0);
-    ~DeclarativeWebViewCreator();
+    DeclarativeWebPageCreator(QObject *parent = 0);
+    ~DeclarativeWebPageCreator();
 
-    QuickMozView *activeWebView() const;
-    void setActiveWebView(QuickMozView *activeWebView);
+    DeclarativeWebPage *activeWebPage() const;
+    void setActiveWebPage(DeclarativeWebPage *activeWebPage);
 
     virtual quint32 createView(const QString &url, const quint32 &parentId);
 
 signals:
-    void activeWebViewChanged();
+    void activeWebPageChanged();
     void newWindowRequested(const QString &url, const quint32 &parentId);
 
 private:
-    QPointer<QuickMozView> m_activeWebView;
+    QPointer<DeclarativeWebPage> m_activeWebPage;
 };
 
-#endif // DECLARATIVEWEBVIEWCREATOR_H
+#endif // DECLARATIVEWEBPAGECREATOR_H

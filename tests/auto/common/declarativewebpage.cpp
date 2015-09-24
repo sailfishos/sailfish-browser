@@ -1,7 +1,7 @@
 /****************************************************************************
 **
-** Copyright (C) 2014 Jolla Ltd.
-** Contact: Raine Makelainen <raine.makelainen@jolla.com>
+** Copyright (C) 2015 Jolla Ltd.
+** Contact: Dmitry Rozhkov <dmitry.rozhkov@jolla.com>
 **
 ****************************************************************************/
 
@@ -9,17 +9,23 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import QtQuick 2.1
+#include "declarativewebpage.h"
 
-Transition {
-    property alias animation: animation
+DeclarativeWebPage::DeclarativeWebPage()
+    : QObject()
+{
+}
 
-    NumberAnimation {
-        id: animation
+int DeclarativeWebPage::tabId() const
+{
+    return 0;
+}
 
-        properties: "opacity,height"
-        to: 0
-        duration: 150
-        easing.type: Easing.InOutQuad
-    }
+bool DeclarativeWebPage::initialLoadHasHappened() const
+{
+    return false;
+}
+
+void DeclarativeWebPage::setInitialLoadHasHappened()
+{
 }

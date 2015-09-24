@@ -66,6 +66,10 @@ Dialog {
         id: filterListModel
     }
 
+    Background {
+        anchors.fill: parent
+    }
+
     SilicaListView {
         id: prefsList
         model: prefsListModel
@@ -79,6 +83,7 @@ Dialog {
                 id: dialogHeader
                 dialog: configDialog
                 title: "about:config"
+                _glassOnly: true
             }
 
             SearchField {

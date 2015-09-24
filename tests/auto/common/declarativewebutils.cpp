@@ -11,6 +11,8 @@
 
 #include "declarativewebutils.h"
 
+#include <qmozcontext.h>
+
 static DeclarativeWebUtils *gSingleton = 0;
 
 DeclarativeWebUtils::DeclarativeWebUtils(QObject *parent)
@@ -18,6 +20,8 @@ DeclarativeWebUtils::DeclarativeWebUtils(QObject *parent)
     , m_homePage("file:///opt/tests/sailfish-browser/manual/testpage.html")
     , m_firstUseDone(true)
 {
+    connect(QMozContext::GetInstance(), SIGNAL(onInitialized()),
+            this, SLOT(updateWebEngineSettings()));
 }
 
 int DeclarativeWebUtils::getLightness(QColor color) const
@@ -48,6 +52,29 @@ void DeclarativeWebUtils::setFirstUseDone(bool firstUseDone)
 qreal DeclarativeWebUtils::silicaPixelRatio() const
 {
     return 1.0;
+}
+
+void DeclarativeWebUtils::updateWebEngineSettings()
+{
+    QMozContext* mozContext = QMozContext::GetInstance();
+
+    // Add only mandatory preferences for unit tests.
+
+    // Don't force 16bit color depth
+    mozContext->setPref(QString("gfx.qt.rgb16.force"), QVariant(false));
+
+    // Use external Qt window for rendering content
+    mozContext->setPref(QString("gfx.compositor.external-window"), QVariant(true));
+    mozContext->setPref(QString("gfx.compositor.clear-context"), QVariant(false));
+    mozContext->setPref(QString("embedlite.compositor.external_gl_context"), QVariant(true));
+    mozContext->setPref(QString("embedlite.compositor.request_external_gl_context_early"), QVariant(true));
+
+    // Progressive painting.
+    mozContext->setPref(QString("layers.progressive-paint"), QVariant(true));
+    mozContext->setPref(QString("layers.low-precision-buffer"), QVariant(true));
+
+    // Set max active layers
+    mozContext->setPref(QString("layers.max-active"), QVariant(20));
 }
 
 DeclarativeWebUtils *DeclarativeWebUtils::instance()

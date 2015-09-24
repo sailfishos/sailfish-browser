@@ -13,6 +13,7 @@
 .import QtQuick 2.1 as QtQuick
 .import Sailfish.Browser 1.0 as Browser
 
+var browserPage
 var webView
 var popups
 var pageStack
@@ -49,7 +50,7 @@ var _authData = null
 
 function _hideVirtualKeyboard() {
     if (Qt.inputMethod.visible) {
-        webView.parent.focus = true
+        browserPage.focus = true
     }
 }
 
@@ -144,6 +145,7 @@ function openContextMenu(data) {
         var imageSrc = data.mediaURL
         var linkTitle = data.linkTitle
         var contentType = data.contentType
+
         if (_contextMenu) {
             _contextMenu.linkHref = linkHref
             _contextMenu.linkTitle = linkTitle.trim()
@@ -153,7 +155,7 @@ function openContextMenu(data) {
         } else {
             contextMenuComponent = Qt.createComponent(_contextMenuComponentUrl)
             if (contextMenuComponent.status !== QtQuick.Component.Error) {
-                _contextMenu = contextMenuComponent.createObject(webView.parent,
+                _contextMenu = contextMenuComponent.createObject(browserPage,
                                                         {
                                                             "linkHref": linkHref,
                                                             "imageSrc": imageSrc,

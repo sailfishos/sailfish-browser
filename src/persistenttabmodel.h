@@ -24,12 +24,10 @@ protected:
     virtual void updateTitle(int tabId, int linkId, QString url, QString title);
     virtual void removeTab(int tabId);
     virtual int nextLinkId();
-    virtual void updateTab(int tabId, QString url, QString title, QString path);
     virtual void navigateTo(int tabId, QString url, QString title, QString path);
     virtual void updateThumbPath(int tabId, QString path);
 
 private slots:
-    void tabChanged(const Tab &tab);
     void saveActiveTab() const;
 
 public slots:

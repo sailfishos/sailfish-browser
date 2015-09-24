@@ -58,6 +58,7 @@ Page {
     }
 
     SilicaListView {
+        id: listView
         anchors.fill: parent
         model: selectModel
 
