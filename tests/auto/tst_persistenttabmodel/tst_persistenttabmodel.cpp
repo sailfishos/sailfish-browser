@@ -473,7 +473,7 @@ void tst_persistenttabmodel::updateThumbnailPath()
 
     QString path("/path/to/thumbnail");
     tabModel->updateThumbnailPath(1, path);
-    QCOMPARE(dataChangedSpy.count(), 1);
+    QCOMPARE(dataChangedSpy.count(), 2);
     QCOMPARE(tabModel->m_tabs.at(0).thumbnailPath(), path);
 }
 
