@@ -70,7 +70,7 @@ class DeclarativeWebContainer : public QWindow, public QQmlParserStatus, protect
     Q_PROPERTY(bool privateMode READ privateMode WRITE setPrivateMode NOTIFY privateModeChanged FINAL)
     Q_PROPERTY(bool activeTabRendered READ activeTabRendered NOTIFY activeTabRenderedChanged FINAL)
 
-    Q_PROPERTY(QQmlComponent* webPageComponent MEMBER m_webPageComponent NOTIFY webPageComponentChanged FINAL)
+    Q_PROPERTY(QQmlComponent* webPageComponent READ webPageComponent WRITE setWebPageComponent NOTIFY webPageComponentChanged FINAL)
     Q_PROPERTY(QObject *chromeWindow READ chromeWindow WRITE setChromeWindow NOTIFY chromeWindowChanged FINAL)
 public:
     DeclarativeWebContainer(QWindow *parent = 0);
@@ -87,6 +87,9 @@ public:
 
     int maxLiveTabCount() const;
     void setMaxLiveTabCount(int count);
+
+    QQmlComponent* webPageComponent() const;
+    void setWebPageComponent(QQmlComponent* qmlComponent);
 
     bool privateMode() const;
     void setPrivateMode(bool);
@@ -122,8 +125,6 @@ public:
 
     Q_INVOKABLE void updatePageFocus(bool focus);
     Q_INVOKABLE void clearSurface() {  postClearWindowSurfaceTask(); }
-
-    Q_INVOKABLE bool alive(int tabId);
 
     Q_INVOKABLE void dumpPages() const;
 
@@ -161,7 +162,7 @@ signals:
     void privateModeChanged();
     void activeTabRenderedChanged();
 
-    void webPageComponentChanged();
+    void webPageComponentChanged(QQmlComponent *newComponent);
     void chromeWindowChanged();
     void chromeExposed();
 

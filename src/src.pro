@@ -50,6 +50,7 @@ include(core/core.pri)
 include(history/history.pri)
 include(bookmarks/bookmarks.pri)
 include(qtmozembed/qtmozembed.pri)
+include(factories/factories.pri)
 
 # C++ sources
 SOURCES += \

@@ -16,6 +16,7 @@
 #include "dbmanager.h"
 #include "downloadmanager.h"
 #include "declarativewebutils.h"
+#include "webpagefactory.h"
 
 #include <QPointer>
 #include <QTimerEvent>
@@ -78,7 +79,10 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
 
     QMozContext::GetInstance()->setPixelRatio(2.0);
 
-    m_webPages = new WebPages(this);
+    WebPageFactory* pageFactory = new WebPageFactory(this);
+    connect(this, SIGNAL(webPageComponentChanged(QQmlComponent*)),
+            pageFactory, SLOT(updateQmlComponent(QQmlComponent*)));
+    m_webPages = new WebPages(pageFactory, this);
     int maxTabid = DBManager::instance()->getMaxTabId();
     m_persistentTabModel = new PersistentTabModel(maxTabid + 1, this);
     m_privateTabModel = new PrivateTabModel(maxTabid + 1001, this);
@@ -243,6 +247,19 @@ void DeclarativeWebContainer::setMaxLiveTabCount(int count)
     }
 }
 
+QQmlComponent* DeclarativeWebContainer::webPageComponent() const
+{
+    return m_webPageComponent;
+}
+
+void DeclarativeWebContainer::setWebPageComponent(QQmlComponent *qmlComponent)
+{
+    if (m_webPageComponent.data() != qmlComponent) {
+        m_webPageComponent = qmlComponent;
+        emit webPageComponentChanged(qmlComponent);
+    }
+}
+
 bool DeclarativeWebContainer::privateMode() const
 {
     return m_privateMode;
@@ -397,8 +414,8 @@ bool DeclarativeWebContainer::activatePage(const Tab& tab, bool force, int paren
         return false;
     }
 
-    m_webPages->initialize(this, m_webPageComponent.data());
-    if ((m_model->loaded() || force) && tab.tabId() > 0 && m_webPages->initialized()) {
+    m_webPages->initialize(this);
+    if ((m_model->loaded() || force) && tab.tabId() > 0 && m_webPages->initialized() && m_webPageComponent) {
         WebPageActivationData activationData = m_webPages->page(tab, parentId);
         setActiveTabRendered(false);
         setWebPage(activationData.webPage);
@@ -416,11 +433,6 @@ int DeclarativeWebContainer::findParentTabId(int tabId) const
         return m_webPages->parentTabId(tabId);
     }
     return 0;
-}
-
-bool DeclarativeWebContainer::alive(int tabId)
-{
-    return m_webPages->alive(tabId);
 }
 
 void DeclarativeWebContainer::updateMode()

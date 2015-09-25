@@ -15,7 +15,6 @@
 #include <MGConfItem>
 #include <qmozcontext.h>
 #include <QVariant>
-#include "bookmarkmanager.h"
 
 static SettingManager *gSingleton = 0;
 
@@ -23,12 +22,10 @@ SettingManager::SettingManager(QObject *parent)
     : QObject(parent)
     , m_initialized(false)
 {
-    m_clearPrivateDataConfItem = new MGConfItem("/apps/sailfish-browser/actions/clear_private_data", this);
     m_clearHistoryConfItem = new MGConfItem("/apps/sailfish-browser/actions/clear_history", this);
     m_clearCookiesConfItem = new MGConfItem("/apps/sailfish-browser/actions/clear_cookies", this);
     m_clearPasswordsConfItem = new MGConfItem("/apps/sailfish-browser/actions/clear_passwords", this);
     m_clearCacheConfItem = new MGConfItem("/apps/sailfish-browser/actions/clear_cache", this);
-    m_clearBookmarksConfItem = new MGConfItem("/apps/sailfish-browser/actions/clear_bookmarks", this);
     m_searchEngineConfItem = new MGConfItem("/apps/sailfish-browser/settings/search_engine", this);
     m_doNotTrackConfItem = new MGConfItem("/apps/sailfish-browser/settings/do_not_track", this);
     m_autostartPrivateBrowsing = new MGConfItem("/apps/sailfish-browser/settings/autostart_private_browsing", this);
@@ -42,8 +39,7 @@ SettingManager::SettingManager(QObject *parent)
 
 bool SettingManager::clearHistoryRequested() const
 {
-    return m_clearPrivateDataConfItem->value(QVariant(false)).toBool() ||
-            m_clearHistoryConfItem->value(QVariant(false)).toBool();
+    return m_clearHistoryConfItem->value(QVariant(false)).toBool();
 }
 
 bool SettingManager::initialize()
@@ -52,19 +48,14 @@ bool SettingManager::initialize()
         return false;
     }
 
-    bool clearedData = clearPrivateData();
-    if (!clearedData) {
-        clearedData |= clearCookies();
-        clearedData |= clearPasswords();
-        clearedData |= clearCache();
-        clearedData |= clearBookmarks();
-        clearedData |= clearHistory();
-    }
+    bool clearedData = clearCookies();
+    clearedData |= clearPasswords();
+    clearedData |= clearCache();
+    clearedData |= clearHistory();
+
     setSearchEngine();
     doNotTrack();
 
-    connect(m_clearPrivateDataConfItem, SIGNAL(valueChanged()),
-            this, SLOT(clearPrivateData()));
     connect(m_clearHistoryConfItem, SIGNAL(valueChanged()),
             this, SLOT(clearHistory()));
     connect(m_clearCookiesConfItem, SIGNAL(valueChanged()),
@@ -73,8 +64,6 @@ bool SettingManager::initialize()
             this, SLOT(clearPasswords()));
     connect(m_clearCacheConfItem, SIGNAL(valueChanged()),
             this, SLOT(clearCache()));
-    connect(m_clearBookmarksConfItem, SIGNAL(valueChanged()),
-            this, SLOT(clearBookmarks()));
     connect(m_searchEngineConfItem, SIGNAL(valueChanged()),
             this, SLOT(setSearchEngine()));
     connect(m_doNotTrackConfItem, SIGNAL(valueChanged()),
@@ -100,20 +89,6 @@ SettingManager *SettingManager::instance()
         gSingleton = new SettingManager();
     }
     return gSingleton;
-}
-
-bool SettingManager::clearPrivateData()
-{
-    bool actionNeeded = m_clearPrivateDataConfItem->value(QVariant(false)).toBool();
-    if (actionNeeded) {
-        QMozContext::GetInstance()->sendObserve(QString("clear-private-data"), QString("passwords"));
-        QMozContext::GetInstance()->sendObserve(QString("clear-private-data"), QString("cookies"));
-        QMozContext::GetInstance()->sendObserve(QString("clear-private-data"), QString("cache"));
-        DBManager::instance()->clearHistory();
-        BookmarkManager::instance()->clear();
-        m_clearPrivateDataConfItem->set(QVariant(false));
-    }
-    return actionNeeded;
 }
 
 bool SettingManager::clearHistory()
@@ -152,17 +127,6 @@ bool SettingManager::clearCache()
     if (actionNeeded) {
         QMozContext::GetInstance()->sendObserve(QString("clear-private-data"), QString("cache"));
         m_clearCacheConfItem->set(false);
-    }
-    return actionNeeded;
-}
-
-bool SettingManager::clearBookmarks()
-{
-    bool actionNeeded = m_clearBookmarksConfItem->value(false).toBool();
-    if (actionNeeded) {
-        BookmarkManager* bookmarks = BookmarkManager::instance();
-        bookmarks->clear();
-        m_clearBookmarksConfItem->set(false);
     }
     return actionNeeded;
 }

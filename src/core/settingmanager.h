@@ -39,24 +39,20 @@ signals:
     void toolbarLargeChanged();
 
 private slots:
-    bool clearPrivateData();
     bool clearHistory();
     bool clearCookies();
     bool clearPasswords();
     bool clearCache();
-    bool clearBookmarks();
     void setSearchEngine();
     void doNotTrack();
 
 private:
     explicit SettingManager(QObject *parent = 0);
 
-    MGConfItem *m_clearPrivateDataConfItem;
     MGConfItem *m_clearHistoryConfItem;
     MGConfItem *m_clearCookiesConfItem;
     MGConfItem *m_clearPasswordsConfItem;
     MGConfItem *m_clearCacheConfItem;
-    MGConfItem *m_clearBookmarksConfItem;
     MGConfItem *m_searchEngineConfItem;
     MGConfItem *m_doNotTrackConfItem;
     MGConfItem *m_autostartPrivateBrowsing;

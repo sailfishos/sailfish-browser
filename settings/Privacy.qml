@@ -15,11 +15,6 @@ import org.nemomobile.configuration 1.0
 import org.sailfishos.browser.settings 1.0
 
 Page {
-    property bool clearPrivateData: clearHistory.checked &&
-                                    clearCookies.checked &&
-                                    clearSavedPasswords.checked &&
-                                    clearCache.checked &&
-                                    clearBookmarks.checked
 
     RemorsePopup {
         id: clearDataRemorse
@@ -117,24 +112,20 @@ Page {
                     //% "Clearing"
                     clearDataRemorse.execute(qsTrId("settings_browser-la-clearing_private_data"),
                                              function() {
-                                                 if (clearPrivateData) {
-                                                     clearPrivateDataConfig.value = true
-                                                 } else {
-                                                     if (clearHistory.checked) {
-                                                         clearHistoryConfig.value = true
-                                                     }
-                                                     if (clearCookies.checked) {
-                                                         clearCookiesConfig.value = true
-                                                     }
-                                                     if (clearSavedPasswords.checked) {
-                                                         clearSavedPasswordsConfig.value = true
-                                                     }
-                                                     if (clearCache.checked) {
-                                                         clearCacheConfig.value = true
-                                                     }
-                                                     if (clearBookmarks.checked) {
-                                                         clearBookmarksConfig.value = true
-                                                     }
+                                                 if (clearHistory.checked) {
+                                                     clearHistoryConfig.value = true
+                                                 }
+                                                 if (clearCookies.checked) {
+                                                     clearCookiesConfig.value = true
+                                                 }
+                                                 if (clearSavedPasswords.checked) {
+                                                     clearSavedPasswordsConfig.value = true
+                                                 }
+                                                 if (clearCache.checked) {
+                                                     clearCacheConfig.value = true
+                                                 }
+                                                 if (clearBookmarks.checked) {
+                                                     clearBookmarksConfig.value = true
                                                  }
                                              }
                     );
@@ -147,13 +138,6 @@ Page {
         id: doNotTrackConfig
 
         key: "/apps/sailfish-browser/settings/do_not_track"
-        defaultValue: false
-    }
-
-    ConfigurationValue {
-        id: clearPrivateDataConfig
-
-        key: "/apps/sailfish-browser/actions/clear_private_data"
         defaultValue: false
     }
 

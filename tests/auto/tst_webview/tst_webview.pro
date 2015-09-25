@@ -12,6 +12,7 @@ include(../mocks/declarativewebutils/declarativewebutils_mock.pri)
 include(../common/testobject.pri)
 include(../../../src/core/core.pri)
 include(../../../src/qtmozembed/qtmozembed.pri)
+include(../../../src/factories/factories.pri)
 include(../../../src/bookmarks/bookmarks.pri)
 include(../../../src/history/history.pri)
 

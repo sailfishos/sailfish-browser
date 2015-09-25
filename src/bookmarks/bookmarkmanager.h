@@ -14,8 +14,10 @@
 
 #include <QObject>
 #include <QList>
+#include <QPointer>
 
 class Bookmark;
+class MGConfItem;
 
 class BookmarkManager : public QObject
 {
@@ -31,9 +33,13 @@ public:
 signals:
     void cleared();
 
+private slots:
+    void clearBookmarks();
+
 private:
     BookmarkManager();
 
+    QPointer<MGConfItem> m_clearBookmarksConfItem;
 };
 
 #endif // BOOKMARKMANAGER_H
