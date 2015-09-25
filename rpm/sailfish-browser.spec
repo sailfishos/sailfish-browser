@@ -20,7 +20,6 @@ BuildRequires:  pkgconfig(mlite5)
 BuildRequires:  pkgconfig(qdeclarative5-boostable)
 BuildRequires:  qt5-qttools
 BuildRequires:  qt5-qttools-linguist
-BuildRequires:  gdb
 BuildRequires:  oneshot
 
 Requires: sailfishsilica-qt5 >= 0.21.24.9
