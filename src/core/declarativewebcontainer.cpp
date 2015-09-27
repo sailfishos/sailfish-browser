@@ -30,9 +30,7 @@
 #include <QMetaMethod>
 #include <QOpenGLFunctions_ES2>
 #include <QGuiApplication>
-
 #include <qpa/qplatformnativeinterface.h>
-
 
 #ifndef DEBUG_LOGS
 #define DEBUG_LOGS 0
@@ -75,6 +73,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     format.setAlphaBufferSize(0);
     setFormat(format);
 
+    setTitle("BrowserContent");
     setObjectName("WebView");
 
     QMozContext::GetInstance()->setPixelRatio(2.0);

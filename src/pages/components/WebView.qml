@@ -10,6 +10,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import QtQuick 2.1
+import QtQuick.Window 2.1 as QtQuick
 import Sailfish.Silica 1.0
 import Sailfish.Browser 1.0
 import Qt5Mozilla 1.0
@@ -21,7 +22,6 @@ WebContainer {
 
     property color _decoratorColor: Theme.highlightDimmerColor
     readonly property bool moving: contentItem ? contentItem.moving : false
-
     property bool findInPageHasResult
 
     property var resourceController: ResourceController {
@@ -105,8 +105,8 @@ WebContainer {
             width: container.rotationHandler && container.rotationHandler.width || 0
             fullscreenHeight: container.fullscreenHeight
             toolbarHeight: container.toolbarHeight
-            throttlePainting: !foreground && !resourceController.videoActive || resourceController.displayOff
-            readyToPaint: !resourceController.displayOff
+            throttlePainting: !foreground && !resourceController.videoActive && webView.visible || resourceController.displayOff
+            readyToPaint: resourceController.videoActive ? webView.visible && !resourceController.displayOff : webView.visible
             enabled: webView.enabled
 
             // There needs to be enough content for enabling chrome gesture

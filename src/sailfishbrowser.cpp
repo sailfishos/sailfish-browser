@@ -129,6 +129,10 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     //% "Browser"
     view->setTitle(qtTrId("sailfish-browser-ap-name"));
 
+    // Use QtQuick 2.1 for Sailfish.Browser imports
+    qmlRegisterRevision<QQuickItem, 1>("Sailfish.Browser", 1, 0);
+    qmlRegisterRevision<QWindow, 1>("Sailfish.Browser", 1, 0);
+
     qmlRegisterType<DeclarativeBookmarkModel>("Sailfish.Browser", 1, 0, "BookmarkModel");
     qmlRegisterUncreatableType<DeclarativeTabModel>("Sailfish.Browser", 1, 0, "TabModel", "TabModel is abstract!");
     qmlRegisterUncreatableType<PersistentTabModel>("Sailfish.Browser", 1, 0, "PersistentTabModel", "");
