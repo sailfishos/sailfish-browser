@@ -140,7 +140,8 @@ bool DownloadManager::moveMyAppPackage(QString path)
         uid_t uid = getuid();
         // assumes that correct groupname is same as username (e.g. nemo:nemo)
         int gid = getgrnam(getpwuid(uid)->pw_name)->gr_gid;
-        chown(aptoideDownloadPath.toLatin1().data(), uid, gid);
+        int success = chown(aptoideDownloadPath.toLatin1().data(), uid, gid);
+        Q_UNUSED(success);
         QFile::Permissions permissions(QFile::ExeOwner | QFile::ExeGroup | QFile::ReadOwner | QFile::WriteOwner | QFile::ReadGroup | QFile::WriteGroup);
         QFile::setPermissions(aptoideDownloadPath, permissions);
     }
