@@ -31,6 +31,7 @@
 #include "declarativewebutils.h"
 #include "qmozcontext.h"
 #include "opensearchconfigs.h"
+#include "browserpaths.h"
 
 static const QString gSystemComponentsTimeStamp("/var/lib/_MOZEMBED_CACHE_CLEAN_");
 static const QString gProfilePath("/.mozilla/mozembed");
@@ -76,7 +77,7 @@ DeclarativeWebUtils::DeclarativeWebUtils()
     connect(QMozContext::GetInstance(), SIGNAL(recvObserve(QString, QVariant)),
             this, SLOT(handleObserve(QString, QVariant)));
 
-    QString path = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + QStringLiteral("/.firstUseDone");
+    QString path = BrowserPaths::dataLocation() + QStringLiteral("/.firstUseDone");
     m_firstUseDone = fileExists(path);
 
     connect(&m_homePage, SIGNAL(valueChanged()), this, SIGNAL(homePageChanged()));
@@ -158,7 +159,7 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     // see https://developer.mozilla.org/en-US/docs/Download_Manager_preferences
     // Use custom downloads location defined in browser.download.dir
     mozContext->setPref(QString("browser.download.folderList"), QVariant(2));
-    mozContext->setPref(QString("browser.download.dir"), downloadDir());
+    mozContext->setPref(QString("browser.download.dir"), BrowserPaths::downloadLocation());
     // Downloads should never be removed automatically
     mozContext->setPref(QString("browser.download.manager.retention"), QVariant(2));
     // Downloads will be canceled on quit
@@ -212,7 +213,7 @@ void DeclarativeWebUtils::updateWebEngineSettings()
 }
 
 void DeclarativeWebUtils::setFirstUseDone(bool firstUseDone) {
-    QString path = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + QStringLiteral("/.firstUseDone");
+    QString path = BrowserPaths::dataLocation() + QStringLiteral("/.firstUseDone");
     if (m_firstUseDone != firstUseDone) {
         m_firstUseDone = firstUseDone;
         if (!firstUseDone) {
@@ -359,14 +360,9 @@ DeclarativeWebUtils *DeclarativeWebUtils::instance()
     return gSingleton;
 }
 
-QString DeclarativeWebUtils::downloadDir() const
-{
-    return QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
-}
-
 QString DeclarativeWebUtils::picturesDir() const
 {
-    return QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
+    return BrowserPaths::picturesLocation();
 }
 
 QString DeclarativeWebUtils::displayableUrl(QString fullUrl) const

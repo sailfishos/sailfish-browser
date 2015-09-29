@@ -85,8 +85,3 @@ DeclarativeWebUtils *DeclarativeWebUtils::instance()
     return gSingleton;
 }
 
-QString DeclarativeWebUtils::downloadDir() const
-{
-    QString dir;
-    return dir;
-}

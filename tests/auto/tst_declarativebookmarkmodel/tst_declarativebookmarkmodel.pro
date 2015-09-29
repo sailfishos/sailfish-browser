@@ -8,6 +8,7 @@ PKGCONFIG += mlite5
 
 include(../test_common.pri)
 include(../../../src/bookmarks/bookmarks.pri)
+include(../../../common/paths.pri)
 
 # C++ sources
 SOURCES += tst_declarativebookmarkmodel.cpp

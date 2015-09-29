@@ -25,7 +25,6 @@ class DeclarativeWebUtils : public QObject
     Q_OBJECT
 
     Q_PROPERTY(QString homePage READ homePage NOTIFY homePageChanged FINAL)
-    Q_PROPERTY(QString downloadDir READ downloadDir CONSTANT FINAL)
     Q_PROPERTY(QString picturesDir READ picturesDir CONSTANT FINAL)
     Q_PROPERTY(bool firstUseDone READ firstUseDone WRITE setFirstUseDone NOTIFY firstUseDoneChanged)
     Q_PROPERTY(bool debugMode READ debugMode CONSTANT FINAL)
@@ -40,7 +39,6 @@ class DeclarativeWebUtils : public QObject
 public:
     static DeclarativeWebUtils *instance();
 
-    QString downloadDir() const;
     QString picturesDir() const;
     bool firstUseDone() const;
     void setFirstUseDone(bool firstUseDone);

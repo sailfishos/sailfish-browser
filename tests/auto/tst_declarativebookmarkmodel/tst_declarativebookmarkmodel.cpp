@@ -10,13 +10,12 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include <QtTest>
-#include <QStandardPaths>
-#include <QDir>
 #include <QFile>
 #include <QTextStream>
 
 #include "declarativebookmarkmodel.h"
 #include "bookmarkmanager.h"
+#include "browserpaths.h"
 
 static const QByteArray BOOKMARKS_JSON = \
     "[{" \
@@ -55,13 +54,9 @@ private:
 
 void tst_declarativebookmarkmodel::initTestCase()
 {
-    QString settingsLocation = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
-    QDir dir(settingsLocation);
-    if (!dir.exists()) {
-        if (!dir.mkpath(settingsLocation)) {
-            qWarning() << "Can't create directory " << settingsLocation;
-            return;
-        }
+    QString settingsLocation = BrowserPaths::dataLocation();
+    if (settingsLocation.isNull()) {
+        return;
     }
     m_bookmarksFile = settingsLocation + "/bookmarks.json";
 }

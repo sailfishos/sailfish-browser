@@ -11,6 +11,7 @@
 
 #include <QtTest>
 #include "dbmanager.h"
+#include "browserpaths.h"
 
 Q_DECLARE_METATYPE(QList<Tab>)
 Q_DECLARE_METATYPE(QList<Link>)
@@ -50,7 +51,7 @@ private:
 void tst_dbmanager::initTestCase()
 {
     mDbFile = QString("%1/%2")
-            .arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation))
+            .arg(BrowserPaths::dataLocation())
             .arg(QLatin1String(DB_NAME));
     QFile dbFile(mDbFile);
     dbFile.remove();

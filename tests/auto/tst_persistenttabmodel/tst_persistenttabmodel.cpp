@@ -15,6 +15,7 @@
 #include "dbmanager.h"
 #include "declarativewebpage.h"
 #include "declarativewebcontainer.h"
+#include "browserpaths.h"
 
 using ::testing::Return;
 
@@ -77,7 +78,7 @@ void tst_persistenttabmodel::initTestCase()
     char* argv[0] = {};
     ::testing::InitGoogleMock(&argc, argv);
     mDbFile = QString("%1/%2")
-            .arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation))
+            .arg(BrowserPaths::dataLocation())
             .arg(QLatin1String(DB_NAME));
     QFile dbFile(mDbFile);
     dbFile.remove();

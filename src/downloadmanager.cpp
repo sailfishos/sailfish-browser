@@ -11,7 +11,7 @@
 
 #include "downloadmanager.h"
 #include "qmozcontext.h"
-#include "declarativewebutils.h"
+#include "browserpaths.h"
 
 #include <transferengineinterface.h>
 #include <transfertypes.h>
@@ -129,7 +129,7 @@ void DownloadManager::recvObserve(const QString message, const QVariant data)
 
 bool DownloadManager::moveMyAppPackage(QString path)
 {
-    QString aptoideDownloadPath = QString("%1/.aptoide/").arg(DeclarativeWebUtils::instance()->downloadDir());
+    QString aptoideDownloadPath = QString("%1/.aptoide/").arg(BrowserPaths::downloadLocation());
     QDir dir(aptoideDownloadPath);
 
     if (!dir.exists()) {

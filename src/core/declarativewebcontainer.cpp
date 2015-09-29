@@ -17,13 +17,12 @@
 #include "downloadmanager.h"
 #include "declarativewebutils.h"
 #include "webpagefactory.h"
+#include "browserpaths.h"
 
 #include <QPointer>
 #include <QTimerEvent>
 #include <QQuickWindow>
-#include <QDir>
 #include <QTransform>
-#include <QStandardPaths>
 #include <QtConcurrentRun>
 #include <QGuiApplication>
 #include <QScreen>
@@ -93,10 +92,8 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     connect(QMozContext::GetInstance(), SIGNAL(onInitialized()), this, SLOT(initialize()));
     connect(this, SIGNAL(portraitChanged()), this, SLOT(resetHeight()));
 
-    QString cacheLocation = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
-    QDir dir(cacheLocation);
-    if(!dir.exists() && !dir.mkpath(cacheLocation)) {
-        qWarning() << "Can't create directory "+ cacheLocation;
+    QString cacheLocation = BrowserPaths::cacheLocation();
+    if (cacheLocation.isNull()) {
         return;
     }
 
