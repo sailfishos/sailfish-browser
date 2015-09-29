@@ -467,6 +467,11 @@ Background {
 
                 Component.onDestruction: window.setBrowserCover(webView.tabModel)
             }
+
+            Component.onCompleted: {
+                // order of completion of this an tabview is undefined. reposition on both.
+                tabViewItem.positionViewAtIndex(activeTabIndex, ListView.Center)
+            }
         }
     }
 }
