@@ -40,7 +40,7 @@ static DeclarativeWebUtils *gSingleton = 0;
 static const qreal gCssPixelRatioRoundingFactor = 0.5;
 static const qreal gCssDefaultPixelRatio = 1.5;
 
-bool testScreenDimensions(qreal pixelRatio) {
+static bool testScreenDimensions(qreal pixelRatio) {
     QScreen *screen = QGuiApplication::primaryScreen();
     qreal w = screen->size().width() / pixelRatio;
     qreal h = screen->size().height() / pixelRatio;
