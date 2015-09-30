@@ -165,7 +165,7 @@ Rectangle {
                                        {
                                            "msg": "addDownload",
                                            "from": root.imageSrc,
-                                           "to": "file://" + root.getUniqueFileName(leafName),
+                                           "to": "file://" + WebUtils.uniquePictureName(leafName),
                                            "contentType": root.contentType,
                                            "viewId": root.viewId
                                        })
@@ -218,33 +218,6 @@ Rectangle {
                 onClicked: root._hide()
             }
         }
-    }
-
-    function getUniqueFileName(fileName) {
-        var collisionCount = 0
-        var picturesDir = WebUtils.picturesDir
-        var sectmp
-
-        while (WebUtils.fileExists(picturesDir + "/" + fileName)) {
-            collisionCount++
-            if (collisionCount == 1) {
-                // append "(2)" before the last dot in (or at the end of) the filename
-                sectmp = fileName.split(".")
-                if (sectmp.length > 1) {
-                    sectmp[sectmp.length-2] = sectmp[sectmp.length-2] + "(2)"
-                } else {
-                    sectmp[0] = sectmp[0] + "(2)"
-                }
-                fileName = sectmp.join(".")
-            } else {
-                // replace the last (n) in the filename with (n+1)
-                sectmp = fileName.split("(" + collisionCount + ")")
-                var tmp = sectmp.pop()
-                fileName = sectmp.join("(" + collisionCount + ")") + "(" + (collisionCount+1) + ")" + tmp
-            }
-        }
-
-        return picturesDir + "/" + fileName
     }
 
     function show() {

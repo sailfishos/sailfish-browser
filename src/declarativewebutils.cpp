@@ -61,6 +61,12 @@ int getPressAndHoldDelay()
 
 const int PressAndHoldDelay(getPressAndHoldDelay());
 
+static bool fileExists(QString fileName)
+{
+    QFile file(fileName);
+    return file.exists();
+}
+
 DeclarativeWebUtils::DeclarativeWebUtils()
     : QObject()
     , m_homePage("/apps/sailfish-browser/settings/home_page", this)
@@ -93,10 +99,23 @@ int DeclarativeWebUtils::getLightness(QColor color) const
     return color.lightness();
 }
 
-bool DeclarativeWebUtils::fileExists(QString fileName) const
+QString DeclarativeWebUtils::uniquePictureName(const QString& fileName) const
 {
-    QFile file(fileName);
-    return file.exists();
+    const QFileInfo fileInfo(fileName);
+    const QString picturesDir(BrowserPaths::picturesLocation());
+    const QString newFile("%1/%2(%3)%4%5");
+    const QString baseName = fileInfo.baseName();
+    const QString suffix = fileInfo.completeSuffix();
+
+    QString result(picturesDir + "/" + fileName);
+    int collisionCount(1);
+
+    while (QFileInfo::exists(result)) {
+        collisionCount++;
+        result = newFile.arg(picturesDir).arg(baseName).arg(collisionCount).arg(suffix.isEmpty() ? "" : ".").arg(suffix);
+    }
+
+    return result;
 }
 
 void DeclarativeWebUtils::clearStartupCacheIfNeeded()
@@ -358,11 +377,6 @@ DeclarativeWebUtils *DeclarativeWebUtils::instance()
         gSingleton = new DeclarativeWebUtils();
     }
     return gSingleton;
-}
-
-QString DeclarativeWebUtils::picturesDir() const
-{
-    return BrowserPaths::picturesLocation();
 }
 
 QString DeclarativeWebUtils::displayableUrl(QString fullUrl) const
