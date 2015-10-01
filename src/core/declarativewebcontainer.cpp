@@ -738,18 +738,14 @@ void DeclarativeWebContainer::initialize()
         return;
     }
 
-    // Load test
-    // 1) no tabs and firstUseDone or we have incoming url, load initial url or home page to a new tab.
-    // 2) model has tabs, load initial url or active tab.
-    bool firstUseDone = DeclarativeWebUtils::instance()->firstUseDone();
-    if (m_model->count() == 0 && (firstUseDone || !m_initialUrl.isEmpty())) {
+    if (m_model->count() == 0) {
         if (m_initialUrl.isEmpty()) {
             emit overlayRequested();
         } else {
             QString title("");
             m_model->newTab(m_initialUrl, title);
         }
-    } else if (m_model->count() > 0) {
+    } else {
         Tab tab = m_model->activeTab();
         if (!m_initialUrl.isEmpty()) {
             tab.setUrl(m_initialUrl);
