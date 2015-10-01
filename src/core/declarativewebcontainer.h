@@ -165,6 +165,7 @@ signals:
     void webPageComponentChanged(QQmlComponent *newComponent);
     void chromeWindowChanged();
     void chromeExposed();
+    void overlayRequested();
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event);

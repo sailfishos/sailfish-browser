@@ -743,9 +743,12 @@ void DeclarativeWebContainer::initialize()
     // 2) model has tabs, load initial url or active tab.
     bool firstUseDone = DeclarativeWebUtils::instance()->firstUseDone();
     if (m_model->count() == 0 && (firstUseDone || !m_initialUrl.isEmpty())) {
-        QString url = m_initialUrl.isEmpty() ? DeclarativeWebUtils::instance()->homePage() : m_initialUrl;
-        QString title = "";
-        m_model->newTab(url, title);
+        if (m_initialUrl.isEmpty()) {
+            emit overlayRequested();
+        } else {
+            QString title("");
+            m_model->newTab(m_initialUrl, title);
+        }
     } else if (m_model->count() > 0) {
         Tab tab = m_model->activeTab();
         if (!m_initialUrl.isEmpty()) {

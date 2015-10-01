@@ -160,6 +160,10 @@ Page {
             }
         }
 
+        onOverlayRequested: {
+            overlay.animator.showOverlay(true)
+        }
+
         onForegroundChanged: {
             if (foreground && webView.chromeWindow) {
                 webView.chromeWindow.raise()
