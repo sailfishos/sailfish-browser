@@ -313,10 +313,6 @@ Page {
             // In case first use not done show the overlay immediately.
             if (url == "") {
                 bringToForeground(webView.chromeWindow)
-                if (!WebUtils.firstUseDone) {
-                    overlay.animator.showOverlay(true)
-                }
-
                 return
             }
 
