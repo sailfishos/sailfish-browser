@@ -37,10 +37,6 @@ Page {
     property alias title: webView.title
     property alias webView: webView
 
-    function load(url, title) {
-        webView.load(url, title)
-    }
-
     function bringToForeground(window) {
         if (!Qt.application.active && window) {
             window.raise()
