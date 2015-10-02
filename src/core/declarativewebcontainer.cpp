@@ -739,9 +739,7 @@ void DeclarativeWebContainer::initialize()
     }
 
     if (m_model->count() == 0) {
-        if (m_initialUrl.isEmpty()) {
-            emit overlayRequested();
-        } else {
+        if (!m_initialUrl.isEmpty()) {
             QString title("");
             m_model->newTab(m_initialUrl, title);
         }

@@ -211,6 +211,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 
     if (qApp->arguments().count() > 1) {
         emit utils->openUrlRequested(qApp->arguments().last());
+    } else {
+        emit utils->openUrlRequested("");
     }
 
     return app->exec();

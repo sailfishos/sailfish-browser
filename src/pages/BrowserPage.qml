@@ -29,6 +29,8 @@ Page {
     readonly property size thumbnailSize: Qt.size((Screen.width - (largeScreen ? (2 * Theme.horizontalPageMargin) : 0)), (largeScreen ? Theme.itemSizeExtraLarge + (2 * Theme.paddingLarge) : Screen.height / 5))
     property Item debug
     property Component tabPageComponent
+    property string requestedUrl
+    property bool urlRequested
 
     property alias tabs: webView.tabModel
     property alias history: historyModel
@@ -36,6 +38,25 @@ Page {
     property alias url: webView.url
     property alias title: webView.title
     property alias webView: webView
+
+    function openUrl(url) {
+        if (url == "") {
+            bringToForeground(webView.chromeWindow)
+            return
+        }
+
+        if (browserPage.status !== PageStatus.Active) {
+            pageStack.pop(browserPage, PageStackAction.Immediate)
+        }
+
+        webView.grabActivePage()
+        if (!webView.tabModel.activateTab(url)) {
+            // Not found in tabs list, load it. A new tab will be created if no tabs exist.
+            webView.load(url)
+            overlay.animator.showChrome(true)
+        }
+        bringToForeground(webView)
+    }
 
     function bringToForeground(window) {
         if (!Qt.application.active && window) {
@@ -154,10 +175,6 @@ Page {
             if (overlay.animator.atTop && overlay.searchField.focus && !WebUtils.firstUseDone) {
                 webView.chromeWindow.raise()
             }
-        }
-
-        onOverlayRequested: {
-            overlay.animator.showOverlay(true)
         }
 
         onForegroundChanged: {
@@ -307,25 +324,31 @@ Page {
         onOpenUrlRequested: {
             // Url is empty when user tapped icon when browser was already open.
             // In case first use not done show the overlay immediately.
-            if (url == "") {
-                bringToForeground(webView.chromeWindow)
-                return
+            if (webView.tabModel.loaded) {
+                openUrl(url)
+            } else {
+                requestedUrl = url
+                urlRequested = true
             }
-
-            if (browserPage.status !== PageStatus.Active) {
-                pageStack.pop(browserPage, PageStackAction.Immediate)
-            }
-
-            webView.grabActivePage()
-            if (!webView.tabModel.activateTab(url)) {
-                // Not found in tabs list, load it. A new tab will be created if no tabs exist.
-                webView.load(url)
-                overlay.animator.showChrome(true)
-            }
-            bringToForeground(webView)
         }
+
         onActivateNewTabViewRequested: {
             activateNewTabView()
+        }
+    }
+
+    Connections {
+        target: webView.tabModel
+        onLoadedChanged: {
+            if (webView.tabModel.loaded && urlRequested) {
+                if (requestedUrl) {
+                    openUrl(requestedUrl)
+                    requestedUrl = ""
+                } else if (webView.tabModel.count == 0) {
+                    overlay.animator.showOverlay(true)
+                }
+                urlRequested = false
+            }
         }
     }
 
