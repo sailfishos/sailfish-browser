@@ -73,6 +73,7 @@ void tst_webview::initTestCase()
 
     init(QUrl("qrc:///tst_webview.qml"));
     webContainer = TestObject::qmlObject<DeclarativeWebContainer>("webView");
+    webContainer->load(DeclarativeWebUtils::instance()->homePage());
     QVERIFY(webContainer);
     QSignalSpy completedChanged(webContainer, SIGNAL(completedChanged()));
     QSignalSpy loadingChanged(webContainer, SIGNAL(loadingChanged()));
