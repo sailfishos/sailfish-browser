@@ -28,6 +28,8 @@ private slots:
     void getAllTabs();
     void removeTab_data();
     void removeTab();
+    void removeAllTabs_data();
+    void removeAllTabs();
     void clearHistory_data();
     void clearHistory();
     void navigateTo();
@@ -175,6 +177,46 @@ void tst_dbmanager::removeTab()
     DBManager::instance()->removeTab(tabId);
     tabsAvailableSpy.wait(1000);
     QCOMPARE(tabsAvailableSpy.count(), expectedTabsAvailable);
+}
+
+void tst_dbmanager::removeAllTabs_data()
+{
+    QTest::addColumn<QList<Tab> >("initialTabs");
+
+    QList<Tab> emptyList;
+
+    QList<Tab> oneTab {
+        Tab(1, "http://example1.com", "Test title 1", "")
+    };
+
+    QList<Tab> threeTabs {
+        Tab(1, "http://example1.com", "Test title 1", ""),
+        Tab(2, "http://example2.com", "Test title 2", ""),
+        Tab(3, "http://example3.com", "Test title 3", "")
+    };
+
+    QTest::newRow("no_inital_tabs") << emptyList;
+    QTest::newRow("one_inital_tab") << oneTab;
+    QTest::newRow("three_initial_tabs") << threeTabs;
+}
+
+void tst_dbmanager::removeAllTabs()
+{
+    QFETCH(QList<Tab>, initialTabs);
+
+    // initialize the case
+    foreach (Tab tab, initialTabs) {
+        DBManager::instance()->createTab(tab);
+    }
+
+    QSignalSpy tabsAvailableSpy(DBManager::instance(),
+                                SIGNAL(tabsAvailable(QList<Tab>)));
+
+    // actual test
+    DBManager::instance()->removeAllTabs();
+    tabsAvailableSpy.wait(1000);
+    // Make sure there is no feedback from dbworker thread
+    QCOMPARE(tabsAvailableSpy.count(), 0);
 }
 
 void tst_dbmanager::clearHistory_data()

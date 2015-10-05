@@ -283,9 +283,14 @@ void DBWorker::removeTab(int tabId)
     }
 }
 
-void DBWorker::removeAllTabs()
+void DBWorker::removeAllTabs(bool noFeedback)
 {
-    int oldTabCount = tabCount();
+    int oldTabCount(0);
+
+    if (!noFeedback) {
+        oldTabCount = tabCount();
+    }
+
     QSqlQuery query = prepare("DELETE FROM tab;");
     execute(query);
 
