@@ -138,6 +138,7 @@ function openContextMenu(data) {
             _contextMenu.linkHref = linkHref
             _contextMenu.linkTitle = linkTitle.trim()
             _contextMenu.imageSrc = imageSrc
+            _contextMenu.tabModel = tabModel
             _hideVirtualKeyboard()
             _contextMenu.show()
         } else {
