@@ -499,7 +499,7 @@ Background {
 
             Component.onCompleted: {
                 // order of completion of this an tabview is undefined. reposition on both.
-                tabViewItem.positionViewAtIndex(activeTabIndex, ListView.Center)
+                tabViewItem.positionViewAtIndex(webView.tabModel.activeTabIndex, ListView.Center)
             }
         }
     }
