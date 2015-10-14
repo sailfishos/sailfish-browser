@@ -93,7 +93,7 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
             this, SLOT(onRecvAsyncMessage(const QString&, const QVariant&)));
     connect(&m_grabWritter, SIGNAL(finished()), this, SLOT(grabWritten()));
     connect(this, SIGNAL(urlChanged()), this, SLOT(onUrlChanged()));
-    connect(this, &QOpenGLWebPage::chromeChanged, this, &DeclarativeWebPage::updateViewMargins);
+    connect(this, &QOpenGLWebPage::contentHeightChanged, this, &DeclarativeWebPage::updateViewMargins);
     connect(this, &QOpenGLWebPage::activeChanged, this, &DeclarativeWebPage::updateViewMargins);
 }
 
@@ -228,7 +228,6 @@ void DeclarativeWebPage::setToolbarHeight(qreal toolbarHeight)
 {
     if (toolbarHeight != m_toolbarHeight) {
         m_toolbarHeight = toolbarHeight;
-        updateViewMargins();
         emit toolbarHeightChanged();
     }
 }
@@ -338,7 +337,7 @@ void DeclarativeWebPage::updateViewMargins()
     QMargins margins;
     if (m_virtualKeyboardMargin > 0) {
         margins.setBottom(m_virtualKeyboardMargin);
-    } else if (chrome() && !m_fullscreen) {
+    } else if (!m_fullscreen && contentHeight() < (m_fullScreenHeight + m_toolbarHeight)) {
         margins.setBottom(m_toolbarHeight);
     }
 
