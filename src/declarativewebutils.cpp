@@ -9,19 +9,24 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include <QLocale>
-#include <QStringList>
-#include <QVariant>
-#include <QVariantMap>
-#include <QGuiApplication>
-#include <QClipboard>
-#include <QFile>
-#include <QFileInfo>
-#include <QDir>
-#include <QDateTime>
-#include <QScreen>
-#include <QStandardPaths>
-#include <QtMath>
+// QtCore
+#include <QtCore/QDateTime>
+#include <QtCore/QDir>
+#include <QtCore/QFile>
+#include <QtCore/QFileInfo>
+#include <QtCore/QLocale>
+#include <QtCore/QSettings>
+#include <QtCore/QStandardPaths>
+#include <QtCore/QStringList>
+#include <QtCore/QtMath>
+#include <QtCore/QVariant>
+#include <QtCore/QVariantMap>
+
+// QtGui
+#include <QtGui/QClipboard>
+#include <QtGui/QGuiApplication>
+#include <QtGui/QScreen>
+
 #include <math.h>
 #include "declarativewebutils.h"
 #include "qmozcontext.h"
@@ -34,7 +39,6 @@ static DeclarativeWebUtils *gSingleton = 0;
 static const qreal gCssPixelRatioRoundingFactor = 0.5;
 static const qreal gCssDefaultPixelRatio = 1.5;
 
-
 bool testScreenDimensions(qreal pixelRatio) {
     QScreen *screen = QGuiApplication::primaryScreen();
     qreal w = screen->size().width() / pixelRatio;
@@ -42,6 +46,19 @@ bool testScreenDimensions(qreal pixelRatio) {
 
     return fmod(w, 1.0) == 0 && fmod(h, 1.0) == 0;
 }
+
+const QSettings &quickSettings()
+{
+    static const QSettings settings(QSettings::SystemScope, QStringLiteral("QtProject"), QStringLiteral("QtQuick2"));
+    return settings;
+}
+
+int getPressAndHoldDelay()
+{
+    return quickSettings().value(QStringLiteral("QuickMouseArea/PressAndHoldDelay"), 800).toInt();
+}
+
+const int PressAndHoldDelay(getPressAndHoldDelay());
 
 DeclarativeWebUtils::DeclarativeWebUtils()
     : QObject()
@@ -154,7 +171,7 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     mozContext->setPref(QString("browser.enable_automatic_image_resizing"), QVariant(true));
 
     // Make long press timeout equal to the one in Qt
-    mozContext->setPref(QString("ui.click_hold_context_menus.delay"), QVariant(800));
+    mozContext->setPref(QString("ui.click_hold_context_menus.delay"), QVariant(PressAndHoldDelay));
     mozContext->setPref(QString("apz.fling_stopped_threshold"), QString("0.13f"));
 
     // TODO: remove this line when the value adjusted for different DPIs makes
