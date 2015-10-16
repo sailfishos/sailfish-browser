@@ -9,19 +9,23 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include <QLocale>
-#include <QStringList>
-#include <QVariant>
-#include <QVariantMap>
-#include <QGuiApplication>
-#include <QClipboard>
-#include <QFile>
-#include <QFileInfo>
-#include <QDir>
-#include <QDateTime>
-#include <QScreen>
-#include <QStandardPaths>
-#include <QtMath>
+// QtCore
+#include <QtCore/QDateTime>
+#include <QtCore/QDir>
+#include <QtCore/QFile>
+#include <QtCore/QFileInfo>
+#include <QtCore/QLocale>
+#include <QtCore/QStandardPaths>
+#include <QtCore/QStringList>
+#include <QtCore/QtMath>
+#include <QtCore/QVariant>
+#include <QtCore/QVariantMap>
+
+// QtGui
+#include <QtGui/QClipboard>
+#include <QtGui/QGuiApplication>
+#include <QtGui/QScreen>
+
 #include <math.h>
 #include "declarativewebutils.h"
 #include "qmozcontext.h"
