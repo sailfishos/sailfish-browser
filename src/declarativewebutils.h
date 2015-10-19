@@ -25,8 +25,6 @@ class DeclarativeWebUtils : public QObject
     Q_OBJECT
 
     Q_PROPERTY(QString homePage READ homePage NOTIFY homePageChanged FINAL)
-    Q_PROPERTY(QString downloadDir READ downloadDir CONSTANT FINAL)
-    Q_PROPERTY(QString picturesDir READ picturesDir CONSTANT FINAL)
     Q_PROPERTY(bool firstUseDone READ firstUseDone WRITE setFirstUseDone NOTIFY firstUseDoneChanged)
     Q_PROPERTY(bool debugMode READ debugMode CONSTANT FINAL)
     Q_PROPERTY(qreal cssPixelRatio READ cssPixelRatio NOTIFY cssPixelRatioChanged)
@@ -40,8 +38,6 @@ class DeclarativeWebUtils : public QObject
 public:
     static DeclarativeWebUtils *instance();
 
-    QString downloadDir() const;
-    QString picturesDir() const;
     bool firstUseDone() const;
     void setFirstUseDone(bool firstUseDone);
     bool debugMode() const;
@@ -60,7 +56,7 @@ public:
     void setZoomMargin(qreal zoomMargin);
 
     Q_INVOKABLE int getLightness(QColor color) const;
-    Q_INVOKABLE bool fileExists(QString fileName) const;
+    Q_INVOKABLE QString uniquePictureName(const QString& fileName) const;
     Q_INVOKABLE QString displayableUrl(QString fullUrl) const;
 
 public slots:

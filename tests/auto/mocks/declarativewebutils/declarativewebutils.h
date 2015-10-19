@@ -35,7 +35,6 @@ public:
     bool firstUseDone() const;
     void setFirstUseDone(bool firstUseDone);
     qreal silicaPixelRatio() const;
-    QString downloadDir() const;
 
 signals:
     void homePageChanged();

@@ -31,6 +31,7 @@
 #include "declarativewebutils.h"
 #include "qmozcontext.h"
 #include "opensearchconfigs.h"
+#include "browserpaths.h"
 
 static const QString gSystemComponentsTimeStamp("/var/lib/_MOZEMBED_CACHE_CLEAN_");
 static const QString gProfilePath("/.mozilla/mozembed");
@@ -39,7 +40,7 @@ static DeclarativeWebUtils *gSingleton = 0;
 static const qreal gCssPixelRatioRoundingFactor = 0.5;
 static const qreal gCssDefaultPixelRatio = 1.5;
 
-bool testScreenDimensions(qreal pixelRatio) {
+static bool testScreenDimensions(qreal pixelRatio) {
     QScreen *screen = QGuiApplication::primaryScreen();
     qreal w = screen->size().width() / pixelRatio;
     qreal h = screen->size().height() / pixelRatio;
@@ -60,6 +61,12 @@ int getPressAndHoldDelay()
 
 const int PressAndHoldDelay(getPressAndHoldDelay());
 
+static bool fileExists(QString fileName)
+{
+    QFile file(fileName);
+    return file.exists();
+}
+
 DeclarativeWebUtils::DeclarativeWebUtils()
     : QObject()
     , m_homePage("/apps/sailfish-browser/settings/home_page", this)
@@ -76,7 +83,7 @@ DeclarativeWebUtils::DeclarativeWebUtils()
     connect(QMozContext::GetInstance(), SIGNAL(recvObserve(QString, QVariant)),
             this, SLOT(handleObserve(QString, QVariant)));
 
-    QString path = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + QStringLiteral("/.firstUseDone");
+    QString path = BrowserPaths::dataLocation() + QStringLiteral("/.firstUseDone");
     m_firstUseDone = fileExists(path);
 
     connect(&m_homePage, SIGNAL(valueChanged()), this, SIGNAL(homePageChanged()));
@@ -92,10 +99,23 @@ int DeclarativeWebUtils::getLightness(QColor color) const
     return color.lightness();
 }
 
-bool DeclarativeWebUtils::fileExists(QString fileName) const
+QString DeclarativeWebUtils::uniquePictureName(const QString& fileName) const
 {
-    QFile file(fileName);
-    return file.exists();
+    const QFileInfo fileInfo(fileName);
+    const QString picturesDir(BrowserPaths::picturesLocation());
+    const QString newFile("%1/%2(%3)%4%5");
+    const QString baseName = fileInfo.baseName();
+    const QString suffix = fileInfo.completeSuffix();
+
+    QString result(picturesDir + "/" + fileName);
+    int collisionCount(1);
+
+    while (QFileInfo::exists(result)) {
+        collisionCount++;
+        result = newFile.arg(picturesDir).arg(baseName).arg(collisionCount).arg(suffix.isEmpty() ? "" : ".").arg(suffix);
+    }
+
+    return result;
 }
 
 void DeclarativeWebUtils::clearStartupCacheIfNeeded()
@@ -158,7 +178,7 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     // see https://developer.mozilla.org/en-US/docs/Download_Manager_preferences
     // Use custom downloads location defined in browser.download.dir
     mozContext->setPref(QString("browser.download.folderList"), QVariant(2));
-    mozContext->setPref(QString("browser.download.dir"), downloadDir());
+    mozContext->setPref(QString("browser.download.dir"), BrowserPaths::downloadLocation());
     // Downloads should never be removed automatically
     mozContext->setPref(QString("browser.download.manager.retention"), QVariant(2));
     // Downloads will be canceled on quit
@@ -212,7 +232,7 @@ void DeclarativeWebUtils::updateWebEngineSettings()
 }
 
 void DeclarativeWebUtils::setFirstUseDone(bool firstUseDone) {
-    QString path = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + QStringLiteral("/.firstUseDone");
+    QString path = BrowserPaths::dataLocation() + QStringLiteral("/.firstUseDone");
     if (m_firstUseDone != firstUseDone) {
         m_firstUseDone = firstUseDone;
         if (!firstUseDone) {
@@ -357,16 +377,6 @@ DeclarativeWebUtils *DeclarativeWebUtils::instance()
         gSingleton = new DeclarativeWebUtils();
     }
     return gSingleton;
-}
-
-QString DeclarativeWebUtils::downloadDir() const
-{
-    return QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
-}
-
-QString DeclarativeWebUtils::picturesDir() const
-{
-    return QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
 }
 
 QString DeclarativeWebUtils::displayableUrl(QString fullUrl) const
