@@ -61,12 +61,6 @@ int getPressAndHoldDelay()
 
 const int PressAndHoldDelay(getPressAndHoldDelay());
 
-static bool fileExists(QString fileName)
-{
-    QFile file(fileName);
-    return file.exists();
-}
-
 DeclarativeWebUtils::DeclarativeWebUtils()
     : QObject()
     , m_homePage("/apps/sailfish-browser/settings/home_page", this)
@@ -82,10 +76,6 @@ DeclarativeWebUtils::DeclarativeWebUtils()
             this, SLOT(updateWebEngineSettings()));
     connect(QMozContext::GetInstance(), SIGNAL(recvObserve(QString, QVariant)),
             this, SLOT(handleObserve(QString, QVariant)));
-
-    QString path = BrowserPaths::dataLocation() + QStringLiteral("/.firstUseDone");
-    m_firstUseDone = fileExists(path);
-
     connect(&m_homePage, SIGNAL(valueChanged()), this, SIGNAL(homePageChanged()));
 }
 
@@ -231,21 +221,6 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     mozContext->setPref(QString("security.csp.speccompliant"), QVariant(true));
 }
 
-void DeclarativeWebUtils::setFirstUseDone(bool firstUseDone) {
-    QString path = BrowserPaths::dataLocation() + QStringLiteral("/.firstUseDone");
-    if (m_firstUseDone != firstUseDone) {
-        m_firstUseDone = firstUseDone;
-        if (!firstUseDone) {
-            QFile f(path);
-            f.remove();
-        } else {
-            QProcess process;
-            process.startDetached("touch", QStringList() << path);
-        }
-        emit firstUseDoneChanged();
-    }
-}
-
 bool DeclarativeWebUtils::debugMode() const
 {
     return m_debugMode;
@@ -258,10 +233,6 @@ qreal DeclarativeWebUtils::cssPixelRatio() const
         return mozContext->pixelRatio();
     }
     return 1.0;
-}
-
-bool DeclarativeWebUtils::firstUseDone() const {
-    return m_firstUseDone;
 }
 
 qreal DeclarativeWebUtils::silicaPixelRatio() const

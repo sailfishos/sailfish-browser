@@ -21,7 +21,6 @@ class DeclarativeWebUtils : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString homePage READ homePage NOTIFY homePageChanged FINAL)
-    Q_PROPERTY(bool firstUseDone READ firstUseDone NOTIFY firstUseDoneChanged FINAL)
 
 public:
     explicit DeclarativeWebUtils(QObject *parent = 0);
@@ -32,20 +31,16 @@ public:
     static DeclarativeWebUtils *instance();
 
     QString homePage() const;
-    bool firstUseDone() const;
-    void setFirstUseDone(bool firstUseDone);
     qreal silicaPixelRatio() const;
 
 signals:
     void homePageChanged();
-    void firstUseDoneChanged();
 
 private slots:
     void updateWebEngineSettings();
 
 private:
     QString m_homePage;
-    bool m_firstUseDone;
 };
 
 QML_DECLARE_TYPE(DeclarativeWebUtils)

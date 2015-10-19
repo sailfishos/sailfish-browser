@@ -172,7 +172,7 @@ Page {
         onTabModelChanged: handleModelChanges(true)
 
         onChromeExposed: {
-            if (overlay.animator.atTop && overlay.searchField.focus && !WebUtils.firstUseDone) {
+            if (overlay.animator.atTop && overlay.searchField.focus) {
                 webView.chromeWindow.raise()
             }
         }
@@ -368,10 +368,6 @@ Page {
         WebUtils.touchBottomRadius = Theme.paddingMedium + Theme.paddingSmall
         WebUtils.inputItemSize = Theme.fontSizeSmall
         WebUtils.zoomMargin = Theme.paddingMedium
-
-        if (!WebUtils.firstUseDone) {
-            window.setBrowserCover(webView.tabModel)
-        }
 
         if (WebUtils.debugMode) {
             var component = Qt.createComponent(Qt.resolvedUrl("components/DebugOverlay.qml"))

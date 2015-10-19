@@ -123,10 +123,6 @@ Background {
 
                 favoriteGrid.positionViewAtBeginning()
                 historyList.positionViewAtBeginning()
-
-                if (!WebUtils.firstUseDone) {
-                    WebUtils.firstUseDone = true
-                }
             }
             dragArea.moved = false
         }

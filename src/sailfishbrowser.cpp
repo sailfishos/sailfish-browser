@@ -84,7 +84,6 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     BrowserService *service = new BrowserService(app.data());
     // Handle command line launch
     if (!service->registered()) {
-
         QDBusMessage message;
         if (app->arguments().contains("-dumpMemory")) {
             int index = app->arguments().indexOf("-dumpMemory");
@@ -208,7 +207,6 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 
     // Setup embedding
     QTimer::singleShot(0, QMozContext::GetInstance(), SLOT(runEmbedding()));
-
     if (qApp->arguments().count() > 1) {
         emit utils->openUrlRequested(qApp->arguments().last());
     } else {

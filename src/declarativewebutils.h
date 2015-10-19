@@ -25,7 +25,6 @@ class DeclarativeWebUtils : public QObject
     Q_OBJECT
 
     Q_PROPERTY(QString homePage READ homePage NOTIFY homePageChanged FINAL)
-    Q_PROPERTY(bool firstUseDone READ firstUseDone WRITE setFirstUseDone NOTIFY firstUseDoneChanged)
     Q_PROPERTY(bool debugMode READ debugMode CONSTANT FINAL)
     Q_PROPERTY(qreal cssPixelRatio READ cssPixelRatio NOTIFY cssPixelRatioChanged)
     Q_PROPERTY(qreal silicaPixelRatio READ silicaPixelRatio WRITE setSilicaPixelRatio NOTIFY silicaPixelRatioChanged)
@@ -38,8 +37,6 @@ class DeclarativeWebUtils : public QObject
 public:
     static DeclarativeWebUtils *instance();
 
-    bool firstUseDone() const;
-    void setFirstUseDone(bool firstUseDone);
     bool debugMode() const;
     qreal cssPixelRatio() const;
     qreal silicaPixelRatio() const;
@@ -68,7 +65,6 @@ signals:
     void homePageChanged();
     void openUrlRequested(QString url);
     void activateNewTabViewRequested();
-    void firstUseDoneChanged();
     void dumpMemoryInfo(QString fileName);
     void cssPixelRatioChanged();
     void silicaPixelRatioChanged();
@@ -89,7 +85,6 @@ private:
     void setRenderingPreferences();
 
     MGConfItem m_homePage;
-    bool m_firstUseDone;
     bool m_debugMode;
     qreal m_silicaPixelRatio;
     qreal m_touchSideRadius;
