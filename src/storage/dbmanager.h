@@ -31,6 +31,7 @@ public:
     void createTab(const Tab &tab);
     void getAllTabs();
     void removeTab(int tabId);
+    void removeAllTabs();
     void navigateTo(int tabId, QString url, QString title = "", QString path = "");
     void goForward(int tabId);
     void goBack(int tabId);
