@@ -118,6 +118,7 @@ public:
     bool activatePage(const Tab& tab, bool force = false, int parentId = 0);
     int findParentTabId(int tabId) const;
 
+    Q_INVOKABLE void bindChrome();
     Q_INVOKABLE void load(QString url = "", QString title = "", bool force = false);
     Q_INVOKABLE void reload(bool force = true);
     Q_INVOKABLE void goForward();
@@ -234,6 +235,7 @@ private:
     QPointer<DeclarativeTabModel> m_persistentTabModel;
     QPointer<DeclarativeTabModel> m_privateTabModel;
 
+    bool m_chromeBound;
     bool m_enabled;
     bool m_foreground;
     bool m_allowHiding;

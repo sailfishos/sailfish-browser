@@ -43,6 +43,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     , m_model(0)
     , m_webPageComponent(0)
     , m_settingManager(SettingManager::instance())
+    , m_chromeBound(false)
     , m_enabled(true)
     , m_foreground(true)
     , m_allowHiding(true)
@@ -323,12 +324,6 @@ void DeclarativeWebContainer::setChromeWindow(QObject *chromeWindow)
     QQuickView *quickView = qobject_cast<QQuickView*>(chromeWindow);
     if (quickView && (quickView != m_chromeWindow)) {
         m_chromeWindow = quickView;
-        if (m_chromeWindow) {
-            m_chromeWindow->setTransientParent(this);
-            m_chromeWindow->showFullScreen();
-            updateContentOrientation(m_chromeWindow->contentOrientation());
-            connect(m_chromeWindow, SIGNAL(contentOrientationChanged(Qt::ScreenOrientation)), this, SLOT(updateContentOrientation(Qt::ScreenOrientation)));
-        }
         emit chromeWindowChanged();
     }
 }
@@ -352,6 +347,18 @@ QString DeclarativeWebContainer::url() const
 bool DeclarativeWebContainer::isActiveTab(int tabId)
 {
     return m_webPage && m_webPage->tabId() == tabId;
+}
+
+void DeclarativeWebContainer::bindChrome()
+{
+    if (m_chromeWindow && !m_chromeBound) {
+        showFullScreen();
+        m_chromeWindow->setTransientParent(this);
+        m_chromeWindow->showFullScreen();
+        updateContentOrientation(m_chromeWindow->contentOrientation());
+        connect(m_chromeWindow, SIGNAL(contentOrientationChanged(Qt::ScreenOrientation)), this, SLOT(updateContentOrientation(Qt::ScreenOrientation)));
+        m_chromeBound = true;
+    }
 }
 
 void DeclarativeWebContainer::load(QString url, QString title, bool force)
@@ -540,7 +547,6 @@ void DeclarativeWebContainer::exposeEvent(QExposeEvent*)
         if (m_chromeWindow) {
             m_chromeWindow->update();
         }
-
         if (m_webPage) {
             m_webPage->update();
         } else {
@@ -646,8 +652,6 @@ void DeclarativeWebContainer::classBegin()
 
 void DeclarativeWebContainer::componentComplete()
 {
-    showFullScreen();
-
     if (m_initialized && !m_completed) {
         m_completed = true;
         emit completedChanged();

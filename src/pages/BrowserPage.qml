@@ -31,6 +31,7 @@ Page {
     property Component tabPageComponent
     property string requestedUrl
     property bool urlRequested
+    property bool completed: webView.tabModel.loaded && urlRequested
 
     property alias tabs: webView.tabModel
     property alias history: historyModel
@@ -41,7 +42,6 @@ Page {
 
     function openUrl(url) {
         if (url == "") {
-            bringToForeground(webView.chromeWindow)
             return
         }
 
@@ -59,7 +59,7 @@ Page {
     }
 
     function bringToForeground(window) {
-        if (!Qt.application.active && window) {
+        if (!Qt.application.active && window && browserPage.completed) {
             window.raise()
         }
     }
@@ -105,6 +105,20 @@ Page {
         if (status == PageStatus.Inactive && overlay.visible) {
             overlay.animator.hide()
         }
+    }
+
+    onCompletedChanged: {
+        webView.bindChrome();
+        window.setBrowserCover(webView.tabModel)
+        openUrl(requestedUrl)
+
+        if (webView.tabModel.count === 0 && !requestedUrl) {
+            activateNewTabView()
+        }
+
+        // Break binding so that we don't need to worry about model change.
+        completed = true
+        requestedUrl = ""
     }
 
     property int pageOrientation: pageStack.currentPage._windowOrientation
@@ -204,7 +218,7 @@ Page {
 
         // Both model change and model count change are connected to this.
         function handleModelChanges(openOverlayImmediately) {
-            if (webView.completed && (!webView.tabModel || webView.tabModel.count === 0)) {
+            if (webView.tabModel && webView.tabModel.loaded && webView.tabModel.count === 0) {
                 overlay.animator.showOverlay(openOverlayImmediately)
             }
 
@@ -322,33 +336,19 @@ Page {
     Connections {
         target: WebUtils
         onOpenUrlRequested: {
-            // Url is empty when user tapped icon when browser was already open.
-            // In case first use not done show the overlay immediately.
-            if (webView.tabModel.loaded) {
-                openUrl(url)
-            } else {
+            // Url is empty when user tapped icon.
+            if (!urlRequested) {
                 requestedUrl = url
-                urlRequested = true
             }
+
+            if (completed) {
+                openUrl(url)
+            }
+            urlRequested = true
         }
 
         onActivateNewTabViewRequested: {
             activateNewTabView()
-        }
-    }
-
-    Connections {
-        target: webView.tabModel
-        onLoadedChanged: {
-            if (webView.tabModel.loaded && urlRequested) {
-                if (requestedUrl) {
-                    openUrl(requestedUrl)
-                    requestedUrl = ""
-                } else if (webView.tabModel.count == 0) {
-                    overlay.animator.showOverlay(true)
-                }
-                urlRequested = false
-            }
         }
     }
 
