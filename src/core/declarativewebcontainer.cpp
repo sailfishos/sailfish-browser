@@ -147,8 +147,6 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
             connect(m_webPage, SIGNAL(windowCloseRequested()), this, SLOT(closeWindow()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(loadingChanged()), this, SLOT(updateLoading()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(loadProgressChanged()), this, SLOT(updateLoadProgress()), Qt::UniqueConnection);
-            connect(m_webPage, SIGNAL(domContentLoadedChanged()), this, SLOT(sendVkbOpenCompositionMetrics()), Qt::UniqueConnection);
-            connect(qApp->inputMethod(), SIGNAL(visibleChanged()), this, SLOT(sendVkbOpenCompositionMetrics()), Qt::UniqueConnection);
             // NB: these signals are not disconnected upon setting current m_webPage.
             connect(m_webPage, SIGNAL(urlChanged()), m_model, SLOT(onUrlChanged()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(titleChanged()), m_model, SLOT(onTitleChanged()), Qt::UniqueConnection);
@@ -236,6 +234,19 @@ void DeclarativeWebContainer::setMaxLiveTabCount(int count)
 {
     if (m_webPages->setMaxLivePages(count)) {
         emit maxLiveTabCountChanged();
+    }
+}
+
+bool DeclarativeWebContainer::portrait() const
+{
+    return m_portrait;
+}
+
+void DeclarativeWebContainer::setPortrait(bool portrait)
+{
+    if (m_portrait != portrait) {
+        m_portrait = portrait;
+        emit portraitChanged();
     }
 }
 
@@ -893,42 +904,6 @@ void DeclarativeWebContainer::loadTab(const Tab& tab, bool force)
         // Hence, parentId is not necessary over here.
         m_webPage->loadTab(tab.url(), force);
     }
-}
-
-void DeclarativeWebContainer::sendVkbOpenCompositionMetrics()
-{
-    if (!m_webPage) {
-        return;
-    }
-
-    int vkbRectHeight(0);
-    int winHeight(0);
-    int winWidth(0);
-
-    if (m_portrait) {
-        vkbRectHeight = qGuiApp->inputMethod()->keyboardRectangle().height();
-        winHeight = height();
-        winWidth = width();
-    } else {
-        vkbRectHeight = qGuiApp->inputMethod()->keyboardRectangle().width();
-        winHeight = width();
-        winWidth = height();
-    }
-
-    // Round values to even numbers.
-    int compositionHeight = winHeight - vkbRectHeight;
-    int vkbOpenMaxCssCompositionWidth = winWidth / QMozContext::GetInstance()->pixelRatio();
-    int vkbOpenMaxCssCompositionHeight = compositionHeight / QMozContext::GetInstance()->pixelRatio();
-
-    QVariantMap map;
-    map.insert("imOpen", vkbRectHeight > 0);
-    map.insert("resolution", m_webPage->resolution());
-    map.insert("compositionHeight", compositionHeight);
-    map.insert("maxCssCompositionWidth", vkbOpenMaxCssCompositionWidth);
-    map.insert("maxCssCompositionHeight", vkbOpenMaxCssCompositionHeight);
-
-    QVariant data(map);
-    m_webPage->sendAsyncMessage("embedui:vkbOpenCompositionMetrics", data);
 }
 
 void DeclarativeWebContainer::createGLContext()

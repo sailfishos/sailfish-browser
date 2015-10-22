@@ -46,7 +46,7 @@ class DeclarativeWebContainer : public QWindow, public QQmlParserStatus, protect
     Q_PROPERTY(int maxLiveTabCount READ maxLiveTabCount WRITE setMaxLiveTabCount NOTIFY maxLiveTabCountChanged FINAL)
     // This property should cover all possible popus
     Q_PROPERTY(bool popupActive MEMBER m_popupActive NOTIFY popupActiveChanged FINAL)
-    Q_PROPERTY(bool portrait MEMBER m_portrait NOTIFY portraitChanged FINAL)
+    Q_PROPERTY(bool portrait READ portrait WRITE setPortrait NOTIFY portraitChanged FINAL)
     Q_PROPERTY(bool fullscreenMode MEMBER m_fullScreenMode NOTIFY fullscreenModeChanged FINAL)
     Q_PROPERTY(qreal fullscreenHeight MEMBER m_fullScreenHeight NOTIFY fullscreenHeightChanged FINAL)
     Q_PROPERTY(bool imOpened MEMBER m_imOpened NOTIFY imOpenedChanged FINAL)
@@ -89,6 +89,9 @@ public:
 
     int maxLiveTabCount() const;
     void setMaxLiveTabCount(int count);
+
+    bool portrait() const;
+    void setPortrait(bool portrait);
 
     QQmlComponent* webPageComponent() const;
     void setWebPageComponent(QQmlComponent* qmlComponent);
@@ -203,10 +206,6 @@ private slots:
     void onLastViewDestroyed();
 
     void updateWindowFlags();
-
-    // These are here to inform embedlite-components that keyboard is open or close
-    // matching composition metrics.
-    void sendVkbOpenCompositionMetrics();
 
     // QMozWindow related slots:
     void createGLContext();
