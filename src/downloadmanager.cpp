@@ -23,6 +23,13 @@
 #include <grp.h>
 #include <unistd.h>
 
+#if defined(arm) \
+    || defined(__arm__) \
+    || defined(ARM) \
+    || defined(_ARM_)
+#define CPU_ARM 1
+#endif
+
 static DownloadManager *gSingleton = 0;
 
 DownloadManager::DownloadManager()
@@ -103,14 +110,17 @@ void DownloadManager::recvObserve(const QString message, const QVariant data)
         QString targetPath = dataMap.value(QStringLiteral("targetPath")).toString();
         QFileInfo fileInfo(targetPath);
         if (fileInfo.completeSuffix() == QLatin1Literal("myapp")) {
-            QString packageName("com.aptoide.partners");
-            QString apkName = aptoideApk(packageName);
-            if (apkName.isEmpty()) {
-                qWarning() << "No aptoide client installed to handle package: " + targetPath;
-                return;
-            }
+            QString rootNameSpace("com.aptoide.partners%1");
+            QString aptoideSupport = rootNameSpace.arg(QLatin1Literal(".AptoideJollaSupport"));
+#if CPU_ARM
+            QString packageName = rootNameSpace.arg(QString());
+#else
+            QString packageName = rootNameSpace.arg(QLatin1Literal(".jolla_tablet_store"));
+#endif
+            QString apkName = QString("%1.apk").arg(packageName);
+            // TODO: Add proper checking that Aptoide is installed (JB#33047)
             if (moveMyAppPackage(targetPath)) {
-                QProcess::execute("/usr/bin/apkd-launcher", QStringList() << apkName << QString("%1/%1.AptoideJollaSupport").arg(packageName));
+                QProcess::execute(QStringLiteral("/usr/bin/apkd-launcher"), QStringList() << apkName << QString("%1/%2").arg(packageName).arg(aptoideSupport));
             }
         }
     } else if (msg == QLatin1Literal("dl-fail")) {
@@ -151,7 +161,6 @@ bool DownloadManager::moveMyAppPackage(QString path)
     QFileInfo fileInfo(file);
     QString newPath(aptoideDownloadPath + fileInfo.fileName());
     QFile obsoleteFile(newPath);
-
     if (obsoleteFile.exists() && !obsoleteFile.remove()) {
         qWarning() << "Failed to remove obsolete myapp file, aborting";
         return false;
@@ -165,21 +174,6 @@ bool DownloadManager::moveMyAppPackage(QString path)
     }
 
     return true;
-}
-
-QString DownloadManager::aptoideApk(QString packageName)
-{
-    QString apkPath("/data/app/");
-    QString aptoideApk = QString("%1/%2.apk").arg(apkPath, packageName);
-    if (!QFile(aptoideApk).exists()) {
-        QDir apkDir(apkPath, QString("%1*.apk").arg(packageName));
-        if (apkDir.count() > 0) {
-            aptoideApk = QString("%1/%2").arg(apkPath, apkDir.entryList().last());
-        } else {
-            return QString();
-        }
-    }
-    return aptoideApk;
 }
 
 void DownloadManager::cancelActiveTransfers()
