@@ -57,13 +57,14 @@ void DownloadManager::recvObserve(const QString message, const QVariant data)
     QString msg(dataMap.value("msg").toString());
     qulonglong downloadId(dataMap.value("id").toULongLong());
 
-    if (msg == "dl-start" && m_download2transferMap.contains(downloadId)) { // restart existing transfer
+    if (msg == QLatin1Literal("dl-start") && m_download2transferMap.contains(downloadId)) { // restart existing transfer
         m_transferClient->startTransfer(m_download2transferMap.value(downloadId));
         m_statusCache.insert(downloadId, DownloadStarted);
-    } else if (msg == "dl-start") { // create new transfer
+    } else if (msg == QLatin1Literal("dl-start")) { // create new transfer
         emit downloadStarted();
         QStringList callback;
-        callback << "org.sailfishos.browser" << "/" << "org.sailfishos.browser";
+        QLatin1Literal browserInterface("org.sailfishos.browser");
+        callback << browserInterface << QLatin1Literal("/") << browserInterface;
         QDBusPendingReply<int> reply = m_transferClient->createDownload(dataMap.value("displayName").toString(),
                                                                         QString("image://theme/icon-launcher-browser"),
                                                                         QString("image://theme/icon-launcher-browser"),
@@ -87,19 +88,19 @@ void DownloadManager::recvObserve(const QString message, const QVariant data)
 
         m_transferClient->startTransfer(transferId);
         m_statusCache.insert(downloadId, DownloadStarted);
-    } else if (msg == "dl-progress") {
-        qreal progress(dataMap.value("percent").toULongLong() / 100.0);
+    } else if (msg == QLatin1Literal("dl-progress")) {
+        qreal progress(dataMap.value(QStringLiteral("percent")).toULongLong() / 100.0);
 
         m_transferClient->updateTransferProgress(m_download2transferMap.value(downloadId),
                                                  progress);
-    } else if (msg == "dl-done") {
+    } else if (msg == QLatin1Literal("dl-done")) {
         m_transferClient->finishTransfer(m_download2transferMap.value(downloadId),
                                          TransferEngineData::TransferFinished,
                                          QString("success"));
         m_statusCache.insert(downloadId, DownloadDone);
         checkAllTransfers();
 
-        QString targetPath = dataMap.value("targetPath").toString();
+        QString targetPath = dataMap.value(QStringLiteral("targetPath")).toString();
         QFileInfo fileInfo(targetPath);
         if (fileInfo.completeSuffix() == QLatin1Literal("myapp")) {
             QString packageName("com.aptoide.partners");
@@ -112,13 +113,13 @@ void DownloadManager::recvObserve(const QString message, const QVariant data)
                 QProcess::execute("/usr/bin/apkd-launcher", QStringList() << apkName << QString("%1/%1.AptoideJollaSupport").arg(packageName));
             }
         }
-    } else if (msg == "dl-fail") {
+    } else if (msg == QLatin1Literal("dl-fail")) {
         m_transferClient->finishTransfer(m_download2transferMap.value(downloadId),
                                          TransferEngineData::TransferInterrupted,
                                          QString("browser failure"));
         m_statusCache.insert(downloadId, DownloadFailed);
         checkAllTransfers();
-    } else if (msg == "dl-cancel") {
+    } else if (msg == QLatin1Literal("dl-cancel")) {
         m_transferClient->finishTransfer(m_download2transferMap.value(downloadId),
                                          TransferEngineData::TransferCanceled,
                                          QString("download canceled"));
