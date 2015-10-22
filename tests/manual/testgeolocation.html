@@ -1,0 +1,25 @@
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, user-scalable=false;">
+        <title>Simple Geolocation smoke test</title>
+        <script>
+            function outputData(position) {
+                // Write each attribute from position data.
+                var data = document.getElementById("data");
+                for (var i in position.coords) {
+                    var dataRow = document.createElement("h2");
+                    var positionData = document.createTextNode(i + " : " + position.coords[i]);
+                    dataRow.appendChild(positionData);
+                    data.appendChild(dataRow);
+                }
+            }
+            function init() {
+                navigator.geolocation.getCurrentPosition(outputData);
+            }
+        </script>
+    </head>
+    <body onload="init()">
+    <h1>Geolocation data will be written below</h1>
+    <div id="data"></div>
+    </body>
+</html>
