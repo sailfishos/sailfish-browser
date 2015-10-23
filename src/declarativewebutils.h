@@ -26,7 +26,6 @@ class DeclarativeWebUtils : public QObject
 
     Q_PROPERTY(QString homePage READ homePage NOTIFY homePageChanged FINAL)
     Q_PROPERTY(bool firstUseDone READ firstUseDone WRITE setFirstUseDone NOTIFY firstUseDoneChanged)
-    Q_PROPERTY(bool debugMode READ debugMode CONSTANT FINAL)
     Q_PROPERTY(qreal cssPixelRatio READ cssPixelRatio NOTIFY cssPixelRatioChanged)
     Q_PROPERTY(qreal silicaPixelRatio READ silicaPixelRatio WRITE setSilicaPixelRatio NOTIFY silicaPixelRatioChanged)
     Q_PROPERTY(qreal touchSideRadius READ touchSideRadius WRITE setTouchSideRadius NOTIFY touchSideRadiusChanged)
@@ -40,7 +39,6 @@ public:
 
     bool firstUseDone() const;
     void setFirstUseDone(bool firstUseDone);
-    bool debugMode() const;
     qreal cssPixelRatio() const;
     qreal silicaPixelRatio() const;
     void setSilicaPixelRatio(qreal silicaPixelRatio);
@@ -90,7 +88,6 @@ private:
 
     MGConfItem m_homePage;
     bool m_firstUseDone;
-    bool m_debugMode;
     qreal m_silicaPixelRatio;
     qreal m_touchSideRadius;
     qreal m_touchTopRadius;

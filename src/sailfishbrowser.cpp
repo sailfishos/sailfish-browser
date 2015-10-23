@@ -209,7 +209,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     // Setup embedding
     QTimer::singleShot(0, QMozContext::GetInstance(), SLOT(runEmbedding()));
 
-    if (qApp->arguments().count() > 1) {
+    if (qApp->arguments().count() > 1 && (qApp->arguments().last() != QLatin1Literal("-debugMode"))) {
         emit utils->openUrlRequested(qApp->arguments().last());
     } else if (!utils->firstUseDone()) {
         emit utils->openUrlRequested("");
