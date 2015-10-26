@@ -354,7 +354,7 @@ Page {
             window.setBrowserCover(webView.tabModel)
         }
 
-        if (WebUtils.debugMode) {
+        if (Qt.application.arguments.indexOf("-debugMode") > 0) {
             var component = Qt.createComponent(Qt.resolvedUrl("components/DebugOverlay.qml"))
             if (component.status === Component.Ready) {
                 debug = component.createObject(browserPage)

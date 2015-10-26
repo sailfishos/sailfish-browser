@@ -70,7 +70,6 @@ static bool fileExists(QString fileName)
 DeclarativeWebUtils::DeclarativeWebUtils()
     : QObject()
     , m_homePage("/apps/sailfish-browser/settings/home_page", this)
-    , m_debugMode(qApp->arguments().contains("-debugMode"))
     , m_silicaPixelRatio(1.0)
     , m_touchSideRadius(32.0)
     , m_touchTopRadius(48.0)
@@ -135,7 +134,7 @@ void DeclarativeWebUtils::clearStartupCacheIfNeeded()
 
 void DeclarativeWebUtils::handleDumpMemoryInfoRequest(QString fileName)
 {
-    if (m_debugMode) {
+    if (qApp->arguments().contains("-debugMode")) {
         emit dumpMemoryInfo(fileName);
     }
 }
@@ -244,11 +243,6 @@ void DeclarativeWebUtils::setFirstUseDone(bool firstUseDone) {
         }
         emit firstUseDoneChanged();
     }
-}
-
-bool DeclarativeWebUtils::debugMode() const
-{
-    return m_debugMode;
 }
 
 qreal DeclarativeWebUtils::cssPixelRatio() const
