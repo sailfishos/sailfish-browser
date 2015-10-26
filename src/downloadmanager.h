@@ -54,7 +54,6 @@ private:
     };
 
     void checkAllTransfers();
-    QString aptoideApk(QString packageName);
     bool moveMyAppPackage(QString path);
 
     // TODO: unlike Gecko downloads and Sailfish transfers these mappings
