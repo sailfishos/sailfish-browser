@@ -13,6 +13,7 @@
 #include "declarativewebcontainer.h"
 #include "dbmanager.h"
 
+#include <QGuiApplication>
 #include <QtConcurrent>
 #include <QStandardPaths>
 #include "qmozwindow.h"
@@ -114,6 +115,9 @@ void DeclarativeWebPage::setContainer(DeclarativeWebContainer *container)
 {
     if (m_container != container) {
         m_container = container;
+        if (m_container) {
+            connect(m_container, SIGNAL(portraitChanged()), this, SLOT(sendVkbOpenCompositionMetrics()));
+        }
         Q_ASSERT(container->mozWindow());
         setMozWindow(container->mozWindow());
         emit containerChanged();
@@ -241,7 +245,10 @@ void DeclarativeWebPage::setVirtualKeyboardMargin(qreal margin)
 {
     if (margin != m_virtualKeyboardMargin) {
         m_virtualKeyboardMargin = margin;
-        updateViewMargins();
+        QMargins margins;
+        margins.setBottom(m_virtualKeyboardMargin);
+        setMargins(margins);
+        sendVkbOpenCompositionMetrics();
         emit virtualKeyboardMarginChanged();
     }
 }
@@ -334,14 +341,51 @@ void DeclarativeWebPage::thumbnailReady()
 
 void DeclarativeWebPage::updateViewMargins()
 {
+    // Don't update margins while panning, flicking, or pinching.
+    if (moving() || m_virtualKeyboardMargin > 0) {
+        return;
+    }
+
     QMargins margins;
-    if (m_virtualKeyboardMargin > 0) {
-        margins.setBottom(m_virtualKeyboardMargin);
-    } else if (!m_fullscreen && contentHeight() < (m_fullScreenHeight + m_toolbarHeight)) {
+    if (!m_fullscreen && (contentHeight() < (m_fullScreenHeight + m_toolbarHeight))) {
         margins.setBottom(m_toolbarHeight);
     }
 
     setMargins(margins);
+}
+
+void DeclarativeWebPage::sendVkbOpenCompositionMetrics()
+{
+    // Send update only if the page is active.
+    if (!active()) {
+        return;
+    }
+
+    int winHeight(0);
+    int winWidth(0);
+
+    // Listen im state so that we don't send also updates when
+    // vkb state changes on the chrome side.
+
+    if (m_container) {
+      if (m_container->portrait()) {
+        winHeight = m_container->height();
+        winWidth = m_container->width();
+      } else {
+        winHeight = m_container->width();
+        winWidth = m_container->height();
+      }
+    }
+
+    QVariantMap map;
+    map.insert("imOpen", m_virtualKeyboardMargin > 0);
+    map.insert("pixelRatio", QMozContext::GetInstance()->pixelRatio());
+    map.insert("bottomMargin", m_virtualKeyboardMargin);
+    map.insert("screenWidth", winWidth);
+    map.insert("screenHeight", winHeight);
+
+    QVariant data(map);
+    sendAsyncMessage("embedui:vkbOpenCompositionMetrics", data);
 }
 
 QString DeclarativeWebPage::saveToFile(QImage image)

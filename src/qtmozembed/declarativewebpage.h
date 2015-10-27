@@ -95,6 +95,10 @@ private slots:
     void thumbnailReady();
     void updateViewMargins();
 
+    // These are here to inform embedlite-components that keyboard is open or close
+    // matching composition metrics.
+    void sendVkbOpenCompositionMetrics();
+
 private:
     QString saveToFile(QImage image);
     void restoreHistory();
