@@ -95,7 +95,6 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
     connect(&m_grabWritter, SIGNAL(finished()), this, SLOT(grabWritten()));
     connect(this, SIGNAL(urlChanged()), this, SLOT(onUrlChanged()));
     connect(this, &QOpenGLWebPage::contentHeightChanged, this, &DeclarativeWebPage::updateViewMargins);
-    connect(this, &QOpenGLWebPage::activeChanged, this, &DeclarativeWebPage::updateViewMargins);
 }
 
 DeclarativeWebPage::~DeclarativeWebPage()
@@ -346,8 +345,9 @@ void DeclarativeWebPage::updateViewMargins()
         return;
     }
 
+    qreal threshold = qMax(m_fullScreenHeight * 1.5f, (m_fullScreenHeight + (m_toolbarHeight*2)));
     QMargins margins;
-    if (!m_fullscreen && (contentHeight() < (m_fullScreenHeight + m_toolbarHeight))) {
+    if (!m_fullscreen && (contentHeight() < threshold)) {
         margins.setBottom(m_toolbarHeight);
     }
 
