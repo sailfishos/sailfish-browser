@@ -446,6 +446,13 @@ void DeclarativeWebUtils::setRenderingPreferences()
     // Don't force 16bit color depth
     mozContext->setPref(QString("gfx.qt.rgb16.force"), QVariant(false));
 
+    // We're not relying on async scroll events. So lets fire them
+    // less often than the default value (100) or B2G (15). Currently only toolbar
+    // is interested about async scroll events and it's not urgent to be
+    // updated immediately.
+    mozContext->setPref(QString("apz.asyncscroll.throttle"), QVariant(400));
+    mozContext->setPref(QString("apz.asyncscroll.timeout"), QVariant(400));
+
     // Use external Qt window for rendering content
     mozContext->setPref(QString("embedlite.compositor.external_gl_context"), QVariant(true));
     mozContext->setPref(QString("embedlite.compositor.request_external_gl_context_early"), QVariant(true));
