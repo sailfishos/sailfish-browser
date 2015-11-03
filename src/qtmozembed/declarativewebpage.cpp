@@ -95,6 +95,12 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
     connect(&m_grabWritter, SIGNAL(finished()), this, SLOT(grabWritten()));
     connect(this, SIGNAL(urlChanged()), this, SLOT(onUrlChanged()));
     connect(this, &QOpenGLWebPage::contentHeightChanged, this, &DeclarativeWebPage::updateViewMargins);
+    connect(this, &QOpenGLWebPage::loadedChanged, [this]() {
+        if (loaded()) {
+            updateViewMargins();
+        }
+    });
+    connect(this, SIGNAL(fullscreenHeightChanged()), this, SLOT(updateViewMargins()));
 }
 
 DeclarativeWebPage::~DeclarativeWebPage()
