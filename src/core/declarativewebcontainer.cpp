@@ -88,7 +88,6 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
 
     setTabModel(privateMode() ? m_privateTabModel.data() : m_persistentTabModel.data());
 
-    connect(DownloadManager::instance(), SIGNAL(initializedChanged()), this, SLOT(initialize()));
     connect(DownloadManager::instance(), SIGNAL(downloadStarted()), this, SLOT(onDownloadStarted()));
     connect(QMozContext::GetInstance(), SIGNAL(onInitialized()), this, SLOT(initialize()));
     connect(QMozContext::GetInstance(), &QMozContext::lastViewDestroyed,
@@ -893,7 +892,7 @@ void DeclarativeWebContainer::updatePageFocus(bool focus)
 
 bool DeclarativeWebContainer::canInitialize() const
 {
-    return QMozContext::GetInstance()->initialized() && DownloadManager::instance()->initialized() && m_model && m_model->loaded();
+    return QMozContext::GetInstance()->initialized() && m_model && m_model->loaded();
 }
 
 void DeclarativeWebContainer::loadTab(const Tab& tab, bool force)
