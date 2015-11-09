@@ -138,6 +138,7 @@ void DeclarativeWebUtils::updateWebEngineSettings()
 
     // Use autodownload, never ask
     mozContext->setPref(QString("browser.download.useDownloadDir"), QVariant(true));
+    mozContext->setPref(QString("browser.download.useJSTransfer"), QVariant(true));
     // see https://developer.mozilla.org/en-US/docs/Download_Manager_preferences
     // Use custom downloads location defined in browser.download.dir
     mozContext->setPref(QString("browser.download.folderList"), QVariant(2));
@@ -172,8 +173,7 @@ void DeclarativeWebUtils::updateWebEngineSettings()
                              << "media-decoder-info"
                              << "embed:download"
                              << "embed:allprefs"
-                             << "embed:search"
-                             << "download-manager-initialized");
+                             << "embed:search");
 
     // Enable internet search
     mozContext->setPref(QString("keyword.enabled"), QVariant(true));
