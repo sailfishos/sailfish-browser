@@ -4,6 +4,7 @@ QMAKE_LFLAGS += -lgtest -lgmock
 PKGCONFIG += mlite5
 
 include(../mocks/qmozcontext/qmozcontext.pri)
+include(../mocks/settingmanager/settingmanager_mock.pri)
 include(../test_common.pri)
 include(../../../common/opensearchconfigs.pri)
 include(../../../common/paths.pri)

@@ -34,6 +34,9 @@ public:
 
     static SettingManager *instance();
 
+public slots:
+    void setSearchEngine();
+
 signals:
     void toolbarSmallChanged();
     void toolbarLargeChanged();
@@ -43,7 +46,6 @@ private slots:
     bool clearCookies();
     bool clearPasswords();
     bool clearCache();
-    void setSearchEngine();
     void doNotTrack();
 
 private:
