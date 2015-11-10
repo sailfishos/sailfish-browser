@@ -405,16 +405,16 @@ void DeclarativeWebUtils::handleObserve(const QString message, const QVariant da
 {
     const QVariantMap dataMap = data.toMap();
 
-    if (message == "clipboard:setdata") {
+    if (message == QLatin1String("clipboard:setdata")) {
         QClipboard *clipboard = QGuiApplication::clipboard();
 
         // check if we copied password
         if (!dataMap.value("private").toBool()) {
             clipboard->setText(dataMap.value("data").toString());
         }
-    } else if (message == "embed:search") {
+    } else if (message == QLatin1String("embed:search")) {
         QString msg = dataMap.value("msg").toString();
-        if (msg == "load") {
+        if (msg == QLatin1String("load")) {
             const StringMap configs(OpenSearchConfigs::getAvailableOpenSearchConfigs());
             QStringList registeredSearches(dataMap.value("engines").toStringList());
             QMozContext *mozContext = QMozContext::GetInstance();
