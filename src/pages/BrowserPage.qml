@@ -319,8 +319,8 @@ Page {
 
             webView.grabActivePage()
             if (!webView.tabModel.activateTab(url)) {
-                // Not found in tabs list, load it. A new tab will be created if no tabs exist.
-                webView.load(url)
+                // Open new tab with empty title
+                webView.tabModel.newTab(url, "")
                 overlay.animator.showChrome(true)
             }
             bringToForeground(webView)
