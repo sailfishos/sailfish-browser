@@ -743,7 +743,7 @@ void DeclarativeWebContainer::initialize()
         QString url = m_initialUrl.isEmpty() ? DeclarativeWebUtils::instance()->homePage() : m_initialUrl;
         QString title = "";
         m_model->newTab(url, title);
-    } else if (m_model->count() > 0) {
+    } else if (m_model->count() > 0 && !m_webPage) {
         Tab tab = m_model->activeTab();
         if (!m_initialUrl.isEmpty()) {
             tab.setUrl(m_initialUrl);
@@ -788,6 +788,11 @@ void DeclarativeWebContainer::onNewTabRequested(QString url, QString title, int 
     Q_UNUSED(title);
     Tab tab;
     tab.setTabId(m_model->nextTabId());
+    tab.setUrl(url);
+    if (!canInitialize()) {
+        m_initialUrl = url;
+    }
+
     if (activatePage(tab, false, parentId)) {
         m_webPage->loadTab(url, false);
     }
