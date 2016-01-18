@@ -195,11 +195,11 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 #ifdef USE_RESOURCES
     view->setSource(QUrl("qrc:///browser.qml"));
 #else
-    bool isDesktop = qApp->arguments().contains("-desktop");
+    bool isDesktop = app->arguments().contains("-desktop");
 
     QString path;
     if (isDesktop) {
-        path = qApp->applicationDirPath() + QDir::separator();
+        path = app->applicationDirPath() + QDir::separator();
     } else {
         path = QString(DEPLOYMENT_PATH);
     }
@@ -209,10 +209,12 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     // Setup embedding
     QTimer::singleShot(0, QMozContext::GetInstance(), SLOT(runEmbedding()));
 
-    if (qApp->arguments().count() > 1 && (qApp->arguments().last() != QLatin1Literal("-debugMode"))) {
-        emit utils->openUrlRequested(qApp->arguments().last());
-    } else if (!utils->firstUseDone()) {
-        emit utils->openUrlRequested("");
+    if (!app->arguments().contains(QStringLiteral("-prestart"))) {
+        if (app->arguments().count() > 1 && (app->arguments().last() != QStringLiteral("-debugMode"))) {
+            emit utils->openUrlRequested(app->arguments().last());
+        } else if (!utils->firstUseDone()) {
+            emit utils->openUrlRequested("");
+        }
     }
 
     return app->exec();
