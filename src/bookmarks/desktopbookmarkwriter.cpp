@@ -9,11 +9,11 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "desktopbookmarkwriter.h"
-
 #include <QDir>
-#include <QStandardPaths>
 #include <QtConcurrent>
+
+#include "desktopbookmarkwriter.h"
+#include "browserpaths.h"
 
 static bool dbw_testMode = false;
 
@@ -64,9 +64,9 @@ QString DesktopBookmarkWriter::uniqueDesktopFileName(QString title)
 {
     QString filePath;
     if (!isTestModeEnabled()) {
-        filePath = QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation);
+        filePath = BrowserPaths::applicationsLocation();
     } else {
-        filePath = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+        filePath = BrowserPaths::dataLocation();
     }
     title = title.simplified().replace(QString(" "), QString("-"));
 

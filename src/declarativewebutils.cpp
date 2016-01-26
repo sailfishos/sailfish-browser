@@ -9,23 +9,29 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include <QLocale>
-#include <QStringList>
-#include <QVariant>
-#include <QVariantMap>
-#include <QGuiApplication>
-#include <QClipboard>
-#include <QFile>
-#include <QFileInfo>
-#include <QDir>
-#include <QDateTime>
-#include <QScreen>
-#include <QStandardPaths>
-#include <QtMath>
+// QtCore
+#include <QtCore/QDateTime>
+#include <QtCore/QDir>
+#include <QtCore/QFile>
+#include <QtCore/QFileInfo>
+#include <QtCore/QLocale>
+#include <QtCore/QSettings>
+#include <QtCore/QStandardPaths>
+#include <QtCore/QStringList>
+#include <QtCore/QtMath>
+#include <QtCore/QVariant>
+#include <QtCore/QVariantMap>
+
+// QtGui
+#include <QtGui/QClipboard>
+#include <QtGui/QGuiApplication>
+#include <QtGui/QScreen>
+
 #include <math.h>
 #include "declarativewebutils.h"
 #include "qmozcontext.h"
 #include "opensearchconfigs.h"
+#include "browserpaths.h"
 
 static const QString gSystemComponentsTimeStamp("/var/lib/_MOZEMBED_CACHE_CLEAN_");
 static const QString gProfilePath("/.mozilla/mozembed");
@@ -34,8 +40,7 @@ static DeclarativeWebUtils *gSingleton = 0;
 static const qreal gCssPixelRatioRoundingFactor = 0.5;
 static const qreal gCssDefaultPixelRatio = 1.5;
 
-
-bool testScreenDimensions(qreal pixelRatio) {
+static bool testScreenDimensions(qreal pixelRatio) {
     QScreen *screen = QGuiApplication::primaryScreen();
     qreal w = screen->size().width() / pixelRatio;
     qreal h = screen->size().height() / pixelRatio;
@@ -43,10 +48,28 @@ bool testScreenDimensions(qreal pixelRatio) {
     return fmod(w, 1.0) == 0 && fmod(h, 1.0) == 0;
 }
 
+const QSettings &quickSettings()
+{
+    static const QSettings settings(QSettings::SystemScope, QStringLiteral("QtProject"), QStringLiteral("QtQuick2"));
+    return settings;
+}
+
+int getPressAndHoldDelay()
+{
+    return quickSettings().value(QStringLiteral("QuickMouseArea/PressAndHoldDelay"), 800).toInt();
+}
+
+const int PressAndHoldDelay(getPressAndHoldDelay());
+
+static bool fileExists(QString fileName)
+{
+    QFile file(fileName);
+    return file.exists();
+}
+
 DeclarativeWebUtils::DeclarativeWebUtils()
     : QObject()
     , m_homePage("/apps/sailfish-browser/settings/home_page", this)
-    , m_debugMode(qApp->arguments().contains("-debugMode"))
     , m_silicaPixelRatio(1.0)
     , m_touchSideRadius(32.0)
     , m_touchTopRadius(48.0)
@@ -59,7 +82,7 @@ DeclarativeWebUtils::DeclarativeWebUtils()
     connect(QMozContext::GetInstance(), SIGNAL(recvObserve(QString, QVariant)),
             this, SLOT(handleObserve(QString, QVariant)));
 
-    QString path = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + QStringLiteral("/.firstUseDone");
+    QString path = BrowserPaths::dataLocation() + QStringLiteral("/.firstUseDone");
     m_firstUseDone = fileExists(path);
 
     connect(&m_homePage, SIGNAL(valueChanged()), this, SIGNAL(homePageChanged()));
@@ -75,10 +98,23 @@ int DeclarativeWebUtils::getLightness(QColor color) const
     return color.lightness();
 }
 
-bool DeclarativeWebUtils::fileExists(QString fileName) const
+QString DeclarativeWebUtils::uniquePictureName(const QString& fileName) const
 {
-    QFile file(fileName);
-    return file.exists();
+    const QFileInfo fileInfo(fileName);
+    const QString picturesDir(BrowserPaths::picturesLocation());
+    const QString newFile("%1/%2(%3)%4%5");
+    const QString baseName = fileInfo.baseName();
+    const QString suffix = fileInfo.completeSuffix();
+
+    QString result(picturesDir + "/" + fileName);
+    int collisionCount(1);
+
+    while (QFileInfo::exists(result)) {
+        collisionCount++;
+        result = newFile.arg(picturesDir).arg(baseName).arg(collisionCount).arg(suffix.isEmpty() ? "" : ".").arg(suffix);
+    }
+
+    return result;
 }
 
 void DeclarativeWebUtils::clearStartupCacheIfNeeded()
@@ -98,7 +134,7 @@ void DeclarativeWebUtils::clearStartupCacheIfNeeded()
 
 void DeclarativeWebUtils::handleDumpMemoryInfoRequest(QString fileName)
 {
-    if (m_debugMode) {
+    if (qApp->arguments().contains("-debugMode")) {
         emit dumpMemoryInfo(fileName);
     }
 }
@@ -141,7 +177,7 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     // see https://developer.mozilla.org/en-US/docs/Download_Manager_preferences
     // Use custom downloads location defined in browser.download.dir
     mozContext->setPref(QString("browser.download.folderList"), QVariant(2));
-    mozContext->setPref(QString("browser.download.dir"), downloadDir());
+    mozContext->setPref(QString("browser.download.dir"), BrowserPaths::downloadLocation());
     // Downloads should never be removed automatically
     mozContext->setPref(QString("browser.download.manager.retention"), QVariant(2));
     // Downloads will be canceled on quit
@@ -154,12 +190,12 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     mozContext->setPref(QString("browser.enable_automatic_image_resizing"), QVariant(true));
 
     // Make long press timeout equal to the one in Qt
-    mozContext->setPref(QString("ui.click_hold_context_menus.delay"), QVariant(800));
+    mozContext->setPref(QString("ui.click_hold_context_menus.delay"), QVariant(PressAndHoldDelay));
     mozContext->setPref(QString("apz.fling_stopped_threshold"), QString("0.13f"));
 
     // TODO: remove this line when the value adjusted for different DPIs makes
     // its way to Gecko's default prefs.
-    mozContext->setPref(QString("apz.touch_start_tolerance"), QString("0.0555555f"));
+    mozContext->setPref(QString("apz.touch_start_tolerance"), QString("0.027777f"));
 
     // Move these to embedding.js
     mozContext->setPref(QString("apz.min_skate_speed"), QString("1.0f"));
@@ -204,7 +240,7 @@ void DeclarativeWebUtils::updateWebEngineSettings()
 }
 
 void DeclarativeWebUtils::setFirstUseDone(bool firstUseDone) {
-    QString path = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + QStringLiteral("/.firstUseDone");
+    QString path = BrowserPaths::dataLocation() + QStringLiteral("/.firstUseDone");
     if (m_firstUseDone != firstUseDone) {
         m_firstUseDone = firstUseDone;
         if (!firstUseDone) {
@@ -216,11 +252,6 @@ void DeclarativeWebUtils::setFirstUseDone(bool firstUseDone) {
         }
         emit firstUseDoneChanged();
     }
-}
-
-bool DeclarativeWebUtils::debugMode() const
-{
-    return m_debugMode;
 }
 
 qreal DeclarativeWebUtils::cssPixelRatio() const
@@ -349,16 +380,6 @@ DeclarativeWebUtils *DeclarativeWebUtils::instance()
         gSingleton = new DeclarativeWebUtils();
     }
     return gSingleton;
-}
-
-QString DeclarativeWebUtils::downloadDir() const
-{
-    return QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
-}
-
-QString DeclarativeWebUtils::picturesDir() const
-{
-    return QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
 }
 
 QString DeclarativeWebUtils::displayableUrl(QString fullUrl) const

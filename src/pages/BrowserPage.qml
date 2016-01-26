@@ -322,8 +322,8 @@ Page {
 
             webView.grabActivePage()
             if (!webView.tabModel.activateTab(url)) {
-                // Not found in tabs list, load it. A new tab will be created if no tabs exist.
-                webView.load(url)
+                // Open new tab with empty title
+                webView.tabModel.newTab(url, "")
                 overlay.animator.showChrome(true)
             }
             bringToForeground(webView)
@@ -354,7 +354,7 @@ Page {
             window.setBrowserCover(webView.tabModel)
         }
 
-        if (WebUtils.debugMode) {
+        if (Qt.application.arguments.indexOf("-debugMode") > 0) {
             var component = Qt.createComponent(Qt.resolvedUrl("components/DebugOverlay.qml"))
             if (component.status === Component.Ready) {
                 debug = component.createObject(browserPage)
