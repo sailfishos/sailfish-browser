@@ -16,6 +16,7 @@ QtObject {
     property bool videoActive
     property bool audioActive
     property bool background
+    property bool displayOff
 
     signal webViewSuspended
 

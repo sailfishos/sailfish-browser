@@ -1,7 +1,7 @@
 /****************************************************************************
 **
 ** Copyright (C) 2015 Jolla Ltd.
-** Contact: Raine Makelainen <raine.makelainen@jolla.com>
+** Contact: Dmitry Rozhkov <dmitry.rozhkov@jolla.com>
 **
 ****************************************************************************/
 
@@ -9,27 +9,23 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef DECLARATIVEWEBCONTAINER_H
-#define DECLARATIVEWEBCONTAINER_H
-
-#include <QObject>
+#include <QQmlComponent>
 
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
-class DeclarativeWebPage;
+#include "tab.h"
+#include "declarativewebcontainer.h"
+#include "declarativewebpage.h"
 
-class DeclarativeWebContainer : public QObject
+class WebPageFactory : public QObject
 {
     Q_OBJECT
-
 public:
-    explicit DeclarativeWebContainer(QObject *parent = 0);
+    WebPageFactory(QObject *parent = 0) : QObject(parent) {};
 
-    int findParentTabId(int) const;
-    MOCK_CONST_METHOD0(webPage, DeclarativeWebPage*());
-    MOCK_CONST_METHOD0(privateMode, bool());
+    MOCK_METHOD3(createWebPage, DeclarativeWebPage*(DeclarativeWebContainer*, const Tab&, int));
+
+public slots:
+    void updateQmlComponent(QQmlComponent*) {};
 };
-
-
-#endif

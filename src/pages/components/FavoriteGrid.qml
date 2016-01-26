@@ -174,7 +174,7 @@ SilicaGridView {
                 fetcher.destroy()
             }
 
-            minimumIconSize: Theme.iconSizeMedium
+            minimumIconSize: Theme.iconSizeSmallPlus
 
             onDataChanged: {
                 var canDestroy = true

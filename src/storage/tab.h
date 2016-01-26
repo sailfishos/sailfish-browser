@@ -15,19 +15,14 @@
 #include <QString>
 #include <QDebug>
 
-#include "link.h"
-
 class Tab
 {
 public:
-    explicit Tab(int tabId, Link currentLink);
+    explicit Tab(int tabId, QString url, QString title, QString thumbPath);
     explicit Tab();
 
     int tabId() const;
     void setTabId(int tabId);
-
-    int currentLink() const;
-    void setCurrentLink(int currentLinkId);
 
     QString url() const;
     void setUrl(const QString &url);
@@ -45,8 +40,9 @@ public:
 
 private:
     int m_tabId;
-    Link m_currentLink;
-    int m_nextLinkId;
+    QString m_url;
+    QString m_title;
+    QString m_thumbPath;
 };
 
 QDebug operator<<(QDebug, const Tab *);

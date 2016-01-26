@@ -2,7 +2,7 @@ TARGET = tst_persistenttabmodel
 
 QMAKE_LFLAGS += -lgtest -lgmock
 
-QT += quick qml sql
+QT += qml sql
 
 include(../test_common.pri)
 include(../mocks/declarativewebpage/declarativewebpage_mock.pri)

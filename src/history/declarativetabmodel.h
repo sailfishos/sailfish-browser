@@ -27,12 +27,11 @@ class DeclarativeTabModel : public QAbstractListModel
 protected:
     Q_PROPERTY(int activeTabIndex READ activeTabIndex NOTIFY activeTabIndexChanged FINAL)
     Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
-    Q_PROPERTY(int nextTabId READ nextTabId NOTIFY nextTabIdChanged FINAL)
     Q_PROPERTY(bool loaded READ loaded NOTIFY loadedChanged FINAL)
     Q_PROPERTY(bool waitingForNewTab READ waitingForNewTab WRITE setWaitingForNewTab NOTIFY waitingForNewTabChanged FINAL)
 
 public:
-    DeclarativeTabModel(int nextTabId = 1, DeclarativeWebContainer *webContainer = 0);
+    DeclarativeTabModel(int nextTabId, DeclarativeWebContainer *webContainer = 0);
     ~DeclarativeTabModel();
 
     enum TabRoles {
@@ -49,6 +48,7 @@ public:
     Q_INVOKABLE void activateTab(int index, bool loadActiveTab = true);
     Q_INVOKABLE void closeActiveTab();
     Q_INVOKABLE void newTab(const QString &url, const QString &title, int parentId = 0);
+    Q_INVOKABLE QString url(int tabId) const;
 
     Q_INVOKABLE void dumpTabs() const;
 
@@ -89,7 +89,6 @@ signals:
     // only for testing purposes.
     void tabAdded(int tabId);
     void tabClosed(int tabId);
-    void nextTabIdChanged();
     void loadedChanged();
     void waitingForNewTabChanged();
     void newTabRequested(QString url, QString title, int parentId = 0);
@@ -101,11 +100,9 @@ protected:
     void updateActiveTab(const Tab &activeTab, bool loadActiveTab);
     void updateUrl(int tabId, const QString &url, bool initialLoad);
 
-    virtual int createTab() = 0;
-    virtual int createLink(int tabId, QString url, QString title) = 0;
-    virtual void updateTitle(int tabId, int linkId, QString url, QString title) = 0;
+    virtual void createTab(const Tab &tab) = 0;
+    virtual void updateTitle(int tabId, QString url, QString title) = 0;
     virtual void removeTab(int tabId) = 0;
-    virtual int nextLinkId() = 0;
     virtual void navigateTo(int tabId, QString url, QString title, QString path) = 0;
     virtual void updateThumbPath(int tabId, QString path) = 0;
 

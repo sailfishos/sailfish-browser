@@ -38,16 +38,23 @@ BackgroundItem {
     // contentItem is hidden so this cannot be children of the contentItem.
     // So, making them as siblings of the contentItem.
     data: [
+        Rectangle {
+            color: "#202020"
+            width: root.implicitWidth
+            height: root.implicitHeight
+        },
         Image {
             id: image
 
             source: thumbnailPath
             width: root.implicitWidth
             height: root.implicitHeight
+
             cache: false
             asynchronous: true
+            opacity: status !== Image.Ready && source !== "" ? 0.0 : 1.0
+            Behavior on opacity { FadeAnimation {} }
         },
-
         Rectangle {
             anchors.bottom: parent.bottom
             width: parent.width
@@ -93,7 +100,7 @@ BackgroundItem {
                 verticalCenter: close.verticalCenter
             }
 
-            text: title
+            text: title || WebUtils.displayableUrl(url)
             truncationMode: TruncationMode.Fade
             color: down || activeTab ? Theme.highlightColor : Theme.primaryColor
         }

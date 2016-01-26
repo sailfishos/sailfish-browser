@@ -19,11 +19,19 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QRegularExpression>
+#include <MGConfItem>
 
 #include "bookmark.h"
 
 BookmarkManager::BookmarkManager()
+  : QObject(nullptr)
 {
+    m_clearBookmarksConfItem = new MGConfItem("/apps/sailfish-browser/actions/clear_bookmarks", this);
+
+    clearBookmarks();
+
+    connect(m_clearBookmarksConfItem, SIGNAL(valueChanged()),
+            this, SLOT(clearBookmarks()));
 }
 
 BookmarkManager* BookmarkManager::instance()
@@ -38,15 +46,15 @@ BookmarkManager* BookmarkManager::instance()
 
 void BookmarkManager::save(const QList<Bookmark*> & bookmarks)
 {
-    QString settingsLocation = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
-    QDir dir(settingsLocation);
+    QString dataLocation = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+    QDir dir(dataLocation);
     if (!dir.exists()) {
-        if (!dir.mkpath(settingsLocation)) {
-            qWarning() << "Can't create directory " << settingsLocation;
+        if (!dir.mkpath(dataLocation)) {
+            qWarning() << "Can't create directory " << dataLocation;
             return;
         }
     }
-    QString path = settingsLocation + "/bookmarks.json";
+    QString path = dataLocation + "/bookmarks.json";
     QFile file(path);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         qWarning() << "Can't create file " << path;
@@ -77,13 +85,13 @@ void BookmarkManager::clear()
 
 QList<Bookmark*> BookmarkManager::load() {
     QList<Bookmark*> bookmarks;
-    QString settingsLocation = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/bookmarks.json";
-    QScopedPointer<QFile> file(new QFile(settingsLocation));
+    QString bookmarkFile = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/bookmarks.json";
+    QScopedPointer<QFile> file(new QFile(bookmarkFile));
 
     if (!file->open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qWarning() << "Unable to open bookmarks " << settingsLocation;
+        qWarning() << "Unable to open bookmarks " << bookmarkFile;
 
-        file.reset(new QFile(QLatin1Literal("/usr/share/sailfish-browser/content/bookmarks.json")));
+        file.reset(new QFile(QLatin1Literal("/usr/share/sailfish-browser/default-content/bookmarks.json")));
         if (!file->open(QIODevice::ReadOnly | QIODevice::Text)) {
             qWarning() << "Unable to open bookmarks defaults";
             return bookmarks;
@@ -111,4 +119,12 @@ QList<Bookmark*> BookmarkManager::load() {
     }
     file->close();
     return bookmarks;
+}
+
+void BookmarkManager::clearBookmarks()
+{
+    if (m_clearBookmarksConfItem->value(false).toBool()) {
+        clear();
+        m_clearBookmarksConfItem->set(false);
+    }
 }

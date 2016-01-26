@@ -8,7 +8,7 @@
            </pre_steps>
            <description>Sailfish Browser UI unit tests</description>
            <case manual="false" name="declarativebookmarkmodel">
-               <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_declarativebookmarkmodel -platform wayland-egl</step>
+               <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_declarativebookmarkmodel</step>
            </case>
            <case manual="false" name="declarativehistorymodel">
                <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_declarativehistorymodel -platform wayland-egl</step>
@@ -17,7 +17,7 @@
                <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_linkvalidator</step>
            </case>
            <case manual="false" name="dbmanager">
-               <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_dbmanager -platform wayland-egl -iterations 10</step>
+               <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_dbmanager</step>
            </case>
            <case manual="false" timeout="300" name="webview">
                <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; LOW_MEMORY_DISABLED=1 ./tst_webview -platform wayland-egl</step>
@@ -27,6 +27,15 @@
            </case>
            <case manual="false" name="persistenttabmodel">
                <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_persistenttabmodel</step>
+           </case>
+           <case manual="false" name="webutils">
+               <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_webutils</step>
+           </case>
+           <case manual="false" name="webpages">
+               <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_webpages</step>
+           </case>
+           <case manual="false" name="webpagefactory">
+               <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_webpagefactory</step>
            </case>
            <case manual="false" name="declarativewebcontainer">
                <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_declarativewebcontainer</step>

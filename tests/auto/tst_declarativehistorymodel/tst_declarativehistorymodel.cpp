@@ -17,15 +17,14 @@
 #include "persistenttabmodel.h"
 #include "declarativehistorymodel.h"
 #include "testobject.h"
+#include "dbmanager.h"
 
 static const QByteArray QML_SNIPPET = \
         "import QtQuick 2.0\n" \
         "import Sailfish.Browser 1.0\n" \
         "Item {\n" \
         "   width: 100; height: 100\n" \
-        "   property alias tabModel: tabModel\n" \
         "   property alias historyModel: historyModel\n" \
-        "   PersistentTabModel { id: tabModel }\n" \
         "   HistoryModel { id: historyModel }\n" \
         "}\n";
 
@@ -65,12 +64,13 @@ private:
 tst_declarativehistorymodel::tst_declarativehistorymodel()
     : TestObject(QML_SNIPPET)
 {
-    tabModel = TestObject::qmlObject<DeclarativeTabModel>("tabModel");
-    historyModel = TestObject::qmlObject<DeclarativeHistoryModel>("historyModel");
 }
 
 void tst_declarativehistorymodel::initTestCase()
 {
+    tabModel = new PersistentTabModel(DBManager::instance()->getMaxTabId() + 1);
+    historyModel = TestObject::qmlObject<DeclarativeHistoryModel>("historyModel");
+
     QVERIFY(tabModel);
     QVERIFY(historyModel);
 
@@ -258,6 +258,7 @@ void tst_declarativehistorymodel::cleanupTestCase()
 {
     tabModel->clear();
     QVERIFY(tabModel->count() == 0);
+    delete tabModel;
 
     // Wait for event loop of db manager
     QTest::qWait(1000);
@@ -272,7 +273,6 @@ int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
     app.setAttribute(Qt::AA_Use96Dpi, true);
-    qmlRegisterType<PersistentTabModel>("Sailfish.Browser", 1, 0, "PersistentTabModel");
     qmlRegisterType<DeclarativeHistoryModel>("Sailfish.Browser", 1, 0, "HistoryModel");
     tst_declarativehistorymodel testcase;
     return QTest::qExec(&testcase, argc, argv); \

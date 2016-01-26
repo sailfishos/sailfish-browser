@@ -28,8 +28,7 @@ public:
     static DBManager *instance();
     virtual ~DBManager();
 
-    int createTab();
-    int createLink(int tabId, QString url, QString title);
+    void createTab(const Tab &tab);
     void getAllTabs();
     void removeTab(int tabId);
     void navigateTo(int tabId, QString url, QString title = "", QString path = "");
@@ -37,7 +36,7 @@ public:
     void goBack(int tabId);
 
     void updateThumbPath(int tabId, QString path);
-    void updateTitle(int tabId, int linkId, QString url, QString title);
+    void updateTitle(int tabId, QString url, QString title);
 
     void clearHistory();
     void getHistory(const QString &filter = "");
@@ -48,27 +47,18 @@ public:
     void deleteSetting(QString name);
 
     int getMaxTabId();
-    int nextLinkId();
-
-public slots:
-    void tabListAvailable(QList<Tab> tabs);
 
 signals:
     void tabsAvailable(QList<Tab> tab);
     void historyAvailable(QList<Link> links);
-    void tabHistoryAvailable(int tabId, QList<Link> links);
+    void tabHistoryAvailable(int tabId, QList<Link> links, int currentLinkId);
     void thumbPathChanged(int tabId, QString path);
-    void titleChanged(int tabId, int linkId, QString url, QString title);
+    void titleChanged(QString url, QString title);
     void settingsChanged();
-
-private slots:
-    void updateNextLinkId(int linkId);
 
 private:
     DBManager(QObject *parent = 0);
 
-    int m_maxTabId;
-    int m_nextLinkId;
     QMap<QString, QString> m_settings;
 
     QThread workerThread;

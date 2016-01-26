@@ -12,14 +12,10 @@ dbus_service.path = /usr/share/dbus-1/services
 chrome_scripts.files = chrome/*.js
 chrome_scripts.path = /usr/lib/mozembedlite/chrome/embedlite/content
 
-content.files = content/*
-content.path = /usr/share/sailfish-browser/content
-
 oneshots.files = cleanup-browser-startup-cache
 oneshots.path  = /usr/lib/oneshot.d
 
-INSTALLS += desktop dbus_service chrome_scripts content oneshots
+INSTALLS += desktop dbus_service chrome_scripts oneshots
 
 OTHER_FILES += \
-    rpm/*.spec \
-    content/*.json
+    rpm/*.spec

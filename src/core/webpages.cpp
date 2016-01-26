@@ -20,13 +20,13 @@
 #include <QQmlContext>
 #include <QMapIterator>
 #include <QRectF>
-#include <qqmlinfo.h>
 
 #include "webpages.h"
 #include "declarativewebcontainer.h"
 #include "declarativewebpage.h"
 #include "qmozcontext.h"
 #include "tab.h"
+#include "webpagefactory.h"
 
 #ifndef DEBUG_LOGS
 #define DEBUG_LOGS 0
@@ -44,8 +44,9 @@ static const QString MemNormal = QStringLiteral("normal");
 static const QString MemWarning = QStringLiteral("warning");
 static const QString MemCritical = QStringLiteral("critical");
 
-WebPages::WebPages(QObject *parent)
+WebPages::WebPages(WebPageFactory *pageFactory, QObject *parent)
     : QObject(parent)
+    , m_pageFactory(pageFactory)
     , m_backgroundTimestamp(0)
     , m_memoryLevel(MemNormal)
 {
@@ -71,11 +72,10 @@ WebPages::~WebPages()
 {
 }
 
-void WebPages::initialize(DeclarativeWebContainer *webContainer, QQmlComponent *webPageComponent)
+void WebPages::initialize(DeclarativeWebContainer *webContainer)
 {
-    if (!m_webContainer || !m_webPageComponent) {
+    if (!m_webContainer) {
         m_webContainer = webContainer;
-        m_webPageComponent = webPageComponent;
     }
 
     connect(webContainer, SIGNAL(foregroundChanged()), this, SLOT(updateBackgroundTimestamp()));
@@ -109,7 +109,7 @@ void WebPages::delayVirtualization()
 
 bool WebPages::initialized() const
 {
-    return m_webContainer && m_webPageComponent;
+    return m_webContainer;
 }
 
 int WebPages::count() const
@@ -135,10 +135,6 @@ bool WebPages::alive(int tabId) const
 WebPageActivationData WebPages::page(const Tab& tab, int parentId)
 {
     const int tabId = tab.tabId();
-    if (!m_webPageComponent) {
-        qWarning() << "TabModel not initialized!";
-        return WebPageActivationData(0, false);
-    }
 
     if (m_activePages.active(tabId)) {
         DeclarativeWebPage *activePage = m_activePages.activeWebPage();
@@ -153,32 +149,11 @@ WebPageActivationData WebPages::page(const Tab& tab, int parentId)
     DeclarativeWebPage *webPage = 0;
     DeclarativeWebPage *oldActiveWebPage = m_activePages.activeWebPage();
     if (!m_activePages.alive(tabId)) {
-        QQmlContext *creationContext = m_webPageComponent->creationContext();
-        QQmlContext *context = new QQmlContext(creationContext ? creationContext : QQmlEngine::contextForObject(m_webContainer));
-        QObject *object = m_webPageComponent->beginCreate(context);
-        if (object) {
-            context->setParent(object);
-            object->setParent(m_webContainer);
-            webPage = qobject_cast<DeclarativeWebPage *>(object);
-            if (webPage) {
-                webPage->setParentID(parentId);
-                webPage->setPrivateMode(m_webContainer->privateMode());
-                webPage->setInitialTab(tab);
-                webPage->setContainer(m_webContainer);
-                webPage->initialize();
-                m_webPageComponent->completeCreate();
-#if DEBUG_LOGS
-                qDebug() << "New view id:" << webPage->uniqueID() << "parentId:" << webPage->parentId() << "tab id:" << webPage->tabId();
-#endif
-                m_activePages.prepend(tabId, webPage);
-                QQmlEngine::setObjectOwnership(webPage, QQmlEngine::CppOwnership);
-            } else {
-                qmlInfo(m_webContainer) << "webPage component must be a WebPage component";
-            }
+        webPage = m_pageFactory->createWebPage(m_webContainer, tab, parentId);
+        if (webPage) {
+            m_activePages.prepend(tabId, webPage);
         } else {
-            qmlInfo(m_webContainer) << "Creation of the web page failed. Error: " << m_webPageComponent->errorString();
-            delete object;
-            object = 0;
+            return WebPageActivationData(nullptr, false);
         }
     }
 

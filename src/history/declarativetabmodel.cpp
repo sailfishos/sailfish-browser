@@ -56,10 +56,9 @@ void DeclarativeTabModel::addTab(const QString& url, const QString &title, int i
 
     Q_ASSERT(index >= 0 && index <= m_tabs.count());
 
-    int tabId = createTab();
-    int linkId = createLink(tabId, url, title);
+    const Tab tab(m_nextTabId, url, title, "");
+    createTab(tab);
 
-    Tab tab(tabId, Link(linkId, url, "", title));
 #if DEBUG_LOGS
     qDebug() << "new tab data:" << &tab;
 #endif
@@ -72,10 +71,9 @@ void DeclarativeTabModel::addTab(const QString& url, const QString &title, int i
     updateActiveTab(tab, true);
 
     emit countChanged();
-    emit tabAdded(tabId);
+    emit tabAdded(tab.tabId());
 
-    m_nextTabId = ++tabId;
-    emit nextTabIdChanged();
+    m_nextTabId = tab.tabId() + 1;
 }
 
 int DeclarativeTabModel::nextTabId() const
@@ -177,6 +175,15 @@ void DeclarativeTabModel::newTab(const QString &url, const QString &title, int p
 {
     setWaitingForNewTab(true);
     emit newTabRequested(url, title, parentId);
+}
+
+QString DeclarativeTabModel::url(int tabId) const
+{
+    int index = findTabIndex(tabId);
+    if (index >= 0) {
+        return m_tabs.at(index).url();
+    }
+    return "";
 }
 
 void DeclarativeTabModel::dumpTabs() const
@@ -281,14 +288,12 @@ void DeclarativeTabModel::updateUrl(int tabId, const QString &url, bool initialL
     bool updateDb = false;
     if (tabIndex >= 0 && (m_tabs.at(tabIndex).url() != url || isActiveTab)) {
         QVector<int> roles;
-        roles << UrlRole << ThumbPathRole;
+        roles << UrlRole;
         m_tabs[tabIndex].setUrl(url);
 
         if (!initialLoad) {
-            m_tabs[tabIndex].setCurrentLink(nextLinkId());
             updateDb = true;
         }
-        m_tabs[tabIndex].setThumbnailPath("");
 
         emit dataChanged(index(tabIndex, 0), index(tabIndex, 0), roles);
     }
@@ -392,13 +397,15 @@ void DeclarativeTabModel::updateThumbnailPath(int tabId, QString path)
     QVector<int> roles;
     roles << ThumbPathRole;
     for (int i = 0; i < m_tabs.count(); i++) {
-        if (m_tabs.at(i).tabId() == tabId && m_tabs.at(i).thumbnailPath() != path) {
+        if (m_tabs.at(i).tabId() == tabId) {
 #if DEBUG_LOGS
             qDebug() << "model tab thumbnail updated: " << path << i << tabId;
 #endif
-            m_tabs[i].setThumbnailPath(path);
             QModelIndex start = index(i, 0);
             QModelIndex end = index(i, 0);
+            m_tabs[i].setThumbnailPath("");
+            emit dataChanged(start, end, roles);
+            m_tabs[i].setThumbnailPath(path);
             emit dataChanged(start, end, roles);
             updateThumbPath(tabId, path);
         }
@@ -446,7 +453,7 @@ void DeclarativeTabModel::onTitleChanged()
             roles << TitleRole;
             m_tabs[tabIndex].setTitle(title);
             emit dataChanged(index(tabIndex, 0), index(tabIndex, 0), roles);
-            updateTitle(tabId, m_tabs.at(tabIndex).currentLink(), webPage->url().toString(), title);
+            updateTitle(tabId, webPage->url().toString(), title);
         }
     }
 }
