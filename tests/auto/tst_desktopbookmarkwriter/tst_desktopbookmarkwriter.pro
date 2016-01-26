@@ -1,8 +1,9 @@
 TARGET = tst_desktopbookmarkwriter
 
-NO_COMMON_INCLUDES=1
+QT += concurrent network
+
 include(../test_common.pri)
-include(../../../src/bookmarks.pri)
+include(../../../src/bookmarks/bookmarks.pri)
 
 SOURCES += tst_desktopbookmarkwriter.cpp
 
@@ -18,4 +19,4 @@ PKGCONFIG += mlite5
 testData.path = $$target.path/content
 testData.files = content/*.png
 
-INSTALLS += target testData
+INSTALLS += testData

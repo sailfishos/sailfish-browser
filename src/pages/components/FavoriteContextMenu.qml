@@ -19,6 +19,7 @@ Component {
         property Item delegate
         property string title
         property string url
+        property int index
 
         // FavoriteGrid doesn't fill the entire page thus set width to FavoriteGrid's parent
         width: _flickable !== null ? _flickable.parent.width : (parent ? parent.width : 0)
@@ -53,7 +54,7 @@ Component {
             //: "Remove favorited / bookmarked web page"
             //% "Remove favorite"
             text: qsTrId("sailfish_browser-me-remove_favorite")
-            onClicked: bookmarkModel.removeBookmark(url)
+            onClicked: bookmarkModel.remove(index)
         }
     }
 }

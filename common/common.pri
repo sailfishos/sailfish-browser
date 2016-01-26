@@ -10,6 +10,10 @@ isEmpty(USER_OPENSEARCH_PATH) {
   DEFINES += USER_OPENSEARCH_PATH=\"\\\"$$USER_OPENSEARCH_PATH\\\"\"
 }
 
+INCLUDEPATH += $$PWD
+
+CONFIG += c++11
+
 # C++ sources
 SOURCES += \
     $$PWD/opensearchconfigs.cpp

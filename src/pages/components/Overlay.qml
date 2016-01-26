@@ -35,6 +35,9 @@ Background {
         if (url == "about:config") {
             pageStack.push(Qt.resolvedUrl("ConfigWarning.qml"), {"browserPage": browserPage});
         } else {
+            if (webView && webView.tabModel.count === 0) {
+                webView.clearSurface();
+            }
             // let gecko figure out how to handle malformed URLs
             var pageUrl = url
             var pageTitle = title || ""
@@ -125,6 +128,13 @@ Background {
                     WebUtils.firstUseDone = true
                 }
             }
+            dragArea.moved = false
+        }
+
+        onAtTopChanged: {
+            if (!atTop) {
+                dragArea.moved = true
+            }
         }
     }
 
@@ -147,6 +157,7 @@ Background {
     MouseArea {
         id: dragArea
 
+        property bool moved
         property int dragThreshold: state === "fullscreenOverlay" ? toolBar.toolsHeight * 1.5 :
                                                                     state === "doubleToolBar" ?
                                                                         (webView.fullscreenHeight - toolBar.toolsHeight * 4) :
@@ -192,11 +203,16 @@ Background {
         Item {
             id: historyContainer
 
-            readonly property bool showFavorites: (!searchField.edited && searchField.text === webView.url || !searchField.text)
+            readonly property bool showFavorites: !overlayAnimator.atBottom && (!searchField.edited && searchField.text === webView.url || !searchField.text)
 
             width: parent.width
             height: toolBar.toolsHeight + historyList.height
-            clip: true
+            // Clip only when content has been moved and we're at top or animating downwards.
+            clip: (overlayAnimator.atTop ||
+                   overlayAnimator.direction === "downwards" ||
+                   overlayAnimator.direction === "upwards" ||
+                   favoriteGrid.opacity != 0.0 ||
+                   historyList.opacity != 0.0) && searchField.y < 0
 
             PrivateModeTexture {
                 opacity: toolBar.visible && webView.privateMode ? toolBar.opacity : 0.0
@@ -207,7 +223,7 @@ Background {
 
                 url: webView.contentItem && webView.contentItem.url || ""
                 findText: searchField.text
-                bookmarked: bookmarkModel.count && bookmarkModel.contains(webView.url)
+                bookmarked: bookmarkModel.activeUrlBookmarked
                 opacity: (overlay.y - webView.fullscreenHeight/2)  / (webView.fullscreenHeight/2 - toolBar.height)
                 visible: opacity > 0.0
                 secondaryToolsActive: overlayAnimator.secondaryTools
@@ -221,9 +237,7 @@ Background {
                     // Push the currently active tab index.
                     // Changing of active tab cannot cause blinking.
                     webView.grabActivePage()
-                    pageStack.push(tabView, {
-                                       "activeTabIndex": webView.tabModel.activeTabIndex
-                                   })
+                    pageStack.push(tabView)
                 }
                 onShowSecondaryTools: overlayAnimator.showSecondaryTools()
                 onShowChrome: overlayAnimator.showChrome()
@@ -248,13 +262,18 @@ Background {
                                    })
                 }
                 onBookmarkActivePage: favoriteGrid.fetchAndSaveBookmark()
-                onRemoveActivePageFromBookmarks: bookmarkModel.removeBookmark(webView.url)
+                onRemoveActivePageFromBookmarks: bookmarkModel.remove(webView.url)
             }
 
             SearchField {
                 id: searchField
 
-                readonly property bool requestingFocus: overlayAnimator.atTop && browserPage.active
+                readonly property bool requestingFocus: overlayAnimator.atTop && browserPage.active && !dragArea.moved
+
+                // Release focus when ever history list or favorite grid is moved and overlay itself starts moving
+                // from the top. After moving the overlay or the content, search field can be focused by tapping.
+                readonly property bool focusOut: dragArea.moved
+
                 property bool edited
                 property bool enteringNewTabUrl
 
@@ -295,12 +314,23 @@ Background {
 
                 background: null
                 opacity: toolBar.opacity * -1.0
-                visible: opacity > 0.0
+                visible: opacity > 0.0 && y >= -searchField.height
+
+                onYChanged: {
+                    if (y < 0) {
+                        dragArea.moved = true
+                    }
+                }
+
                 onRequestingFocusChanged: {
                     if (requestingFocus) {
                         forceActiveFocus()
-                    } else {
-                        focus = false
+                    }
+                }
+
+                onFocusOutChanged: {
+                    if (focusOut) {
+                        overlay.focus = true
                     }
                 }
 
@@ -313,6 +343,7 @@ Background {
                         } else {
                             searchField.selectAll()
                         }
+                        dragArea.moved = false
                     }
                 }
 
@@ -363,24 +394,24 @@ Background {
                 }
 
                 search: searchField.text
-                opacity: historyContainer.showFavorites ? 0.0 : 1.0
+                opacity: historyContainer.showFavorites || toolBar.opacity > 0.9 ? 0.0 : 1.0
                 enabled: overlayAnimator.atTop
-                visible: !overlayAnimator.atBottom && !toolBar.findInPageActive && opacity > 0.0
+                visible: !overlayAnimator.atBottom && !toolBar.findInPageActive && !historyContainer.showFavorites
 
                 onMovingChanged: if (moving) historyList.focus = true
                 onSearchChanged: if (search !== webView.url) historyModel.search(search)
                 onLoad: overlay.loadPage(url, title)
 
-                Behavior on opacity { FadeAnimation {} }
+                Behavior on opacity { FadeAnimator {} }
             }
 
             Browser.FavoriteGrid {
                 id: favoriteGrid
 
                 height: historyList.height
-                opacity: historyContainer.showFavorites ? 1.0 : 0.0
+                opacity: historyContainer.showFavorites && toolBar.opacity < 0.9 ? 1.0 : 0.0
                 enabled: overlayAnimator.atTop
-                visible: !overlayAnimator.atBottom && !toolBar.findInPageActive && opacity > 0.0
+                visible: !overlayAnimator.atBottom && !toolBar.findInPageActive && historyContainer.showFavorites
                 _quickScrollRightMargin: -(browserPage.width - width) / 2
 
                 header: Item {
@@ -390,6 +421,7 @@ Background {
 
                 model: BookmarkModel {
                     id: bookmarkModel
+                    activeUrl: toolBar.url
                 }
 
                 onMovingChanged: if (moving) favoriteGrid.focus = true
@@ -404,7 +436,7 @@ Background {
 
                 onShare: pageStack.push(Qt.resolvedUrl("../ShareLinkPage.qml"), {"link" : url, "linkTitle": title})
 
-                Behavior on opacity { FadeAnimation {} }
+                Behavior on opacity { FadeAnimator {} }
             }
         }
     }
@@ -413,7 +445,6 @@ Background {
         id: tabView
         Page {
             id: tabPage
-            property int activeTabIndex
 
             onStatusChanged: browserPage.tabPageActive = (status == PageStatus.Active)
 
@@ -428,8 +459,6 @@ Background {
 
                 onPrivateModeChanged: {
                     webView.privateMode = privateMode
-                    tabPage.activeTabIndex =  webView.tabModel.activeTabIndex
-
                     if (webView.tabModel.count === 0) {
                         overlay.enterNewTabUrl(PageStackAction.Immediate)
                     } else if (!overlayAnimator.atBottom) {
@@ -461,7 +490,7 @@ Background {
                 }
 
                 Component.onCompleted: {
-                    positionViewAtIndex(tabPage.activeTabIndex, ListView.Center)
+                    positionViewAtIndex(webView.tabModel.activeTabIndex, ListView.Center)
                     window.setBrowserCover(webView.tabModel)
                 }
 

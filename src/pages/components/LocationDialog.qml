@@ -16,6 +16,8 @@ import Sailfish.Silica 1.0
 UserPrompt {
     id: dialog
 
+    property string host
+
     //: Allow the server to use location
     //% "Allow"
     acceptText: qsTrId("sailfish_browser-he-accept_location")
@@ -24,8 +26,8 @@ UserPrompt {
         x: Theme.paddingLarge
         width: parent.width - Theme.paddingLarge * 2
         //: The site that wants know user location
-        //% "The site wants to use your current location."
-        text: qsTrId("sailfish_browser-la-location_requested")
+        //% "The site '%1' wants to use your current location."
+        text: qsTrId("sailfish_browser-la-location_requested").arg(host)
         wrapMode: Text.WordWrap
         color: Theme.highlightColor
     }

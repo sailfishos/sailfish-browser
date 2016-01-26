@@ -11,7 +11,7 @@ BuildRequires:  pkgconfig(Qt5Core)
 BuildRequires:  pkgconfig(Qt5Qml)
 BuildRequires:  pkgconfig(Qt5Gui)
 BuildRequires:  pkgconfig(Qt5Quick)
-BuildRequires:  pkgconfig(qt5embedwidget) >= 1.12.26
+BuildRequires:  pkgconfig(qt5embedwidget) >= 1.12.29
 BuildRequires:  pkgconfig(Qt5DBus)
 BuildRequires:  pkgconfig(Qt5Concurrent)
 BuildRequires:  pkgconfig(Qt5Sql)
@@ -21,12 +21,14 @@ BuildRequires:  pkgconfig(qdeclarative5-boostable)
 BuildRequires:  qt5-qttools
 BuildRequires:  qt5-qttools-linguist
 BuildRequires:  oneshot
+BuildRequires:  gtest-devel
+BuildRequires:  libgmock-devel
 
-Requires: sailfishsilica-qt5 >= 0.21.24.9
+Requires: sailfishsilica-qt5 >= 0.21.34
 Requires: jolla-ambient >= 0.7.12
-Requires: xulrunner-qt5 >= 31.7.0.22
+Requires: xulrunner-qt5 >= 31.8.0.3
 Requires: embedlite-components-qt5 >= 1.8.11
-Requires: qtmozembed-qt5 >= 1.12.26
+Requires: qtmozembed-qt5 >= 1.12.29
 Requires: sailfish-browser-settings = %{version}
 Requires: qt5-plugin-imageformat-ico
 Requires: qt5-plugin-imageformat-gif
@@ -42,6 +44,9 @@ Requires: sailfish-components-media-qt5
 Requires: sailfish-components-pickers-qt5 >= 0.1.7
 
 %{_oneshot_requires_post}
+
+%{!?qtc_qmake5:%define qtc_qmake5 %qmake5}
+%{!?qtc_make:%define qtc_make make}
 
 %description
 Sailfish Web Browser
@@ -86,9 +91,8 @@ Unit tests and additional data needed for functional tests
 # >> build pre
 # << build pre
 
-%qmake5
-
-make %{_smp_mflags}
+%qtc_qmake5 -r VERSION=%{version}
+%qtc_make %{?_smp_mflags}
 
 # >> build post
 # << build post

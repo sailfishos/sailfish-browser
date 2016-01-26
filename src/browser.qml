@@ -49,6 +49,9 @@ ApplicationWindow {
     _defaultLabelFormat: Text.PlainText
     _clippingItem.opacity: 1.0
     _resizeContent: !window.rootPage.active
+    _mainWindow: webView
+    _backgroundVisible: false
+
     cover: null
     initialPage: Component {
         BrowserPage {
@@ -61,11 +64,6 @@ ApplicationWindow {
 
             Component.onDestruction: {
                 window.webView = null
-                if (!!_coverWindow) {
-                    // Make sure the cover window won't be resolving dangling pointer upon exit
-                    // as the line above doesn't guaranty nullifying _coverWindow.mainWindow.
-                    _coverWindow.mainWindow = null
-                }
             }
         }
     }
@@ -91,12 +89,6 @@ ApplicationWindow {
     }
 
     property QtObject webView
-    Binding {
-        when: !!_coverWindow
-        target: _coverWindow
-        property: "mainWindow"
-        value: webView
-    }
 
     Component {
         id: backgroundComponent

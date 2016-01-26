@@ -152,7 +152,7 @@ void tst_webview::testNewTab()
     QSignalSpy titleChangedSpy(webContainer, SIGNAL(titleChanged()));
 
     QSignalSpy tabCountSpy(tabModel, SIGNAL(countChanged()));
-    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,int)));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
     QSignalSpy tabAddedSpy(tabModel, SIGNAL(tabAdded(int)));
     QSignalSpy contentItemSpy(webContainer, SIGNAL(contentItemChanged()));
     QSignalSpy loadingChanged(webContainer, SIGNAL(loadingChanged()));
@@ -198,7 +198,7 @@ void tst_webview::testNewTab()
 
     // Signaled always when tab is changed.
     QList<QVariant> arguments = activeTabChangedSpy.takeFirst();
-    int activatedTabId = arguments.at(1).toInt();
+    int activatedTabId = arguments.at(0).toInt();
     QCOMPARE(activatedTabId, webContainer->webPage()->tabId());
 
     // Signaled only when tab added.
@@ -240,7 +240,7 @@ void tst_webview::testActivateTab()
     QString newActiveTitle = tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString();
     int newActiveTabId = tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt();
 
-    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,int)));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
     QSignalSpy urlChangedSpy(webContainer, SIGNAL(urlChanged()));
     QSignalSpy titleChangedSpy(webContainer, SIGNAL(titleChanged()));
     QSignalSpy contentItemSpy(webContainer, SIGNAL(contentItemChanged()));
@@ -265,7 +265,7 @@ void tst_webview::testActivateTab()
 
     // Signaled always when tab is changed.
     QList<QVariant> arguments = activeTabChangedSpy.takeFirst();
-    int activatedTabId = arguments.at(1).toInt();
+    int activatedTabId = arguments.at(0).toInt();
     QCOMPARE(activatedTabId, webContainer->webPage()->tabId());
 }
 
@@ -277,7 +277,7 @@ void tst_webview::testCloseActiveTab()
     // "testuseragent.html", "TestUserAgent" (2)
     // "testnavigation.html", "TestNavigation" (3)
 
-    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,int)));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
     QSignalSpy tabClosedSpy(tabModel, SIGNAL(tabClosed(int)));
     QSignalSpy urlChangedSpy(webContainer, SIGNAL(urlChanged()));
     QSignalSpy titleChangedSpy(webContainer, SIGNAL(titleChanged()));
@@ -324,7 +324,7 @@ void tst_webview::testCloseActiveTab()
 
     // Signaled always when tab is changed.
     arguments = activeTabChangedSpy.takeFirst();
-    int activatedTabId = arguments.at(1).toInt();
+    int activatedTabId = arguments.at(0).toInt();
     QCOMPARE(activatedTabId, webContainer->webPage()->tabId());
 }
 
@@ -335,7 +335,7 @@ void tst_webview::testRemoveTab()
     // "testuseragent.html", "TestUserAgent" (1)
     // "testnavigation.html", "TestNavigation" (2)
 
-    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,int)));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
     QSignalSpy tabClosedSpy(tabModel, SIGNAL(tabClosed(int)));
 
     QSignalSpy urlChangedSpy(webContainer, SIGNAL(urlChanged()));
@@ -429,7 +429,7 @@ void tst_webview::testLiveTabCount()
     QFETCH(int, liveTabCount);
 
     QSignalSpy tabCountSpy(tabModel, SIGNAL(countChanged()));
-    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,int)));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
     QSignalSpy tabAddedSpy(tabModel, SIGNAL(tabAdded(int)));
     QSignalSpy loadingChanged(webContainer, SIGNAL(loadingChanged()));
     QSignalSpy urlChangedSpy(webContainer, SIGNAL(urlChanged()));
@@ -795,7 +795,7 @@ int main(int argc, char *argv[])
 
     qmlRegisterType<DeclarativeHistoryModel>("Sailfish.Browser", 1, 0, "HistoryModel");
     qmlRegisterUncreatableType<DeclarativeTabModel>("Sailfish.Browser", 1, 0, "TabModel", "TabModel is abstract!");
-    qmlRegisterType<PersistentTabModel>("Sailfish.Browser", 1, 0, "PersistentTabModel");
+    qmlRegisterUncreatableType<PersistentTabModel>("Sailfish.Browser", 1, 0, "PersistentTabModel", "");
     qmlRegisterType<DeclarativeWebContainer>("Sailfish.Browser", 1, 0, "WebContainer");
     qmlRegisterType<DeclarativeWebPage>("Sailfish.Browser", 1, 0, "WebPage");
     qmlRegisterType<DeclarativeWebPageCreator>("Sailfish.Browser", 1, 0, "WebPageCreator");

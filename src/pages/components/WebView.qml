@@ -24,6 +24,25 @@ WebContainer {
 
     property bool findInPageHasResult
 
+    property var resourceController: ResourceController {
+        webView: contentItem
+        background: !webView.visible
+    }
+
+    property Timer auxTimer: Timer {
+        interval: 1000
+    }
+
+    property var _webPageCreator: WebPageCreator {
+        activeWebPage: contentItem
+        // onNewWindowRequested is always handled as synchronous operation (not through newTab).
+        onNewWindowRequested: tabModel.newTab(url, "", parentId)
+    }
+
+    property Component _pickerCreator: Component {
+        PickerCreator {}
+    }
+
     function stop() {
         if (contentItem) {
             contentItem.stop()
@@ -63,12 +82,6 @@ WebContainer {
         PopupHandler.tabModel = tabModel
     }
 
-    property var webPageCreator: WebPageCreator {
-        activeWebPage: contentItem
-        // onNewWindowRequested is always handled as synchronous operation (not through newTab).
-        onNewWindowRequested: tabModel.newTab(url, "", parentId)
-    }
-
     webPageComponent: Component {
         WebPage {
             id: webPage
@@ -77,21 +90,20 @@ WebContainer {
             property string iconType
             readonly property bool activeWebPage: container.tabId == tabId
 
-            fullscreenHeight: container.fullscreenHeight
-            toolbarHeight: container.toolbarHeight
-            throttlePainting: !foreground && !resourceController.videoActive
-
-            enabled: webView.enabled
-
-            // There needs to be enough content for enabling chrome gesture
-            chromeGestureThreshold: toolbarHeight / 2
-            chromeGestureEnabled: (contentHeight > fullscreenHeight + toolbarHeight) && !forcedChrome && enabled && !webView.imOpened
-
             signal selectionRangeUpdated(variant data)
             signal selectionCopied(variant data)
             signal contextMenuRequested(variant data)
 
             width: container.rotationHandler && container.rotationHandler.width || 0
+            fullscreenHeight: container.fullscreenHeight
+            toolbarHeight: container.toolbarHeight
+            throttlePainting: !foreground && !resourceController.videoActive || resourceController.displayOff
+            readyToPaint: !resourceController.displayOff
+            enabled: webView.enabled
+
+            // There needs to be enough content for enabling chrome gesture
+            chromeGestureThreshold: toolbarHeight / 2
+            chromeGestureEnabled: (contentHeight > fullscreenHeight + toolbarHeight) && !forcedChrome && enabled && !webView.imOpened
 
             onClearGrabResult: tabModel.updateThumbnailPath(tabId, "")
             onGrabResult: tabModel.updateThumbnailPath(tabId, fileName)
@@ -103,14 +115,6 @@ WebContainer {
                 if (url == "about:blank") return
 
                 webView.findInPageHasResult = false
-
-                if (!PopupHandler.isRejectedGeolocationUrl(url)) {
-                    PopupHandler.rejectedGeolocationUrl = ""
-                }
-
-                if (!PopupHandler.isAcceptedGeolocationUrl(url)) {
-                    PopupHandler.acceptedGeolocationUrl = ""
-                }
             }
 
             onBgcolorChanged: {
@@ -233,7 +237,17 @@ WebContainer {
                     break
                 }
                 case "embed:permissions": {
-                    PopupHandler.openLocationDialog(data)
+                    if (data.title === "geolocation") {
+                        PopupHandler.openLocationDialog(data)
+                    } else {
+                        // Currently we don't support other permission requests.
+                        sendAsyncMessage("embedui:premissions",
+                                         {
+                                             allow: false,
+                                             checkedDontAsk: false,
+                                             id: data.id
+                                         })
+                    }
                     break
                 }
                 case "embed:login": {
@@ -311,19 +325,6 @@ WebContainer {
 //        Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
 //    }
 
-    property var resourceController: ResourceController {
-        webView: contentItem
-        background: !webView.visible
-    }
-
-    property Timer auxTimer: Timer {
-        interval: 1000
-    }
-
-    property Component pickerCreator: Component {
-        PickerCreator {}
-    }
-
     Component.onCompleted: {
         PopupHandler.auxTimer = auxTimer
         PopupHandler.pageStack = pageStack
@@ -332,6 +333,6 @@ WebContainer {
         PopupHandler.resourceController = resourceController
         PopupHandler.WebUtils = WebUtils
         PopupHandler.tabModel = tabModel
-        PopupHandler.pickerCreator = pickerCreator
+        PopupHandler.pickerCreator = _pickerCreator
     }
 }

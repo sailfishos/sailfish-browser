@@ -11,6 +11,7 @@
 
 #include <QGuiApplication>
 #include <QQuickView>
+#include <qqmldebug.h>
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QtQml>
@@ -57,6 +58,10 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 
     QQuickWindow::setDefaultAlphaBuffer(true);
 
+    if (!qgetenv("QML_DEBUGGING_ENABLED").isEmpty()) {
+        QQmlDebuggingEnabler qmlDebuggingEnabler;
+    }
+
 #ifdef HAS_BOOSTER
     QScopedPointer<QGuiApplication> app(MDeclarativeCache::qApplication(argc, argv));
     QScopedPointer<QQuickView> view(MDeclarativeCache::qQuickView());
@@ -71,9 +76,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     QByteArray binaryPath = QCoreApplication::applicationDirPath().toLocal8Bit();
     setenv("GRE_HOME", binaryPath.constData(), 1);
 
-    // TODO : Remove this and set custom user agent always
-    // Don't set custom user agent string when arguments contains -developerMode, give url as last argument
-    if (!app->arguments().contains("-developerMode")) {
+    // Don't set custom user agent string when the environment already contains CUSTOM_UA.
+    if (qgetenv("CUSTOM_UA").isEmpty()) {
         setenv("CUSTOM_UA", "Mozilla/5.0 (Maemo; Linux; U; Jolla; Sailfish; Mobile; rv:31.0) Gecko/31.0 Firefox/31.0 SailfishBrowser/1.0", 1);
     }
 
@@ -127,8 +131,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 
     qmlRegisterType<DeclarativeBookmarkModel>("Sailfish.Browser", 1, 0, "BookmarkModel");
     qmlRegisterUncreatableType<DeclarativeTabModel>("Sailfish.Browser", 1, 0, "TabModel", "TabModel is abstract!");
-    qmlRegisterType<PersistentTabModel>("Sailfish.Browser", 1, 0, "PersistentTabModel");
-    qmlRegisterType<PrivateTabModel>("Sailfish.Browser", 1, 0, "PrivateTabModel");
+    qmlRegisterUncreatableType<PersistentTabModel>("Sailfish.Browser", 1, 0, "PersistentTabModel", "");
+    qmlRegisterUncreatableType<PrivateTabModel>("Sailfish.Browser", 1, 0, "PrivateTabModel", "");
     qmlRegisterType<DeclarativeHistoryModel>("Sailfish.Browser", 1, 0, "HistoryModel");
     qmlRegisterType<DeclarativeWebContainer>("Sailfish.Browser", 1, 0, "WebContainer");
     qmlRegisterType<DeclarativeWebPage>("Sailfish.Browser", 1, 0, "WebPage");

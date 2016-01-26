@@ -44,6 +44,8 @@ private slots:
     void removeBookmark();
     void contains();
     void editBookmark();
+    void activeUrlBookmarked();
+    void removeByIndex();
     void clearBookmarks();
 
 private:
@@ -69,7 +71,7 @@ void tst_declarativebookmarkmodel::addBookmark()
 {
     QSignalSpy countChangeSpy(bookmarkModel, SIGNAL(countChanged()));
     int count = bookmarkModel->rowCount() + 1;
-    bookmarkModel->addBookmark("http://www.test1.jolla.com", "jolla", "");
+    bookmarkModel->add("http://www.test1.jolla.com", "jolla", "");
 
     waitSignals(countChangeSpy, 1);
     QCOMPARE(bookmarkModel->rowCount(), count);
@@ -77,22 +79,22 @@ void tst_declarativebookmarkmodel::addBookmark()
 
 void tst_declarativebookmarkmodel::removeBookmark()
 {
-    bookmarkModel->addBookmark("http://www.test2.jolla.com", "jolla", "");
+    bookmarkModel->add("http://www.test2.jolla.com", "jolla", "");
     int count = bookmarkModel->rowCount();
 
     QSignalSpy countChangeSpy(bookmarkModel, SIGNAL(countChanged()));
-    bookmarkModel->removeBookmark("http://www.test2.jolla.com");
+    bookmarkModel->remove("http://www.test2.jolla.com");
     waitSignals(countChangeSpy, 1);
 
     QCOMPARE(bookmarkModel->rowCount(), count-1);
 
-    bookmarkModel->removeBookmark("http://www.test3.that.is.not.there.jolla.com");
+    bookmarkModel->remove("http://www.test3.that.is.not.there.jolla.com");
     QCOMPARE(bookmarkModel->rowCount(), count-1);
 }
 
 void tst_declarativebookmarkmodel::contains()
 {
-    bookmarkModel->addBookmark("http://www.test4.contains.jolla.com", "jolla", "");
+    bookmarkModel->add("http://www.test4.contains.jolla.com", "jolla", "");
 
     QVERIFY(bookmarkModel->contains("http://www.test4.contains.jolla.com"));
     QVERIFY(!bookmarkModel->contains("http://www.test4.that.is.not.there.jolla.com"));
@@ -100,8 +102,8 @@ void tst_declarativebookmarkmodel::contains()
 
 void tst_declarativebookmarkmodel::editBookmark()
 {
-    bookmarkModel->addBookmark("http://www.test5.jolla.com", "jolla", "");
-    bookmarkModel->addBookmark("http://www.test5.jolla.com/2", "jolla2", "");
+    bookmarkModel->add("http://www.test5.jolla.com", "jolla", "");
+    bookmarkModel->add("http://www.test5.jolla.com/2", "jolla2", "");
     int count = bookmarkModel->rowCount();
 
     QModelIndex index = bookmarkModel->index(0);
@@ -115,14 +117,14 @@ void tst_declarativebookmarkmodel::editBookmark()
     QString newTitle("New title");
     QString newUrl("http://www.test5.jolla.com/edited");
 
-    bookmarkModel->editBookmark(index.row(), originalUrl, newTitle);
+    bookmarkModel->edit(index.row(), originalUrl, newTitle);
     QString title = bookmarkModel->data(index, DeclarativeBookmarkModel::TitleRole).toString();
     QString url = bookmarkModel->data(index, DeclarativeBookmarkModel::UrlRole).toString();
 
     QCOMPARE(title, newTitle);
     QCOMPARE(url, originalUrl);
 
-    bookmarkModel->editBookmark(index.row(), newUrl, title);
+    bookmarkModel->edit(index.row(), newUrl, title);
     title = bookmarkModel->data(index, DeclarativeBookmarkModel::TitleRole).toString();
     url = bookmarkModel->data(index, DeclarativeBookmarkModel::UrlRole).toString();
 
@@ -139,6 +141,51 @@ void tst_declarativebookmarkmodel::editBookmark()
     QCOMPARE(count, bookmarkModel->rowCount());
 }
 
+void tst_declarativebookmarkmodel::activeUrlBookmarked()
+{
+    QString newUrl = "http://www.test6.jolla.com";
+    bookmarkModel->setActiveUrl(newUrl);
+    QVERIFY(!bookmarkModel->activeUrlBookmarked());
+    QSignalSpy activeUrlBookmarkedChangedSpy(bookmarkModel, SIGNAL(activeUrlBookmarkedChanged()));
+    bookmarkModel->add(newUrl, "jolla", "");
+    waitSignals(activeUrlBookmarkedChangedSpy, 1);
+    QVERIFY(bookmarkModel->activeUrlBookmarked());
+
+    bookmarkModel->edit(bookmarkModel->rowCount() - 1, "http://www.test6.not.bookmarked.jolla.com", "jolla");
+    waitSignals(activeUrlBookmarkedChangedSpy, 2);
+    QVERIFY(!bookmarkModel->activeUrlBookmarked());
+
+    bookmarkModel->edit(bookmarkModel->rowCount() - 1, newUrl, "jolla");
+    waitSignals(activeUrlBookmarkedChangedSpy, 3);
+    QVERIFY(bookmarkModel->activeUrlBookmarked());
+
+    bookmarkModel->setActiveUrl("http://www.test6.not.bookmarked.jolla.com");
+    waitSignals(activeUrlBookmarkedChangedSpy, 4);
+    QVERIFY(!bookmarkModel->activeUrlBookmarked());
+
+    bookmarkModel->setActiveUrl(newUrl);
+    waitSignals(activeUrlBookmarkedChangedSpy, 5);
+    QVERIFY(bookmarkModel->activeUrlBookmarked());
+
+    bookmarkModel->remove(bookmarkModel->rowCount() - 1);
+    waitSignals(activeUrlBookmarkedChangedSpy, 6);
+    QVERIFY(!bookmarkModel->activeUrlBookmarked());
+    bookmarkModel->setActiveUrl("");
+}
+
+void tst_declarativebookmarkmodel::removeByIndex()
+{
+    // Remove all items one-by-one
+    bookmarkModel->add("http://www.test-something.jolla.com", "jolla", "");
+    while (bookmarkModel->rowCount() > 0) {
+        int expectedCount = bookmarkModel->rowCount() - 1;
+        QSignalSpy countChangeSpy(bookmarkModel, SIGNAL(countChanged()));
+        bookmarkModel->remove(0);
+        waitSignals(countChangeSpy, 1);
+        QCOMPARE(bookmarkModel->rowCount(), expectedCount);
+    }
+}
+
 void tst_declarativebookmarkmodel::cleanupTestCase()
 {
     QFile file(QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/bookmarks.json");
@@ -147,7 +194,7 @@ void tst_declarativebookmarkmodel::cleanupTestCase()
 
 void tst_declarativebookmarkmodel::clearBookmarks()
 {
-    bookmarkModel->addBookmark("http://www.test6.jolla.com", "jolla", "");
+    bookmarkModel->add("http://www.test6.jolla.com", "jolla", "");
 
     QSignalSpy countChangeSpy(bookmarkModel, SIGNAL(countChanged()));
     BookmarkManager::instance()->clear();

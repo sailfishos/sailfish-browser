@@ -25,9 +25,7 @@ var tabModel
 var WebUtils
 var pickerCreator
 
-// TODO: Handle these per QmlMozView (map of webviews + accepted/rejectedGeolocationUrl)
-var acceptedGeolocationUrl = ""
-var rejectedGeolocationUrl = ""
+var geolocationUrls = {}
 
 var _authenticationComponentUrl = Qt.resolvedUrl("AuthDialog.qml")
 var _passwordManagerComponentUrl = Qt.resolvedUrl("PasswordManagerDialog.qml")
@@ -52,16 +50,6 @@ function _hideVirtualKeyboard() {
     if (Qt.inputMethod.visible) {
         browserPage.focus = true
     }
-}
-
-function isAcceptedGeolocationUrl(url) {
-    var tmpUrl = WebUtils.displayableUrl(url)
-    return  acceptedGeolocationUrl === tmpUrl
-}
-
-function isRejectedGeolocationUrl(url) {
-    var tmpUrl = WebUtils.displayableUrl(url)
-    return  rejectedGeolocationUrl === tmpUrl
 }
 
 function openAuthDialog(input) {
@@ -150,6 +138,7 @@ function openContextMenu(data) {
             _contextMenu.linkHref = linkHref
             _contextMenu.linkTitle = linkTitle.trim()
             _contextMenu.imageSrc = imageSrc
+            _contextMenu.tabModel = tabModel
             _hideVirtualKeyboard()
             _contextMenu.show()
         } else {
@@ -179,34 +168,36 @@ function openContextMenu(data) {
 
 function openLocationDialog(data) {
     // Ask for location permission
-    var url = webView.contentItem.url
-    if (isAcceptedGeolocationUrl(url)) {
+    switch (geolocationUrls[data.host]) {
+    case "accepted": {
         webView.sendAsyncMessage("embedui:premissions", {
                              allow: true,
                              checkedDontAsk: false,
                              id: data.id })
-    } else if (isRejectedGeolocationUrl(url)) {
+        break;
+    }
+    case "rejected": {
         webView.sendAsyncMessage("embedui:premissions", {
                              allow: false,
                              checkedDontAsk: false,
                              id: data.id })
-    } else {
-        var dialog = pageStack.push(_locationComponentUrl, {})
+        break;
+    }
+    default:
+        var dialog = pageStack.push(_locationComponentUrl, {"host": data.host})
         dialog.accepted.connect(function() {
             webView.sendAsyncMessage("embedui:premissions", {
                                                allow: true,
                                                checkedDontAsk: false,
                                                id: data.id })
-            acceptedGeolocationUrl = WebUtils.displayableUrl(url)
-            rejectedGeolocationUrl = ""
+            geolocationUrls[data.host] = "accepted"
         })
         dialog.rejected.connect(function() {
             webView.sendAsyncMessage("embedui:premissions", {
                                                allow: false,
                                                checkedDontAsk: false,
                                                id: data.id })
-            rejectedGeolocationUrl = WebUtils.displayableUrl(url)
-            acceptedGeolocationUrl = ""
+            geolocationUrls[data.host] = "rejected"
         })
     }
 }

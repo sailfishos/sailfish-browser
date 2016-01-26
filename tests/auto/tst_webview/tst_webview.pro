@@ -1,35 +1,21 @@
 TARGET = tst_webview
-include(../test_common.pri)
-include(../common/testobject.pri)
-include(../../../src/bookmarks.pri)
 
 CONFIG += link_pkgconfig
 
-PKGCONFIG += mlite5
+PKGCONFIG += nemotransferengine-qt5 mlite5
 
-# WebContainer need this
-isEmpty(QTEMBED_LIB) {
-  PKGCONFIG += qt5embedwidget
-} else {
-  LIBS+=$$QTEMBED_LIB
-}
+QT += quick concurrent sql gui-private
 
-QT += gui-private
+include(../test_common.pri)
+include(../mocks/downloadmanager/downloadmanager_mock.pri)
+include(../mocks/declarativewebutils/declarativewebutils_mock.pri)
+include(../common/testobject.pri)
+include(../../../src/core/core.pri)
+include(../../../src/qtmozembed/qtmozembed.pri)
+include(../../../src/bookmarks/bookmarks.pri)
+include(../../../src/history/history.pri)
 
-SOURCES += tst_webview.cpp \
-    ../../../src/declarativewebcontainer.cpp \
-    ../../../src/declarativewebpage.cpp \
-    ../../../src/declarativewebpagecreator.cpp \
-    ../../../src/settingmanager.cpp \
-    ../../../src/webpagequeue.cpp \
-    ../../../src/webpages.cpp
-
-HEADERS += ../../../src/declarativewebcontainer.h \
-    ../../../src/declarativewebpage.h \
-    ../../../src/declarativewebpagecreator.h \
-    ../../../src/settingmanager.h \
-    ../../../src/webpagequeue.h \
-    ../../../src/webpages.h
+SOURCES += tst_webview.cpp
 
 OTHER_FILES = *.qml
 

@@ -45,12 +45,10 @@ Rectangle {
                 value: true
             }
 
-            ParallelAnimation {
-                FadeAnimation {
-                    id: fadeOut
-                    to: 0
-                    duration: 100
-                }
+            FadeAnimation {
+                id: fadeOut
+                to: 0
+                duration: 100
             }
 
             PropertyAction {
@@ -59,18 +57,16 @@ Rectangle {
             }
 
             ScriptAction {
-                script: orientationFader.applyContentOrientation()
-            }
-
-            ScriptAction {
                 script: {
                     // Restores the Bindings to width, height and rotation
                     page._defaultTransition = false
                     page._defaultTransition = true
+                    orientationFader.applyContentOrientation()
                 }
             }
 
-            ParallelAnimation {
+            SequentialAnimation {
+                PauseAnimation { duration: 350 }
                 FadeAnimation {
                     target: fadeTarget
                     to: 1
@@ -79,7 +75,7 @@ Rectangle {
 
                 // End-2-end implementation for OnUpdateDisplayPort should
                 // give better solution and reduce visible relayoutting.
-                PauseAnimation { duration: 700 }
+                PauseAnimation { duration: 350 }
             }
 
             PropertyAction {
