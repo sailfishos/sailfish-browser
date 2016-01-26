@@ -197,15 +197,6 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     // its way to Gecko's default prefs.
     mozContext->setPref(QString("apz.touch_start_tolerance"), QString("0.027777f"));
 
-    // Move these to embedding.js
-    mozContext->setPref(QString("apz.min_skate_speed"), QString("1.0f"));
-    // Tweak default displayport values to reduce the risk of running out of
-    // memory when zooming in
-    mozContext->setPref(QString("apz.x_skate_size_multiplier"), QString("1.25f"));
-    mozContext->setPref(QString("apz.y_skate_size_multiplier"), QString("1.5f"));
-    mozContext->setPref(QString("apz.x_stationary_size_multiplier"), QString("1.5f"));
-    mozContext->setPref(QString("apz.y_stationary_size_multiplier"), QString("1.8f"));
-
     mozContext->setPref(QString("media.resource_handler_disabled"), QVariant(true));
 
     // Disable asmjs
