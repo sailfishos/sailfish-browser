@@ -14,6 +14,7 @@
     <file>pages/components/ConfigWarning.qml</file>
     <file>pages/components/ConfirmDialog.qml</file>
     <file>pages/components/DebugOverlay.qml</file>
+    <file>pages/components/DownloadMenuItem.qml</file>
     <file>pages/components/DownloadRemorsePopup.qml</file>
     <file>pages/components/FavoriteContextMenu.qml</file>
     <file>pages/components/FavoriteGrid.qml</file>

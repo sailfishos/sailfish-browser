@@ -136,9 +136,15 @@ function openContextMenu(data) {
 
         if (_contextMenu) {
             _contextMenu.linkHref = linkHref
-            _contextMenu.linkTitle = linkTitle.trim()
             _contextMenu.imageSrc = imageSrc
+            _contextMenu.linkTitle = linkTitle.trim()
+            _contextMenu.contentType = contentType
             _contextMenu.tabModel = tabModel
+            _contextMenu.viewId = webView.contentItem.uniqueID()
+            // PageStack and WebView are currently always the same but
+            // let's update them regardless so that they will remain correct.
+            _contextMenu.pageStack = pageStack
+            _contextMenu.webView = webView
             _hideVirtualKeyboard()
             _contextMenu.show()
         } else {

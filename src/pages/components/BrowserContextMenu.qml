@@ -28,6 +28,9 @@ Rectangle {
     readonly property bool active: visible
     readonly property bool landscape: width > height
 
+    readonly property bool isLink: linkHref.length > 0 && imageSrc.length === 0
+    readonly property bool isImage: imageSrc.length > 0
+
     visible: opacity > 0.0
     opacity: 0.0
 
@@ -85,7 +88,7 @@ Rectangle {
         width: parent.width
 
         MenuItem {
-            visible: root.linkHref.length > 0 && root.imageSrc.length === 0
+            visible: root.isLink
             //: Open link in current tab
             //% "Open link"
             text: qsTrId("sailfish_browser-me-open_link")
@@ -98,7 +101,7 @@ Rectangle {
 
 
         MenuItem {
-            visible: root.linkHref.length > 0 && root.imageSrc.length === 0
+            visible: root.isLink
             //: Open link in a new tab from browser context menu
             //% "Open link in a new tab"
             text: qsTrId("sailfish_browser-me-open_link_in_new_tab")
@@ -110,7 +113,7 @@ Rectangle {
         }
 
         MenuItem {
-            visible: root.linkHref.length > 0 && root.imageSrc.length === 0
+            visible: root.isLink
             //: Share link from browser context menu
             //% "Share"
             text: qsTrId("sailfish_browser-me-share_link")
@@ -122,7 +125,7 @@ Rectangle {
         }
 
         MenuItem {
-            visible: root.linkHref.length > 0 && root.imageSrc.length === 0
+            visible: root.isLink
             //: Copy link to clipboard from browser context menu
             //% "Copy to clipboard"
             text: qsTrId("sailfish_browser-me-copy_to_clipboard")
@@ -133,8 +136,21 @@ Rectangle {
             }
         }
 
+        DownloadMenuItem {
+            visible: root.isLink && downloadFileTargetUrl
+            //: This menu item saves link to downloads.
+            //% "Save link"
+            text: qsTrId("sailfish_browser-me-save_link")
+            targetDirectory: StandardPaths.download
+            linkUrl: root.linkHref
+            contentType: root.contentType
+            viewId: root.viewId
+
+            onClicked: root._hide()
+        }
+
         MenuItem {
-            visible: imageSrc.length > 0
+            visible: root.isImage
             //: Open image in a new tab from browser context menu
             //% "Open image in a new tab"
             text: qsTrId("sailfish_browser-me-open_image_in_new_tab")
@@ -145,31 +161,17 @@ Rectangle {
             }
         }
 
-        MenuItem {
-            visible: root.imageSrc.length > 0
+        DownloadMenuItem {
+            visible: root.isImage && downloadFileTargetUrl
             //: This menu item saves image to Gallery application
             //% "Save to Gallery"
             text: qsTrId("sailfish_browser-me-save_image_to_gallery")
+            targetDirectory: StandardPaths.pictures
+            linkUrl: root.imageSrc
+            contentType: root.contentType
+            viewId: root.viewId
 
-            onClicked: {
-                root._hide()
-                // drop query string from URL and split to sections
-                var urlSections = imageSrc.split("?")[0].split("/")
-                var leafName = urlSections[urlSections.length - 1]
-
-                if (leafName.length === 0) {
-                    leafName = "unnamed_picture"
-                }
-
-                MozContext.sendObserve("embedui:download",
-                                       {
-                                           "msg": "addDownload",
-                                           "from": root.imageSrc,
-                                           "to": "file://" + WebUtils.uniquePictureName(leafName),
-                                           "contentType": root.contentType,
-                                           "viewId": root.viewId
-                                       })
-            }
+            onClicked: root._hide()
         }
 
         function highlightItem(yPos) {
