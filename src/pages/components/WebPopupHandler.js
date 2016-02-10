@@ -138,6 +138,7 @@ function openContextMenu(data) {
             _contextMenu.linkHref = linkHref
             _contextMenu.imageSrc = imageSrc
             _contextMenu.linkTitle = linkTitle.trim()
+            _contextMenu.linkProtocol = data.linkProtocol || ""
             _contextMenu.contentType = contentType
             _contextMenu.tabModel = tabModel
             _contextMenu.viewId = webView.contentItem.uniqueID()
@@ -155,6 +156,7 @@ function openContextMenu(data) {
                                                             "linkHref": linkHref,
                                                             "imageSrc": imageSrc,
                                                             "linkTitle": linkTitle.trim(),
+                                                            "linkProtocol": data.linkProtocol,
                                                             "contentType": contentType,
                                                             "tabModel": tabModel,
                                                             "viewId": webView.contentItem.uniqueID(),
