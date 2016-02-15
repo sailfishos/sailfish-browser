@@ -10,6 +10,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "downloadmanager.h"
+#include "downloadmimetypehandler.h"
 #include "qmozcontext.h"
 #include "browserpaths.h"
 
@@ -18,10 +19,6 @@
 #include <QDir>
 #include <QFile>
 #include <QDebug>
-
-#include <pwd.h>
-#include <grp.h>
-#include <unistd.h>
 
 #if defined(arm) \
     || defined(__arm__) \
@@ -40,6 +37,8 @@ DownloadManager::DownloadManager()
                                                    "/org/nemo/transferengine",
                                                    QDBusConnection::sessionBus(),
                                                    this);
+    connect(QMozContext::GetInstance(), SIGNAL(onInitialized()),
+            this, SLOT(setPreferences()));
     connect(QMozContext::GetInstance(), SIGNAL(recvObserve(const QString, const QVariant)),
             this, SLOT(recvObserve(const QString, const QVariant)));
 }
@@ -141,20 +140,9 @@ void DownloadManager::recvObserve(const QString message, const QVariant data)
 bool DownloadManager::moveMyAppPackage(QString path)
 {
     QString aptoideDownloadPath = QString("%1/.aptoide/").arg(BrowserPaths::downloadLocation());
-    QDir dir(aptoideDownloadPath);
-
-    if (!dir.exists()) {
-        if (!dir.mkpath(aptoideDownloadPath)) {
-            qWarning() << "Failed to create path for myapp download, aborting";
-            return false;
-        }
-        uid_t uid = getuid();
-        // assumes that correct groupname is same as username (e.g. nemo:nemo)
-        int gid = getgrnam(getpwuid(uid)->pw_name)->gr_gid;
-        int success = chown(aptoideDownloadPath.toLatin1().data(), uid, gid);
-        Q_UNUSED(success);
-        QFile::Permissions permissions(QFile::ExeOwner | QFile::ExeGroup | QFile::ReadOwner | QFile::WriteOwner | QFile::ReadGroup | QFile::WriteGroup);
-        QFile::setPermissions(aptoideDownloadPath, permissions);
+    if (!BrowserPaths::createDirectory(aptoideDownloadPath)) {
+        qWarning() << "Failed to create path for myapp download, aborting";
+        return false;
     }
 
     QFile file(path);
@@ -211,6 +199,29 @@ void DownloadManager::restartTransfer(int transferId)
                                          TransferEngineData::TransferInterrupted,
                                          QString("Transfer got unavailable"));
     }
+}
+
+void DownloadManager::setPreferences()
+{
+    QMozContext* mozContext = QMozContext::GetInstance();
+    Q_ASSERT(mozContext->initialized());
+
+    // Use autodownload, never ask
+    mozContext->setPref(QString("browser.download.useDownloadDir"), QVariant(true));
+    // see https://developer.mozilla.org/en-US/docs/Download_Manager_preferences
+    // Use custom downloads location defined in browser.download.dir
+    mozContext->setPref(QString("browser.download.folderList"), QVariant(2));
+    mozContext->setPref(QString("browser.download.dir"), BrowserPaths::downloadLocation());
+    // Downloads should never be removed automatically
+    mozContext->setPref(QString("browser.download.manager.retention"), QVariant(2));
+    // Downloads will be canceled on quit
+    // TODO: this doesn't really work. Instead the incomplete downloads get restarted
+    //       on browser launch.
+    mozContext->setPref(QString("browser.download.manager.quitBehavior"), QVariant(2));
+    // TODO: this doesn't really work too
+    mozContext->setPref(QString("browser.helperApps.deleteTempFileOnExit"), QVariant(true));
+
+    DownloadMimetypeHandler::update();
 }
 
 DownloadManager *DownloadManager::instance()

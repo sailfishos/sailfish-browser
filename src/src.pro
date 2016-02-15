@@ -61,6 +61,7 @@ SOURCES += \
     dbusadaptor.cpp \
     closeeventfilter.cpp \
     downloadmanager.cpp \
+    downloadmimetypehandler.cpp \
     declarativewebutils.cpp
 
 # C++ headers
@@ -69,6 +70,7 @@ HEADERS += \
     dbusadaptor.h \
     closeeventfilter.h \
     downloadmanager.h \
+    downloadmimetypehandler.h \
     declarativewebutils.h
 
 OTHER_FILES = *.qml \
