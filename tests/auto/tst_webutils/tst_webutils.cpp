@@ -29,8 +29,8 @@ public:
 private slots:
     void displayableUrl_data();
     void displayableUrl();
-    void uniquePictureName_data();
-    void uniquePictureName();
+    void uniqueFileName_data();
+    void uniqueFileName();
 };
 
 tst_webutils::tst_webutils(QObject *parent)
@@ -68,7 +68,7 @@ void tst_webutils::displayableUrl()
     QCOMPARE(resultUrl, expectedUrl);
 }
 
-void tst_webutils::uniquePictureName_data()
+void tst_webutils::uniqueFileName_data()
 {
     QTest::addColumn<QString>("fileName");
     QTest::addColumn<QList<QString> >("existingFiles");
@@ -107,18 +107,18 @@ void tst_webutils::uniquePictureName_data()
     QTest::newRow("many_files_exist_no_ext") << "some_file" << existingFiles << "some_file(4)";
 }
 
-void tst_webutils::uniquePictureName()
+void tst_webutils::uniqueFileName()
 {
     QFETCH(QString, fileName);
     QFETCH(QList<QString>, existingFiles);
     QFETCH(QString, expectedName);
 
     // set up test case
-    QDir dir(BrowserPaths::picturesLocation());
+    QDir dir(BrowserPaths::dataLocation());
     dir.removeRecursively();
 
     foreach (const QString& existingFile, existingFiles) {
-        QFile file(BrowserPaths::picturesLocation() + "/" + existingFile);
+        QFile file(BrowserPaths::dataLocation() + "/" + existingFile);
         QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Text));
         QTextStream out(&file);
         out << TEST_CONTENT;
@@ -127,12 +127,12 @@ void tst_webutils::uniquePictureName()
 
     // actual test
     DeclarativeWebUtils *webUtils = DeclarativeWebUtils::instance();
-    QCOMPARE(webUtils->uniquePictureName(fileName), BrowserPaths::picturesLocation() + "/" + expectedName);
+    QCOMPARE(webUtils->uniqueFileName(BrowserPaths::dataLocation(), fileName), BrowserPaths::dataLocation() + "/" + expectedName);
 
     // tear down
     // set up test case
     dir.removeRecursively();
-    Q_UNUSED(BrowserPaths::picturesLocation());
+    Q_UNUSED(BrowserPaths::dataLocation());
 }
 
 QTEST_MAIN(tst_webutils)

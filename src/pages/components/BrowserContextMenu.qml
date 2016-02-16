@@ -165,7 +165,7 @@ Rectangle {
                                        {
                                            "msg": "addDownload",
                                            "from": root.imageSrc,
-                                           "to": "file://" + WebUtils.uniquePictureName(leafName),
+                                           "to": "file://" + WebUtils.uniqueFileName(StandardPaths.pictures, leafName),
                                            "contentType": root.contentType,
                                            "viewId": root.viewId
                                        })
