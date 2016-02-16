@@ -98,20 +98,20 @@ int DeclarativeWebUtils::getLightness(QColor color) const
     return color.lightness();
 }
 
-QString DeclarativeWebUtils::uniquePictureName(const QString& fileName) const
+QString DeclarativeWebUtils::uniqueFileName(const QString &path, const QString &fileName) const
 {
     const QFileInfo fileInfo(fileName);
-    const QString picturesDir(BrowserPaths::picturesLocation());
     const QString newFile("%1/%2(%3)%4%5");
     const QString baseName = fileInfo.baseName();
+
     const QString suffix = fileInfo.completeSuffix();
 
-    QString result(picturesDir + "/" + fileName);
+    QString result(path + "/" + fileName);
     int collisionCount(1);
 
     while (QFileInfo::exists(result)) {
         collisionCount++;
-        result = newFile.arg(picturesDir).arg(baseName).arg(collisionCount).arg(suffix.isEmpty() ? "" : ".").arg(suffix);
+        result = newFile.arg(path).arg(baseName).arg(collisionCount).arg(suffix.isEmpty() ? "" : ".").arg(suffix);
     }
 
     return result;

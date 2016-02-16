@@ -54,7 +54,7 @@ public:
     void setZoomMargin(qreal zoomMargin);
 
     Q_INVOKABLE int getLightness(QColor color) const;
-    Q_INVOKABLE QString uniquePictureName(const QString& fileName) const;
+    Q_INVOKABLE QString uniqueFileName(const QString &path, const QString &fileName) const;
     Q_INVOKABLE QString displayableUrl(QString fullUrl) const;
 
 public slots:
