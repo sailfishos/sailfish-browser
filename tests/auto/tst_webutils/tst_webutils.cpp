@@ -114,25 +114,27 @@ void tst_webutils::uniquePictureName()
     QFETCH(QString, expectedName);
 
     // set up test case
-    QDir dir(BrowserPaths::picturesLocation());
+    QDir dir(BrowserPaths::dataLocation());
     dir.removeRecursively();
 
     foreach (const QString& existingFile, existingFiles) {
-        QFile file(BrowserPaths::picturesLocation() + "/" + existingFile);
+        QFile file(BrowserPaths::dataLocation() + "/" + existingFile);
         QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Text));
         QTextStream out(&file);
         out << TEST_CONTENT;
         file.close();
     }
 
+    QString targetPath = BrowserPaths::dataLocation();
+
     // actual test
     DeclarativeWebUtils *webUtils = DeclarativeWebUtils::instance();
-    QCOMPARE(webUtils->uniquePictureName(fileName), BrowserPaths::picturesLocation() + "/" + expectedName);
+    QCOMPARE(webUtils->createUniqueFileUrl(fileName, targetPath), "file://" + targetPath + "/" + expectedName);
 
     // tear down
     // set up test case
     dir.removeRecursively();
-    Q_UNUSED(BrowserPaths::picturesLocation());
+    Q_UNUSED(BrowserPaths::dataLocation());
 }
 
 QTEST_MAIN(tst_webutils)

@@ -24,7 +24,7 @@ BuildRequires:  oneshot
 BuildRequires:  gtest-devel
 BuildRequires:  libgmock-devel
 
-Requires: sailfishsilica-qt5 >= 0.21.34
+Requires: sailfishsilica-qt5 >= 0.22.13
 Requires: jolla-ambient >= 0.7.12
 Requires: xulrunner-qt5 >= 31.8.0.3
 Requires: embedlite-components-qt5 >= 1.8.11
