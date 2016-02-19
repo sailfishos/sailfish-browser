@@ -12,6 +12,8 @@
 #ifndef DOWNLOADMANAGER_H
 #define DOWNLOADMANAGER_H
 
+#include "downloadstatus.h"
+
 #include <QObject>
 #include <QHash>
 #include <QString>
@@ -22,7 +24,7 @@ class TransferEngineInterface;
 class DownloadManager : public QObject
 {
     Q_OBJECT
-
+    Q_ENUMS(DownloadStatus::Status)
 public:
     static DownloadManager *instance();
 
@@ -32,10 +34,12 @@ public:
 signals:
     void initializedChanged();
     void downloadStarted();
+    void downloadStatusChanged(int downloadId, int status, QVariant info);
     void allTransfersCompleted();
 
 public slots:
     void cancelActiveTransfers();
+    void cancel(int downloadId);
 
 private slots:
     void recvObserve(const QString message, const QVariant data);
@@ -47,22 +51,19 @@ private:
     explicit DownloadManager();
     ~DownloadManager();
 
-    enum Status {
-        DownloadStarted,
-        DownloadDone,
-        DownloadFailed,
-        DownloadCanceled
-    };
-
     void checkAllTransfers();
-    bool moveMyAppPackage(QString path);
+    bool moveMyAppPackage(const QString &path) const;
+
+    bool isMyApp(const QString &targetPath) const;
+    bool needPlatformTransfersUpdate(const QString &targetPath) const;
+    void finishMyAppDownload(const QString &targetPath) const;
 
     // TODO: unlike Gecko downloads and Sailfish transfers these mappings
     //       are not persistent -> after user has browser closed transfers can't be
     //       restarted.
     QHash<qulonglong, int> m_download2transferMap;
     QHash<int, qulonglong> m_transfer2downloadMap;
-    QHash<qulonglong, Status> m_statusCache;
+    QHash<qulonglong, DownloadStatus::Status> m_statusCache;
 
     TransferEngineInterface *m_transferClient;
     bool m_initialized;

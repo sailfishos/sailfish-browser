@@ -30,6 +30,7 @@
 #include "declarativewebutils.h"
 #include "browserservice.h"
 #include "downloadmanager.h"
+#include "downloadstatus.h"
 #include "closeeventfilter.h"
 #include "persistenttabmodel.h"
 #include "privatetabmodel.h"
@@ -139,6 +140,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     qmlRegisterUncreatableType<DeclarativeTabModel>(uri, 1, 0, "TabModel", "TabModel is abstract!");
     qmlRegisterUncreatableType<PersistentTabModel>(uri, 1, 0, "PersistentTabModel", "");
     qmlRegisterUncreatableType<PrivateTabModel>(uri, 1, 0, "PrivateTabModel", "");
+    qmlRegisterUncreatableType<DownloadStatus>(uri, 1, 0, "DownloadStatus", "");
     qmlRegisterType<DeclarativeHistoryModel>(uri, 1, 0, "HistoryModel");
     qmlRegisterType<DeclarativeWebContainer>(uri, 1, 0, "WebContainer");
     qmlRegisterType<DeclarativeWebPage>(uri, 1, 0, "WebPage");
@@ -172,15 +174,17 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
                    utils, SIGNAL(activateNewTabViewRequested()));
 
     utils->clearStartupCacheIfNeeded();
-    view->rootContext()->setContextProperty("WebUtils", utils);
-    view->rootContext()->setContextProperty("MozContext", QMozContext::GetInstance());
-    view->rootContext()->setContextProperty("Settings", SettingManager::instance());
 
     DownloadManager *dlMgr = DownloadManager::instance();
     dlMgr->connect(service, SIGNAL(cancelTransferRequested(int)),
             dlMgr, SLOT(cancelTransfer(int)));
     dlMgr->connect(service, SIGNAL(restartTransferRequested(int)),
             dlMgr, SLOT(restartTransfer(int)));
+
+    view->rootContext()->setContextProperty("WebUtils", utils);
+    view->rootContext()->setContextProperty("MozContext", QMozContext::GetInstance());
+    view->rootContext()->setContextProperty("Settings", SettingManager::instance());
+    view->rootContext()->setContextProperty("DownloadManager", dlMgr);
 
     CloseEventFilter * clsEventFilter = new CloseEventFilter(dlMgr, app.data());
     view->installEventFilter(clsEventFilter);

@@ -71,6 +71,7 @@ HEADERS += \
     closeeventfilter.h \
     downloadmanager.h \
     downloadmimetypehandler.h \
+    downloadstatus.h \
     declarativewebutils.h
 
 OTHER_FILES = *.qml \

@@ -12,40 +12,32 @@
 
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import Sailfish.Browser 1.0
 
 RemorsePopup {
     id: popup
 
-    property int _currentDownloadId
+    property int currentDownloadId
 
-    onCanceled: {
-        MozContext.sendObserve("embedui:download",
-                               {
-                                   "msg": "cancelDownload",
-                                   "id": _currentDownloadId
-                               })
-    }
+    onCanceled: DownloadManager.cancel(currentDownloadId)
 
     Connections {
-        target: MozContext
+        target: DownloadManager
 
-        onRecvObserve: {
-            if (message === "embed:download") {
-                switch (data.msg) {
-                    case "dl-start": {
-                        popup._currentDownloadId = data.id
-                        //% "Downloading %1"
-                        popup.execute(qsTrId("sailfish_browser-no-downloading").arg(data.displayName))
-                        break
-                    }
-                    case "dl-fail":
-                    case "dl-done": {
-                        if (popup.visible && popup._currentDownloadId === data.id) {
-                            popup.visible = false
-                        }
-                        break
-                    }
+        // Arguments downloadId, status, info
+        onDownloadStatusChanged: {
+            switch (status) {
+            case DownloadStatus.Started:
+                popup.currentDownloadId = downloadId
+                //% "Downloading %1"
+                popup.execute(qsTrId("sailfish_browser-no-downloading").arg(info.displayName))
+                break
+            case DownloadStatus.Failed:
+            case DownloadStatus.Done:
+                if (popup.visible && popup.currentDownloadId === downloadId) {
+                    popup.visible = false
                 }
+                break
             }
         }
     }

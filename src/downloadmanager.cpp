@@ -41,6 +41,11 @@ DownloadManager::DownloadManager()
             this, SLOT(setPreferences()));
     connect(QMozContext::GetInstance(), SIGNAL(recvObserve(const QString, const QVariant)),
             this, SLOT(recvObserve(const QString, const QVariant)));
+
+    // Ignore the download info argument of the downloadStatusChanged signal.
+    connect(this, &DownloadManager::downloadStatusChanged, [=](int downloadId, int status) {
+        m_statusCache.insert(downloadId, static_cast<DownloadStatus::Status>(status));
+    });
 }
 
 DownloadManager::~DownloadManager()
@@ -60,84 +65,78 @@ void DownloadManager::recvObserve(const QString message, const QVariant data)
     }
 
     QVariantMap dataMap(data.toMap());
-    QString msg(dataMap.value("msg").toString());
-    qulonglong downloadId(dataMap.value("id").toULongLong());
+    QString msg = dataMap.value(QStringLiteral("msg")).toString();
+    QString targetPath = dataMap.value(QStringLiteral("targetPath")).toString();
+    qulonglong downloadId(dataMap.value(QStringLiteral("id")).toULongLong());
+    bool needPlatformTransfersUpdate = this->needPlatformTransfersUpdate(targetPath);
 
-    if (msg == QLatin1Literal("dl-start") && m_download2transferMap.contains(downloadId)) { // restart existing transfer
+    if (msg == QLatin1Literal("dl-start")
+            && needPlatformTransfersUpdate
+            && m_download2transferMap.contains(downloadId)) { // restart existing transfer
         m_transferClient->startTransfer(m_download2transferMap.value(downloadId));
-        m_statusCache.insert(downloadId, DownloadStarted);
+        emit downloadStatusChanged(downloadId, DownloadStatus::Started, data);
     } else if (msg == QLatin1Literal("dl-start")) { // create new transfer
         emit downloadStarted();
-        QStringList callback;
-        QLatin1Literal browserInterface("org.sailfishos.browser");
-        callback << browserInterface << QLatin1Literal("/") << browserInterface;
-        QDBusPendingReply<int> reply = m_transferClient->createDownload(dataMap.value("displayName").toString(),
-                                                                        QString("image://theme/icon-launcher-browser"),
-                                                                        QString("image://theme/icon-launcher-browser"),
-                                                                        dataMap.value("targetPath").toString(),
-                                                                        dataMap.value("mimeType").toString(),
-                                                                        dataMap.value("size").toULongLong(),
-                                                                        callback,
-                                                                        QString("cancelTransfer"),
-                                                                        QString("restartTransfer"));
-        reply.waitForFinished();
+        if (needPlatformTransfersUpdate) {
+            QStringList callback;
+            QLatin1Literal browserInterface("org.sailfishos.browser");
+            callback << browserInterface << QLatin1Literal("/") << browserInterface;
+            QDBusPendingReply<int> reply = m_transferClient->createDownload(dataMap.value("displayName").toString(),
+                                                                            QString("image://theme/icon-launcher-browser"),
+                                                                            QString("image://theme/icon-launcher-browser"),
+                                                                            targetPath,
+                                                                            dataMap.value("mimeType").toString(),
+                                                                            dataMap.value("size").toULongLong(),
+                                                                            callback,
+                                                                            QString("cancelTransfer"),
+                                                                            QString("restartTransfer"));
+            reply.waitForFinished();
 
-        if (reply.isError()) {
-            qWarning() << "DownloadManager::recvObserve: failed to get transfer ID!" << reply.error();
-            return;
-        }
-
-        int transferId(reply.value());
-
-        m_download2transferMap.insert(downloadId, transferId);
-        m_transfer2downloadMap.insert(transferId, downloadId);
-
-        m_transferClient->startTransfer(transferId);
-        m_statusCache.insert(downloadId, DownloadStarted);
-    } else if (msg == QLatin1Literal("dl-progress")) {
-        qreal progress(dataMap.value(QStringLiteral("percent")).toULongLong() / 100.0);
-
-        m_transferClient->updateTransferProgress(m_download2transferMap.value(downloadId),
-                                                 progress);
-    } else if (msg == QLatin1Literal("dl-done")) {
-        m_transferClient->finishTransfer(m_download2transferMap.value(downloadId),
-                                         TransferEngineData::TransferFinished,
-                                         QString("success"));
-        m_statusCache.insert(downloadId, DownloadDone);
-        checkAllTransfers();
-
-        QString targetPath = dataMap.value(QStringLiteral("targetPath")).toString();
-        QFileInfo fileInfo(targetPath);
-        if (fileInfo.completeSuffix() == QLatin1Literal("myapp")) {
-            QString rootNameSpace("com.aptoide.partners%1");
-            QString aptoideSupport = rootNameSpace.arg(QLatin1Literal(".AptoideJollaSupport"));
-#if CPU_ARM
-            QString packageName = rootNameSpace.arg(QString());
-#else
-            QString packageName = rootNameSpace.arg(QLatin1Literal(".jolla_tablet_store"));
-#endif
-            QString apkName = QString("%1.apk").arg(packageName);
-            // TODO: Add proper checking that Aptoide is installed (JB#33047)
-            if (moveMyAppPackage(targetPath)) {
-                QProcess::execute(QStringLiteral("/usr/bin/apkd-launcher"), QStringList() << apkName << QString("%1/%2").arg(packageName).arg(aptoideSupport));
+            if (reply.isError()) {
+                qWarning() << "DownloadManager::recvObserve: failed to get transfer ID!" << reply.error();
+                return;
             }
+
+            int transferId(reply.value());
+
+            m_download2transferMap.insert(downloadId, transferId);
+            m_transfer2downloadMap.insert(transferId, downloadId);
+            m_transferClient->startTransfer(transferId);
+            emit downloadStatusChanged(downloadId, DownloadStatus::Started, data);
         }
+    } else if (msg == QLatin1Literal("dl-progress") && needPlatformTransfersUpdate) {
+        qreal progress(dataMap.value(QStringLiteral("percent")).toULongLong() / 100.0);
+        m_transferClient->updateTransferProgress(m_download2transferMap.value(downloadId), progress);
+    } else if (msg == QLatin1Literal("dl-done")) {
+        if (needPlatformTransfersUpdate) {
+            m_transferClient->finishTransfer(m_download2transferMap.value(downloadId),
+                                             TransferEngineData::TransferFinished,
+                                             QString("success"));
+            emit downloadStatusChanged(downloadId, DownloadStatus::Done, data);
+        } else if (isMyApp(targetPath)) {
+            finishMyAppDownload(targetPath);
+        }
+        checkAllTransfers();
     } else if (msg == QLatin1Literal("dl-fail")) {
-        m_transferClient->finishTransfer(m_download2transferMap.value(downloadId),
-                                         TransferEngineData::TransferInterrupted,
-                                         QString("browser failure"));
-        m_statusCache.insert(downloadId, DownloadFailed);
+        if (needPlatformTransfersUpdate) {
+            m_transferClient->finishTransfer(m_download2transferMap.value(downloadId),
+                                             TransferEngineData::TransferInterrupted,
+                                             QString("browser failure"));
+            emit downloadStatusChanged(downloadId, DownloadStatus::Failed, data);
+        }
         checkAllTransfers();
     } else if (msg == QLatin1Literal("dl-cancel")) {
-        m_transferClient->finishTransfer(m_download2transferMap.value(downloadId),
-                                         TransferEngineData::TransferCanceled,
-                                         QString("download canceled"));
-        m_statusCache.insert(downloadId, DownloadCanceled);
+        if (needPlatformTransfersUpdate) {
+            m_transferClient->finishTransfer(m_download2transferMap.value(downloadId),
+                                             TransferEngineData::TransferCanceled,
+                                             QString("download canceled"));
+            emit downloadStatusChanged(downloadId, DownloadStatus::Canceled, data);
+        }
         checkAllTransfers();
     }
 }
 
-bool DownloadManager::moveMyAppPackage(QString path)
+bool DownloadManager::moveMyAppPackage(const QString &path) const
 {
     QString aptoideDownloadPath = QString("%1/.aptoide/").arg(BrowserPaths::downloadLocation());
     if (!BrowserPaths::createDirectory(aptoideDownloadPath)) {
@@ -164,22 +163,55 @@ bool DownloadManager::moveMyAppPackage(QString path)
     return true;
 }
 
+bool DownloadManager::isMyApp(const QString &targetPath) const
+{
+    return QFileInfo(targetPath).completeSuffix() == QLatin1Literal("myapp");
+}
+
+bool DownloadManager::needPlatformTransfersUpdate(const QString &targetPath) const
+{
+    return !isMyApp(targetPath);
+}
+
+void DownloadManager::finishMyAppDownload(const QString &targetPath) const
+{
+    Q_ASSERT(isMyApp(targetPath));
+
+    QString rootNameSpace("com.aptoide.partners%1");
+    QString aptoideSupport = rootNameSpace.arg(QLatin1Literal(".AptoideJollaSupport"));
+#if CPU_ARM
+    QString packageName = rootNameSpace.arg(QString());
+#else
+    QString packageName = rootNameSpace.arg(QLatin1Literal(".jolla_tablet_store"));
+#endif
+    QString apkName = QString("%1.apk").arg(packageName);
+    // TODO: Add proper checking that Aptoide is installed (JB#33047)
+    if (moveMyAppPackage(targetPath)) {
+        QProcess::execute(QStringLiteral("/usr/bin/apkd-launcher"), QStringList() << apkName << QString("%1/%2").arg(packageName).arg(aptoideSupport));
+    }
+}
+
 void DownloadManager::cancelActiveTransfers()
 {
     foreach (qulonglong downloadId, m_statusCache.keys()) {
-        if (m_statusCache.value(downloadId) == DownloadStarted) {
+        if (m_statusCache.value(downloadId) == DownloadStatus::Started) {
             cancelTransfer(m_download2transferMap.value(downloadId));
         }
     }
 }
 
+void DownloadManager::cancel(int downloadId)
+{
+    QVariantMap data;
+    data.insert("msg", "cancelDownload");
+    data.insert("id", downloadId);
+    QMozContext::GetInstance()->sendObserve(QString("embedui:download"), QVariant(data));
+}
+
 void DownloadManager::cancelTransfer(int transferId)
 {
     if (m_transfer2downloadMap.contains(transferId)) {
-        QVariantMap data;
-        data.insert("msg", "cancelDownload");
-        data.insert("id", m_transfer2downloadMap.value(transferId));
-        QMozContext::GetInstance()->sendObserve(QString("embedui:download"), QVariant(data));
+        cancel(m_transfer2downloadMap.value(transferId));
     } else {
         m_transferClient->finishTransfer(transferId,
                                          TransferEngineData::TransferInterrupted,
@@ -236,8 +268,8 @@ bool DownloadManager::existActiveTransfers()
 {
     bool exists(false);
 
-    foreach (Status st, m_statusCache) {
-        if (st == DownloadStarted) {
+    foreach (DownloadStatus::Status status, m_statusCache) {
+        if (status == DownloadStatus::Started) {
             exists = true;
             break;
         }
