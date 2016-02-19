@@ -129,23 +129,25 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     //% "Browser"
     view->setTitle(qtTrId("sailfish-browser-ap-name"));
 
-    // Use QtQuick 2.1 for Sailfish.Browser imports
-    qmlRegisterRevision<QQuickItem, 1>("Sailfish.Browser", 1, 0);
-    qmlRegisterRevision<QWindow, 1>("Sailfish.Browser", 1, 0);
+    const char *uri = "Sailfish.Browser";
 
-    qmlRegisterType<DeclarativeBookmarkModel>("Sailfish.Browser", 1, 0, "BookmarkModel");
-    qmlRegisterUncreatableType<DeclarativeTabModel>("Sailfish.Browser", 1, 0, "TabModel", "TabModel is abstract!");
-    qmlRegisterUncreatableType<PersistentTabModel>("Sailfish.Browser", 1, 0, "PersistentTabModel", "");
-    qmlRegisterUncreatableType<PrivateTabModel>("Sailfish.Browser", 1, 0, "PrivateTabModel", "");
-    qmlRegisterType<DeclarativeHistoryModel>("Sailfish.Browser", 1, 0, "HistoryModel");
-    qmlRegisterType<DeclarativeWebContainer>("Sailfish.Browser", 1, 0, "WebContainer");
-    qmlRegisterType<DeclarativeWebPage>("Sailfish.Browser", 1, 0, "WebPage");
-    qmlRegisterType<DeclarativeWebPageCreator>("Sailfish.Browser", 1, 0, "WebPageCreator");
-    qmlRegisterType<DeclarativeFileUploadMode>("Sailfish.Browser", 1, 0, "FileUploadMode");
-    qmlRegisterType<DeclarativeFileUploadFilter>("Sailfish.Browser", 1, 0, "FileUploadFilter");
-    qmlRegisterType<DesktopBookmarkWriter>("Sailfish.Browser", 1, 0, "DesktopBookmarkWriter");
-    qmlRegisterType<IconFetcher>("Sailfish.Browser", 1, 0, "IconFetcher");
-    qmlRegisterType<InputRegion>("Sailfish.Browser", 1, 0, "InputRegion");
+    // Use QtQuick 2.1 for Sailfish.Browser imports
+    qmlRegisterRevision<QQuickItem, 1>(uri, 1, 0);
+    qmlRegisterRevision<QWindow, 1>(uri, 1, 0);
+
+    qmlRegisterType<DeclarativeBookmarkModel>(uri, 1, 0, "BookmarkModel");
+    qmlRegisterUncreatableType<DeclarativeTabModel>(uri, 1, 0, "TabModel", "TabModel is abstract!");
+    qmlRegisterUncreatableType<PersistentTabModel>(uri, 1, 0, "PersistentTabModel", "");
+    qmlRegisterUncreatableType<PrivateTabModel>(uri, 1, 0, "PrivateTabModel", "");
+    qmlRegisterType<DeclarativeHistoryModel>(uri, 1, 0, "HistoryModel");
+    qmlRegisterType<DeclarativeWebContainer>(uri, 1, 0, "WebContainer");
+    qmlRegisterType<DeclarativeWebPage>(uri, 1, 0, "WebPage");
+    qmlRegisterType<DeclarativeWebPageCreator>(uri, 1, 0, "WebPageCreator");
+    qmlRegisterType<DeclarativeFileUploadMode>(uri, 1, 0, "FileUploadMode");
+    qmlRegisterType<DeclarativeFileUploadFilter>(uri, 1, 0, "FileUploadFilter");
+    qmlRegisterType<DesktopBookmarkWriter>(uri, 1, 0, "DesktopBookmarkWriter");
+    qmlRegisterType<IconFetcher>(uri, 1, 0, "IconFetcher");
+    qmlRegisterType<InputRegion>(uri, 1, 0, "InputRegion");
 
     QString componentPath(DEFAULT_COMPONENTS_PATH);
     QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/components/EmbedLiteBinComponents.manifest"));
