@@ -175,20 +175,6 @@ void DeclarativeWebUtils::updateWebEngineSettings()
 
     mozContext->setPref(QString("security.alternate_certificate_error_page"), QString("certerror"));
 
-    // Use autodownload, never ask
-    mozContext->setPref(QString("browser.download.useDownloadDir"), QVariant(true));
-    // see https://developer.mozilla.org/en-US/docs/Download_Manager_preferences
-    // Use custom downloads location defined in browser.download.dir
-    mozContext->setPref(QString("browser.download.folderList"), QVariant(2));
-    mozContext->setPref(QString("browser.download.dir"), BrowserPaths::downloadLocation());
-    // Downloads should never be removed automatically
-    mozContext->setPref(QString("browser.download.manager.retention"), QVariant(2));
-    // Downloads will be canceled on quit
-    // TODO: this doesn't really work. Instead the incomplete downloads get restarted
-    //       on browser launch.
-    mozContext->setPref(QString("browser.download.manager.quitBehavior"), QVariant(2));
-    // TODO: this doesn't really work too
-    mozContext->setPref(QString("browser.helperApps.deleteTempFileOnExit"), QVariant(true));
     mozContext->setPref(QString("geo.wifi.scan"), QVariant(false));
     mozContext->setPref(QString("browser.enable_automatic_image_resizing"), QVariant(true));
 

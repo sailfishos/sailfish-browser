@@ -41,6 +41,7 @@ private slots:
     void recvObserve(const QString message, const QVariant data);
     void cancelTransfer(int transferId);
     void restartTransfer(int transferId);
+    void setPreferences();
 
 private:
     explicit DownloadManager();
