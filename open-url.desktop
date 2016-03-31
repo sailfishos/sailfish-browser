@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
 Name=Browser
-NotShowIn=X-MeeGo;
+NoDisplay=true
 X-MeeGo-Logical-Id=sailfish-browser-ap-name
 X-MeeGo-Translation-Catalog=sailfish-browser
 MimeType=text/html;x-maemo-urischeme/http;x-maemo-urischeme/https;
