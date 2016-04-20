@@ -66,8 +66,11 @@ WebContainer {
 
     function grabActivePage() {
         if (webView.contentItem && webView.activeTabRendered) {
-            webView.privateMode ? webView.contentItem.grabThumbnail(thumbnailCaptureSize())
-                                : webView.contentItem.grabToFile(thumbnailCaptureSize())
+            if (webView.privateMode) {
+                webView.contentItem.grabThumbnail(thumbnailCaptureSize())
+            } else {
+                webView.contentItem.grabToFile(thumbnailCaptureSize())
+            }
         }
     }
 
@@ -98,7 +101,11 @@ WebContainer {
 
             function grabItem() {
                 if (rendered && activeWebPage && active) {
-                    webView.privateMode ? grabThumbnail(thumbnailCaptureSize()) : grabToFile(thumbnailCaptureSize())
+                    if (webView.privateMode) {
+                        grabThumbnail(thumbnailCaptureSize())
+                    } else {
+                        grabToFile(thumbnailCaptureSize())
+                    }
                 }
             }
 
