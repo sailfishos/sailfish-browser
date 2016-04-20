@@ -56,7 +56,7 @@ include(factories/factories.pri)
 
 # C++ sources
 SOURCES += \
-    sailfishbrowser.cpp \
+    main.cpp \
     browserservice.cpp \
     dbusadaptor.cpp \
     closeeventfilter.cpp \
