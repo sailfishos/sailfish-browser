@@ -1,7 +1,8 @@
 /****************************************************************************
 **
-** Copyright (C) 2013 Jolla Ltd.
-** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jollamobile.com>
+** Copyright (C) 2013-2016 Jolla Ltd.
+** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jolla.com>
+** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **
 ****************************************************************************/
 
@@ -12,26 +13,18 @@
 #include <QGuiApplication>
 #include <QQuickView>
 #include <qqmldebug.h>
-#include <QQmlContext>
-#include <QQmlEngine>
 #include <QtQml>
-#include <QTimer>
 #include <QTranslator>
-#include <QDir>
-#include <QScreen>
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDBusPendingCall>
 
-#include "qmozcontext.h"
-
+#include "browser.h"
+// Registered QML types
 #include "declarativebookmarkmodel.h"
 #include "desktopbookmarkwriter.h"
-#include "declarativewebutils.h"
-#include "browserservice.h"
-#include "downloadmanager.h"
 #include "downloadstatus.h"
-#include "closeeventfilter.h"
+#include "browserservice.h"
 #include "persistenttabmodel.h"
 #include "privatetabmodel.h"
 #include "declarativehistorymodel.h"
@@ -49,16 +42,6 @@
 
 Q_DECL_EXPORT int main(int argc, char *argv[])
 {
-    setenv("USE_ASYNC", "1", 1);
-    setenv("USE_NEMO_GSTREAMER", "1", 1);
-    setenv("NO_LIMIT_ONE_GST_DECODER", "1", 1);
-    // See https://www.freedesktop.org/wiki/Software/PulseAudio/Documentation/Developer/Clients/ApplicationProperties/
-    setenv("PULSE_PROP_application.process.binary", "sailfish-browser", 1);
-
-    // Workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=929879
-    setenv("LC_NUMERIC", "C", 1);
-    setlocale(LC_NUMERIC, "C");
-
     QQuickWindow::setDefaultAlphaBuffer(true);
 
     if (!qgetenv("QML_DEBUGGING_ENABLED").isEmpty()) {
@@ -73,16 +56,6 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     QScopedPointer<QQuickView> view(new QQuickView);
 #endif
     app->setQuitOnLastWindowClosed(false);
-
-    // GRE_HOME must be set before QMozContext is initialized.
-    // With invoker PWD is empty.
-    QByteArray binaryPath = QCoreApplication::applicationDirPath().toLocal8Bit();
-    setenv("GRE_HOME", binaryPath.constData(), 1);
-
-    // Don't set custom user agent string when the environment already contains CUSTOM_UA.
-    if (qgetenv("CUSTOM_UA").isEmpty()) {
-        setenv("CUSTOM_UA", "Mozilla/5.0 (Maemo; Linux; U; Jolla; Sailfish; Mobile; rv:31.0) Gecko/31.0 Firefox/31.0 SailfishBrowser/1.0", 1);
-    }
 
     BrowserService *service = new BrowserService(app.data());
     // Handle command line launch
@@ -132,6 +105,9 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     //% "Browser"
     view->setTitle(qtTrId("sailfish-browser-ap-name"));
 
+    app->setApplicationName(QString("sailfish-browser"));
+    app->setOrganizationName(QString("org.sailfishos"));
+
     const char *uri = "Sailfish.Browser";
 
     // Use QtQuick 2.1 for Sailfish.Browser imports
@@ -153,77 +129,23 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     qmlRegisterType<IconFetcher>(uri, 1, 0, "IconFetcher");
     qmlRegisterType<InputRegion>(uri, 1, 0, "InputRegion");
 
-    QString componentPath(DEFAULT_COMPONENTS_PATH);
-    QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/components/EmbedLiteBinComponents.manifest"));
-    QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/components/EmbedLiteJSComponents.manifest"));
-    QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/chrome/EmbedLiteJSScripts.manifest"));
-    QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/chrome/EmbedLiteOverrides.manifest"));
+    Browser *browser = new Browser(view.data(), app.data());
+    browser->connect(service, SIGNAL(openUrlRequested(QString)),
+                     browser, SLOT(openUrl(QString)));
+    browser->connect(service, SIGNAL(activateNewTabViewRequested()),
+                     browser, SLOT(openNewTabView()));
+    browser->connect(service, SIGNAL(dumpMemoryInfoRequested(QString)),
+                     browser, SLOT(dumpMemoryInfo(QString)));
 
-    app->setApplicationName(QString("sailfish-browser"));
-    app->setOrganizationName(QString("org.sailfishos"));
+    browser->connect(uiService, SIGNAL(openUrlRequested(QString)),
+                     browser, SLOT(openUrl(QString)));
+    browser->connect(uiService, SIGNAL(activateNewTabViewRequested()),
+                     browser, SLOT(openNewTabView()));
 
-    DeclarativeWebUtils *utils = DeclarativeWebUtils::instance();
-    utils->connect(service, SIGNAL(openUrlRequested(QString)),
-                   utils, SIGNAL(openUrlRequested(QString)));
-    utils->connect(service, SIGNAL(activateNewTabViewRequested()),
-                   utils, SIGNAL(activateNewTabViewRequested()));
-    utils->connect(service, SIGNAL(dumpMemoryInfoRequested(QString)),
-                   utils, SLOT(handleDumpMemoryInfoRequest(QString)));
-
-    utils->connect(uiService, SIGNAL(openUrlRequested(QString)),
-                   utils, SIGNAL(openUrlRequested(QString)));
-    utils->connect(uiService, SIGNAL(activateNewTabViewRequested()),
-                   utils, SIGNAL(activateNewTabViewRequested()));
-
-    utils->clearStartupCacheIfNeeded();
-
-    DownloadManager *dlMgr = DownloadManager::instance();
-    dlMgr->connect(service, SIGNAL(cancelTransferRequested(int)),
-            dlMgr, SLOT(cancelTransfer(int)));
-    dlMgr->connect(service, SIGNAL(restartTransferRequested(int)),
-            dlMgr, SLOT(restartTransfer(int)));
-
-    view->rootContext()->setContextProperty("WebUtils", utils);
-    view->rootContext()->setContextProperty("MozContext", QMozContext::GetInstance());
-    view->rootContext()->setContextProperty("Settings", SettingManager::instance());
-    view->rootContext()->setContextProperty("DownloadManager", dlMgr);
-
-    CloseEventFilter * clsEventFilter = new CloseEventFilter(dlMgr, app.data());
-    view->installEventFilter(clsEventFilter);
-    QObject::connect(service, SIGNAL(openUrlRequested(QString)),
-                     clsEventFilter, SLOT(cancelStopApplication()));
-    QObject::connect(service, SIGNAL(activateNewTabViewRequested()),
-                     clsEventFilter, SLOT(cancelStopApplication()));
-
-    QObject::connect(uiService, SIGNAL(openUrlRequested(QString)),
-                     clsEventFilter, SLOT(cancelStopApplication()));
-    QObject::connect(uiService, SIGNAL(activateNewTabViewRequested()),
-                     clsEventFilter, SLOT(cancelStopApplication()));
-
-#ifdef USE_RESOURCES
-    view->setSource(QUrl("qrc:///browser.qml"));
-#else
-    bool isDesktop = app->arguments().contains("-desktop");
-
-    QString path;
-    if (isDesktop) {
-        path = app->applicationDirPath() + QDir::separator();
-    } else {
-        path = QString(DEPLOYMENT_PATH);
-    }
-    view->setSource(QUrl::fromLocalFile(path+"browser.qml"));
-#endif
-
-    // Setup embedding
-    QTimer::singleShot(0, QMozContext::GetInstance(), SLOT(runEmbedding()));
-
-    if (!app->arguments().contains(QStringLiteral("-prestart"))) {
-        if (app->arguments().count() > 1 && (app->arguments().last() != QStringLiteral("-debugMode"))) {
-            emit utils->openUrlRequested(app->arguments().last());
-        } else if (!utils->firstUseDone()) {
-            emit utils->openUrlRequested("");
-        }
-    }
-
+    browser->connect(service, SIGNAL(cancelTransferRequested(int)),
+                     browser, SLOT(cancelDownload(int)));
+    browser->connect(service, SIGNAL(restartTransferRequested(int)),
+                     browser, SLOT(restartDownload(int)));
+    browser->load();
     return app->exec();
 }
