@@ -85,6 +85,7 @@ private:
     ~DeclarativeWebUtils();
     void setContentScaling();
     void setRenderingPreferences();
+    void setSiteSpecificOverrides();
 
     MGConfItem m_homePage;
     bool m_firstUseDone;
