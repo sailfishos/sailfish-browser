@@ -5,10 +5,10 @@ QT -= gui
 include(../test_common.pri)
 include(../../../common/paths.pri)
 
-INCLUDEPATH += ../../../src/
+INCLUDEPATH += $$BROWSERSRCDIR
 
 SOURCES += tst_downloadmimetypehandler.cpp \
-           ../../../src/downloadmimetypehandler.cpp
+           $$BROWSERSRCDIR/downloadmimetypehandler.cpp
 
 HEADERS += \
-           ../../../src/downloadmimetypehandler.h
+           $$BROWSERSRCDIR/downloadmimetypehandler.h

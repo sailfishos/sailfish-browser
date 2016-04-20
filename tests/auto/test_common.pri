@@ -6,6 +6,9 @@ CONFIG += c++11
 
 include(../../defaults.pri)
 
+SRCDIR = $$PWD/../../src
+BROWSERSRCDIR = $$SRCDIR/browser
+
 CONFIG(gcov) {
     message("GCOV instrumentalization enabled")
     QMAKE_CXXFLAGS += -fprofile-arcs -ftest-coverage -O0
