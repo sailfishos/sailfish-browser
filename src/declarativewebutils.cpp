@@ -207,6 +207,9 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     setContentScaling();
     setRenderingPreferences();
 
+    // Set site specific overrides
+    setSiteSpecificOverrides();
+
     // Theme.fontSizeSmall
     mozContext->setPref(QStringLiteral("embedlite.inputItemSize"), QVariant(m_inputItemSize));
     mozContext->setPref(QStringLiteral("embedlite.zoomMargin"), QVariant(m_zoomMargin));
@@ -473,4 +476,19 @@ void DeclarativeWebUtils::setRenderingPreferences()
         // a bit the blurriness.
         mozContext->setPref(QString("layers.low-precision-resolution"), QString("0.5f"));
     }
+}
+
+void DeclarativeWebUtils::setSiteSpecificOverrides()
+{
+    QMozContext* mozContext = QMozContext::GetInstance();
+    Q_ASSERT(mozContext->initialized());
+
+    mozContext->setPref(QStringLiteral("general.useragent.override.dailymotion.com"), QStringLiteral("Maemo; Linux;#Android 4.4.2;"));
+    mozContext->setPref(QStringLiteral("general.useragent.override.le.com"), QStringLiteral("Maemo; Linux;#Android 4.4.2;"));
+    mozContext->setPref(QStringLiteral("general.useragent.override.youku.com"), QStringLiteral("Maemo; Linux;#Android 4.4.2;"));
+    mozContext->setPref(QStringLiteral("general.useragent.override.iqiyi.com"), QStringLiteral("Maemo; Linux; U; #Android;"));
+    mozContext->setPref(QStringLiteral("general.useragent.override.facebook.com"), QStringLiteral("Maemo; Linux; U; Jolla; # ; "));
+    mozContext->setPref(QStringLiteral("general.useragent.override.fbcdn.net"), QStringLiteral("Maemo; Linux; U; Jolla; # ; "));
+    mozContext->setPref(QStringLiteral("general.useragent.override.engadget.com"), QStringLiteral("Maemo; Linux; U; Jolla; # ;"));
+    mozContext->setPref(QStringLiteral("general.useragent.override.youtube.com"), QStringLiteral("Mozilla/5.0 (Maemo; Android 4.4.2; U; Jolla; Sailfish; ; rv:31.0) Gecko/31.0 Firefox/31.0 SailfishBrowser/1.0 like Safari/538.1"));
 }
