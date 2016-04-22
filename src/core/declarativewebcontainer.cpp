@@ -361,6 +361,9 @@ void DeclarativeWebContainer::load(QString url, QString title, bool force)
     }
 
     if (m_webPage && m_webPage->completed()) {
+        if (m_loading) {
+            m_webPage->stop();
+        }
         m_webPage->loadTab(url, force);
     } else if (!canInitialize()) {
         m_initialUrl = url;
