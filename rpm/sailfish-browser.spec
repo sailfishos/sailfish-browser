@@ -84,42 +84,25 @@ Unit tests and additional data needed for functional tests
 %prep
 %setup -q -n %{name}-%{version}
 
-# >> setup
-# << setup
-
 %build
-# >> build pre
-# << build pre
-
 %qtc_qmake5 -r VERSION=%{version}
 %qtc_make %{?_smp_mflags}
 
-# >> build post
-# << build post
-
 %install
 rm -rf %{buildroot}
-# >> install pre
-# << install pre
 %qmake5_install
 chmod +x %{buildroot}/%{_oneshotdir}/*
 
-# >> install post
-# << install post
-
 %post
-# >> post
 /usr/bin/update-desktop-database -q
 
 # Upgrade, count is 2 or higher (depending on the number of versions installed)
 if [ "$1" -ge 2 ]; then
 %{_bindir}/add-oneshot --user --now browser-cleanup-startup-cache
 fi
-# << post
 
 %files
 %defattr(-,root,root,-)
-# >> files
 %{_bindir}/%{name}
 %{_datadir}/applications/%{name}.desktop
 %{_datadir}/applications/open-url.desktop
@@ -127,7 +110,6 @@ fi
 %{_datadir}/translations/sailfish-browser_eng_en.qm
 %{_datadir}/dbus-1/services/*.service
 %{_oneshotdir}/browser-cleanup-startup-cache
-# << files
 
 %files settings
 %defattr(-,root,root,-)
