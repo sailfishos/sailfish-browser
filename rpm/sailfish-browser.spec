@@ -101,6 +101,8 @@ if [ "$1" -ge 2 ]; then
 %{_bindir}/add-oneshot --user --now browser-cleanup-startup-cache
 fi
 
+%{_bindir}/add-oneshot --user --late browser-update-default-data
+
 %files
 %defattr(-,root,root,-)
 %{_bindir}/%{name}
@@ -109,7 +111,7 @@ fi
 %{_datadir}/%{name}/*
 %{_datadir}/translations/sailfish-browser_eng_en.qm
 %{_datadir}/dbus-1/services/*.service
-%{_oneshotdir}/browser-cleanup-startup-cache
+%{_oneshotdir}/*
 
 %files settings
 %defattr(-,root,root,-)
