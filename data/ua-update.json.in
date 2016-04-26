@@ -46,5 +46,13 @@
   // bug 878273, livescore.com
   "livescore.com": "\\(Maemo; Linux; U; Jolla; Sailfish#(Android",
   // bug 878653, redstarbelgrade.info
-  "redstarbelgrade.info": "\\(Maemo; Linux; U; Jolla; Sailfish#(Android"
+  "redstarbelgrade.info": "\\(Maemo; Linux; U; Jolla; Sailfish#(Android",
+  "dailymotion.com": "Maemo; Linux;#Android 4.4.2;",
+  "le.com": "Maemo; Linux;#Android 4.4.2;",
+  "youku.com": "Maemo; Linux;#Android 4.4.2;",
+  "iqiyi.com": "Maemo; Linux; U; #Android;",
+  "facebook.com": "Maemo; Linux; U; Jolla; # ; ",
+  "fbcdn.net": "Maemo; Linux; U; Jolla; # ; ",
+  "engadget.com": "Maemo; Linux; U; Jolla; # ;",
+  "youtube.com": "Mozilla/5.0 (Maemo; Android 4.4.2; U; Jolla; Sailfish; ; rv:31.0) Gecko/31.0 Firefox/31.0 SailfishBrowser/1.0 like Safari/538.1"
 }
