@@ -32,6 +32,7 @@
 #include "qmozcontext.h"
 #include "opensearchconfigs.h"
 #include "browserpaths.h"
+#include "settingmanager.h"
 
 static const QString gSystemComponentsTimeStamp("/var/lib/_MOZEMBED_CACHE_CLEAN_");
 static const QString gProfilePath("/.mozilla/mozembed");
@@ -220,6 +221,12 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     // Content Security Policy is enabled by default,
     // this enables the spec compliant mode.
     mozContext->setPref(QString("security.csp.speccompliant"), QVariant(true));
+
+    QVariantMap initSearchEngines;
+    // Load search engines
+    initSearchEngines.insert(QString("msg"), QVariant(QString("init")));
+    mozContext->sendObserve("embedui:search", QVariant(initSearchEngines));
+    SettingManager::instance()->setSearchEngine();
 }
 
 void DeclarativeWebUtils::setFirstUseDone(bool firstUseDone) {
@@ -390,24 +397,22 @@ void DeclarativeWebUtils::handleObserve(const QString message, const QVariant da
 {
     const QVariantMap dataMap = data.toMap();
 
-    if (message == "clipboard:setdata") {
+    if (message == QLatin1String("clipboard:setdata")) {
         QClipboard *clipboard = QGuiApplication::clipboard();
 
         // check if we copied password
         if (!dataMap.value("private").toBool()) {
             clipboard->setText(dataMap.value("data").toString());
         }
-    } else if (message == "embed:search") {
+    } else if (message == QLatin1String("embed:search")) {
         QString msg = dataMap.value("msg").toString();
-
-        if (msg == "init") {
+        if (msg == QLatin1String("load")) {
             const StringMap configs(OpenSearchConfigs::getAvailableOpenSearchConfigs());
             QStringList registeredSearches(dataMap.value("engines").toStringList());
             QMozContext *mozContext = QMozContext::GetInstance();
 
             // Add newly installed configs
             foreach (QString searchName, configs.keys()) {
-
                 if (registeredSearches.contains(searchName)) {
                     registeredSearches.removeAll(searchName);
                 } else {
@@ -417,7 +422,6 @@ void DeclarativeWebUtils::handleObserve(const QString message, const QVariant da
                     loadsearch.insert(QString("uri"), QVariant(QString("file://") + configs[searchName]));
                     loadsearch.insert(QString("confirm"), QVariant(false));
                     mozContext->sendObserve("embedui:search", QVariant(loadsearch));
-
                 }
             }
 
