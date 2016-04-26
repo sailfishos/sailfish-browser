@@ -113,7 +113,7 @@ chmod +x %{buildroot}/%{_oneshotdir}/*
 
 # Upgrade, count is 2 or higher (depending on the number of versions installed)
 if [ "$1" -ge 2 ]; then
-%{_bindir}/add-oneshot --user --now cleanup-browser-startup-cache
+%{_bindir}/add-oneshot --user --now browser-cleanup-startup-cache
 fi
 # << post
 
@@ -126,7 +126,7 @@ fi
 %{_datadir}/%{name}/*
 %{_datadir}/translations/sailfish-browser_eng_en.qm
 %{_datadir}/dbus-1/services/*.service
-%{_oneshotdir}/cleanup-browser-startup-cache
+%{_oneshotdir}/browser-cleanup-startup-cache
 # << files
 
 %files settings

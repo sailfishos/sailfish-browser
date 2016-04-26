@@ -12,10 +12,10 @@ dbus_service.path = /usr/share/dbus-1/services
 chrome_scripts.files = chrome/*.js
 chrome_scripts.path = /usr/lib/mozembedlite/chrome/embedlite/content
 
-oneshots.files = cleanup-browser-startup-cache
+oneshots.files = oneshot.d/browser-cleanup-startup-cache
 oneshots.path  = /usr/lib/oneshot.d
 
 INSTALLS += desktop dbus_service chrome_scripts oneshots
 
 OTHER_FILES += \
-    rpm/*.spec
+    rpm/*.spec \
