@@ -23,6 +23,7 @@
   "comunio.es": "\\(Maemo; Linux; U; Jolla; Sailfish#(Android",
   // bug 843151, citibank.com
   "citibank.com": "\\(Maemo; Linux; U; Jolla; Sailfish#(Android",
+  "citi.com": "\\(Maemo; Linux; U; Jolla; Sailfish#(Android",
   // bug 843153, games.com
   "games.com": "\\(Maemo; Linux; U; Jolla; Sailfish#(Android",
   // bug 843160, ehow.com
@@ -43,6 +44,7 @@
   "cdm.me": "\\(Maemo; Linux; U; Jolla; Sailfish#(Android",
   // bug 878262, download.com
   "download.com": "\\(Maemo; Linux; U; Jolla; Sailfish#(Android",
+  "cnet.com": "\\(Maemo; Linux; U; Jolla; Sailfish#(Android",
   // bug 878273, livescore.com
   "livescore.com": "\\(Maemo; Linux; U; Jolla; Sailfish#(Android",
   // bug 878653, redstarbelgrade.info
