@@ -52,6 +52,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     setenv("USE_ASYNC", "1", 1);
     setenv("USE_NEMO_GSTREAMER", "1", 1);
     setenv("NO_LIMIT_ONE_GST_DECODER", "1", 1);
+    // See https://www.freedesktop.org/wiki/Software/PulseAudio/Documentation/Developer/Clients/ApplicationProperties/
+    setenv("PULSE_PROP_application.process.binary", "sailfish-browser", 1);
 
     // Workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=929879
     setenv("LC_NUMERIC", "C", 1);
