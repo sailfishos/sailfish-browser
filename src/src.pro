@@ -49,6 +49,7 @@ include(../defaults.pri)
 include(../common/opensearchconfigs.pri)
 include(../common/paths.pri)
 include(core/core.pri)
+include(browser/browser.pri)
 include(history/history.pri)
 include(bookmarks/bookmarks.pri)
 include(qtmozembed/qtmozembed.pri)
@@ -56,23 +57,14 @@ include(factories/factories.pri)
 
 # C++ sources
 SOURCES += \
-    sailfishbrowser.cpp \
+    main.cpp \
     browserservice.cpp \
-    dbusadaptor.cpp \
-    closeeventfilter.cpp \
-    downloadmanager.cpp \
-    downloadmimetypehandler.cpp \
-    declarativewebutils.cpp
+    dbusadaptor.cpp
 
 # C++ headers
 HEADERS += \
     browserservice.h \
-    dbusadaptor.h \
-    closeeventfilter.h \
-    downloadmanager.h \
-    downloadmimetypehandler.h \
-    downloadstatus.h \
-    declarativewebutils.h
+    dbusadaptor.h
 
 OTHER_FILES = *.qml \
               cover/*.qml \

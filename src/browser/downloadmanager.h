@@ -43,8 +43,6 @@ public slots:
 
 private slots:
     void recvObserve(const QString message, const QVariant data);
-    void cancelTransfer(int transferId);
-    void restartTransfer(int transferId);
     void setPreferences();
 
 private:
@@ -58,6 +56,9 @@ private:
     bool needPlatformTransfersUpdate(const QString &targetPath) const;
     void finishMyAppDownload(const QString &targetPath) const;
 
+    void cancelTransfer(int transferId);
+    void restartTransfer(int transferId);
+
     // TODO: unlike Gecko downloads and Sailfish transfers these mappings
     //       are not persistent -> after user has browser closed transfers can't be
     //       restarted.
@@ -67,6 +68,8 @@ private:
 
     TransferEngineInterface *m_transferClient;
     bool m_initialized;
+
+    friend class Browser;
 };
 
 #endif
