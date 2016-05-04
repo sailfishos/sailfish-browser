@@ -1,0 +1,25 @@
+#!/bin/sh
+MOZEMBED_DIR=/home/$USER/.mozilla/mozembed
+BROWSER_DATA_DIR=/usr/share/sailfish-browser/data
+
+if [ ! -d "$MOZEMBED_DIR" ]; then
+    mkdir -p $MOZEMBED_DIR
+fi
+
+if [ ! -f "$MOZEMBED_DIR/ua-update.json" ]; then
+    # Remove lines starting with a comment.
+    # Using Perl regexp so that this works on device.
+    grep -vP  ^\\s*// ua-update.json.in > "$MOZEMBED_DIR/ua-update.json"
+fi
+
+if [ ! -f "$MOZEMBED_DIR/prefs.js" ]; then
+    cp $BROWSER_DATA_DIR/prefs.js $MOZEMBED_DIR
+else
+    while IFS='' read -r line || [[ -n "$line" ]]; do
+        prefKey=$(echo "$line" | cut -d "," -f1)
+        foundKey=$(grep "$prefKey" $MOZEMBED_DIR/prefs.js | wc -l)
+        if [ $foundKey -eq 0 ]; then
+            echo "$line" >> $MOZEMBED_DIR/prefs.js
+        fi
+    done < "$BROWSER_DATA_DIR/prefs.js"
+fi

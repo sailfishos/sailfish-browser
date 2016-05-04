@@ -15,6 +15,7 @@ include(../../../src/qtmozembed/qtmozembed.pri)
 include(../../../src/factories/factories.pri)
 include(../../../src/bookmarks/bookmarks.pri)
 include(../../../src/history/history.pri)
+include(../../../common/paths.pri)
 
 SOURCES += tst_webview.cpp
 

@@ -38,6 +38,7 @@ public slots:
     void createTab(const Tab &tab);
     void removeTab(int tabId);
     void getAllTabs();
+    void removeAllTabs(bool noFeedback = false);
     void navigateTo(int tabId, QString url, QString title, QString path);
     int getMaxTabId();
 
@@ -73,7 +74,6 @@ private:
     int integerQuery(const QString &statement);
     void migrateTo_1();
     void setUserVersion(int userVersion);
-    void removeAllTabs();
 
     QSqlQuery prepare(const QString &statement);
     bool execute(QSqlQuery &query);

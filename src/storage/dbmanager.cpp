@@ -103,6 +103,12 @@ void DBManager::removeTab(int tabId)
                               Q_ARG(int, tabId));
 }
 
+void DBManager::removeAllTabs()
+{
+    QMetaObject::invokeMethod(worker, "removeAllTabs", Qt::BlockingQueuedConnection,
+                              Q_ARG(bool, true));
+}
+
 void DBManager::updateTitle(int tabId, QString url, QString title)
 {
     QMetaObject::invokeMethod(worker, "updateTitle", Qt::QueuedConnection,

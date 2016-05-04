@@ -5,13 +5,15 @@ PKGCONFIG += mlite5
 
 include(../mocks/qmozcontext/qmozcontext.pri)
 include(../test_common.pri)
-include(../../../common/common.pri)
+include(../../../common/opensearchconfigs.pri)
+include(../../../common/paths.pri)
 
-INCLUDEPATH += ../../../src/
+INCLUDEPATH += $$SRCDIR \
+    $$BROWSERSRCDIR
 
 SOURCES += tst_webutils.cpp \
-   ../../../src/declarativewebutils.cpp
+           $$BROWSERSRCDIR/declarativewebutils.cpp
 
-HEADERS += ../../../src/declarativewebutils.h
+HEADERS += $$BROWSERSRCDIR/declarativewebutils.h
 
 INCLUDEPATH -= $$absolute_path(../../../../qtmozembed/src)

@@ -20,6 +20,7 @@
 #include "declarativewebpagecreator.h"
 #include "declarativewebutils.h"
 #include "webpages.h"
+#include "browserpaths.h"
 #include "testobject.h"
 
 class tst_webview : public TestObject
@@ -755,7 +756,7 @@ void tst_webview::cleanupTestCase()
     QTest::qWait(1000);
 
     QString dbFileName = QString("%1/%2")
-            .arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation))
+            .arg(BrowserPaths::dataLocation())
             .arg(QLatin1String(DB_NAME));
     QFile dbFile(dbFileName);
     QVERIFY(dbFile.remove());

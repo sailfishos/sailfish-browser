@@ -265,7 +265,7 @@ Background {
                 onRemoveActivePageFromBookmarks: bookmarkModel.remove(webView.url)
             }
 
-            SearchField {
+            TextField {
                 id: searchField
 
                 readonly property bool requestingFocus: overlayAnimator.atTop && browserPage.active && !dragArea.moved
@@ -288,9 +288,19 @@ Background {
                 // On top of HistoryList and FavoriteGrid
                 z: 1
                 width: parent.width
+                height: Theme.itemSizeMedium
                 textLeftMargin: Theme.paddingLarge
                 textRightMargin: Theme.paddingLarge
+                focusOutBehavior: FocusBehavior.ClearPageFocus
+                font {
+                    pixelSize: Theme.fontSizeLarge
+                    family: Theme.fontFamilyHeading
+                }
+
+                textTopMargin: height/2 - _editor.implicitHeight/2
+                labelVisible: false
                 inputMethodHints: Qt.ImhUrlCharactersOnly
+                background: null
 
                 placeholderText: toolBar.findInPageActive ?
                                      //: Placeholder text for finding text from the web page
@@ -299,6 +309,7 @@ Background {
                                      //: Placeholder text for url typing and searching
                                      //% "Type URL or search"
                                      qsTrId("sailfish_browser-ph-type_url_or_search")
+
                 EnterKey.onClicked: {
                     if (!text) {
                         return
@@ -312,7 +323,6 @@ Background {
                     }
                 }
 
-                background: null
                 opacity: toolBar.opacity * -1.0
                 visible: opacity > 0.0 && y >= -searchField.height
 
@@ -336,6 +346,7 @@ Background {
 
                 onFocusChanged: {
                     if (focus) {
+                        cursorPosition = text.length
                         // Mark SearchField as edited if focused before url is resolved.
                         // Otherwise select all.
                         if (!text) {

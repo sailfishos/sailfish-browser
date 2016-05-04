@@ -10,6 +10,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "desktopbookmarkwriter.h"
+#include "browserpaths.h"
 
 #include <MDesktopEntry>
 #include <QtTest>
@@ -86,7 +87,7 @@ void tst_desktopbookmarkwriter::writeDesktopFile_data()
     QTest::addColumn<QString>("outputIcon");
     QTest::addColumn<QString>("savedDesktopFile");
 
-    QString testPath = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+    QString testPath = BrowserPaths::dataLocation();
     QTest::newRow("basic default icon")  << "Jolla" << "Jolla"
                             << "http://www.test1.jolla.com" << "http://www.test1.jolla.com"
                             << "" << QString(DEFAULT_DESKTOP_BOOKMARK_ICON)

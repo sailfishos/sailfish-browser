@@ -18,6 +18,7 @@
 #include "declarativehistorymodel.h"
 #include "testobject.h"
 #include "dbmanager.h"
+#include "browserpaths.h"
 
 static const QByteArray QML_SNIPPET = \
         "import QtQuick 2.0\n" \
@@ -263,7 +264,7 @@ void tst_declarativehistorymodel::cleanupTestCase()
     // Wait for event loop of db manager
     QTest::qWait(1000);
     QString dbFileName = QString("%1/%2")
-            .arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation))
+            .arg(BrowserPaths::dataLocation())
             .arg(QLatin1String(DB_NAME));
     QFile dbFile(dbFileName);
     QVERIFY(dbFile.remove());

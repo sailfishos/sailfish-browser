@@ -13,6 +13,7 @@
 #include "closeeventfilter.h"
 #include "qmozcontext.h"
 #include "declarativewebutils.h"
+#include "dbmanager.h"
 
 CloseEventFilter::CloseEventFilter(DownloadManager *dlMgr, QObject *parent)
     : QObject(parent),
@@ -28,6 +29,11 @@ CloseEventFilter::CloseEventFilter(DownloadManager *dlMgr, QObject *parent)
 
 void CloseEventFilter::stopApplication()
 {
+    MGConfItem closeAllTabsConf("/apps/sailfish-browser/settings/close_all_tabs");
+    if (closeAllTabsConf.value(false).toBool()) {
+        DBManager::instance()->removeAllTabs();
+    }
+
     QMozContext::GetInstance()->stopEmbedding();
     // Give the engine 5 seconds to shut down. If it fails terminate
     // with a fatal error.

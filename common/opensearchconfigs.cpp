@@ -12,7 +12,6 @@
 
 #include <QDir>
 #include <QFile>
-#include <QStandardPaths>
 #include <QXmlStreamReader>
 #include "opensearchconfigs.h"
 

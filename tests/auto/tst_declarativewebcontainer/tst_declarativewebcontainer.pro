@@ -16,6 +16,7 @@ include(../mocks/declarativewebutils/declarativewebutils_mock.pri)
 include(../mocks/downloadmanager/downloadmanager_mock.pri)
 
 include(../test_common.pri)
+include(../../../common/paths.pri)
 include(../../../src/core/core.pri)
 include(../../../src/history/history.pri)
 

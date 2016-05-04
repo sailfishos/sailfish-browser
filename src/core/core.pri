@@ -1,7 +1,5 @@
 INCLUDEPATH += $$PWD
 
-include(../../common/common.pri)
-
 # C++ sources
 SOURCES += \
     $$PWD/declarativewebcontainer.cpp \

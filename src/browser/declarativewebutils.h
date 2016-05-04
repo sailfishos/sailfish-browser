@@ -25,10 +25,7 @@ class DeclarativeWebUtils : public QObject
     Q_OBJECT
 
     Q_PROPERTY(QString homePage READ homePage NOTIFY homePageChanged FINAL)
-    Q_PROPERTY(QString downloadDir READ downloadDir CONSTANT FINAL)
-    Q_PROPERTY(QString picturesDir READ picturesDir CONSTANT FINAL)
     Q_PROPERTY(bool firstUseDone READ firstUseDone WRITE setFirstUseDone NOTIFY firstUseDoneChanged)
-    Q_PROPERTY(bool debugMode READ debugMode CONSTANT FINAL)
     Q_PROPERTY(qreal cssPixelRatio READ cssPixelRatio NOTIFY cssPixelRatioChanged)
     Q_PROPERTY(qreal silicaPixelRatio READ silicaPixelRatio WRITE setSilicaPixelRatio NOTIFY silicaPixelRatioChanged)
     Q_PROPERTY(qreal touchSideRadius READ touchSideRadius WRITE setTouchSideRadius NOTIFY touchSideRadiusChanged)
@@ -40,11 +37,8 @@ class DeclarativeWebUtils : public QObject
 public:
     static DeclarativeWebUtils *instance();
 
-    QString downloadDir() const;
-    QString picturesDir() const;
     bool firstUseDone() const;
     void setFirstUseDone(bool firstUseDone);
-    bool debugMode() const;
     qreal cssPixelRatio() const;
     qreal silicaPixelRatio() const;
     void setSilicaPixelRatio(qreal silicaPixelRatio);
@@ -60,7 +54,7 @@ public:
     void setZoomMargin(qreal zoomMargin);
 
     Q_INVOKABLE int getLightness(QColor color) const;
-    Q_INVOKABLE bool fileExists(QString fileName) const;
+    Q_INVOKABLE QString createUniqueFileUrl(const QString &fileName, const QString &path) const;
     Q_INVOKABLE QString displayableUrl(QString fullUrl) const;
 
 public slots:
@@ -94,7 +88,6 @@ private:
 
     MGConfItem m_homePage;
     bool m_firstUseDone;
-    bool m_debugMode;
     qreal m_silicaPixelRatio;
     qreal m_touchSideRadius;
     qreal m_touchTopRadius;

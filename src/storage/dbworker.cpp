@@ -9,8 +9,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "dbworker.h"
-
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QSqlRecord>
@@ -21,6 +19,9 @@
 #include <QDir>
 #include <QFile>
 #include <QDateTime>
+
+#include "dbworker.h"
+#include "browserpaths.h"
 
 #ifndef DEBUG_LOGS
 #define DEBUG_LOGS 0
@@ -86,14 +87,12 @@ DBWorker::DBWorker(QObject *parent) :
 
 void DBWorker::init()
 {
-    QString databaseDir = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
-    const QString dbFileName = QLatin1String(DB_NAME);
-    QDir dir(databaseDir);
-
-    if(!dir.mkpath(databaseDir)) {
-        qWarning() << "Can't create directory "+ databaseDir;
+    QString databaseDir = BrowserPaths::dataLocation();
+    if (databaseDir.isNull()) {
         return;
     }
+    QDir dir(databaseDir);
+    const QString dbFileName(QLatin1String(DB_NAME));
 
     m_database = QSqlDatabase::addDatabase("QSQLITE");
     m_database.setDatabaseName(dir.absoluteFilePath(dbFileName));
@@ -283,9 +282,14 @@ void DBWorker::removeTab(int tabId)
     }
 }
 
-void DBWorker::removeAllTabs()
+void DBWorker::removeAllTabs(bool noFeedback)
 {
-    int oldTabCount = tabCount();
+    int oldTabCount(0);
+
+    if (!noFeedback) {
+        oldTabCount = tabCount();
+    }
+
     QSqlQuery query = prepare("DELETE FROM tab;");
     execute(query);
 

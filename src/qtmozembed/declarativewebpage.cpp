@@ -12,11 +12,11 @@
 #include "declarativewebpage.h"
 #include "declarativewebcontainer.h"
 #include "dbmanager.h"
+#include "browserpaths.h"
 
+#include <qmozwindow.h>
 #include <QGuiApplication>
 #include <QtConcurrent>
-#include <QStandardPaths>
-#include "qmozwindow.h"
 
 static const QString gFullScreenMessage("embed:fullscreenchanged");
 static const QString gDomContentLoadedMessage("embed:domcontentloaded");
@@ -401,7 +401,7 @@ QString DeclarativeWebPage::saveToFile(QImage image)
     }
 
     // 75% quality jpg produces small and good enough capture.
-    QString path = QString("%1/tab-%2-thumb.jpg").arg(QStandardPaths::writableLocation(QStandardPaths::CacheLocation)).arg(tabId());
+    QString path = QString("%1/tab-%2-thumb.jpg").arg(BrowserPaths::cacheLocation()).arg(tabId());
     return !allBlack(image) && image.save(path, "jpg", 75) ? path : "";
 }
 
@@ -441,7 +441,7 @@ QDebug operator<<(QDebug dbg, const DeclarativeWebPage *page)
     }
 
     QSize size = page->mozWindow()->size();
-    dbg.nospace() << "DeclarativeWebPage(url = " << page->url() << ", title = " << page->title() << ", width = " << size.width()
+    dbg.nospace() << "DeclarativeWebPage(tabId = " << page->tabId() << " url = " << page->url() << ", title = " << page->title() << ", width = " << size.width()
                   << ", height = " << size.height() << ", completed = " << page->completed()
                   << ", active = " << page->active() << ", enabled = " << page->enabled() << ")";
     return dbg.space();

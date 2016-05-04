@@ -11,8 +11,6 @@
 
 #include "bookmarkmanager.h"
 #include <QDebug>
-#include <QStandardPaths>
-#include <QDir>
 #include <QFile>
 #include <QTextStream>
 #include <QJsonObject>
@@ -22,6 +20,7 @@
 #include <MGConfItem>
 
 #include "bookmark.h"
+#include "browserpaths.h"
 
 BookmarkManager::BookmarkManager()
   : QObject(nullptr)
@@ -46,13 +45,9 @@ BookmarkManager* BookmarkManager::instance()
 
 void BookmarkManager::save(const QList<Bookmark*> & bookmarks)
 {
-    QString dataLocation = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
-    QDir dir(dataLocation);
-    if (!dir.exists()) {
-        if (!dir.mkpath(dataLocation)) {
-            qWarning() << "Can't create directory " << dataLocation;
-            return;
-        }
+    QString dataLocation = BrowserPaths::dataLocation();
+    if (dataLocation.isNull()) {
+        return;
     }
     QString path = dataLocation + "/bookmarks.json";
     QFile file(path);
@@ -85,7 +80,7 @@ void BookmarkManager::clear()
 
 QList<Bookmark*> BookmarkManager::load() {
     QList<Bookmark*> bookmarks;
-    QString bookmarkFile = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "/bookmarks.json";
+    QString bookmarkFile = BrowserPaths::dataLocation() + "/bookmarks.json";
     QScopedPointer<QFile> file(new QFile(bookmarkFile));
 
     if (!file->open(QIODevice::ReadOnly | QIODevice::Text)) {

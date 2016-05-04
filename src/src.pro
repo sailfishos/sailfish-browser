@@ -46,7 +46,10 @@ EE_QM = $$OUT_PWD/sailfish-browser_eng_en.qm
 include(../translations/translations.pri)
 
 include(../defaults.pri)
+include(../common/opensearchconfigs.pri)
+include(../common/paths.pri)
 include(core/core.pri)
+include(browser/browser.pri)
 include(history/history.pri)
 include(bookmarks/bookmarks.pri)
 include(qtmozembed/qtmozembed.pri)
@@ -54,20 +57,14 @@ include(factories/factories.pri)
 
 # C++ sources
 SOURCES += \
-    sailfishbrowser.cpp \
+    main.cpp \
     browserservice.cpp \
-    dbusadaptor.cpp \
-    closeeventfilter.cpp \
-    downloadmanager.cpp \
-    declarativewebutils.cpp
+    dbusadaptor.cpp
 
 # C++ headers
 HEADERS += \
     browserservice.h \
-    dbusadaptor.h \
-    closeeventfilter.h \
-    downloadmanager.h \
-    declarativewebutils.h
+    dbusadaptor.h
 
 OTHER_FILES = *.qml \
               cover/*.qml \

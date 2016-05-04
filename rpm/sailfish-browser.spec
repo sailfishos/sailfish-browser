@@ -24,12 +24,11 @@ BuildRequires:  pkgconfig(mlite5)
 BuildRequires:  pkgconfig(qdeclarative5-boostable)
 BuildRequires:  qt5-qttools
 BuildRequires:  qt5-qttools-linguist
-BuildRequires:  gdb
 BuildRequires:  oneshot
 BuildRequires:  gtest-devel
 BuildRequires:  libgmock-devel
 
-Requires: sailfishsilica-qt5 >= 0.21.34
+Requires: sailfishsilica-qt5 >= 0.22.13
 Requires: jolla-ambient >= 0.7.12
 Requires: xulrunner-qt5 >= %{min_xulrunner_version}
 Requires: embedlite-components-qt5 >= %{min_embedlite_components_version}
@@ -89,50 +88,34 @@ Unit tests and additional data needed for functional tests
 %prep
 %setup -q -n %{name}-%{version}
 
-# >> setup
-# << setup
-
 %build
-# >> build pre
-# << build pre
-
 %qtc_qmake5 -r VERSION=%{version}
 %qtc_make %{?_smp_mflags}
 
-# >> build post
-# << build post
-
 %install
 rm -rf %{buildroot}
-# >> install pre
-# << install pre
 %qmake5_install
 chmod +x %{buildroot}/%{_oneshotdir}/*
 
-# >> install post
-# << install post
-
 %post
-# >> post
 /usr/bin/update-desktop-database -q
 
 # Upgrade, count is 2 or higher (depending on the number of versions installed)
 if [ "$1" -ge 2 ]; then
-%{_bindir}/add-oneshot --user --now cleanup-browser-startup-cache
+%{_bindir}/add-oneshot --user --now browser-cleanup-startup-cache
 fi
-# << post
+
+%{_bindir}/add-oneshot --user --late browser-update-default-data
 
 %files
 %defattr(-,root,root,-)
-# >> files
 %{_bindir}/%{name}
 %{_datadir}/applications/%{name}.desktop
 %{_datadir}/applications/open-url.desktop
 %{_datadir}/%{name}/*
 %{_datadir}/translations/sailfish-browser_eng_en.qm
 %{_datadir}/dbus-1/services/*.service
-%{_oneshotdir}/cleanup-browser-startup-cache
-# << files
+%{_oneshotdir}/*
 
 %files settings
 %defattr(-,root,root,-)

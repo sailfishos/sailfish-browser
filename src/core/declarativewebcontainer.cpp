@@ -18,10 +18,9 @@
 #include "declarativewebutils.h"
 #include "webpagefactory.h"
 #include "webpages.h"
+#include "browserpaths.h"
 
 #include <QTimerEvent>
-#include <QDir>
-#include <QStandardPaths>
 #include <QScreen>
 #include <QMetaMethod>
 #include <QOpenGLFunctions_ES2>
@@ -93,10 +92,8 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     connect(QMozContext::GetInstance(), &QMozContext::lastViewDestroyed,
             this, &DeclarativeWebContainer::onLastViewDestroyed);
 
-    QString cacheLocation = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
-    QDir dir(cacheLocation);
-    if(!dir.exists() && !dir.mkpath(cacheLocation)) {
-        qWarning() << "Can't create directory "+ cacheLocation;
+    QString cacheLocation = BrowserPaths::cacheLocation();
+    if (cacheLocation.isNull()) {
         return;
     }
 
@@ -380,6 +377,9 @@ void DeclarativeWebContainer::load(QString url, QString title, bool force)
     }
 
     if (m_webPage && m_webPage->completed()) {
+        if (m_loading) {
+            m_webPage->stop();
+        }
         m_webPage->loadTab(url, force);
     } else if (!canInitialize()) {
         m_initialUrl = url;
@@ -746,7 +746,7 @@ void DeclarativeWebContainer::initialize()
         QString url = m_initialUrl.isEmpty() ? DeclarativeWebUtils::instance()->homePage() : m_initialUrl;
         QString title = "";
         m_model->newTab(url, title);
-    } else if (m_model->count() > 0) {
+    } else if (m_model->count() > 0 && !m_webPage) {
         Tab tab = m_model->activeTab();
         if (!m_initialUrl.isEmpty()) {
             tab.setUrl(m_initialUrl);
@@ -790,6 +790,11 @@ void DeclarativeWebContainer::onNewTabRequested(QString url, QString title, int 
     Q_UNUSED(title);
     Tab tab;
     tab.setTabId(m_model->nextTabId());
+    tab.setUrl(url);
+    if (!canInitialize()) {
+        m_initialUrl = url;
+    }
+
     if (activatePage(tab, false, parentId)) {
         m_webPage->loadTab(url, false);
     }
