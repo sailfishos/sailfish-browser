@@ -6,10 +6,10 @@ if [ ! -d "$MOZEMBED_DIR" ]; then
     mkdir -p $MOZEMBED_DIR
 fi
 
-if [ ! -f "$MOZEMBED_DIR/ua-update.json" ]; then
+if [ ! -f "$MOZEMBED_DIR/ua-update.json" -o ! -s "$MOZEMBED_DIR/ua-update.json" ]; then
     # Remove lines starting with a comment.
     # Using Perl regexp so that this works on device.
-    grep -vP  ^\\s*// ua-update.json.in > "$MOZEMBED_DIR/ua-update.json"
+    grep -vP  ^\\s*// $BROWSER_DATA_DIR/ua-update.json.in > "$MOZEMBED_DIR/ua-update.json"
 fi
 
 if [ ! -f "$MOZEMBED_DIR/prefs.js" ]; then
