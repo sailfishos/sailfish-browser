@@ -519,6 +519,11 @@ bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
     if (event->type() == QEvent::Close && m_mozWindow) {
         m_mozWindow->suspendRendering();
         m_closing = true;
+
+        if (m_webPages->count() == 0) {
+            m_mozWindow.reset();
+        }
+
         m_webPages->clear();
     }
 
