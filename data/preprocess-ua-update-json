@@ -1,0 +1,5 @@
+#!/bin/sh
+# Remove lines starting with a comment.
+# Using Perl regexp so that this works on device.
+grep -vP  ^\\s*// $PWD/ua-update.json.in > $PWD/ua-update.json
+git commit $PWD/ua-update.json -m "[user-agent] Update preprocessed user agent overrides"
