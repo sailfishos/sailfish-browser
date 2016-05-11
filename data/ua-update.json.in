@@ -58,5 +58,9 @@
   "facebook.com": "Maemo; Linux; U; Jolla; # ; ",
   "fbcdn.net": "Maemo; Linux; U; Jolla; # ; ",
   "engadget.com": "Maemo; Linux; U; Jolla; # ;",
-  "youtube.com": "Mozilla/5.0 (Maemo; Android 4.4.2; U; Jolla; Sailfish; ; rv:31.0) Gecko/31.0 Firefox/31.0 SailfishBrowser/1.0 like Safari/538.1"
+  "youtube.com": "Mozilla/5.0 (Maemo; Android 4.4.2; U; Jolla; Sailfish; ; rv:31.0) Gecko/31.0 Firefox/31.0 SailfishBrowser/1.0 like Safari/538.1",
+  "yandex.com": "Mozilla/5.0 (Mobile; rv:31.0) Gecko/31.0 Firefox/31.0",
+  "yandex.net": "Mozilla/5.0 (Mobile; rv:31.0) Gecko/31.0 Firefox/31.0",
+  "yandex.ru": "Mozilla/5.0 (Mobile; rv:31.0) Gecko/31.0 Firefox/31.0",
+  "yastatic.net": "Mozilla/5.0 (Mobile; rv:31.0) Gecko/31.0 Firefox/31.0"
 }
