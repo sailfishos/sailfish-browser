@@ -491,4 +491,9 @@ void DeclarativeWebUtils::setSiteSpecificOverrides()
     mozContext->setPref(QStringLiteral("general.useragent.override.fbcdn.net"), QStringLiteral("Maemo; Linux; U; Jolla; # ; "));
     mozContext->setPref(QStringLiteral("general.useragent.override.engadget.com"), QStringLiteral("Maemo; Linux; U; Jolla; # ;"));
     mozContext->setPref(QStringLiteral("general.useragent.override.youtube.com"), QStringLiteral("Mozilla/5.0 (Maemo; Android 4.4.2; U; Jolla; Sailfish; ; rv:31.0) Gecko/31.0 Firefox/31.0 SailfishBrowser/1.0 like Safari/538.1"));
+
+    mozContext->setPref(QStringLiteral("general.useragent.override.yandex.com"), QStringLiteral("Mozilla/5.0 (Mobile; rv:31.0) Gecko/31.0 Firefox/31.0"));
+    mozContext->setPref(QStringLiteral("general.useragent.override.yandex.net"), QStringLiteral("Mozilla/5.0 (Mobile; rv:31.0) Gecko/31.0 Firefox/31.0"));
+    mozContext->setPref(QStringLiteral("general.useragent.override.yandex.ru"), QStringLiteral("Mozilla/5.0 (Mobile; rv:31.0) Gecko/31.0 Firefox/31.0"));
+    mozContext->setPref(QStringLiteral("general.useragent.override.yastatic.net"), QStringLiteral("Mozilla/5.0 (Mobile; rv:31.0) Gecko/31.0 Firefox/31.0"));
 }
