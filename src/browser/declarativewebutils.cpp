@@ -188,9 +188,6 @@ void DeclarativeWebUtils::updateWebEngineSettings()
 
     mozContext->setPref(QString("media.resource_handler_disabled"), QVariant(true));
 
-    // Disable asmjs
-    mozContext->setPref(QString("javascript.options.asmjs"), QVariant(false));
-
     // subscribe to gecko messages
     mozContext->addObservers(QStringList()
                              << "clipboard:setdata"
