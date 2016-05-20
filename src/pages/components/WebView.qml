@@ -25,7 +25,7 @@ WebContainer {
     property bool findInPageHasResult
 
     property var resourceController: ResourceController {
-        webView: contentItem
+        webPage: contentItem
         background: !webView.visible
     }
 
