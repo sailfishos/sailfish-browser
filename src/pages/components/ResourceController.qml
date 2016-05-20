@@ -29,8 +29,6 @@ Item {
     property bool _isAudioStream
     property bool _isVideoStream
 
-    signal webViewSuspended
-
     function calculateStatus() {
         var video = false
         var audio = false
@@ -62,7 +60,6 @@ Item {
         if (webView) {
             webView.suspendView()
         }
-        webViewSuspended()
     }
 
     onAudioActiveChanged: {

@@ -18,8 +18,6 @@ QtObject {
     property bool background
     property bool displayOff
 
-    signal webViewSuspended
-
     function calculateStatus() {}
 
     function resumeView() {}
