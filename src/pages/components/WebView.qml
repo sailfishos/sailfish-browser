@@ -112,7 +112,7 @@ WebContainer {
 
             fullscreenHeight: container.fullscreenHeight
             toolbarHeight: container.toolbarHeight
-            throttlePainting: !foreground && !resourceController.videoActive && webView.visible || resourceController.displayOff
+            throttlePainting: !foreground && !resourceController.videoActive && webView.visible || !webView.visible
             enabled: webView.enabled
 
             // There needs to be enough content for enabling chrome gesture

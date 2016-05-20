@@ -128,6 +128,8 @@ Item {
             } else {
                 resumeView()
             }
+            // Reset suspend intention.
+            suspendIntention = false
         }
 
         onSuspendIntentionChanged: {
