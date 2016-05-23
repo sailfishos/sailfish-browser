@@ -17,7 +17,7 @@ import org.nemomobile.policy 1.0
 
 // QtObject cannot have children
 Item {
-    property QtObject webView
+    property QtObject webPage
     property bool videoActive
     property bool audioActive
     readonly property alias displayOff: screenBlanked.value
@@ -28,8 +28,6 @@ Item {
     property string _lastMetaOwner
     property bool _isAudioStream
     property bool _isVideoStream
-
-    signal webViewSuspended
 
     function calculateStatus() {
         var video = false
@@ -53,16 +51,15 @@ Item {
     }
 
     function resumeView() {
-        if (webView) {
-            webView.resumeView()
+        if (webPage) {
+            webPage.resumeView()
         }
     }
 
     function suspendView() {
-        if (webView) {
-            webView.suspendView()
+        if (webPage) {
+            webPage.suspendView()
         }
-        webViewSuspended()
     }
 
     onAudioActiveChanged: {
@@ -131,6 +128,8 @@ Item {
             } else {
                 resumeView()
             }
+            // Reset suspend intention.
+            suspendIntention = false
         }
 
         onSuspendIntentionChanged: {

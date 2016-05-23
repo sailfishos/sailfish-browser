@@ -25,7 +25,7 @@ WebContainer {
     property bool findInPageHasResult
 
     property var resourceController: ResourceController {
-        webView: contentItem
+        webPage: contentItem
         background: !webView.visible
     }
 
@@ -112,7 +112,7 @@ WebContainer {
 
             fullscreenHeight: container.fullscreenHeight
             toolbarHeight: container.toolbarHeight
-            throttlePainting: !foreground && !resourceController.videoActive && webView.visible || resourceController.displayOff
+            throttlePainting: !foreground && !resourceController.videoActive && webView.visible || !webView.visible
             enabled: webView.enabled
 
             // There needs to be enough content for enabling chrome gesture
@@ -360,7 +360,6 @@ WebContainer {
         PopupHandler.pageStack = pageStack
         PopupHandler.webView = webView
         PopupHandler.browserPage = browserPage
-        PopupHandler.resourceController = resourceController
         PopupHandler.WebUtils = WebUtils
         PopupHandler.tabModel = tabModel
         PopupHandler.pickerCreator = _pickerCreator
