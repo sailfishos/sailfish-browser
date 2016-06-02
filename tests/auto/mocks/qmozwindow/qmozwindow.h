@@ -26,7 +26,9 @@ class QMozWindow : public QObject
     Q_OBJECT
 
 public:
-    explicit QMozWindow(QObject *parent = 0) : QObject(parent) {};
+    explicit QMozWindow(const QSize &size, QObject *parent = 0) : QObject(parent) {
+        Q_UNUSED(size);
+    }
 
     MOCK_METHOD1(setSize, void(QSize));
     MOCK_METHOD0(size, QSize(void));
