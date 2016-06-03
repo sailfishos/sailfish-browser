@@ -196,8 +196,10 @@ void DeclarativeWebContainer::setTabModel(DeclarativeTabModel *model)
             emit m_model->countChanged();
         }
 
-        // Set waiting for a tab.
-        if (m_model) {
+        // Set waiting for a tab. This can only happen when
+        // browser is already started. Initialization steps take
+        // care creating new tabs as per need.
+        if (m_model && m_initialized) {
             m_model->setWaitingForNewTab(true);
         }
     }
@@ -425,7 +427,8 @@ void DeclarativeWebContainer::goBack()
 
 bool DeclarativeWebContainer::activatePage(const Tab& tab, bool force, int parentId)
 {
-    if (!m_model) {
+    if (!m_initialized) {
+        m_initialUrl = tab.url();
         return false;
     }
 
@@ -743,11 +746,16 @@ void DeclarativeWebContainer::initialize()
         return;
     }
 
+    // From this point onwards, we're ready to initialize.
+    // We set m_initialized to true prior to the block below since we may need to
+    // call loadTab() within it, and that function is guarded by the value of m_initialized.
+    m_initialized = true;
+
     // Load test
     // 1) no tabs and firstUseDone or we have incoming url, load initial url or home page to a new tab.
     // 2) model has tabs, load initial url or active tab.
     bool firstUseDone = DeclarativeWebUtils::instance()->firstUseDone();
-    if (m_model->count() == 0 && (firstUseDone || !m_initialUrl.isEmpty())) {
+    if ((m_model->waitingForNewTab() || m_model->count() == 0) && (firstUseDone || !m_initialUrl.isEmpty())) {
         QString url = m_initialUrl.isEmpty() ? DeclarativeWebUtils::instance()->homePage() : m_initialUrl;
         QString title = "";
         m_model->newTab(url, title);
@@ -763,7 +771,6 @@ void DeclarativeWebContainer::initialize()
         m_completed = true;
         emit completedChanged();
     }
-    m_initialized = true;
 }
 
 void DeclarativeWebContainer::onDownloadStarted()
@@ -796,9 +803,6 @@ void DeclarativeWebContainer::onNewTabRequested(QString url, QString title, int 
     Tab tab;
     tab.setTabId(m_model->nextTabId());
     tab.setUrl(url);
-    if (!canInitialize()) {
-        m_initialUrl = url;
-    }
 
     if (activatePage(tab, false, parentId)) {
         m_webPage->loadTab(url, false);
