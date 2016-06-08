@@ -125,9 +125,9 @@ QMozWindow *DeclarativeWebContainer::mozWindow() const
     return m_mozWindow.data();
 }
 
-void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
+void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage, bool triggerSignals)
 {
-    if (m_webPage != webPage) {
+    if (m_webPage != webPage || triggerSignals) {
         // Disconnect previous page.
         if (m_webPage) {
             m_webPage->disconnect(this);
@@ -819,7 +819,7 @@ void DeclarativeWebContainer::releasePage(int tabId)
         m_webPages->release(tabId);
         // Successfully destroyed. Emit relevant property changes.
         if (m_model->count() == 0) {
-            setWebPage(NULL);
+            setWebPage(NULL, true);
             postClearWindowSurfaceTask();
         }
     }

@@ -211,7 +211,7 @@ private slots:
     void drawUnderlay();
 
 private:
-    void setWebPage(DeclarativeWebPage *webPage);
+    void setWebPage(DeclarativeWebPage *webPage, bool triggerSignals = false);
     void setTabModel(DeclarativeTabModel *model);
     qreal contentHeight() const;
     bool canInitialize() const;
