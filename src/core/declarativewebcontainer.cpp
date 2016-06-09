@@ -712,8 +712,7 @@ void DeclarativeWebContainer::onActiveTabChanged(int activeTabId, bool loadActiv
 void DeclarativeWebContainer::initialize()
 {
     if (QMozContext::GetInstance()->initialized() && !m_mozWindow) {
-        m_mozWindow.reset(new QMozWindow);
-        m_mozWindow->setSize(QWindow::size());
+        m_mozWindow.reset(new QMozWindow(QWindow::size()));
         connect(m_mozWindow.data(), &QMozWindow::requestGLContext,
                 this, &DeclarativeWebContainer::createGLContext, Qt::DirectConnection);
         connect(m_mozWindow.data(), &QMozWindow::drawUnderlay,
