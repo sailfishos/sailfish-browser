@@ -125,15 +125,17 @@ QMozWindow *DeclarativeWebContainer::mozWindow() const
     return m_mozWindow.data();
 }
 
-void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
+void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage, bool triggerSignals)
 {
-    if (m_webPage != webPage) {
+    if (m_webPage != webPage || triggerSignals) {
         // Disconnect previous page.
         if (m_webPage) {
             m_webPage->disconnect(this);
         }
 
         m_webPage = webPage;
+        // Mark as not rendered when ever tab is changed.
+        setActiveTabRendered(false);
 
         if (m_webPage) {
             connect(m_webPage, SIGNAL(canGoBackChanged()), this, SIGNAL(canGoBackChanged()), Qt::UniqueConnection);
@@ -147,10 +149,11 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
             connect(m_webPage, SIGNAL(urlChanged()), m_model, SLOT(onUrlChanged()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(titleChanged()), m_model, SLOT(onTitleChanged()), Qt::UniqueConnection);
 
-            connect(m_webPage, SIGNAL(firstPaint(int, int)), this, SLOT(onFirstPaint(int, int)), Qt::UniqueConnection);
-            setActiveTabRendered(m_webPage->isPainted());
-        } else {
-            setActiveTabRendered(false);
+            // Wait for one frame to be rendered and schedule update if tab is ready to render.
+            connect(m_mozWindow.data(), SIGNAL(compositingFinished()), this, SLOT(updateActiveTabRendered()), Qt::UniqueConnection);
+            if (m_webPage->completed() && m_webPage->active()) {
+                m_webPage->update();
+            }
         }
 
         emit contentItemChanged();
@@ -435,7 +438,6 @@ bool DeclarativeWebContainer::activatePage(const Tab& tab, bool force, int paren
     m_webPages->initialize(this);
     if ((m_model->loaded() || force) && tab.tabId() > 0 && m_webPages->initialized() && m_webPageComponent) {
         WebPageActivationData activationData = m_webPages->page(tab, parentId);
-        setActiveTabRendered(false);
         setWebPage(activationData.webPage);
         // Reset always height so that orentation change is taken into account.
         m_webPage->forceChrome(false);
@@ -467,12 +469,18 @@ void DeclarativeWebContainer::updateMode()
     }
 }
 
+/**
+ * @brief DeclarativeWebContainer::setActiveTabRendered
+ * Sets the active tab render state. Should be only called when tab changes
+ * or is about to change. When a frame is rendered, we mark tab as rendered.
+ * @param rendered
+ */
 void DeclarativeWebContainer::setActiveTabRendered(bool rendered)
 {
-    if (m_activeTabRendered != rendered) {
-        m_activeTabRendered = rendered;
-        emit activeTabRenderedChanged();
-    }
+    // When tab is closed, make sure that signal gets emitted again
+    // if tab is already rendered.
+    m_activeTabRendered = rendered;
+    emit activeTabRenderedChanged();
 }
 
 bool DeclarativeWebContainer::postClearWindowSurfaceTask()
@@ -814,7 +822,7 @@ void DeclarativeWebContainer::releasePage(int tabId)
         m_webPages->release(tabId);
         // Successfully destroyed. Emit relevant property changes.
         if (m_model->count() == 0) {
-            setWebPage(NULL);
+            setWebPage(NULL, true);
             postClearWindowSurfaceTask();
         }
     }
@@ -854,17 +862,16 @@ void DeclarativeWebContainer::updateLoading()
     emit loadingChanged();
 }
 
-void DeclarativeWebContainer::onFirstPaint(int, int)
-{
-    updateActiveTabRendered();
-}
-
 void DeclarativeWebContainer::updateActiveTabRendered()
 {
+    if (m_webPage && !m_webPage->completed()) {
+        return;
+    }
+
     setActiveTabRendered(true);
     // One frame rendered so let's disconnect.
-    disconnect(m_mozWindow.data(), &QMozWindow::compositingFinished,
-               this, &DeclarativeWebContainer::updateActiveTabRendered);
+    disconnect(m_mozWindow.data(), SIGNAL(compositingFinished()),
+               this, SLOT(updateActiveTabRendered()));
 }
 
 void DeclarativeWebContainer::onLastViewDestroyed()

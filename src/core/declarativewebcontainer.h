@@ -201,7 +201,6 @@ private slots:
     void closeWindow();
     void updateLoadProgress();
     void updateLoading();
-    void onFirstPaint(int dx, int dy);
     void updateActiveTabRendered();
     void onLastViewDestroyed();
 
@@ -212,7 +211,7 @@ private slots:
     void drawUnderlay();
 
 private:
-    void setWebPage(DeclarativeWebPage *webPage);
+    void setWebPage(DeclarativeWebPage *webPage, bool triggerSignals = false);
     void setTabModel(DeclarativeTabModel *model);
     qreal contentHeight() const;
     bool canInitialize() const;
