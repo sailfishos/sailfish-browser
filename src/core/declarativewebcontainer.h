@@ -175,6 +175,8 @@ signals:
     void chromeExposed();
     void readyToPaintChanged();
 
+    void webContentOrientationChanged(Qt::ScreenOrientation orientation);
+
 protected:
     bool eventFilter(QObject *obj, QEvent *event);
     virtual void exposeEvent(QExposeEvent *event);

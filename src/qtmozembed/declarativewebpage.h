@@ -70,6 +70,7 @@ public:
     Q_INVOKABLE void forceChrome(bool forcedChrome);
 
 signals:
+    void contentOrientationChanged(Qt::ScreenOrientation orientation);
     void containerChanged();
     void tabIdChanged();
     void userHasDraggedWhileLoadingChanged();

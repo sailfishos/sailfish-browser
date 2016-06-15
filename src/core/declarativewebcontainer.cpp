@@ -145,6 +145,9 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage, bool trigg
             connect(m_webPage, SIGNAL(windowCloseRequested()), this, SLOT(closeWindow()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(loadingChanged()), this, SLOT(updateLoading()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(loadProgressChanged()), this, SLOT(updateLoadProgress()), Qt::UniqueConnection);
+            connect(m_webPage, SIGNAL(contentOrientationChanged(Qt::ScreenOrientation)),
+                    this, SIGNAL(webContentOrientationChanged(Qt::ScreenOrientation)), Qt::UniqueConnection);
+
             // NB: these signals are not disconnected upon setting current m_webPage.
             connect(m_webPage, SIGNAL(urlChanged()), m_model, SLOT(onUrlChanged()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(titleChanged()), m_model, SLOT(onTitleChanged()), Qt::UniqueConnection);
@@ -335,8 +338,6 @@ void DeclarativeWebContainer::setChromeWindow(QObject *chromeWindow)
             m_chromeWindow->setTransientParent(this);
             m_chromeWindow->showFullScreen();
             updateContentOrientation(m_chromeWindow->contentOrientation());
-            connect(m_chromeWindow.data(), &QWindow::contentOrientationChanged,
-                    this, &DeclarativeWebContainer::updateContentOrientation);
         }
         emit chromeWindowChanged();
     }

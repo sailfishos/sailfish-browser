@@ -21,6 +21,7 @@
 static const QString gFullScreenMessage("embed:fullscreenchanged");
 static const QString gDomContentLoadedMessage("embed:domcontentloaded");
 
+static const QString gContentOrientationChanged("embed:contentOrientationChanged");
 static const QString gLinkAddedMessage("chrome:linkadded");
 static const QString gAlertMessage("embed:alert");
 static const QString gConfirmMessage("embed:confirm");
@@ -86,6 +87,7 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
     addMessageListener(gSelectionCopiedMessage);
     addMessageListener(gSelectAsyncMessage);
     addMessageListener(gFilePickerMessage);
+    addMessageListener(gContentOrientationChanged);
 
     loadFrameScript("chrome://embedlite/content/SelectAsyncHelper.js");
     loadFrameScript("chrome://embedlite/content/embedhelper.js");
@@ -412,6 +414,18 @@ void DeclarativeWebPage::onRecvAsyncMessage(const QString& message, const QVaria
     } else if (message == gDomContentLoadedMessage && data.toMap().value("rootFrame").toBool()) {
         m_domContentLoaded = true;
         emit domContentLoadedChanged();
+    }
+    else if (message == gContentOrientationChanged) {
+        QString orientation = data.toMap().value("orientation").toString();
+        Qt::ScreenOrientation mappedOrientation = Qt::PortraitOrientation;
+        if (orientation == QStringLiteral("landscape-primary")) {
+            mappedOrientation = Qt::LandscapeOrientation;
+        } else if (orientation == QStringLiteral("landscape-secondary")) {
+            mappedOrientation = Qt::InvertedLandscapeOrientation;
+        } else if (orientation == QStringLiteral("portrait-secondary")) {
+            mappedOrientation = Qt::InvertedPortraitOrientation;
+        }
+        contentOrientationChanged(mappedOrientation);
     }
 }
 
