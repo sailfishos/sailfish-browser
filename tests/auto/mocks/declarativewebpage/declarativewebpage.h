@@ -67,6 +67,7 @@ public:
     MOCK_CONST_METHOD0(resolution, float());
     MOCK_METHOD2(sendAsyncMessage, void(const QString&, const QVariant&));
     MOCK_METHOD1(setParentID, void(unsigned));
+    MOCK_CONST_METHOD0(active, bool());
     MOCK_METHOD1(setActive, void(bool));
 
     MOCK_METHOD1(setContainer, void(DeclarativeWebContainer *));
