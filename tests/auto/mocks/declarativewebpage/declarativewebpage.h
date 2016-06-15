@@ -76,6 +76,7 @@ public:
     MOCK_METHOD1(setInitialTab, void(const Tab&));
 
     MOCK_METHOD1(forceChrome, void(bool));
+    MOCK_CONST_METHOD0(domContentLoaded, bool());
 
     MOCK_CONST_METHOD0(tabId, int());
 
