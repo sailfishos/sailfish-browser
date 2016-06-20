@@ -164,7 +164,11 @@ Page {
             }
         }
 
+        onWebContentOrientationChanged: orientationFader.waitForWebContentOrientationChanged = false
+
         function applyContentOrientation(orientation) {
+            orientationFader.waitForWebContentOrientationChanged = (contentItem && contentItem.active)
+
             switch (orientation) {
             case Orientation.None:
             case Orientation.Portrait:

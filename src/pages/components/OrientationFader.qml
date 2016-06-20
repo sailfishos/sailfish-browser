@@ -19,11 +19,12 @@ Rectangle {
     property alias page: propertyAction.target
     property alias fadeTarget: fadeOut.target
     readonly property alias running: transition.running
+    property bool waitForWebContentOrientationChanged
 
     signal applyContentOrientation
 
     anchors.fill: parent
-    opacity: running ? 1.0 : 0.0
+    opacity: running || waitForWebContentOrientationChanged ? 1.0 : 0.0
 
     Behavior on opacity {
         FadeAnimation {
@@ -65,17 +66,10 @@ Rectangle {
                 }
             }
 
-            SequentialAnimation {
-                PauseAnimation { duration: 350 }
-                FadeAnimation {
-                    target: fadeTarget
-                    to: 1
-                    duration: 200
-                }
-
-                // End-2-end implementation for OnUpdateDisplayPort should
-                // give better solution and reduce visible relayoutting.
-                PauseAnimation { duration: 350 }
+            FadeAnimation {
+                target: fadeTarget
+                to: 1
+                duration: 150
             }
 
             PropertyAction {
