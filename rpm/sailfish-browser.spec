@@ -1,11 +1,11 @@
-%global min_xulrunner_version 38.8.0.4
+%global min_xulrunner_version 38.8.0.5
 %global min_qtmozembed_version 1.13.9
-%global min_embedlite_components_version 1.9.4
+%global min_embedlite_components_version 1.9.13
 
 Name:       sailfish-browser
 
 Summary:    Sailfish Browser
-Version:    1.14.17
+Version:    1.14.20
 Release:    1
 Group:      Applications/Internet
 License:    MPLv2
