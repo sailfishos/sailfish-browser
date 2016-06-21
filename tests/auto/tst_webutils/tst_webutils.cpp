@@ -129,7 +129,7 @@ void tst_webutils::uniquePictureName()
 
     // actual test
     DeclarativeWebUtils *webUtils = DeclarativeWebUtils::instance();
-    QCOMPARE(webUtils->createUniqueFileUrl(fileName, targetPath), "file://" + targetPath + "/" + expectedName);
+    QCOMPARE(webUtils->createUniqueFileUrl(fileName, targetPath), targetPath + "/" + expectedName);
 
     // tear down
     // set up test case

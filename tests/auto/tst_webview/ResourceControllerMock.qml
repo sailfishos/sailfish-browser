@@ -12,7 +12,7 @@
 import QtQuick 2.1
 
 QtObject {
-    property QtObject webView
+    property QtObject webPage
     property bool videoActive
     property bool audioActive
     property bool background

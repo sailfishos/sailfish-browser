@@ -667,6 +667,11 @@ void tst_webview::restart()
     tabModel->deleteLater();
     QTest::waitForEvents();
 
+    // Fake closing the window.
+    QEvent closeEvent(QEvent::Close);
+    qGuiApp->sendEvent(webContainer, &closeEvent);
+    QTest::waitForEvents();
+
     delete historyModel;
     historyModel = 0;
     delete webContainer;
