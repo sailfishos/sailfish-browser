@@ -199,11 +199,9 @@ void SettingManager::handleObserve(const QString &message, const QVariant &data)
                 mozContext->sendObserve(QLatin1String("embedui:search"), QVariant(removeMsg));
             }
 
-            // After first start we can update the default search engine immediately
-            // without
-            if (m_searchEnginesInitialized && defaultSearchEngine.isEmpty()) {
-                setSearchEngine();
-            }
+            // Try to set search engine. After first start we can update the default search
+            // engine immediately.
+            setSearchEngine();
         } else if (msg == QLatin1String("search-engine-added")) {
             // We're only interrested about the very first start. Then the m_addedSearchEngines
             // contains engines.
