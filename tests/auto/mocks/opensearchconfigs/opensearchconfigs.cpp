@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2014 Jolla Ltd.
+** Copyright (C) 2016
 ** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **
 ****************************************************************************/
@@ -9,18 +9,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import QtQuick 2.1
+#include "opensearchconfigs.h"
 
-QtObject {
-    property QtObject webPage
-    property bool videoActive
-    property bool audioActive
-    property bool background
-    property bool displayOff
+const StringMap OpenSearchConfigs::getAvailableOpenSearchConfigs()
+{
+    return StringMap();
+}
 
-    function calculateStatus() {}
-
-    function resumeView() {}
-
-    function suspendView() {}
+const QStringList OpenSearchConfigs::getSearchEngineList()
+{
+    return QStringList();
 }

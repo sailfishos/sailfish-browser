@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2014 Jolla Ltd.
+** Copyright (C) 2016
 ** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **
 ****************************************************************************/
@@ -9,18 +9,17 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import QtQuick 2.1
+#include <QStringList>
+#include <QMap>
 
-QtObject {
-    property QtObject webPage
-    property bool videoActive
-    property bool audioActive
-    property bool background
-    property bool displayOff
+typedef QMap<QString, QString> StringMap;
 
-    function calculateStatus() {}
+class OpenSearchConfigs : public QObject {
 
-    function resumeView() {}
+public:
+    static const StringMap getAvailableOpenSearchConfigs();
+    static const QStringList getSearchEngineList();
 
-    function suspendView() {}
-}
+private:
+    OpenSearchConfigs(QObject* parent=0);
+};

@@ -9,6 +9,7 @@ QT += quick concurrent sql gui-private
 include(../test_common.pri)
 include(../mocks/downloadmanager/downloadmanager_mock.pri)
 include(../mocks/declarativewebutils/declarativewebutils_mock.pri)
+include(../mocks/opensearchconfigs/opensearchconfigs_mock.pri)
 include(../common/testobject.pri)
 include(../../../src/core/core.pri)
 include(../../../src/qtmozembed/qtmozembed.pri)

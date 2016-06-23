@@ -30,7 +30,6 @@
 #include <math.h>
 #include "declarativewebutils.h"
 #include "qmozcontext.h"
-#include "opensearchconfigs.h"
 #include "browserpaths.h"
 
 static const QString gSystemComponentsTimeStamp("/var/lib/_MOZEMBED_CACHE_CLEAN_");
@@ -382,45 +381,12 @@ QString DeclarativeWebUtils::displayableUrl(QString fullUrl) const
 void DeclarativeWebUtils::handleObserve(const QString message, const QVariant data)
 {
     const QVariantMap dataMap = data.toMap();
-
     if (message == "clipboard:setdata") {
         QClipboard *clipboard = QGuiApplication::clipboard();
 
         // check if we copied password
         if (!dataMap.value("private").toBool()) {
             clipboard->setText(dataMap.value("data").toString());
-        }
-    } else if (message == "embed:search") {
-        QString msg = dataMap.value("msg").toString();
-
-        if (msg == "init") {
-            const StringMap configs(OpenSearchConfigs::getAvailableOpenSearchConfigs());
-            QStringList registeredSearches(dataMap.value("engines").toStringList());
-            QMozContext *mozContext = QMozContext::GetInstance();
-
-            // Add newly installed configs
-            foreach (QString searchName, configs.keys()) {
-
-                if (registeredSearches.contains(searchName)) {
-                    registeredSearches.removeAll(searchName);
-                } else {
-                    QVariantMap loadsearch;
-                    // load opensearch descriptions
-                    loadsearch.insert(QString("msg"), QVariant(QString("loadxml")));
-                    loadsearch.insert(QString("uri"), QVariant(QString("file://") + configs[searchName]));
-                    loadsearch.insert(QString("confirm"), QVariant(false));
-                    mozContext->sendObserve("embedui:search", QVariant(loadsearch));
-
-                }
-            }
-
-            // Remove uninstalled OpenSearch configs
-            foreach(QString searchName, registeredSearches) {
-                QVariantMap removeMsg;
-                removeMsg.insert(QString("msg"), QVariant(QString("remove")));
-                removeMsg.insert(QString("name"), QVariant(searchName));
-                mozContext->sendObserve("embedui:search", QVariant(removeMsg));
-            }
         }
     }
 }

@@ -103,6 +103,7 @@ signals:
     void loadProgressChanged();
     void requestGLContext();
 
+    void contentOrientationChanged(Qt::ScreenOrientation orientation);
     void containerChanged();
     void tabIdChanged();
     void urlChanged();
