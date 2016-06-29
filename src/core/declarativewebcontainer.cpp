@@ -707,6 +707,11 @@ void DeclarativeWebContainer::updateContentOrientation(Qt::ScreenOrientation ori
     reportContentOrientationChange(orientation);
 }
 
+void DeclarativeWebContainer::clearSurface()
+{
+    postClearWindowSurfaceTask();
+}
+
 qreal DeclarativeWebContainer::contentHeight() const
 {
     if (m_webPage) {

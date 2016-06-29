@@ -43,6 +43,7 @@ DeclarativeWebPage* WebPageFactory::createWebPage(DeclarativeWebContainer *webCo
             webPage->setPrivateMode(webContainer->privateMode());
             webPage->setInitialTab(initialTab);
             webPage->setContainer(webContainer);
+            emit aboutToInitialize(webPage);
             webPage->initialize();
             m_qmlComponent->completeCreate();
 #if DEBUG_LOGS
