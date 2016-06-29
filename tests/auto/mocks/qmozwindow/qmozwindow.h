@@ -34,6 +34,7 @@ public:
     MOCK_METHOD0(size, QSize(void));
     MOCK_METHOD1(setContentOrientation, void(Qt::ScreenOrientation));
     MOCK_METHOD0(contentOrientation, Qt::ScreenOrientation());
+    MOCK_METHOD0(pendingOrientation, Qt::ScreenOrientation());
     MOCK_METHOD2(getPlatformImage, void(int*, int*));
     MOCK_METHOD0(suspendRendering, void(void));
     MOCK_METHOD0(resumeRendering, void(void));
@@ -42,6 +43,8 @@ public:
     MOCK_METHOD1(setReadyToPaint, bool(bool));
 
 signals:
+    void pendingOrientationChanged(Qt::ScreenOrientation orientation);
+    void orientationChangeFiltered(Qt::ScreenOrientation orientation);
     void requestGLContext();
     void initialized();
     void drawOverlay(QRect);

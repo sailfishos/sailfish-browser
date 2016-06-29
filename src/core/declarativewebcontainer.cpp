@@ -146,7 +146,7 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage, bool trigg
             connect(m_webPage, SIGNAL(loadingChanged()), this, SLOT(updateLoading()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(loadProgressChanged()), this, SLOT(updateLoadProgress()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(contentOrientationChanged(Qt::ScreenOrientation)),
-                    this, SIGNAL(webContentOrientationChanged(Qt::ScreenOrientation)), Qt::UniqueConnection);
+                    this, SLOT(handleContentOrientationChanged(Qt::ScreenOrientation)), Qt::UniqueConnection);
 
             // NB: these signals are not disconnected upon setting current m_webPage.
             connect(m_webPage, SIGNAL(urlChanged()), m_model, SLOT(onUrlChanged()), Qt::UniqueConnection);
@@ -355,6 +355,11 @@ void DeclarativeWebContainer::setReadyToPaint(bool ready)
     if (m_mozWindow && m_mozWindow->setReadyToPaint(ready)) {
         emit readyToPaintChanged();
     }
+}
+
+Qt::ScreenOrientation DeclarativeWebContainer::pendingWebContentOrientation() const
+{
+    return m_mozWindow ? m_mozWindow->pendingOrientation() : Qt::PortraitOrientation;
 }
 
 int DeclarativeWebContainer::tabId() const
@@ -693,7 +698,11 @@ void DeclarativeWebContainer::componentComplete()
 void DeclarativeWebContainer::updateContentOrientation(Qt::ScreenOrientation orientation)
 {
     if (m_mozWindow) {
+        bool orientationShouldChange = (orientation != m_mozWindow->pendingOrientation());
         m_mozWindow->setContentOrientation(orientation);
+        if (orientationShouldChange) {
+            emit pendingWebContentOrientationChanged();
+        }
     }
     reportContentOrientationChange(orientation);
 }
@@ -728,6 +737,8 @@ void DeclarativeWebContainer::initialize()
                 this, &DeclarativeWebContainer::createGLContext, Qt::DirectConnection);
         connect(m_mozWindow.data(), &QMozWindow::drawUnderlay,
                 this, &DeclarativeWebContainer::drawUnderlay, Qt::DirectConnection);
+        connect(m_mozWindow.data(), &QMozWindow::orientationChangeFiltered,
+                this, &DeclarativeWebContainer::handleContentOrientationChanged);
         if (m_chromeWindow) {
             updateContentOrientation(m_chromeWindow->contentOrientation());
         }
@@ -960,5 +971,12 @@ void DeclarativeWebContainer::drawUnderlay()
         QColor bgColor = m_webPage->bgcolor();
         funcs->glClearColor(bgColor.redF(), bgColor.greenF(), bgColor.blueF(), 0.0);
         funcs->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    }
+}
+
+void DeclarativeWebContainer::handleContentOrientationChanged(Qt::ScreenOrientation orientation)
+{
+    if (orientation == pendingWebContentOrientation()) {
+        emit webContentOrientationChanged(orientation);
     }
 }

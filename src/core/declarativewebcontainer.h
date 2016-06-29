@@ -73,6 +73,8 @@ class DeclarativeWebContainer : public QWindow, public QQmlParserStatus, protect
     Q_PROPERTY(QObject *chromeWindow READ chromeWindow WRITE setChromeWindow NOTIFY chromeWindowChanged FINAL)
     Q_PROPERTY(bool readyToPaint READ readyToPaint WRITE setReadyToPaint NOTIFY readyToPaintChanged FINAL)
 
+    Q_PROPERTY(Qt::ScreenOrientation pendingWebContentOrientation READ pendingWebContentOrientation NOTIFY pendingWebContentOrientationChanged FINAL)
+
 public:
     DeclarativeWebContainer(QWindow *parent = 0);
     ~DeclarativeWebContainer();
@@ -116,6 +118,8 @@ public:
 
     bool readyToPaint() const;
     void setReadyToPaint(bool ready);
+
+    Qt::ScreenOrientation pendingWebContentOrientation() const;
 
     int tabId() const;
     QString title() const;
@@ -175,6 +179,7 @@ signals:
     void chromeExposed();
     void readyToPaintChanged();
 
+    void pendingWebContentOrientationChanged();
     void webContentOrientationChanged(Qt::ScreenOrientation orientation);
 
 protected:
@@ -211,6 +216,8 @@ private slots:
     // QMozWindow related slots:
     void createGLContext();
     void drawUnderlay();
+
+    void handleContentOrientationChanged(Qt::ScreenOrientation orientation);
 
 private:
     void setWebPage(DeclarativeWebPage *webPage, bool triggerSignals = false);
