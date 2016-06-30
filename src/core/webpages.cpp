@@ -50,6 +50,7 @@ WebPages::WebPages(WebPageFactory *pageFactory, QObject *parent)
     , m_backgroundTimestamp(0)
     , m_memoryLevel(MemNormal)
 {
+    Q_ASSERT_X(m_pageFactory, Q_FUNC_INFO, "WebPages initialized with invalid WebPageFactory.");
     if (gLowMemoryEnabled) {
         QDBusConnection systemBus = QDBusConnection::systemBus();
         systemBus.connect("com.nokia.mce", "/com/nokia/mce/signal",
@@ -76,9 +77,11 @@ void WebPages::initialize(DeclarativeWebContainer *webContainer)
 {
     if (!m_webContainer) {
         m_webContainer = webContainer;
-    }
+        Q_ASSERT_X(m_webContainer, Q_FUNC_INFO, "DeclarativeWebContainer is null");
 
-    connect(webContainer, SIGNAL(foregroundChanged()), this, SLOT(updateBackgroundTimestamp()));
+        connect(webContainer, SIGNAL(foregroundChanged()), this, SLOT(updateBackgroundTimestamp()));
+        connect(m_pageFactory, SIGNAL(aboutToInitialize(DeclarativeWebPage*)), m_webContainer, SLOT(clearSurface()));
+    }
 }
 
 void WebPages::updateBackgroundTimestamp()

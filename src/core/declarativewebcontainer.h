@@ -136,8 +136,6 @@ public:
     Q_INVOKABLE void goBack();
 
     Q_INVOKABLE void updatePageFocus(bool focus);
-    Q_INVOKABLE void clearSurface() {  postClearWindowSurfaceTask(); }
-
     Q_INVOKABLE void dumpPages() const;
 
     QObject *focusObject() const;
@@ -198,6 +196,7 @@ protected:
 
 public slots:
     void updateContentOrientation(Qt::ScreenOrientation orientation);
+    void clearSurface();
 
 private slots:
     void initialize();

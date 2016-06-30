@@ -75,7 +75,7 @@ WebContainer {
     }
 
     foreground: Qt.application.active
-    readyToPaint: resourceController.videoActive ? webView.visible && !resourceController.displayOff : webView.visible
+    readyToPaint: resourceController.videoActive ? webView.visible && !resourceController.displayOff : webView.visible && webView.contentItem && webView.contentItem.domContentLoaded
     allowHiding: !resourceController.videoActive && !resourceController.audioActive
     fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) ||
                     (contentItem && contentItem.fullscreen)

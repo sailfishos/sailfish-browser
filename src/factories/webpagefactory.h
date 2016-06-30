@@ -29,6 +29,10 @@ public:
     DeclarativeWebPage* createWebPage(DeclarativeWebContainer *webContainer,
                                       const Tab &initialTab,
                                       int parentId);
+
+signals:
+    void aboutToInitialize(DeclarativeWebPage *webPage);
+
 public slots:
     void updateQmlComponent(QQmlComponent *newComponent);
 

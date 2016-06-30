@@ -19,7 +19,7 @@
 #include <QtConcurrent>
 
 static const QString gFullScreenMessage("embed:fullscreenchanged");
-static const QString gDomContentLoadedMessage("embed:domcontentloaded");
+static const QString gDomContentLoadedMessage("chrome:contentloaded");
 
 static const QString gContentOrientationChanged("embed:contentOrientationChanged");
 static const QString gLinkAddedMessage("chrome:linkadded");
@@ -411,9 +411,11 @@ void DeclarativeWebPage::onRecvAsyncMessage(const QString& message, const QVaria
 {
     if (message == gFullScreenMessage) {
         setFullscreen(data.toMap().value(QString("fullscreen")).toBool());
-    } else if (message == gDomContentLoadedMessage && data.toMap().value("rootFrame").toBool()) {
-        m_domContentLoaded = true;
-        emit domContentLoadedChanged();
+    } else if (message == gDomContentLoadedMessage) {
+        if (!m_domContentLoaded) {
+            m_domContentLoaded = true;
+            emit domContentLoadedChanged();
+        }
     }
     else if (message == gContentOrientationChanged) {
         QString orientation = data.toMap().value("orientation").toString();

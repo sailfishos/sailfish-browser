@@ -707,6 +707,11 @@ void DeclarativeWebContainer::updateContentOrientation(Qt::ScreenOrientation ori
     reportContentOrientationChange(orientation);
 }
 
+void DeclarativeWebContainer::clearSurface()
+{
+    postClearWindowSurfaceTask();
+}
+
 qreal DeclarativeWebContainer::contentHeight() const
 {
     if (m_webPage) {
@@ -739,6 +744,7 @@ void DeclarativeWebContainer::initialize()
                 this, &DeclarativeWebContainer::drawUnderlay, Qt::DirectConnection);
         connect(m_mozWindow.data(), &QMozWindow::orientationChangeFiltered,
                 this, &DeclarativeWebContainer::handleContentOrientationChanged);
+        m_mozWindow->setReadyToPaint(false);
         if (m_chromeWindow) {
             updateContentOrientation(m_chromeWindow->contentOrientation());
         }
@@ -961,14 +967,10 @@ void DeclarativeWebContainer::drawUnderlay()
 {
     Q_ASSERT(m_context);
 
-    if (!m_webPage) {
-       return;
-    }
-
+    QColor bgColor = m_webPage ? m_webPage->bgcolor() : QColor(Qt::white);
     m_context->makeCurrent(this);
     QOpenGLFunctions_ES2* funcs = m_context->versionFunctions<QOpenGLFunctions_ES2>();
     if (funcs) {
-        QColor bgColor = m_webPage->bgcolor();
         funcs->glClearColor(bgColor.redF(), bgColor.greenF(), bgColor.blueF(), 0.0);
         funcs->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
