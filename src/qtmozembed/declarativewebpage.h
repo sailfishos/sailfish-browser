@@ -104,6 +104,7 @@ private slots:
 private:
     QString saveToFile(QImage image);
     void restoreHistory();
+    void setContentLoaded();
 
     QPointer<DeclarativeWebContainer> m_container;
     // Tab data fetched upon web page initialization. It never changes afterwards.
