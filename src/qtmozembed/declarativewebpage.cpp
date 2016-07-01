@@ -100,6 +100,9 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
     connect(this, &QOpenGLWebPage::loadedChanged, [this]() {
         if (loaded()) {
             updateViewMargins();
+            // E.g. when loading images directly we don't necessarily get domContentLoaded message from engine.
+            // So mark content loaded when webpage is loaded.
+            setContentLoaded();
         }
     });
     connect(this, SIGNAL(fullscreenHeightChanged()), this, SLOT(updateViewMargins()));
@@ -200,6 +203,14 @@ void DeclarativeWebPage::restoreHistory() {
     data.insert(QString("links"), QVariant(urls));
     data.insert(QString("index"), QVariant(index));
     sendAsyncMessage("embedui:addhistory", QVariant(data));
+}
+
+void DeclarativeWebPage::setContentLoaded()
+{
+    if (!m_domContentLoaded) {
+        m_domContentLoaded = true;
+        emit domContentLoadedChanged();
+    }
 }
 
 bool DeclarativeWebPage::domContentLoaded() const
@@ -412,10 +423,7 @@ void DeclarativeWebPage::onRecvAsyncMessage(const QString& message, const QVaria
     if (message == gFullScreenMessage) {
         setFullscreen(data.toMap().value(QString("fullscreen")).toBool());
     } else if (message == gDomContentLoadedMessage) {
-        if (!m_domContentLoaded) {
-            m_domContentLoaded = true;
-            emit domContentLoadedChanged();
-        }
+        setContentLoaded();
     }
     else if (message == gContentOrientationChanged) {
         QString orientation = data.toMap().value("orientation").toString();
