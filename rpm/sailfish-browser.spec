@@ -5,7 +5,7 @@
 Name:       sailfish-browser
 
 Summary:    Sailfish Browser
-Version:    1.14.23
+Version:    1.14.24
 Release:    1
 Group:      Applications/Internet
 License:    MPLv2
