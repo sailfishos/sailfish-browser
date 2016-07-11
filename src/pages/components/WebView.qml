@@ -25,7 +25,7 @@ WebContainer {
     property bool findInPageHasResult
 
     property var resourceController: ResourceController {
-        webView: contentItem
+        webPage: contentItem
         background: !webView.visible
     }
 
@@ -75,6 +75,7 @@ WebContainer {
     }
 
     foreground: Qt.application.active
+    readyToPaint: resourceController.videoActive ? webView.visible && !resourceController.displayOff : webView.visible && webView.contentItem && webView.contentItem.domContentLoaded
     allowHiding: !resourceController.videoActive && !resourceController.audioActive
     fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) ||
                     (contentItem && contentItem.fullscreen)
@@ -109,11 +110,9 @@ WebContainer {
                 }
             }
 
-            width: container.rotationHandler && container.rotationHandler.width || 0
             fullscreenHeight: container.fullscreenHeight
             toolbarHeight: container.toolbarHeight
-            throttlePainting: !foreground && !resourceController.videoActive && webView.visible || resourceController.displayOff
-            readyToPaint: resourceController.videoActive ? webView.visible && !resourceController.displayOff : webView.visible
+            throttlePainting: !foreground && !resourceController.videoActive && webView.visible || !webView.visible
             enabled: webView.enabled
 
             // There needs to be enough content for enabling chrome gesture
@@ -170,16 +169,13 @@ WebContainer {
 
             onLoadedChanged: {
                 if (loaded) {
-                    if (!userHasDraggedWhileLoading) {
-                        resetHeight(false)
-                        if (resurrectedContentRect) {
-                            sendAsyncMessage("embedui:zoomToRect",
-                                             {
-                                                 "x": resurrectedContentRect.x, "y": resurrectedContentRect.y,
-                                                 "width": resurrectedContentRect.width, "height": resurrectedContentRect.height
-                                             })
-                            resurrectedContentRect = null
-                        }
+                    if (!userHasDraggedWhileLoading && resurrectedContentRect) {
+                        sendAsyncMessage("embedui:zoomToRect",
+                                         {
+                                             "x": resurrectedContentRect.x, "y": resurrectedContentRect.y,
+                                             "width": resurrectedContentRect.width, "height": resurrectedContentRect.height
+                                         })
+                        resurrectedContentRect = null
                     }
                     grabItem()
                 }
@@ -198,7 +194,6 @@ WebContainer {
                     favicon = ""
                     iconType = ""
                     iconSize = 0
-                    resetHeight(false)
                 }
             }
 
@@ -365,7 +360,6 @@ WebContainer {
         PopupHandler.pageStack = pageStack
         PopupHandler.webView = webView
         PopupHandler.browserPage = browserPage
-        PopupHandler.resourceController = resourceController
         PopupHandler.WebUtils = WebUtils
         PopupHandler.tabModel = tabModel
         PopupHandler.pickerCreator = _pickerCreator

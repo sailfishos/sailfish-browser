@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2014 Jolla Ltd.
+** Copyright (C) 2016
 ** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **
 ****************************************************************************/
@@ -9,24 +9,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef DOWNLOADMANAGER_H
-#define DOWNLOADMANAGER_H
+#include "opensearchconfigs.h"
 
-#include <QObject>
-
-class DownloadManager : public QObject
+const StringMap OpenSearchConfigs::getAvailableOpenSearchConfigs()
 {
-    Q_OBJECT
+    return StringMap();
+}
 
-public:
-    static DownloadManager *instance();
-
-signals:
-    void initializedChanged();
-    void downloadStarted();
-
-private:
-    explicit DownloadManager();
-};
-
-#endif
+const QStringList OpenSearchConfigs::getSearchEngineList()
+{
+    return QStringList();
+}

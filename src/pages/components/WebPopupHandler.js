@@ -19,7 +19,6 @@ var popups
 var pageStack
 var auxTimer
 var contextMenuComponent
-var resourceController
 var tabModel
 // TODO: WebUtils context property. Should be singleton.
 var WebUtils

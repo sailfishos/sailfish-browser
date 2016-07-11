@@ -19,6 +19,7 @@
 #include <QWindow>
 #include <QTouchEvent>
 #include <QVariant>
+#include <QColor>
 
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
@@ -52,6 +53,7 @@ public:
     MOCK_METHOD0(update, void());
     MOCK_METHOD0(initialize, void());
     MOCK_METHOD0(stop, void());
+    MOCK_METHOD0(bgcolor, QColor());
     MOCK_METHOD1(touchEvent, void(QTouchEvent *));
     MOCK_CONST_METHOD1(inputMethodQuery, QVariant(Qt::InputMethodQuery));
     MOCK_METHOD1(inputMethodEvent, void(QInputMethodEvent *));
@@ -65,6 +67,7 @@ public:
     MOCK_CONST_METHOD0(resolution, float());
     MOCK_METHOD2(sendAsyncMessage, void(const QString&, const QVariant&));
     MOCK_METHOD1(setParentID, void(unsigned));
+    MOCK_CONST_METHOD0(active, bool());
     MOCK_METHOD1(setActive, void(bool));
 
     MOCK_METHOD1(setContainer, void(DeclarativeWebContainer *));
@@ -72,8 +75,8 @@ public:
     MOCK_METHOD1(setResurrectedContentRect, void(QVariant));
     MOCK_METHOD1(setInitialTab, void(const Tab&));
 
-    MOCK_METHOD1(resetHeight, void(bool));
     MOCK_METHOD1(forceChrome, void(bool));
+    MOCK_CONST_METHOD0(domContentLoaded, bool());
 
     MOCK_CONST_METHOD0(tabId, int());
 
@@ -98,9 +101,9 @@ signals:
     void windowCloseRequested();
     void loadingChanged();
     void loadProgressChanged();
-    void afterRendering(const QRect&);
     void requestGLContext();
 
+    void contentOrientationChanged(Qt::ScreenOrientation orientation);
     void containerChanged();
     void tabIdChanged();
     void urlChanged();

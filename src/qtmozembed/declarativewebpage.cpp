@@ -14,11 +14,14 @@
 #include "dbmanager.h"
 #include "browserpaths.h"
 
+#include <qmozwindow.h>
+#include <QGuiApplication>
 #include <QtConcurrent>
 
 static const QString gFullScreenMessage("embed:fullscreenchanged");
-static const QString gDomContentLoadedMessage("embed:domcontentloaded");
+static const QString gDomContentLoadedMessage("chrome:contentloaded");
 
+static const QString gContentOrientationChanged("embed:contentOrientationChanged");
 static const QString gLinkAddedMessage("chrome:linkadded");
 static const QString gAlertMessage("embed:alert");
 static const QString gConfirmMessage("embed:confirm");
@@ -64,6 +67,9 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
     , m_tabHistoryReady(false)
     , m_urlReady(false)
     , m_restoredCurrentLinkId(-1)
+    , m_fullScreenHeight(0.f)
+    , m_toolbarHeight(0.f)
+    , m_virtualKeyboardMargin(0.f)
 {
     addMessageListener(gFullScreenMessage);
     addMessageListener(gDomContentLoadedMessage);
@@ -81,6 +87,7 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
     addMessageListener(gSelectionCopiedMessage);
     addMessageListener(gSelectAsyncMessage);
     addMessageListener(gFilePickerMessage);
+    addMessageListener(gContentOrientationChanged);
 
     loadFrameScript("chrome://embedlite/content/SelectAsyncHelper.js");
     loadFrameScript("chrome://embedlite/content/embedhelper.js");
@@ -88,9 +95,17 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
     connect(this, SIGNAL(recvAsyncMessage(const QString, const QVariant)),
             this, SLOT(onRecvAsyncMessage(const QString&, const QVariant&)));
     connect(&m_grabWritter, SIGNAL(finished()), this, SLOT(grabWritten()));
-    connect(this, SIGNAL(contentHeightChanged()), this, SLOT(resetHeight()));
-    connect(this, SIGNAL(scrollableOffsetChanged()), this, SLOT(resetHeight()));
     connect(this, SIGNAL(urlChanged()), this, SLOT(onUrlChanged()));
+    connect(this, &QOpenGLWebPage::contentHeightChanged, this, &DeclarativeWebPage::updateViewMargins);
+    connect(this, &QOpenGLWebPage::loadedChanged, [this]() {
+        if (loaded()) {
+            updateViewMargins();
+            // E.g. when loading images directly we don't necessarily get domContentLoaded message from engine.
+            // So mark content loaded when webpage is loaded.
+            setContentLoaded();
+        }
+    });
+    connect(this, SIGNAL(fullscreenHeightChanged()), this, SLOT(updateViewMargins()));
 }
 
 DeclarativeWebPage::~DeclarativeWebPage()
@@ -110,6 +125,11 @@ void DeclarativeWebPage::setContainer(DeclarativeWebContainer *container)
 {
     if (m_container != container) {
         m_container = container;
+        if (m_container) {
+            connect(m_container, SIGNAL(portraitChanged()), this, SLOT(sendVkbOpenCompositionMetrics()));
+        }
+        Q_ASSERT(container->mozWindow());
+        setMozWindow(container->mozWindow());
         emit containerChanged();
     }
 }
@@ -185,6 +205,14 @@ void DeclarativeWebPage::restoreHistory() {
     sendAsyncMessage("embedui:addhistory", QVariant(data));
 }
 
+void DeclarativeWebPage::setContentLoaded()
+{
+    if (!m_domContentLoaded) {
+        m_domContentLoaded = true;
+        emit domContentLoadedChanged();
+    }
+}
+
 bool DeclarativeWebPage::domContentLoaded() const
 {
     return m_domContentLoaded;
@@ -210,6 +238,36 @@ void DeclarativeWebPage::setResurrectedContentRect(QVariant resurrectedContentRe
     if (m_resurrectedContentRect != resurrectedContentRect) {
         m_resurrectedContentRect = resurrectedContentRect;
         emit resurrectedContentRectChanged();
+    }
+}
+
+qreal DeclarativeWebPage::toolbarHeight() const
+{
+    return m_toolbarHeight;
+}
+
+void DeclarativeWebPage::setToolbarHeight(qreal toolbarHeight)
+{
+    if (toolbarHeight != m_toolbarHeight) {
+        m_toolbarHeight = toolbarHeight;
+        emit toolbarHeightChanged();
+    }
+}
+
+qreal DeclarativeWebPage::virtualKeyboardMargin() const
+{
+    return m_virtualKeyboardMargin;
+}
+
+void DeclarativeWebPage::setVirtualKeyboardMargin(qreal margin)
+{
+    if (margin != m_virtualKeyboardMargin) {
+        m_virtualKeyboardMargin = margin;
+        QMargins margins;
+        margins.setBottom(m_virtualKeyboardMargin);
+        setMargins(margins);
+        sendVkbOpenCompositionMetrics();
+        emit virtualKeyboardMarginChanged();
     }
 }
 
@@ -265,36 +323,9 @@ void DeclarativeWebPage::forceChrome(bool forcedChrome)
     if (forcedChrome) {
         setChrome(forcedChrome);
     }
-    // Without chrome respect content height.
-    resetHeight(!forcedChrome);
     if (m_forcedChrome != forcedChrome) {
         m_forcedChrome = forcedChrome;
         emit forcedChromeChanged();
-    }
-}
-
-void DeclarativeWebPage::resetHeight(bool respectContentHeight)
-{
-    // Input panel is fully open.
-    if (m_container->imOpened()) {
-        return;
-    }
-
-    // fullscreen() below in the fullscreen request coming from the web content.
-    if (respectContentHeight && (!m_forcedChrome || fullscreen())) {
-        // Handle webPage height over here, BrowserPage.qml loading
-        // reset might be redundant as we have also loaded trigger
-        // reset. However, I'd leave it there for safety reasons.
-        // We need to reset height always back to short height when loading starts
-        // so that after tab change there is always initial short composited height.
-        // Height may expand when content is moved.
-        if (contentHeight() > (m_fullScreenHeight + m_toolbarHeight) || fullscreen()) {
-            setHeight(m_fullScreenHeight);
-        } else {
-            setHeight(m_fullScreenHeight - m_toolbarHeight);
-        }
-    } else {
-        setHeight(m_fullScreenHeight - m_toolbarHeight);
     }
 }
 
@@ -326,6 +357,56 @@ void DeclarativeWebPage::thumbnailReady()
     }
 }
 
+void DeclarativeWebPage::updateViewMargins()
+{
+    // Don't update margins while panning, flicking, or pinching.
+    if (moving() || m_virtualKeyboardMargin > 0) {
+        return;
+    }
+
+    qreal threshold = qMax(m_fullScreenHeight * 1.5f, (m_fullScreenHeight + (m_toolbarHeight*2)));
+    QMargins margins;
+    if (!m_fullscreen && (contentHeight() < threshold)) {
+        margins.setBottom(m_toolbarHeight);
+    }
+
+    setMargins(margins);
+}
+
+void DeclarativeWebPage::sendVkbOpenCompositionMetrics()
+{
+    // Send update only if the page is active.
+    if (!active()) {
+        return;
+    }
+
+    int winHeight(0);
+    int winWidth(0);
+
+    // Listen im state so that we don't send also updates when
+    // vkb state changes on the chrome side.
+
+    if (m_container) {
+      if (m_container->portrait()) {
+        winHeight = m_container->height();
+        winWidth = m_container->width();
+      } else {
+        winHeight = m_container->width();
+        winWidth = m_container->height();
+      }
+    }
+
+    QVariantMap map;
+    map.insert("imOpen", m_virtualKeyboardMargin > 0);
+    map.insert("pixelRatio", QMozContext::GetInstance()->pixelRatio());
+    map.insert("bottomMargin", m_virtualKeyboardMargin);
+    map.insert("screenWidth", winWidth);
+    map.insert("screenHeight", winHeight);
+
+    QVariant data(map);
+    sendAsyncMessage("embedui:vkbOpenCompositionMetrics", data);
+}
+
 QString DeclarativeWebPage::saveToFile(QImage image)
 {
     if (image.isNull()) {
@@ -341,9 +422,20 @@ void DeclarativeWebPage::onRecvAsyncMessage(const QString& message, const QVaria
 {
     if (message == gFullScreenMessage) {
         setFullscreen(data.toMap().value(QString("fullscreen")).toBool());
-    } else if (message == gDomContentLoadedMessage && data.toMap().value("rootFrame").toBool()) {
-        m_domContentLoaded = true;
-        emit domContentLoadedChanged();
+    } else if (message == gDomContentLoadedMessage) {
+        setContentLoaded();
+    }
+    else if (message == gContentOrientationChanged) {
+        QString orientation = data.toMap().value("orientation").toString();
+        Qt::ScreenOrientation mappedOrientation = Qt::PortraitOrientation;
+        if (orientation == QStringLiteral("landscape-primary")) {
+            mappedOrientation = Qt::LandscapeOrientation;
+        } else if (orientation == QStringLiteral("landscape-secondary")) {
+            mappedOrientation = Qt::InvertedLandscapeOrientation;
+        } else if (orientation == QStringLiteral("portrait-secondary")) {
+            mappedOrientation = Qt::InvertedPortraitOrientation;
+        }
+        contentOrientationChanged(mappedOrientation);
     }
 }
 
@@ -361,7 +453,7 @@ void DeclarativeWebPage::setFullscreen(const bool fullscreen)
 {
     if (m_fullscreen != fullscreen) {
         m_fullscreen = fullscreen;
-        resetHeight();
+        updateViewMargins();
         emit fullscreenChanged();
     }
 }
@@ -372,8 +464,9 @@ QDebug operator<<(QDebug dbg, const DeclarativeWebPage *page)
         return dbg << "DeclarativeWebPage (this = 0x0)";
     }
 
-    dbg.nospace() << "DeclarativeWebPage(tabId = " << page->tabId() << " url = " << page->url() << ", title = " << page->title() << ", width = " << page->width()
-                  << ", height = " << page->height() << ", completed = " << page->completed()
+    QSize size = page->mozWindow()->size();
+    dbg.nospace() << "DeclarativeWebPage(tabId = " << page->tabId() << " url = " << page->url() << ", title = " << page->title() << ", width = " << size.width()
+                  << ", height = " << size.height() << ", completed = " << page->completed()
                   << ", active = " << page->active() << ", enabled = " << page->enabled() << ")";
     return dbg.space();
 }

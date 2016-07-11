@@ -129,6 +129,8 @@ void tst_declarativewebcontainer::setTabModel()
 
     QSignalSpy countChangeSpy(&model, SIGNAL(countChanged()));
 
+    bool wasInitialized = m_webContainer->m_initialized;
+    m_webContainer->m_initialized = true;
     // Setting model1
     m_webContainer->setTabModel(&model);
     QCOMPARE(m_webContainer->m_model.data(), &model);
@@ -139,6 +141,7 @@ void tst_declarativewebcontainer::setTabModel()
     m_webContainer->setTabModel(0);
     QCOMPARE(!!m_webContainer->m_model.data(), false);
     QCOMPARE(model.waitingForNewTab(), false);
+    m_webContainer->m_initialized = wasInitialized;
 }
 
 void tst_declarativewebcontainer::setForeground()
