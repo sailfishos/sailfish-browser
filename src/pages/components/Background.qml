@@ -28,7 +28,7 @@ Item {
         Rectangle {
             id: base
             anchors.fill: parent
-            color: "white"
+            color: Theme.primaryColor
             opacity: window.opaqueBackground ? 1 : 0
             Behavior on opacity {
                 enabled: window.rootPage.active
@@ -37,7 +37,7 @@ Item {
         }
 
         Rectangle {
-            color: "black"
+            color: Theme.overlayBackgroundColor
             opacity: 0.948
             anchors.fill: parent
         }
