@@ -350,8 +350,6 @@ void DeclarativeTabModel::updateActiveTab(const Tab &activeTab, bool loadActiveT
         int oldTabId = m_activeTabId;
         m_activeTabId = activeTab.tabId();
 
-        setWaitingForNewTab(true);
-
         // If tab has changed, update active tab role.
         int tabIndex = activeTabIndex();
         if (tabIndex >= 0) {
