@@ -77,6 +77,15 @@ Background {
             overlay.animator.hide()
         }
         searchField.enteringNewTabUrl = false
+        loadActiveTab()
+    }
+
+    function loadActiveTab() {
+        // Activate tab if we don't have content item but we have a valid tab id.
+        if (active && !webView.contentItem && !searchField.enteringNewTabUrl && webView.tabId > 0) {
+            // Don't force reloading tab change if already loaded.
+            webView.reload(false)
+        }
     }
 
     y: webView.fullscreenHeight - toolBar.toolsHeight
@@ -92,12 +101,7 @@ Background {
     // `visible` is controlled by Browser.OverlayAnimator
     enabled: visible
 
-    onActiveChanged: {
-        if (active && !webView.contentItem && !searchField.enteringNewTabUrl && webView.tabId > 0) {
-            // Don't force reloading tab change if already loaded.
-            webView.reload(false)
-        }
-    }
+    onActiveChanged: loadActiveTab()
 
     // This is an invisible object responsible to hide/show Overlay in an animated way
     Browser.OverlayAnimator {

@@ -230,11 +230,7 @@ Page {
         MouseArea {
             anchors.fill: parent
             enabled: overlay.animator.atTop && webView.tabModel.count > 0
-            onClicked: {
-                overlay.dismiss(true)
-                // trigger overlay.onActiveChanged() handler to activate a web page in case it's inactive
-                overlay.activeChanged()
-            }
+            onClicked: overlay.dismiss(true)
         }
 
         Browser.PrivateModeTexture {
