@@ -121,6 +121,12 @@ void DBManager::updateThumbPath(int tabId, QString path)
                               Q_ARG(int, tabId), Q_ARG(QString, path));
 }
 
+void DBManager::removeHistoryEntry(int linkId)
+{
+    QMetaObject::invokeMethod(worker, "removeHistoryEntry", Qt::QueuedConnection,
+                              Q_ARG(int, linkId));
+}
+
 void DBManager::clearHistory()
 {
     QMetaObject::invokeMethod(worker, "clearHistory", Qt::QueuedConnection);

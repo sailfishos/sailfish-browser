@@ -21,10 +21,12 @@ SilicaListView {
     // To prevent model to steal focus
     currentIndex: -1
 
-    delegate: BackgroundItem {
+    delegate: ListItem {
         id: historyDelegate
         width: view.width
-        height: titleText.height * 2 + Theme.paddingMedium
+        contentHeight: titleText.height * 2 + Theme.paddingMedium
+        menu: contextMenuComponent
+
         ListView.onAdd: AddAnimation { target: historyDelegate }
 
         Column {
@@ -53,9 +55,22 @@ SilicaListView {
             }
         }
 
+        ListView.onRemove: animateRemoval()
         onClicked: {
             view.focus = true
             view.load(model.url, model.title)
+        }
+
+        Component {
+            id: contextMenuComponent
+            ContextMenu {
+                MenuItem {
+                  //: Delete history entry
+                  //% "Delete"
+                  text: qsTrId("sailfish_browser-me-delete")
+                  onClicked: view.model.remove(model.index)
+                }
+            }
         }
     }
 

@@ -39,6 +39,20 @@ void DeclarativeHistoryModel::clear()
     emit countChanged();
 }
 
+void DeclarativeHistoryModel::remove(int index)
+{
+    if (index < 0 || index >= m_links.count()) {
+        qWarning() << "Trying to remove invalid history entry.";
+        return;
+    }
+
+    beginRemoveRows(QModelIndex(), index, index);
+    Link link = m_links.takeAt(index);
+    DBManager::instance()->removeHistoryEntry(link.linkId());
+    endRemoveRows();
+    emit countChanged();
+}
+
 void DeclarativeHistoryModel::search(const QString &filter)
 {
     DBManager::instance()->getHistory(filter);
