@@ -22,8 +22,8 @@ BrowserService::BrowserService(QObject * parent)
 {
     new DBusAdaptor(this);
     QDBusConnection connection = QDBusConnection::sessionBus();
-    if(!connection.registerService(SAILFISH_BROWSER_SERVICE) ||
-            !connection.registerObject("/", this)) {
+    if(!connection.registerObject("/", this)
+            || !connection.registerService(SAILFISH_BROWSER_SERVICE)) {
         m_registered = false;
     }
 }
