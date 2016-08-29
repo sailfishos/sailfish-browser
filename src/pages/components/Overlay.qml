@@ -225,10 +225,13 @@ Background {
             Browser.ToolBar {
                 id: toolBar
 
+                property real crossfadeRatio: (overlay.y - webView.fullscreenHeight/2)  / (webView.fullscreenHeight/2 - toolBar.height)
+
                 url: webView.contentItem && webView.contentItem.url || ""
                 findText: searchField.text
                 bookmarked: bookmarkModel.activeUrlBookmarked
-                opacity: (overlay.y - webView.fullscreenHeight/2)  / (webView.fullscreenHeight/2 - toolBar.height)
+
+                opacity: crossfadeRatio
                 visible: opacity > 0.0
                 secondaryToolsActive: overlayAnimator.secondaryTools
 
@@ -327,7 +330,7 @@ Background {
                     }
                 }
 
-                opacity: toolBar.opacity * -1.0
+                opacity: toolBar.crossfadeRatio * -1.0
                 visible: opacity > 0.0 && y >= -searchField.height
 
                 onYChanged: {
