@@ -1,0 +1,34 @@
+<!-- Adapted from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/toLocaleString -->
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, user-scalable=false;">
+        <title>Test Localization</title>
+    </head>
+    <h1>Localization of 123456.789</h1>
+    <script>
+        var number = 123456.789;
+
+        // German uses comma as decimal separator and period for thousands
+        var localizedNumber = "de-DE: " + number.toLocaleString('de-DE') + "</br>";
+        // 123.456,789
+
+        // Arabic in most Arabic speaking countries uses Eastern Arabic digits
+        localizedNumber += "ar-EG: " + number.toLocaleString('ar-EG') + "</br>";
+        // ١٢٣٤٥٦٫٧٨٩
+
+        // India uses thousands/lakh/crore separators
+        localizedNumber += "en-IN: " + number.toLocaleString('en-IN') + "</br>";
+        // 1,23,456.789
+
+        // the nu extension key requests a numbering system, e.g. Chinese decimal
+        localizedNumber += "zh-Hans-CN-u-nu-hanidec: " + number.toLocaleString('zh-Hans-CN-u-nu-hanidec') + "</br>";
+        // 一二三,四五六.七八九
+
+        // when requesting a language that may not be supported, such as
+        // Balinese, include a fallback language, in this case Indonesian
+        localizedNumber += "Balinese, include a fallback language, in this case Indonesian: " + number.toLocaleString(['ban', 'id']) + "</br>";
+        // 123.456,789
+        document.write(localizedNumber);
+    </script>
+    </body>
+</html>
