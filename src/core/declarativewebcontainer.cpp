@@ -192,8 +192,8 @@ void DeclarativeWebContainer::setTabModel(DeclarativeTabModel *model)
         m_model = model;
         int newCount = 0;
         if (m_model) {
-            connect(m_model, SIGNAL(activeTabChanged(int,bool)), this, SLOT(onActiveTabChanged(int,bool)));
-            connect(m_model, SIGNAL(activeTabChanged(int,bool)), this, SIGNAL(tabIdChanged()));
+            connect(m_model, SIGNAL(activeTabChanged(int)), this, SLOT(onActiveTabChanged(int)));
+            connect(m_model, SIGNAL(activeTabChanged(int)), this, SIGNAL(tabIdChanged()));
             connect(m_model, SIGNAL(loadedChanged()), this, SLOT(initialize()));
             connect(m_model, SIGNAL(tabClosed(int)), this, SLOT(releasePage(int)));
             connect(m_model, SIGNAL(newTabRequested(QString,QString,int)), this, SLOT(onNewTabRequested(QString,QString,int)));
@@ -721,13 +721,9 @@ qreal DeclarativeWebContainer::contentHeight() const
     }
 }
 
-void DeclarativeWebContainer::onActiveTabChanged(int activeTabId, bool loadActiveTab)
+void DeclarativeWebContainer::onActiveTabChanged(int activeTabId)
 {
     if (activeTabId <= 0) {
-        return;
-    }
-
-    if (!loadActiveTab) {
         return;
     }
 

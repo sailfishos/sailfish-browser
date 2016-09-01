@@ -154,7 +154,7 @@ void tst_webview::testNewTab()
     QSignalSpy titleChangedSpy(webContainer, SIGNAL(titleChanged()));
 
     QSignalSpy tabCountSpy(tabModel, SIGNAL(countChanged()));
-    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int)));
     QSignalSpy tabAddedSpy(tabModel, SIGNAL(tabAdded(int)));
     QSignalSpy contentItemSpy(webContainer, SIGNAL(contentItemChanged()));
     QSignalSpy loadingChanged(webContainer, SIGNAL(loadingChanged()));
@@ -242,7 +242,7 @@ void tst_webview::testActivateTab()
     QString newActiveTitle = tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString();
     int newActiveTabId = tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt();
 
-    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int)));
     QSignalSpy urlChangedSpy(webContainer, SIGNAL(urlChanged()));
     QSignalSpy titleChangedSpy(webContainer, SIGNAL(titleChanged()));
     QSignalSpy contentItemSpy(webContainer, SIGNAL(contentItemChanged()));
@@ -279,7 +279,7 @@ void tst_webview::testCloseActiveTab()
     // "testuseragent.html", "TestUserAgent" (2)
     // "testnavigation.html", "TestNavigation" (3)
 
-    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int)));
     QSignalSpy tabClosedSpy(tabModel, SIGNAL(tabClosed(int)));
     QSignalSpy urlChangedSpy(webContainer, SIGNAL(urlChanged()));
     QSignalSpy titleChangedSpy(webContainer, SIGNAL(titleChanged()));
@@ -337,7 +337,7 @@ void tst_webview::testRemoveTab()
     // "testuseragent.html", "TestUserAgent" (1)
     // "testnavigation.html", "TestNavigation" (2)
 
-    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int)));
     QSignalSpy tabClosedSpy(tabModel, SIGNAL(tabClosed(int)));
 
     QSignalSpy urlChangedSpy(webContainer, SIGNAL(urlChanged()));
@@ -431,7 +431,7 @@ void tst_webview::testLiveTabCount()
     QFETCH(int, liveTabCount);
 
     QSignalSpy tabCountSpy(tabModel, SIGNAL(countChanged()));
-    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int)));
     QSignalSpy tabAddedSpy(tabModel, SIGNAL(tabAdded(int)));
     QSignalSpy loadingChanged(webContainer, SIGNAL(loadingChanged()));
     QSignalSpy urlChangedSpy(webContainer, SIGNAL(urlChanged()));

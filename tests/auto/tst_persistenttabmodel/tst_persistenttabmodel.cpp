@@ -139,7 +139,7 @@ void tst_persistenttabmodel::addTab()
     QSignalSpy tabAddedSpy(tabModel, SIGNAL(tabAdded(int)));
     QSignalSpy dataChangedSpy(tabModel, SIGNAL(dataChanged(QModelIndex, QModelIndex, QVector<int>)));
     QSignalSpy activeTabIndexChangedSpy(tabModel, SIGNAL(activeTabIndexChanged()));
-    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int)));
 
     // actual test
     tabModel->addTab(tabToAdd.url, tabToAdd.title, insertToIndex);
@@ -155,7 +155,6 @@ void tst_persistenttabmodel::addTab()
     QCOMPARE(activeTabChangedSpy.count(), 1);
     arguments = activeTabChangedSpy.at(0);
     QCOMPARE(arguments.at(0).toInt(), initialTabs.count() + 1);
-    QCOMPARE(arguments.at(1).toBool(), true);
 
     QCOMPARE(tabModel->activeTab().url(), tabToAdd.url);
     QCOMPARE(tabModel->activeTab().title(), tabToAdd.title);
@@ -197,7 +196,7 @@ void tst_persistenttabmodel::addTabInvalidInput_data()
 void tst_persistenttabmodel::addTabInvalidInput()
 {
     QSignalSpy countChangeSpy(tabModel, SIGNAL(countChanged()));
-    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int)));
 
     QFETCH(QString, url);
     QFETCH(QString, title);
@@ -215,7 +214,7 @@ void tst_persistenttabmodel::remove()
     QSignalSpy tabClosedSpy(tabModel, SIGNAL(tabClosed(int)));
     QSignalSpy dataChangedSpy(tabModel, SIGNAL(dataChanged(QModelIndex, QModelIndex, QVector<int>)));
     QSignalSpy activeTabIndexChangedSpy(tabModel, SIGNAL(activeTabIndexChanged()));
-    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int)));
 
     // nothing should happen
     tabModel->remove(-1);
@@ -276,7 +275,7 @@ void tst_persistenttabmodel::removeTabById()
     QFETCH(bool, isValid);
 
     QSignalSpy tabClosedSpy(tabModel, SIGNAL(tabClosed(int)));
-    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int)));
 
     tabModel->removeTabById(tabId, activeTab);
 
@@ -325,7 +324,7 @@ void tst_persistenttabmodel::activateTabByUrl()
     QFETCH(QString, expectedUrl);
     QFETCH(QString, expectedTitle);
 
-    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int)));
 
     tabModel->activateTab(url);
 
@@ -359,7 +358,7 @@ void tst_persistenttabmodel::activateTabById()
     QFETCH(QString, expectedUrl);
     QFETCH(QString, expectedTitle);
 
-    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int)));
 
     tabModel->activateTabById(tabId);
 
@@ -393,7 +392,7 @@ void tst_persistenttabmodel::activateTabByIndex()
     QFETCH(QString, expectedUrl);
     QFETCH(QString, expectedTitle);
 
-    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int)));
 
     tabModel->activateTab(tabIndex);
 
@@ -409,7 +408,7 @@ void tst_persistenttabmodel::closeActiveTab()
     // make the first tab active
     tabModel->activateTabById(1);
 
-    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int)));
     QSignalSpy tabCountChangedSpy(tabModel, SIGNAL(countChanged()));
     QSignalSpy activeTabIndexChangedSpy(tabModel, SIGNAL(activeTabIndexChanged()));
 

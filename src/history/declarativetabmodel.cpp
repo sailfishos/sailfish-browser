@@ -68,7 +68,7 @@ void DeclarativeTabModel::addTab(const QString& url, const QString &title, int i
     // We should trigger this only when
     // tab is added through new window request. In all other
     // case we should keep the new tab in background.
-    updateActiveTab(tab, true);
+    updateActiveTab(tab);
 
     emit countChanged();
     emit tabAdded(tab.tabId());
@@ -91,7 +91,7 @@ void DeclarativeTabModel::remove(int index) {
 
         removeTab(m_tabs.at(index).tabId(), m_tabs.at(index).thumbnailPath(), index);
         if (removingActiveTab) {
-            activateTab(newActiveIndex, true);
+            activateTab(newActiveIndex);
         }
     }
 }
@@ -131,7 +131,7 @@ bool DeclarativeTabModel::activateTab(const QString& url)
     return false;
 }
 
-void DeclarativeTabModel::activateTab(int index, bool loadActiveTab)
+void DeclarativeTabModel::activateTab(int index)
 {
     if (m_tabs.isEmpty()) {
         return;
@@ -142,7 +142,7 @@ void DeclarativeTabModel::activateTab(int index, bool loadActiveTab)
 #if DEBUG_LOGS
     qDebug() << "activate tab: " << index << &newActiveTab;
 #endif
-    updateActiveTab(newActiveTab, loadActiveTab);
+    updateActiveTab(newActiveTab);
 }
 
 bool DeclarativeTabModel::activateTabById(int tabId)
@@ -167,7 +167,7 @@ void DeclarativeTabModel::closeActiveTab()
         int index = activeTabIndex();
         int newActiveIndex = nextActiveTabIndex(index);
         removeTab(m_activeTabId, m_tabs.at(index).thumbnailPath(), index);
-        activateTab(newActiveIndex, true);
+        activateTab(newActiveIndex);
     }
 }
 
@@ -337,7 +337,7 @@ int DeclarativeTabModel::findTabIndex(int tabId) const
     return -1;
 }
 
-void DeclarativeTabModel::updateActiveTab(const Tab &activeTab, bool loadActiveTab)
+void DeclarativeTabModel::updateActiveTab(const Tab &activeTab)
 {
 #if DEBUG_LOGS
     qDebug() << "new active tab:" << &activeTab << "old active tab:" << m_activeTabId << "count:" << m_tabs.count();
@@ -367,7 +367,7 @@ void DeclarativeTabModel::updateActiveTab(const Tab &activeTab, bool loadActiveT
         // Instead, we pass current contentItem and activeTabIndex
         // when pushing the TabPage to the PageStack. This is the signal changes the
         // contentItem of WebView.
-        emit activeTabChanged(activeTab.tabId(), loadActiveTab);
+        emit activeTabChanged(activeTab.tabId());
     }
 }
 
