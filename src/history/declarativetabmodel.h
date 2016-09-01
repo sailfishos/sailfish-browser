@@ -45,7 +45,7 @@ public:
     Q_INVOKABLE void remove(int index);
     Q_INVOKABLE void clear();
     Q_INVOKABLE bool activateTab(const QString &url);
-    Q_INVOKABLE void activateTab(int index, bool loadActiveTab = true);
+    Q_INVOKABLE void activateTab(int index);
     Q_INVOKABLE void closeActiveTab();
     Q_INVOKABLE void newTab(const QString &url, const QString &title, int parentId = 0);
     Q_INVOKABLE QString url(int tabId) const;
@@ -84,9 +84,7 @@ public slots:
 signals:
     void activeTabIndexChanged();
     void countChanged();
-    void activeTabChanged(int activeTabId, bool loadActiveTab = true);
-    // TODO: Update test to use activeTabChanged instead. Currently this is here
-    // only for testing purposes.
+    void activeTabChanged(int activeTabId);
     void tabAdded(int tabId);
     void tabClosed(int tabId);
     void loadedChanged();
@@ -97,7 +95,7 @@ protected:
     void addTab(const QString &url, const QString &title, int index);
     void removeTab(int tabId, const QString &thumbnail, int index);
     int findTabIndex(int tabId) const;
-    void updateActiveTab(const Tab &activeTab, bool loadActiveTab);
+    void updateActiveTab(const Tab &activeTab);
     void updateUrl(int tabId, const QString &url, bool initialLoad);
 
     virtual void createTab(const Tab &tab) = 0;
