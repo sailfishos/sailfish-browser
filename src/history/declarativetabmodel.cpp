@@ -91,7 +91,7 @@ void DeclarativeTabModel::remove(int index) {
 
         removeTab(m_tabs.at(index).tabId(), m_tabs.at(index).thumbnailPath(), index);
         if (removingActiveTab) {
-            activateTab(newActiveIndex, false);
+            activateTab(newActiveIndex, true);
         }
     }
 }
