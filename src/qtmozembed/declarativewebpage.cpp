@@ -359,15 +359,18 @@ void DeclarativeWebPage::thumbnailReady()
 
 void DeclarativeWebPage::updateViewMargins()
 {
-    // Don't update margins while panning, flicking, or pinching.
-    if (moving() || m_virtualKeyboardMargin > 0) {
-        return;
-    }
-
-    qreal threshold = qMax(m_fullScreenHeight * 1.5f, (m_fullScreenHeight + (m_toolbarHeight*2)));
+    // Reset margins always when fullscreen mode is enabled.
     QMargins margins;
-    if (!m_fullscreen && (contentHeight() < threshold)) {
-        margins.setBottom(m_toolbarHeight);
+    if (!m_fullscreen) {
+        // Don't update margins while panning, flicking, or pinching.
+        if (moving() || m_virtualKeyboardMargin > 0) {
+            return;
+        }
+
+        qreal threshold = qMax(m_fullScreenHeight * 1.5f, (m_fullScreenHeight + (m_toolbarHeight*2)));
+        if (contentHeight() < threshold) {
+            margins.setBottom(m_toolbarHeight);
+        }
     }
 
     setMargins(margins);
