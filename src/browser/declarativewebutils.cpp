@@ -434,9 +434,17 @@ void DeclarativeWebUtils::setRenderingPreferences()
     mozContext->setPref(QString("layers.progressive-paint"), QVariant(true));
     mozContext->setPref(QString("layers.low-precision-buffer"), QVariant(true));
 
+    int screenWidth = QGuiApplication::primaryScreen()->size().width();
+    int tileSize = screenWidth;
+    // With bigger than qHD screen fill with two tiles in row (portrait).
+    // Landscape will be filled with same tile size.
+    if (screenWidth > 540) {
+        tileSize = screenWidth / 2;
+    }
+
+    mozContext->setPref(QString("layers.tile-width"), QVariant(tileSize));
+    mozContext->setPref(QString("layers.tile-height"), QVariant(tileSize));
     if (mozContext->pixelRatio() >= 2.0) {
-        mozContext->setPref(QString("layers.tile-width"), QVariant(512));
-        mozContext->setPref(QString("layers.tile-height"), QVariant(512));
         // Don't use too small low precision buffers for high dpi devices. This reduces
         // a bit the blurriness.
         mozContext->setPref(QString("layers.low-precision-resolution"), QString("0.5f"));
