@@ -64,7 +64,7 @@ int DeclarativeHistoryModel::rowCount(const QModelIndex & parent) const {
 }
 
 QVariant DeclarativeHistoryModel::data(const QModelIndex & index, int role) const {
-    if (index.row() < 0 || index.row() > m_links.count())
+    if (index.row() < 0 || index.row() >= m_links.count())
         return QVariant();
 
     const Link url = m_links[index.row()];
