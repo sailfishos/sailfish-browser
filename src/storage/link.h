@@ -13,6 +13,7 @@
 #define LINK_H
 
 #include <QString>
+#include <QDebug>
 
 class Link
 {
@@ -44,5 +45,7 @@ private:
     QString m_thumbPath;
     QString m_title;
 };
+
+QDebug operator<<(QDebug, const Link *);
 
 #endif // LINK_H

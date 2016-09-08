@@ -214,7 +214,7 @@ int DeclarativeTabModel::rowCount(const QModelIndex & parent) const {
 }
 
 QVariant DeclarativeTabModel::data(const QModelIndex & index, int role) const {
-    if (index.row() < 0 || index.row() > m_tabs.count())
+    if (index.row() < 0 || index.row() >= m_tabs.count())
         return QVariant();
 
     const Tab &tab = m_tabs.at(index.row());
