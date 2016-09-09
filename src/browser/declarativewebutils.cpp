@@ -153,6 +153,12 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     }
 
     QMozContext* mozContext = QMozContext::GetInstance();
+
+    mozContext->setPref(QStringLiteral("general.useragent.updates.url"),
+                        QStringLiteral("https://browser.sailfishos.org/gecko/%APP_VERSION%/ua-update.json"));
+    mozContext->setPref(QStringLiteral("general.useragent.updates.interval"), QVariant(604800)); // 1 week
+    mozContext->setPref(QStringLiteral("general.useragent.updates.retry"), QVariant(86400)); // 1 day
+
     mozContext->setPref(QString("intl.accept_languages"), QVariant(langs));
 
     // these are magic numbers defining touch radius required to detect <image src=""> touch
