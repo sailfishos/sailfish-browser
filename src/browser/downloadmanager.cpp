@@ -200,7 +200,7 @@ void DownloadManager::cancel(int downloadId)
     QVariantMap data;
     data.insert("msg", "cancelDownload");
     data.insert("id", downloadId);
-    QMozContext::GetInstance()->sendObserve(QString("embedui:download"), QVariant(data));
+    QMozContext::GetInstance()->notifyObservers(QString("embedui:download"), QVariant(data));
 }
 
 void DownloadManager::cancelTransfer(int transferId)
@@ -220,7 +220,7 @@ void DownloadManager::restartTransfer(int transferId)
         QVariantMap data;
         data.insert("msg", "retryDownload");
         data.insert("id", m_transfer2downloadMap.value(transferId));
-        QMozContext::GetInstance()->sendObserve(QString("embedui:download"), QVariant(data));
+        QMozContext::GetInstance()->notifyObservers(QString("embedui:download"), QVariant(data));
     } else {
         m_transferClient->finishTransfer(transferId,
                                          TransferEngineData::TransferInterrupted,

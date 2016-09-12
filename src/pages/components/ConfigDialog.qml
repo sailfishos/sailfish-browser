@@ -19,14 +19,14 @@ Dialog {
     property var changedConfigs: ({})
 
     // Get all the preferences
-    Component.onCompleted: MozContext.sendObserve("embedui:allprefs", {})
+    Component.onCompleted: MozContext.notifyObservers("embedui:allprefs", {})
 
     // If dialog is accepted, save all the changed configs
     onAccepted: {
         for (var key in changedConfigs) {
             MozContext.setPref(key, changedConfigs[key]);
         }
-        MozContext.sendObserve("embedui:saveprefs", {})
+        MozContext.notifyObservers("embedui:saveprefs", {})
     }
 
     function filterModel(value) {

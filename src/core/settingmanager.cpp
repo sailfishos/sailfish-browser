@@ -110,7 +110,7 @@ bool SettingManager::clearCookies()
 {
     bool actionNeeded = m_clearCookiesConfItem->value(false).toBool();
     if (actionNeeded) {
-        QMozContext::GetInstance()->sendObserve(QString("clear-private-data"), QString("cookies"));
+        QMozContext::GetInstance()->notifyObservers(QString("clear-private-data"), QString("cookies"));
         m_clearCookiesConfItem->set(false);
     }
     return actionNeeded;
@@ -120,7 +120,7 @@ bool SettingManager::clearPasswords()
 {
     bool actionNeeded = m_clearPasswordsConfItem->value(false).toBool();
     if (actionNeeded) {
-        QMozContext::GetInstance()->sendObserve(QString("clear-private-data"), QString("passwords"));
+        QMozContext::GetInstance()->notifyObservers(QString("clear-private-data"), QString("passwords"));
         m_clearPasswordsConfItem->set(false);
     }
     return actionNeeded;
@@ -130,7 +130,7 @@ bool SettingManager::clearCache()
 {
     bool actionNeeded = m_clearCacheConfItem->value(false).toBool();
     if (actionNeeded) {
-        QMozContext::GetInstance()->sendObserve(QString("clear-private-data"), QString("cache"));
+        QMozContext::GetInstance()->notifyObservers(QString("clear-private-data"), QString("cache"));
         m_clearCacheConfItem->set(false);
     }
     return actionNeeded;
@@ -147,7 +147,7 @@ void SettingManager::setSearchEngine()
         QVariantMap defaultSearchEngine;
         defaultSearchEngine.insert(QLatin1String("msg"), QLatin1String("setdefault"));
         defaultSearchEngine.insert(QLatin1String("name"), searchEngine);
-        context->sendObserve(QLatin1String("embedui:search"), QVariant(defaultSearchEngine));
+        context->notifyObservers(QLatin1String("embedui:search"), QVariant(defaultSearchEngine));
     }
 }
 
@@ -187,7 +187,7 @@ void SettingManager::handleObserve(const QString &message, const QVariant &data)
                     loadsearch.insert(QLatin1String("msg"), QVariant(QLatin1String("loadxml")));
                     loadsearch.insert(QLatin1String("uri"), QVariant(QString("file://%1").arg(configs[searchName])));
                     loadsearch.insert(QLatin1String("confirm"), QVariant(false));
-                    mozContext->sendObserve(QLatin1String("embedui:search"), QVariant(loadsearch));
+                    mozContext->notifyObservers(QLatin1String("embedui:search"), QVariant(loadsearch));
                 }
             }
 
@@ -196,7 +196,7 @@ void SettingManager::handleObserve(const QString &message, const QVariant &data)
                 QVariantMap removeMsg;
                 removeMsg.insert(QLatin1String("msg"), QVariant(QLatin1String("remove")));
                 removeMsg.insert(QLatin1String("name"), QVariant(searchName));
-                mozContext->sendObserve(QLatin1String("embedui:search"), QVariant(removeMsg));
+                mozContext->notifyObservers(QLatin1String("embedui:search"), QVariant(removeMsg));
             }
 
             // Try to set search engine. After first start we can update the default search
