@@ -154,7 +154,7 @@ void SettingManager::setSearchEngine()
 void SettingManager::doNotTrack()
 {
     QMozContext::GetInstance()->setPref(QString("privacy.donottrackheader.enabled"),
-                                        m_doNotTrackConfItem->value(false));
+                                           m_doNotTrackConfItem->value(false));
 }
 
 void SettingManager::handleObserve(const QString &message, const QVariant &data)

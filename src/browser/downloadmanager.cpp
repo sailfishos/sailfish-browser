@@ -36,8 +36,7 @@ DownloadManager::DownloadManager()
                                                    "/org/nemo/transferengine",
                                                    QDBusConnection::sessionBus(),
                                                    this);
-    connect(QMozContext::GetInstance(), SIGNAL(onInitialized()),
-            this, SLOT(setPreferences()));
+    setPreferences();
     connect(QMozContext::GetInstance(), SIGNAL(recvObserve(const QString, const QVariant)),
             this, SLOT(recvObserve(const QString, const QVariant)));
 
@@ -232,8 +231,6 @@ void DownloadManager::restartTransfer(int transferId)
 void DownloadManager::setPreferences()
 {
     QMozContext* mozContext = QMozContext::GetInstance();
-    Q_ASSERT(mozContext->initialized());
-
     // Use autodownload, never ask
     mozContext->setPref(QString("browser.download.useDownloadDir"), QVariant(true));
     mozContext->setPref(QString("browser.download.useJSTransfer"), QVariant(true));

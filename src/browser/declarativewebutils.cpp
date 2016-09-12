@@ -76,8 +76,7 @@ DeclarativeWebUtils::DeclarativeWebUtils()
     , m_inputItemSize(28.0)
     , m_zoomMargin(14.0)
 {
-    connect(QMozContext::GetInstance(), SIGNAL(onInitialized()),
-            this, SLOT(updateWebEngineSettings()));
+    updateWebEngineSettings();
     connect(QMozContext::GetInstance(), SIGNAL(recvObserve(QString, QVariant)),
             this, SLOT(handleObserve(QString, QVariant)));
 
@@ -257,9 +256,7 @@ void DeclarativeWebUtils::setSilicaPixelRatio(qreal silicaPixelRatio)
 {
     if (m_silicaPixelRatio != silicaPixelRatio) {
         m_silicaPixelRatio = silicaPixelRatio;
-        if (QMozContext::GetInstance()->initialized()) {
-            setContentScaling();
-        }
+        setContentScaling();
         emit silicaPixelRatioChanged();
     }
 }
@@ -274,10 +271,8 @@ void DeclarativeWebUtils::setTouchSideRadius(qreal touchSideRadius)
     if (m_touchSideRadius != touchSideRadius) {
         m_touchSideRadius = touchSideRadius;
         QMozContext* mozContext = QMozContext::GetInstance();
-        if (mozContext->initialized()) {
-            mozContext->setPref(QStringLiteral("browser.ui.touch.left"), QVariant(m_touchSideRadius));
-            mozContext->setPref(QStringLiteral("browser.ui.touch.right"), QVariant(m_touchSideRadius));
-        }
+        mozContext->setPref(QStringLiteral("browser.ui.touch.left"), QVariant(m_touchSideRadius));
+        mozContext->setPref(QStringLiteral("browser.ui.touch.right"), QVariant(m_touchSideRadius));
         emit touchSideRadiusChanged();
     }
 }
@@ -292,9 +287,7 @@ void DeclarativeWebUtils::setTouchTopRadius(qreal touchTopRadius)
     if (m_touchTopRadius != touchTopRadius) {
         m_touchTopRadius = touchTopRadius;
         QMozContext* mozContext = QMozContext::GetInstance();
-        if (mozContext->initialized()) {
-            mozContext->setPref(QStringLiteral("browser.ui.touch.top"), QVariant(m_touchTopRadius));
-        }
+        mozContext->setPref(QStringLiteral("browser.ui.touch.top"), QVariant(m_touchTopRadius));
         emit touchTopRadiusChanged();
     }
 }
@@ -309,9 +302,7 @@ void DeclarativeWebUtils::setTouchBottomRadius(qreal touchBottomRadius)
     if (m_touchBottomRadius != touchBottomRadius) {
         m_touchBottomRadius = touchBottomRadius;
         QMozContext* mozContext = QMozContext::GetInstance();
-        if (mozContext->initialized()) {
-            mozContext->setPref(QStringLiteral("browser.ui.touch.bottom"), QVariant(m_touchBottomRadius));
-        }
+        mozContext->setPref(QStringLiteral("browser.ui.touch.bottom"), QVariant(m_touchBottomRadius));
         emit touchBottomRadiusChanged();
     }
 }
@@ -326,9 +317,7 @@ void DeclarativeWebUtils::setInputItemSize(qreal inputItemSize)
     if (m_inputItemSize != inputItemSize) {
         m_inputItemSize = inputItemSize;
         QMozContext* mozContext = QMozContext::GetInstance();
-        if (mozContext->initialized()) {
-            mozContext->setPref(QStringLiteral("embedlite.inputItemSize"), QVariant(m_inputItemSize));
-        }
+        mozContext->setPref(QStringLiteral("embedlite.inputItemSize"), QVariant(m_inputItemSize));
         emit inputItemSizeChanged();
     }
 }
@@ -343,9 +332,7 @@ void DeclarativeWebUtils::setZoomMargin(qreal zoomMargin)
     if (m_zoomMargin != zoomMargin) {
         m_zoomMargin = zoomMargin;
         QMozContext* mozContext = QMozContext::GetInstance();
-        if (mozContext->initialized()) {
-            mozContext->setPref(QStringLiteral("embedlite.zoomMargin"), QVariant(m_zoomMargin));
-        }
+        mozContext->setPref(QStringLiteral("embedlite.zoomMargin"), QVariant(m_zoomMargin));
         emit zoomMarginChanged();
     }
 }
@@ -419,7 +406,6 @@ void DeclarativeWebUtils::setContentScaling()
 void DeclarativeWebUtils::setRenderingPreferences()
 {
     QMozContext* mozContext = QMozContext::GetInstance();
-    Q_ASSERT(mozContext->initialized());
 
     // Don't force 16bit color depth
     mozContext->setPref(QString("gfx.qt.rgb16.force"), QVariant(false));

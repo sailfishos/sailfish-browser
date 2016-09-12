@@ -41,7 +41,6 @@ public slots:
 
 private slots:
     void recvObserve(const QString message, const QVariant data);
-    void setPreferences();
 
 private:
     explicit DownloadManager();
@@ -56,6 +55,8 @@ private:
 
     void cancelTransfer(int transferId);
     void restartTransfer(int transferId);
+
+    void setPreferences();
 
     // TODO: unlike Gecko downloads and Sailfish transfers these mappings
     //       are not persistent -> after user has browser closed transfers can't be
