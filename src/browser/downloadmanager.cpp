@@ -37,7 +37,7 @@ DownloadManager::DownloadManager()
                                                    QDBusConnection::sessionBus(),
                                                    this);
     setPreferences();
-    connect(QMozContext::GetInstance(), SIGNAL(recvObserve(const QString, const QVariant)),
+    connect(QMozContext::instance(), SIGNAL(recvObserve(const QString, const QVariant)),
             this, SLOT(recvObserve(const QString, const QVariant)));
 
     // Ignore the download info argument of the downloadStatusChanged signal.
@@ -200,7 +200,7 @@ void DownloadManager::cancel(int downloadId)
     QVariantMap data;
     data.insert("msg", "cancelDownload");
     data.insert("id", downloadId);
-    QMozContext::GetInstance()->notifyObservers(QString("embedui:download"), QVariant(data));
+    QMozContext::instance()->notifyObservers(QString("embedui:download"), QVariant(data));
 }
 
 void DownloadManager::cancelTransfer(int transferId)
@@ -220,7 +220,7 @@ void DownloadManager::restartTransfer(int transferId)
         QVariantMap data;
         data.insert("msg", "retryDownload");
         data.insert("id", m_transfer2downloadMap.value(transferId));
-        QMozContext::GetInstance()->notifyObservers(QString("embedui:download"), QVariant(data));
+        QMozContext::instance()->notifyObservers(QString("embedui:download"), QVariant(data));
     } else {
         m_transferClient->finishTransfer(transferId,
                                          TransferEngineData::TransferInterrupted,
@@ -230,7 +230,7 @@ void DownloadManager::restartTransfer(int transferId)
 
 void DownloadManager::setPreferences()
 {
-    QMozContext* mozContext = QMozContext::GetInstance();
+    QMozContext* mozContext = QMozContext::instance();
     // Use autodownload, never ask
     mozContext->setPref(QString("browser.download.useDownloadDir"), QVariant(true));
     mozContext->setPref(QString("browser.download.useJSTransfer"), QVariant(true));

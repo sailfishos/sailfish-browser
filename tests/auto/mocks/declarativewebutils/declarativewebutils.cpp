@@ -20,7 +20,7 @@ DeclarativeWebUtils::DeclarativeWebUtils(QObject *parent)
     , m_homePage("file:///opt/tests/sailfish-browser/manual/testpage.html")
     , m_firstUseDone(true)
 {
-    connect(QMozContext::GetInstance(), SIGNAL(onInitialized()),
+    connect(QMozContext::instance(), SIGNAL(onInitialized()),
             this, SLOT(updateWebEngineSettings()));
 }
 
@@ -56,7 +56,7 @@ qreal DeclarativeWebUtils::silicaPixelRatio() const
 
 void DeclarativeWebUtils::updateWebEngineSettings()
 {
-    QMozContext* mozContext = QMozContext::GetInstance();
+    QMozContext* mozContext = QMozContext::instance();
 
     // Add only mandatory preferences for unit tests.
 

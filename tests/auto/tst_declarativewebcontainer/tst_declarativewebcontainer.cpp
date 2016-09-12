@@ -56,13 +56,13 @@ void tst_declarativewebcontainer::initTestCase()
 
 void tst_declarativewebcontainer::cleanupTestCase()
 {
-    delete QMozContext::GetInstance();
+    delete QMozContext::instance();
 }
 
 void tst_declarativewebcontainer::init()
 {
     SettingManager::instance()->setAutostartPrivateBrowsing(false);
-    EXPECT_CALL(*QMozContext::GetInstance(), setPixelRatio(_));
+    EXPECT_CALL(*QMozContext::instance(), setPixelRatio(_));
     m_webContainer = new DeclarativeWebContainer();
 }
 
@@ -258,7 +258,7 @@ void tst_declarativewebcontainer::setChromeWindow()
 void tst_declarativewebcontainer::load()
 {
     // No page and no model set => set initial url
-    EXPECT_CALL(*QMozContext::GetInstance(), initialized()).WillOnce(Return(false));
+    EXPECT_CALL(*QMozContext::instance(), initialized()).WillOnce(Return(false));
     m_webContainer->load(QString(), QString(), true);
     QCOMPARE(m_webContainer->m_initialUrl, QString("about:blank"));
 
@@ -269,14 +269,14 @@ void tst_declarativewebcontainer::load()
     EXPECT_CALL(page, loadProgress());
     m_webContainer->setWebPage(&page);
     EXPECT_CALL(page, completed()).WillOnce(Return(false));
-    EXPECT_CALL(*QMozContext::GetInstance(), initialized()).WillOnce(Return(false));
+    EXPECT_CALL(*QMozContext::instance(), initialized()).WillOnce(Return(false));
     m_webContainer->load(QString("http://example1.com"), QString(), true);
     QCOMPARE(m_webContainer->m_initialUrl, QString("http://example1.com"));
 
     // Initialized container, empty model => add new tab to model
     PrivateTabModel model(NEXT_TAB_ID);
     m_webContainer->setTabModel(&model);
-    EXPECT_CALL(*QMozContext::GetInstance(), initialized()).WillOnce(Return(true));
+    EXPECT_CALL(*QMozContext::instance(), initialized()).WillOnce(Return(true));
     EXPECT_CALL(page, completed()).WillOnce(Return(false));
     m_webContainer->load(QString(), QString(), true);
 
@@ -318,7 +318,7 @@ void tst_declarativewebcontainer::activatePage()
 
 void tst_declarativewebcontainer::releasePage()
 {
-    EXPECT_CALL(*QMozContext::GetInstance(), PostCompositorTask(_, m_webContainer.data()));
+    EXPECT_CALL(*QMozContext::instance(), PostCompositorTask(_, m_webContainer.data()));
     m_webContainer->releasePage(1);
 }
 

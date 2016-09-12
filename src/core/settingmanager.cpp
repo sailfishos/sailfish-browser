@@ -38,7 +38,7 @@ SettingManager::SettingManager(QObject *parent)
     m_toolbarLarge = new MGConfItem("/apps/sailfish-browser/settings/toolbar_large", this);
     connect(m_toolbarSmall, SIGNAL(valueChanged()), this, SIGNAL(toolbarSmallChanged()));
     connect(m_toolbarLarge, SIGNAL(valueChanged()), this, SIGNAL(toolbarLargeChanged()));
-    connect(QMozContext::GetInstance(), SIGNAL(recvObserve(QString, QVariant)),
+    connect(QMozContext::instance(), SIGNAL(recvObserve(QString, QVariant)),
             this, SLOT(handleObserve(QString, QVariant)));
 }
 
@@ -110,7 +110,7 @@ bool SettingManager::clearCookies()
 {
     bool actionNeeded = m_clearCookiesConfItem->value(false).toBool();
     if (actionNeeded) {
-        QMozContext::GetInstance()->notifyObservers(QString("clear-private-data"), QString("cookies"));
+        QMozContext::instance()->notifyObservers(QString("clear-private-data"), QString("cookies"));
         m_clearCookiesConfItem->set(false);
     }
     return actionNeeded;
@@ -120,7 +120,7 @@ bool SettingManager::clearPasswords()
 {
     bool actionNeeded = m_clearPasswordsConfItem->value(false).toBool();
     if (actionNeeded) {
-        QMozContext::GetInstance()->notifyObservers(QString("clear-private-data"), QString("passwords"));
+        QMozContext::instance()->notifyObservers(QString("clear-private-data"), QString("passwords"));
         m_clearPasswordsConfItem->set(false);
     }
     return actionNeeded;
@@ -130,7 +130,7 @@ bool SettingManager::clearCache()
 {
     bool actionNeeded = m_clearCacheConfItem->value(false).toBool();
     if (actionNeeded) {
-        QMozContext::GetInstance()->notifyObservers(QString("clear-private-data"), QString("cache"));
+        QMozContext::instance()->notifyObservers(QString("clear-private-data"), QString("cache"));
         m_clearCacheConfItem->set(false);
     }
     return actionNeeded;
@@ -140,7 +140,7 @@ void SettingManager::setSearchEngine()
 {
     if (m_searchEnginesInitialized) {
         QVariant searchEngine = m_searchEngineConfItem->value(QVariant(QString("Google")));
-        QMozContext *context = QMozContext::GetInstance();
+        QMozContext *context = QMozContext::instance();
         context->setPref(QString("browser.search.defaultenginename"), searchEngine);
 
         // Let nsSearchService update the search engine (through EmbedLiteSearchEngine).
@@ -153,8 +153,8 @@ void SettingManager::setSearchEngine()
 
 void SettingManager::doNotTrack()
 {
-    QMozContext::GetInstance()->setPref(QString("privacy.donottrackheader.enabled"),
-                                           m_doNotTrackConfItem->value(false));
+    QMozContext::instance()->setPref(QString("privacy.donottrackheader.enabled"),
+                                     m_doNotTrackConfItem->value(false));
 }
 
 void SettingManager::handleObserve(const QString &message, const QVariant &data)
@@ -175,7 +175,7 @@ void SettingManager::handleObserve(const QString &message, const QVariant &data)
                 m_addedSearchEngines = new QStringList(configuredEngines);
             }
 
-            QMozContext *mozContext = QMozContext::GetInstance();
+            QMozContext *mozContext = QMozContext::instance();
 
             // Add newly installed configs
             foreach (QString searchName, configuredEngines) {

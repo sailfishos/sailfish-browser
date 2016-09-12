@@ -28,18 +28,21 @@ public:
 
     explicit QMozContext(QObject *parent = 0) : QObject(parent) {};
 
-    static QMozContext* GetInstance();
+    static QMozContext* instance();
     MOCK_METHOD2(setPref, void(QString const &, QVariant const &));
     MOCK_METHOD1(setPixelRatio, void(float));
     MOCK_CONST_METHOD0(initialized, bool());
     MOCK_CONST_METHOD0(pixelRatio, float());
-    MOCK_METHOD1(CancelTask, void(void*));
-    MOCK_METHOD2(PostCompositorTask, TaskHandle(TaskCallback, void*));
-    MOCK_METHOD2(sendObserve, void(const QString&, const QString&));
-    MOCK_METHOD2(sendObserve, void(const QString&, const QVariant&));
+    MOCK_METHOD1(CancelTask, void(void *));
+    MOCK_METHOD2(PostCompositorTask, TaskHandle(TaskCallback, void *));
+    MOCK_METHOD2(sendObserve, void(const QString &, const QString &));
+    MOCK_METHOD2(sendObserve, void(const QString &, const QVariant &));
 
-    MOCK_METHOD1(addObserver, void(const QString&));
-    MOCK_METHOD1(addObservers, void(const QStringList&));
+    MOCK_METHOD2(notifyObservers, void(const QString &, const QString &));
+    MOCK_METHOD2(notifyObservers, void(const QString &, const QVariant &));
+
+    MOCK_METHOD1(addObserver, void(const QString &));
+    MOCK_METHOD1(addObservers, void(const QStringList &));
 
 signals:
     void onInitialized();

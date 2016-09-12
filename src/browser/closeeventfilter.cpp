@@ -19,9 +19,9 @@ CloseEventFilter::CloseEventFilter(DownloadManager *dlMgr, QObject *parent)
     : QObject(parent),
       m_downloadManager(dlMgr)
 {
-    connect(QMozContext::GetInstance(), &QMozContext::lastWindowDestroyed,
+    connect(QMozContext::instance(), &QMozContext::lastWindowDestroyed,
             this, &CloseEventFilter::onLastWindowDestroyed);
-    connect(QMozContext::GetInstance(), &QMozContext::destroyed,
+    connect(QMozContext::instance(), &QMozContext::destroyed,
             this, &CloseEventFilter::onContextDestroyed);
     connect(&m_shutdownWatchdog, &QTimer::timeout,
             this, &CloseEventFilter::onWatchdogTimeout);
@@ -34,7 +34,7 @@ void CloseEventFilter::stopApplication()
         DBManager::instance()->removeAllTabs();
     }
 
-    QMozContext::GetInstance()->stopEmbedding();
+    QMozContext::instance()->stopEmbedding();
     // Give the engine 5 seconds to shut down. If it fails terminate
     // with a fatal error.
     m_shutdownWatchdog.start(5000);

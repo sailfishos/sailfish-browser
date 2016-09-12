@@ -61,10 +61,10 @@ Browser::Browser(QQuickView *view, QObject *parent)
     }
 
     QString componentPath(DEFAULT_COMPONENTS_PATH);
-    QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/components/EmbedLiteBinComponents.manifest"));
-    QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/components/EmbedLiteJSComponents.manifest"));
-    QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/chrome/EmbedLiteJSScripts.manifest"));
-    QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/chrome/EmbedLiteOverrides.manifest"));
+    QMozContext::instance()->addComponentManifest(componentPath + QString("/components/EmbedLiteBinComponents.manifest"));
+    QMozContext::instance()->addComponentManifest(componentPath + QString("/components/EmbedLiteJSComponents.manifest"));
+    QMozContext::instance()->addComponentManifest(componentPath + QString("/chrome/EmbedLiteJSScripts.manifest"));
+    QMozContext::instance()->addComponentManifest(componentPath + QString("/chrome/EmbedLiteOverrides.manifest"));
 
     DeclarativeWebUtils *utils = DeclarativeWebUtils::instance();
     DownloadManager *downloadManager = DownloadManager::instance();
@@ -72,7 +72,7 @@ Browser::Browser(QQuickView *view, QObject *parent)
     utils->clearStartupCacheIfNeeded();
 
     d->view->rootContext()->setContextProperty("WebUtils", utils);
-    d->view->rootContext()->setContextProperty("MozContext", QMozContext::GetInstance());
+    d->view->rootContext()->setContextProperty("MozContext", QMozContext::instance());
     d->view->rootContext()->setContextProperty("Settings", SettingManager::instance());
     d->view->rootContext()->setContextProperty("DownloadManager", downloadManager);
 
@@ -86,7 +86,7 @@ Browser::Browser(QQuickView *view, QObject *parent)
 #endif
 
     // Setup embedding
-    QTimer::singleShot(0, QMozContext::GetInstance(), SLOT(runEmbedding()));
+    QTimer::singleShot(0, QMozContext::instance(), SLOT(runEmbedding()));
 }
 
 void Browser::load()

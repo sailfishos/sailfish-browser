@@ -401,7 +401,7 @@ void DeclarativeWebPage::sendVkbOpenCompositionMetrics()
 
     QVariantMap map;
     map.insert("imOpen", m_virtualKeyboardMargin > 0);
-    map.insert("pixelRatio", QMozContext::GetInstance()->pixelRatio());
+    map.insert("pixelRatio", QMozContext::instance()->pixelRatio());
     map.insert("bottomMargin", m_virtualKeyboardMargin);
     map.insert("screenWidth", winWidth);
     map.insert("screenHeight", winHeight);

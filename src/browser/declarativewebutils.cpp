@@ -77,7 +77,7 @@ DeclarativeWebUtils::DeclarativeWebUtils()
     , m_zoomMargin(14.0)
 {
     updateWebEngineSettings();
-    connect(QMozContext::GetInstance(), SIGNAL(recvObserve(QString, QVariant)),
+    connect(QMozContext::instance(), SIGNAL(recvObserve(QString, QVariant)),
             this, SLOT(handleObserve(QString, QVariant)));
 
     QString path = BrowserPaths::dataLocation() + QStringLiteral("/.firstUseDone");
@@ -151,7 +151,7 @@ void DeclarativeWebUtils::updateWebEngineSettings()
         langs = locale.at(0);
     }
 
-    QMozContext* mozContext = QMozContext::GetInstance();
+    QMozContext* mozContext = QMozContext::instance();
 
     mozContext->setPref(QStringLiteral("general.useragent.updates.url"),
                         QStringLiteral("https://browser.sailfishos.org/gecko/%APP_VERSION%/ua-update.json"));
@@ -236,7 +236,7 @@ void DeclarativeWebUtils::setFirstUseDone(bool firstUseDone) {
 
 qreal DeclarativeWebUtils::cssPixelRatio() const
 {
-    QMozContext* mozContext = QMozContext::GetInstance();
+    QMozContext* mozContext = QMozContext::instance();
     if (mozContext) {
         return mozContext->pixelRatio();
     }
@@ -270,7 +270,7 @@ void DeclarativeWebUtils::setTouchSideRadius(qreal touchSideRadius)
 {
     if (m_touchSideRadius != touchSideRadius) {
         m_touchSideRadius = touchSideRadius;
-        QMozContext* mozContext = QMozContext::GetInstance();
+        QMozContext* mozContext = QMozContext::instance();
         mozContext->setPref(QStringLiteral("browser.ui.touch.left"), QVariant(m_touchSideRadius));
         mozContext->setPref(QStringLiteral("browser.ui.touch.right"), QVariant(m_touchSideRadius));
         emit touchSideRadiusChanged();
@@ -286,8 +286,7 @@ void DeclarativeWebUtils::setTouchTopRadius(qreal touchTopRadius)
 {
     if (m_touchTopRadius != touchTopRadius) {
         m_touchTopRadius = touchTopRadius;
-        QMozContext* mozContext = QMozContext::GetInstance();
-        mozContext->setPref(QStringLiteral("browser.ui.touch.top"), QVariant(m_touchTopRadius));
+        QMozContext::instance()->setPref(QStringLiteral("browser.ui.touch.top"), QVariant(m_touchTopRadius));
         emit touchTopRadiusChanged();
     }
 }
@@ -301,8 +300,7 @@ void DeclarativeWebUtils::setTouchBottomRadius(qreal touchBottomRadius)
 {
     if (m_touchBottomRadius != touchBottomRadius) {
         m_touchBottomRadius = touchBottomRadius;
-        QMozContext* mozContext = QMozContext::GetInstance();
-        mozContext->setPref(QStringLiteral("browser.ui.touch.bottom"), QVariant(m_touchBottomRadius));
+        QMozContext::instance()->setPref(QStringLiteral("browser.ui.touch.bottom"), QVariant(m_touchBottomRadius));
         emit touchBottomRadiusChanged();
     }
 }
@@ -316,8 +314,7 @@ void DeclarativeWebUtils::setInputItemSize(qreal inputItemSize)
 {
     if (m_inputItemSize != inputItemSize) {
         m_inputItemSize = inputItemSize;
-        QMozContext* mozContext = QMozContext::GetInstance();
-        mozContext->setPref(QStringLiteral("embedlite.inputItemSize"), QVariant(m_inputItemSize));
+        QMozContext::instance()->setPref(QStringLiteral("embedlite.inputItemSize"), QVariant(m_inputItemSize));
         emit inputItemSizeChanged();
     }
 }
@@ -331,8 +328,7 @@ void DeclarativeWebUtils::setZoomMargin(qreal zoomMargin)
 {
     if (m_zoomMargin != zoomMargin) {
         m_zoomMargin = zoomMargin;
-        QMozContext* mozContext = QMozContext::GetInstance();
-        mozContext->setPref(QStringLiteral("embedlite.zoomMargin"), QVariant(m_zoomMargin));
+        QMozContext::instance()->setPref(QStringLiteral("embedlite.zoomMargin"), QVariant(m_zoomMargin));
         emit zoomMarginChanged();
     }
 }
@@ -386,7 +382,7 @@ void DeclarativeWebUtils::handleObserve(const QString message, const QVariant da
 
 void DeclarativeWebUtils::setContentScaling()
 {
-    QMozContext* mozContext = QMozContext::GetInstance();
+    QMozContext* mozContext = QMozContext::instance();
     qreal mozCssPixelRatio = gCssDefaultPixelRatio * m_silicaPixelRatio;
     // Round to nearest even rounding factor
     mozCssPixelRatio = qRound(mozCssPixelRatio / gCssPixelRatioRoundingFactor) * gCssPixelRatioRoundingFactor;
@@ -405,7 +401,7 @@ void DeclarativeWebUtils::setContentScaling()
 
 void DeclarativeWebUtils::setRenderingPreferences()
 {
-    QMozContext* mozContext = QMozContext::GetInstance();
+    QMozContext* mozContext = QMozContext::instance();
 
     // Don't force 16bit color depth
     mozContext->setPref(QString("gfx.qt.rgb16.force"), QVariant(false));

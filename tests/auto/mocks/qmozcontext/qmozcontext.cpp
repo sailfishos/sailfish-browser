@@ -13,7 +13,7 @@
 
 static QMozContext* gSingleton = 0;
 
-QMozContext* QMozContext::GetInstance()
+QMozContext* QMozContext::instance()
 {
     if (!gSingleton) {
         gSingleton = new QMozContext();
