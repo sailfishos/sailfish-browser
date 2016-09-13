@@ -27,6 +27,8 @@
 #include <QtGui/QGuiApplication>
 #include <QtGui/QScreen>
 
+#include <silicatheme.h>
+
 #include <math.h>
 #include "declarativewebutils.h"
 #include "qmozcontext.h"
@@ -69,7 +71,6 @@ static bool fileExists(QString fileName)
 DeclarativeWebUtils::DeclarativeWebUtils()
     : QObject()
     , m_homePage("/apps/sailfish-browser/settings/home_page", this)
-    , m_silicaPixelRatio(1.0)
     , m_touchSideRadius(32.0)
     , m_touchTopRadius(48.0)
     , m_touchBottomRadius(16.0)
@@ -203,13 +204,13 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     // Enable internet search
     mozContext->setPref(QString("keyword.enabled"), QVariant(true));
 
+    Silica::Theme *silicaTheme = Silica::Theme::instance();
+    setZoomMargin(silicaTheme->paddingMedium());
+    setInputItemSize(silicaTheme->fontSizeSmall());
+
     // Scale up content size
     setContentScaling();
     setRenderingPreferences();
-
-    // Theme.fontSizeSmall
-    mozContext->setPref(QStringLiteral("embedlite.inputItemSize"), QVariant(m_inputItemSize));
-    mozContext->setPref(QStringLiteral("embedlite.zoomMargin"), QVariant(m_zoomMargin));
 
     // Disable SSLv3
     mozContext->setPref(QString("security.tls.version.min"), QVariant(1));
@@ -245,20 +246,6 @@ qreal DeclarativeWebUtils::cssPixelRatio() const
 
 bool DeclarativeWebUtils::firstUseDone() const {
     return m_firstUseDone;
-}
-
-qreal DeclarativeWebUtils::silicaPixelRatio() const
-{
-    return m_silicaPixelRatio;
-}
-
-void DeclarativeWebUtils::setSilicaPixelRatio(qreal silicaPixelRatio)
-{
-    if (m_silicaPixelRatio != silicaPixelRatio) {
-        m_silicaPixelRatio = silicaPixelRatio;
-        setContentScaling();
-        emit silicaPixelRatioChanged();
-    }
 }
 
 qreal DeclarativeWebUtils::touchSideRadius() const
@@ -383,7 +370,7 @@ void DeclarativeWebUtils::handleObserve(const QString message, const QVariant da
 void DeclarativeWebUtils::setContentScaling()
 {
     QMozContext* mozContext = QMozContext::instance();
-    qreal mozCssPixelRatio = gCssDefaultPixelRatio * m_silicaPixelRatio;
+    qreal mozCssPixelRatio = gCssDefaultPixelRatio * Silica::Theme::instance()->pixelRatio();
     // Round to nearest even rounding factor
     mozCssPixelRatio = qRound(mozCssPixelRatio / gCssPixelRatioRoundingFactor) * gCssPixelRatioRoundingFactor;
 
