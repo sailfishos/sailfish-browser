@@ -340,10 +340,6 @@ Page {
     }
 
     Component.onCompleted: {
-        WebUtils.touchSideRadius = Theme.paddingMedium + Theme.paddingLarge
-        WebUtils.touchTopRadius = Theme.paddingLarge * 2
-        WebUtils.touchBottomRadius = Theme.paddingMedium + Theme.paddingSmall
-
         if (!WebUtils.firstUseDone) {
             window.setBrowserCover(webView.tabModel)
         }

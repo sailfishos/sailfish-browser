@@ -71,9 +71,6 @@ static bool fileExists(QString fileName)
 DeclarativeWebUtils::DeclarativeWebUtils()
     : QObject()
     , m_homePage("/apps/sailfish-browser/settings/home_page", this)
-    , m_touchSideRadius(32.0)
-    , m_touchTopRadius(48.0)
-    , m_touchBottomRadius(16.0)
     , m_inputItemSize(28.0)
     , m_zoomMargin(14.0)
 {
@@ -161,12 +158,6 @@ void DeclarativeWebUtils::updateWebEngineSettings()
 
     mozContext->setPref(QString("intl.accept_languages"), QVariant(langs));
 
-    // these are magic numbers defining touch radius required to detect <image src=""> touch
-    mozContext->setPref(QStringLiteral("browser.ui.touch.left"), QVariant(m_touchSideRadius));
-    mozContext->setPref(QStringLiteral("browser.ui.touch.right"), QVariant(m_touchSideRadius));
-    mozContext->setPref(QStringLiteral("browser.ui.touch.top"), QVariant(m_touchTopRadius));
-    mozContext->setPref(QStringLiteral("browser.ui.touch.bottom"), QVariant(m_touchBottomRadius));
-
     // Install embedlite handlers for guestures
     mozContext->setPref(QString("embedlite.azpc.handle.singletap"), QVariant(false));
     mozContext->setPref(QString("embedlite.azpc.json.singletap"), QVariant(true));
@@ -246,50 +237,6 @@ qreal DeclarativeWebUtils::cssPixelRatio() const
 
 bool DeclarativeWebUtils::firstUseDone() const {
     return m_firstUseDone;
-}
-
-qreal DeclarativeWebUtils::touchSideRadius() const
-{
-    return m_touchSideRadius;
-}
-
-void DeclarativeWebUtils::setTouchSideRadius(qreal touchSideRadius)
-{
-    if (m_touchSideRadius != touchSideRadius) {
-        m_touchSideRadius = touchSideRadius;
-        QMozContext* mozContext = QMozContext::instance();
-        mozContext->setPref(QStringLiteral("browser.ui.touch.left"), QVariant(m_touchSideRadius));
-        mozContext->setPref(QStringLiteral("browser.ui.touch.right"), QVariant(m_touchSideRadius));
-        emit touchSideRadiusChanged();
-    }
-}
-
-qreal DeclarativeWebUtils::touchTopRadius() const
-{
-    return m_touchTopRadius;
-}
-
-void DeclarativeWebUtils::setTouchTopRadius(qreal touchTopRadius)
-{
-    if (m_touchTopRadius != touchTopRadius) {
-        m_touchTopRadius = touchTopRadius;
-        QMozContext::instance()->setPref(QStringLiteral("browser.ui.touch.top"), QVariant(m_touchTopRadius));
-        emit touchTopRadiusChanged();
-    }
-}
-
-qreal DeclarativeWebUtils::touchBottomRadius() const
-{
-    return m_touchBottomRadius;
-}
-
-void DeclarativeWebUtils::setTouchBottomRadius(qreal touchBottomRadius)
-{
-    if (m_touchBottomRadius != touchBottomRadius) {
-        m_touchBottomRadius = touchBottomRadius;
-        QMozContext::instance()->setPref(QStringLiteral("browser.ui.touch.bottom"), QVariant(m_touchBottomRadius));
-        emit touchBottomRadiusChanged();
-    }
 }
 
 qreal DeclarativeWebUtils::inputItemSize() const
