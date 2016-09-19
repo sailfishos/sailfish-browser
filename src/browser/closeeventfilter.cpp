@@ -21,7 +21,7 @@ CloseEventFilter::CloseEventFilter(DownloadManager *dlMgr, QObject *parent)
 {
     connect(QMozContext::instance(), &QMozContext::lastWindowDestroyed,
             this, &CloseEventFilter::onLastWindowDestroyed);
-    connect(QMozContext::instance(), &QMozContext::destroyed,
+    connect(QMozContext::instance(), &QMozContext::contextDestroyed,
             this, &CloseEventFilter::onContextDestroyed);
     connect(&m_shutdownWatchdog, &QTimer::timeout,
             this, &CloseEventFilter::onWatchdogTimeout);

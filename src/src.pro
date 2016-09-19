@@ -24,8 +24,8 @@ isEmpty(USE_RESOURCES) {
   RESOURCES = sailfish-browser.qrc
 }
 
-PKGCONFIG +=  nemotransferengine-qt5 mlite5 sailfishsilica
-INCLUDEPATH += $$system(pkg-config --cflags sailfishsilica)
+PKGCONFIG +=  nemotransferengine-qt5 mlite5 sailfishwebengine
+INCLUDEPATH += $$system(pkg-config --cflags sailfishwebengine)
 
 packagesExist(qdeclarative5-boostable) {
     message("Building with qdeclarative-boostable support")
