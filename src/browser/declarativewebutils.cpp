@@ -131,7 +131,6 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     webEngineSettings->setPreference(QString("security.alternate_certificate_error_page"), QString("certerror"));
 
     webEngineSettings->setPreference(QString("geo.wifi.scan"), QVariant(false));
-    webEngineSettings->setPreference(QString("browser.enable_automatic_image_resizing"), QVariant(true));
 
     // TODO: remove this line when the value adjusted for different DPIs makes
     // its way to Gecko's default prefs.
