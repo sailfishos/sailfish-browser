@@ -17,12 +17,12 @@ DeclarativeWebPageCreator::DeclarativeWebPageCreator(QObject *parent)
     : QMozViewCreator(parent)
     , m_activeWebPage(0)
 {
-    QMozContext::GetInstance()->setViewCreator(this);
+    QMozContext::instance()->setViewCreator(this);
 }
 
 DeclarativeWebPageCreator::~DeclarativeWebPageCreator()
 {
-    QMozContext::GetInstance()->setViewCreator(0);
+    QMozContext::instance()->setViewCreator(0);
 }
 
 DeclarativeWebPage *DeclarativeWebPageCreator::activeWebPage() const

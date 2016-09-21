@@ -27,12 +27,6 @@ class DeclarativeWebUtils : public QObject
     Q_PROPERTY(QString homePage READ homePage NOTIFY homePageChanged FINAL)
     Q_PROPERTY(bool firstUseDone READ firstUseDone WRITE setFirstUseDone NOTIFY firstUseDoneChanged)
     Q_PROPERTY(qreal cssPixelRatio READ cssPixelRatio NOTIFY cssPixelRatioChanged)
-    Q_PROPERTY(qreal silicaPixelRatio READ silicaPixelRatio WRITE setSilicaPixelRatio NOTIFY silicaPixelRatioChanged)
-    Q_PROPERTY(qreal touchSideRadius READ touchSideRadius WRITE setTouchSideRadius NOTIFY touchSideRadiusChanged)
-    Q_PROPERTY(qreal touchTopRadius READ touchTopRadius WRITE setTouchTopRadius NOTIFY touchTopRadiusChanged)
-    Q_PROPERTY(qreal touchBottomRadius READ touchBottomRadius WRITE setTouchBottomRadius NOTIFY touchBottomRadiusChanged)
-    Q_PROPERTY(qreal inputItemSize READ inputItemSize WRITE setInputItemSize NOTIFY inputItemSizeChanged)
-    Q_PROPERTY(qreal zoomMargin READ zoomMargin WRITE setZoomMargin NOTIFY zoomMarginChanged)
 
 public:
     static DeclarativeWebUtils *instance();
@@ -40,18 +34,6 @@ public:
     bool firstUseDone() const;
     void setFirstUseDone(bool firstUseDone);
     qreal cssPixelRatio() const;
-    qreal silicaPixelRatio() const;
-    void setSilicaPixelRatio(qreal silicaPixelRatio);
-    qreal touchSideRadius() const;
-    void setTouchSideRadius(qreal touchSideRadius);
-    qreal touchTopRadius() const;
-    void setTouchTopRadius(qreal touchTopRadius);
-    qreal touchBottomRadius() const;
-    void setTouchBottomRadius(qreal touchBottomRadius);
-    qreal inputItemSize() const;
-    void setInputItemSize(qreal inputItemSize);
-    qreal zoomMargin() const;
-    void setZoomMargin(qreal zoomMargin);
 
     Q_INVOKABLE int getLightness(QColor color) const;
     Q_INVOKABLE QString createUniqueFileUrl(const QString &fileName, const QString &path) const;
@@ -69,12 +51,8 @@ signals:
     void firstUseDoneChanged();
     void dumpMemoryInfo(QString fileName);
     void cssPixelRatioChanged();
-    void silicaPixelRatioChanged();
-    void touchSideRadiusChanged();
     void touchTopRadiusChanged();
     void touchBottomRadiusChanged();
-    void inputItemSizeChanged();
-    void zoomMarginChanged();
 
 private slots:
     void updateWebEngineSettings();
@@ -83,16 +61,9 @@ private slots:
 private:
     explicit DeclarativeWebUtils();
     ~DeclarativeWebUtils();
-    void setContentScaling();
     void setRenderingPreferences();
 
     MGConfItem m_homePage;
     bool m_firstUseDone;
-    qreal m_silicaPixelRatio;
-    qreal m_touchSideRadius;
-    qreal m_touchTopRadius;
-    qreal m_touchBottomRadius;
-    qreal m_inputItemSize;
-    qreal m_zoomMargin;
 };
 #endif // DECLARATIVEWEBUTILS_H

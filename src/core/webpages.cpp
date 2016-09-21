@@ -233,11 +233,11 @@ void WebPages::handleMemNotify(const QString &memoryLevel)
             connect(m_activePages.activeWebPage(), SIGNAL(completedChanged()), this, SLOT(delayVirtualization()), Qt::UniqueConnection);
         }
 
-        QMozContext::GetInstance()->sendObserve(QString("memory-pressure"), QString("low-memory"));
+        QMozContext::instance()->notifyObservers(QString("memory-pressure"), QString("low-memory"));
         if (!m_webContainer->foreground() &&
                 (QDateTime::currentMSecsSinceEpoch() - m_backgroundTimestamp) > gMemoryPressureTimeout) {
             m_backgroundTimestamp = QDateTime::currentMSecsSinceEpoch();
-            QMozContext::GetInstance()->sendObserve(QString("memory-pressure"), QString("heap-minimize"));
+            QMozContext::instance()->notifyObservers(QString("memory-pressure"), QString("heap-minimize"));
         }
     }
 }

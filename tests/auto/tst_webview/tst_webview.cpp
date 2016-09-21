@@ -114,7 +114,7 @@ void tst_webview::initTestCase()
 
     QCOMPARE(tabAddedSpy.count(), 1);
 
-    QMozContext::GetInstance()->setPref(QString("media.resource_handler_disabled"), QVariant(true));
+    QMozContext::instance()->setPref(QString("media.resource_handler_disabled"), QVariant(true));
 }
 
 void tst_webview::testNewTab_data()
@@ -765,7 +765,7 @@ void tst_webview::cleanupTestCase()
             .arg(QLatin1String(DB_NAME));
     QFile dbFile(dbFileName);
     QVERIFY(dbFile.remove());
-    QMozContext::GetInstance()->stopEmbedding();
+    QMozContext::instance()->stopEmbedding();
 }
 
 /*!
@@ -798,7 +798,7 @@ int main(int argc, char *argv[])
     app.setAttribute(Qt::AA_Use96Dpi, true);
     tst_webview testcase;
     testcase.setContextProperty("WebUtils", DeclarativeWebUtils::instance());
-    testcase.setContextProperty("MozContext", QMozContext::GetInstance());
+    testcase.setContextProperty("MozContext", QMozContext::instance());
 
     qmlRegisterType<DeclarativeHistoryModel>("Sailfish.Browser", 1, 0, "HistoryModel");
     qmlRegisterUncreatableType<DeclarativeTabModel>("Sailfish.Browser", 1, 0, "TabModel", "TabModel is abstract!");
@@ -808,12 +808,12 @@ int main(int argc, char *argv[])
     qmlRegisterType<DeclarativeWebPageCreator>("Sailfish.Browser", 1, 0, "WebPageCreator");
 
     QString componentPath(DEFAULT_COMPONENTS_PATH);
-    QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/components/EmbedLiteBinComponents.manifest"));
-    QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/components/EmbedLiteJSComponents.manifest"));
-    QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/chrome/EmbedLiteJSScripts.manifest"));
-    QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/chrome/EmbedLiteOverrides.manifest"));
+    QMozContext::instance()->addComponentManifest(componentPath + QString("/components/EmbedLiteBinComponents.manifest"));
+    QMozContext::instance()->addComponentManifest(componentPath + QString("/components/EmbedLiteJSComponents.manifest"));
+    QMozContext::instance()->addComponentManifest(componentPath + QString("/chrome/EmbedLiteJSScripts.manifest"));
+    QMozContext::instance()->addComponentManifest(componentPath + QString("/chrome/EmbedLiteOverrides.manifest"));
 
-    QTimer::singleShot(0, QMozContext::GetInstance(), SLOT(runEmbedding()));
+    QTimer::singleShot(0, QMozContext::instance(), SLOT(runEmbedding()));
 
     return QTest::qExec(&testcase, argc, argv);
 }

@@ -38,14 +38,14 @@ MenuItem {
 
     onClicked: {
         if (downloadFileTargetUrl) {
-            MozContext.sendObserve("embedui:download",
-                                   {
-                                       "msg": "addDownload",
-                                       "from": root.linkUrl,
-                                       "to": downloadFileTargetUrl,
-                                       "contentType": root.contentType,
-                                       "viewId": root.viewId
-                                   })
+            MozContext.notifyObservers("embedui:download",
+                                       {
+                                           "msg": "addDownload",
+                                           "from": root.linkUrl,
+                                           "to": downloadFileTargetUrl,
+                                           "contentType": root.contentType,
+                                           "viewId": root.viewId
+                                       })
         }
     }
 }
