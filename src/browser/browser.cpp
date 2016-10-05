@@ -41,9 +41,7 @@ Browser::Browser(QQuickView *view, QObject *parent)
     Q_ASSERT(view);
     Q_ASSERT(qGuiApp);
 
-    QString homePath = QDir::homePath();
-
-    SailfishOS::WebEngine::initialize(homePath + "/.mozilla/mozembed/");
+    SailfishOS::WebEngine::initialize("mozembed");
     SailfishOS::WebEngine *webEngine = SailfishOS::WebEngine::instance();
     SailfishOS::WebEngineSettings::initialize();
 
