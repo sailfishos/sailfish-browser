@@ -12,6 +12,7 @@
 
 import QtQuick 2.0
 import Sailfish.Media 1.0
+import Sailfish.WebEngine 1.0
 import org.freedesktop.contextkit 1.0
 import org.nemomobile.policy 1.0
 
@@ -78,7 +79,7 @@ Item {
     }
 
     Connections {
-        target: MozContext
+        target: WebEngine
         onRecvObserve: {
             if (message === "media-decoder-info") {
                 if (data.state === "meta") {

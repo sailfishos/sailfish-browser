@@ -75,8 +75,6 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     setTitle("BrowserContent");
     setObjectName("WebView");
 
-    QMozContext::instance()->setPixelRatio(2.0);
-
     WebPageFactory* pageFactory = new WebPageFactory(this);
     connect(this, SIGNAL(webPageComponentChanged(QQmlComponent*)),
             pageFactory, SLOT(updateQmlComponent(QQmlComponent*)));

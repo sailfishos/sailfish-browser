@@ -2,7 +2,8 @@ TARGET = tst_webpages
 
 CONFIG += link_pkgconfig
 
-PKGCONFIG += mlite5
+PKGCONFIG += mlite5 sailfishwebengine
+INCLUDEPATH += $$system(pkg-config --cflags sailfishwebengine)
 
 QT += qml quick concurrent sql gui-private
 

@@ -62,7 +62,6 @@ void tst_declarativewebcontainer::cleanupTestCase()
 void tst_declarativewebcontainer::init()
 {
     SettingManager::instance()->setAutostartPrivateBrowsing(false);
-    EXPECT_CALL(*QMozContext::instance(), setPixelRatio(_));
     m_webContainer = new DeclarativeWebContainer();
 }
 

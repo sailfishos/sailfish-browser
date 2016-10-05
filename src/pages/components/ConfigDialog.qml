@@ -12,6 +12,7 @@
 
 import QtQuick 2.2
 import Sailfish.Silica 1.0
+import Sailfish.WebEngine 1.0
 
 Dialog {
     id: configDialog
@@ -19,14 +20,14 @@ Dialog {
     property var changedConfigs: ({})
 
     // Get all the preferences
-    Component.onCompleted: MozContext.notifyObservers("embedui:allprefs", {})
+    Component.onCompleted: WebEngine.notifyObservers("embedui:allprefs", {})
 
     // If dialog is accepted, save all the changed configs
     onAccepted: {
         for (var key in changedConfigs) {
-            MozContext.setPref(key, changedConfigs[key]);
+            WebEngineSettings.setPreference(key, changedConfigs[key]);
         }
-        MozContext.notifyObservers("embedui:saveprefs", {})
+        WebEngine.notifyObservers("embedui:saveprefs", {})
     }
 
     function filterModel(value) {
@@ -46,7 +47,7 @@ Dialog {
     }
 
     Connections {
-        target: MozContext
+        target: WebEngine
         onRecvObserve: {
             if (message === "embed:allprefs") {
                 var allprefs = data;

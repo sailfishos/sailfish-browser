@@ -78,7 +78,6 @@ void tst_webpages::cleanup()
 
 void tst_webpages::initialize()
 {
-    EXPECT_CALL(*QMozContext::instance(), setPixelRatio(_));
     DeclarativeWebContainer webContainer;
     webContainer.setForeground(true);
 
@@ -93,7 +92,6 @@ void tst_webpages::initialize()
 
 void tst_webpages::count()
 {
-    EXPECT_CALL(*QMozContext::instance(), setPixelRatio(_));
     DeclarativeWebContainer webContainer;
     m_webPages->initialize(&webContainer);
 
@@ -159,7 +157,6 @@ void tst_webpages::page()
 
     // set up test case
 
-    EXPECT_CALL(*QMozContext::instance(), setPixelRatio(_));
     DeclarativeWebContainer webContainer;
     m_webPages->initialize(&webContainer);
 
