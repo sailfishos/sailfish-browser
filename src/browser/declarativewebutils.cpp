@@ -32,7 +32,6 @@
 
 #include <math.h>
 #include "declarativewebutils.h"
-#include "qmozcontext.h"
 #include "browserpaths.h"
 
 static const QString gSystemComponentsTimeStamp("/var/lib/_MOZEMBED_CACHE_CLEAN_");

@@ -1,16 +1,15 @@
 TARGET = tst_webutils
 CONFIG += link_pkgconfig
 QMAKE_LFLAGS += -lgtest -lgmock
-PKGCONFIG += mlite5 sailfishwebengine
+PKGCONFIG += mlite5
 
-include(../mocks/qmozcontext/qmozcontext.pri)
+include(../mocks/webengine/webengine.pri)
 include(../test_common.pri)
 include(../../../common/opensearchconfigs.pri)
 include(../../../common/paths.pri)
 
 INCLUDEPATH += $$SRCDIR \
-    $$BROWSERSRCDIR \
-    $$system(pkg-config --cflags sailfishwebengine)
+    $$BROWSERSRCDIR
 
 SOURCES += tst_webutils.cpp \
            $$BROWSERSRCDIR/declarativewebutils.cpp
