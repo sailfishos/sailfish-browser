@@ -2,13 +2,13 @@ TARGET = tst_webpages
 
 CONFIG += link_pkgconfig
 
-PKGCONFIG += mlite5 sailfishwebengine
-INCLUDEPATH += $$system(pkg-config --cflags sailfishwebengine)
+PKGCONFIG += mlite5
 
 QT += qml quick concurrent sql gui-private
 
 QMAKE_LFLAGS += -lgtest -lgmock
 
+include(../mocks/webengine/webengine.pri)
 include(../mocks/qmozcontext/qmozcontext.pri)
 include(../mocks/qmozwindow/qmozwindow.pri)
 include(../mocks/webpagefactory/webpagefactory.pri)
