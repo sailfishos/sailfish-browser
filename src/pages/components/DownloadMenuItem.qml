@@ -12,6 +12,7 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
 import Sailfish.Browser 1.0
+import Sailfish.WebEngine 1.0
 
 MenuItem {
     id: root
@@ -38,14 +39,14 @@ MenuItem {
 
     onClicked: {
         if (downloadFileTargetUrl) {
-            MozContext.notifyObservers("embedui:download",
-                                       {
-                                           "msg": "addDownload",
-                                           "from": root.linkUrl,
-                                           "to": downloadFileTargetUrl,
-                                           "contentType": root.contentType,
-                                           "viewId": root.viewId
-                                       })
+            WebEngine.notifyObservers("embedui:download",
+                                      {
+                                          "msg": "addDownload",
+                                          "from": root.linkUrl,
+                                          "to": downloadFileTargetUrl,
+                                          "contentType": root.contentType,
+                                          "viewId": root.viewId
+                                      })
         }
     }
 }

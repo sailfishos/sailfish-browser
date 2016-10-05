@@ -11,7 +11,7 @@
 
 #include <QtTest>
 #include <QQuickView>
-#include <qmozcontext.h>
+#include <webenginesettings.h>
 
 #include "declarativehistorymodel.h"
 #include "persistenttabmodel.h"
@@ -114,7 +114,8 @@ void tst_webview::initTestCase()
 
     QCOMPARE(tabAddedSpy.count(), 1);
 
-    QMozContext::instance()->setPref(QString("media.resource_handler_disabled"), QVariant(true));
+    SailfishOS::WebEngineSettings *webEngineSettings = SailfishOS::WebEngineSettings::instance();
+    webEngineSettings->setPreference(QString("media.resource_handler_disabled"), QVariant(true));
 }
 
 void tst_webview::testNewTab_data()

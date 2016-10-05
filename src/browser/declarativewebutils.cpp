@@ -51,7 +51,7 @@ DeclarativeWebUtils::DeclarativeWebUtils()
     , m_homePage("/apps/sailfish-browser/settings/home_page", this)
 {
     updateWebEngineSettings();
-    connect(QMozContext::instance(), SIGNAL(recvObserve(QString, QVariant)),
+    connect(SailfishOS::WebEngine::instance(), SIGNAL(recvObserve(QString, QVariant)),
             this, SLOT(handleObserve(QString, QVariant)));
 
     QString path = BrowserPaths::dataLocation() + QStringLiteral("/.firstUseDone");
@@ -176,9 +176,9 @@ void DeclarativeWebUtils::setFirstUseDone(bool firstUseDone) {
 
 qreal DeclarativeWebUtils::cssPixelRatio() const
 {
-    QMozContext* mozContext = QMozContext::instance();
-    if (mozContext) {
-        return mozContext->pixelRatio();
+    SailfishOS::WebEngineSettings *webEngineSettings = SailfishOS::WebEngineSettings::instance();
+    if (webEngineSettings) {
+        return webEngineSettings->pixelRatio();
     }
     return 1.0;
 }

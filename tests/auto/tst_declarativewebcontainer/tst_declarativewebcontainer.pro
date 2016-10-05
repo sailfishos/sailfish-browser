@@ -4,7 +4,8 @@ CONFIG += link_pkgconfig
 
 QMAKE_LFLAGS += -lgtest -lgmock
 
-PKGCONFIG += mlite5 nemotransferengine-qt5
+PKGCONFIG += mlite5 nemotransferengine-qt5 sailfishwebengine
+INCLUDEPATH += $$system(pkg-config --cflags sailfishwebengine)
 
 QT += quick qml concurrent sql gui-private
 
