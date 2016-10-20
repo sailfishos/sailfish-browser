@@ -427,8 +427,7 @@ void DeclarativeWebPage::onRecvAsyncMessage(const QString& message, const QVaria
         setFullscreen(data.toMap().value(QString("fullscreen")).toBool());
     } else if (message == gDomContentLoadedMessage) {
         setContentLoaded();
-    }
-    else if (message == gContentOrientationChanged) {
+    } else if (message == gContentOrientationChanged) {
         QString orientation = data.toMap().value("orientation").toString();
         Qt::ScreenOrientation mappedOrientation = Qt::PortraitOrientation;
         if (orientation == QStringLiteral("landscape-primary")) {
@@ -438,7 +437,7 @@ void DeclarativeWebPage::onRecvAsyncMessage(const QString& message, const QVaria
         } else if (orientation == QStringLiteral("portrait-secondary")) {
             mappedOrientation = Qt::InvertedPortraitOrientation;
         }
-        contentOrientationChanged(mappedOrientation);
+        emit contentOrientationChanged(mappedOrientation);
     }
 }
 
