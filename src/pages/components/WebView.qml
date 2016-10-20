@@ -117,7 +117,7 @@ WebContainer {
 
             // There needs to be enough content for enabling chrome gesture
             chromeGestureThreshold: toolbarHeight / 2
-            chromeGestureEnabled: (contentHeight > fullscreenHeight + toolbarHeight) && !forcedChrome && enabled && !webView.imOpened
+            chromeGestureEnabled: !forcedChrome && enabled && !webView.imOpened
 
             onGrabResult: tabModel.updateThumbnailPath(tabId, fileName)
 
