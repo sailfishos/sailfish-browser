@@ -105,6 +105,15 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
             setContentLoaded();
         }
     });
+
+    // When loading start reset state of chrome.
+    connect(this, &QOpenGLWebPage::loadingChanged, [this]() {
+        if (loading()) {
+            forceChrome(false);
+            setChrome(true);
+        }
+    });
+
     connect(this, SIGNAL(fullscreenHeightChanged()), this, SLOT(updateViewMargins()));
 }
 
@@ -359,8 +368,13 @@ void DeclarativeWebPage::thumbnailReady()
 
 void DeclarativeWebPage::updateViewMargins()
 {
+    if (m_container && !m_container->foreground()) {
+        return;
+    }
+
     // Reset margins always when fullscreen mode is enabled.
     QMargins margins;
+    bool chromeVisible = false;
     if (!m_fullscreen) {
         // Don't update margins while panning, flicking, or pinching.
         if (moving() || m_virtualKeyboardMargin > 0) {
@@ -370,9 +384,11 @@ void DeclarativeWebPage::updateViewMargins()
         qreal threshold = qMax(m_fullScreenHeight * 1.5f, (m_fullScreenHeight + (m_toolbarHeight*2)));
         if (contentHeight() < threshold) {
             margins.setBottom(m_toolbarHeight);
+            chromeVisible = true;
         }
     }
 
+    forceChrome(chromeVisible);
     setMargins(margins);
 }
 
