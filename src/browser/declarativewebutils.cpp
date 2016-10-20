@@ -50,8 +50,8 @@ DeclarativeWebUtils::DeclarativeWebUtils()
     , m_homePage("/apps/sailfish-browser/settings/home_page", this)
 {
     updateWebEngineSettings();
-    connect(SailfishOS::WebEngine::instance(), SIGNAL(recvObserve(QString, QVariant)),
-            this, SLOT(handleObserve(QString, QVariant)));
+    connect(SailfishOS::WebEngine::instance(), &SailfishOS::WebEngine::recvObserve,
+            this, &DeclarativeWebUtils::handleObserve);
 
     QString path = BrowserPaths::dataLocation() + QStringLiteral("/.firstUseDone");
     m_firstUseDone = fileExists(path);

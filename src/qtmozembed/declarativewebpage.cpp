@@ -14,6 +14,7 @@
 #include "dbmanager.h"
 #include "browserpaths.h"
 
+#include <webenginesettings.h>
 #include <qmozwindow.h>
 #include <QGuiApplication>
 #include <QtConcurrent>
@@ -417,7 +418,7 @@ void DeclarativeWebPage::sendVkbOpenCompositionMetrics()
 
     QVariantMap map;
     map.insert("imOpen", m_virtualKeyboardMargin > 0);
-    map.insert("pixelRatio", QMozContext::instance()->pixelRatio());
+    map.insert("pixelRatio", SailfishOS::WebEngineSettings::instance()->pixelRatio());
     map.insert("bottomMargin", m_virtualKeyboardMargin);
     map.insert("screenWidth", winWidth);
     map.insert("screenHeight", winHeight);
