@@ -351,6 +351,12 @@ bool DeclarativeWebContainer::readyToPaint() const
 void DeclarativeWebContainer::setReadyToPaint(bool ready)
 {
     if (m_mozWindow && m_mozWindow->setReadyToPaint(ready)) {
+        if (ready) {
+            m_mozWindow->resumeRendering();
+        } else {
+            m_mozWindow->suspendRendering();
+        }
+
         emit readyToPaintChanged();
     }
 }
