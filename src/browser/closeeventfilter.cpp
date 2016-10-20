@@ -10,8 +10,8 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include <QCoreApplication>
+#include <webengine.h>
 #include "closeeventfilter.h"
-#include "qmozcontext.h"
 #include "declarativewebutils.h"
 #include "dbmanager.h"
 
@@ -19,9 +19,10 @@ CloseEventFilter::CloseEventFilter(DownloadManager *dlMgr, QObject *parent)
     : QObject(parent),
       m_downloadManager(dlMgr)
 {
-    connect(QMozContext::instance(), &QMozContext::lastWindowDestroyed,
+    SailfishOS::WebEngine *webEngine = SailfishOS::WebEngine::instance();
+    connect(webEngine, &SailfishOS::WebEngine::lastWindowDestroyed,
             this, &CloseEventFilter::onLastWindowDestroyed);
-    connect(QMozContext::instance(), &QMozContext::contextDestroyed,
+    connect(webEngine, &SailfishOS::WebEngine::contextDestroyed,
             this, &CloseEventFilter::onContextDestroyed);
     connect(&m_shutdownWatchdog, &QTimer::timeout,
             this, &CloseEventFilter::onWatchdogTimeout);
@@ -34,7 +35,7 @@ void CloseEventFilter::stopApplication()
         DBManager::instance()->removeAllTabs();
     }
 
-    QMozContext::instance()->stopEmbedding();
+    SailfishOS::WebEngine::instance()->stopEmbedding();
     // Give the engine 5 seconds to shut down. If it fails terminate
     // with a fatal error.
     m_shutdownWatchdog.start(5000);

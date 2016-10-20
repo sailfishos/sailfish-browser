@@ -22,7 +22,6 @@
 #include <QQuickView>
 #include <QTimer>
 #include <QUrl>
-#include <qmozcontext.h>
 #include <webengine.h>
 #include <webenginesettings.h>
 
@@ -42,7 +41,6 @@ Browser::Browser(QQuickView *view, QObject *parent)
     Q_ASSERT(qGuiApp);
 
     SailfishOS::WebEngine::initialize("mozembed");
-    SailfishOS::WebEngine *webEngine = SailfishOS::WebEngine::instance();
     SailfishOS::WebEngineSettings::initialize();
 
     DeclarativeWebUtils *utils = DeclarativeWebUtils::instance();
@@ -51,7 +49,6 @@ Browser::Browser(QQuickView *view, QObject *parent)
     utils->clearStartupCacheIfNeeded();
 
     d->view->rootContext()->setContextProperty("WebUtils", utils);
-    d->view->rootContext()->setContextProperty("MozContext", webEngine);
     d->view->rootContext()->setContextProperty("Settings", SettingManager::instance());
     d->view->rootContext()->setContextProperty("DownloadManager", downloadManager);
 

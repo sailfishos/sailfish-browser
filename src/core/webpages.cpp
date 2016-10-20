@@ -20,11 +20,11 @@
 #include <QQmlContext>
 #include <QMapIterator>
 #include <QRectF>
+#include <webengine.h>
 
 #include "webpages.h"
 #include "declarativewebcontainer.h"
 #include "declarativewebpage.h"
-#include "qmozcontext.h"
 #include "tab.h"
 #include "webpagefactory.h"
 
@@ -233,11 +233,12 @@ void WebPages::handleMemNotify(const QString &memoryLevel)
             connect(m_activePages.activeWebPage(), SIGNAL(completedChanged()), this, SLOT(delayVirtualization()), Qt::UniqueConnection);
         }
 
-        QMozContext::instance()->notifyObservers(QString("memory-pressure"), QString("low-memory"));
+        SailfishOS::WebEngine *webEngine = SailfishOS::WebEngine::instance();
+        webEngine->notifyObservers(QString("memory-pressure"), QString("low-memory"));
         if (!m_webContainer->foreground() &&
                 (QDateTime::currentMSecsSinceEpoch() - m_backgroundTimestamp) > gMemoryPressureTimeout) {
             m_backgroundTimestamp = QDateTime::currentMSecsSinceEpoch();
-            QMozContext::instance()->notifyObservers(QString("memory-pressure"), QString("heap-minimize"));
+            webEngine->notifyObservers(QString("memory-pressure"), QString("heap-minimize"));
         }
     }
 }

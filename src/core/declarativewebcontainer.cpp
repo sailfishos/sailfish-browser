@@ -20,6 +20,7 @@
 #include "webpages.h"
 #include "browserpaths.h"
 
+#include <webengine.h>
 #include <QTimerEvent>
 #include <QScreen>
 #include <QMetaMethod>
@@ -86,8 +87,10 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     setTabModel(privateMode() ? m_privateTabModel.data() : m_persistentTabModel.data());
 
     connect(DownloadManager::instance(), SIGNAL(downloadStarted()), this, SLOT(onDownloadStarted()));
-    connect(QMozContext::instance(), SIGNAL(onInitialized()), this, SLOT(initialize()));
-    connect(QMozContext::instance(), &QMozContext::lastViewDestroyed,
+    SailfishOS::WebEngine *webEngine = SailfishOS::WebEngine::instance();
+    connect(webEngine, &SailfishOS::WebEngine::onInitialized,
+            this, &DeclarativeWebContainer::initialize);
+    connect(webEngine, &SailfishOS::WebEngine::lastViewDestroyed,
             this, &DeclarativeWebContainer::onLastViewDestroyed);
 
     QString cacheLocation = BrowserPaths::cacheLocation();
@@ -109,7 +112,8 @@ DeclarativeWebContainer::~DeclarativeWebContainer()
 
     QMutexLocker lock(&m_clearSurfaceTaskMutex);
     if (m_clearSurfaceTask) {
-        QMozContext::instance()->CancelTask(m_clearSurfaceTask);
+        SailfishOS::WebEngine *webEngine = SailfishOS::WebEngine::instance();
+        webEngine->CancelTask(m_clearSurfaceTask);
     }
 }
 
@@ -495,7 +499,8 @@ bool DeclarativeWebContainer::postClearWindowSurfaceTask()
     if (m_clearSurfaceTask) {
         return true;
     }
-    m_clearSurfaceTask = QMozContext::instance()->PostCompositorTask(
+    SailfishOS::WebEngine *webEngine = SailfishOS::WebEngine::instance();
+    m_clearSurfaceTask = webEngine->PostCompositorTask(
         &DeclarativeWebContainer::clearWindowSurfaceTask, this);
     return m_clearSurfaceTask != 0;
 }
@@ -730,7 +735,7 @@ void DeclarativeWebContainer::onActiveTabChanged(int activeTabId)
 
 void DeclarativeWebContainer::initialize()
 {
-    if (QMozContext::instance()->initialized() && !m_mozWindow) {
+    if (SailfishOS::WebEngine::instance()->initialized() && !m_mozWindow) {
         m_mozWindow.reset(new QMozWindow(QWindow::size()));
         connect(m_mozWindow.data(), &QMozWindow::requestGLContext,
                 this, &DeclarativeWebContainer::createGLContext, Qt::DirectConnection);
@@ -926,7 +931,7 @@ void DeclarativeWebContainer::updatePageFocus(bool focus)
 
 bool DeclarativeWebContainer::canInitialize() const
 {
-    return QMozContext::instance()->initialized() && m_model && m_model->loaded();
+    return SailfishOS::WebEngine::instance()->initialized() && m_model && m_model->loaded();
 }
 
 void DeclarativeWebContainer::loadTab(const Tab& tab, bool force)
