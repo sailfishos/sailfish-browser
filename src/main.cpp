@@ -102,6 +102,9 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     translator.load(QLocale(), "sailfish-browser", "-", translationPath);
     qApp->installTranslator(&translator);
 
+    //% "Search the web"
+    QT_TRID_NOOP("sailfish-browser-quickaction-la-search_the_web");
+
     //% "Browser"
     view->setTitle(qtTrId("sailfish-browser-ap-name"));
 
