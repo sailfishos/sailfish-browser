@@ -124,6 +124,19 @@ WebContainer {
             // Image data is base64 encoded which can be directly used as source in Image element
             onThumbnailResult: tabModel.updateThumbnailPath(tabId, data)
 
+            onAtYBeginningChanged: {
+                if (atYBeginning && activeWebPage) {
+                    chrome = true
+                }
+            }
+
+            onAtYEndChanged: {
+                // Don't hide chrome if content lenght is short e.i. forcedChrome is enabled.
+                if (atYEnd && !forcedChrome && chrome && activeWebPage) {
+                    chrome = false
+                }
+            }
+
             onUrlChanged: {
                 if (url == "about:blank") return
 
