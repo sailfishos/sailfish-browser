@@ -125,14 +125,14 @@ WebContainer {
             onThumbnailResult: tabModel.updateThumbnailPath(tabId, data)
 
             onAtYBeginningChanged: {
-                if (atYBeginning && activeWebPage) {
+                if (atYBeginning && activeWebPage && domContentLoaded) {
                     chrome = true
                 }
             }
 
             onAtYEndChanged: {
                 // Don't hide chrome if content lenght is short e.i. forcedChrome is enabled.
-                if (atYEnd && !forcedChrome && chrome && activeWebPage) {
+                if (atYEnd && !forcedChrome && chrome && activeWebPage && domContentLoaded) {
                     chrome = false
                 }
             }
