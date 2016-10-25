@@ -56,15 +56,12 @@ UserPrompt {
             EnterKey.onClicked: password.focus = true
         }
 
-        TextField {
+        PasswordField {
             id: password
 
             width: parent.width
-            echoMode: TextInput.Password
             //% "Enter password"
             placeholderText: qsTrId("sailfish_browser-la-enter_password")
-            //% "Password"
-            label: qsTrId("sailfish_browser-la-password")
             EnterKey.iconSource: (username.text.length > 0 && text.length > 0) ? "image://theme/icon-m-enter-accept"
                                                                                : "image://theme/icon-m-enter-next"
             EnterKey.onClicked: {
