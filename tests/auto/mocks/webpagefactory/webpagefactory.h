@@ -26,6 +26,9 @@ public:
 
     MOCK_METHOD3(createWebPage, DeclarativeWebPage*(DeclarativeWebContainer*, const Tab&, int));
 
+signals:
+    void aboutToInitialize(DeclarativeWebPage *webPage);
+
 public slots:
     void updateQmlComponent(QQmlComponent*) {};
 };

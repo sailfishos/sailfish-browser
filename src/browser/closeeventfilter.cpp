@@ -44,8 +44,8 @@ void CloseEventFilter::stopApplication()
 void CloseEventFilter::onLastWindowDestroyed()
 {
     if (m_downloadManager->existActiveTransfers()) {
-        connect(m_downloadManager, SIGNAL(allTransfersCompleted()),
-                this, SLOT(stopApplication()));
+        connect(m_downloadManager, &DownloadManager::allTransfersCompleted,
+                this, &CloseEventFilter::stopApplication);
     } else {
         stopApplication();
     }
@@ -63,7 +63,7 @@ void CloseEventFilter::onWatchdogTimeout()
 
 void CloseEventFilter::cancelStopApplication()
 {
-    disconnect(m_downloadManager, SIGNAL(allTransfersCompleted()),
-               this, SLOT(stopApplication()));
+    disconnect(m_downloadManager, &DownloadManager::allTransfersCompleted,
+               this, &CloseEventFilter::stopApplication);
     m_shutdownWatchdog.stop();
 }

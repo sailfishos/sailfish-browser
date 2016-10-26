@@ -93,10 +93,10 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
     loadFrameScript("chrome://embedlite/content/SelectAsyncHelper.js");
     loadFrameScript("chrome://embedlite/content/embedhelper.js");
 
-    connect(this, SIGNAL(recvAsyncMessage(const QString, const QVariant)),
-            this, SLOT(onRecvAsyncMessage(const QString&, const QVariant&)));
-    connect(&m_grabWritter, SIGNAL(finished()), this, SLOT(grabWritten()));
-    connect(this, SIGNAL(urlChanged()), this, SLOT(onUrlChanged()));
+    connect(this, &DeclarativeWebPage::recvAsyncMessage,
+            this, &DeclarativeWebPage::onRecvAsyncMessage);
+    connect(&m_grabWritter, &QFutureWatcher<QString>::finished, this, &DeclarativeWebPage::grabWritten);
+    connect(this, &DeclarativeWebPage::urlChanged, this, &DeclarativeWebPage::onUrlChanged);
     connect(this, &QOpenGLWebPage::contentHeightChanged, this, &DeclarativeWebPage::updateViewMargins);
     connect(this, &QOpenGLWebPage::loadedChanged, [this]() {
         if (loaded()) {
@@ -115,7 +115,8 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
         }
     });
 
-    connect(this, SIGNAL(fullscreenHeightChanged()), this, SLOT(updateViewMargins()));
+    connect(this, &DeclarativeWebPage::fullscreenHeightChanged,
+            this, &DeclarativeWebPage::updateViewMargins);
 }
 
 DeclarativeWebPage::~DeclarativeWebPage()
@@ -136,7 +137,8 @@ void DeclarativeWebPage::setContainer(DeclarativeWebContainer *container)
     if (m_container != container) {
         m_container = container;
         if (m_container) {
-            connect(m_container, SIGNAL(portraitChanged()), this, SLOT(sendVkbOpenCompositionMetrics()));
+            connect(m_container.data(), &DeclarativeWebContainer::portraitChanged,
+                    this, &DeclarativeWebPage::sendVkbOpenCompositionMetrics);
         }
         Q_ASSERT(container->mozWindow());
         setMozWindow(container->mozWindow());
@@ -155,14 +157,14 @@ void DeclarativeWebPage::setInitialTab(const Tab& tab)
 
     m_initialTab = tab;
     emit tabIdChanged();
-    connect(DBManager::instance(), SIGNAL(tabHistoryAvailable(int, QList<Link>,int)),
-            this, SLOT(onTabHistoryAvailable(int, QList<Link>,int)));
+    connect(DBManager::instance(), &DBManager::tabHistoryAvailable,
+            this, &DeclarativeWebPage::onTabHistoryAvailable);
     DBManager::instance()->getTabHistory(tabId());
 }
 
 void DeclarativeWebPage::onUrlChanged()
 {
-    disconnect(this, SIGNAL(urlChanged()), this, SLOT(onUrlChanged()));
+    disconnect(this, &DeclarativeWebPage::urlChanged, this, &DeclarativeWebPage::onUrlChanged);
     m_urlReady = true;
     restoreHistory();
 }
@@ -299,7 +301,8 @@ void DeclarativeWebPage::grabToFile(const QSize &size)
     m_grabResult = grabToImage(size);
     if (m_grabResult) {
         if (!m_grabResult->isReady()) {
-            connect(m_grabResult.data(), SIGNAL(ready()), this, SLOT(grabResultReady()));
+            connect(m_grabResult.data(), &QMozGrabResult::ready,
+                    this, &DeclarativeWebPage::grabResultReady);
         } else {
             grabResultReady();
         }
@@ -311,7 +314,8 @@ void DeclarativeWebPage::grabThumbnail(const QSize &size)
 {
     m_thumbnailResult = grabToImage(size);
     if (m_thumbnailResult) {
-        connect(m_thumbnailResult.data(), SIGNAL(ready()), this, SLOT(thumbnailReady()));
+        connect(m_thumbnailResult.data(), &QMozGrabResult::ready,
+                this, &DeclarativeWebPage::thumbnailReady);
     }
 }
 

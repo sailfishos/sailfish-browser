@@ -77,8 +77,8 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     setObjectName("WebView");
 
     WebPageFactory* pageFactory = new WebPageFactory(this);
-    connect(this, SIGNAL(webPageComponentChanged(QQmlComponent*)),
-            pageFactory, SLOT(updateQmlComponent(QQmlComponent*)));
+    connect(this, &DeclarativeWebContainer::webPageComponentChanged,
+            pageFactory, &WebPageFactory::updateQmlComponent);
     m_webPages = new WebPages(pageFactory, this);
     int maxTabid = DBManager::instance()->getMaxTabId();
     m_persistentTabModel = new PersistentTabModel(maxTabid + 1, this);
@@ -86,7 +86,8 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
 
     setTabModel(privateMode() ? m_privateTabModel.data() : m_persistentTabModel.data());
 
-    connect(DownloadManager::instance(), SIGNAL(downloadStarted()), this, SLOT(onDownloadStarted()));
+    connect(DownloadManager::instance(), &DownloadManager::downloadStarted,
+            this, &DeclarativeWebContainer::onDownloadStarted);
     SailfishOS::WebEngine *webEngine = SailfishOS::WebEngine::instance();
     connect(webEngine, &SailfishOS::WebEngine::onInitialized,
             this, &DeclarativeWebContainer::initialize);
@@ -98,7 +99,8 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
         return;
     }
 
-    connect(this, SIGNAL(foregroundChanged()), this, SLOT(updateWindowFlags()));
+    connect(this, &DeclarativeWebContainer::foregroundChanged,
+            this, &DeclarativeWebContainer::updateWindowFlags);
 
     qApp->installEventFilter(this);
 }
@@ -140,23 +142,34 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage, bool trigg
         setActiveTabRendered(false);
 
         if (m_webPage) {
-            connect(m_webPage, SIGNAL(canGoBackChanged()), this, SIGNAL(canGoBackChanged()), Qt::UniqueConnection);
-            connect(m_webPage, SIGNAL(canGoForwardChanged()), this, SIGNAL(canGoForwardChanged()), Qt::UniqueConnection);
-            connect(m_webPage, SIGNAL(urlChanged()), this, SIGNAL(urlChanged()), Qt::UniqueConnection);
-            connect(m_webPage, SIGNAL(titleChanged()), this, SIGNAL(titleChanged()), Qt::UniqueConnection);
-            connect(m_webPage, SIGNAL(windowCloseRequested()), this, SLOT(closeWindow()), Qt::UniqueConnection);
-            connect(m_webPage, SIGNAL(loadingChanged()), this, SLOT(updateLoading()), Qt::UniqueConnection);
-            connect(m_webPage, SIGNAL(loadProgressChanged()), this, SLOT(updateLoadProgress()), Qt::UniqueConnection);
-            connect(m_webPage, SIGNAL(contentOrientationChanged(Qt::ScreenOrientation)),
-                    this, SLOT(handleContentOrientationChanged(Qt::ScreenOrientation)), Qt::UniqueConnection);
+            connect(m_webPage.data(), &DeclarativeWebPage::canGoBackChanged,
+                    this, &DeclarativeWebContainer::canGoBackChanged, Qt::UniqueConnection);
+            connect(m_webPage.data(), &DeclarativeWebPage::canGoForwardChanged,
+                    this, &DeclarativeWebContainer::canGoForwardChanged, Qt::UniqueConnection);
+            connect(m_webPage.data(), &DeclarativeWebPage::urlChanged,
+                    this, &DeclarativeWebContainer::urlChanged, Qt::UniqueConnection);
+            connect(m_webPage.data(), &DeclarativeWebPage::titleChanged,
+                    this, &DeclarativeWebContainer::titleChanged, Qt::UniqueConnection);
+            connect(m_webPage.data(), &DeclarativeWebPage::windowCloseRequested,
+                    this, &DeclarativeWebContainer::closeWindow, Qt::UniqueConnection);
+            connect(m_webPage.data(), &DeclarativeWebPage::loadingChanged,
+                    this, &DeclarativeWebContainer::updateLoading, Qt::UniqueConnection);
+            connect(m_webPage.data(), &DeclarativeWebPage::loadProgressChanged,
+                    this, &DeclarativeWebContainer::updateLoadProgress, Qt::UniqueConnection);
+            connect(m_webPage.data(), &DeclarativeWebPage::contentOrientationChanged,
+                    this, &DeclarativeWebContainer::handleContentOrientationChanged, Qt::UniqueConnection);
 
             // NB: these signals are not disconnected upon setting current m_webPage.
-            connect(m_webPage, SIGNAL(urlChanged()), m_model, SLOT(onUrlChanged()), Qt::UniqueConnection);
-            connect(m_webPage, SIGNAL(titleChanged()), m_model, SLOT(onTitleChanged()), Qt::UniqueConnection);
+            connect(m_webPage.data(), &DeclarativeWebPage::urlChanged,
+                    m_model.data(), &DeclarativeTabModel::onUrlChanged, Qt::UniqueConnection);
+            connect(m_webPage.data(), &DeclarativeWebPage::titleChanged,
+                    m_model.data(), &DeclarativeTabModel::onTitleChanged, Qt::UniqueConnection);
 
             // Wait for one frame to be rendered and schedule update if tab is ready to render.
-            connect(m_mozWindow.data(), SIGNAL(compositingFinished()), this, SLOT(updateActiveTabRendered()), Qt::UniqueConnection);
-            connect(m_webPage, SIGNAL(domContentLoadedChanged()), this, SLOT(updateActiveTabRendered()), Qt::UniqueConnection);
+            connect(m_mozWindow.data(), &QMozWindow::compositingFinished,
+                    this, &DeclarativeWebContainer::updateActiveTabRendered, Qt::UniqueConnection);
+            connect(m_webPage.data(), &DeclarativeWebPage::domContentLoadedChanged,
+                    this, &DeclarativeWebContainer::updateActiveTabRendered, Qt::UniqueConnection);
 
             if (m_webPage->completed() && m_webPage->active() && m_webPage->domContentLoaded()) {
                 m_webPage->update();
@@ -194,11 +207,16 @@ void DeclarativeWebContainer::setTabModel(DeclarativeTabModel *model)
         m_model = model;
         int newCount = 0;
         if (m_model) {
-            connect(m_model, SIGNAL(activeTabChanged(int)), this, SLOT(onActiveTabChanged(int)));
-            connect(m_model, SIGNAL(activeTabChanged(int)), this, SIGNAL(tabIdChanged()));
-            connect(m_model, SIGNAL(loadedChanged()), this, SLOT(initialize()));
-            connect(m_model, SIGNAL(tabClosed(int)), this, SLOT(releasePage(int)));
-            connect(m_model, SIGNAL(newTabRequested(QString,QString,int)), this, SLOT(onNewTabRequested(QString,QString,int)));
+            connect(m_model.data(), &DeclarativeTabModel::activeTabChanged,
+                    this, &DeclarativeWebContainer::onActiveTabChanged);
+            connect(m_model.data(), &DeclarativeTabModel::activeTabChanged,
+                    this, &DeclarativeWebContainer::tabIdChanged);
+            connect(m_model.data(), &DeclarativeTabModel::loadedChanged,
+                    this, &DeclarativeWebContainer::initialize);
+            connect(m_model.data(), &DeclarativeTabModel::tabClosed,
+                    this, &DeclarativeWebContainer::releasePage);
+            connect(m_model.data(), &DeclarativeTabModel::newTabRequested,
+                    this, &DeclarativeWebContainer::onNewTabRequested);
             newCount = m_model->count();
         }
         emit tabModelChanged();
@@ -895,8 +913,8 @@ void DeclarativeWebContainer::updateActiveTabRendered()
 
     setActiveTabRendered(true);
     // One frame rendered so let's disconnect.
-    disconnect(m_mozWindow.data(), SIGNAL(compositingFinished()),
-               this, SLOT(updateActiveTabRendered()));
+    disconnect(m_mozWindow.data(), &QMozWindow::compositingFinished,
+               this, &DeclarativeWebContainer::updateActiveTabRendered);
 }
 
 void DeclarativeWebContainer::onLastViewDestroyed()

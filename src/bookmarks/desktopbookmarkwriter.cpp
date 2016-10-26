@@ -20,7 +20,8 @@ static bool dbw_testMode = false;
 DesktopBookmarkWriter::DesktopBookmarkWriter(QObject *parent)
     : QObject(parent)
 {
-    connect(&m_writter, SIGNAL(finished()), this, SLOT(desktopFileWritten()));
+    connect(&m_writter, &QFutureWatcher<QString>::finished,
+            this, &DesktopBookmarkWriter::desktopFileWritten);
 }
 
 DesktopBookmarkWriter::~DesktopBookmarkWriter()

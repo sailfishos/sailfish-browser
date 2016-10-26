@@ -56,7 +56,8 @@ DeclarativeWebUtils::DeclarativeWebUtils()
     QString path = BrowserPaths::dataLocation() + QStringLiteral("/.firstUseDone");
     m_firstUseDone = fileExists(path);
 
-    connect(&m_homePage, SIGNAL(valueChanged()), this, SIGNAL(homePageChanged()));
+    connect(&m_homePage, &MGConfItem::valueChanged,
+            this, &DeclarativeWebUtils::homePageChanged);
 }
 
 DeclarativeWebUtils::~DeclarativeWebUtils()

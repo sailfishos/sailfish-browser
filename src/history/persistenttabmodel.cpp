@@ -18,8 +18,8 @@
 PersistentTabModel::PersistentTabModel(int nextTabId, DeclarativeWebContainer *webContainer)
     : DeclarativeTabModel(nextTabId, webContainer)
 {
-    connect(DBManager::instance(), SIGNAL(tabsAvailable(QList<Tab>)),
-            this, SLOT(tabsAvailable(QList<Tab>)));
+    connect(DBManager::instance(), &DBManager::tabsAvailable,
+            this, &PersistentTabModel::tabsAvailable);
 
     DBManager::instance()->getAllTabs();
 }
@@ -74,8 +74,8 @@ void PersistentTabModel::tabsAvailable(const QList<Tab> &tabs)
         emit loadedChanged();
     }
 
-    connect(this, SIGNAL(activeTabIndexChanged()),
-            this, SLOT(saveActiveTab()), Qt::UniqueConnection);
+    connect(this, &PersistentTabModel::activeTabIndexChanged,
+            this, &PersistentTabModel::saveActiveTab, Qt::UniqueConnection);
 }
 
 void PersistentTabModel::createTab(const Tab &tab) {

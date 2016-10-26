@@ -16,10 +16,10 @@
 DeclarativeHistoryModel::DeclarativeHistoryModel(QObject *parent)
     : QAbstractListModel(parent)
 {
-    connect(DBManager::instance(), SIGNAL(historyAvailable(QList<Link>)),
-            this, SLOT(historyAvailable(QList<Link>)));
-    connect(DBManager::instance(), SIGNAL(titleChanged(QString,QString)),
-            this, SLOT(updateTitle(QString,QString)));
+    connect(DBManager::instance(), &DBManager::historyAvailable,
+            this, &DeclarativeHistoryModel::historyAvailable);
+    connect(DBManager::instance(), &DBManager::titleChanged,
+            this, &DeclarativeHistoryModel::updateTitle);
 }
 
 QHash<int, QByteArray> DeclarativeHistoryModel::roleNames() const
