@@ -94,7 +94,8 @@ void WebPageQueue::release(int tabId,  bool virtualize)
                 pageEntry->webPage->setParent(0);
                 delete pageEntry->webPage;
             } else {
-                QObject::connect(pageEntry->webPage, SIGNAL(completedChanged()), pageEntry->webPage, SLOT(deleteLater()));
+                QObject::connect(pageEntry->webPage.data(), &DeclarativeWebPage::completedChanged,
+                                 pageEntry->webPage.data(), &QObject::deleteLater);
             }
         }
 

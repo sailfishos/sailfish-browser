@@ -38,10 +38,10 @@ SettingManager::SettingManager(QObject *parent)
     // Look and feel related settings
     m_toolbarSmall = new MGConfItem("/apps/sailfish-browser/settings/toolbar_small", this);
     m_toolbarLarge = new MGConfItem("/apps/sailfish-browser/settings/toolbar_large", this);
-    connect(m_toolbarSmall, SIGNAL(valueChanged()), this, SIGNAL(toolbarSmallChanged()));
-    connect(m_toolbarLarge, SIGNAL(valueChanged()), this, SIGNAL(toolbarLargeChanged()));
-    connect(SailfishOS::WebEngine::instance(), SIGNAL(recvObserve(QString, QVariant)),
-            this, SLOT(handleObserve(QString, QVariant)));
+    connect(m_toolbarSmall, &MGConfItem::valueChanged, this, &SettingManager::toolbarSmallChanged);
+    connect(m_toolbarLarge, &MGConfItem::valueChanged, this, &SettingManager::toolbarLargeChanged);
+    connect(SailfishOS::WebEngine::instance(), &SailfishOS::WebEngine::recvObserve,
+            this, &SettingManager::handleObserve);
 }
 
 bool SettingManager::clearHistoryRequested() const
@@ -63,18 +63,18 @@ bool SettingManager::initialize()
     setSearchEngine();
     doNotTrack();
 
-    connect(m_clearHistoryConfItem, SIGNAL(valueChanged()),
-            this, SLOT(clearHistory()));
-    connect(m_clearCookiesConfItem, SIGNAL(valueChanged()),
-            this, SLOT(clearCookies()));
-    connect(m_clearPasswordsConfItem, SIGNAL(valueChanged()),
-            this, SLOT(clearPasswords()));
-    connect(m_clearCacheConfItem, SIGNAL(valueChanged()),
-            this, SLOT(clearCache()));
-    connect(m_searchEngineConfItem, SIGNAL(valueChanged()),
-            this, SLOT(setSearchEngine()));
-    connect(m_doNotTrackConfItem, SIGNAL(valueChanged()),
-            this, SLOT(doNotTrack()));
+    connect(m_clearHistoryConfItem, &MGConfItem::valueChanged,
+            this, &SettingManager::clearHistory);
+    connect(m_clearCookiesConfItem, &MGConfItem::valueChanged,
+            this, &SettingManager::clearCookies);
+    connect(m_clearPasswordsConfItem, &MGConfItem::valueChanged,
+            this, &SettingManager::clearPasswords);
+    connect(m_clearCacheConfItem, &MGConfItem::valueChanged,
+            this, &SettingManager::clearCache);
+    connect(m_searchEngineConfItem, &MGConfItem::valueChanged,
+            this, &SettingManager::setSearchEngine);
+    connect(m_doNotTrackConfItem, &MGConfItem::valueChanged,
+            this, &SettingManager::doNotTrack);
 
     m_initialized = true;
     return clearedData;

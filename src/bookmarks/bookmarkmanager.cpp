@@ -29,8 +29,8 @@ BookmarkManager::BookmarkManager()
 
     clearBookmarks();
 
-    connect(m_clearBookmarksConfItem, SIGNAL(valueChanged()),
-            this, SLOT(clearBookmarks()));
+    connect(m_clearBookmarksConfItem.data(), &MGConfItem::valueChanged,
+            this, &BookmarkManager::clearBookmarks);
 }
 
 BookmarkManager* BookmarkManager::instance()

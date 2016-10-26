@@ -130,22 +130,22 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     qmlRegisterType<InputRegion>(uri, 1, 0, "InputRegion");
 
     Browser *browser = new Browser(view.data(), app.data());
-    browser->connect(service, SIGNAL(openUrlRequested(QString)),
-                     browser, SLOT(openUrl(QString)));
-    browser->connect(service, SIGNAL(activateNewTabViewRequested()),
-                     browser, SLOT(openNewTabView()));
-    browser->connect(service, SIGNAL(dumpMemoryInfoRequested(QString)),
-                     browser, SLOT(dumpMemoryInfo(QString)));
+    browser->connect(service, &BrowserService::openUrlRequested,
+                     browser, &Browser::openUrl);
+    browser->connect(service, &BrowserService::activateNewTabViewRequested,
+                     browser, &Browser::openNewTabView);
+    browser->connect(service, &BrowserService::dumpMemoryInfoRequested,
+                     browser, &Browser::dumpMemoryInfo);
 
-    browser->connect(uiService, SIGNAL(openUrlRequested(QString)),
-                     browser, SLOT(openUrl(QString)));
-    browser->connect(uiService, SIGNAL(activateNewTabViewRequested()),
-                     browser, SLOT(openNewTabView()));
+    browser->connect(uiService, &BrowserUIService::openUrlRequested,
+                     browser, &Browser::openUrl);
+    browser->connect(uiService, &BrowserUIService::activateNewTabViewRequested,
+                     browser, &Browser::openNewTabView);
 
-    browser->connect(service, SIGNAL(cancelTransferRequested(int)),
-                     browser, SLOT(cancelDownload(int)));
-    browser->connect(service, SIGNAL(restartTransferRequested(int)),
-                     browser, SLOT(restartDownload(int)));
+    browser->connect(service, &BrowserService::cancelTransferRequested,
+                     browser, &Browser::cancelDownload);
+    browser->connect(service, &BrowserService::restartTransferRequested,
+                     browser, &Browser::restartDownload);
     browser->load();
     return app->exec();
 }

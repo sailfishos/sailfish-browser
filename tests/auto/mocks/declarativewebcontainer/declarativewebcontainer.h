@@ -29,6 +29,9 @@ public:
     int findParentTabId(int) const;
     MOCK_CONST_METHOD0(webPage, DeclarativeWebPage*());
     MOCK_CONST_METHOD0(privateMode, bool());
+
+signals:
+    void portraitChanged();
 };
 
 
