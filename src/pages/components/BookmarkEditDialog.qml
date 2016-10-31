@@ -11,7 +11,7 @@
 
 import QtQuick 2.1
 import Sailfish.Silica 1.0
-import Sailfish.Browser 1.0
+import Sailfish.WebView.Popups 1.0
 
 UserPrompt {
     property string url

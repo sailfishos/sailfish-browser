@@ -14,8 +14,6 @@ import QtQuick 2.1
 import QtQuick.Window 2.1 as QtWindow
 import Sailfish.Silica 1.0
 import Sailfish.Silica.private 1.0 as Private
-import MeeGo.Connman 0.2
-import com.jolla.settings.system 1.0
 import Sailfish.Browser 1.0
 import "components" as Browser
 
@@ -328,15 +326,6 @@ Page {
         onActivateNewTabViewRequested: {
             activateNewTabView()
         }
-    }
-
-    TechnologyModel {
-        id: gpsTechModel
-        name: "gps"
-    }
-
-    LocationSettings {
-        id: locationSettings
     }
 
     Component.onCompleted: {
