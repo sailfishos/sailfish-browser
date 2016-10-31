@@ -34,8 +34,6 @@ static const QString gPermissionsMessage("embed:permissions");
 static const QString gContextMenuMessage("Content:ContextMenu");
 static const QString gSelectionRangeMessage("Content:SelectionRange");
 static const QString gSelectionCopiedMessage("Content:SelectionCopied");
-static const QString gSelectAsyncMessage("embed:selectasync");
-static const QString gFilePickerMessage("embed:filepicker");
 
 bool isBlack(QRgb rgb)
 {
@@ -86,8 +84,6 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
     addMessageListener(gContextMenuMessage);
     addMessageListener(gSelectionRangeMessage);
     addMessageListener(gSelectionCopiedMessage);
-    addMessageListener(gSelectAsyncMessage);
-    addMessageListener(gFilePickerMessage);
     addMessageListener(gContentOrientationChanged);
 
     loadFrameScript("chrome://embedlite/content/SelectAsyncHelper.js");

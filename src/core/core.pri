@@ -10,8 +10,6 @@ SOURCES += \
 
 # C++ headers
 HEADERS += \
-    $$PWD/declarativefileuploadfilter.h \
-    $$PWD/declarativefileuploadmode.h \
     $$PWD/declarativewebcontainer.h \
     $$PWD/inputregion.h \
     $$PWD/inputregion_p.h \
