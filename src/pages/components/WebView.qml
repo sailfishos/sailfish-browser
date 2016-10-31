@@ -13,6 +13,7 @@ import QtQuick 2.1
 import QtQuick.Window 2.1 as QtQuick
 import Sailfish.Silica 1.0
 import Sailfish.Browser 1.0
+import Sailfish.WebView.Pickers 1.0 as Pickers
 import Qt5Mozilla 1.0
 import "WebPopupHandler.js" as PopupHandler
 import "." as Browser
@@ -37,10 +38,6 @@ WebContainer {
         activeWebPage: contentItem
         // onNewWindowRequested is always handled as synchronous operation (not through newTab).
         onNewWindowRequested: tabModel.newTab(url, "", parentId)
-    }
-
-    property Component _pickerCreator: Component {
-        PickerCreator {}
     }
 
     function stop() {
@@ -95,6 +92,11 @@ WebContainer {
             property int frameCounter
             property bool rendered
             readonly property bool activeWebPage: container.tabId == tabId
+
+            property QtObject pickerOpener: Pickers.PickerOpener {
+                pageStack: window.pageStack
+                contentItem: webPage
+            }
 
             signal selectionRangeUpdated(variant data)
             signal selectionCopied(variant data)
@@ -253,14 +255,6 @@ WebContainer {
                     }
                     break
                 }
-                case "embed:filepicker": {
-                    PopupHandler.openFilePicker(data)
-                    break
-                }
-                case "embed:selectasync": {
-                    PopupHandler.openSelectDialog(data)
-                    break;
-                }
                 case "embed:alert": {
                     PopupHandler.openAlert(data)
                     break
@@ -375,6 +369,5 @@ WebContainer {
         PopupHandler.browserPage = browserPage
         PopupHandler.WebUtils = WebUtils
         PopupHandler.tabModel = tabModel
-        PopupHandler.pickerCreator = _pickerCreator
     }
 }

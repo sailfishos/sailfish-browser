@@ -22,15 +22,12 @@ var contextMenuComponent
 var tabModel
 // TODO: WebUtils context property. Should be singleton.
 var WebUtils
-var pickerCreator
 
 var geolocationUrls = {}
 
 var _authenticationComponentUrl = Qt.resolvedUrl("AuthDialog.qml")
 var _passwordManagerComponentUrl = Qt.resolvedUrl("PasswordManagerDialog.qml")
 var _contextMenuComponentUrl = Qt.resolvedUrl("BrowserContextMenu.qml")
-var _multiSelectComponent = Qt.resolvedUrl("MultiSelectDialog.qml")
-var _singleSelectComponentUrl = Qt.resolvedUrl("SingleSelectPage.qml")
 var _locationComponentUrl = Qt.resolvedUrl("LocationDialog.qml")
 var _alertComponentUrl = Qt.resolvedUrl("AlertDialog.qml")
 var _confirmComponentUrl = Qt.resolvedUrl("ConfirmDialog.qml")
@@ -93,22 +90,6 @@ function openAuthDialog(input) {
             webView.sendAsyncMessage("authresponse",
                                            {"winid": winid, "accepted": false})
         })
-    }
-}
-
-function openSelectDialog(data) {
-    if (data.multiple) {
-        pageStack.push(_multiSelectComponent,
-                        {
-                            "options": data.options,
-                            "webview": webView.contentItem
-                        })
-    } else {
-        pageStack.push(_singleSelectComponentUrl,
-                        {
-                            "options": data.options,
-                            "webview": webView.contentItem
-                        })
     }
 }
 
@@ -251,17 +232,4 @@ function openPrompt(data) {
         webView.sendAsyncMessage("promptresponse",
                          {"winid": winid, "accepted": false})
     })
-}
-
-function openFilePicker(data) {
-    if (data.mode == Browser.FileUploadMode.Open || data.mode == Browser.FileUploadMode.OpenMultiple ) {
-        pickerCreator.createObject(pageStack, {
-                                       "pageStack": pageStack,
-                                       "winid": data.winid,
-                                       "webView": webView,
-                                       "filter": data.filter,
-                                       "mode": data.mode});
-    } else {
-        console.log("Gecko file picker requested unsupported mode" + data.mode)
-    }
 }

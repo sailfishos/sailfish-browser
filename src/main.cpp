@@ -31,8 +31,6 @@
 #include "declarativewebcontainer.h"
 #include "declarativewebpage.h"
 #include "declarativewebpagecreator.h"
-#include "declarativefileuploadmode.h"
-#include "declarativefileuploadfilter.h"
 #include "iconfetcher.h"
 #include "inputregion.h"
 
@@ -123,8 +121,6 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     qmlRegisterType<DeclarativeWebContainer>(uri, 1, 0, "WebContainer");
     qmlRegisterType<DeclarativeWebPage>(uri, 1, 0, "WebPage");
     qmlRegisterType<DeclarativeWebPageCreator>(uri, 1, 0, "WebPageCreator");
-    qmlRegisterType<DeclarativeFileUploadMode>(uri, 1, 0, "FileUploadMode");
-    qmlRegisterType<DeclarativeFileUploadFilter>(uri, 1, 0, "FileUploadFilter");
     qmlRegisterType<DesktopBookmarkWriter>(uri, 1, 0, "DesktopBookmarkWriter");
     qmlRegisterType<IconFetcher>(uri, 1, 0, "IconFetcher");
     qmlRegisterType<InputRegion>(uri, 1, 0, "InputRegion");

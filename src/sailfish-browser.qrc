@@ -25,12 +25,9 @@
     <file>pages/components/Overlay.qml</file>
     <file>pages/components/OverlayAnimator.qml</file>
     <file>pages/components/PasswordManagerDialog.qml</file>
-    <file>pages/components/PickerCreator.qml</file>
     <file>pages/components/ProgressBar.qml</file>
     <file>pages/components/PromptDialog.qml</file>
     <file>pages/components/PromptLabel.qml</file>
-    <file>pages/components/MultiSelectDialog.qml</file>
-    <file>pages/components/SingleSelectPage.qml</file>
     <file>pages/components/TextSelectionController.qml</file>
     <file>pages/components/TextSelectionHandle.qml</file>
     <file>pages/components/ToolBar.qml</file>
@@ -48,14 +45,6 @@
     <file>pages/components/PressEffect.qml</file>
     <file>pages/components/ExpandingButton.qml</file>
     <file>pages/components/PrivateModeTexture.qml</file>
-    <file>pages/components/pickers/ContentPicker.qml</file>
-    <file>pages/components/pickers/ImagePicker.qml</file>
-    <file>pages/components/pickers/MultiContentPicker.qml</file>
-    <file>pages/components/pickers/MultiImagePicker.qml</file>
-    <file>pages/components/pickers/MultiMusicPicker.qml</file>
-    <file>pages/components/pickers/MultiVideoPicker.qml</file>
-    <file>pages/components/pickers/MusicPicker.qml</file>
-    <file>pages/components/pickers/VideoPicker.qml</file>
     <file>pages/components/graphic-radial-mask.png</file>
     <file>pages/components/graphic-diagonal-line-texture.png</file>
 </qresource>
