@@ -24,14 +24,7 @@ static const QString gDomContentLoadedMessage("chrome:contentloaded");
 
 static const QString gContentOrientationChanged("embed:contentOrientationChanged");
 static const QString gLinkAddedMessage("chrome:linkadded");
-static const QString gAlertMessage("embed:alert");
-static const QString gConfirmMessage("embed:confirm");
-static const QString gPromptMessage("embed:prompt");
-static const QString gAuthMessage("embed:auth");
-static const QString gLoginMessage("embed:login");
 static const QString gFindMessage("embed:find");
-static const QString gPermissionsMessage("embed:permissions");
-static const QString gContextMenuMessage("Content:ContextMenu");
 static const QString gSelectionRangeMessage("Content:SelectionRange");
 static const QString gSelectionCopiedMessage("Content:SelectionCopied");
 
@@ -74,14 +67,7 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
     addMessageListener(gDomContentLoadedMessage);
 
     addMessageListener(gLinkAddedMessage);
-    addMessageListener(gAlertMessage);
-    addMessageListener(gConfirmMessage);
-    addMessageListener(gPromptMessage);
-    addMessageListener(gAuthMessage);
-    addMessageListener(gLoginMessage);
     addMessageListener(gFindMessage);
-    addMessageListener(gPermissionsMessage);
-    addMessageListener(gContextMenuMessage);
     addMessageListener(gSelectionRangeMessage);
     addMessageListener(gSelectionCopiedMessage);
     addMessageListener(gContentOrientationChanged);

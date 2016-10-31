@@ -14,8 +14,8 @@ import QtQuick.Window 2.1 as QtQuick
 import Sailfish.Silica 1.0
 import Sailfish.Browser 1.0
 import Sailfish.WebView.Pickers 1.0 as Pickers
+import Sailfish.WebView.Popups 1.0 as Popups
 import Qt5Mozilla 1.0
-import "WebPopupHandler.js" as PopupHandler
 import "." as Browser
 
 WebContainer {
@@ -77,11 +77,8 @@ WebContainer {
     fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) ||
                     (contentItem && contentItem.fullscreen)
 
+    popupActive: contentItem && contentItem.popupOpener && contentItem.popupOpener.active || false
     favicon: contentItem ? contentItem.favicon : ""
-    onTabModelChanged: {
-        // BrowserContextMenu created in PopupHandler needs to maintain correct tabModel.
-        PopupHandler.tabModel = tabModel
-    }
 
     webPageComponent: Component {
         WebPage {
@@ -98,9 +95,26 @@ WebContainer {
                 contentItem: webPage
             }
 
+            property QtObject popupOpener: Popups.PopupOpener {
+                pageStack: pickerOpener.pageStack
+                parentItem: browserPage
+                contentItem: webPage
+                // ContextMenu needs a reference to correct TabModel so that
+                // private and public tabs are created to correct model. While context
+                // menu is open, tab model cannot change (at least at the moment).
+                tabModel: webView.tabModel
+
+                onAboutToOpenContextMenu: {
+                    // Possible path that leads to a new tab. Thus, capturing current
+                    // view before opening context menu.
+                    webView.grabActivePage()
+                    contextMenuRequested(data)
+                }
+            }
+
             signal selectionRangeUpdated(variant data)
             signal selectionCopied(variant data)
-            signal contextMenuRequested(variant data)
+            signal contextMenuRequested(var data)
 
             function grabItem() {
                 if (rendered && activeWebPage && active) {
@@ -223,6 +237,10 @@ WebContainer {
             }
 
             onRecvAsyncMessage: {
+                if (pickerOpener.handlesMessage(message) || popupOpener.handlesMessage(message)) {
+                    return
+                }
+
                 switch (message) {
                 case "chrome:linkadded": {
                     var parsedFavicon = false
@@ -253,46 +271,6 @@ WebContainer {
                         favicon = data.href
                         iconType = iconSize >= Theme.iconSizeMedium ? data.rel : ""
                     }
-                    break
-                }
-                case "embed:alert": {
-                    PopupHandler.openAlert(data)
-                    break
-                }
-                case "embed:confirm": {
-                    PopupHandler.openConfirm(data)
-                    break
-                }
-                case "embed:prompt": {
-                    PopupHandler.openPrompt(data)
-                    break
-                }
-                case "embed:auth": {
-                    PopupHandler.openAuthDialog(data)
-                    break
-                }
-                case "embed:permissions": {
-                    if (data.title === "geolocation"
-                            && locationSettings.locationEnabled
-                            && gpsTechModel.powered) {
-                        PopupHandler.openLocationDialog(data)
-                    } else {
-                        // Currently we don't support other permission requests.
-                        sendAsyncMessage("embedui:premissions",
-                                         {
-                                             allow: false,
-                                             checkedDontAsk: false,
-                                             id: data.id
-                                         })
-                    }
-                    break
-                }
-                case "embed:login": {
-                    PopupHandler.openPasswordManagerDialog(data)
-                    break
-                }
-                case "Content:ContextMenu": {
-                    PopupHandler.openContextMenu(data)
                     break
                 }
                 case "Content:SelectionRange": {
@@ -361,13 +339,4 @@ WebContainer {
 //        opacity: contentItem && contentItem.horizontalScrollDecorator.moving ? 1.0 : 0.0
 //        Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
 //    }
-
-    Component.onCompleted: {
-        PopupHandler.auxTimer = auxTimer
-        PopupHandler.pageStack = pageStack
-        PopupHandler.webView = webView
-        PopupHandler.browserPage = browserPage
-        PopupHandler.WebUtils = WebUtils
-        PopupHandler.tabModel = tabModel
-    }
 }
