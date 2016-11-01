@@ -36,7 +36,6 @@ public:
     qreal cssPixelRatio() const;
 
     Q_INVOKABLE int getLightness(QColor color) const;
-    Q_INVOKABLE QString createUniqueFileUrl(const QString &fileName, const QString &path) const;
     Q_INVOKABLE QString displayableUrl(QString fullUrl) const;
 
 public slots:
