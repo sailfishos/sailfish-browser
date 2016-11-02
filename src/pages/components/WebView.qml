@@ -237,7 +237,7 @@ WebContainer {
             }
 
             onRecvAsyncMessage: {
-                if (pickerOpener.handlesMessage(message) || popupOpener.handlesMessage(message)) {
+                if (pickerOpener.message(message, data) || popupOpener.message(message, data)) {
                     return
                 }
 
