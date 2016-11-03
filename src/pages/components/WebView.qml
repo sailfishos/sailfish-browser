@@ -105,6 +105,11 @@ WebContainer {
                 tabModel: webView.tabModel
 
                 onAboutToOpenContextMenu: {
+                    if (Qt.inputMethod.visible) {
+                        browserPage.focus = true
+                        Qt.inputMethod.hide()
+                    }
+
                     // Possible path that leads to a new tab. Thus, capturing current
                     // view before opening context menu.
                     webView.grabActivePage()
