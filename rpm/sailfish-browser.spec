@@ -36,6 +36,9 @@ Requires: xulrunner-qt5 >= %{min_xulrunner_version}
 Requires: embedlite-components-qt5 >= %{min_embedlite_components_version}
 Requires: qtmozembed-qt5 >= %{min_qtmozembed_version}
 Requires: sailfish-browser-settings = %{version}
+Requires: sailfish-components-webview-qt5 >= %{min_sailfishwebengine_version}
+Requires: sailfish-components-webview-qt5-popups >= %{min_sailfishwebengine_version}
+Requires: sailfish-components-webview-qt5-pickers >= %{min_sailfishwebengine_version}
 Requires: qt5-plugin-imageformat-ico
 Requires: qt5-plugin-imageformat-gif
 Requires: qt5-plugin-position-geoclue
