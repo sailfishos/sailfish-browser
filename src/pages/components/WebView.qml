@@ -24,6 +24,7 @@ WebContainer {
     property color _decoratorColor: Theme.highlightDimmerColor
     readonly property bool moving: contentItem ? contentItem.moving : false
     property bool findInPageHasResult
+    property bool canShowSelectionMarkers: true
 
     property var resourceController: ResourceController {
         webPage: contentItem
@@ -38,6 +39,22 @@ WebContainer {
         activeWebPage: contentItem
         // onNewWindowRequested is always handled as synchronous operation (not through newTab).
         onNewWindowRequested: tabModel.newTab(url, "", parentId)
+    }
+
+    property Component textSelectionControllerComponent: Component {
+        TextSelectionController {
+            opacity: canShowSelectionMarkers ? 1.0 : 0.0
+            contentWidth: webView.rotationHandler ? webView.rotationHandler.width : 0
+            contentHeight: Math.max(0, webView.fullscreenHeight - webView.toolbarHeight)
+            // Push below the overlay
+            z: -1
+            anchors {
+                fill: parent
+                bottomMargin: webView.toolbarHeight
+            }
+
+            Behavior on opacity { FadeAnimator {} }
+        }
     }
 
     function stop() {
@@ -88,6 +105,7 @@ WebContainer {
             property string iconType
             property int frameCounter
             property bool rendered
+            readonly property bool textSelectionActive: textSelectionController && textSelectionController.active
             property Item textSelectionController: null
             readonly property bool activeWebPage: container.tabId == tabId
 
@@ -118,8 +136,7 @@ WebContainer {
                 }
             }
 
-            signal selectionRangeUpdated(variant data)
-            signal selectionCopied(variant data)
+            signal selectionCopied(var data)
             signal contextMenuRequested(var data)
 
             function grabItem() {
@@ -129,6 +146,12 @@ WebContainer {
                     } else {
                         grabToFile(thumbnailCaptureSize())
                     }
+                }
+            }
+
+            function clearSelection() {
+                if (textSelectionActive) {
+                    textSelectionController.clearSelection()
                 }
             }
 
@@ -281,9 +304,18 @@ WebContainer {
                 }
                 case "Content:SelectionRange": {
                     if (textSelectionController === null) {
-                        textSelectionController = textSelectionControllerComponent.createObject(webPage)
+                        textSelectionController = textSelectionControllerComponent.createObject(browserPage,
+                                                                                                {"contentItem" : webPage}
+                                                                                                )
                     }
-                    webPage.selectionRangeUpdated(data)
+                    textSelectionController.selectionRangeUpdated(data)
+                    break
+                }
+                case "Content:SelectionSwap": {
+                    if (textSelectionController) {
+                        textSelectionController.swap()
+                    }
+
                     break
                 }
                 case "embed:find": {
@@ -300,11 +332,8 @@ WebContainer {
                 // sender expects that this handler will update `response` argument
                 switch (message) {
                 case "Content:SelectionCopied": {
-                    webPage.selectionCopied(data)
-
-                    if (data.succeeded) {
-                        //% "Copied to clipboard"
-                        notification.show(qsTrId("sailfish_browser-la-selection_copied"))
+                    if (data.succeeded && textSelectionController) {
+                        textSelectionController.showNotification()
                     }
                     break
                 }
@@ -318,12 +347,13 @@ WebContainer {
                 }
             }
 
-            // We decided to disable "text selection" until we understand how it
-            // should look like in Sailfish.
-            // TextSelectionController {}
+            Component.onCompleted: {
+                addMessageListeners(["Content:SelectionRange",
+                                     "Content:SelectionCopied",
+                                     "Content:SelectionSwap"])
+            }
         }
     }
-
 //    Rectangle {
 //        id: verticalScrollDecorator
 
@@ -356,9 +386,4 @@ WebContainer {
 //        Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
 //    }
 
-    Component {
-        id: textSelectionControllerComponent
-
-        TextSelectionController { color: _decoratorColor }
-    }
 }

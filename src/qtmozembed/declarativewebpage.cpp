@@ -25,8 +25,6 @@ static const QString gDomContentLoadedMessage("chrome:contentloaded");
 static const QString gContentOrientationChanged("embed:contentOrientationChanged");
 static const QString gLinkAddedMessage("chrome:linkadded");
 static const QString gFindMessage("embed:find");
-static const QString gSelectionRangeMessage("Content:SelectionRange");
-static const QString gSelectionCopiedMessage("Content:SelectionCopied");
 
 bool isBlack(QRgb rgb)
 {
@@ -68,8 +66,6 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
 
     addMessageListener(gLinkAddedMessage);
     addMessageListener(gFindMessage);
-    addMessageListener(gSelectionRangeMessage);
-    addMessageListener(gSelectionCopiedMessage);
     addMessageListener(gContentOrientationChanged);
 
     loadFrameScript("chrome://embedlite/content/SelectAsyncHelper.js");

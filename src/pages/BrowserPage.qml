@@ -56,7 +56,7 @@ Page {
     function inputMaskForOrientation(orientation) {
         // mask is in portrait window coordinates
         var mask = Qt.rect(0, 0, Screen.width, Screen.height)
-        if (!window.opaqueBackground && webView.enabled && browserPage.active && !webView.popupActive && !downloadPopup.visible) {
+        if (!(webView.contentItem && webView.contentItem.textSelectionActive) && !window.opaqueBackground && webView.enabled && browserPage.active && !webView.popupActive && !downloadPopup.visible) {
             var overlayVisibleHeight = browserPage.height - overlay.y
 
             switch (orientation) {
@@ -146,6 +146,7 @@ Page {
         toolbarHeight: overlay.toolBar.toolsHeight
         rotationHandler: browserPage
         imOpened: virtualKeyboardObserver.opened
+        canShowSelectionMarkers: !orientationFader.waitForWebContentOrientationChanged
 
         // Show overlay immediately at top if needed.
         onTabModelChanged: handleModelChanges(true)
@@ -275,6 +276,12 @@ Page {
 
         onEnteringNewTabUrlChanged: window.opaqueBackground = webView.tabModel.waitingForNewTab || enteringNewTabUrl
 
+        animator.onAtBottomChanged: {
+            if (!animator.atBottom && webView.contentItem) {
+                webView.contentItem.clearSelection()
+            }
+        }
+
         onActiveChanged: {
             if (active && webView.contentItem && !overlay.enteringNewTabUrl && !webView.contentItem.fullscreen) {
                 overlay.animator.showChrome()
@@ -341,9 +348,5 @@ Page {
                 console.warn("Failed to create DebugOverlay " + component.errorString())
             }
         }
-    }
-
-    Browser.BrowserNotification {
-        id: notification
     }
 }

@@ -1,7 +1,8 @@
 /****************************************************************************
 **
-** Copyright (C) 2013 Jolla Ltd.
+** Copyright (C) 2013-2016 Jolla Ltd.
 ** Contact: Dmitry Rozhkov <dmitry.rozhkov@jollamobile.com>
+** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **
 ****************************************************************************/
 
@@ -11,48 +12,60 @@
 
 import QtQuick 2.1
 import Sailfish.Silica 1.0
+import org.nemomobile.notifications 1.0
 
-Item {
+MouseArea {
+    id: root
 
-    property bool selectionVisible: false
-    property color color
+    property bool selectionVisible
+    readonly property bool active: selectionVisible
 
-    property Item _webPage: parent
+    property alias contentWidth: start.contentWidth
+    property alias contentHeight: start.contentHeight
+
+    property alias contentItem: start.contentItem
+
+    property string text
+    property string searchUri
+    property bool isPhoneNumber
+
     // keep selection range we get from engine to move the draggers with
     // selection together when panning or zooming
-    property variant _cssRange
+    property var _cssRange
+    property var _selectionData
 
-    anchors.fill: parent
+    function selectionRangeUpdated(data) {
+        var resolution = contentItem.resolution
+        start.lineHeight = data.start.height * resolution
+        end.lineHeight = data.end.height * resolution
 
-    function onViewAreaChanged() {
-        var newOffset = _webPage.scrollableOffset
-        var resolution = _webPage.resolution
-        var zoom = resolution / _cssRange.origResolution
-
-        var diffX = newOffset.x - _cssRange.origOffsetX * zoom
-        var diffY = newOffset.y - _cssRange.origOffsetY * zoom
-
-        start.x = _cssRange.startX * resolution - diffX - start.width
-        start.y = (_cssRange.startY - _cssRange.startHeightShift) * resolution - diffY
-        end.x = _cssRange.endX * resolution - diffX
-        end.y = (_cssRange.endY - _cssRange.endHeightShift) * resolution - diffY
-
-        timer.restart()
-    }
-
-    function onSelectionRangeUpdated(data) {
-        if (!data.updateStart) {
-            return
-        }
-
-        var resolution = _webPage.resolution
         var startHeightShift = data.start.height / 2
         var endHeightShift = data.end.height / 2
 
-        start.x = (data.start.xPos * resolution) - start.width
-        start.y = (data.start.yPos - startHeightShift) * resolution
-        end.x = data.end.xPos * resolution
-        end.y = (data.end.yPos - endHeightShift) * resolution
+        // Don't update root state yet.
+        var state = data.src
+
+        // Start marker
+        start.fixedX = (data.start.xPos * resolution) - start.width
+        start.fixedY = data.start.yPos * resolution
+        if (!selectionVisible) {
+            start.x = start.fixedX
+            start.y = start.fixedY
+        } else if ((state === "end"  || state === "reflow") && !start.dragActive) {
+            start.targetPositionAnimation.start()
+        }
+
+        // End marker
+        end.fixedX = data.end.xPos * resolution
+        end.fixedY = data.end.yPos * resolution
+
+        if (!selectionVisible) {
+            end.x = end.fixedX
+            end.y = end.fixedY
+        }
+        else if ((state === "end" || state === "reflow") && !end.dragActive) {
+            end.targetPositionAnimation.start()
+        }
 
         _cssRange = {
             "startX": data.start.xPos,
@@ -61,63 +74,128 @@ Item {
             "endY": data.end.yPos,
             "startHeightShift": startHeightShift,
             "endHeightShift": endHeightShift,
-            "origOffsetX": _webPage.scrollableOffset.x,
-            "origOffsetY": _webPage.scrollableOffset.y,
+            "origOffsetX": contentItem.scrollableOffset.x,
+            "origOffsetY": contentItem.scrollableOffset.y,
             "origResolution": resolution
         }
 
+        _selectionData = data
         selectionVisible = true
+
+        text = data.text
+        searchUri = data.searchUri
+        isPhoneNumber = data.isPhoneNumber
+
+        root.state = state
     }
 
-    function onSelectionCopied(data) {
+    function copy() {
+        if (selectionVisible) {
+            // Send a message that hits the selection.
+            contentItem.sendAsyncMessage("Browser:SelectionCopy",
+                                         {
+                                             "xPos": _cssRange.startX + 1,
+                                             "yPos": _cssRange.startY - 1,
+                                         })
+        }
+    }
+
+    function showNotification() {
+        notification.show()
+    }
+
+    function swap() {
+        // Should we implement this?
+        // Feels rather good this way as well.
+    }
+
+    function clearSelection() {
         selectionVisible = false
         _cssRange = null
-        _webPage.sendAsyncMessage("Browser:SelectionClose",
+        contentItem.sendAsyncMessage("Browser:SelectionClose",
                                  {
                                      "clearSelection": true
                                  })
+
+        notification.hide()
+        root.destroy()
     }
 
-    onSelectionVisibleChanged: {
-        if (selectionVisible) {
-            _webPage.viewAreaChanged.connect(onViewAreaChanged)
-        } else {
-            _webPage.viewAreaChanged.disconnect(onViewAreaChanged)
+
+    function getMarkerBaseMessage(markerTag) {
+        var resolution = contentItem.resolution
+        return {
+            change: markerTag,
+            start: {
+                xPos: (start.x + start.width) / resolution,
+                yPos: start.y / resolution
+            },
+            end: {
+                xPos: end.x / resolution,
+                yPos: end.y / resolution
+            },
+            caret: {
+                xPos: 0,
+                yPos: 0
+            }
+        }
+    }
+
+    // Selection is copied upon state change.
+    onClicked: clearSelection()
+
+    onStateChanged: {
+        // Copy when selection starts and ends.
+        if (state === "end" || state === "start") {
+            copy()
         }
     }
 
     TextSelectionHandle {
         id: start
+        markerTag: "start"
 
-        color: parent.color
-        type: "start"
-        content: _webPage
+        // contentItem, contentWidth, and contentHeight are aliased
+        // from root
         visible: selectionVisible
+        selectionController: root
     }
 
     TextSelectionHandle {
         id: end
 
-        color: parent.color
-        type: "end"
-        content: _webPage
+        markerTag: "end"
+        contentItem: root.contentItem
+        contentWidth: root.contentWidth
+        contentHeight: root.contentHeight
         visible: selectionVisible
+        selectionController: root
     }
 
-    Component.onCompleted: {
-        _webPage.selectionRangeUpdated.connect(onSelectionRangeUpdated)
-        _webPage.selectionCopied.connect(onSelectionCopied)
-    }
+    Notification {
+        id: notification
+        property bool published
 
-    Timer {
-        id: timer
-
-        interval: 100
-
-        onTriggered: {
-            if (selectionVisible) {
-                _webPage.sendAsyncMessage("Browser:SelectionUpdate", {})
+        function show() {
+            if (published) {
+                close()
+            } else {
+                publish()
+                published = true
             }
         }
+
+        function hide() {
+            if (published) {
+                close()
+            }
+            published = false
+        }
+
+        expireTimeout: 3000
+        appIcon: "icon-s-clipboard"
+
+        //% "Copied to clipboard"
+        previewSummary: qsTrId("sailfish_browser-la-selection_copied")
     }
 }
