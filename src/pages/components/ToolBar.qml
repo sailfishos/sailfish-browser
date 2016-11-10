@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2014 Jolla Ltd.
+** Copyright (C) 2014-2016 Jolla Ltd.
 ** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jolla.com>
 ** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **
@@ -26,6 +26,25 @@ Column {
     readonly property bool showFindButtons: webView.findInPageHasResult && findInPageActive
     property alias bookmarked: secondaryBar.bookmarked
     readonly property alias toolsHeight: toolsRow.height
+
+    readonly property int horizontalOffset: browserPage.largeScreen ? Theme.paddingLarge : Theme.paddingSmall
+    readonly property int iconWidth: browserPage.largeScreen ? (Theme.iconSizeLarge + 3 * Theme.paddingMedium) : (Theme.iconSizeMedium + 2 * Theme.paddingMedium)
+    // Height of toolbar should be such that viewport height is
+    // even number both chrome and fullscreen modes. For instance
+    // height of 110px for toolbar would result 1px rounding
+    // error in chrome mode as viewport height would be 850px. This would
+    // result in CSS pixels viewport height of 566.66..px -> rounded to 566px.
+    // So, we make sure below that (device height - toolbar height) / pixel ratio is even number.
+    // target values when Theme.pixelratio == 1 are:
+    // portrait: 108px
+    // landcape: 78px
+    property int scaledPortraitHeight: Screen.height -
+                                       Math.floor((Screen.height - Settings.toolbarLarge * Theme.pixelRatio) /
+                                                  WebUtils.cssPixelRatio) * WebUtils.cssPixelRatio
+    property int scaledLandscapeHeight: Screen.width -
+                                        Math.floor((Screen.width - Settings.toolbarSmall * Theme.pixelRatio) /
+                                                  WebUtils.cssPixelRatio) * WebUtils.cssPixelRatio
+
 
     signal showTabs
     signal showOverlay
@@ -63,32 +82,14 @@ Column {
         visible: opacity > 0.0 || height > 0.0
         opacity: secondaryToolsActive ? 1.0 : 0.0
         height: secondaryToolsHeight
-        horizontalOffset: toolsRow.horizontalOffset
-        iconWidth: toolsRow.iconWidth
+        horizontalOffset: toolBarRow.horizontalOffset
+        iconWidth: toolBarRow.iconWidth
 
         Behavior on opacity { FadeAnimation {} }
     }
 
     Row {
         id: toolsRow
-        readonly property int horizontalOffset: browserPage.largeScreen ? Theme.paddingLarge : Theme.paddingSmall
-        readonly property int iconWidth: browserPage.largeScreen ? (Theme.iconSizeLarge + 3 * Theme.paddingMedium) : (Theme.iconSizeMedium + 2 * Theme.paddingMedium)
-        // Height of toolbar should be such that viewport height is
-        // even number both chrome and fullscreen modes. For instance
-        // height of 110px for toolbar would result 1px rounding
-        // error in chrome mode as viewport height would be 850px. This would
-        // result in CSS pixels viewport height of 566.66..px -> rounded to 566px.
-        // So, we make sure below that (device height - toolbar height) / pixel ratio is even number.
-        // target values when Theme.pixelratio == 1 are:
-        // portrait: 108px
-        // landcape: 78px
-        property int scaledPortraitHeight: Screen.height -
-                                           Math.floor((Screen.height - Settings.toolbarLarge * Theme.pixelRatio) /
-                                                      WebUtils.cssPixelRatio) * WebUtils.cssPixelRatio
-        property int scaledLandscapeHeight: Screen.width -
-                                            Math.floor((Screen.width - Settings.toolbarSmall * Theme.pixelRatio) /
-                                                      WebUtils.cssPixelRatio) * WebUtils.cssPixelRatio
-
         width: parent.width
         height: isPortrait ? scaledPortraitHeight : scaledLandscapeHeight
 
@@ -96,14 +97,14 @@ Column {
         Item {
             id: tabButton
 
-            width: toolsRow.iconWidth + toolsRow.horizontalOffset
+            width: toolBarRow.iconWidth + toolBarRow.horizontalOffset
             height: parent.height
 
             Browser.TabButton {
                 id: tabs
 
                 opacity: secondaryToolsActive || findInPageActive ? 0.0 : 1.0
-                horizontalOffset: toolsRow.horizontalOffset
+                horizontalOffset: toolBarRow.horizontalOffset
                 label.text: webView.tabModel.count
                 onTapped: toolBarRow.showTabs()
 
@@ -137,7 +138,7 @@ Column {
             Browser.IconButton {
                 opacity: secondaryToolsActive && !findInPageActive ? 1.0 : 0.0
                 icon.source: "image://theme/icon-m-tab-close"
-                icon.anchors.horizontalCenterOffset: toolsRow.horizontalOffset
+                icon.anchors.horizontalCenterOffset: toolBarRow.horizontalOffset
                 active: webView.tabModel.count > 0
                 onTapped: closeActiveTab()
             }
@@ -145,7 +146,7 @@ Column {
             Browser.IconButton {
                 opacity: !secondaryToolsActive && findInPageActive ? 1.0 : 0.0
                 icon.source: "image://theme/icon-m-search"
-                icon.anchors.horizontalCenterOffset: toolsRow.horizontalOffset
+                icon.anchors.horizontalCenterOffset: toolBarRow.horizontalOffset
                 onTapped: {
                     findInPageActive = true
                     findInPage()
@@ -155,7 +156,7 @@ Column {
 
         Browser.ExpandingButton {
             id: backIcon
-            expandedWidth: toolsRow.iconWidth
+            expandedWidth: toolBarRow.iconWidth
             icon.source: "image://theme/icon-m-back"
             active: webView.canGoBack && !toolBarRow.secondaryToolsActive && !findInPageActive
             onTapped: webView.goBack()
@@ -238,7 +239,7 @@ Column {
 
         Browser.ExpandingButton {
             id: reloadButton
-            expandedWidth: toolsRow.iconWidth
+            expandedWidth: toolBarRow.iconWidth
             icon.source: webView.loading ? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
             active: webView.contentItem && !toolBarRow.secondaryToolsActive && !findInPageActive
             onTapped: webView.loading ? webView.stop() : webView.reload()
@@ -247,12 +248,12 @@ Column {
         Item {
             id: menuButton
 
-            width: toolsRow.iconWidth + toolsRow.horizontalOffset
+            width: toolBarRow.iconWidth + toolBarRow.horizontalOffset
             height: parent.height
 
             Browser.IconButton {
                 icon.source: "image://theme/icon-m-menu"
-                icon.anchors.horizontalCenterOffset: -toolsRow.horizontalOffset
+                icon.anchors.horizontalCenterOffset: -toolBarRow.horizontalOffset
                 width: parent.width
                 opacity: secondaryToolsActive || findInPageActive ? 0.0 : 1.0
                 onTapped: showSecondaryTools()
@@ -260,7 +261,7 @@ Column {
 
             Browser.IconButton {
                 icon.source: "image://theme/icon-m-menu"
-                icon.anchors.horizontalCenterOffset: toolsRow.horizontalOffset
+                icon.anchors.horizontalCenterOffset: toolBarRow.horizontalOffset
                 width: parent.width
                 rotation: 180
                 opacity: secondaryToolsActive && !findInPageActive ? 1.0 : 0.0
@@ -269,7 +270,7 @@ Column {
 
             Browser.IconButton {
                 icon.source: "image://theme/icon-m-reset"
-                icon.anchors.horizontalCenterOffset: -toolsRow.horizontalOffset
+                icon.anchors.horizontalCenterOffset: -toolBarRow.horizontalOffset
                 width: parent.width
                 opacity: !secondaryToolsActive && findInPageActive ? 1.0 : 0.0
                 onTapped: {

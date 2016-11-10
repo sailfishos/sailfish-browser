@@ -212,6 +212,58 @@ Background {
                 opacity: toolBar.visible && webView.privateMode ? toolBar.opacity : 0.0
             }
 
+            Browser.TextSelectionToolbar {
+                id: textSelectionToolbar
+
+                property bool active: webView.contentItem && webView.contentItem.textSelectionActive
+                onActiveChanged: {
+                    if (active) {
+                        overlayAnimator.showChrome(false)
+                        webView.contentItem.forceChrome(true)
+                    } else {
+                        webView.contentItem.forceChrome(false)
+                    }
+                }
+
+                property Item controller: webView && webView.contentItem && webView.contentItem.textSelectionController
+                opacity: active ? 1.0 : 0.0
+                horizontalOffset: toolBar.horizontalOffset
+                iconWidth: toolBar.iconWidth
+                scaledPortraitHeight: toolBar.scaledPortraitHeight
+                scaledLandscapeHeight: toolBar.scaledLandscapeHeight
+                isPhoneNumber: active && controller.isPhoneNumber
+                Behavior on opacity {
+                    FadeAnimator {}
+                }
+
+                onCall: {
+                    Qt.openUrlExternally("tel:" + controller.text)
+                    controller.clearSelection()
+                }
+
+                onShare: {
+                    controller.clearSelection()
+                    pageStack.push(shareText, {"text" : controller.text })
+                }
+                onSearch: {
+                    // Open new tab with the search uri.
+                    controller.clearSelection()
+                    webView.tabModel.newTab(controller.searchUri, "")
+                    overlay.animator.showChrome(true)
+                }
+                onClear: {
+                    if (controller) {
+                        controller.clearSelection()
+                    }
+                }
+
+                Component {
+                    id: shareText
+
+                    Popups.ShareTextPage {}
+                }
+            }
+
             Browser.ToolBar {
                 id: toolBar
 
@@ -221,7 +273,12 @@ Background {
                 findText: searchField.text
                 bookmarked: bookmarkModel.activeUrlBookmarked
 
-                opacity: crossfadeRatio
+                opacity: textSelectionToolbar.active ? 0.0 : crossfadeRatio
+                Behavior on opacity {
+                    enabled: overlayAnimator.atBottom
+                    FadeAnimation {}
+                }
+
                 visible: opacity > 0.0
                 secondaryToolsActive: overlayAnimator.secondaryTools
 
