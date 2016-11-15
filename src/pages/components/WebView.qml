@@ -94,7 +94,8 @@ WebContainer {
     fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) ||
                     (contentItem && contentItem.fullscreen)
 
-    popupActive: contentItem && contentItem.popupOpener && contentItem.popupOpener.active || false
+    touchBlocked: contentItem && contentItem.popupOpener && contentItem.popupOpener.active ||
+                  webView.contentItem && webView.contentItem.textSelectionActive || false
     favicon: contentItem ? contentItem.favicon : ""
 
     webPageComponent: Component {

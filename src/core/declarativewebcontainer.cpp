@@ -46,7 +46,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     , m_enabled(true)
     , m_foreground(true)
     , m_allowHiding(true)
-    , m_popupActive(false)
+    , m_touchBlocked(false)
     , m_portrait(true)
     , m_fullScreenMode(false)
     , m_fullScreenHeight(0.0)
@@ -644,7 +644,7 @@ void DeclarativeWebContainer::touchEvent(QTouchEvent *event)
         return;
     }
 
-    if (m_webPage && m_enabled) {
+    if (m_webPage && m_enabled && !m_touchBlocked) {
         QList<QTouchEvent::TouchPoint> touchPoints = event->touchPoints();
         QTouchEvent mappedTouchEvent = *event;
 
@@ -655,6 +655,8 @@ void DeclarativeWebContainer::touchEvent(QTouchEvent *event)
 
         mappedTouchEvent.setTouchPoints(touchPoints);
         m_webPage->touchEvent(&mappedTouchEvent);
+    } else {
+        QWindow::touchEvent(event);
     }
 }
 

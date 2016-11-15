@@ -56,7 +56,7 @@ Page {
     function inputMaskForOrientation(orientation) {
         // mask is in portrait window coordinates
         var mask = Qt.rect(0, 0, Screen.width, Screen.height)
-        if (!(webView.contentItem && webView.contentItem.textSelectionActive) && !window.opaqueBackground && webView.enabled && browserPage.active && !webView.popupActive && !downloadPopup.visible) {
+        if (!window.opaqueBackground && webView.enabled && browserPage.active && !webView.touchBlocked && !downloadPopup.visible) {
             var overlayVisibleHeight = browserPage.height - overlay.y
 
             switch (orientation) {
