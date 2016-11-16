@@ -18,10 +18,6 @@ Row {
 
     property int horizontalOffset
     property int iconWidth
-
-    property int scaledPortraitHeight
-    property int scaledLandscapeHeight
-
     property bool isPhoneNumber
 
     signal call
@@ -29,8 +25,9 @@ Row {
     signal search
     signal share
 
-    width: parent.width
-    height: isPortrait ? scaledPortraitHeight : scaledLandscapeHeight
+    // Suppress warnings
+    width: parent && parent.width || 0
+    height: parent && parent.height || 0
 
     Repeater {
         id: repeater
