@@ -212,55 +212,60 @@ Background {
                 opacity: toolBar.visible && webView.privateMode ? toolBar.opacity : 0.0
             }
 
-            Browser.TextSelectionToolbar {
+
+            Loader {
                 id: textSelectionToolbar
 
-                property bool active: webView.contentItem && webView.contentItem.textSelectionActive
-                onActiveChanged: {
-                    if (active) {
-                        overlayAnimator.showChrome(false)
-                        webView.contentItem.forceChrome(true)
-                    } else {
-                        webView.contentItem.forceChrome(false)
-                    }
-                }
+                width: parent.width
+                height: isPortrait ? toolBar.scaledPortraitHeight : toolBar.scaledLandscapeHeight
+                active: webView.contentItem && webView.contentItem.textSelectionActive
 
-                property Item controller: webView && webView.contentItem && webView.contentItem.textSelectionController
                 opacity: active ? 1.0 : 0.0
-                horizontalOffset: toolBar.horizontalOffset
-                iconWidth: toolBar.iconWidth
-                scaledPortraitHeight: toolBar.scaledPortraitHeight
-                scaledLandscapeHeight: toolBar.scaledLandscapeHeight
-                isPhoneNumber: active && controller.isPhoneNumber
                 Behavior on opacity {
                     FadeAnimator {}
                 }
 
-                onCall: {
-                    Qt.openUrlExternally("tel:" + controller.text)
-                    controller.clearSelection()
-                }
-
-                onShare: {
-                    controller.clearSelection()
-                    pageStack.push(shareText, {"text" : controller.text })
-                }
-                onSearch: {
-                    // Open new tab with the search uri.
-                    controller.clearSelection()
-                    webView.tabModel.newTab(controller.searchUri, "")
-                    overlay.animator.showChrome(true)
-                }
-                onClear: {
-                    if (controller) {
-                        controller.clearSelection()
+                onActiveChanged: {
+                    if (active) {
+                        overlayAnimator.showChrome(false)
+                        if (webView.contentItem) {
+                            webView.contentItem.forceChrome(true)
+                        }
+                    } else {
+                        if (webView.contentItem) {
+                            webView.contentItem.forceChrome(false)
+                        }
                     }
                 }
 
-                Component {
-                    id: shareText
+                sourceComponent: Component {
+                    Browser.TextSelectionToolbar {
+                        property Item controller: webView && webView.contentItem && webView.contentItem.textSelectionController
+                        horizontalOffset: toolBar.horizontalOffset
+                        iconWidth: toolBar.iconWidth
+                        isPhoneNumber: active && controller.isPhoneNumber
+                        onCall: {
+                            Qt.openUrlExternally("tel:" + controller.text)
+                            controller.clearSelection()
+                        }
 
-                    Popups.ShareTextPage {}
+                        onShare: {
+                            controller.clearSelection()
+                            pageStack.push("Sailfish.WebView.Popups.ShareTextPage", {"text" : controller.text })
+                        }
+                        onSearch: {
+                            // Open new tab with the search uri.
+                            controller.clearSelection()
+                            webView.tabModel.newTab(controller.searchUri, "")
+                            overlay.animator.showChrome(true)
+                        }
+                        onClear: {
+                            if (controller) {
+                                controller.clearSelection()
+                            }
+                        }
+
+                    }
                 }
             }
 
