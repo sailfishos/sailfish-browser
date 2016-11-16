@@ -13,7 +13,6 @@ import QtQuick 2.2
 import Sailfish.Silica 1.0
 import Sailfish.Silica.private 1.0 as Private
 import Sailfish.Browser 1.0
-import Sailfish.WebView.Popups 1.0 as Popups
 import "." as Browser
 
 Background {
@@ -315,7 +314,7 @@ Background {
                     overlayAnimator.showOverlay()
                 }
                 onShareActivePage: {
-                    pageStack.push(shareLinkPage, {
+                    pageStack.push("Sailfish.WebView.Popups.ShareLinkPage", {
                                        "link" : webView.url,
                                        "linkTitle": webView.title
                                    })
@@ -504,7 +503,7 @@ Background {
                     overlay.loadPage(url, title)
                 }
 
-                onShare: pageStack.push(Qt.resolvedUrl("../ShareLinkPage.qml"), {"link" : url, "linkTitle": title})
+                onShare: pageStack.push("Sailfish.WebView.Popups.ShareLinkPage", {"link" : url, "linkTitle": title})
 
                 Behavior on opacity { FadeAnimator {} }
             }
@@ -572,10 +571,5 @@ Background {
                 tabViewItem.positionViewAtIndex(webView.tabModel.activeTabIndex, ListView.Center)
             }
         }
-    }
-
-    Component {
-        id: shareLinkPage
-        Popups.ShareLinkPage {}
     }
 }
