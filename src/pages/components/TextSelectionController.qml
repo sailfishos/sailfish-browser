@@ -13,6 +13,7 @@
 import QtQuick 2.1
 import Sailfish.Silica 1.0
 import org.nemomobile.notifications 1.0
+import org.freedesktop.contextkit 1.0
 
 MouseArea {
     id: root
@@ -84,7 +85,7 @@ MouseArea {
 
         text = data.text
         searchUri = data.searchUri
-        isPhoneNumber = data.isPhoneNumber
+        isPhoneNumber = (cellular1Status.disabled && cellular2Status.disabled) ? false : data.isPhoneNumber
 
         root.state = state
     }
@@ -197,5 +198,16 @@ MouseArea {
 
         //% "Copied to clipboard"
         previewSummary: qsTrId("sailfish_browser-la-selection_copied")
+    }
+
+    ContextProperty {
+        id: cellular1Status
+        property bool disabled: value == "disabled" || value == undefined
+        key: "Cellular.Status"
+    }
+    ContextProperty {
+        id: cellular2Status
+        property bool disabled: value == "disabled" || value == undefined
+        key: "Cellular_1.Status"
     }
 }
