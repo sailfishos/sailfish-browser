@@ -51,6 +51,7 @@ Requires: nemo-qml-plugin-connectivity
 Requires: nemo-qml-plugin-policy-qt5 >= 0.0.4
 Requires: sailfish-components-media-qt5
 Requires: sailfish-components-pickers-qt5 >= 0.1.7
+Requires: nemo-qml-plugin-notifications-qt5 >= 1.0.12
 
 %{_oneshot_requires_post}
 

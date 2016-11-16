@@ -193,7 +193,7 @@ MouseArea {
         }
 
         expireTimeout: 3000
-        appIcon: "icon-s-clipboard"
+        icon: "icon-s-clipboard"
 
         //% "Copied to clipboard"
         previewSummary: qsTrId("sailfish_browser-la-selection_copied")
