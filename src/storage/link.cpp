@@ -80,3 +80,13 @@ bool Link::operator!=(const Link &other) const
 {
     return !(*this == other);
 }
+
+QDebug operator<<(QDebug dbg, const Link *link) {
+    if (!link) {
+        return dbg << "Link (this = 0x0)";
+    }
+
+    dbg.nospace() << "Link(linkId = " << link->linkId() << ", isValid = " << link->isValid()
+                  << ", url = " << link->url() << ", title = " << link->title() << ", thumbnailPath = " << link->thumbPath() << ")";
+    return dbg.space();
+}

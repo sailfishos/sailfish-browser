@@ -11,7 +11,7 @@
 
 #include <QtTest>
 #include <QQuickView>
-#include <qmozcontext.h>
+#include <webenginesettings.h>
 
 #include "declarativehistorymodel.h"
 #include "persistenttabmodel.h"
@@ -114,7 +114,8 @@ void tst_webview::initTestCase()
 
     QCOMPARE(tabAddedSpy.count(), 1);
 
-    QMozContext::GetInstance()->setPref(QString("media.resource_handler_disabled"), QVariant(true));
+    SailfishOS::WebEngineSettings *webEngineSettings = SailfishOS::WebEngineSettings::instance();
+    webEngineSettings->setPreference(QString("media.resource_handler_disabled"), QVariant(true));
 }
 
 void tst_webview::testNewTab_data()
@@ -154,7 +155,7 @@ void tst_webview::testNewTab()
     QSignalSpy titleChangedSpy(webContainer, SIGNAL(titleChanged()));
 
     QSignalSpy tabCountSpy(tabModel, SIGNAL(countChanged()));
-    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int)));
     QSignalSpy tabAddedSpy(tabModel, SIGNAL(tabAdded(int)));
     QSignalSpy contentItemSpy(webContainer, SIGNAL(contentItemChanged()));
     QSignalSpy loadingChanged(webContainer, SIGNAL(loadingChanged()));
@@ -242,7 +243,7 @@ void tst_webview::testActivateTab()
     QString newActiveTitle = tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString();
     int newActiveTabId = tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt();
 
-    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int)));
     QSignalSpy urlChangedSpy(webContainer, SIGNAL(urlChanged()));
     QSignalSpy titleChangedSpy(webContainer, SIGNAL(titleChanged()));
     QSignalSpy contentItemSpy(webContainer, SIGNAL(contentItemChanged()));
@@ -279,7 +280,7 @@ void tst_webview::testCloseActiveTab()
     // "testuseragent.html", "TestUserAgent" (2)
     // "testnavigation.html", "TestNavigation" (3)
 
-    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int)));
     QSignalSpy tabClosedSpy(tabModel, SIGNAL(tabClosed(int)));
     QSignalSpy urlChangedSpy(webContainer, SIGNAL(urlChanged()));
     QSignalSpy titleChangedSpy(webContainer, SIGNAL(titleChanged()));
@@ -337,7 +338,7 @@ void tst_webview::testRemoveTab()
     // "testuseragent.html", "TestUserAgent" (1)
     // "testnavigation.html", "TestNavigation" (2)
 
-    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int)));
     QSignalSpy tabClosedSpy(tabModel, SIGNAL(tabClosed(int)));
 
     QSignalSpy urlChangedSpy(webContainer, SIGNAL(urlChanged()));
@@ -431,7 +432,7 @@ void tst_webview::testLiveTabCount()
     QFETCH(int, liveTabCount);
 
     QSignalSpy tabCountSpy(tabModel, SIGNAL(countChanged()));
-    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int,bool)));
+    QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int)));
     QSignalSpy tabAddedSpy(tabModel, SIGNAL(tabAdded(int)));
     QSignalSpy loadingChanged(webContainer, SIGNAL(loadingChanged()));
     QSignalSpy urlChangedSpy(webContainer, SIGNAL(urlChanged()));
@@ -765,7 +766,7 @@ void tst_webview::cleanupTestCase()
             .arg(QLatin1String(DB_NAME));
     QFile dbFile(dbFileName);
     QVERIFY(dbFile.remove());
-    QMozContext::GetInstance()->stopEmbedding();
+    QMozContext::instance()->stopEmbedding();
 }
 
 /*!
@@ -798,7 +799,7 @@ int main(int argc, char *argv[])
     app.setAttribute(Qt::AA_Use96Dpi, true);
     tst_webview testcase;
     testcase.setContextProperty("WebUtils", DeclarativeWebUtils::instance());
-    testcase.setContextProperty("MozContext", QMozContext::GetInstance());
+    testcase.setContextProperty("MozContext", QMozContext::instance());
 
     qmlRegisterType<DeclarativeHistoryModel>("Sailfish.Browser", 1, 0, "HistoryModel");
     qmlRegisterUncreatableType<DeclarativeTabModel>("Sailfish.Browser", 1, 0, "TabModel", "TabModel is abstract!");
@@ -808,12 +809,12 @@ int main(int argc, char *argv[])
     qmlRegisterType<DeclarativeWebPageCreator>("Sailfish.Browser", 1, 0, "WebPageCreator");
 
     QString componentPath(DEFAULT_COMPONENTS_PATH);
-    QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/components/EmbedLiteBinComponents.manifest"));
-    QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/components/EmbedLiteJSComponents.manifest"));
-    QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/chrome/EmbedLiteJSScripts.manifest"));
-    QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/chrome/EmbedLiteOverrides.manifest"));
+    QMozContext::instance()->addComponentManifest(componentPath + QString("/components/EmbedLiteBinComponents.manifest"));
+    QMozContext::instance()->addComponentManifest(componentPath + QString("/components/EmbedLiteJSComponents.manifest"));
+    QMozContext::instance()->addComponentManifest(componentPath + QString("/chrome/EmbedLiteJSScripts.manifest"));
+    QMozContext::instance()->addComponentManifest(componentPath + QString("/chrome/EmbedLiteOverrides.manifest"));
 
-    QTimer::singleShot(0, QMozContext::GetInstance(), SLOT(runEmbedding()));
+    QTimer::singleShot(0, QMozContext::instance(), SLOT(runEmbedding()));
 
     return QTest::qExec(&testcase, argc, argv);
 }

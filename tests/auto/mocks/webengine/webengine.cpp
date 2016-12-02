@@ -1,7 +1,7 @@
 /****************************************************************************
 **
-** Copyright (C) 2015 Jolla Ltd.
-** Contact: Dmitry Rozhkov <dmitry.rozhkov@jolla.com>
+** Copyright (C) 2016 Jolla Ltd.
+** Contact: Raine Makelainen <raine.makelaine@jolla.com>
 **
 ****************************************************************************/
 
@@ -9,14 +9,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "qmozcontext.h"
+#include "webengine.h"
 
-static QMozContext* gSingleton = 0;
+static SailfishOS::WebEngine *gSingleton = 0;
 
-QMozContext* QMozContext::instance()
+SailfishOS::WebEngine* SailfishOS::WebEngine::instance()
 {
     if (!gSingleton) {
-        gSingleton = new QMozContext();
+        gSingleton = new SailfishOS::WebEngine();
     }
     return gSingleton;
 }

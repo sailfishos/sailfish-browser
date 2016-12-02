@@ -200,7 +200,7 @@ public slots:
 
 private slots:
     void initialize();
-    void onActiveTabChanged(int activeTabId, bool loadActiveTab);
+    void onActiveTabChanged(int activeTabId);
     void onDownloadStarted();
     void onNewTabRequested(QString url, QString title, int parentId);
     void releasePage(int tabId);

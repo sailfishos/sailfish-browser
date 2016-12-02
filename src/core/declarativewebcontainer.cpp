@@ -75,8 +75,6 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     setTitle("BrowserContent");
     setObjectName("WebView");
 
-    QMozContext::GetInstance()->setPixelRatio(2.0);
-
     WebPageFactory* pageFactory = new WebPageFactory(this);
     connect(this, SIGNAL(webPageComponentChanged(QQmlComponent*)),
             pageFactory, SLOT(updateQmlComponent(QQmlComponent*)));
@@ -88,8 +86,8 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     setTabModel(privateMode() ? m_privateTabModel.data() : m_persistentTabModel.data());
 
     connect(DownloadManager::instance(), SIGNAL(downloadStarted()), this, SLOT(onDownloadStarted()));
-    connect(QMozContext::GetInstance(), SIGNAL(onInitialized()), this, SLOT(initialize()));
-    connect(QMozContext::GetInstance(), &QMozContext::lastViewDestroyed,
+    connect(QMozContext::instance(), SIGNAL(onInitialized()), this, SLOT(initialize()));
+    connect(QMozContext::instance(), &QMozContext::lastViewDestroyed,
             this, &DeclarativeWebContainer::onLastViewDestroyed);
 
     QString cacheLocation = BrowserPaths::cacheLocation();
@@ -111,7 +109,7 @@ DeclarativeWebContainer::~DeclarativeWebContainer()
 
     QMutexLocker lock(&m_clearSurfaceTaskMutex);
     if (m_clearSurfaceTask) {
-        QMozContext::GetInstance()->CancelTask(m_clearSurfaceTask);
+        QMozContext::instance()->CancelTask(m_clearSurfaceTask);
     }
 }
 
@@ -192,8 +190,8 @@ void DeclarativeWebContainer::setTabModel(DeclarativeTabModel *model)
         m_model = model;
         int newCount = 0;
         if (m_model) {
-            connect(m_model, SIGNAL(activeTabChanged(int,bool)), this, SLOT(onActiveTabChanged(int,bool)));
-            connect(m_model, SIGNAL(activeTabChanged(int,bool)), this, SIGNAL(tabIdChanged()));
+            connect(m_model, SIGNAL(activeTabChanged(int)), this, SLOT(onActiveTabChanged(int)));
+            connect(m_model, SIGNAL(activeTabChanged(int)), this, SIGNAL(tabIdChanged()));
             connect(m_model, SIGNAL(loadedChanged()), this, SLOT(initialize()));
             connect(m_model, SIGNAL(tabClosed(int)), this, SLOT(releasePage(int)));
             connect(m_model, SIGNAL(newTabRequested(QString,QString,int)), this, SLOT(onNewTabRequested(QString,QString,int)));
@@ -497,7 +495,7 @@ bool DeclarativeWebContainer::postClearWindowSurfaceTask()
     if (m_clearSurfaceTask) {
         return true;
     }
-    m_clearSurfaceTask = QMozContext::GetInstance()->PostCompositorTask(
+    m_clearSurfaceTask = QMozContext::instance()->PostCompositorTask(
         &DeclarativeWebContainer::clearWindowSurfaceTask, this);
     return m_clearSurfaceTask != 0;
 }
@@ -721,13 +719,9 @@ qreal DeclarativeWebContainer::contentHeight() const
     }
 }
 
-void DeclarativeWebContainer::onActiveTabChanged(int activeTabId, bool loadActiveTab)
+void DeclarativeWebContainer::onActiveTabChanged(int activeTabId)
 {
     if (activeTabId <= 0) {
-        return;
-    }
-
-    if (!loadActiveTab) {
         return;
     }
 
@@ -736,7 +730,7 @@ void DeclarativeWebContainer::onActiveTabChanged(int activeTabId, bool loadActiv
 
 void DeclarativeWebContainer::initialize()
 {
-    if (QMozContext::GetInstance()->initialized() && !m_mozWindow) {
+    if (QMozContext::instance()->initialized() && !m_mozWindow) {
         m_mozWindow.reset(new QMozWindow(QWindow::size()));
         connect(m_mozWindow.data(), &QMozWindow::requestGLContext,
                 this, &DeclarativeWebContainer::createGLContext, Qt::DirectConnection);
@@ -932,7 +926,7 @@ void DeclarativeWebContainer::updatePageFocus(bool focus)
 
 bool DeclarativeWebContainer::canInitialize() const
 {
-    return QMozContext::GetInstance()->initialized() && m_model && m_model->loaded();
+    return QMozContext::instance()->initialized() && m_model && m_model->loaded();
 }
 
 void DeclarativeWebContainer::loadTab(const Tab& tab, bool force)

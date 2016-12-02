@@ -33,6 +33,7 @@ public:
     };
 
     Q_INVOKABLE void clear();
+    Q_INVOKABLE void remove(int index);
     Q_INVOKABLE void search(const QString &filter);
 
     // From QAbstractListModel

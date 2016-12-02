@@ -8,6 +8,7 @@ QT += qml quick concurrent sql gui-private
 
 QMAKE_LFLAGS += -lgtest -lgmock
 
+include(../mocks/webengine/webengine.pri)
 include(../mocks/qmozcontext/qmozcontext.pri)
 include(../mocks/qmozwindow/qmozwindow.pri)
 include(../mocks/webpagefactory/webpagefactory.pri)

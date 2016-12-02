@@ -5,7 +5,7 @@
 Name:       sailfish-browser
 
 Summary:    Sailfish Browser
-Version:    1.14.25
+Version:    1.14.34
 Release:    1
 Group:      Applications/Internet
 License:    MPLv2
@@ -22,6 +22,7 @@ BuildRequires:  pkgconfig(Qt5Sql)
 BuildRequires:  pkgconfig(nemotransferengine-qt5)
 BuildRequires:  pkgconfig(mlite5)
 BuildRequires:  pkgconfig(qdeclarative5-boostable)
+BuildRequires:  pkgconfig(sailfishwebengine)
 BuildRequires:  qt5-qttools
 BuildRequires:  qt5-qttools-linguist
 BuildRequires:  oneshot

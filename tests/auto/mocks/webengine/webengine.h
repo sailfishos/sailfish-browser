@@ -1,7 +1,7 @@
 /****************************************************************************
 **
-** Copyright (C) 2015 Jolla Ltd.
-** Contact: Dmitry Rozhkov <dmitry.rozhkov@jolla.com>
+** Copyright (C) 2016 Jolla Ltd.
+** Contact: Raine Makelainen <raine.makelaine@jolla.com>
 **
 ****************************************************************************/
 
@@ -9,8 +9,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifndef qmozcontext_h
-#define qmozcontext_h
+#ifndef WEBENGINE_H
+#define WEBENGINE_H
 
 #include <QObject>
 #include <QVariant>
@@ -18,7 +18,9 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
-class QMozContext : public QObject
+namespace SailfishOS {
+
+class WebEngine : public QObject
 {
     Q_OBJECT
 
@@ -26,13 +28,11 @@ public:
     typedef void (*TaskCallback)(void* data);
     typedef void* TaskHandle;
 
-    explicit QMozContext(QObject *parent = 0) : QObject(parent) {};
+    explicit WebEngine(QObject *parent = 0) : QObject(parent) {};
 
-    static QMozContext* instance();
-    MOCK_METHOD2(setPref, void(QString const &, QVariant const &));
-    MOCK_METHOD1(setPixelRatio, void(float));
+    static void initialize(const QString &profilePath, const QString &userAgent = QLatin1String(""));
+    static WebEngine* instance();
     MOCK_CONST_METHOD0(initialized, bool());
-    MOCK_CONST_METHOD0(pixelRatio, float());
     MOCK_METHOD1(CancelTask, void(void *));
     MOCK_METHOD2(PostCompositorTask, TaskHandle(TaskCallback, void *));
     MOCK_METHOD2(sendObserve, void(const QString &, const QString &));
@@ -51,5 +51,6 @@ signals:
     void lastWindowDestroyed();
     void recvObserve(const QString, const QVariant);
 };
+}
 
-#endif /* qmozcontext_h */
+#endif // WEBENGINE_H

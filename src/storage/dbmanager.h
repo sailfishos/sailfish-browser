@@ -39,6 +39,7 @@ public:
     void updateThumbPath(int tabId, QString path);
     void updateTitle(int tabId, QString url, QString title);
 
+    void removeHistoryEntry(int linkId);
     void clearHistory();
     void getHistory(const QString &filter = "");
     void getTabHistory(int tabId);

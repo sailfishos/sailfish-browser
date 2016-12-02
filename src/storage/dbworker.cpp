@@ -556,7 +556,7 @@ void DBWorker::getHistory(const QString &filter)
         order = QString("date DESC");
     }
 
-    QString queryString = QString("SELECT DISTINCT url, title "
+    QString queryString = QString("SELECT DISTINCT id, url, title "
                                   "FROM browser_history "
                                   "%1"
                                   "ORDER BY %2 LIMIT 20;").arg(filterQuery).arg(order);
@@ -571,11 +571,14 @@ void DBWorker::getHistory(const QString &filter)
 
     QList<Link> linkList;
     while (query.next()) {
-        Link url(0,
-                 query.value(0).toString(),
-                 "",
-                 query.value(1).toString());
-        linkList.append(url);
+        Link link(query.value(0).toInt(),
+                  query.value(1).toString(),
+                  "",
+                  query.value(2).toString());
+#if DEBUG_LOGS
+        qDebug() << &link;
+#endif
+        linkList.append(link);
     }
 
     emit historyAvailable(linkList);
@@ -609,6 +612,13 @@ void DBWorker::getTabHistory(int tabId)
     }
 
     emit tabHistoryAvailable(tabId, linkList, currentLinkId);
+}
+
+void DBWorker::removeHistoryEntry(int linkId)
+{
+    QSqlQuery query = prepare("DELETE FROM browser_history WHERE id = ?");
+    query.bindValue(0, linkId);
+    execute(query);
 }
 
 void DBWorker::updateThumbPath(int tabId, QString path)

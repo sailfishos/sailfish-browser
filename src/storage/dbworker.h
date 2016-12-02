@@ -49,6 +49,8 @@ public slots:
     void goBack(int tabId);
     void getHistory(const QString &filter);
     void getTabHistory(int tabId);
+
+    void removeHistoryEntry(int linkId);
     void clearHistory();
 
     void saveSetting(QString name, QString value);

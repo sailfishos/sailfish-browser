@@ -116,7 +116,7 @@ void DeclarativeBookmarkModel::updateFavoriteIcon(const QString &url, const QStr
 
 void DeclarativeBookmarkModel::edit(int index, const QString& url, const QString& title)
 {
-    if (index < 0 || index > bookmarks.count())
+    if (index < 0 || index >= bookmarks.count())
         return;
 
     Bookmark * bookmark = bookmarks.value(index);
@@ -193,7 +193,7 @@ int DeclarativeBookmarkModel::rowCount(const QModelIndex & parent) const
 
 QVariant DeclarativeBookmarkModel::data(const QModelIndex & index, int role) const
 {
-    if (index.row() < 0 || index.row() > bookmarks.count())
+    if (index.row() < 0 || index.row() >= bookmarks.count())
         return QVariant();
 
     const Bookmark * bookmark = bookmarks.value(index.row());

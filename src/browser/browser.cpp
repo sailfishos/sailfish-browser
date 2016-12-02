@@ -23,6 +23,8 @@
 #include <QTimer>
 #include <QUrl>
 #include <qmozcontext.h>
+#include <webengine.h>
+#include <webenginesettings.h>
 
 BrowserPrivate::BrowserPrivate(QQuickView *view)
     : view(view)
@@ -39,32 +41,9 @@ Browser::Browser(QQuickView *view, QObject *parent)
     Q_ASSERT(view);
     Q_ASSERT(qGuiApp);
 
-    setenv("USE_ASYNC", "1", 1);
-    setenv("USE_NEMO_GSTREAMER", "1", 1);
-    setenv("NO_LIMIT_ONE_GST_DECODER", "1", 1);
-
-    // See https://www.freedesktop.org/wiki/Software/PulseAudio/Documentation/Developer/Clients/ApplicationProperties/
-    setenv("PULSE_PROP_application.process.binary", "sailfish-browser", 1);
-
-    // Workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=929879
-    setenv("LC_NUMERIC", "C", 1);
-    setlocale(LC_NUMERIC, "C");
-
-    // GRE_HOME must be set before QMozContext is initialized.
-    // With invoker PWD is empty.
-    QByteArray binaryPath = QCoreApplication::applicationDirPath().toLocal8Bit();
-    setenv("GRE_HOME", binaryPath.constData(), 1);
-
-    // Don't set custom user agent string when the environment already contains CUSTOM_UA.
-    if (qgetenv("CUSTOM_UA").isEmpty()) {
-        setenv("CUSTOM_UA", "Mozilla/5.0 (Maemo; Linux; U; Jolla; Sailfish; Mobile; rv:38.0) Gecko/38.0 Firefox/38.0 SailfishBrowser/1.0", 1);
-    }
-
-    QString componentPath(DEFAULT_COMPONENTS_PATH);
-    QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/components/EmbedLiteBinComponents.manifest"));
-    QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/components/EmbedLiteJSComponents.manifest"));
-    QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/chrome/EmbedLiteJSScripts.manifest"));
-    QMozContext::GetInstance()->addComponentManifest(componentPath + QString("/chrome/EmbedLiteOverrides.manifest"));
+    SailfishOS::WebEngine::initialize("mozembed");
+    SailfishOS::WebEngine *webEngine = SailfishOS::WebEngine::instance();
+    SailfishOS::WebEngineSettings::initialize();
 
     DeclarativeWebUtils *utils = DeclarativeWebUtils::instance();
     DownloadManager *downloadManager = DownloadManager::instance();
@@ -72,7 +51,7 @@ Browser::Browser(QQuickView *view, QObject *parent)
     utils->clearStartupCacheIfNeeded();
 
     d->view->rootContext()->setContextProperty("WebUtils", utils);
-    d->view->rootContext()->setContextProperty("MozContext", QMozContext::GetInstance());
+    d->view->rootContext()->setContextProperty("MozContext", webEngine);
     d->view->rootContext()->setContextProperty("Settings", SettingManager::instance());
     d->view->rootContext()->setContextProperty("DownloadManager", downloadManager);
 
@@ -84,9 +63,6 @@ Browser::Browser(QQuickView *view, QObject *parent)
 #else
     d->view->setSource(QUrl::fromLocalFile(Browser::applicationFilePath() + "browser.qml"));
 #endif
-
-    // Setup embedding
-    QTimer::singleShot(0, QMozContext::GetInstance(), SLOT(runEmbedding()));
 }
 
 void Browser::load()

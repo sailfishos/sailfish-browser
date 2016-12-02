@@ -20,6 +20,8 @@
 #include <QFile>
 #include <QDebug>
 
+#include <webenginesettings.h>
+
 #if defined(arm) \
     || defined(__arm__) \
     || defined(ARM) \
@@ -36,9 +38,8 @@ DownloadManager::DownloadManager()
                                                    "/org/nemo/transferengine",
                                                    QDBusConnection::sessionBus(),
                                                    this);
-    connect(QMozContext::GetInstance(), SIGNAL(onInitialized()),
-            this, SLOT(setPreferences()));
-    connect(QMozContext::GetInstance(), SIGNAL(recvObserve(const QString, const QVariant)),
+    setPreferences();
+    connect(QMozContext::instance(), SIGNAL(recvObserve(const QString, const QVariant)),
             this, SLOT(recvObserve(const QString, const QVariant)));
 
     // Ignore the download info argument of the downloadStatusChanged signal.
@@ -201,7 +202,7 @@ void DownloadManager::cancel(int downloadId)
     QVariantMap data;
     data.insert("msg", "cancelDownload");
     data.insert("id", downloadId);
-    QMozContext::GetInstance()->sendObserve(QString("embedui:download"), QVariant(data));
+    QMozContext::instance()->notifyObservers(QString("embedui:download"), QVariant(data));
 }
 
 void DownloadManager::cancelTransfer(int transferId)
@@ -221,7 +222,7 @@ void DownloadManager::restartTransfer(int transferId)
         QVariantMap data;
         data.insert("msg", "retryDownload");
         data.insert("id", m_transfer2downloadMap.value(transferId));
-        QMozContext::GetInstance()->sendObserve(QString("embedui:download"), QVariant(data));
+        QMozContext::instance()->notifyObservers(QString("embedui:download"), QVariant(data));
     } else {
         m_transferClient->finishTransfer(transferId,
                                          TransferEngineData::TransferInterrupted,
@@ -231,24 +232,22 @@ void DownloadManager::restartTransfer(int transferId)
 
 void DownloadManager::setPreferences()
 {
-    QMozContext* mozContext = QMozContext::GetInstance();
-    Q_ASSERT(mozContext->initialized());
-
+    SailfishOS::WebEngineSettings *webEngineSettings = SailfishOS::WebEngineSettings::instance();
     // Use autodownload, never ask
-    mozContext->setPref(QString("browser.download.useDownloadDir"), QVariant(true));
-    mozContext->setPref(QString("browser.download.useJSTransfer"), QVariant(true));
+    webEngineSettings->setPreference(QString("browser.download.useDownloadDir"), QVariant(true));
+    webEngineSettings->setPreference(QString("browser.download.useJSTransfer"), QVariant(true));
     // see https://developer.mozilla.org/en-US/docs/Download_Manager_preferences
     // Use custom downloads location defined in browser.download.dir
-    mozContext->setPref(QString("browser.download.folderList"), QVariant(2));
-    mozContext->setPref(QString("browser.download.dir"), BrowserPaths::downloadLocation());
+    webEngineSettings->setPreference(QString("browser.download.folderList"), QVariant(2));
+    webEngineSettings->setPreference(QString("browser.download.dir"), BrowserPaths::downloadLocation());
     // Downloads should never be removed automatically
-    mozContext->setPref(QString("browser.download.manager.retention"), QVariant(2));
+    webEngineSettings->setPreference(QString("browser.download.manager.retention"), QVariant(2));
     // Downloads will be canceled on quit
     // TODO: this doesn't really work. Instead the incomplete downloads get restarted
     //       on browser launch.
-    mozContext->setPref(QString("browser.download.manager.quitBehavior"), QVariant(2));
+    webEngineSettings->setPreference(QString("browser.download.manager.quitBehavior"), QVariant(2));
     // TODO: this doesn't really work too
-    mozContext->setPref(QString("browser.helperApps.deleteTempFileOnExit"), QVariant(true));
+    webEngineSettings->setPreference(QString("browser.helperApps.deleteTempFileOnExit"), QVariant(true));
 
     DownloadMimetypeHandler::update();
 }
