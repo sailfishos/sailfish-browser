@@ -19,6 +19,7 @@
 #include "declarativewebpage.h"
 #include "declarativewebpagecreator.h"
 #include "declarativewebutils.h"
+#include "webpages.h"
 #include "browserpaths.h"
 #include "testobject.h"
 
@@ -664,6 +665,11 @@ void tst_webview::restart()
     verifyHistory(historyOrder);
 
     tabModel->deleteLater();
+    QTest::waitForEvents();
+
+    // Fake closing the window.
+    QEvent closeEvent(QEvent::Close);
+    qGuiApp->sendEvent(webContainer, &closeEvent);
     QTest::waitForEvents();
 
     delete historyModel;

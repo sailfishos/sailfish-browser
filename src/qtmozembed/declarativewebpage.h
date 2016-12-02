@@ -31,11 +31,13 @@ class DeclarativeWebPage : public QOpenGLWebPage {
     Q_PROPERTY(bool userHasDraggedWhileLoading MEMBER m_userHasDraggedWhileLoading NOTIFY userHasDraggedWhileLoadingChanged FINAL)
     Q_PROPERTY(bool fullscreen READ fullscreen NOTIFY fullscreenChanged FINAL)
     Q_PROPERTY(bool forcedChrome READ forcedChrome NOTIFY forcedChromeChanged FINAL)
+    Q_PROPERTY(bool domContentLoaded READ domContentLoaded NOTIFY domContentLoadedChanged FINAL)
     Q_PROPERTY(QString favicon MEMBER m_favicon NOTIFY faviconChanged FINAL)
     Q_PROPERTY(QVariant resurrectedContentRect READ resurrectedContentRect WRITE setResurrectedContentRect NOTIFY resurrectedContentRectChanged)
 
     Q_PROPERTY(qreal fullscreenHeight MEMBER m_fullScreenHeight NOTIFY fullscreenHeightChanged FINAL)
-    Q_PROPERTY(qreal toolbarHeight MEMBER m_toolbarHeight NOTIFY toolbarHeightChanged FINAL)
+    Q_PROPERTY(qreal toolbarHeight READ toolbarHeight WRITE setToolbarHeight NOTIFY toolbarHeightChanged FINAL)
+    Q_PROPERTY(qreal virtualKeyboardMargin WRITE setVirtualKeyboardMargin READ virtualKeyboardMargin NOTIFY virtualKeyboardMarginChanged FINAL)
 
 public:
     DeclarativeWebPage(QObject *parent = 0);
@@ -50,6 +52,12 @@ public:
     QVariant resurrectedContentRect() const;
     void setResurrectedContentRect(QVariant resurrectedContentRect);
 
+    qreal toolbarHeight() const;
+    void setToolbarHeight(qreal);
+
+    qreal virtualKeyboardMargin() const;
+    void setVirtualKeyboardMargin(qreal);
+
     bool fullscreen() const;
     bool forcedChrome() const;
     bool domContentLoaded() const;
@@ -62,10 +70,8 @@ public:
     Q_INVOKABLE void grabThumbnail(const QSize& size);
     Q_INVOKABLE void forceChrome(bool forcedChrome);
 
-public slots:
-    void resetHeight(bool respectContentHeight = true);
-
 signals:
+    void contentOrientationChanged(Qt::ScreenOrientation orientation);
     void containerChanged();
     void tabIdChanged();
     void userHasDraggedWhileLoadingChanged();
@@ -79,6 +85,7 @@ signals:
 
     void fullscreenHeightChanged();
     void toolbarHeightChanged();
+    void virtualKeyboardMarginChanged();
 
 private slots:
     void setFullscreen(const bool fullscreen);
@@ -88,10 +95,16 @@ private slots:
     void grabResultReady();
     void grabWritten();
     void thumbnailReady();
+    void updateViewMargins();
+
+    // These are here to inform embedlite-components that keyboard is open or close
+    // matching composition metrics.
+    void sendVkbOpenCompositionMetrics();
 
 private:
     QString saveToFile(QImage image);
     void restoreHistory();
+    void setContentLoaded();
 
     QPointer<DeclarativeWebContainer> m_container;
     // Tab data fetched upon web page initialization. It never changes afterwards.
@@ -113,6 +126,7 @@ private:
 
     qreal m_fullScreenHeight;
     qreal m_toolbarHeight;
+    qreal m_virtualKeyboardMargin;
 };
 
 QDebug operator<<(QDebug, const DeclarativeWebPage *);

@@ -31,7 +31,6 @@ static DownloadManager *gSingleton = 0;
 
 DownloadManager::DownloadManager()
     : QObject()
-    , m_initialized(false)
 {
     m_transferClient = new TransferEngineInterface("org.nemo.transferengine",
                                                    "/org/nemo/transferengine",
@@ -56,10 +55,7 @@ DownloadManager::~DownloadManager()
 void DownloadManager::recvObserve(const QString message, const QVariant data)
 {
 
-    if (message == "download-manager-initialized" && !m_initialized) {
-        m_initialized = true;
-        emit initializedChanged();
-    } else if (message != "embed:download") {
+    if (message != "embed:download") {
         // here we are interested in download messages only
         return;
     }
@@ -240,6 +236,7 @@ void DownloadManager::setPreferences()
 
     // Use autodownload, never ask
     mozContext->setPref(QString("browser.download.useDownloadDir"), QVariant(true));
+    mozContext->setPref(QString("browser.download.useJSTransfer"), QVariant(true));
     // see https://developer.mozilla.org/en-US/docs/Download_Manager_preferences
     // Use custom downloads location defined in browser.download.dir
     mozContext->setPref(QString("browser.download.folderList"), QVariant(2));
@@ -275,11 +272,6 @@ bool DownloadManager::existActiveTransfers()
         }
     }
     return exists;
-}
-
-bool DownloadManager::initialized()
-{
-    return m_initialized;
 }
 
 void DownloadManager::checkAllTransfers()

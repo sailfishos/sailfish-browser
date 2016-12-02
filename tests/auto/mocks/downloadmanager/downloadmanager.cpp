@@ -24,8 +24,3 @@ DownloadManager *DownloadManager::instance()
     }
     return s_singleton;
 }
-
-bool DownloadManager::initialized()
-{
-    return true;
-}

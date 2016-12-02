@@ -19,21 +19,12 @@ CloseEventFilter::CloseEventFilter(DownloadManager *dlMgr, QObject *parent)
     : QObject(parent),
       m_downloadManager(dlMgr)
 {
-}
-
-bool CloseEventFilter::eventFilter(QObject *obj, QEvent *event)
-{
-    if (event->type() == QEvent::Close) {
-        if (m_downloadManager->existActiveTransfers()) {
-            connect(m_downloadManager, SIGNAL(allTransfersCompleted()),
-                    this, SLOT(stopApplication()));
-        } else {
-            stopApplication();
-        }
-        return false;
-    } else {
-        return QObject::eventFilter(obj, event);
-    }
+    connect(QMozContext::GetInstance(), &QMozContext::lastWindowDestroyed,
+            this, &CloseEventFilter::onLastWindowDestroyed);
+    connect(QMozContext::GetInstance(), &QMozContext::destroyed,
+            this, &CloseEventFilter::onContextDestroyed);
+    connect(&m_shutdownWatchdog, &QTimer::timeout,
+            this, &CloseEventFilter::onWatchdogTimeout);
 }
 
 void CloseEventFilter::stopApplication()
@@ -42,12 +33,36 @@ void CloseEventFilter::stopApplication()
     if (closeAllTabsConf.value(false).toBool()) {
         DBManager::instance()->removeAllTabs();
     }
+
     QMozContext::GetInstance()->stopEmbedding();
-    qApp->quit();
- }
+    // Give the engine 5 seconds to shut down. If it fails terminate
+    // with a fatal error.
+    m_shutdownWatchdog.start(5000);
+}
+
+void CloseEventFilter::onLastWindowDestroyed()
+{
+    if (m_downloadManager->existActiveTransfers()) {
+        connect(m_downloadManager, SIGNAL(allTransfersCompleted()),
+                this, SLOT(stopApplication()));
+    } else {
+        stopApplication();
+    }
+}
+
+void CloseEventFilter::onContextDestroyed()
+{
+    qApp->exit();
+}
+
+void CloseEventFilter::onWatchdogTimeout()
+{
+    qFatal("Browser failed to terminate in acceptable time!");
+}
 
 void CloseEventFilter::cancelStopApplication()
 {
     disconnect(m_downloadManager, SIGNAL(allTransfersCompleted()),
                this, SLOT(stopApplication()));
+    m_shutdownWatchdog.stop();
 }

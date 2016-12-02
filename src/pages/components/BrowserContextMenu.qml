@@ -204,7 +204,6 @@ Rectangle {
             linkUrl: root.imageSrc
             contentType: root.contentType
             viewId: root.viewId
-
             onClicked: root._hide()
         }
 

@@ -91,7 +91,7 @@ void DeclarativeTabModel::remove(int index) {
 
         removeTab(m_tabs.at(index).tabId(), m_tabs.at(index).thumbnailPath(), index);
         if (removingActiveTab) {
-            activateTab(newActiveIndex, false);
+            activateTab(newActiveIndex, true);
         }
     }
 }
@@ -349,8 +349,6 @@ void DeclarativeTabModel::updateActiveTab(const Tab &activeTab, bool loadActiveT
     if (m_activeTabId != activeTab.tabId()) {
         int oldTabId = m_activeTabId;
         m_activeTabId = activeTab.tabId();
-
-        setWaitingForNewTab(true);
 
         // If tab has changed, update active tab role.
         int tabIndex = activeTabIndex();

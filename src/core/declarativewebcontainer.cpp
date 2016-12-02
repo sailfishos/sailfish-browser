@@ -9,26 +9,24 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "declarativewebpage.h"
 #include "declarativewebcontainer.h"
 #include "persistenttabmodel.h"
 #include "privatetabmodel.h"
-#include "declarativewebpage.h"
 #include "dbmanager.h"
 #include "downloadmanager.h"
 #include "declarativewebutils.h"
 #include "webpagefactory.h"
+#include "webpages.h"
 #include "browserpaths.h"
 
-#include <QPointer>
 #include <QTimerEvent>
-#include <QQuickWindow>
-#include <QTransform>
-#include <QtConcurrentRun>
-#include <QGuiApplication>
 #include <QScreen>
 #include <QMetaMethod>
 #include <QOpenGLFunctions_ES2>
 #include <QGuiApplication>
+#include <qmozwindow.h>
+
 #include <qpa/qplatformnativeinterface.h>
 
 #ifndef DEBUG_LOGS
@@ -37,6 +35,7 @@
 
 DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     : QWindow(parent)
+    , m_mozWindow(nullptr)
     , m_rotationHandler(0)
     , m_webPage(0)
     , m_context(0)
@@ -59,6 +58,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     , m_privateMode(m_settingManager->autostartPrivateBrowsing())
     , m_activeTabRendered(false)
     , m_clearSurfaceTask(0)
+    , m_closing(false)
 {
 
     QSize screenSize = QGuiApplication::primaryScreen()->size();
@@ -87,10 +87,10 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
 
     setTabModel(privateMode() ? m_privateTabModel.data() : m_persistentTabModel.data());
 
-    connect(DownloadManager::instance(), SIGNAL(initializedChanged()), this, SLOT(initialize()));
     connect(DownloadManager::instance(), SIGNAL(downloadStarted()), this, SLOT(onDownloadStarted()));
     connect(QMozContext::GetInstance(), SIGNAL(onInitialized()), this, SLOT(initialize()));
-    connect(this, SIGNAL(portraitChanged()), this, SLOT(resetHeight()));
+    connect(QMozContext::GetInstance(), &QMozContext::lastViewDestroyed,
+            this, &DeclarativeWebContainer::onLastViewDestroyed);
 
     QString cacheLocation = BrowserPaths::cacheLocation();
     if (cacheLocation.isNull()) {
@@ -120,42 +120,45 @@ DeclarativeWebPage *DeclarativeWebContainer::webPage() const
     return m_webPage;
 }
 
-void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage)
+QMozWindow *DeclarativeWebContainer::mozWindow() const
 {
-    if (m_webPage != webPage) {
+    return m_mozWindow.data();
+}
+
+void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage, bool triggerSignals)
+{
+    if (m_webPage != webPage || triggerSignals) {
         // Disconnect previous page.
         if (m_webPage) {
             m_webPage->disconnect(this);
         }
 
         m_webPage = webPage;
+        // Mark as not rendered when ever tab is changed.
+        setActiveTabRendered(false);
 
         if (m_webPage) {
             connect(m_webPage, SIGNAL(canGoBackChanged()), this, SIGNAL(canGoBackChanged()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(canGoForwardChanged()), this, SIGNAL(canGoForwardChanged()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(urlChanged()), this, SIGNAL(urlChanged()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(titleChanged()), this, SIGNAL(titleChanged()), Qt::UniqueConnection);
-            connect(m_webPage, SIGNAL(imeNotification(int,bool,int,int,QString)),
-                    this, SLOT(imeNotificationChanged(int,bool,int,int,QString)), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(windowCloseRequested()), this, SLOT(closeWindow()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(loadingChanged()), this, SLOT(updateLoading()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(loadProgressChanged()), this, SLOT(updateLoadProgress()), Qt::UniqueConnection);
-            connect(m_webPage, SIGNAL(domContentLoadedChanged()), this, SLOT(sendVkbOpenCompositionMetrics()), Qt::UniqueConnection);
-            connect(m_webPage, SIGNAL(requestGLContext()), this, SLOT(createGLContext()), Qt::DirectConnection);
-            connect(qApp->inputMethod(), SIGNAL(visibleChanged()), this, SLOT(sendVkbOpenCompositionMetrics()), Qt::UniqueConnection);
-            // Intentionally not a direct connect as signal is emitted from gecko compositor thread.
-            connect(m_webPage, SIGNAL(afterRendering(QRect)), this, SLOT(updateActiveTabRendered()), Qt::UniqueConnection);
+            connect(m_webPage, SIGNAL(contentOrientationChanged(Qt::ScreenOrientation)),
+                    this, SLOT(handleContentOrientationChanged(Qt::ScreenOrientation)), Qt::UniqueConnection);
+
             // NB: these signals are not disconnected upon setting current m_webPage.
             connect(m_webPage, SIGNAL(urlChanged()), m_model, SLOT(onUrlChanged()), Qt::UniqueConnection);
             connect(m_webPage, SIGNAL(titleChanged()), m_model, SLOT(onTitleChanged()), Qt::UniqueConnection);
 
-            m_webPage->setWindow(this);
-            if (m_chromeWindow) {
-                updateContentOrientation(m_chromeWindow->contentOrientation());
+            // Wait for one frame to be rendered and schedule update if tab is ready to render.
+            connect(m_mozWindow.data(), SIGNAL(compositingFinished()), this, SLOT(updateActiveTabRendered()), Qt::UniqueConnection);
+            connect(m_webPage, SIGNAL(domContentLoadedChanged()), this, SLOT(updateActiveTabRendered()), Qt::UniqueConnection);
+
+            if (m_webPage->completed() && m_webPage->active() && m_webPage->domContentLoaded()) {
+                m_webPage->update();
             }
-            setActiveTabRendered(m_webPage->isPainted());
-        } else {
-            setActiveTabRendered(false);
         }
 
         emit contentItemChanged();
@@ -201,8 +204,10 @@ void DeclarativeWebContainer::setTabModel(DeclarativeTabModel *model)
             emit m_model->countChanged();
         }
 
-        // Set waiting for a tab.
-        if (m_model) {
+        // Set waiting for a tab. This can only happen when
+        // browser is already started. Initialization steps take
+        // care creating new tabs as per need.
+        if (m_model && m_initialized) {
             m_model->setWaitingForNewTab(true);
         }
     }
@@ -222,11 +227,6 @@ void DeclarativeWebContainer::setForeground(bool active)
 {
     if (m_foreground != active) {
         m_foreground = active;
-
-        if (!m_foreground) {
-            // Respect content height when browser brought back from home
-            resetHeight(true);
-        }
         emit foregroundChanged();
     }
 }
@@ -240,6 +240,19 @@ void DeclarativeWebContainer::setMaxLiveTabCount(int count)
 {
     if (m_webPages->setMaxLivePages(count)) {
         emit maxLiveTabCountChanged();
+    }
+}
+
+bool DeclarativeWebContainer::portrait() const
+{
+    return m_portrait;
+}
+
+void DeclarativeWebContainer::setPortrait(bool portrait)
+{
+    if (m_portrait != portrait) {
+        m_portrait = portrait;
+        emit portraitChanged();
     }
 }
 
@@ -327,10 +340,26 @@ void DeclarativeWebContainer::setChromeWindow(QObject *chromeWindow)
             m_chromeWindow->setTransientParent(this);
             m_chromeWindow->showFullScreen();
             updateContentOrientation(m_chromeWindow->contentOrientation());
-            connect(m_chromeWindow, SIGNAL(contentOrientationChanged(Qt::ScreenOrientation)), this, SLOT(updateContentOrientation(Qt::ScreenOrientation)));
         }
         emit chromeWindowChanged();
     }
+}
+
+bool DeclarativeWebContainer::readyToPaint() const
+{
+     return m_mozWindow ? m_mozWindow->readyToPaint() : true;
+}
+
+void DeclarativeWebContainer::setReadyToPaint(bool ready)
+{
+    if (m_mozWindow && m_mozWindow->setReadyToPaint(ready)) {
+        emit readyToPaintChanged();
+    }
+}
+
+Qt::ScreenOrientation DeclarativeWebContainer::pendingWebContentOrientation() const
+{
+    return m_mozWindow ? m_mozWindow->pendingOrientation() : Qt::PortraitOrientation;
 }
 
 int DeclarativeWebContainer::tabId() const
@@ -409,14 +438,14 @@ void DeclarativeWebContainer::goBack()
 
 bool DeclarativeWebContainer::activatePage(const Tab& tab, bool force, int parentId)
 {
-    if (!m_model) {
+    if (!m_initialized) {
+        m_initialUrl = tab.url();
         return false;
     }
 
     m_webPages->initialize(this);
     if ((m_model->loaded() || force) && tab.tabId() > 0 && m_webPages->initialized() && m_webPageComponent) {
         WebPageActivationData activationData = m_webPages->page(tab, parentId);
-        setActiveTabRendered(false);
         setWebPage(activationData.webPage);
         // Reset always height so that orentation change is taken into account.
         m_webPage->forceChrome(false);
@@ -448,12 +477,18 @@ void DeclarativeWebContainer::updateMode()
     }
 }
 
+/**
+ * @brief DeclarativeWebContainer::setActiveTabRendered
+ * Sets the active tab render state. Should be only called when tab changes
+ * or is about to change. When a frame is rendered, we mark tab as rendered.
+ * @param rendered
+ */
 void DeclarativeWebContainer::setActiveTabRendered(bool rendered)
 {
-    if (m_activeTabRendered != rendered) {
-        m_activeTabRendered = rendered;
-        emit activeTabRenderedChanged();
-    }
+    // When tab is closed, make sure that signal gets emitted again
+    // if tab is already rendered.
+    m_activeTabRendered = rendered;
+    emit activeTabRenderedChanged();
 }
 
 bool DeclarativeWebContainer::postClearWindowSurfaceTask()
@@ -483,8 +518,6 @@ void DeclarativeWebContainer::clearWindowSurface()
     m_context->makeCurrent(this);
     QOpenGLFunctions_ES2* funcs = m_context->versionFunctions<QOpenGLFunctions_ES2>();
     Q_ASSERT(funcs);
-    QSize s = m_context->surface()->size();
-    funcs->glScissor(0, 0, s.width(), s.height());
     funcs->glClearColor(1.0, 1.0, 1.0, 0.0);
     funcs->glClear(GL_COLOR_BUFFER_BIT);
     m_context->swapBuffers(this);
@@ -502,10 +535,15 @@ QObject *DeclarativeWebContainer::focusObject() const
 
 bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
 {
-    if (event->type() == QEvent::Close && m_webPage) {
-        // Make sure gecko does not use GL context we gave it in ::createGLContext
-        // after the window has been closed.
-        m_webPage->suspendView();
+    if (event->type() == QEvent::Close && m_mozWindow) {
+        m_mozWindow->suspendRendering();
+        m_closing = true;
+
+        if (m_webPages->count() == 0) {
+            m_mozWindow.reset();
+        }
+
+        m_webPages->clear();
     }
 
     // Emit chrome exposed when both chrome window and browser window has been exposed. This way chrome
@@ -657,38 +695,21 @@ void DeclarativeWebContainer::componentComplete()
     }
 }
 
-void DeclarativeWebContainer::resetHeight(bool respectContentHeight)
-{
-    if (!m_webPage) {
-        return;
-    }
-
-    m_webPage->resetHeight(respectContentHeight);
-}
-
 void DeclarativeWebContainer::updateContentOrientation(Qt::ScreenOrientation orientation)
 {
-    if (m_webPage) {
-        m_webPage->updateContentOrientation(orientation);
+    if (m_mozWindow) {
+        bool orientationShouldChange = (orientation != m_mozWindow->pendingOrientation());
+        m_mozWindow->setContentOrientation(orientation);
+        if (orientationShouldChange) {
+            emit pendingWebContentOrientationChanged();
+        }
     }
-
     reportContentOrientationChange(orientation);
 }
 
-void DeclarativeWebContainer::imeNotificationChanged(int state, bool open, int cause, int focusChange, const QString &type)
+void DeclarativeWebContainer::clearSurface()
 {
-    Q_UNUSED(open)
-    Q_UNUSED(cause)
-    Q_UNUSED(focusChange)
-    Q_UNUSED(type)
-
-    // QmlMozView's input context open is actually intention (0 closed, 1 opened).
-    // cause 3 equals InputContextAction::CAUSE_MOUSE nsIWidget.h
-    if (state == 1 && cause == 3) {
-        // For safety reset height based on contentHeight before going to "boundHeightControl" state
-        // so that when vkb is closed we get correctly reset height back.
-        resetHeight(true);
-    }
+    postClearWindowSurfaceTask();
 }
 
 qreal DeclarativeWebContainer::contentHeight() const
@@ -715,6 +736,20 @@ void DeclarativeWebContainer::onActiveTabChanged(int activeTabId, bool loadActiv
 
 void DeclarativeWebContainer::initialize()
 {
+    if (QMozContext::GetInstance()->initialized() && !m_mozWindow) {
+        m_mozWindow.reset(new QMozWindow(QWindow::size()));
+        connect(m_mozWindow.data(), &QMozWindow::requestGLContext,
+                this, &DeclarativeWebContainer::createGLContext, Qt::DirectConnection);
+        connect(m_mozWindow.data(), &QMozWindow::drawUnderlay,
+                this, &DeclarativeWebContainer::drawUnderlay, Qt::DirectConnection);
+        connect(m_mozWindow.data(), &QMozWindow::orientationChangeFiltered,
+                this, &DeclarativeWebContainer::handleContentOrientationChanged);
+        m_mozWindow->setReadyToPaint(false);
+        if (m_chromeWindow) {
+            updateContentOrientation(m_chromeWindow->contentOrientation());
+        }
+    }
+
     // This signal handler is responsible for activating
     // the first page.
     if (!canInitialize() || m_initialized) {
@@ -738,11 +773,16 @@ void DeclarativeWebContainer::initialize()
         return;
     }
 
+    // From this point onwards, we're ready to initialize.
+    // We set m_initialized to true prior to the block below since we may need to
+    // call loadTab() within it, and that function is guarded by the value of m_initialized.
+    m_initialized = true;
+
     // Load test
     // 1) no tabs and firstUseDone or we have incoming url, load initial url or home page to a new tab.
     // 2) model has tabs, load initial url or active tab.
     bool firstUseDone = DeclarativeWebUtils::instance()->firstUseDone();
-    if (m_model->count() == 0 && (firstUseDone || !m_initialUrl.isEmpty())) {
+    if ((m_model->waitingForNewTab() || m_model->count() == 0) && (firstUseDone || !m_initialUrl.isEmpty())) {
         QString url = m_initialUrl.isEmpty() ? DeclarativeWebUtils::instance()->homePage() : m_initialUrl;
         QString title = "";
         m_model->newTab(url, title);
@@ -758,8 +798,6 @@ void DeclarativeWebContainer::initialize()
         m_completed = true;
         emit completedChanged();
     }
-    m_initialized = true;
-    disconnect(m_chromeWindow, SIGNAL(contentOrientationChanged(Qt::ScreenOrientation)), this, SLOT(updateContentOrientation(Qt::ScreenOrientation)));
 }
 
 void DeclarativeWebContainer::onDownloadStarted()
@@ -792,9 +830,6 @@ void DeclarativeWebContainer::onNewTabRequested(QString url, QString title, int 
     Tab tab;
     tab.setTabId(m_model->nextTabId());
     tab.setUrl(url);
-    if (!canInitialize()) {
-        m_initialUrl = url;
-    }
 
     if (activatePage(tab, false, parentId)) {
         m_webPage->loadTab(url, false);
@@ -807,7 +842,7 @@ void DeclarativeWebContainer::releasePage(int tabId)
         m_webPages->release(tabId);
         // Successfully destroyed. Emit relevant property changes.
         if (m_model->count() == 0) {
-            setWebPage(NULL);
+            setWebPage(NULL, true);
             postClearWindowSurfaceTask();
         }
     }
@@ -849,9 +884,21 @@ void DeclarativeWebContainer::updateLoading()
 
 void DeclarativeWebContainer::updateActiveTabRendered()
 {
+    if (m_webPage && !m_webPage->completed() && !m_webPage->domContentLoaded()) {
+        return;
+    }
+
     setActiveTabRendered(true);
     // One frame rendered so let's disconnect.
-    disconnect(m_webPage, SIGNAL(afterRendering(QRect)), this, SLOT(updateActiveTabRendered()));
+    disconnect(m_mozWindow.data(), SIGNAL(compositingFinished()),
+               this, SLOT(updateActiveTabRendered()));
+}
+
+void DeclarativeWebContainer::onLastViewDestroyed()
+{
+    if (m_closing) {
+        m_mozWindow.reset();
+    }
 }
 
 void DeclarativeWebContainer::updateWindowFlags()
@@ -885,7 +932,7 @@ void DeclarativeWebContainer::updatePageFocus(bool focus)
 
 bool DeclarativeWebContainer::canInitialize() const
 {
-    return QMozContext::GetInstance()->initialized() && DownloadManager::instance()->initialized() && m_model && m_model->loaded();
+    return QMozContext::GetInstance()->initialized() && m_model && m_model->loaded();
 }
 
 void DeclarativeWebContainer::loadTab(const Tab& tab, bool force)
@@ -896,42 +943,6 @@ void DeclarativeWebContainer::loadTab(const Tab& tab, bool force)
         // Hence, parentId is not necessary over here.
         m_webPage->loadTab(tab.url(), force);
     }
-}
-
-void DeclarativeWebContainer::sendVkbOpenCompositionMetrics()
-{
-    if (!m_webPage) {
-        return;
-    }
-
-    int vkbRectHeight(0);
-    int winHeight(0);
-    int winWidth(0);
-
-    if (m_portrait) {
-        vkbRectHeight = qGuiApp->inputMethod()->keyboardRectangle().height();
-        winHeight = height();
-        winWidth = width();
-    } else {
-        vkbRectHeight = qGuiApp->inputMethod()->keyboardRectangle().width();
-        winHeight = width();
-        winWidth = height();
-    }
-
-    // Round values to even numbers.
-    int compositionHeight = winHeight - vkbRectHeight;
-    int vkbOpenMaxCssCompositionWidth = winWidth / QMozContext::GetInstance()->pixelRatio();
-    int vkbOpenMaxCssCompositionHeight = compositionHeight / QMozContext::GetInstance()->pixelRatio();
-
-    QVariantMap map;
-    map.insert("imOpen", vkbRectHeight > 0);
-    map.insert("resolution", m_webPage->resolution());
-    map.insert("compositionHeight", compositionHeight);
-    map.insert("maxCssCompositionWidth", vkbOpenMaxCssCompositionWidth);
-    map.insert("maxCssCompositionHeight", vkbOpenMaxCssCompositionHeight);
-
-    QVariant data(map);
-    m_webPage->sendAsyncMessage("embedui:vkbOpenCompositionMetrics", data);
 }
 
 void DeclarativeWebContainer::createGLContext()
@@ -949,5 +960,25 @@ void DeclarativeWebContainer::createGLContext()
 
     if (!m_activeTabRendered) {
         clearWindowSurface();
+    }
+}
+
+void DeclarativeWebContainer::drawUnderlay()
+{
+    Q_ASSERT(m_context);
+
+    QColor bgColor = m_webPage ? m_webPage->bgcolor() : QColor(Qt::white);
+    m_context->makeCurrent(this);
+    QOpenGLFunctions_ES2* funcs = m_context->versionFunctions<QOpenGLFunctions_ES2>();
+    if (funcs) {
+        funcs->glClearColor(bgColor.redF(), bgColor.greenF(), bgColor.blueF(), 0.0);
+        funcs->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    }
+}
+
+void DeclarativeWebContainer::handleContentOrientationChanged(Qt::ScreenOrientation orientation)
+{
+    if (orientation == pendingWebContentOrientation()) {
+        emit webContentOrientationChanged(orientation);
     }
 }

@@ -29,10 +29,8 @@ public:
     static DownloadManager *instance();
 
     bool existActiveTransfers();
-    bool initialized();
 
 signals:
-    void initializedChanged();
     void downloadStarted();
     void downloadStatusChanged(int downloadId, int status, QVariant info);
     void allTransfersCompleted();
@@ -67,7 +65,6 @@ private:
     QHash<qulonglong, DownloadStatus::Status> m_statusCache;
 
     TransferEngineInterface *m_transferClient;
-    bool m_initialized;
 
     friend class Browser;
 };

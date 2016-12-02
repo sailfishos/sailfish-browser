@@ -132,7 +132,7 @@ Page {
             when: virtualKeyboardObserver.opened && webView.enabled
             PropertyChanges {
                 target: webView.contentItem
-                height: browserPage.height - virtualKeyboardObserver.panelSize
+                virtualKeyboardMargin: virtualKeyboardObserver.panelSize
             }
         }
     }
@@ -146,8 +146,6 @@ Page {
         portrait: browserPage.isPortrait
         maxLiveTabCount: 3
         toolbarHeight: overlay.toolBar.toolsHeight
-        width: window.width
-        height: window.height
         rotationHandler: browserPage
         imOpened: virtualKeyboardObserver.opened
 
@@ -166,7 +164,11 @@ Page {
             }
         }
 
+        onWebContentOrientationChanged: orientationFader.waitForWebContentOrientationChanged = false
+
         function applyContentOrientation(orientation) {
+            orientationFader.waitForWebContentOrientationChanged = (contentItem && contentItem.active)
+
             switch (orientation) {
             case Orientation.None:
             case Orientation.Portrait:
@@ -182,7 +184,6 @@ Page {
                 updateContentOrientation(Qt.InvertedLandscapeOrientation)
                 break
             }
-            resetHeight()
         }
 
         // Both model change and model count change are connected to this.
@@ -229,11 +230,7 @@ Page {
         MouseArea {
             anchors.fill: parent
             enabled: overlay.animator.atTop && webView.tabModel.count > 0
-            onClicked: {
-                overlay.dismiss(true)
-                // trigger overlay.onActiveChanged() handler to activate a web page in case it's inactive
-                overlay.activeChanged()
-            }
+            onClicked: overlay.dismiss(true)
         }
 
         Browser.PrivateModeTexture {

@@ -13,14 +13,11 @@
 #define DECLARATIVEWEBCONTAINER_H
 
 #include "settingmanager.h"
-#include "webpages.h"
 
-#include <qqml.h>
 #include <qmozcontext.h>
 #include <QtGui/QWindow>
 #include <QtGui/QOpenGLFunctions>
 #include <QPointer>
-#include <QImage>
 #include <QFutureWatcher>
 #include <QQmlComponent>
 #include <QQuickView>
@@ -29,9 +26,11 @@
 #include <QWaitCondition>
 
 class QInputMethodEvent;
+class QMozWindow;
 class QTimerEvent;
 class DeclarativeTabModel;
 class DeclarativeWebPage;
+class WebPages;
 class Tab;
 
 class DeclarativeWebContainer : public QWindow, public QQmlParserStatus, protected QOpenGLFunctions {
@@ -47,7 +46,7 @@ class DeclarativeWebContainer : public QWindow, public QQmlParserStatus, protect
     Q_PROPERTY(int maxLiveTabCount READ maxLiveTabCount WRITE setMaxLiveTabCount NOTIFY maxLiveTabCountChanged FINAL)
     // This property should cover all possible popus
     Q_PROPERTY(bool popupActive MEMBER m_popupActive NOTIFY popupActiveChanged FINAL)
-    Q_PROPERTY(bool portrait MEMBER m_portrait NOTIFY portraitChanged FINAL)
+    Q_PROPERTY(bool portrait READ portrait WRITE setPortrait NOTIFY portraitChanged FINAL)
     Q_PROPERTY(bool fullscreenMode MEMBER m_fullScreenMode NOTIFY fullscreenModeChanged FINAL)
     Q_PROPERTY(qreal fullscreenHeight MEMBER m_fullScreenHeight NOTIFY fullscreenHeightChanged FINAL)
     Q_PROPERTY(bool imOpened MEMBER m_imOpened NOTIFY imOpenedChanged FINAL)
@@ -72,11 +71,16 @@ class DeclarativeWebContainer : public QWindow, public QQmlParserStatus, protect
 
     Q_PROPERTY(QQmlComponent* webPageComponent READ webPageComponent WRITE setWebPageComponent NOTIFY webPageComponentChanged FINAL)
     Q_PROPERTY(QObject *chromeWindow READ chromeWindow WRITE setChromeWindow NOTIFY chromeWindowChanged FINAL)
+    Q_PROPERTY(bool readyToPaint READ readyToPaint WRITE setReadyToPaint NOTIFY readyToPaintChanged FINAL)
+
+    Q_PROPERTY(Qt::ScreenOrientation pendingWebContentOrientation READ pendingWebContentOrientation NOTIFY pendingWebContentOrientationChanged FINAL)
+
 public:
     DeclarativeWebContainer(QWindow *parent = 0);
     ~DeclarativeWebContainer();
 
     DeclarativeWebPage *webPage() const;
+    QMozWindow *mozWindow() const;
 
     DeclarativeTabModel *tabModel() const;
 
@@ -87,6 +91,9 @@ public:
 
     int maxLiveTabCount() const;
     void setMaxLiveTabCount(int count);
+
+    bool portrait() const;
+    void setPortrait(bool portrait);
 
     QQmlComponent* webPageComponent() const;
     void setWebPageComponent(QQmlComponent* qmlComponent);
@@ -109,6 +116,11 @@ public:
     QObject *chromeWindow() const;
     void setChromeWindow(QObject *chromeWindow);
 
+    bool readyToPaint() const;
+    void setReadyToPaint(bool ready);
+
+    Qt::ScreenOrientation pendingWebContentOrientation() const;
+
     int tabId() const;
     QString title() const;
     QString url() const;
@@ -124,8 +136,6 @@ public:
     Q_INVOKABLE void goBack();
 
     Q_INVOKABLE void updatePageFocus(bool focus);
-    Q_INVOKABLE void clearSurface() {  postClearWindowSurfaceTask(); }
-
     Q_INVOKABLE void dumpPages() const;
 
     QObject *focusObject() const;
@@ -165,6 +175,10 @@ signals:
     void webPageComponentChanged(QQmlComponent *newComponent);
     void chromeWindowChanged();
     void chromeExposed();
+    void readyToPaintChanged();
+
+    void pendingWebContentOrientationChanged();
+    void webContentOrientationChanged(Qt::ScreenOrientation orientation);
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event);
@@ -177,16 +191,14 @@ protected:
     virtual void focusInEvent(QFocusEvent *event);
     virtual void focusOutEvent(QFocusEvent *event);
     virtual void timerEvent(QTimerEvent *event);
-
     virtual void classBegin();
     virtual void componentComplete();
 
 public slots:
-    void resetHeight(bool respectContentHeight = true);
     void updateContentOrientation(Qt::ScreenOrientation orientation);
+    void clearSurface();
 
 private slots:
-    void imeNotificationChanged(int state, bool open, int cause, int focusChange, const QString& type);
     void initialize();
     void onActiveTabChanged(int activeTabId, bool loadActiveTab);
     void onDownloadStarted();
@@ -196,17 +208,18 @@ private slots:
     void updateLoadProgress();
     void updateLoading();
     void updateActiveTabRendered();
+    void onLastViewDestroyed();
 
     void updateWindowFlags();
 
-    // These are here to inform embedlite-components that keyboard is open or close
-    // matching composition metrics.
-    void sendVkbOpenCompositionMetrics();
-
+    // QMozWindow related slots:
     void createGLContext();
+    void drawUnderlay();
+
+    void handleContentOrientationChanged(Qt::ScreenOrientation orientation);
 
 private:
-    void setWebPage(DeclarativeWebPage *webPage);
+    void setWebPage(DeclarativeWebPage *webPage, bool triggerSignals = false);
     void setTabModel(DeclarativeTabModel *model);
     qreal contentHeight() const;
     bool canInitialize() const;
@@ -221,6 +234,7 @@ private:
     static void clearWindowSurfaceTask(void* data);
     void clearWindowSurface();
 
+    QScopedPointer<QMozWindow> m_mozWindow;
     QPointer<QQuickItem> m_rotationHandler;
     QPointer<DeclarativeWebPage> m_webPage;
     QPointer<QQuickView> m_chromeWindow;
@@ -265,6 +279,8 @@ private:
 
     QMutex m_clearSurfaceTaskMutex;
     QMozContext::TaskHandle m_clearSurfaceTask;
+
+    bool m_closing;
 
     friend class tst_webview;
     friend class tst_declarativewebcontainer;

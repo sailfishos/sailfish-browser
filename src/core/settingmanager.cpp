@@ -11,6 +11,7 @@
 
 #include "settingmanager.h"
 #include "dbmanager.h"
+#include "opensearchconfigs.h"
 
 #include <MGConfItem>
 #include <qmozcontext.h>
@@ -21,6 +22,8 @@ static SettingManager *gSingleton = 0;
 SettingManager::SettingManager(QObject *parent)
     : QObject(parent)
     , m_initialized(false)
+    , m_searchEnginesInitialized(false)
+    , m_addedSearchEngines(0)
 {
     m_clearHistoryConfItem = new MGConfItem("/apps/sailfish-browser/actions/clear_history", this);
     m_clearCookiesConfItem = new MGConfItem("/apps/sailfish-browser/actions/clear_cookies", this);
@@ -35,6 +38,8 @@ SettingManager::SettingManager(QObject *parent)
     m_toolbarLarge = new MGConfItem("/apps/sailfish-browser/settings/toolbar_large", this);
     connect(m_toolbarSmall, SIGNAL(valueChanged()), this, SIGNAL(toolbarSmallChanged()));
     connect(m_toolbarLarge, SIGNAL(valueChanged()), this, SIGNAL(toolbarLargeChanged()));
+    connect(QMozContext::GetInstance(), SIGNAL(recvObserve(QString, QVariant)),
+            this, SLOT(handleObserve(QString, QVariant)));
 }
 
 bool SettingManager::clearHistoryRequested() const
@@ -133,14 +138,90 @@ bool SettingManager::clearCache()
 
 void SettingManager::setSearchEngine()
 {
-    QVariant searchEngine = m_searchEngineConfItem->value(QVariant(QString("Google")));
-    QMozContext::GetInstance()->setPref(QString("browser.search.defaultenginename"), searchEngine);
+    if (m_searchEnginesInitialized) {
+        QVariant searchEngine = m_searchEngineConfItem->value(QVariant(QString("Google")));
+        QMozContext *context = QMozContext::GetInstance();
+        context->setPref(QString("browser.search.defaultenginename"), searchEngine);
+
+        // Let nsSearchService update the search engine (through EmbedLiteSearchEngine).
+        QVariantMap defaultSearchEngine;
+        defaultSearchEngine.insert(QLatin1String("msg"), QLatin1String("setdefault"));
+        defaultSearchEngine.insert(QLatin1String("name"), searchEngine);
+        context->sendObserve(QLatin1String("embedui:search"), QVariant(defaultSearchEngine));
+    }
 }
 
 void SettingManager::doNotTrack()
 {
     QMozContext::GetInstance()->setPref(QString("privacy.donottrackheader.enabled"),
                                         m_doNotTrackConfItem->value(false));
+}
+
+void SettingManager::handleObserve(const QString &message, const QVariant &data)
+{
+    const QVariantMap dataMap = data.toMap();
+    if (message == QLatin1String("embed:search")) {
+        QString msg = dataMap.value("msg").toString();
+        if (msg == QLatin1String("init")) {
+            const StringMap configs(OpenSearchConfigs::getAvailableOpenSearchConfigs());
+            const QStringList configuredEngines = configs.keys();
+            QStringList registeredSearches(dataMap.value(QLatin1String("engines")).toStringList());
+            QString defaultSearchEngine = dataMap.value(QLatin1String("defaultEngine")).toString();
+            m_searchEnginesInitialized = !registeredSearches.isEmpty();
+
+            // Upon first start, engine doesn't know about the search engines.
+            // Engine load requests are send within the for loop below.
+            if (!m_searchEnginesInitialized) {
+                m_addedSearchEngines = new QStringList(configuredEngines);
+            }
+
+            QMozContext *mozContext = QMozContext::GetInstance();
+
+            // Add newly installed configs
+            foreach (QString searchName, configuredEngines) {
+                if (registeredSearches.contains(searchName)) {
+                    registeredSearches.removeAll(searchName);
+                } else {
+                    QVariantMap loadsearch;
+                    // load opensearch descriptions
+                    loadsearch.insert(QLatin1String("msg"), QVariant(QLatin1String("loadxml")));
+                    loadsearch.insert(QLatin1String("uri"), QVariant(QString("file://%1").arg(configs[searchName])));
+                    loadsearch.insert(QLatin1String("confirm"), QVariant(false));
+                    mozContext->sendObserve(QLatin1String("embedui:search"), QVariant(loadsearch));
+                }
+            }
+
+            // Remove uninstalled OpenSearch configs
+            foreach(QString searchName, registeredSearches) {
+                QVariantMap removeMsg;
+                removeMsg.insert(QLatin1String("msg"), QVariant(QLatin1String("remove")));
+                removeMsg.insert(QLatin1String("name"), QVariant(searchName));
+                mozContext->sendObserve(QLatin1String("embedui:search"), QVariant(removeMsg));
+            }
+
+            // Try to set search engine. After first start we can update the default search
+            // engine immediately.
+            setSearchEngine();
+        } else if (msg == QLatin1String("search-engine-added")) {
+            // We're only interrested about the very first start. Then the m_addedSearchEngines
+            // contains engines.
+            int errorCode = dataMap.value(QLatin1String("errorCode")).toInt();
+            bool firstStart = m_addedSearchEngines && !m_addedSearchEngines->isEmpty();
+            if (errorCode != 0) {
+                qWarning() << "An error occurred while adding a search engine, error code: " << errorCode << ", see nsIBrowserSearchService for more details.";
+            } else if (m_addedSearchEngines) {
+                QString engine = dataMap.value(QLatin1String("engine")).toString();
+                m_addedSearchEngines->removeAll(engine);
+                m_searchEnginesInitialized = m_addedSearchEngines->isEmpty();
+                // All engines are added.
+                if (firstStart && m_searchEnginesInitialized) {
+                    setSearchEngine();
+                    delete m_addedSearchEngines;
+                    m_addedSearchEngines = 0;
+                }
+            }
+        }
+    }
 }
 
 void SettingManager::setAutostartPrivateBrowsing(bool privateMode)

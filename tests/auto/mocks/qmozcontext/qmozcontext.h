@@ -43,6 +43,9 @@ public:
 
 signals:
     void onInitialized();
+    void destroyed();
+    void lastViewDestroyed();
+    void lastWindowDestroyed();
     void recvObserve(const QString, const QVariant);
 };
 

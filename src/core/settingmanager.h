@@ -45,6 +45,7 @@ private slots:
     bool clearCache();
     void setSearchEngine();
     void doNotTrack();
+    void handleObserve(const QString &message, const QVariant &data);
 
 private:
     explicit SettingManager(QObject *parent = 0);
@@ -61,6 +62,9 @@ private:
     MGConfItem *m_toolbarLarge;
 
     bool m_initialized;
+    bool m_searchEnginesInitialized;
+
+    QStringList *m_addedSearchEngines;
 };
 
 #endif
