@@ -193,6 +193,9 @@ void DeclarativeWebPage::restoreHistory() {
     data.insert(QString("links"), QVariant(urls));
     data.insert(QString("index"), QVariant(index));
     sendAsyncMessage("embedui:addhistory", QVariant(data));
+
+    // History is restored once per webpage's life cycle.
+    m_restoredTabHistory.clear();
 }
 
 void DeclarativeWebPage::setContentLoaded()
