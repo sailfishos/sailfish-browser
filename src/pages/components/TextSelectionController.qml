@@ -30,10 +30,14 @@ MouseArea {
     property string searchUri
     property bool isPhoneNumber
 
+    readonly property bool _canCall: !cellular1Status.disabled || !cellular2Status.disabled
+
     // keep selection range we get from engine to move the draggers with
     // selection together when panning or zooming
     property var _cssRange
     property var _selectionData
+
+    property bool _phoneNumberSelected
 
     function selectionRangeUpdated(data) {
         var resolution = contentItem.resolution
@@ -85,7 +89,9 @@ MouseArea {
 
         text = data.text
         searchUri = data.searchUri
-        isPhoneNumber = (cellular1Status.disabled && cellular2Status.disabled) ? false : data.isPhoneNumber
+
+        _phoneNumberSelected = data.isPhoneNumber
+        isPhoneNumber = _canCall && _phoneNumberSelected
 
         root.state = state
     }
@@ -150,6 +156,10 @@ MouseArea {
         if (state === "end" || state === "start") {
             copy()
         }
+    }
+
+    on_CanCallChanged: {
+        isPhoneNumber = _canCall && _phoneNumberSelected
     }
 
     TextSelectionHandle {
