@@ -63,6 +63,12 @@ WebContainer {
         }
     }
 
+    function clearSelection() {
+        if (contentItem) {
+            contentItem.clearSelection()
+        }
+    }
+
     function sendAsyncMessage(name, data) {
         if (!contentItem) {
             return
