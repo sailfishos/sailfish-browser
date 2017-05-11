@@ -11,6 +11,7 @@
 
 import QtQuick 2.1
 import Sailfish.Silica 1.0
+import org.nemomobile.configuration 1.0
 import "." as Browser
 
 SilicaListView {
@@ -70,6 +71,12 @@ SilicaListView {
         }
     ]
 
+    ConfigurationValue {
+        id: showCloseAllAction
+        key: "/apps/sailfish-browser/settings/show_close_all"
+        defaultValue: true
+    }
+
     PullDownMenu {
         id: pullDownMenu
         property var callbackFunction
@@ -100,7 +107,7 @@ SilicaListView {
             onClicked: pullDownMenu.callbackFunction = switchMode
         }
         MenuItem {
-            visible: webView.tabModel.count
+            visible: showCloseAllAction.value && webView.tabModel.count
             //% "Close all tabs"
             text: qsTrId("sailfish_browser-me-close_all")
             onClicked: tabView.closeAll()
