@@ -11,7 +11,6 @@
 
 #include "downloadmanager.h"
 #include "downloadmimetypehandler.h"
-#include "qmozcontext.h"
 #include "browserpaths.h"
 
 #include <transferengineinterface.h>
@@ -20,6 +19,7 @@
 #include <QFile>
 #include <QDebug>
 
+#include <webengine.h>
 #include <webenginesettings.h>
 
 #if defined(arm) \
@@ -39,8 +39,9 @@ DownloadManager::DownloadManager()
                                                    QDBusConnection::sessionBus(),
                                                    this);
     setPreferences();
-    connect(QMozContext::instance(), SIGNAL(recvObserve(const QString, const QVariant)),
-            this, SLOT(recvObserve(const QString, const QVariant)));
+    SailfishOS::WebEngine *webEngine = SailfishOS::WebEngine::instance();
+    connect(webEngine, &SailfishOS::WebEngine::recvObserve,
+            this, &DownloadManager::recvObserve);
 
     // Ignore the download info argument of the downloadStatusChanged signal.
     connect(this, &DownloadManager::downloadStatusChanged, [=](int downloadId, int status) {
@@ -202,7 +203,8 @@ void DownloadManager::cancel(int downloadId)
     QVariantMap data;
     data.insert("msg", "cancelDownload");
     data.insert("id", downloadId);
-    QMozContext::instance()->notifyObservers(QString("embedui:download"), QVariant(data));
+    SailfishOS::WebEngine *webEngine = SailfishOS::WebEngine::instance();
+    webEngine->notifyObservers(QString("embedui:download"), QVariant(data));
 }
 
 void DownloadManager::cancelTransfer(int transferId)
@@ -222,7 +224,8 @@ void DownloadManager::restartTransfer(int transferId)
         QVariantMap data;
         data.insert("msg", "retryDownload");
         data.insert("id", m_transfer2downloadMap.value(transferId));
-        QMozContext::instance()->notifyObservers(QString("embedui:download"), QVariant(data));
+        SailfishOS::WebEngine *webEngine = SailfishOS::WebEngine::instance();
+        webEngine->notifyObservers(QString("embedui:download"), QVariant(data));
     } else {
         m_transferClient->finishTransfer(transferId,
                                          TransferEngineData::TransferInterrupted,

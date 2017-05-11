@@ -211,6 +211,63 @@ Background {
                 opacity: toolBar.visible && webView.privateMode ? toolBar.opacity : 0.0
             }
 
+
+            Loader {
+                id: textSelectionToolbar
+
+                width: parent.width
+                height: isPortrait ? toolBar.scaledPortraitHeight : toolBar.scaledLandscapeHeight
+                active: webView.contentItem && webView.contentItem.textSelectionActive
+
+                opacity: active ? 1.0 : 0.0
+                Behavior on opacity {
+                    FadeAnimator {}
+                }
+
+                onActiveChanged: {
+                    if (active) {
+                        overlayAnimator.showChrome(false)
+                        if (webView.contentItem) {
+                            webView.contentItem.forceChrome(true)
+                        }
+                    } else {
+                        if (webView.contentItem) {
+                            webView.contentItem.forceChrome(false)
+                        }
+                    }
+                }
+
+                sourceComponent: Component {
+                    Browser.TextSelectionToolbar {
+                        property Item controller: webView && webView.contentItem && webView.contentItem.textSelectionController
+                        horizontalOffset: toolBar.horizontalOffset
+                        iconWidth: toolBar.iconWidth
+                        isPhoneNumber: active && controller.isPhoneNumber
+                        onCall: {
+                            Qt.openUrlExternally("tel:" + controller.text)
+                            controller.clearSelection()
+                        }
+
+                        onShare: {
+                            controller.clearSelection()
+                            pageStack.push("Sailfish.WebView.Popups.ShareTextPage", {"text" : controller.text })
+                        }
+                        onSearch: {
+                            // Open new tab with the search uri.
+                            controller.clearSelection()
+                            webView.tabModel.newTab(controller.searchUri, "")
+                            overlay.animator.showChrome(true)
+                        }
+                        onClear: {
+                            if (controller) {
+                                controller.clearSelection()
+                            }
+                        }
+
+                    }
+                }
+            }
+
             Browser.ToolBar {
                 id: toolBar
 
@@ -220,7 +277,12 @@ Background {
                 findText: searchField.text
                 bookmarked: bookmarkModel.activeUrlBookmarked
 
-                opacity: crossfadeRatio
+                opacity: textSelectionToolbar.active ? 0.0 : crossfadeRatio
+                Behavior on opacity {
+                    enabled: overlayAnimator.atBottom
+                    FadeAnimation {}
+                }
+
                 visible: opacity > 0.0
                 secondaryToolsActive: overlayAnimator.secondaryTools
 
@@ -252,7 +314,7 @@ Background {
                     overlayAnimator.showOverlay()
                 }
                 onShareActivePage: {
-                    pageStack.push(Qt.resolvedUrl("../ShareLinkPage.qml"), {
+                    pageStack.push("Sailfish.WebView.Popups.ShareLinkPage", {
                                        "link" : webView.url,
                                        "linkTitle": webView.title
                                    })
@@ -441,7 +503,7 @@ Background {
                     overlay.loadPage(url, title)
                 }
 
-                onShare: pageStack.push(Qt.resolvedUrl("../ShareLinkPage.qml"), {"link" : url, "linkTitle": title})
+                onShare: pageStack.push("Sailfish.WebView.Popups.ShareLinkPage", {"link" : url, "linkTitle": title})
 
                 Behavior on opacity { FadeAnimator {} }
             }

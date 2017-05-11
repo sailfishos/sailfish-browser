@@ -45,7 +45,7 @@ class DeclarativeWebContainer : public QWindow, public QQmlParserStatus, protect
     Q_PROPERTY(bool foreground READ foreground WRITE setForeground NOTIFY foregroundChanged FINAL)
     Q_PROPERTY(int maxLiveTabCount READ maxLiveTabCount WRITE setMaxLiveTabCount NOTIFY maxLiveTabCountChanged FINAL)
     // This property should cover all possible popus
-    Q_PROPERTY(bool popupActive MEMBER m_popupActive NOTIFY popupActiveChanged FINAL)
+    Q_PROPERTY(bool touchBlocked MEMBER m_touchBlocked NOTIFY touchBlockedChanged FINAL)
     Q_PROPERTY(bool portrait READ portrait WRITE setPortrait NOTIFY portraitChanged FINAL)
     Q_PROPERTY(bool fullscreenMode MEMBER m_fullScreenMode NOTIFY fullscreenModeChanged FINAL)
     Q_PROPERTY(qreal fullscreenHeight MEMBER m_fullScreenHeight NOTIFY fullscreenHeightChanged FINAL)
@@ -151,7 +151,7 @@ signals:
     void foregroundChanged();
     void allowHidingChanged();
     void maxLiveTabCountChanged();
-    void popupActiveChanged();
+    void touchBlockedChanged();
     void portraitChanged();
     void fullscreenModeChanged();
     void fullscreenHeightChanged();
@@ -251,7 +251,7 @@ private:
     bool m_enabled;
     bool m_foreground;
     bool m_allowHiding;
-    bool m_popupActive;
+    bool m_touchBlocked;
     bool m_portrait;
     bool m_fullScreenMode;
     qreal m_fullScreenHeight;

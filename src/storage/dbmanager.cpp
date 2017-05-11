@@ -35,12 +35,12 @@ DBManager::DBManager(QObject *parent)
     worker = new DBWorker();
     worker->moveToThread(&workerThread);
 
-    connect(&workerThread, SIGNAL(finished()), worker, SLOT(deleteLater()));
-    connect(worker, SIGNAL(tabsAvailable(QList<Tab>)), this, SIGNAL(tabsAvailable(QList<Tab>)));
-    connect(worker, SIGNAL(historyAvailable(QList<Link>)), this, SIGNAL(historyAvailable(QList<Link>)));
-    connect(worker, SIGNAL(tabHistoryAvailable(int,QList<Link>,int)), this, SIGNAL(tabHistoryAvailable(int,QList<Link>,int)));
-    connect(worker, SIGNAL(titleChanged(QString,QString)), this, SIGNAL(titleChanged(QString,QString)));
-    connect(worker, SIGNAL(thumbPathChanged(int,QString)), this, SIGNAL(thumbPathChanged(int,QString)));
+    connect(&workerThread, &QThread::finished, worker, &DBWorker::deleteLater);
+    connect(worker, &DBWorker::tabsAvailable, this, &DBManager::tabsAvailable);
+    connect(worker, &DBWorker::historyAvailable, this, &DBManager::historyAvailable);
+    connect(worker, &DBWorker::tabHistoryAvailable, this, &DBManager::tabHistoryAvailable);
+    connect(worker, &DBWorker::titleChanged, this, &DBManager::titleChanged);
+    connect(worker, &DBWorker::thumbPathChanged, this, &DBManager::thumbPathChanged);
     workerThread.start();
 
     QMetaObject::invokeMethod(worker, "init", Qt::BlockingQueuedConnection);

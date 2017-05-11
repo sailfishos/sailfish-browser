@@ -9,7 +9,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include <qmozcontext.h>
+#include <webengine.h>
 #include "declarativewebpage.h"
 #include "declarativewebpagecreator.h"
 
@@ -17,12 +17,12 @@ DeclarativeWebPageCreator::DeclarativeWebPageCreator(QObject *parent)
     : QMozViewCreator(parent)
     , m_activeWebPage(0)
 {
-    QMozContext::instance()->setViewCreator(this);
+    SailfishOS::WebEngine::instance()->setViewCreator(this);
 }
 
 DeclarativeWebPageCreator::~DeclarativeWebPageCreator()
 {
-    QMozContext::instance()->setViewCreator(0);
+    SailfishOS::WebEngine::instance()->setViewCreator(0);
 }
 
 DeclarativeWebPage *DeclarativeWebPageCreator::activeWebPage() const

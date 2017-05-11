@@ -10,6 +10,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include <QtTest/QtTest>
+#include <webengine.h>
 
 #include "declarativewebcontainer.h"
 #include "declarativewebpage.h"
@@ -56,7 +57,7 @@ void tst_declarativewebcontainer::initTestCase()
 
 void tst_declarativewebcontainer::cleanupTestCase()
 {
-    delete QMozContext::instance();
+    delete SailfishOS::WebEngine::instance();
 }
 
 void tst_declarativewebcontainer::init()
@@ -89,7 +90,6 @@ void tst_declarativewebcontainer::setWebPage()
     // Setting page
     EXPECT_CALL(page, setWindow(m_webContainer.data()));
     EXPECT_CALL(page, updateContentOrientation(_));
-    EXPECT_CALL(page, isPainted()).WillOnce(Return(true));
     EXPECT_CALL(page, loadProgress()).WillOnce(Return(0));
     m_webContainer->setWebPage(&page);
     QCOMPARE(m_webContainer->m_webPage.data(), &page);
@@ -229,8 +229,6 @@ void tst_declarativewebcontainer::loading()
     QCOMPARE(m_webContainer->loading(), false);
 
     // Page is not loading => false
-    EXPECT_CALL(page, setWindow(m_webContainer.data()));
-    EXPECT_CALL(page, isPainted());
     EXPECT_CALL(page, loadProgress());
     m_webContainer->setWebPage(&page);
     EXPECT_CALL(page, loading()).WillOnce(Return(false));
@@ -257,25 +255,23 @@ void tst_declarativewebcontainer::setChromeWindow()
 void tst_declarativewebcontainer::load()
 {
     // No page and no model set => set initial url
-    EXPECT_CALL(*QMozContext::instance(), initialized()).WillOnce(Return(false));
+    EXPECT_CALL(*SailfishOS::WebEngine::instance(), initialized()).WillOnce(Return(false));
     m_webContainer->load(QString(), QString(), true);
     QCOMPARE(m_webContainer->m_initialUrl, QString("about:blank"));
 
     // Test the path for uninitialized container => set initial url
     DeclarativeWebPage page;
-    EXPECT_CALL(page, setWindow(m_webContainer.data()));
-    EXPECT_CALL(page, isPainted());
     EXPECT_CALL(page, loadProgress());
     m_webContainer->setWebPage(&page);
     EXPECT_CALL(page, completed()).WillOnce(Return(false));
-    EXPECT_CALL(*QMozContext::instance(), initialized()).WillOnce(Return(false));
+    EXPECT_CALL(*SailfishOS::WebEngine::instance(), initialized()).WillOnce(Return(false));
     m_webContainer->load(QString("http://example1.com"), QString(), true);
     QCOMPARE(m_webContainer->m_initialUrl, QString("http://example1.com"));
 
     // Initialized container, empty model => add new tab to model
     PrivateTabModel model(NEXT_TAB_ID);
     m_webContainer->setTabModel(&model);
-    EXPECT_CALL(*QMozContext::instance(), initialized()).WillOnce(Return(true));
+    EXPECT_CALL(*SailfishOS::WebEngine::instance(), initialized()).WillOnce(Return(true));
     EXPECT_CALL(page, completed()).WillOnce(Return(false));
     m_webContainer->load(QString(), QString(), true);
 
@@ -317,7 +313,7 @@ void tst_declarativewebcontainer::activatePage()
 
 void tst_declarativewebcontainer::releasePage()
 {
-    EXPECT_CALL(*QMozContext::instance(), PostCompositorTask(_, m_webContainer.data()));
+    EXPECT_CALL(*SailfishOS::WebEngine::instance(), PostCompositorTask(_, m_webContainer.data()));
     m_webContainer->releasePage(1);
 }
 

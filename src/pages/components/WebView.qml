@@ -13,8 +13,9 @@ import QtQuick 2.1
 import QtQuick.Window 2.1 as QtQuick
 import Sailfish.Silica 1.0
 import Sailfish.Browser 1.0
+import Sailfish.WebView.Pickers 1.0 as Pickers
+import Sailfish.WebView.Popups 1.0 as Popups
 import Qt5Mozilla 1.0
-import "WebPopupHandler.js" as PopupHandler
 import "." as Browser
 
 WebContainer {
@@ -23,6 +24,7 @@ WebContainer {
     property color _decoratorColor: Theme.highlightDimmerColor
     readonly property bool moving: contentItem ? contentItem.moving : false
     property bool findInPageHasResult
+    property bool canShowSelectionMarkers: true
 
     property var resourceController: ResourceController {
         webPage: contentItem
@@ -39,8 +41,20 @@ WebContainer {
         onNewWindowRequested: tabModel.newTab(url, "", parentId)
     }
 
-    property Component _pickerCreator: Component {
-        PickerCreator {}
+    property Component textSelectionControllerComponent: Component {
+        TextSelectionController {
+            opacity: canShowSelectionMarkers ? 1.0 : 0.0
+            contentWidth: webView.rotationHandler ? webView.rotationHandler.width : 0
+            contentHeight: Math.max(0, webView.fullscreenHeight - webView.toolbarHeight)
+            // Push below the overlay
+            z: -1
+            anchors {
+                fill: parent
+                bottomMargin: webView.toolbarHeight
+            }
+
+            Behavior on opacity { FadeAnimator {} }
+        }
     }
 
     function stop() {
@@ -77,14 +91,12 @@ WebContainer {
     foreground: Qt.application.active
     readyToPaint: resourceController.videoActive ? webView.visible && !resourceController.displayOff : webView.visible && webView.contentItem && webView.contentItem.domContentLoaded
     allowHiding: !resourceController.videoActive && !resourceController.audioActive
-    fullscreenMode: (contentItem && contentItem.chromeGestureEnabled && !contentItem.chrome) ||
+    fullscreenMode: (contentItem && !contentItem.chrome) ||
                     (contentItem && contentItem.fullscreen)
 
+    touchBlocked: contentItem && contentItem.popupOpener && contentItem.popupOpener.active ||
+                  webView.contentItem && webView.contentItem.textSelectionActive || false
     favicon: contentItem ? contentItem.favicon : ""
-    onTabModelChanged: {
-        // BrowserContextMenu created in PopupHandler needs to maintain correct tabModel.
-        PopupHandler.tabModel = tabModel
-    }
 
     webPageComponent: Component {
         WebPage {
@@ -94,11 +106,39 @@ WebContainer {
             property string iconType
             property int frameCounter
             property bool rendered
+            readonly property bool textSelectionActive: textSelectionController && textSelectionController.active
+            property Item textSelectionController: null
             readonly property bool activeWebPage: container.tabId == tabId
 
-            signal selectionRangeUpdated(variant data)
-            signal selectionCopied(variant data)
-            signal contextMenuRequested(variant data)
+            property QtObject pickerOpener: Pickers.PickerOpener {
+                pageStack: window.pageStack
+                contentItem: webPage
+            }
+
+            property QtObject popupOpener: Popups.PopupOpener {
+                pageStack: pickerOpener.pageStack
+                parentItem: browserPage
+                contentItem: webPage
+                // ContextMenu needs a reference to correct TabModel so that
+                // private and public tabs are created to correct model. While context
+                // menu is open, tab model cannot change (at least at the moment).
+                tabModel: webView.tabModel
+
+                onAboutToOpenContextMenu: {
+                    if (Qt.inputMethod.visible) {
+                        browserPage.focus = true
+                        Qt.inputMethod.hide()
+                    }
+
+                    // Possible path that leads to a new tab. Thus, capturing current
+                    // view before opening context menu.
+                    webView.grabActivePage()
+                    contextMenuRequested(data)
+                }
+            }
+
+            signal selectionCopied(var data)
+            signal contextMenuRequested(var data)
 
             function grabItem() {
                 if (rendered && activeWebPage && active) {
@@ -110,6 +150,12 @@ WebContainer {
                 }
             }
 
+            function clearSelection() {
+                if (textSelectionActive) {
+                    textSelectionController.clearSelection()
+                }
+            }
+
             fullscreenHeight: container.fullscreenHeight
             toolbarHeight: container.toolbarHeight
             throttlePainting: !foreground && !resourceController.videoActive && webView.visible || !webView.visible
@@ -117,12 +163,25 @@ WebContainer {
 
             // There needs to be enough content for enabling chrome gesture
             chromeGestureThreshold: toolbarHeight / 2
-            chromeGestureEnabled: (contentHeight > fullscreenHeight + toolbarHeight) && !forcedChrome && enabled && !webView.imOpened
+            chromeGestureEnabled: !forcedChrome && enabled && !webView.imOpened
 
             onGrabResult: tabModel.updateThumbnailPath(tabId, fileName)
 
             // Image data is base64 encoded which can be directly used as source in Image element
             onThumbnailResult: tabModel.updateThumbnailPath(tabId, data)
+
+            onAtYBeginningChanged: {
+                if (atYBeginning && activeWebPage && domContentLoaded) {
+                    chrome = true
+                }
+            }
+
+            onAtYEndChanged: {
+                // Don't hide chrome if content lenght is short e.i. forcedChrome is enabled.
+                if (!atYBeginning && atYEnd && !forcedChrome && chrome && activeWebPage && domContentLoaded) {
+                    chrome = false
+                }
+            }
 
             onUrlChanged: {
                 if (url == "about:blank") return
@@ -208,6 +267,10 @@ WebContainer {
             }
 
             onRecvAsyncMessage: {
+                if (pickerOpener.message(message, data) || popupOpener.message(message, data)) {
+                    return
+                }
+
                 switch (message) {
                 case "chrome:linkadded": {
                     var parsedFavicon = false
@@ -240,56 +303,20 @@ WebContainer {
                     }
                     break
                 }
-                case "embed:filepicker": {
-                    PopupHandler.openFilePicker(data)
-                    break
-                }
-                case "embed:selectasync": {
-                    PopupHandler.openSelectDialog(data)
-                    break;
-                }
-                case "embed:alert": {
-                    PopupHandler.openAlert(data)
-                    break
-                }
-                case "embed:confirm": {
-                    PopupHandler.openConfirm(data)
-                    break
-                }
-                case "embed:prompt": {
-                    PopupHandler.openPrompt(data)
-                    break
-                }
-                case "embed:auth": {
-                    PopupHandler.openAuthDialog(data)
-                    break
-                }
-                case "embed:permissions": {
-                    if (data.title === "geolocation"
-                            && locationSettings.locationEnabled
-                            && gpsTechModel.powered) {
-                        PopupHandler.openLocationDialog(data)
-                    } else {
-                        // Currently we don't support other permission requests.
-                        sendAsyncMessage("embedui:premissions",
-                                         {
-                                             allow: false,
-                                             checkedDontAsk: false,
-                                             id: data.id
-                                         })
-                    }
-                    break
-                }
-                case "embed:login": {
-                    PopupHandler.openPasswordManagerDialog(data)
-                    break
-                }
-                case "Content:ContextMenu": {
-                    PopupHandler.openContextMenu(data)
-                    break
-                }
                 case "Content:SelectionRange": {
-                    webPage.selectionRangeUpdated(data)
+                    if (textSelectionController === null) {
+                        textSelectionController = textSelectionControllerComponent.createObject(browserPage,
+                                                                                                {"contentItem" : webPage}
+                                                                                                )
+                    }
+                    textSelectionController.selectionRangeUpdated(data)
+                    break
+                }
+                case "Content:SelectionSwap": {
+                    if (textSelectionController) {
+                        textSelectionController.swap()
+                    }
+
                     break
                 }
                 case "embed:find": {
@@ -306,23 +333,28 @@ WebContainer {
                 // sender expects that this handler will update `response` argument
                 switch (message) {
                 case "Content:SelectionCopied": {
-                    webPage.selectionCopied(data)
-
-                    if (data.succeeded) {
-                        //% "Copied to clipboard"
-                        notification.show(qsTrId("sailfish_browser-la-selection_copied"))
+                    if (data.succeeded && textSelectionController) {
+                        textSelectionController.showNotification()
                     }
                     break
                 }
                 }
             }
 
-            // We decided to disable "text selection" until we understand how it
-            // should look like in Sailfish.
-            // TextSelectionController {}
+            onContextMenuRequested: {
+                if (data.types.indexOf("content-text") !== -1) {
+                   // we want to select some content text
+                   webPage.sendAsyncMessage("Browser:SelectionStart", {"xPos": data.xPos, "yPos": data.yPos})
+                }
+            }
+
+            Component.onCompleted: {
+                addMessageListeners(["Content:SelectionRange",
+                                     "Content:SelectionCopied",
+                                     "Content:SelectionSwap"])
+            }
         }
     }
-
 //    Rectangle {
 //        id: verticalScrollDecorator
 
@@ -355,13 +387,4 @@ WebContainer {
 //        Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
 //    }
 
-    Component.onCompleted: {
-        PopupHandler.auxTimer = auxTimer
-        PopupHandler.pageStack = pageStack
-        PopupHandler.webView = webView
-        PopupHandler.browserPage = browserPage
-        PopupHandler.WebUtils = WebUtils
-        PopupHandler.tabModel = tabModel
-        PopupHandler.pickerCreator = _pickerCreator
-    }
 }

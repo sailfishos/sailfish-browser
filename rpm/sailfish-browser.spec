@@ -1,11 +1,12 @@
 %global min_xulrunner_version 38.8.0.5
-%global min_qtmozembed_version 1.13.10
-%global min_embedlite_components_version 1.9.15
+%global min_qtmozembed_version 1.13.28
+%global min_embedlite_components_version 1.9.26
+%global min_sailfishwebengine_version 0.0.12
 
 Name:       sailfish-browser
 
 Summary:    Sailfish Browser
-Version:    1.14.34
+Version:    1.15.8
 Release:    1
 Group:      Applications/Internet
 License:    MPLv2
@@ -22,7 +23,7 @@ BuildRequires:  pkgconfig(Qt5Sql)
 BuildRequires:  pkgconfig(nemotransferengine-qt5)
 BuildRequires:  pkgconfig(mlite5)
 BuildRequires:  pkgconfig(qdeclarative5-boostable)
-BuildRequires:  pkgconfig(sailfishwebengine)
+BuildRequires:  pkgconfig(sailfishwebengine) >= %{min_sailfishwebengine_version}
 BuildRequires:  qt5-qttools
 BuildRequires:  qt5-qttools-linguist
 BuildRequires:  oneshot
@@ -35,6 +36,9 @@ Requires: xulrunner-qt5 >= %{min_xulrunner_version}
 Requires: embedlite-components-qt5 >= %{min_embedlite_components_version}
 Requires: qtmozembed-qt5 >= %{min_qtmozembed_version}
 Requires: sailfish-browser-settings = %{version}
+Requires: sailfish-components-webview-qt5 >= %{min_sailfishwebengine_version}
+Requires: sailfish-components-webview-qt5-popups >= %{min_sailfishwebengine_version}
+Requires: sailfish-components-webview-qt5-pickers >= %{min_sailfishwebengine_version}
 Requires: qt5-plugin-imageformat-ico
 Requires: qt5-plugin-imageformat-gif
 Requires: qt5-plugin-position-geoclue
@@ -47,6 +51,7 @@ Requires: nemo-qml-plugin-connectivity
 Requires: nemo-qml-plugin-policy-qt5 >= 0.0.4
 Requires: sailfish-components-media-qt5
 Requires: sailfish-components-pickers-qt5 >= 0.1.7
+Requires: nemo-qml-plugin-notifications-qt5 >= 1.0.12
 
 %{_oneshot_requires_post}
 

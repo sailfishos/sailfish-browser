@@ -10,6 +10,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include <QtTest>
+#include <webengine.h>
 
 #include "webpagefactory.h"
 #include "declarativewebcontainer.h"
@@ -58,12 +59,12 @@ private:
 
 void tst_webpages::initTestCase()
 {
-    QMozContext::instance();
+    SailfishOS::WebEngine::instance();
 }
 
 void tst_webpages::cleanupTestCase()
 {
-    delete QMozContext::instance();
+    delete SailfishOS::WebEngine::instance();
 }
 
 void tst_webpages::init()

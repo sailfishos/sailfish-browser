@@ -1,7 +1,8 @@
 /****************************************************************************
 **
-** Copyright (C) 2013 Jolla Ltd.
+** Copyright (C) 2013-2016 Jolla Ltd.
 ** Contact: Dmitry Rozhkov <dmitry.rozhkov@jollamobile.com>
+** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **
 ****************************************************************************/
 
@@ -9,95 +10,131 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import QtQuick 2.0
+import QtQuick 2.1
 import Sailfish.Silica 1.0
 
-Item {
+Image {
     id: handle
 
-    width: Theme.itemSizeSmall
-    height: width
+    property real contentWidth
+    property real contentHeight
 
-    property string type
-    property Item content
+    property real lineHeight
+
+    property real fixedX
+    property real fixedY
+
+    property QtObject contentItem
+    property QtObject selectionController
 
     // the moving property is updated upon dragActive change to make sure
     // that Browser:SelectionMoveStart is sent out before Browser:SelectionMove
     property bool moving
-    property bool dragActive: mouseArea.drag.active
+    readonly property bool dragActive: mouseArea.drag.active
 
-    function getJson() {
-        var resolution = content.child.resolution
-        var json = {
-            "change": handle.type,
-        }
-        json[handle.type] = {
-                "xPos": handle.type === "start" ? (x + width) / resolution : x / resolution,
-                "yPos": y / resolution
-        }
-        return json
-    }
+    // We could use these to programmatically scroll the content.
+    readonly property bool atXBeginning: x - Theme.horizontalPageMargin <= 0
+    readonly property bool atXEnd: x + width + Theme.horizontalPageMargin > contentWidth
 
-    // Property binding doesn't work for content.width and content.height in qt5 -> resort to assignment
-    onVisibleChanged: {
-        if (visible) {
-            mouseArea.drag.maximumX = content.width - handle.width
-            mouseArea.drag.maximumY = content.height - handle.height
-        }
-    }
+    readonly property bool atYBeginning: y - Theme.horizontalPageMargin <= 0
+    readonly property bool atYEnd: y + height + Theme.horizontalPageMargin > contentHeight
+
+    property alias targetPositionAnimation: targetPositionAnimation
+
+    property string markerTag
+
+    source: "image://theme/icon-m-textselection-" + markerTag
+    width: Theme.iconSizeSmallPlus
+    height: Theme.iconSizeSmallPlus
 
     onDragActiveChanged: {
         if (dragActive) {
-            content.child.sendAsyncMessage("Browser:SelectionMoveStart", handle.getJson())
+            contentItem.sendAsyncMessage("Browser:SelectionMoveStart", selectionController.getMarkerBaseMessage(markerTag))
             moving = true
         } else {
-            content.child.sendAsyncMessage("Browser:SelectionMoveEnd", handle.getJson())
+            contentItem.sendAsyncMessage("Browser:SelectionMoveEnd", selectionController.getMarkerBaseMessage(markerTag))
             moving = false
         }
     }
 
-    Image {
-        anchors.top: parent.top
-        anchors.left: type === "end" ? parent.left : undefined
-        anchors.right: type === "start" ? parent.right : undefined
-        source: type === "start" ? "image://theme/icon-browser-dragger-start?" + Theme.highlightBackgroundColor :
-                                   "image://theme/icon-browser-dragger-end?" + Theme.highlightBackgroundColor
+    onVisibleChanged: {
+        if (visible) {
+            showAnimation.restart()
+        }
     }
 
     MouseArea {
         id: mouseArea
 
-        width: parent.width
-        height: parent.height
+        property real previousX: -1
+        property real previousY: -1
+
+        width: Theme.itemSizeSmall
+        height: width
 
         anchors {
-            top: parent.top
-            left: type === "end" ? parent.left : undefined
-            right: type === "start" ? parent.right : undefined
-            leftMargin: type === "end" ? -1 * (Theme.itemSizeSmall / 2) : 0
-            rightMargin: type === "start" ? -1 * (Theme.itemSizeSmall / 2) : 0
+            fill: parent
+            leftMargin: -Theme.paddingLarge * 2
+            rightMargin: -Theme.paddingLarge * 2
+            bottomMargin: -Theme.paddingLarge * 2
         }
 
-        drag.target: parent
-        drag.axis: Drag.XandYAxis
-        drag.minimumX: 0
-        drag.maximumX: content.width - handle.width
-        drag.minimumY: 0
-        drag.maximumY: content.height - handle.height
+        drag {
+            target: parent
+            axis: Drag.XandYAxis
+            maximumX: handle.contentWidth
+            maximumY: handle.contentHeight
+        }
+
+        preventStealing: true
 
         onPositionChanged: {
-            if (timer.running || !handle.moving) {
+            var targetX = mouse.x
+            var targetY = mouse.y
+
+            if (!handle.moving || Math.abs(targetX - previousX) < 0.99 && Math.abs(targetY - previousY) < 0.99) {
                 return
             }
 
-            content.child.sendAsyncMessage("Browser:SelectionMove", handle.getJson())
-            timer.start()
+            var markerMessage = selectionController.getMarkerBaseMessage(markerTag)
+            contentItem.sendAsyncMessage("Browser:SelectionMove", markerMessage)
+            previousX = targetX
+            previousY = targetY
         }
     }
 
-    Timer {
-        id: timer
+    ParallelAnimation {
+        id: showAnimation
+        FadeAnimation {
+            target: handle
+            from: 0
+            to: 1.0
+        }
+        NumberAnimation {
+            target: handle
+            property: "x"
+            from: handle.markerTag === "start" ? handle.x - Theme.itemSizeExtraLarge : handle.x + Theme.itemSizeExtraLarge
+            to: handle.x
+            duration: 200
+            easing.type: Easing.InOutQuad
+        }
+    }
 
-        interval: 200
+    ParallelAnimation {
+        id: targetPositionAnimation
+        NumberAnimation {
+            target: handle
+            property: "x"
+            to: handle.fixedX
+            duration: 100
+            easing.type: Easing.InOutQuad
+        }
+        NumberAnimation {
+            target: handle
+            property: "y"
+            to: handle.fixedY
+            duration: 100
+            easing.type: Easing.InOutQuad
+        }
     }
 }

@@ -14,6 +14,7 @@
 #include "dbmanager.h"
 #include "browserpaths.h"
 
+#include <webenginesettings.h>
 #include <qmozwindow.h>
 #include <QGuiApplication>
 #include <QtConcurrent>
@@ -23,18 +24,7 @@ static const QString gDomContentLoadedMessage("chrome:contentloaded");
 
 static const QString gContentOrientationChanged("embed:contentOrientationChanged");
 static const QString gLinkAddedMessage("chrome:linkadded");
-static const QString gAlertMessage("embed:alert");
-static const QString gConfirmMessage("embed:confirm");
-static const QString gPromptMessage("embed:prompt");
-static const QString gAuthMessage("embed:auth");
-static const QString gLoginMessage("embed:login");
 static const QString gFindMessage("embed:find");
-static const QString gPermissionsMessage("embed:permissions");
-static const QString gContextMenuMessage("Content:ContextMenu");
-static const QString gSelectionRangeMessage("Content:SelectionRange");
-static const QString gSelectionCopiedMessage("Content:SelectionCopied");
-static const QString gSelectAsyncMessage("embed:selectasync");
-static const QString gFilePickerMessage("embed:filepicker");
 
 bool isBlack(QRgb rgb)
 {
@@ -75,27 +65,16 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
     addMessageListener(gDomContentLoadedMessage);
 
     addMessageListener(gLinkAddedMessage);
-    addMessageListener(gAlertMessage);
-    addMessageListener(gConfirmMessage);
-    addMessageListener(gPromptMessage);
-    addMessageListener(gAuthMessage);
-    addMessageListener(gLoginMessage);
     addMessageListener(gFindMessage);
-    addMessageListener(gPermissionsMessage);
-    addMessageListener(gContextMenuMessage);
-    addMessageListener(gSelectionRangeMessage);
-    addMessageListener(gSelectionCopiedMessage);
-    addMessageListener(gSelectAsyncMessage);
-    addMessageListener(gFilePickerMessage);
     addMessageListener(gContentOrientationChanged);
 
     loadFrameScript("chrome://embedlite/content/SelectAsyncHelper.js");
     loadFrameScript("chrome://embedlite/content/embedhelper.js");
 
-    connect(this, SIGNAL(recvAsyncMessage(const QString, const QVariant)),
-            this, SLOT(onRecvAsyncMessage(const QString&, const QVariant&)));
-    connect(&m_grabWritter, SIGNAL(finished()), this, SLOT(grabWritten()));
-    connect(this, SIGNAL(urlChanged()), this, SLOT(onUrlChanged()));
+    connect(this, &DeclarativeWebPage::recvAsyncMessage,
+            this, &DeclarativeWebPage::onRecvAsyncMessage);
+    connect(&m_grabWritter, &QFutureWatcher<QString>::finished, this, &DeclarativeWebPage::grabWritten);
+    connect(this, &DeclarativeWebPage::urlChanged, this, &DeclarativeWebPage::onUrlChanged);
     connect(this, &QOpenGLWebPage::contentHeightChanged, this, &DeclarativeWebPage::updateViewMargins);
     connect(this, &QOpenGLWebPage::loadedChanged, [this]() {
         if (loaded()) {
@@ -105,7 +84,17 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
             setContentLoaded();
         }
     });
-    connect(this, SIGNAL(fullscreenHeightChanged()), this, SLOT(updateViewMargins()));
+
+    // When loading start reset state of chrome.
+    connect(this, &QOpenGLWebPage::loadingChanged, [this]() {
+        if (loading()) {
+            forceChrome(false);
+            setChrome(true);
+        }
+    });
+
+    connect(this, &DeclarativeWebPage::fullscreenHeightChanged,
+            this, &DeclarativeWebPage::updateViewMargins);
 }
 
 DeclarativeWebPage::~DeclarativeWebPage()
@@ -126,7 +115,8 @@ void DeclarativeWebPage::setContainer(DeclarativeWebContainer *container)
     if (m_container != container) {
         m_container = container;
         if (m_container) {
-            connect(m_container, SIGNAL(portraitChanged()), this, SLOT(sendVkbOpenCompositionMetrics()));
+            connect(m_container.data(), &DeclarativeWebContainer::portraitChanged,
+                    this, &DeclarativeWebPage::sendVkbOpenCompositionMetrics);
         }
         Q_ASSERT(container->mozWindow());
         setMozWindow(container->mozWindow());
@@ -145,14 +135,14 @@ void DeclarativeWebPage::setInitialTab(const Tab& tab)
 
     m_initialTab = tab;
     emit tabIdChanged();
-    connect(DBManager::instance(), SIGNAL(tabHistoryAvailable(int, QList<Link>,int)),
-            this, SLOT(onTabHistoryAvailable(int, QList<Link>,int)));
+    connect(DBManager::instance(), &DBManager::tabHistoryAvailable,
+            this, &DeclarativeWebPage::onTabHistoryAvailable);
     DBManager::instance()->getTabHistory(tabId());
 }
 
 void DeclarativeWebPage::onUrlChanged()
 {
-    disconnect(this, SIGNAL(urlChanged()), this, SLOT(onUrlChanged()));
+    disconnect(this, &DeclarativeWebPage::urlChanged, this, &DeclarativeWebPage::onUrlChanged);
     m_urlReady = true;
     restoreHistory();
 }
@@ -203,6 +193,9 @@ void DeclarativeWebPage::restoreHistory() {
     data.insert(QString("links"), QVariant(urls));
     data.insert(QString("index"), QVariant(index));
     sendAsyncMessage("embedui:addhistory", QVariant(data));
+
+    // History is restored once per webpage's life cycle.
+    m_restoredTabHistory.clear();
 }
 
 void DeclarativeWebPage::setContentLoaded()
@@ -289,7 +282,8 @@ void DeclarativeWebPage::grabToFile(const QSize &size)
     m_grabResult = grabToImage(size);
     if (m_grabResult) {
         if (!m_grabResult->isReady()) {
-            connect(m_grabResult.data(), SIGNAL(ready()), this, SLOT(grabResultReady()));
+            connect(m_grabResult.data(), &QMozGrabResult::ready,
+                    this, &DeclarativeWebPage::grabResultReady);
         } else {
             grabResultReady();
         }
@@ -301,7 +295,8 @@ void DeclarativeWebPage::grabThumbnail(const QSize &size)
 {
     m_thumbnailResult = grabToImage(size);
     if (m_thumbnailResult) {
-        connect(m_thumbnailResult.data(), SIGNAL(ready()), this, SLOT(thumbnailReady()));
+        connect(m_thumbnailResult.data(), &QMozGrabResult::ready,
+                this, &DeclarativeWebPage::thumbnailReady);
     }
 }
 
@@ -359,8 +354,13 @@ void DeclarativeWebPage::thumbnailReady()
 
 void DeclarativeWebPage::updateViewMargins()
 {
+    if (m_container && !m_container->foreground()) {
+        return;
+    }
+
     // Reset margins always when fullscreen mode is enabled.
     QMargins margins;
+    bool chromeVisible = false;
     if (!m_fullscreen) {
         // Don't update margins while panning, flicking, or pinching.
         if (moving() || m_virtualKeyboardMargin > 0) {
@@ -370,9 +370,11 @@ void DeclarativeWebPage::updateViewMargins()
         qreal threshold = qMax(m_fullScreenHeight * 1.5f, (m_fullScreenHeight + (m_toolbarHeight*2)));
         if (contentHeight() < threshold) {
             margins.setBottom(m_toolbarHeight);
+            chromeVisible = true;
         }
     }
 
+    forceChrome(chromeVisible);
     setMargins(margins);
 }
 
@@ -401,7 +403,7 @@ void DeclarativeWebPage::sendVkbOpenCompositionMetrics()
 
     QVariantMap map;
     map.insert("imOpen", m_virtualKeyboardMargin > 0);
-    map.insert("pixelRatio", QMozContext::instance()->pixelRatio());
+    map.insert("pixelRatio", SailfishOS::WebEngineSettings::instance()->pixelRatio());
     map.insert("bottomMargin", m_virtualKeyboardMargin);
     map.insert("screenWidth", winWidth);
     map.insert("screenHeight", winHeight);
@@ -427,8 +429,7 @@ void DeclarativeWebPage::onRecvAsyncMessage(const QString& message, const QVaria
         setFullscreen(data.toMap().value(QString("fullscreen")).toBool());
     } else if (message == gDomContentLoadedMessage) {
         setContentLoaded();
-    }
-    else if (message == gContentOrientationChanged) {
+    } else if (message == gContentOrientationChanged) {
         QString orientation = data.toMap().value("orientation").toString();
         Qt::ScreenOrientation mappedOrientation = Qt::PortraitOrientation;
         if (orientation == QStringLiteral("landscape-primary")) {
@@ -438,7 +439,7 @@ void DeclarativeWebPage::onRecvAsyncMessage(const QString& message, const QVaria
         } else if (orientation == QStringLiteral("portrait-secondary")) {
             mappedOrientation = Qt::InvertedPortraitOrientation;
         }
-        contentOrientationChanged(mappedOrientation);
+        emit contentOrientationChanged(mappedOrientation);
     }
 }
 

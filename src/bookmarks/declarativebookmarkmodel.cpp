@@ -15,7 +15,8 @@
 DeclarativeBookmarkModel::DeclarativeBookmarkModel(QObject *parent) :
     QAbstractListModel(parent)
 {
-    connect(BookmarkManager::instance(), SIGNAL(cleared()), this, SLOT(clearBookmarks()));
+    connect(BookmarkManager::instance(), &BookmarkManager::cleared,
+            this, &DeclarativeBookmarkModel::clearBookmarks);
     bookmarks = BookmarkManager::instance()->load();
 
     // Generate mapping URL -> bookmark's index in the loaded list.

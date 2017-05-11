@@ -20,11 +20,11 @@
 #include <QQmlContext>
 #include <QMapIterator>
 #include <QRectF>
+#include <webengine.h>
 
 #include "webpages.h"
 #include "declarativewebcontainer.h"
 #include "declarativewebpage.h"
-#include "qmozcontext.h"
 #include "tab.h"
 #include "webpagefactory.h"
 
@@ -64,8 +64,8 @@ WebPages::WebPages(WebPageFactory *pageFactory, QObject *parent)
 
         QDBusPendingCall pendingLowMemory = mceRequest.asyncCall("get_memory_level");
         QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(pendingLowMemory, this);
-        QObject::connect(watcher, SIGNAL(finished(QDBusPendingCallWatcher*)),
-                         this, SLOT(initialMemoryLevel(QDBusPendingCallWatcher*)));
+        QObject::connect(watcher, &QDBusPendingCallWatcher::finished,
+                         this, &WebPages::initialMemoryLevel);
     }
 }
 
@@ -79,8 +79,10 @@ void WebPages::initialize(DeclarativeWebContainer *webContainer)
         m_webContainer = webContainer;
         Q_ASSERT_X(m_webContainer, Q_FUNC_INFO, "DeclarativeWebContainer is null");
 
-        connect(webContainer, SIGNAL(foregroundChanged()), this, SLOT(updateBackgroundTimestamp()));
-        connect(m_pageFactory, SIGNAL(aboutToInitialize(DeclarativeWebPage*)), m_webContainer, SLOT(clearSurface()));
+        connect(m_webContainer.data(), &DeclarativeWebContainer::foregroundChanged,
+                this, &WebPages::updateBackgroundTimestamp);
+        connect(m_pageFactory.data(), &WebPageFactory::aboutToInitialize,
+                m_webContainer.data(), &DeclarativeWebContainer::clearSurface);
     }
 }
 
@@ -107,7 +109,8 @@ void WebPages::initialMemoryLevel(QDBusPendingCallWatcher *watcher)
 void WebPages::delayVirtualization()
 {
     handleMemNotify(m_memoryLevel);
-    disconnect(m_activePages.activeWebPage(), SIGNAL(completedChanged()), this, SLOT(delayVirtualization()));
+    disconnect(m_activePages.activeWebPage(), &DeclarativeWebPage::completedChanged,
+               this, &WebPages::delayVirtualization);
 }
 
 bool WebPages::initialized() const
@@ -230,14 +233,16 @@ void WebPages::handleMemNotify(const QString &memoryLevel)
     if (m_memoryLevel == MemWarning || m_memoryLevel == MemCritical) {
 
         if (!m_activePages.virtualizeInactive() && m_activePages.activeWebPage() && !m_activePages.activeWebPage()->completed()) {
-            connect(m_activePages.activeWebPage(), SIGNAL(completedChanged()), this, SLOT(delayVirtualization()), Qt::UniqueConnection);
+            connect(m_activePages.activeWebPage(), &DeclarativeWebPage::completedChanged,
+                    this, &WebPages::delayVirtualization, Qt::UniqueConnection);
         }
 
-        QMozContext::instance()->notifyObservers(QString("memory-pressure"), QString("low-memory"));
+        SailfishOS::WebEngine *webEngine = SailfishOS::WebEngine::instance();
+        webEngine->notifyObservers(QString("memory-pressure"), QString("low-memory"));
         if (!m_webContainer->foreground() &&
                 (QDateTime::currentMSecsSinceEpoch() - m_backgroundTimestamp) > gMemoryPressureTimeout) {
             m_backgroundTimestamp = QDateTime::currentMSecsSinceEpoch();
-            QMozContext::instance()->notifyObservers(QString("memory-pressure"), QString("heap-minimize"));
+            webEngine->notifyObservers(QString("memory-pressure"), QString("heap-minimize"));
         }
     }
 }

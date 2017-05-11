@@ -550,7 +550,7 @@ void DBWorker::getHistory(const QString &filter)
 
     if (!filter.isEmpty()) {
         filterQuery = filterQuery.arg(QString("(url LIKE :search OR title LIKE :search)"));
-        order = QString("LENGTH(url), title, date ASC");
+        order = QString("visited_count DESC, date ASC, LENGTH(url), title");
     } else {
         filterQuery = filterQuery.arg(1);
         order = QString("date DESC");

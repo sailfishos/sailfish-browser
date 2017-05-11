@@ -14,8 +14,6 @@ import QtQuick 2.1
 import QtQuick.Window 2.1 as QtWindow
 import Sailfish.Silica 1.0
 import Sailfish.Silica.private 1.0 as Private
-import MeeGo.Connman 0.2
-import com.jolla.settings.system 1.0
 import Sailfish.Browser 1.0
 import "components" as Browser
 
@@ -58,7 +56,7 @@ Page {
     function inputMaskForOrientation(orientation) {
         // mask is in portrait window coordinates
         var mask = Qt.rect(0, 0, Screen.width, Screen.height)
-        if (!window.opaqueBackground && webView.enabled && browserPage.active && !webView.popupActive && !downloadPopup.visible) {
+        if (!window.opaqueBackground && webView.enabled && browserPage.active && !webView.touchBlocked && !downloadPopup.visible) {
             var overlayVisibleHeight = browserPage.height - overlay.y
 
             switch (orientation) {
@@ -148,6 +146,7 @@ Page {
         toolbarHeight: overlay.toolBar.toolsHeight
         rotationHandler: browserPage
         imOpened: virtualKeyboardObserver.opened
+        canShowSelectionMarkers: !orientationFader.waitForWebContentOrientationChanged
 
         // Show overlay immediately at top if needed.
         onTabModelChanged: handleModelChanges(true)
@@ -277,6 +276,12 @@ Page {
 
         onEnteringNewTabUrlChanged: window.opaqueBackground = webView.tabModel.waitingForNewTab || enteringNewTabUrl
 
+        animator.onAtBottomChanged: {
+            if (!animator.atBottom && webView.contentItem) {
+                webView.contentItem.clearSelection()
+            }
+        }
+
         onActiveChanged: {
             if (active && webView.contentItem && !overlay.enteringNewTabUrl && !webView.contentItem.fullscreen) {
                 overlay.animator.showChrome()
@@ -330,15 +335,6 @@ Page {
         }
     }
 
-    TechnologyModel {
-        id: gpsTechModel
-        name: "gps"
-    }
-
-    LocationSettings {
-        id: locationSettings
-    }
-
     Component.onCompleted: {
         if (!WebUtils.firstUseDone) {
             window.setBrowserCover(webView.tabModel)
@@ -352,9 +348,5 @@ Page {
                 console.warn("Failed to create DebugOverlay " + component.errorString())
             }
         }
-    }
-
-    Browser.BrowserNotification {
-        id: notification
     }
 }

@@ -34,7 +34,10 @@ void IconFetcher::fetch(const QString &iconUrl)
     } else {
         QNetworkRequest request(url);
         QNetworkReply *reply = m_networkAccessManager.get(request);
-        connect(reply, SIGNAL(finished()), this, SLOT(dataReady()));
+        connect(reply, &QNetworkReply::finished, this, &IconFetcher::dataReady);
+        // qOverload(T functionPointer) would be handy to resolve right error method but it is introduced only
+        // in Qt5.7. QNetWorkReply has signal error(QNetworkReply::NetworkError) and method error().
+        // connect(reply, qOverload<QNetworkReply::NetworkError>(&QNetworkReply::error), this, IconFetcher::error);
         connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(error(QNetworkReply::NetworkError)));
     }
 }

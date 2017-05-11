@@ -483,7 +483,7 @@ void tst_persistenttabmodel::onUrlChanged()
     tabModel->addTab("http://example.com", "initial title", 0);
 
     DeclarativeWebPage mockPage;
-    connect(&mockPage, SIGNAL(urlChanged()), tabModel, SLOT(onUrlChanged()));
+    connect(&mockPage, &DeclarativeWebPage::urlChanged, tabModel, &PersistentTabModel::onUrlChanged);
 
     QSignalSpy dataChangedSpy(tabModel, SIGNAL(dataChanged(QModelIndex, QModelIndex, QVector<int>)));
     QSignalSpy tabAddedSpy(tabModel, SIGNAL(tabAdded(int)));
@@ -527,7 +527,7 @@ void tst_persistenttabmodel::onTitleChanged()
     tabModel->addTab("http://example.com", "initial title", 0);
 
     DeclarativeWebPage mockPage;
-    connect(&mockPage, SIGNAL(titleChanged()), tabModel, SLOT(onTitleChanged()));
+    connect(&mockPage, &DeclarativeWebPage::titleChanged, tabModel, &PersistentTabModel::onTitleChanged);
 
     QSignalSpy dataChangedSpy(tabModel, SIGNAL(dataChanged(QModelIndex, QModelIndex, QVector<int>)));
 

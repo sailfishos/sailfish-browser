@@ -11,7 +11,6 @@
 
 #include "declarativewebutils.h"
 
-#include <qmozcontext.h>
 #include <webenginesettings.h>
 
 static DeclarativeWebUtils *gSingleton = 0;
@@ -21,8 +20,8 @@ DeclarativeWebUtils::DeclarativeWebUtils(QObject *parent)
     , m_homePage("file:///opt/tests/sailfish-browser/manual/testpage.html")
     , m_firstUseDone(true)
 {
-    connect(QMozContext::instance(), SIGNAL(onInitialized()),
-            this, SLOT(updateWebEngineSettings()));
+    connect(SailfishOS::WebEngineSettings::instance(), &SailfishOS::WebEngineSettings::initialized,
+            this, &DeclarativeWebUtils::updateWebEngineSettings);
 }
 
 int DeclarativeWebUtils::getLightness(QColor color) const

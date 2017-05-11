@@ -50,13 +50,14 @@ DeclarativeWebUtils::DeclarativeWebUtils()
     , m_homePage("/apps/sailfish-browser/settings/home_page", this)
 {
     updateWebEngineSettings();
-    connect(SailfishOS::WebEngine::instance(), SIGNAL(recvObserve(QString, QVariant)),
-            this, SLOT(handleObserve(QString, QVariant)));
+    connect(SailfishOS::WebEngine::instance(), &SailfishOS::WebEngine::recvObserve,
+            this, &DeclarativeWebUtils::handleObserve);
 
     QString path = BrowserPaths::dataLocation() + QStringLiteral("/.firstUseDone");
     m_firstUseDone = fileExists(path);
 
-    connect(&m_homePage, SIGNAL(valueChanged()), this, SIGNAL(homePageChanged()));
+    connect(&m_homePage, &MGConfItem::valueChanged,
+            this, &DeclarativeWebUtils::homePageChanged);
 }
 
 DeclarativeWebUtils::~DeclarativeWebUtils()
@@ -67,28 +68,6 @@ DeclarativeWebUtils::~DeclarativeWebUtils()
 int DeclarativeWebUtils::getLightness(QColor color) const
 {
     return color.lightness();
-}
-
-QString DeclarativeWebUtils::createUniqueFileUrl(const QString &fileName, const QString &path) const
-{
-    if (path.isEmpty() || fileName.isEmpty()) {
-        return QString();
-    }
-
-    const QFileInfo fileInfo(fileName);
-    const QString newFile("%1/%2(%3)%4%5");
-    const QString baseName = fileInfo.baseName();
-    const QString suffix = fileInfo.completeSuffix();
-
-    QString result(path + "/" + fileName);
-    int collisionCount(1);
-
-    while (QFileInfo::exists(result)) {
-        collisionCount++;
-        result = newFile.arg(path).arg(baseName).arg(collisionCount).arg(suffix.isEmpty() ? "" : ".").arg(suffix);
-    }
-
-    return result;
 }
 
 void DeclarativeWebUtils::clearStartupCacheIfNeeded()
