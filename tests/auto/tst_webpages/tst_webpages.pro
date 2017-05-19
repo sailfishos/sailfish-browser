@@ -6,8 +6,6 @@ PKGCONFIG += mlite5
 
 QT += qml quick concurrent sql gui-private
 
-QMAKE_LFLAGS += -lgtest -lgmock
-
 include(../mocks/webengine/webengine.pri)
 include(../mocks/qmozcontext/qmozcontext.pri)
 include(../mocks/qmozwindow/qmozwindow.pri)
@@ -21,6 +19,8 @@ include(../test_common.pri)
 include(../../../common/paths.pri)
 include(../../../src/core/core.pri)
 include(../../../src/history/history.pri)
+
+LIBS += -lgtest -lgmock
 
 SOURCES += tst_webpages.cpp
 

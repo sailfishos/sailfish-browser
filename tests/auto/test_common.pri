@@ -12,7 +12,7 @@ BROWSERSRCDIR = $$SRCDIR/browser
 CONFIG(gcov) {
     message("GCOV instrumentalization enabled")
     QMAKE_CXXFLAGS += -fprofile-arcs -ftest-coverage -O0
-    QMAKE_LFLAGS += -lgcov -coverage
+    LIBS += -lgcov -coverage
 }
 
 # install the test

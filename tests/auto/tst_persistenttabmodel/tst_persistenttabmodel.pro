@@ -1,7 +1,5 @@
 TARGET = tst_persistenttabmodel
 
-QMAKE_LFLAGS += -lgtest -lgmock
-
 QT += qml sql
 
 include(../test_common.pri)
@@ -12,3 +10,5 @@ include(../../../common/paths.pri)
 include(../../../src/history/history.pri)
 
 SOURCES += tst_persistenttabmodel.cpp
+
+LIBS += -lgtest -lgmock
