@@ -1,7 +1,5 @@
 TARGET = tst_declarativehistorymodel
 
-QMAKE_LFLAGS += -lgtest -lgmock
-
 QT += quick sql
 
 include(../test_common.pri)
@@ -12,3 +10,5 @@ include(../../../common/paths.pri)
 include(../../../src/history/history.pri)
 
 SOURCES += tst_declarativehistorymodel.cpp
+
+LIBS += -lgtest -lgmock
