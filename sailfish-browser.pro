@@ -5,6 +5,9 @@ SUBDIRS += src tests settings
 desktop.files = sailfish-browser.desktop open-url.desktop
 desktop.path = /usr/share/applications
 
+quick_actions.files = org.sailfishos.browser.conf
+quick_actions.path = /usr/share/lipstick/quickactions
+
 dbus_service.files = org.sailfishos.browser.service \
                      org.sailfishos.browser.ui.service
 dbus_service.path = /usr/share/dbus-1/services
@@ -20,7 +23,7 @@ data.files = data/prefs.js \
              data/ua-update.json.in
 data.path = /usr/share/sailfish-browser/data
 
-INSTALLS += desktop dbus_service chrome_scripts oneshots data
+INSTALLS += desktop quick_actions dbus_service chrome_scripts oneshots data
 
 OTHER_FILES += \
     rpm/*.spec
