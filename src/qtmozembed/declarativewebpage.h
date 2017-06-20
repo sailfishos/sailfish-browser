@@ -65,6 +65,8 @@ public:
     bool initialLoadHasHappened() const;
     void setInitialLoadHasHappened();
 
+    void timerEvent(QTimerEvent *);
+
     Q_INVOKABLE void loadTab(QString newUrl, bool force);
     Q_INVOKABLE void grabToFile(const QSize& size);
     Q_INVOKABLE void grabThumbnail(const QSize& size);
@@ -127,6 +129,8 @@ private:
     qreal m_fullScreenHeight;
     qreal m_toolbarHeight;
     qreal m_virtualKeyboardMargin;
+
+    int m_marginChangeThrottleTimer;
 };
 
 QDebug operator<<(QDebug, const DeclarativeWebPage *);

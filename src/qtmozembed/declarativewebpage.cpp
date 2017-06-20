@@ -324,6 +324,16 @@ void DeclarativeWebPage::forceChrome(bool forcedChrome)
     }
 }
 
+void DeclarativeWebPage::timerEvent(QTimerEvent *te)
+{
+    if (te->timerId() == m_marginChangeThrottleTimer) {
+        killTimer(m_marginChangeThrottleTimer);
+        m_marginChangeThrottleTimer = 0;
+
+    }
+    QOpenGLWebPage::timerEvent(te);
+}
+
 void DeclarativeWebPage::grabResultReady()
 {
     QImage image = m_grabResult->image();
@@ -354,7 +364,7 @@ void DeclarativeWebPage::thumbnailReady()
 
 void DeclarativeWebPage::updateViewMargins()
 {
-    if (m_container && !m_container->foreground()) {
+    if ((m_container && !m_container->foreground()) || m_marginChangeThrottleTimer > 0) {
         return;
     }
 
@@ -374,6 +384,7 @@ void DeclarativeWebPage::updateViewMargins()
         }
     }
 
+    m_marginChangeThrottleTimer = startTimer(200);
     forceChrome(chromeVisible);
     setMargins(margins);
 }
