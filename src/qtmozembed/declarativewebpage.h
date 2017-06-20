@@ -98,6 +98,7 @@ private slots:
     void grabWritten();
     void thumbnailReady();
     void updateViewMargins();
+    void resetViewMargins();
 
     // These are here to inform embedlite-components that keyboard is open or close
     // matching composition metrics.

@@ -256,9 +256,15 @@ void DeclarativeWebPage::setVirtualKeyboardMargin(qreal margin)
 {
     if (margin != m_virtualKeyboardMargin) {
         m_virtualKeyboardMargin = margin;
-        QMargins margins;
-        margins.setBottom(m_virtualKeyboardMargin);
-        setMargins(margins);
+        if (m_virtualKeyboardMargin == 0.0) {
+            // Only place where we ignore view margins update guards.
+            // It must be allowed to close vkb while content is moving.
+            resetViewMargins();
+        } else {
+            QMargins margins;
+            margins.setBottom(m_virtualKeyboardMargin);
+            setMargins(margins);
+        }
         sendVkbOpenCompositionMetrics();
         emit virtualKeyboardMarginChanged();
     }
@@ -364,19 +370,22 @@ void DeclarativeWebPage::thumbnailReady()
 
 void DeclarativeWebPage::updateViewMargins()
 {
-    if ((m_container && !m_container->foreground()) || m_marginChangeThrottleTimer > 0) {
+    // Don't update margins while panning, flicking, pinching, vkb is already open, or
+    // margin update is ongoing (throttling).
+    if ((m_container && !m_container->foreground()) || m_marginChangeThrottleTimer > 0 ||
+            moving() || m_virtualKeyboardMargin > 0) {
         return;
     }
 
+    resetViewMargins();
+}
+
+void DeclarativeWebPage::resetViewMargins()
+{
     // Reset margins always when fullscreen mode is enabled.
     QMargins margins;
     bool chromeVisible = false;
     if (!m_fullscreen) {
-        // Don't update margins while panning, flicking, or pinching.
-        if (moving() || m_virtualKeyboardMargin > 0) {
-            return;
-        }
-
         qreal threshold = qMax(m_fullScreenHeight * 1.5f, (m_fullScreenHeight + (m_toolbarHeight*2)));
         if (contentHeight() < threshold) {
             margins.setBottom(m_toolbarHeight);
