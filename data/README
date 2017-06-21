@@ -1,0 +1,9 @@
+How to update ua-update.json
+============================
+
+1) Edit ua-update.json.in
+2) Run preprocess-ua-update-json
+3) Copy preprocessed ua-update.json to ua/<engine-version>
+4) Git commit ua/<engine-version>/ua-update.json
+5) Create merge request
+
