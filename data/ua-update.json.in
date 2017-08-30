@@ -59,6 +59,7 @@
   "fbcdn.net": "Maemo; Linux; U; # ;",
   "engadget.com": "Maemo; Linux; U; # ;",
   "youtube.com": "Mozilla/5.0 (Maemo; Android 4.4.2; U; Sailfish; ; rv:38.0) Gecko/38.0 Firefox/38.0 SailfishBrowser/1.0 like Safari/538.1",
+  "yahoo.com": "Mozilla/5.0 (Mobile; rv:38.0) Gecko/38.0 Firefox/38.0",
   "yandex.com": "Mozilla/5.0 (Mobile; rv:38.0) Gecko/38.0 Firefox/38.0",
   "yandex.net": "Mozilla/5.0 (Mobile; rv:38.0) Gecko/38.0 Firefox/38.0",
   "yandex.ru": "Mozilla/5.0 (Mobile; rv:38.0) Gecko/38.0 Firefox/38.0",
