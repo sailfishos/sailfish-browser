@@ -11,6 +11,7 @@
   "baidu.com": "Maemo; Linux;#Android 4.4.2;",
   // bug 827622, bing.com
   "bing.com": "\\(Maemo; Linux; U; Sailfish#(Android",
+  "live.com": "Maemo; Linux; U; Sailfish# Android 4.4.2;",
   // bug 827626, magazineluiza.com.br
   "magazineluiza.com.br": "\\(Maemo; Linux; U; Sailfish#(Android",
   // bug 827670, elpais.com.co
