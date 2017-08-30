@@ -7,6 +7,8 @@
   "itau.com.br": "\\(Maemo; Linux; U; Sailfish#(Android",
   // bug 826510, r7.com
   "r7.com": "\\(Maemo; Linux; U; Sailfish#(Android",
+  // JB#39252, baidu.com
+  "baidu.com": "Maemo; Linux;#Android 4.4.2;",
   // bug 827622, bing.com
   "bing.com": "\\(Maemo; Linux; U; Sailfish#(Android",
   // bug 827626, magazineluiza.com.br
@@ -26,6 +28,8 @@
   "citi.com": "\\(Maemo; Linux; U; Sailfish#(Android",
   // bug 843153, games.com
   "games.com": "\\(Maemo; Linux; U; Sailfish#(Android",
+  // JB#39252, jd.com
+  "jd.com": "Maemo; Linux;#Android 4.4.2;",
   // bug 843160, ehow.com
   "ehow.com": "\\(Maemo; Linux; U; Sailfish#(Android",
   // bug 878228, blikk.hu
@@ -54,10 +58,37 @@
   "dailymotion.com": "Maemo; Linux;#Android 4.4.2;",
   "le.com": "Maemo; Linux;#Android 4.4.2;",
   "youku.com": "Maemo; Linux;#Android 4.4.2;",
-  "iqiyi.com": "Maemo; Linux; U; #Android;",
+  // JB#39351
+  "iqiyi.com": "Maemo; Linux; U; #Android 4.4.2;",
   "facebook.com": "Maemo; Linux; U; # ;",
   "fbcdn.net": "Maemo; Linux; U; # ;",
   "engadget.com": "Maemo; Linux; U; # ;",
+  // JB#39351, sohu.com
+  "sohu.com": "Maemo; Linux; U; Sailfish# ; Android",
+  // JB#39351, qq.com
+  "qq.com": "Maemo; Linux;#Android 4.4.2;",
+  // JB#39351, tom.com
+  "tom.com": "Maemo; Linux; #Android 4.4.2;",
+  // JB#39351, zhihu.com
+  "zhihu.com": "Maemo; Linux; U; #Android;",
+  // JB#39351, 58.com
+  "58.com": "Maemo; Linux; U; #Android; U; ",
+  // JB#39351, dianping.com
+  "dianping.com": "Maemo; Linux; U; #Android; U; ",
+  // JB#39351, taobao.com
+  "taobao.com": "Maemo; Linux; U; #Android; U; ",
+  // JB#39351, soso.com
+  "soso.com": "Maemo; Linux; U; #Android; U; ",
+  // JB#39351, 360.cn
+  "360.cn": "Maemo; Linux; U; #Android; U; ",
+  // JB#39351, xinhuanet.com
+  "xinhuanet.com": "Maemo; Linux; U; #Android; U; ",
+  // JB#39351, hao123.com
+  "hao123.com": "Maemo; Linux; U; #Android; U; ",
+  // JB#39351, chinaz.com
+  "chinaz.com": "Maemo; Linux; U; #Android; U; ",
+  // JB#39351, tmall.com
+  "tmall.com": "Maemo; Linux; U; #Android; U; ",
   "youtube.com": "Mozilla/5.0 (Maemo; Android 4.4.2; U; Sailfish; ; rv:38.0) Gecko/38.0 Firefox/38.0 SailfishBrowser/1.0 like Safari/538.1",
   "yahoo.com": "Mozilla/5.0 (Mobile; rv:38.0) Gecko/38.0 Firefox/38.0",
   "yandex.com": "Mozilla/5.0 (Mobile; rv:38.0) Gecko/38.0 Firefox/38.0",
