@@ -109,11 +109,6 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     webEngineSettings->setPreference(QString("security.alternate_certificate_error_page"), QString("certerror"));
 
     webEngineSettings->setPreference(QString("geo.wifi.scan"), QVariant(false));
-
-    // TODO: remove this line when the value adjusted for different DPIs makes
-    // its way to Gecko's default prefs.
-    webEngineSettings->setPreference(QString("apz.touch_start_tolerance"), QString("0.027777f"));
-
     webEngineSettings->setPreference(QString("media.resource_handler_disabled"), QVariant(true));
 
     // subscribe to gecko messages
