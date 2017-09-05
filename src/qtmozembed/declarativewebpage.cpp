@@ -60,6 +60,7 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
     , m_fullScreenHeight(0.f)
     , m_toolbarHeight(0.f)
     , m_virtualKeyboardMargin(0.f)
+    , m_marginChangeThrottleTimer(0)
 {
     addMessageListener(gFullScreenMessage);
     addMessageListener(gDomContentLoadedMessage);
@@ -393,7 +394,11 @@ void DeclarativeWebPage::resetViewMargins()
         }
     }
 
-    m_marginChangeThrottleTimer = startTimer(200);
+    // Some content needed so that it makes sense to throttle content height changes.
+    if (contentHeight() > 0) {
+        m_marginChangeThrottleTimer = startTimer(200);
+    }
+
     forceChrome(chromeVisible);
     setMargins(margins);
 }
