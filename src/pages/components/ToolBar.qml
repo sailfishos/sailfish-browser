@@ -91,7 +91,7 @@ Column {
     Row {
         id: toolsRow
         width: parent.width
-        height: isPortrait ? scaledPortraitHeight : scaledLandscapeHeight
+        height: browserPage.isPortrait ? scaledPortraitHeight : scaledLandscapeHeight
 
         // Container item for cross fading tabs, close, find in page button (and keep Row's width still).
         Item {
