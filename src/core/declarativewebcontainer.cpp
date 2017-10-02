@@ -511,8 +511,10 @@ void DeclarativeWebContainer::updateMode()
  */
 void DeclarativeWebContainer::setActiveTabRendered(bool rendered)
 {
+    QMutexLocker lock(&m_contextMutex);
     // When tab is closed, make sure that signal gets emitted again
-    // if tab is already rendered.
+    // if tab is already rendered. Value read from compositor thread. Thus,
+    // guard with context mutex.
     m_activeTabRendered = rendered;
     emit activeTabRenderedChanged();
 }
