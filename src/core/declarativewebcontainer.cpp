@@ -533,10 +533,18 @@ bool DeclarativeWebContainer::postClearWindowSurfaceTask()
 
 void DeclarativeWebContainer::clearWindowSurfaceTask(void *data)
 {
+    // Called from compositor thread.
     DeclarativeWebContainer* that = static_cast<DeclarativeWebContainer*>(data);
-    QMutexLocker lock(&that->m_clearSurfaceTaskMutex);
-    that->clearWindowSurface();
-    that->m_clearSurfaceTask = 0;
+    QMutexLocker taskLock(&that->m_clearSurfaceTaskMutex);
+
+    // When executing clear window surface task, GL context might not yet
+    // be created. Time window is between first postClearWindowTask call and
+    // createGLContext (requestGLContext signal).
+    QMutexLocker contextLock(&that->m_contextMutex);
+    if (that->m_context) {
+        that->clearWindowSurface();
+        that->m_clearSurfaceTask = 0;
+    }
 }
 
 void DeclarativeWebContainer::clearWindowSurface()
