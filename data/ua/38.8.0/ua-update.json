@@ -54,5 +54,6 @@
   "yandex.net": "Mozilla/5.0 (Mobile; rv:38.0) Gecko/38.0 Firefox/38.0",
   "yandex.ru": "Mozilla/5.0 (Mobile; rv:38.0) Gecko/38.0 Firefox/38.0",
   "yastatic.net": "Mozilla/5.0 (Mobile; rv:38.0) Gecko/38.0 Firefox/38.0",
-  "elisa.fi": "Maemo; Linux;#Android 4.4.2;"
+  "elisa.fi": "Maemo; Linux;#Android 4.4.2;",
+  "slashdot.org": "Maemo; Linux;#Android 4.4.2;"
 }
