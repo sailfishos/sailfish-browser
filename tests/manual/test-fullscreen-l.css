@@ -1,0 +1,13 @@
+@import 'test-fullscreen.css';
+
+div.bigbox {
+    height: 300%;
+    width: 100%;
+    color: white;
+    background-color: yellow;
+    position: relative;
+
+    background-image: url('https://sailfishos.org/wp-content/uploads/2016/05/SF_Hero.png');
+    background-size: contain;
+
+}
