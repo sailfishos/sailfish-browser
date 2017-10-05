@@ -13,6 +13,7 @@
 #include "declarativewebcontainer.h"
 #include "dbmanager.h"
 #include "browserpaths.h"
+#include "logging.h"
 
 #include <webenginesettings.h>
 #include <qmozwindow.h>
@@ -79,6 +80,7 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
     connect(this, &QOpenGLWebPage::contentHeightChanged, this, &DeclarativeWebPage::updateViewMargins);
     connect(this, &QOpenGLWebPage::loadedChanged, [this]() {
         if (loaded()) {
+            qCDebug(lcCoreLog) << "WebPage: loaded";
             updateViewMargins();
             // E.g. when loading images directly we don't necessarily get domContentLoaded message from engine.
             // So mark content loaded when webpage is loaded.
@@ -95,7 +97,10 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
     });
 
     connect(this, &DeclarativeWebPage::fullscreenHeightChanged,
-            this, &DeclarativeWebPage::updateViewMargins);
+            this, [this]() {
+        qCDebug(lcCoreLog) << "WebPage: fullscreenHeightChanged";
+        updateViewMargins();
+    });
 }
 
 DeclarativeWebPage::~DeclarativeWebPage()
@@ -255,6 +260,7 @@ qreal DeclarativeWebPage::virtualKeyboardMargin() const
 
 void DeclarativeWebPage::setVirtualKeyboardMargin(qreal margin)
 {
+    qCDebug(lcCoreLog) << "WebPage: setting vkb margins:" << margin;
     if (margin != m_virtualKeyboardMargin) {
         m_virtualKeyboardMargin = margin;
         if (m_virtualKeyboardMargin == 0.0) {
@@ -264,6 +270,7 @@ void DeclarativeWebPage::setVirtualKeyboardMargin(qreal margin)
         } else {
             QMargins margins;
             margins.setBottom(m_virtualKeyboardMargin);
+            qCDebug(lcCoreLog) << "WebPage: set vkb margins:" << m_virtualKeyboardMargin;
             setMargins(margins);
         }
         sendVkbOpenCompositionMetrics();
@@ -320,6 +327,8 @@ void DeclarativeWebPage::grabThumbnail(const QSize &size)
  */
 void DeclarativeWebPage::forceChrome(bool forcedChrome)
 {
+    qCDebug(lcCoreLog) << "WebPage: force chrome:" << forcedChrome;
+
     // This way we don't break chromeGestureEnabled and chrome bindings.
     setChromeGestureEnabled(!forcedChrome);
     if (forcedChrome) {
@@ -371,6 +380,8 @@ void DeclarativeWebPage::thumbnailReady()
 
 void DeclarativeWebPage::updateViewMargins()
 {
+    qCDebug(lcCoreLog) << "WebPage: update view margins, foreground:" << (m_container && !m_container->foreground()) << "throttling:" << (m_marginChangeThrottleTimer > 0) << "moving:" << moving();
+
     // Don't update margins while panning, flicking, pinching, vkb is already open, or
     // margin update is ongoing (throttling).
     if ((m_container && !m_container->foreground()) || m_marginChangeThrottleTimer > 0 ||
@@ -383,6 +394,8 @@ void DeclarativeWebPage::updateViewMargins()
 
 void DeclarativeWebPage::resetViewMargins()
 {
+    qCDebug(lcCoreLog) << "WebPage: reset view margins, fullscreen:" << m_fullscreen << "content height:" << contentHeight();
+
     // Reset margins always when fullscreen mode is enabled.
     QMargins margins;
     bool chromeVisible = false;
@@ -400,6 +413,8 @@ void DeclarativeWebPage::resetViewMargins()
     }
 
     forceChrome(chromeVisible);
+
+    qCDebug(lcCoreLog) << "WebPage: set margins:" << margins;
     setMargins(margins);
 }
 
@@ -482,6 +497,7 @@ void DeclarativeWebPage::setFullscreen(const bool fullscreen)
 {
     if (m_fullscreen != fullscreen) {
         m_fullscreen = fullscreen;
+        qCDebug(lcCoreLog) << "WebPage: fullscreen:" << fullscreen;
         updateViewMargins();
         emit fullscreenChanged();
     }
