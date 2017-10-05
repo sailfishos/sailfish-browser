@@ -498,7 +498,7 @@ void DeclarativeWebPage::setFullscreen(const bool fullscreen)
     if (m_fullscreen != fullscreen) {
         m_fullscreen = fullscreen;
         qCDebug(lcCoreLog) << "WebPage: fullscreen:" << fullscreen;
-        updateViewMargins();
+        resetViewMargins();
         emit fullscreenChanged();
     }
 }
