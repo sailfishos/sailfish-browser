@@ -4,6 +4,7 @@ TEMPLATE = aux
 testdata.files = *.txt \
                  *.sh \
                  *.html \
+                 *.js \
                  *.css \
                  icon-launcher-testbrowser.png
 testdata.path = /opt/tests/sailfish-browser/manual/
@@ -19,6 +20,7 @@ INSTALLS += testdata testnavigationdata testdesktop
 
 OTHER_FILES += \
     *.html \
+    *.js \
     *.css \
     navigation/*.html \
     *.sh \
