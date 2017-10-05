@@ -99,7 +99,7 @@ void DeclarativeWebUtils::updateWebEngineSettings()
 
     webEngineSettings->setPreference(QStringLiteral("general.useragent.updates.url"),
                         QStringLiteral("https://browser.sailfishos.org/gecko/%APP_VERSION%/ua-update.json"));
-    webEngineSettings->setPreference(QStringLiteral("general.useragent.updates.interval"), QVariant(604800)); // 1 week
+    webEngineSettings->setPreference(QStringLiteral("general.useragent.updates.interval"), QVariant(172800)); // every 2nd day
     webEngineSettings->setPreference(QStringLiteral("general.useragent.updates.retry"), QVariant(86400)); // 1 day
 
     // Without this pref placeholders get cleaned as soon as a character gets committed
