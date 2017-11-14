@@ -20,6 +20,7 @@ import "pages/components" as Browser
 ApplicationWindow {
     id: window
 
+    readonly property bool largeScreen: Screen.sizeCategory > Screen.Medium
     property bool opaqueBackground
     property var rootPage
     property var backgrounds: []
@@ -45,7 +46,8 @@ ApplicationWindow {
     }
 
     allowedOrientations: defaultAllowedOrientations
-    _defaultPageOrientations: Orientation.All
+    // For non large screen fix cover to portrait.
+    _defaultPageOrientations: !largeScreen && !Qt.application.active ? Orientation.Portrait : Orientation.LandscapeMask | Orientation.Portrait
     _defaultLabelFormat: Text.PlainText
     _clippingItem.opacity: 1.0
     _resizeContent: !window.rootPage.active
