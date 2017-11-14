@@ -122,8 +122,28 @@ void DeclarativeTabModel::clear()
 
 bool DeclarativeTabModel::activateTab(const QString& url)
 {
+    // Skip empty url
+    if (url.isEmpty()) {
+        return false;
+    }
+
+    QUrl inputUrl(url);
+    if (!inputUrl.hasFragment() && !inputUrl.hasQuery() && inputUrl.path().endsWith(QLatin1Char('/'))) {
+        QString inputUrlStr = url;
+        inputUrlStr.chop(1);
+        inputUrl.setUrl(inputUrlStr);
+    }
+
     for (int i = 0; i < m_tabs.size(); i++) {
-        if (m_tabs.at(i).url() == url) {
+        QString tabUrlStr = m_tabs.at(i).url();
+        QUrl tabUrl(tabUrlStr);
+        // Always chop trailing slash if no fragment or query exists as QUrl::StripTrailingSlash
+        // doesn't remove trailing slash if path is "/" e.i. http://www.sailfishos.org vs http://www.sailfishos.org/
+        if (!tabUrl.hasFragment() && !tabUrl.hasQuery() && tabUrl.path().endsWith(QLatin1Char('/'))) {
+            tabUrlStr.chop(1);
+            tabUrl.setUrl(tabUrlStr);
+        }
+        if (tabUrl.matches(inputUrl, QUrl::FullyDecoded)) {
             activateTab(i);
             return true;
         }

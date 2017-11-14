@@ -277,8 +277,8 @@ Page {
         onEnteringNewTabUrlChanged: window.opaqueBackground = webView.tabModel.waitingForNewTab || enteringNewTabUrl
 
         animator.onAtBottomChanged: {
-            if (!animator.atBottom && webView.contentItem) {
-                webView.contentItem.clearSelection()
+            if (!animator.atBottom) {
+                webView.clearSelection()
             }
         }
 
@@ -287,8 +287,11 @@ Page {
                 overlay.animator.showChrome()
             }
 
-            if (!active && webView.chromeWindow && webView.foreground) {
-                webView.chromeWindow.raise()
+            if (!active) {
+                webView.clearSelection()
+                if (webView.chromeWindow && webView.foreground) {
+                    webView.chromeWindow.raise()
+                }
             }
         }
     }
@@ -324,6 +327,7 @@ Page {
 
             webView.grabActivePage()
             if (!webView.tabModel.activateTab(url)) {
+                webView.clearSelection()
                 // Open new tab with empty title
                 webView.tabModel.newTab(url, "")
                 overlay.animator.showChrome(true)

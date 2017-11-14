@@ -511,8 +511,10 @@ void DeclarativeWebContainer::updateMode()
  */
 void DeclarativeWebContainer::setActiveTabRendered(bool rendered)
 {
+    QMutexLocker lock(&m_contextMutex);
     // When tab is closed, make sure that signal gets emitted again
-    // if tab is already rendered.
+    // if tab is already rendered. Value read from compositor thread. Thus,
+    // guard with context mutex.
     m_activeTabRendered = rendered;
     emit activeTabRenderedChanged();
 }
@@ -531,10 +533,18 @@ bool DeclarativeWebContainer::postClearWindowSurfaceTask()
 
 void DeclarativeWebContainer::clearWindowSurfaceTask(void *data)
 {
+    // Called from compositor thread.
     DeclarativeWebContainer* that = static_cast<DeclarativeWebContainer*>(data);
-    QMutexLocker lock(&that->m_clearSurfaceTaskMutex);
-    that->clearWindowSurface();
-    that->m_clearSurfaceTask = 0;
+    QMutexLocker taskLock(&that->m_clearSurfaceTaskMutex);
+
+    // When executing clear window surface task, GL context might not yet
+    // be created. Time window is between first postClearWindowTask call and
+    // createGLContext (requestGLContext signal).
+    QMutexLocker contextLock(&that->m_contextMutex);
+    if (that->m_context) {
+        that->clearWindowSurface();
+        that->m_clearSurfaceTask = 0;
+    }
 }
 
 void DeclarativeWebContainer::clearWindowSurface()

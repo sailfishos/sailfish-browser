@@ -99,7 +99,7 @@ void DeclarativeWebUtils::updateWebEngineSettings()
 
     webEngineSettings->setPreference(QStringLiteral("general.useragent.updates.url"),
                         QStringLiteral("https://browser.sailfishos.org/gecko/%APP_VERSION%/ua-update.json"));
-    webEngineSettings->setPreference(QStringLiteral("general.useragent.updates.interval"), QVariant(604800)); // 1 week
+    webEngineSettings->setPreference(QStringLiteral("general.useragent.updates.interval"), QVariant(172800)); // every 2nd day
     webEngineSettings->setPreference(QStringLiteral("general.useragent.updates.retry"), QVariant(86400)); // 1 day
 
     // Without this pref placeholders get cleaned as soon as a character gets committed
@@ -109,11 +109,6 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     webEngineSettings->setPreference(QString("security.alternate_certificate_error_page"), QString("certerror"));
 
     webEngineSettings->setPreference(QString("geo.wifi.scan"), QVariant(false));
-
-    // TODO: remove this line when the value adjusted for different DPIs makes
-    // its way to Gecko's default prefs.
-    webEngineSettings->setPreference(QString("apz.touch_start_tolerance"), QString("0.027777f"));
-
     webEngineSettings->setPreference(QString("media.resource_handler_disabled"), QVariant(true));
 
     // subscribe to gecko messages
