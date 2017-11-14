@@ -29,7 +29,7 @@ SilicaGridView {
     readonly property int rows: Math.floor(pageHeight / minimumCellHeight)
     readonly property int columns: Math.floor(browserPage.width / minimumCellWidth)
 
-    readonly property int horizontalMargin: browserPage.largeScreen ? 6 * Theme.paddingLarge : Theme.paddingLarge
+    readonly property int horizontalMargin: browserPage.largeScreen ? 6 * Theme.paddingLarge : Theme._homePageMargin
     readonly property int initialCellWidth: (browserPage.width - 2*horizontalMargin) / columns
 
     // The multipliers below for Large screens are magic. They look good on Jolla tablet.
@@ -58,7 +58,7 @@ SilicaGridView {
     width: cellWidth * columns
     currentIndex: -1
     anchors.horizontalCenter: parent.horizontalCenter
-    cellWidth: Math.round(initialCellWidth + (initialCellWidth - Theme.iconSizeLauncher) / (columns - 1))
+    cellWidth: Math.floor(initialCellWidth + (initialCellWidth - Theme.iconSizeLauncher) / (columns - 1))
     cellHeight: Math.round(pageHeight / rows)
 
     displaced: Transition { NumberAnimation { properties: "x,y"; easing.type: Easing.InOutQuad; duration: 200 } }
