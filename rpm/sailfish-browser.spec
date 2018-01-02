@@ -107,14 +107,14 @@ mkdir -p %{buildroot}/%{_sharedstatedir}/environment/nemo/
 cp -f data/70-browser.conf %{buildroot}/%{_sharedstatedir}/environment/nemo/
 
 %post
-/usr/bin/update-desktop-database -q
+/usr/bin/update-desktop-database -q || :
 
 # Upgrade, count is 2 or higher (depending on the number of versions installed)
 if [ "$1" -ge 2 ]; then
-%{_bindir}/add-oneshot --user --now browser-cleanup-startup-cache
+%{_bindir}/add-oneshot --user --now browser-cleanup-startup-cache || :
 fi
 
-%{_bindir}/add-oneshot --user --late browser-update-default-data
+%{_bindir}/add-oneshot --user --late browser-update-default-data || :
 
 %files
 %defattr(-,root,root,-)
