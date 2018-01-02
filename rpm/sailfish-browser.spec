@@ -103,6 +103,9 @@ rm -rf %{buildroot}
 %qmake5_install
 chmod +x %{buildroot}/%{_oneshotdir}/*
 
+mkdir -p %{buildroot}/%{_sharedstatedir}/environment/nemo/
+cp -f data/70-browser.conf %{buildroot}/%{_sharedstatedir}/environment/nemo/
+
 %post
 /usr/bin/update-desktop-database -q
 
@@ -122,6 +125,7 @@ fi
 %{_datadir}/translations/sailfish-browser_eng_en.qm
 %{_datadir}/dbus-1/services/*.service
 %{_oneshotdir}/*
+%{_sharedstatedir}/environment/nemo/*
 
 %files settings
 %defattr(-,root,root,-)
