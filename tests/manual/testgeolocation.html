@@ -3,6 +3,9 @@
         <meta name="viewport" content="width=device-width, user-scalable=false;">
         <title>Simple Geolocation smoke test</title>
         <script>
+            var watchId = 0;
+            var options = 0;
+
             function outputData(position) {
                 // Write each attribute from position data.
                 var data = document.getElementById("data");
@@ -16,12 +19,65 @@
             function init() {
                 navigator.geolocation.getCurrentPosition(outputData);
             }
+
+            function geoLocate(out, track) {
+                var output = document.getElementById(out);
+
+                if (!navigator.geolocation){
+                  output.innerHTML = "<p>Geolocation is not supported by your browser</p>";
+                  return;
+                }
+
+                function success(position) {
+                    var latitude  = position.coords.latitude;
+                    var longitude = position.coords.longitude;
+
+                    output.innerHTML = '<p>Latitude is ' + latitude + '° <br>Longitude is ' + longitude + '°</p>';
+
+                    var img = new Image();
+                    img.src = "https://maps.googleapis.com/maps/api/staticmap?center=" + latitude + "," + longitude + "&zoom=13&size=300x300&sensor=false";
+
+                    output.appendChild(img);
+                }
+
+                function error() {
+                    output.innerHTML = "Unable to retrieve your location";
+                }
+
+                output.innerHTML = "<p>Locating…</p>";
+                if (track == "track") {
+                    options = {
+                      enableHighAccuracy: true,
+                      timeout: 5000,
+                      maximumAge: 1000
+                    };
+                    watchID = navigator.geolocation.watchPosition(success, error, options);
+                } else {
+                    watchID = navigator.geolocation.getCurrentPosition(success, error);
+                }
+            }
+
+            function clearWatch() {
+                if (watchID) {
+                    navigator.geolocation.clearWatch(watchID);
+                }
+            }
         </script>
     </head>
     <body onload="init()">
     <h1>Geolocation data will be written below</h1>
     </br>
-    <h2><a href="geo:61.4943844,23.7755181">Jolla Headquarters</a></h2>
+    <h1><a href="geo:61.4943844,23.7755181">Jolla Headquarters</a></h1>
     <div id="data"></div>
+
+    <h1>Locate me</h1>
+    <div id="locate_me_out"></div>
+    <button onclick='geoLocate("locate_me_out")'>Locate</button>
+
+
+    <h1>Watch me</h1>
+    <div id="watch_me_out"></div>
+    <button onclick='geoLocate("watch_me_out", "watch")'>Watch</button>
+    <button onclick="clearWatch()">Stop watch</button>
     </body>
 </html>
