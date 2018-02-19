@@ -78,7 +78,7 @@ Page {
     }
 
     onStatusChanged: {
-        if (overlay.enteringNewTabUrl) {
+        if (overlay.enteringNewTabUrl || webView.tabModel.count === 0) {
             return
         }
 
