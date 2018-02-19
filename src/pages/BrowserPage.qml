@@ -45,7 +45,7 @@ Page {
     }
 
     function activateNewTabView() {
-        pageStack.pop(browserPage, PageStackAction.Immediate);
+        pageStack.pop(browserPage, PageStackAction.Immediate)
         overlay.enterNewTabUrl(PageStackAction.Immediate)
         bringToForeground(webView.chromeWindow)
         // after bringToForeground, webView has focus => activate chrome
