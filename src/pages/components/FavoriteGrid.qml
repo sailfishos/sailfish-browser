@@ -85,7 +85,7 @@ SilicaGridView {
         contentHeight: favoriteGrid.cellHeight
         menu: favoriteContextMenu
         down: favoriteItem.down
-        showMenuOnPressAndHold: false
+        openMenuOnPressAndHold: false
         // Do not capture mouse events here. This ListItem only handles
         // menu creation and destruction.
         enabled: false
@@ -122,7 +122,7 @@ SilicaGridView {
                 if (showContextMenu) {
                     // Set currentIndex for grid to make minOffsetIndex calculation to work.
                     favoriteGrid.currentIndex = model.index
-                    container.showMenu(
+                    container.openMenu(
                                 {
                                     "view": favoriteGrid,
                                     "delegate": container,
