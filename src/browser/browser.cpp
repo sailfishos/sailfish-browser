@@ -68,9 +68,9 @@ void Browser::load()
     const QStringList arguments = qGuiApp->arguments();
     if (!arguments.contains(QStringLiteral("-prestart"))) {
         if (arguments.count() > 1 && (arguments.last() != QStringLiteral("-debugMode"))) {
-            emit DeclarativeWebUtils::instance()->openUrlRequested(arguments.last());
+            DeclarativeWebUtils::instance()->openUrl(arguments.last());
         } else if (!DeclarativeWebUtils::instance()->firstUseDone()) {
-            emit DeclarativeWebUtils::instance()->openUrlRequested("");
+            DeclarativeWebUtils::instance()->openUrl("");
         }
     }
 }
@@ -89,7 +89,7 @@ void Browser::openUrl(const QString &url)
 {
     Q_D(Browser);
     d->closeEventFilter->cancelStopApplication();
-    emit DeclarativeWebUtils::instance()->openUrlRequested(url);
+    DeclarativeWebUtils::instance()->openUrl(url);
 }
 
 void Browser::openNewTabView()
