@@ -98,7 +98,7 @@ void DeclarativeWebUtils::openUrl(QString url)
     QFileInfo fileInfo(url);
     QUrl targetUrl(url);
 
-    if (targetUrl.scheme().isEmpty()) {
+    if (!url.isEmpty() && targetUrl.scheme().isEmpty()) {
         QUrl tmpUrl;
         if (fileInfo.isAbsolute()) {
             tmpUrl = QUrl::fromLocalFile(url);
