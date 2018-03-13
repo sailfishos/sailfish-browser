@@ -85,6 +85,6 @@ BackgroundItem {
 
         color: down ? Theme.highlightColor : Theme.primaryColor
         font.pixelSize: Theme.fontSizeTiny
-        text: title
+        text: title.replace(/\n|\r/g, " ")
     }
 }

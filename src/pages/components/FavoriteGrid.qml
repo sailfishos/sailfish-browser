@@ -29,13 +29,13 @@ SilicaGridView {
     readonly property int rows: Math.floor(pageHeight / minimumCellHeight)
     readonly property int columns: Math.floor(browserPage.width / minimumCellWidth)
 
-    readonly property int horizontalMargin: browserPage.largeScreen ? 6 * Theme.paddingLarge : Theme.paddingLarge
+    readonly property int horizontalMargin: largeScreen ? 6 * Theme.paddingLarge : Theme._homePageMargin
     readonly property int initialCellWidth: (browserPage.width - 2*horizontalMargin) / columns
 
     // The multipliers below for Large screens are magic. They look good on Jolla tablet.
-    readonly property real minimumCellWidth: browserPage.largeScreen ? Theme.itemSizeExtraLarge * 1.6 : Theme.itemSizeExtraLarge
+    readonly property real minimumCellWidth: largeScreen ? Theme.itemSizeExtraLarge * 1.6 : Theme.itemSizeExtraLarge
     // phone reference row height: 960 / 6
-    readonly property real minimumCellHeight: browserPage.largeScreen ? Theme.itemSizeExtraLarge * 1.6 : Theme.pixelRatio * 160
+    readonly property real minimumCellHeight: largeScreen ? Theme.itemSizeExtraLarge * 1.6 : Theme.pixelRatio * 160
 
     signal load(string url, string title)
     signal newTab(string url, string title)
@@ -58,7 +58,7 @@ SilicaGridView {
     width: cellWidth * columns
     currentIndex: -1
     anchors.horizontalCenter: parent.horizontalCenter
-    cellWidth: Math.round(initialCellWidth + (initialCellWidth - Theme.iconSizeLauncher) / (columns - 1))
+    cellWidth: Math.floor(initialCellWidth + (initialCellWidth - Theme.iconSizeLauncher) / (columns - 1))
     cellHeight: Math.round(pageHeight / rows)
 
     displaced: Transition { NumberAnimation { properties: "x,y"; easing.type: Easing.InOutQuad; duration: 200 } }
@@ -73,7 +73,7 @@ SilicaGridView {
     delegate: ListItem {
         id: container
 
-        property real offsetY: browserPage.largeScreen
+        property real offsetY: largeScreen
                  ? - (((-favoriteGrid.originY+container.contentHeight/2)%favoriteGrid.pageHeight)/favoriteGrid.pageHeight - 0.5) * (Theme.paddingLarge*4)
                  : 0
 
