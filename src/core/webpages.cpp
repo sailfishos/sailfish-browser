@@ -10,7 +10,6 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include <QDateTime>
-#include <QDBusServiceWatcher>
 #include <QDBusConnection>
 #include <QDBusInterface>
 #include <QDBusPendingCallWatcher>
