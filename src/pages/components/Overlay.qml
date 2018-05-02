@@ -315,7 +315,7 @@ Background {
                 }
                 onShareActivePage: {
                     pageStack.push("Sailfish.WebView.Popups.ShareLinkPage", {
-                                       "link" : webView.url,
+                                       "link": webView.url,
                                        "linkTitle": webView.title
                                    })
                 }
