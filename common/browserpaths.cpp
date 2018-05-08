@@ -44,7 +44,7 @@ QString BrowserPaths::picturesLocation()
 
 QString BrowserPaths::dataLocation()
 {
-    return getLocation(QStandardPaths::DataLocation);
+    return getLocation(QStandardPaths::AppDataLocation);
 }
 
 QString BrowserPaths::applicationsLocation()
