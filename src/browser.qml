@@ -45,6 +45,13 @@ ApplicationWindow {
         return -1
     }
 
+    function pushPage(page) {
+        pageStack.animatorPush(page)
+        if (pageStack.currentPage && pageStack.currentPage.hasOwnProperty("__placeholder")) {
+            pushBackground.parent = pageStack.currentPage
+        }
+    }
+
     allowedOrientations: defaultAllowedOrientations
     // For non large screen fix cover to portrait.
     _defaultPageOrientations: !largeScreen && !Qt.application.active ? Orientation.Portrait : Orientation.LandscapeMask | Orientation.Portrait
@@ -70,9 +77,21 @@ ApplicationWindow {
         }
     }
 
+    Browser.Background {
+        id: pushBackground
+        parent: null
+        anchors.fill: parent
+        z: -1
+    }
+
     pageStack.onCurrentPageChanged: {
         var currentContainer = pageStack._currentContainer
-        if (currentContainer && pageStack.currentPage !== window.rootPage) {
+
+        // synchronous x binding does not work with the new animator-based page pushes
+        // the push is performed using placeholder page, the background is handled with pushBackground above
+        var isPlaceholderPage = pageStack.currentPage && pageStack.currentPage.hasOwnProperty("__placeholder")
+
+        if (currentContainer && pageStack.currentPage !== window.rootPage && !isPlaceholderPage) {
             var index = findBackgroundIndexByPage(pageStack.currentPage)
             if (index === -1) {
                 var background = backgroundComponent.createObject(window._wallpaperItem, {
@@ -125,7 +144,7 @@ ApplicationWindow {
             y: pageContainer && page && page.isLandscape ? pageContainer.y : 0
             // Page can have longer life-cycle than page container in case
             // page pushed to the pagestack as an item.
-            visible: pageContainer ? pageContainer.visible : 0
+            visible: pageContainer && pageContainer.visible
         }
     }
 }
