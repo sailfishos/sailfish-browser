@@ -598,10 +598,10 @@ bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
 
 bool DeclarativeWebContainer::event(QEvent *event)
 {
-    QPlatformWindow *windowHandle;
-    if (event->type() == QEvent::PlatformSurface
+    if (QPlatformWindow *windowHandle = event->type() == QEvent::PlatformSurface
                 && static_cast<QPlatformSurfaceEvent *>(event)->surfaceEventType() == QPlatformSurfaceEvent::SurfaceCreated
-                && (windowHandle = handle())) {
+            ? handle()
+            : nullptr) {
         QPlatformNativeInterface *native = QGuiApplication::platformNativeInterface();
         native->setWindowProperty(windowHandle, QStringLiteral("BACKGROUND_VISIBLE"), false);
         native->setWindowProperty(windowHandle, QStringLiteral("HAS_CHILD_WINDOWS"), true);

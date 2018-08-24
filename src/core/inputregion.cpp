@@ -35,9 +35,13 @@ void InputRegionPrivate::update()
     q->killTimer(updateTimerId);
     updateTimerId = 0;
 
-    if (window && window->handle()) {
-        QPlatformNativeInterface *native = QGuiApplication::platformNativeInterface();
-        native->setWindowProperty(window->handle(), QLatin1String("MOUSE_REGION"), QVariant(QRegion(x, y, width, height)));
+    if (window) {
+        QRegion mask(x, y, width, height);
+        window->setMask(mask);
+        if (window->handle()) {
+            QPlatformNativeInterface *native = QGuiApplication::platformNativeInterface();
+            native->setWindowProperty(window->handle(), QLatin1String("MOUSE_REGION"), mask);
+        }
     }
 }
 
