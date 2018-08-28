@@ -21,7 +21,6 @@ Background {
     property bool active
     property QtObject webView
     property Item browserPage
-    property alias historyModel: historyList.model
     property alias toolBar: toolBar
     property alias progressBar: progressBar
     property alias animator: overlayAnimator
@@ -462,26 +461,33 @@ Background {
                     height: searchField.height
                 }
 
-                search: searchField.text
+                model: historyModelLoader.item
+                search: !!model ? searchField.text : ""
                 opacity: historyContainer.showFavorites || toolBar.opacity > 0.9 ? 0.0 : 1.0
                 enabled: overlayAnimator.atTop
                 visible: !overlayAnimator.atBottom && !toolBar.findInPageActive && !historyContainer.showFavorites
 
                 onMovingChanged: if (moving) historyList.focus = true
-                onSearchChanged: if (search !== webView.url) historyModel.search(search)
+                onSearchChanged: if (search !== webView.url) model.search(search)
                 onLoad: overlay.loadPage(url, title)
 
                 Behavior on opacity { FadeAnimator {} }
+                Loader {
+                    id: historyModelLoader
+                    active: searchField.text.length > 0 && searchField.text !== webView.url
+                    onActiveChanged: if (active) active = true // remove binding
+                    sourceComponent: HistoryModel {}
+                }
             }
 
             Browser.FavoriteGrid {
                 id: favoriteGrid
 
+                showFavorites: historyContainer.showFavorites
                 height: historyList.height
-                opacity: historyContainer.showFavorites && toolBar.opacity < 0.9 ? 1.0 : 0.0
+                opacity: showFavorites && toolBar.opacity < 0.9 && count > 0 ? 1.0 : 0.0
                 enabled: overlayAnimator.atTop
-                visible: !overlayAnimator.atBottom && !toolBar.findInPageActive && historyContainer.showFavorites
-                _quickScrollRightMargin: -(browserPage.width - width) / 2
+                visible: !overlayAnimator.atBottom && !toolBar.findInPageActive && showFavorites
 
                 header: Item {
                     width: parent.width

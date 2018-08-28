@@ -79,13 +79,10 @@ Column {
 
     SecondaryBar {
         id: secondaryBar
-        visible: opacity > 0.0 || height > 0.0
-        opacity: secondaryToolsActive ? 1.0 : 0.0
-        height: secondaryToolsHeight
+        toolsActive: toolBarRow.secondaryToolsActive
         horizontalOffset: toolBarRow.horizontalOffset
         iconWidth: toolBarRow.iconWidth
-
-        Behavior on opacity { FadeAnimation {} }
+        height: secondaryToolsHeight
     }
 
     Row {
