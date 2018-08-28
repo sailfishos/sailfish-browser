@@ -15,86 +15,99 @@ import Sailfish.Browser 1.0
 import org.nemomobile.dbus 2.0
 import "." as Browser
 
-Item {
+Loader {
     id: root
     property bool bookmarked
     property int horizontalOffset
+    property bool toolsActive
     property int iconWidth
-    property real midIconWidth: iconWidth + (iconWidth - forwardButton.width) / 3
 
     width: parent.width
-    height: isPortrait ? Settings.toolbarLarge : Settings.toolbarSmall
-    clip: opacity < 1.0
+    active: toolsActive
+    visible: opacity > 0.0 || height > 0.0
+    onActiveChanged: if (active) active = true // remove binding
+    opacity: toolsActive && !!item ? 1.0 : 0.0
+    Behavior on opacity { FadeAnimator {} }
 
-    Row {
+    sourceComponent: Item {
+        id: bar
+
+        property real midIconWidth: iconWidth + (iconWidth - forwardButton.width) / 3
+
         width: parent.width
-        height: parent.height
+        height: isPortrait ? Settings.toolbarLarge : Settings.toolbarSmall
+        clip: opacity < 1.0
 
-        Browser.TabButton {
-            id: addTabButton
-            width: iconWidth + horizontalOffset
-            horizontalOffset: root.horizontalOffset
-            label.text: "+"
-            onTapped: enterNewTabUrl()
-        }
-
-        Browser.ExpandingButton {
-            id: forwardButton
-            expandedWidth: iconWidth
-            icon.source: "image://theme/icon-m-forward"
-            active: webView.canGoForward
-            onTapped: webView.goForward()
-        }
-
-        // Spacer for pushing Search, Favorite, Share, Downloads to the right hand side
-        Item {
+        Row {
+            width: parent.width
             height: parent.height
-            width: parent.width - addTabButton.width - forwardButton.width - midIconWidth * 3 - downloadsButton.width
-        }
 
-        Browser.IconButton {
-            width: midIconWidth
-            icon.source: "image://theme/icon-m-search"
-            active: webView.contentItem
-            onTapped: {
-                findInPageActive = true
-                findInPage()
+            Browser.TabButton {
+                id: addTabButton
+                width: iconWidth + horizontalOffset
+                horizontalOffset: root.horizontalOffset
+                label.text: "+"
+                onTapped: enterNewTabUrl()
             }
-        }
 
-        Browser.IconButton {
-            width: midIconWidth
-            icon.source: bookmarked ? "image://theme/icon-m-favorite-selected" : "image://theme/icon-m-favorite"
-            active: webView.contentItem
-            onClicked: {
-                if (bookmarked) {
-                    removeActivePageFromBookmarks()
-                } else {
-                    bookmarkActivePage()
+            Browser.ExpandingButton {
+                id: forwardButton
+                expandedWidth: iconWidth
+                icon.source: "image://theme/icon-m-forward"
+                active: webView.canGoForward
+                onTapped: webView.goForward()
+            }
+
+            // Spacer for pushing Search, Favorite, Share, Downloads to the right hand side
+            Item {
+                height: parent.height
+                width: parent.width - addTabButton.width - forwardButton.width - bar.midIconWidth * 3 - downloadsButton.width
+            }
+
+            Browser.IconButton {
+                width: bar.midIconWidth
+                icon.source: "image://theme/icon-m-search"
+                active: webView.contentItem
+                onTapped: {
+                    findInPageActive = true
+                    findInPage()
                 }
             }
+
+            Browser.IconButton {
+                width: bar.midIconWidth
+                icon.source: bookmarked ? "image://theme/icon-m-favorite-selected" : "image://theme/icon-m-favorite"
+                active: webView.contentItem
+                onClicked: {
+                    if (bookmarked) {
+                        removeActivePageFromBookmarks()
+                    } else {
+                        bookmarkActivePage()
+                    }
+                }
+            }
+
+            Browser.IconButton {
+                width: bar.midIconWidth
+                icon.source: "image://theme/icon-m-share"
+                active: webView.contentItem
+                onTapped: shareActivePage()
+            }
+
+            Browser.IconButton {
+                id: downloadsButton
+                width: iconWidth + horizontalOffset
+                icon.source: "image://theme/icon-m-transfer"
+                icon.anchors.horizontalCenterOffset: -horizontalOffset
+                onTapped: settingsApp.call("showTransfers", [])
+            }
         }
 
-        Browser.IconButton {
-            width: midIconWidth
-            icon.source: "image://theme/icon-m-share"
-            active: webView.contentItem
-            onTapped: shareActivePage()
+        DBusInterface {
+            id: settingsApp
+            service: "com.jolla.settings"
+            iface: "com.jolla.settings.ui"
+            path: "/com/jolla/settings/ui"
         }
-
-        Browser.IconButton {
-            id: downloadsButton
-            width: iconWidth + horizontalOffset
-            icon.source: "image://theme/icon-m-transfer"
-            icon.anchors.horizontalCenterOffset: -horizontalOffset
-            onTapped: settingsApp.call("showTransfers", [])
-        }
-    }
-
-    DBusInterface {
-        id: settingsApp
-        service: "com.jolla.settings"
-        iface: "com.jolla.settings.ui"
-        path: "/com/jolla/settings/ui"
     }
 }
