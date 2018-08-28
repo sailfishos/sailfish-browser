@@ -477,11 +477,11 @@ Background {
             Browser.FavoriteGrid {
                 id: favoriteGrid
 
+                showFavorites: historyContainer.showFavorites
                 height: historyList.height
-                opacity: historyContainer.showFavorites && toolBar.opacity < 0.9 ? 1.0 : 0.0
+                opacity: showFavorites && toolBar.opacity < 0.9 && count > 0 ? 1.0 : 0.0
                 enabled: overlayAnimator.atTop
-                visible: !overlayAnimator.atBottom && !toolBar.findInPageActive && historyContainer.showFavorites
-                _quickScrollRightMargin: -(browserPage.width - width) / 2
+                visible: !overlayAnimator.atBottom && !toolBar.findInPageActive && showFavorites
 
                 header: Item {
                     width: parent.width
