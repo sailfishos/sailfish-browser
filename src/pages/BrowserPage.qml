@@ -28,7 +28,6 @@ Page {
     property Component tabPageComponent
 
     property alias tabs: webView.tabModel
-    property alias history: historyModel
     property alias viewLoading: webView.loading
     property alias url: webView.url
     property alias title: webView.title
@@ -108,10 +107,6 @@ Page {
                                    : "white"
 
         onApplyContentOrientation: webView.applyContentOrientation(browserPage.orientation)
-    }
-
-    HistoryModel {
-        id: historyModel
     }
 
     Private.VirtualKeyboardObserver {
@@ -270,7 +265,6 @@ Page {
 
         active: browserPage.status == PageStatus.Active
         webView: webView
-        historyModel: historyModel
         browserPage: browserPage
 
         onEnteringNewTabUrlChanged: window.opaqueBackground = webView.tabModel.waitingForNewTab || enteringNewTabUrl

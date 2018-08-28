@@ -77,7 +77,7 @@ SilicaListView {
     ViewPlaceholder {
         x: (view.width - width) / 2
         y: view.originY + (view.height - height) / 2
-        enabled: !history.count
+        enabled: !view.count
 
         //: Shown as placeholder in history list when entered text or url did not match to history.
         //% "Press enter to open"
