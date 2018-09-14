@@ -92,22 +92,22 @@ SilicaGridView {
 
         onAddToLauncher: {
             // url, title, favicon
-            pageStack.push(addToLauncherDialog,
-                           {
-                               "url": url,
-                               "title": title,
-                               "icon": favicon
-                           })
+            pushPage(addToLauncherDialog,
+                     {
+                         "url": url,
+                         "title": title,
+                         "icon": favicon
+                     })
         }
 
         onEditBookmark: {
             // index, url, title
-            pageStack.push(editDialog,
-                           {
-                               "url": url,
-                               "title": title,
-                               "index": index,
-                           })
+            pushPage(editDialog,
+                     {
+                         "url": url,
+                         "title": title,
+                         "index": index,
+                     })
         }
 
         FavoriteItem {

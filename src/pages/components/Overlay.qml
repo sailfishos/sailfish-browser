@@ -33,7 +33,7 @@ Background {
 
     function loadPage(url, title)  {
         if (url == "about:config") {
-            pageStack.push(Qt.resolvedUrl("ConfigWarning.qml"), {"browserPage": browserPage});
+            pushPage(Qt.resolvedUrl("ConfigWarning.qml"), {"browserPage": browserPage})
         } else {
             if (webView && webView.tabModel.count === 0) {
                 webView.clearSurface();
@@ -250,7 +250,7 @@ Background {
 
                         onShare: {
                             controller.clearSelection()
-                            pageStack.push("Sailfish.WebView.Popups.ShareTextPage", {"text" : controller.text })
+                            pushPage("Sailfish.WebView.Popups.ShareTextPage", {"text" : controller.text })
                         }
                         onSearch: {
                             // Open new tab with the search uri.
@@ -295,7 +295,7 @@ Background {
                     // Push the currently active tab index.
                     // Changing of active tab cannot cause blinking.
                     webView.grabActivePage()
-                    pageStack.push(tabView)
+                    pushPage(tabView)
                 }
                 onShowSecondaryTools: overlayAnimator.showSecondaryTools()
                 onShowChrome: overlayAnimator.showChrome()
@@ -314,7 +314,7 @@ Background {
                     overlayAnimator.showOverlay()
                 }
                 onShareActivePage: {
-                    pageStack.push("Sailfish.WebView.Popups.ShareLinkPage", {
+                    pushPage("Sailfish.WebView.Popups.ShareLinkPage", {
                                        "link": webView.url,
                                        "linkTitle": webView.title
                                    })
@@ -503,7 +503,7 @@ Background {
                     overlay.loadPage(url, title)
                 }
 
-                onShare: pageStack.push("Sailfish.WebView.Popups.ShareLinkPage", {"link" : url, "linkTitle": title})
+                onShare: pushPage("Sailfish.WebView.Popups.ShareLinkPage", {"link" : url, "linkTitle": title})
 
                 Behavior on opacity { FadeAnimator {} }
             }
