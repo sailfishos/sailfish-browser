@@ -23,7 +23,7 @@ ApplicationWindow {
     readonly property bool largeScreen: Screen.sizeCategory > Screen.Medium
     property bool opaqueBackground
     property var rootPage
-    property var backgrounds: []
+    property QtObject webView
 
     function setBrowserCover(model) {
         if (!model || model.count === 0) {
@@ -33,22 +33,6 @@ ApplicationWindow {
               window.webView.clearSurface();
             }
             cover = null
-        }
-    }
-
-    function findBackgroundIndexByPage(page) {
-        for (var i = 0; i < backgrounds.length; ++i) {
-            if (backgrounds[i].page === page) {
-                return i
-            }
-        }
-        return -1
-    }
-
-    function pushPage(page) {
-        pageStack.animatorPush(page)
-        if (pageStack.currentPage && pageStack.currentPage.hasOwnProperty("__placeholder")) {
-            pushBackground.parent = pageStack.currentPage
         }
     }
 
@@ -90,61 +74,21 @@ ApplicationWindow {
         // synchronous x binding does not work with the new animator-based page pushes
         // the push is performed using placeholder page, the background is handled with pushBackground above
         var isPlaceholderPage = pageStack.currentPage && pageStack.currentPage.hasOwnProperty("__placeholder")
-
-        if (currentContainer && pageStack.currentPage !== window.rootPage && !isPlaceholderPage) {
-            var index = findBackgroundIndexByPage(pageStack.currentPage)
-            if (index === -1) {
-                var background = backgroundComponent.createObject(window._wallpaperItem, {
-                                                                      "pageContainer": currentContainer,
-                                                                      "page": pageStack.currentPage
-                                                                  })
-                backgrounds.push({
-                                     "page": pageStack.currentPage,
-                                     "background": background
-                                 })
-            } else {
-                // Update container that is the one that moves.
-                backgrounds[index].background.pageContainer = currentContainer
-            }
+        var newBackground = pageStack.currentPage && !pageStack.currentPage.hasOwnProperty("__hasBackground")
+        if (isPlaceholderPage) {
+            pushBackground.parent = pageStack.currentPage
+        } else if (newBackground) {
+            var background = pushBackgroundComponent.createObject(pageStack.currentPage)
+            background.parent = pageStack.currentPage
         }
     }
 
-    property QtObject webView
-
     Component {
-        id: backgroundComponent
+        id: pushBackgroundComponent
         Browser.Background {
-            id: bg
-            property Item pageContainer
-            property Page page
-
-            // Page and attached background is destroyed when the page gets destroyed.
-            onPageChanged: {
-                if (!page) {
-                    var index = 0
-                    for (; index < backgrounds.length; ++index) {
-                        if (backgrounds[index].background === bg) {
-                            break
-                        }
-                    }
-
-                    if (index >= 0 && backgrounds.length > 0) {
-                        backgrounds.splice(index, 1)
-                    } else {
-                        backgrounds = []
-                    }
-
-                    destroy()
-                }
-            }
-
-            width: page ? (page.isPortrait ? Screen.width : Screen.height) : 0
-            height: Math.max(Screen.height, Screen.width)
-            x: pageContainer && page && page.isPortrait ? pageContainer.x : 0
-            y: pageContainer && page && page.isLandscape ? pageContainer.y : 0
-            // Page can have longer life-cycle than page container in case
-            // page pushed to the pagestack as an item.
-            visible: pageContainer && pageContainer.visible
+            parent: null
+            anchors.fill: parent
+            z: -1
         }
     }
 }
