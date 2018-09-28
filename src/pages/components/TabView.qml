@@ -77,6 +77,11 @@ SilicaListView {
         defaultValue: true
     }
 
+    // Remorse popup for closing all tabs.
+    RemorsePopup {
+        id: closeAllTabsRemorse
+    }
+
     PullDownMenu {
         id: pullDownMenu
 
@@ -97,7 +102,8 @@ SilicaListView {
             visible: showCloseAllAction.value && webView.tabModel.count
             //% "Close all tabs"
             text: qsTrId("sailfish_browser-me-close_all")
-            onDelayedClick: tabView.closeAll()
+            //% "Closing all tabs"
+            onDelayedClick: closeAllTabsRemorse.execute(qsTrId("sailfish_browser-closing-all-tabs"), tabView.closeAll)
         }
         MenuItem {
             //% "New tab"
