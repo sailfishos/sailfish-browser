@@ -122,7 +122,7 @@ WebContainer {
             }
 
             property QtObject popupOpener: Popups.PopupOpener {
-                pageStack: pickerOpener.pageStack
+                pageStack: window.pageStack
                 parentItem: browserPage
                 contentItem: webPage
                 // ContextMenu needs a reference to correct TabModel so that
@@ -347,8 +347,8 @@ WebContainer {
 
             onContextMenuRequested: {
                 if (data.types.indexOf("content-text") !== -1) {
-                   // we want to select some content text
-                   webPage.sendAsyncMessage("Browser:SelectionStart", {"xPos": data.xPos, "yPos": data.yPos})
+                    // we want to select some content text
+                    webPage.sendAsyncMessage("Browser:SelectionStart", {"xPos": data.xPos, "yPos": data.yPos})
                 }
             }
 

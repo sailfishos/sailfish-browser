@@ -74,8 +74,8 @@ SilicaGridView {
         id: container
 
         property real offsetY: largeScreen
-                 ? - (((-favoriteGrid.originY+container.contentHeight/2)%favoriteGrid.pageHeight)/favoriteGrid.pageHeight - 0.5) * (Theme.paddingLarge*4)
-                 : 0
+                               ? - (((-favoriteGrid.originY+container.contentHeight/2)%favoriteGrid.pageHeight)/favoriteGrid.pageHeight - 0.5) * (Theme.paddingLarge*4)
+                               : 0
 
         signal addToLauncher
         signal editBookmark
@@ -92,22 +92,22 @@ SilicaGridView {
 
         onAddToLauncher: {
             // url, title, favicon
-            pushPage(addToLauncherDialog,
-                     {
-                         "url": url,
-                         "title": title,
-                         "icon": favicon
-                     })
+            pageStack.animatorPush(addToLauncherDialog,
+                                   {
+                                       "url": url,
+                                       "title": title,
+                                       "icon": favicon
+                                   })
         }
 
         onEditBookmark: {
             // index, url, title
-            pushPage(editDialog,
-                     {
-                         "url": url,
-                         "title": title,
-                         "index": index,
-                     })
+            pageStack.animatorPush(editDialog,
+                                   {
+                                       "url": url,
+                                       "title": title,
+                                       "index": index,
+                                   })
         }
 
         FavoriteItem {

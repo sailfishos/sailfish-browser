@@ -33,7 +33,7 @@ Background {
 
     function loadPage(url, title)  {
         if (url == "about:config") {
-            pushPage(Qt.resolvedUrl("ConfigWarning.qml"), {"browserPage": browserPage})
+            pageStack.animatorPush(Qt.resolvedUrl("ConfigWarning.qml"), {"browserPage": browserPage})
         } else {
             if (webView && webView.tabModel.count === 0) {
                 webView.clearSurface();
@@ -250,7 +250,7 @@ Background {
 
                         onShare: {
                             controller.clearSelection()
-                            pushPage("Sailfish.WebView.Popups.ShareTextPage", {"text" : controller.text })
+                            pageStack.animatorPush("Sailfish.WebView.Popups.ShareTextPage", {"text" : controller.text })
                         }
                         onSearch: {
                             // Open new tab with the search uri.
@@ -295,7 +295,7 @@ Background {
                     // Push the currently active tab index.
                     // Changing of active tab cannot cause blinking.
                     webView.grabActivePage()
-                    pushPage(tabView)
+                    pageStack.animatorPush(tabView)
                 }
                 onShowSecondaryTools: overlayAnimator.showSecondaryTools()
                 onShowChrome: overlayAnimator.showChrome()
@@ -314,10 +314,10 @@ Background {
                     overlayAnimator.showOverlay()
                 }
                 onShareActivePage: {
-                    pushPage("Sailfish.WebView.Popups.ShareLinkPage", {
-                                       "link": webView.url,
-                                       "linkTitle": webView.title
-                                   })
+                    pageStack.animatorPush("Sailfish.WebView.Popups.ShareLinkPage", {
+                                               "link": webView.url,
+                                               "linkTitle": webView.title
+                                           })
                 }
                 onBookmarkActivePage: favoriteGrid.fetchAndSaveBookmark()
                 onRemoveActivePageFromBookmarks: bookmarkModel.remove(webView.url)
@@ -503,7 +503,7 @@ Background {
                     overlay.loadPage(url, title)
                 }
 
-                onShare: pushPage("Sailfish.WebView.Popups.ShareLinkPage", {"link" : url, "linkTitle": title})
+                onShare: pageStack.animatorPush("Sailfish.WebView.Popups.ShareLinkPage", {"link" : url, "linkTitle": title})
 
                 Behavior on opacity { FadeAnimator {} }
             }
