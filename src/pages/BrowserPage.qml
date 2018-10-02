@@ -10,8 +10,8 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 
-import QtQuick 2.1
-import QtQuick.Window 2.1 as QtWindow
+import QtQuick 2.2
+import QtQuick.Window 2.2 as QuickWindow
 import Sailfish.Silica 1.0
 import Sailfish.Silica.private 1.0 as Private
 import Sailfish.Browser 1.0
@@ -40,7 +40,7 @@ Page {
     }
 
     function bringToForeground(window) {
-        if (!Qt.application.active && window) {
+        if ((webView.visibility < QuickWindow.Window.Maximized) && window) {
             window.raise()
         }
     }

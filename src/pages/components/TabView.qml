@@ -85,7 +85,6 @@ SilicaListView {
     PullDownMenu {
         id: pullDownMenu
 
-        visible: Qt.application.active
         flickable: tabView
 
         MenuItem {

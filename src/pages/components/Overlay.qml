@@ -10,6 +10,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import QtQuick 2.2
+import QtQuick.Window 2.2 as QuickWindow
 import Sailfish.Silica 1.0
 import Sailfish.Silica.private 1.0 as Private
 import Sailfish.Browser 1.0
@@ -98,7 +99,7 @@ Background {
 
         overlay: overlay
         portrait: browserPage.isPortrait
-        active: Qt.application.active
+        active: webView.visibility >= QuickWindow.Window.Maximized
         webView: overlay.webView
         // Favorite grid first row offset is negative. So, increase minumumY drag by that.
         openYPosition: dragArea.drag.minimumY
