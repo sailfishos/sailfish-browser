@@ -73,7 +73,8 @@ BackgroundItem {
                 left: parent.left
                 bottom: parent.bottom
             }
-            highlighted: down || activeTab
+            highlighted: true
+            icon.color: down || activeTab ? Theme.highlightColor : Theme.lightPrimaryColor
             icon.source: "image://theme/icon-m-tab-close"
             onClicked: {
                 // Break binding, so that texture size would not change when
@@ -102,7 +103,7 @@ BackgroundItem {
 
             text: title || WebUtils.displayableUrl(url)
             truncationMode: TruncationMode.Fade
-            color: down || activeTab ? Theme.highlightColor : Theme.primaryColor
+            color: down || activeTab ? Theme.highlightColor : Theme.lightPrimaryColor
         }
     ]
 }
