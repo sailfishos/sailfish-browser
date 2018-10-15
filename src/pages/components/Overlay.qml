@@ -99,7 +99,6 @@ Background {
 
         overlay: overlay
         portrait: browserPage.isPortrait
-        active: webView.visibility >= QuickWindow.Window.Maximized
         webView: overlay.webView
         // Favorite grid first row offset is negative. So, increase minumumY drag by that.
         openYPosition: dragArea.drag.minimumY
