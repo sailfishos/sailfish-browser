@@ -23,7 +23,6 @@ Item {
     property int transitionDuration: !_immediate ? 400 : 0
     property real openYPosition: portrait ? overlay.toolBar.toolsHeight : 0
 
-    property bool active
     readonly property bool allowContentUse: state === _chromeVisible || state === _fullscreenWebPage || state === _doubleToolBar
     readonly property bool dragging: state === _draggingOverlay
     readonly property bool secondaryTools: state === _doubleToolBar
@@ -68,27 +67,6 @@ Item {
     }
 
     state: _chromeVisible
-
-    // TODO: Fix real cover. Once that is fixed, we should remove this block.
-    onActiveChanged: {
-        // When activating and state already changed to something else than
-        // _fullscreenWebPage we should not alter the state.
-        // For instance "new-tab" cover action triggers this state change.
-        if (active && (state !== _fullscreenWebPage || webView.contentItem && webView.contentItem.fullscreen)) {
-            return
-        }
-
-        if (active) {
-            if (webView.completed && !webView.tabModel.waitingForNewTab && webView.tabModel.count === 0) {
-                updateState(_fullscreenOverlay, true)
-            } else {
-                updateState(_chromeVisible, true)
-            }
-        } else if (webView.tabModel.count > 0) {
-            updateState(_fullscreenWebPage, true)
-        }
-    }
-
     onStateChanged: {
         // Animation end changes to true state. Hence not like atTop = state !== _fullscreenOverlay
         var wasAtMiddle = !atBottom && !atTop
@@ -109,10 +87,6 @@ Item {
         ignoreUnknownSignals: true
 
         onFullscreenModeChanged: {
-            if (!active) {
-                return
-            }
-
             if (webView.fullscreenMode) {
                 updateState(_fullscreenWebPage)
             } else {
