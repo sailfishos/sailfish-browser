@@ -11,12 +11,15 @@
 
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import Sailfish.Silica.private 1.0
 import Sailfish.Browser 1.0
 
-SilicaGridView {
+IconGridViewBase {
     id: favoriteGrid
 
-    readonly property real pageHeight: Math.ceil(browserPage.height + pageStack.panelSize)
+    pageHeight: Math.ceil(browserPage.height + pageStack.panelSize)
+    rows: Math.floor(pageHeight / minimumCellHeight)
+    columns: Math.floor(browserPage.width / minimumCellWidth)
 
     readonly property Item contextMenu: currentItem ? currentItem._menuItem : null
     readonly property bool contextMenuActive: contextMenu && contextMenu.active
@@ -25,17 +28,6 @@ SilicaGridView {
     // for the context menu when it's open.
     readonly property int minOffsetIndex: contextMenu ? currentIndex - (currentIndex % columns) + columns : 0
     readonly property int yOffset: contextMenu ? contextMenu.height : 0
-
-    readonly property int rows: Math.floor(pageHeight / minimumCellHeight)
-    readonly property int columns: Math.floor(browserPage.width / minimumCellWidth)
-
-    readonly property int horizontalMargin: largeScreen ? 6 * Theme.paddingLarge : Theme._homePageMargin
-    readonly property int initialCellWidth: (browserPage.width - 2*horizontalMargin) / columns
-
-    // The multipliers below for Large screens are magic. They look good on Jolla tablet.
-    readonly property real minimumCellWidth: largeScreen ? Theme.itemSizeExtraLarge * 1.6 : Theme.itemSizeExtraLarge
-    // phone reference row height: 960 / 6
-    readonly property real minimumCellHeight: largeScreen ? Theme.itemSizeExtraLarge * 1.6 : Theme.pixelRatio * 160
 
     signal load(string url, string title)
     signal newTab(string url, string title)
@@ -55,11 +47,7 @@ SilicaGridView {
         }
     }
 
-    width: cellWidth * columns
     currentIndex: -1
-    anchors.horizontalCenter: parent.horizontalCenter
-    cellWidth: Math.floor(initialCellWidth + (initialCellWidth - Theme.iconSizeLauncher) / (columns - 1))
-    cellHeight: Math.round(pageHeight / rows)
 
     displaced: Transition { NumberAnimation { properties: "x,y"; easing.type: Easing.InOutQuad; duration: 200 } }
     cacheBuffer: cellHeight * 2
