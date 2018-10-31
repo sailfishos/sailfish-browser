@@ -21,6 +21,8 @@ Component {
         property string url
         property int index
 
+        baseXOffset: _flickable ? (width - _flickable.width) / 2 : 0
+
         // FavoriteGrid doesn't fill the entire page thus set width to FavoriteGrid's parent
         width: _flickable !== null ? _flickable.parent.width : (parent ? parent.width : 0)
 
