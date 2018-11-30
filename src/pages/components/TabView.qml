@@ -77,26 +77,17 @@ SilicaListView {
         defaultValue: true
     }
 
+    // Remorse popup for closing all tabs.
+    RemorsePopup {
+        id: closeAllTabsRemorse
+    }
+
     PullDownMenu {
         id: pullDownMenu
-        property var callbackFunction
 
-        visible: Qt.application.active
         flickable: tabView
 
-        // Delay private mode execution until PullDownMenu is closed.
-        onActiveChanged: {
-            if (!active && callbackFunction) {
-                callbackFunction()
-                callbackFunction = null
-            }
-        }
-
         MenuItem {
-            function switchMode() {
-                tabView.privateMode = !tabView.privateMode
-            }
-
             text: tabView.privateMode ?
                     //: Menu item switching back to normal browser
                     //% "Normal browsing"
@@ -104,13 +95,14 @@ SilicaListView {
                     //: Menu item switching to private browser
                     //% "Private browsing"
                     qsTrId("sailfish_browser-me-private_browsing")
-            onClicked: pullDownMenu.callbackFunction = switchMode
+            onDelayedClick: tabView.privateMode = !tabView.privateMode
         }
         MenuItem {
             visible: showCloseAllAction.value && webView.tabModel.count
             //% "Close all tabs"
             text: qsTrId("sailfish_browser-me-close_all")
-            onClicked: tabView.closeAll()
+            //% "Closing all tabs"
+            onDelayedClick: closeAllTabsRemorse.execute(qsTrId("sailfish_browser-closing-all-tabs"), tabView.closeAll)
         }
         MenuItem {
             //% "New tab"

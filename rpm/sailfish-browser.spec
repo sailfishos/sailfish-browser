@@ -30,7 +30,7 @@ BuildRequires:  oneshot
 BuildRequires:  gtest-devel
 BuildRequires:  libgmock-devel
 
-Requires: sailfishsilica-qt5 >= 0.24.26
+Requires: sailfishsilica-qt5 >= 1.0.11
 Requires: jolla-ambient >= 0.7.12
 Requires: xulrunner-qt5 >= %{min_xulrunner_version}
 Requires: embedlite-components-qt5 >= %{min_embedlite_components_version}
@@ -103,15 +103,18 @@ rm -rf %{buildroot}
 %qmake5_install
 chmod +x %{buildroot}/%{_oneshotdir}/*
 
+mkdir -p %{buildroot}/%{_sharedstatedir}/environment/nemo/
+cp -f data/70-browser.conf %{buildroot}/%{_sharedstatedir}/environment/nemo/
+
 %post
-/usr/bin/update-desktop-database -q
+/usr/bin/update-desktop-database -q || :
 
 # Upgrade, count is 2 or higher (depending on the number of versions installed)
 if [ "$1" -ge 2 ]; then
-%{_bindir}/add-oneshot --user --now browser-cleanup-startup-cache
+%{_bindir}/add-oneshot --user --now browser-cleanup-startup-cache || :
 fi
 
-%{_bindir}/add-oneshot --user --late browser-update-default-data
+%{_bindir}/add-oneshot --user --late browser-update-default-data || :
 
 %files
 %defattr(-,root,root,-)
@@ -122,6 +125,7 @@ fi
 %{_datadir}/translations/sailfish-browser_eng_en.qm
 %{_datadir}/dbus-1/services/*.service
 %{_oneshotdir}/*
+%{_sharedstatedir}/environment/nemo/*
 
 %files settings
 %defattr(-,root,root,-)

@@ -10,6 +10,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import QtQuick 2.2
+import QtQuick.Window 2.2 as QuickWindow
 import Sailfish.Silica 1.0
 import Sailfish.Silica.private 1.0 as Private
 import Sailfish.Browser 1.0
@@ -33,7 +34,7 @@ Background {
 
     function loadPage(url, title)  {
         if (url == "about:config") {
-            pageStack.push(Qt.resolvedUrl("ConfigWarning.qml"), {"browserPage": browserPage});
+            pageStack.animatorPush(Qt.resolvedUrl("ConfigWarning.qml"), {"browserPage": browserPage})
         } else {
             if (webView && webView.tabModel.count === 0) {
                 webView.clearSurface();
@@ -98,7 +99,6 @@ Background {
 
         overlay: overlay
         portrait: browserPage.isPortrait
-        active: Qt.application.active
         webView: overlay.webView
         // Favorite grid first row offset is negative. So, increase minumumY drag by that.
         openYPosition: dragArea.drag.minimumY
@@ -250,7 +250,7 @@ Background {
 
                         onShare: {
                             controller.clearSelection()
-                            pageStack.push("Sailfish.WebView.Popups.ShareTextPage", {"text" : controller.text })
+                            pageStack.animatorPush("Sailfish.WebView.Popups.ShareTextPage", {"text" : controller.text })
                         }
                         onSearch: {
                             // Open new tab with the search uri.
@@ -295,7 +295,7 @@ Background {
                     // Push the currently active tab index.
                     // Changing of active tab cannot cause blinking.
                     webView.grabActivePage()
-                    pageStack.push(tabView)
+                    pageStack.animatorPush(tabView)
                 }
                 onShowSecondaryTools: overlayAnimator.showSecondaryTools()
                 onShowChrome: overlayAnimator.showChrome()
@@ -314,10 +314,10 @@ Background {
                     overlayAnimator.showOverlay()
                 }
                 onShareActivePage: {
-                    pageStack.push("Sailfish.WebView.Popups.ShareLinkPage", {
-                                       "link": webView.url,
-                                       "linkTitle": webView.title
-                                   })
+                    pageStack.animatorPush("Sailfish.WebView.Popups.ShareLinkPage", {
+                                               "link": webView.url,
+                                               "linkTitle": webView.title
+                                           })
                 }
                 onBookmarkActivePage: favoriteGrid.fetchAndSaveBookmark()
                 onRemoveActivePageFromBookmarks: bookmarkModel.remove(webView.url)
@@ -503,7 +503,7 @@ Background {
                     overlay.loadPage(url, title)
                 }
 
-                onShare: pageStack.push("Sailfish.WebView.Popups.ShareLinkPage", {"link" : url, "linkTitle": title})
+                onShare: pageStack.animatorPush("Sailfish.WebView.Popups.ShareLinkPage", {"link" : url, "linkTitle": title})
 
                 Behavior on opacity { FadeAnimator {} }
             }

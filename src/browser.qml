@@ -11,7 +11,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import QtQuick 2.2
-import QtQuick.Window 2.1
+import QtQuick.Window 2.2 as QuickWindow
 import Sailfish.Silica 1.0
 import Sailfish.Browser 1.0
 import "pages"
@@ -21,9 +21,14 @@ ApplicationWindow {
     id: window
 
     readonly property bool largeScreen: Screen.sizeCategory > Screen.Medium
+    readonly property int browserVisibility: _mainWindow ? _mainWindow.visibility : QuickWindow.Window.Hidden
+    readonly property bool coverMode: browserVisibility === QuickWindow.Window.Hidden ||
+                                      browserVisibility === QuickWindow.Window.Minimized ||
+                                      browserVisibility === QuickWindow.Window.Windowed
+
     property bool opaqueBackground
     property var rootPage
-    property var backgrounds: []
+    property QtObject webView
 
     function setBrowserCover(model) {
         if (!model || model.count === 0) {
@@ -36,18 +41,9 @@ ApplicationWindow {
         }
     }
 
-    function findBackgroundIndexByPage(page) {
-        for (var i = 0; i < backgrounds.length; ++i) {
-            if (backgrounds[i].page === page) {
-                return i
-            }
-        }
-        return -1
-    }
-
     allowedOrientations: defaultAllowedOrientations
     // For non large screen fix cover to portrait.
-    _defaultPageOrientations: !largeScreen && !Qt.application.active ? Orientation.Portrait : Orientation.LandscapeMask | Orientation.Portrait
+    _defaultPageOrientations: !largeScreen && coverMode ? Orientation.Portrait : Orientation.LandscapeMask | Orientation.Portrait
     _defaultLabelFormat: Text.PlainText
     _clippingItem.opacity: 1.0
     _resizeContent: !window.rootPage.active
@@ -70,62 +66,34 @@ ApplicationWindow {
         }
     }
 
+    Browser.Background {
+        id: pushBackground
+        parent: null
+        anchors.fill: parent
+        z: -1
+    }
+
     pageStack.onCurrentPageChanged: {
         var currentContainer = pageStack._currentContainer
-        if (currentContainer && pageStack.currentPage !== window.rootPage) {
-            var index = findBackgroundIndexByPage(pageStack.currentPage)
-            if (index === -1) {
-                var background = backgroundComponent.createObject(window._wallpaperItem, {
-                                                                      "pageContainer": currentContainer,
-                                                                      "page": pageStack.currentPage
-                                                                  })
-                backgrounds.push({
-                                     "page": pageStack.currentPage,
-                                     "background": background
-                                 })
-            } else {
-                // Update container that is the one that moves.
-                backgrounds[index].background.pageContainer = currentContainer
-            }
+
+        // synchronous x binding does not work with the new animator-based page pushes
+        // the push is performed using placeholder page, the background is handled with pushBackground above
+        var isPlaceholderPage = pageStack.currentPage && pageStack.currentPage.hasOwnProperty("__placeholder")
+        var newBackground = pageStack.currentPage && !pageStack.currentPage.hasOwnProperty("__hasBackground")
+        if (isPlaceholderPage) {
+            pushBackground.parent = pageStack.currentPage
+        } else if (newBackground) {
+            var background = pushBackgroundComponent.createObject(pageStack.currentPage)
+            background.parent = pageStack.currentPage
         }
     }
 
-    property QtObject webView
-
     Component {
-        id: backgroundComponent
+        id: pushBackgroundComponent
         Browser.Background {
-            id: bg
-            property Item pageContainer
-            property Page page
-
-            // Page and attached background is destroyed when the page gets destroyed.
-            onPageChanged: {
-                if (!page) {
-                    var index = 0
-                    for (; index < backgrounds.length; ++index) {
-                        if (backgrounds[index].background === bg) {
-                            break
-                        }
-                    }
-
-                    if (index >= 0 && backgrounds.length > 0) {
-                        backgrounds.splice(index, 1)
-                    } else {
-                        backgrounds = []
-                    }
-
-                    destroy()
-                }
-            }
-
-            width: page ? (page.isPortrait ? Screen.width : Screen.height) : 0
-            height: Math.max(Screen.height, Screen.width)
-            x: pageContainer && page && page.isPortrait ? pageContainer.x : 0
-            y: pageContainer && page && page.isLandscape ? pageContainer.y : 0
-            // Page can have longer life-cycle than page container in case
-            // page pushed to the pagestack as an item.
-            visible: pageContainer ? pageContainer.visible : 0
+            parent: null
+            anchors.fill: parent
+            z: -1
         }
     }
 }

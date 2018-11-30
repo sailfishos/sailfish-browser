@@ -92,6 +92,30 @@ void DeclarativeWebUtils::handleDumpMemoryInfoRequest(QString fileName)
     }
 }
 
+void DeclarativeWebUtils::openUrl(QString url)
+{
+
+    QFileInfo fileInfo(url);
+    QUrl targetUrl(url);
+
+    if (!url.isEmpty() && targetUrl.scheme().isEmpty()) {
+        QUrl tmpUrl;
+        if (fileInfo.isAbsolute()) {
+            tmpUrl = QUrl::fromLocalFile(url);
+        } else {
+            QUrl baseUrl = QUrl::fromLocalFile(QDir::currentPath() + QDir::separator());
+            tmpUrl = baseUrl.resolved(url);
+        }
+
+        if (QFileInfo::exists(tmpUrl.path())) {
+            targetUrl = tmpUrl;
+        }
+    }
+
+    url = targetUrl.toEncoded();
+    emit openUrlRequested(url);
+}
+
 void DeclarativeWebUtils::updateWebEngineSettings()
 {
     SailfishOS::WebEngineSettings *webEngineSettings = SailfishOS::WebEngineSettings::instance();

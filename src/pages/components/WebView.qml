@@ -9,8 +9,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import QtQuick 2.1
-import QtQuick.Window 2.1 as QtQuick
+import QtQuick 2.2
+import QtQuick.Window 2.2 as QuickWindow
 import Sailfish.Silica 1.0
 import Sailfish.Browser 1.0
 import Sailfish.WebView.Pickers 1.0 as Pickers
@@ -94,7 +94,7 @@ WebContainer {
         }
     }
 
-    foreground: Qt.application.active
+    foreground: visibility >= QuickWindow.Window.Maximized
     readyToPaint: resourceController.videoActive ? webView.visible && !resourceController.displayOff : webView.visible && webView.contentItem && webView.contentItem.domContentLoaded
     allowHiding: !resourceController.videoActive && !resourceController.audioActive
     fullscreenMode: (contentItem && !contentItem.chrome) ||
@@ -122,7 +122,7 @@ WebContainer {
             }
 
             property QtObject popupOpener: Popups.PopupOpener {
-                pageStack: pickerOpener.pageStack
+                pageStack: window.pageStack
                 parentItem: browserPage
                 contentItem: webPage
                 // ContextMenu needs a reference to correct TabModel so that
@@ -347,8 +347,8 @@ WebContainer {
 
             onContextMenuRequested: {
                 if (data.types.indexOf("content-text") !== -1) {
-                   // we want to select some content text
-                   webPage.sendAsyncMessage("Browser:SelectionStart", {"xPos": data.xPos, "yPos": data.yPos})
+                    // we want to select some content text
+                    webPage.sendAsyncMessage("Browser:SelectionStart", {"xPos": data.xPos, "yPos": data.yPos})
                 }
             }
 

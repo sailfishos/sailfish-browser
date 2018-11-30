@@ -17,6 +17,7 @@ import Sailfish.WebEngine 1.0
 Dialog {
     id: configDialog
 
+    readonly property bool __hasBackground: true
     property var changedConfigs: ({})
 
     // Get all the preferences

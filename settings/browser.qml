@@ -101,7 +101,7 @@ Page {
                 //: Button for opening privacy settings page.
                 //% "Privacy"
                 text: qsTrId("settings_browser-bt-privacy")
-                onClicked: pageStack.push(Qt.resolvedUrl("Privacy.qml"))
+                onClicked: pageStack.animatorPush(Qt.resolvedUrl("Privacy.qml"))
             }
 
             TextSwitch {

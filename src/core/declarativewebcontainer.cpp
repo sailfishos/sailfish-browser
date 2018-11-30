@@ -34,6 +34,8 @@
 #define DEBUG_LOGS 0
 #endif
 
+static const bool gForceLandscapeToPortrait = !qgetenv("BROWSER_FORCE_LANDSCAPE_TO_PORTRAIT").isEmpty();
+
 DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     : QWindow(parent)
     , m_mozWindow(nullptr)
@@ -596,10 +598,10 @@ bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
 
 bool DeclarativeWebContainer::event(QEvent *event)
 {
-    QPlatformWindow *windowHandle;
-    if (event->type() == QEvent::PlatformSurface
+    if (QPlatformWindow *windowHandle = event->type() == QEvent::PlatformSurface
                 && static_cast<QPlatformSurfaceEvent *>(event)->surfaceEventType() == QPlatformSurfaceEvent::SurfaceCreated
-                && (windowHandle = handle())) {
+            ? handle()
+            : nullptr) {
         QPlatformNativeInterface *native = QGuiApplication::platformNativeInterface();
         native->setWindowProperty(windowHandle, QStringLiteral("BACKGROUND_VISIBLE"), false);
         native->setWindowProperty(windowHandle, QStringLiteral("HAS_CHILD_WINDOWS"), true);
@@ -736,6 +738,14 @@ void DeclarativeWebContainer::componentComplete()
 
 void DeclarativeWebContainer::updateContentOrientation(Qt::ScreenOrientation orientation)
 {
+    if (gForceLandscapeToPortrait) {
+        if (orientation == Qt::LandscapeOrientation) {
+            orientation = Qt::PortraitOrientation;
+        } else if (orientation == Qt::InvertedLandscapeOrientation) {
+            orientation = Qt::InvertedPortraitOrientation;
+        }
+    }
+
     if (m_mozWindow) {
         bool orientationShouldChange = (orientation != m_mozWindow->pendingOrientation());
         m_mozWindow->setContentOrientation(orientation);

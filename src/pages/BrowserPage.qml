@@ -10,8 +10,8 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 
-import QtQuick 2.1
-import QtQuick.Window 2.1 as QtWindow
+import QtQuick 2.2
+import QtQuick.Window 2.2 as QuickWindow
 import Sailfish.Silica 1.0
 import Sailfish.Silica.private 1.0 as Private
 import Sailfish.Browser 1.0
@@ -20,6 +20,7 @@ import "components" as Browser
 Page {
     id: browserPage
 
+    readonly property bool __hasBackground: true
     readonly property rect inputMask: inputMaskForOrientation(orientation)
     readonly property bool active: status == PageStatus.Active
     property bool tabPageActive
@@ -39,13 +40,13 @@ Page {
     }
 
     function bringToForeground(window) {
-        if (!Qt.application.active && window) {
+        if ((webView.visibility < QuickWindow.Window.Maximized) && window) {
             window.raise()
         }
     }
 
     function activateNewTabView() {
-        pageStack.pop(browserPage, PageStackAction.Immediate);
+        pageStack.pop(browserPage, PageStackAction.Immediate)
         overlay.enterNewTabUrl(PageStackAction.Immediate)
         bringToForeground(webView.chromeWindow)
         // after bringToForeground, webView has focus => activate chrome
@@ -78,7 +79,7 @@ Page {
     }
 
     onStatusChanged: {
-        if (overlay.enteringNewTabUrl) {
+        if (overlay.enteringNewTabUrl || webView.tabModel.count === 0) {
             return
         }
 

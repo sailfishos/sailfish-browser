@@ -42,6 +42,7 @@ public slots:
     QString homePage() const;
     void clearStartupCacheIfNeeded();
     void handleDumpMemoryInfoRequest(QString fileName);
+    void openUrl(QString url);
 
 signals:
     void homePageChanged();

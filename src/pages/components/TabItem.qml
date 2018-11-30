@@ -18,7 +18,9 @@ BackgroundItem {
     // Expose ListView for all items
     property Item view: ListView.view
     property bool destroying
-
+    property color highlightColor: Theme.colorScheme == Theme.LightOnDark
+                                   ? Theme.highlightColor
+                                   : Theme.highlightFromColor(Theme.highlightColor, Theme.LightOnDark)
     // In direction so that we can break this binding when closing a tab
     implicitWidth: width
     implicitHeight: height
@@ -73,7 +75,8 @@ BackgroundItem {
                 left: parent.left
                 bottom: parent.bottom
             }
-            highlighted: down || activeTab
+            highlighted: true
+            icon.color: down || activeTab ? root.highlightColor : Theme.lightPrimaryColor
             icon.source: "image://theme/icon-m-tab-close"
             onClicked: {
                 // Break binding, so that texture size would not change when
@@ -102,7 +105,7 @@ BackgroundItem {
 
             text: title || WebUtils.displayableUrl(url)
             truncationMode: TruncationMode.Fade
-            color: down || activeTab ? Theme.highlightColor : Theme.primaryColor
+            color: down || activeTab ? root.highlightColor : Theme.lightPrimaryColor
         }
     ]
 }
