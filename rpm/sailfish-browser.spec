@@ -31,7 +31,7 @@ BuildRequires:  gtest-devel
 BuildRequires:  libgmock-devel
 
 Requires: sailfishsilica-qt5 >= 1.0.11
-Requires: jolla-ambient >= 0.7.12
+Requires: sailfish-content-graphics
 Requires: xulrunner-qt5 >= %{min_xulrunner_version}
 Requires: embedlite-components-qt5 >= %{min_embedlite_components_version}
 Requires: qtmozembed-qt5 >= %{min_qtmozembed_version}
