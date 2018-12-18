@@ -1,7 +1,7 @@
-%global min_xulrunner_version 38.8.0.5
-%global min_qtmozembed_version 1.13.28
-%global min_embedlite_components_version 1.9.26
-%global min_sailfishwebengine_version 0.0.12
+%global min_xulrunner_version 45.8.1.1
+%global min_qtmozembed_version 1.14.0
+%global min_embedlite_components_version 1.20.0
+%global min_sailfishwebengine_version 0.2.0
 
 Name:       sailfish-browser
 
