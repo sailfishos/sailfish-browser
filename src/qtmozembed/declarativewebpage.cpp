@@ -70,7 +70,7 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
     addMessageListener(gFindMessage);
     addMessageListener(gContentOrientationChanged);
 
-    loadFrameScript("chrome://embedlite/content/SelectAsyncHelper.js");
+//    loadFrameScript("chrome://embedlite/content/SelectAsyncHelper.js");
     loadFrameScript("chrome://embedlite/content/embedhelper.js");
 
     connect(this, &DeclarativeWebPage::recvAsyncMessage,
