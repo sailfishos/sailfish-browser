@@ -100,5 +100,7 @@
   // JB#27828, elisa.fi
   "elisa.fi": "Maemo; Linux;#Android 4.4.2;",
   // JB#39970, slashdot.org
-  "slashdot.org": "Maemo; Linux;#Android 4.4.2;"
+  "slashdot.org": "Maemo; Linux;#Android 4.4.2;",
+  "verkkokauppa.com": "Mozilla/5.0 (Android 4.4.2; U; Sailfish; rv:45.0) Gecko/45.0 Firefox/45.0 SailfishBrowser/1.0 like Safari/538.1",
+  "verk.net": "Mozilla/5.0 (Android 4.4.2; U; Sailfish; rv:45.0) Gecko/45.0 Firefox/45.0 SailfishBrowser/1.0 like Safari/538.1"
 }
