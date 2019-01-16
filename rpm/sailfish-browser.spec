@@ -12,6 +12,7 @@ Group:      Applications/Internet
 License:    MPLv2
 Url:        https://github.com/sailfishos/sailfish-browser
 Source0:    %{name}-%{version}.tar.bz2
+Source1:    %{name}.privileges
 BuildRequires:  pkgconfig(Qt5Core)
 BuildRequires:  pkgconfig(Qt5Qml)
 BuildRequires:  pkgconfig(Qt5Gui)
@@ -106,6 +107,9 @@ chmod +x %{buildroot}/%{_oneshotdir}/*
 mkdir -p %{buildroot}/%{_sharedstatedir}/environment/nemo/
 cp -f data/70-browser.conf %{buildroot}/%{_sharedstatedir}/environment/nemo/
 
+mkdir -p %{buildroot}%{_datadir}/mapplauncherd/privileges.d
+install -m 644 -p %{SOURCE1} %{buildroot}%{_datadir}/mapplauncherd/privileges.d/
+
 %post
 /usr/bin/update-desktop-database -q || :
 
@@ -121,24 +125,27 @@ fi
 %{_bindir}/%{name}
 %{_datadir}/applications/%{name}.desktop
 %{_datadir}/applications/open-url.desktop
-%{_datadir}/%{name}/*
-%{_datadir}/translations/sailfish-browser_eng_en.qm
+%{_datadir}/%{name}
+%{_datadir}/translations/%{name}*.qm
 %{_datadir}/dbus-1/services/*.service
+%{_datadir}/mapplauncherd/privileges.d/*
 %{_oneshotdir}/*
+# Let main package own import root level
+%dir %{_libdir}/qt5/qml/org/sailfishos/browser
 %{_sharedstatedir}/environment/nemo/*
 
 %files settings
 %defattr(-,root,root,-)
-%{_datadir}/jolla-settings/*
-%{_libdir}/qt5/qml/org/sailfishos/browser/settings/*
-%{_datadir}/translations/settings-sailfish-browser_eng_en.qm
+%{_libdir}/qt5/qml/org/sailfishos/browser/settings
+%{_datadir}/jolla-settings/entries/browser.json
+%{_datadir}/jolla-settings/pages/browser
+%{_datadir}/translations/settings-%{name}_eng_en.qm
 
 %files ts-devel
 %defattr(-,root,root,-)
-%{_datadir}/translations/source/sailfish-browser.ts
-%{_datadir}/translations/source/settings-sailfish-browser.ts
+%{_datadir}/translations/source/*.ts
 
 %files tests
 %defattr(-,root,root,-)
-%{_datadir}/applications/test-sailfish-browser.desktop
-/opt/*
+%{_datadir}/applications/test-%{name}.desktop
+/opt/tests/%{name}
