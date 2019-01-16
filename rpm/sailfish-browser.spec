@@ -12,6 +12,7 @@ Group:      Applications/Internet
 License:    MPLv2
 Url:        https://github.com/sailfishos/sailfish-browser
 Source0:    %{name}-%{version}.tar.bz2
+Source1:    %{name}.privileges
 BuildRequires:  pkgconfig(Qt5Core)
 BuildRequires:  pkgconfig(Qt5Qml)
 BuildRequires:  pkgconfig(Qt5Gui)
@@ -106,6 +107,9 @@ chmod +x %{buildroot}/%{_oneshotdir}/*
 mkdir -p %{buildroot}/%{_sharedstatedir}/environment/nemo/
 cp -f data/70-browser.conf %{buildroot}/%{_sharedstatedir}/environment/nemo/
 
+mkdir -p %{buildroot}%{_datadir}/mapplauncherd/privileges.d
+install -m 644 -p %{SOURCE1} %{buildroot}%{_datadir}/mapplauncherd/privileges.d/
+
 %post
 /usr/bin/update-desktop-database -q || :
 
@@ -124,6 +128,7 @@ fi
 %{_datadir}/%{name}/*
 %{_datadir}/translations/sailfish-browser_eng_en.qm
 %{_datadir}/dbus-1/services/*.service
+%{_datadir}/mapplauncherd/privileges.d/*
 %{_oneshotdir}/*
 %{_sharedstatedir}/environment/nemo/*
 
