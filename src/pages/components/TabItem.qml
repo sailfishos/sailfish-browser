@@ -75,8 +75,10 @@ BackgroundItem {
                 left: parent.left
                 bottom: parent.bottom
             }
-            highlighted: true
-            icon.color: down || activeTab ? root.highlightColor : Theme.lightPrimaryColor
+
+            icon.color: Theme.lightPrimaryColor
+            icon.highlightColor: root.highlightColor
+            icon.highlighted: down || activeTab
             icon.source: "image://theme/icon-m-tab-close"
             onClicked: {
                 // Break binding, so that texture size would not change when
