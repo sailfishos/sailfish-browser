@@ -130,7 +130,7 @@ public:
     bool activatePage(const Tab& tab, bool force = false, int parentId = 0);
     int findParentTabId(int tabId) const;
 
-    Q_INVOKABLE void load(QString url = "", QString title = "", bool force = false);
+    Q_INVOKABLE void load(const QString &url = QString(), const QString &title = QString(), bool force = false);
     Q_INVOKABLE void reload(bool force = true);
     Q_INVOKABLE void goForward();
     Q_INVOKABLE void goBack();
@@ -202,7 +202,7 @@ private slots:
     void initialize();
     void onActiveTabChanged(int activeTabId);
     void onDownloadStarted();
-    void onNewTabRequested(QString url, QString title, int parentId);
+    void onNewTabRequested(const QString &url, const QString &title, int parentId);
     void releasePage(int tabId);
     void closeWindow();
     void updateLoadProgress();

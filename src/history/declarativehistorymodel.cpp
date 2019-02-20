@@ -128,7 +128,7 @@ void DeclarativeHistoryModel::updateModel(QList<Link> linkList)
     }
 }
 
-void DeclarativeHistoryModel::updateTitle(QString url, QString title)
+void DeclarativeHistoryModel::updateTitle(const QString &url, const QString &title)
 {
     QVector<int> roles;
     roles << TitleRole;

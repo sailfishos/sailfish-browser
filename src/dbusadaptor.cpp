@@ -17,7 +17,7 @@ DBusAdaptor::DBusAdaptor(BrowserService *browserService):
 {
 }
 
-void DBusAdaptor::openUrl(QStringList args)
+void DBusAdaptor::openUrl(const QStringList &args)
 {
     m_BrowserService->openUrl(args);
 }
@@ -37,7 +37,7 @@ void DBusAdaptor::restartTransfer(int transferId)
     m_BrowserService->restartTransfer(transferId);
 }
 
-void DBusAdaptor::dumpMemoryInfo(QString fileName)
+void DBusAdaptor::dumpMemoryInfo(const QString &fileName)
 {
     m_BrowserService->dumpMemoryInfo(fileName);
 }
@@ -49,7 +49,7 @@ UIServiceDBusAdaptor::UIServiceDBusAdaptor(BrowserUIService *browserService)
 {
 }
 
-void UIServiceDBusAdaptor::openUrl(QStringList args)
+void UIServiceDBusAdaptor::openUrl(const QStringList &args)
 {
     m_BrowserService->openUrl(args);
 }

@@ -38,7 +38,7 @@ QString BrowserService::serviceName() const
     return SAILFISH_BROWSER_SERVICE;
 }
 
-void BrowserService::openUrl(QStringList args)
+void BrowserService::openUrl(const QStringList &args)
 {
     if(args.count() > 0) {
         emit openUrlRequested(args.first());
@@ -62,7 +62,7 @@ void BrowserService::restartTransfer(int transferId)
     emit restartTransferRequested(transferId);
 }
 
-void BrowserService::dumpMemoryInfo(QString fileName)
+void BrowserService::dumpMemoryInfo(const QString &fileName)
 {
     emit dumpMemoryInfoRequested(fileName);
 }
@@ -90,7 +90,7 @@ QString BrowserUIService::serviceName() const
     return SAILFISH_BROWSER_UI_SERVICE;
 }
 
-void BrowserUIService::openUrl(QStringList args)
+void BrowserUIService::openUrl(const QStringList &args)
 {
     if(args.count() > 0) {
         emit openUrlRequested(args.first());

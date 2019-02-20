@@ -411,22 +411,23 @@ bool DeclarativeWebContainer::isActiveTab(int tabId)
     return m_webPage && m_webPage->tabId() == tabId;
 }
 
-void DeclarativeWebContainer::load(QString url, QString title, bool force)
+void DeclarativeWebContainer::load(const QString &url, const QString &title, bool force)
 {
-    if (url.isEmpty()) {
-        url = "about:blank";
+    QString tmpUrl = url;
+    if (tmpUrl.isEmpty()) {
+        tmpUrl = "about:blank";
     }
 
     if (m_webPage && m_webPage->completed()) {
         if (m_loading) {
             m_webPage->stop();
         }
-        m_webPage->loadTab(url, force);
+        m_webPage->loadTab(tmpUrl, force);
     } else if (!canInitialize()) {
-        m_initialUrl = url;
+        m_initialUrl = tmpUrl;
     } else if (m_model && m_model->count() == 0) {
         // Browser running all tabs are closed.
-        m_model->newTab(url, title);
+        m_model->newTab(tmpUrl, title);
     }
 }
 
@@ -868,7 +869,7 @@ void DeclarativeWebContainer::onDownloadStarted()
     }
 }
 
-void DeclarativeWebContainer::onNewTabRequested(QString url, QString title, int parentId)
+void DeclarativeWebContainer::onNewTabRequested(const QString &url, const QString &title, int parentId)
 {
     // TODO: Remove unused title argument.
     Q_UNUSED(title);

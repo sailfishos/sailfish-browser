@@ -334,9 +334,7 @@ Page {
             }
             bringToForeground(webView)
         }
-        onActivateNewTabViewRequested: {
-            activateNewTabView()
-        }
+        onActivateNewTabViewRequested: activateNewTabView()
     }
 
     Component.onCompleted: {

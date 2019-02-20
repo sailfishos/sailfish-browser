@@ -29,14 +29,14 @@ public:
     Q_INVOKABLE void save(QString url, QString title, QString icon);
 
 signals:
-    void saved(QString desktopFile);
+    void saved(const QString &desktopFile);
 
 private slots:
     void desktopFileWritten();
 
 private:
     QString uniqueDesktopFileName(QString title);
-    QString write(QString url, QString title, QString icon);
+    QString write(const QString &url, const QString &title, const QString &icon);
 
     QFutureWatcher<QString> m_writter;
 

@@ -73,7 +73,7 @@ void DBManager::createTab(const Tab &tab)
                               Q_ARG(Tab, tab));
 }
 
-void DBManager::navigateTo(int tabId, QString url, QString title, QString path)
+void DBManager::navigateTo(int tabId, const QString &url, const QString &title, const QString &path)
 {
     QMetaObject::invokeMethod(worker, "navigateTo", Qt::QueuedConnection,
                               Q_ARG(int, tabId), Q_ARG(QString, url),
@@ -109,13 +109,13 @@ void DBManager::removeAllTabs()
                               Q_ARG(bool, true));
 }
 
-void DBManager::updateTitle(int tabId, QString url, QString title)
+void DBManager::updateTitle(int tabId, const QString &url, const QString &title)
 {
     QMetaObject::invokeMethod(worker, "updateTitle", Qt::QueuedConnection,
                               Q_ARG(int, tabId), Q_ARG(QString, url), Q_ARG(QString, title));
 }
 
-void DBManager::updateThumbPath(int tabId, QString path)
+void DBManager::updateThumbPath(int tabId, const QString &path)
 {
     QMetaObject::invokeMethod(worker, "updateThumbPath", Qt::QueuedConnection,
                               Q_ARG(int, tabId), Q_ARG(QString, path));
@@ -142,7 +142,7 @@ void DBManager::getTabHistory(int tabId)
     QMetaObject::invokeMethod(worker, "getTabHistory", Qt::QueuedConnection, Q_ARG(int, tabId));
 }
 
-void DBManager::saveSetting(QString name, QString value)
+void DBManager::saveSetting(const QString &name, const QString &value)
 {
     m_settings.insert(name, value);
     emit settingsChanged();
@@ -150,7 +150,7 @@ void DBManager::saveSetting(QString name, QString value)
                               Q_ARG(QString, name), Q_ARG(QString, value));
 }
 
-QString DBManager::getSetting(QString name)
+QString DBManager::getSetting(const QString &name)
 {
     if (m_settings.contains(name)) {
         return m_settings.value(name);
@@ -159,7 +159,7 @@ QString DBManager::getSetting(QString name)
     return "";
 }
 
-void DBManager::deleteSetting(QString name)
+void DBManager::deleteSetting(const QString &name)
 {
     if (m_settings.contains(name)) {
         m_settings.remove(name);

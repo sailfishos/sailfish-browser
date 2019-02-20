@@ -407,7 +407,7 @@ int DeclarativeTabModel::nextActiveTabIndex(int index)
     return index;
 }
 
-void DeclarativeTabModel::updateThumbnailPath(int tabId, QString path)
+void DeclarativeTabModel::updateThumbnailPath(int tabId, const QString &path)
 {
     if (tabId <= 0)
         return;

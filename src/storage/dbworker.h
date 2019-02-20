@@ -39,11 +39,11 @@ public slots:
     void removeTab(int tabId);
     void getAllTabs();
     void removeAllTabs(bool noFeedback = false);
-    void navigateTo(int tabId, QString url, QString title, QString path);
+    void navigateTo(int tabId, const QString &url, const QString &title, const QString &path);
     int getMaxTabId();
 
-    void updateTitle(int tabId, QString url, QString title);
-    void updateThumbPath(int tabId, QString path);
+    void updateTitle(int tabId, const QString &url, const QString &title);
+    void updateThumbPath(int tabId, const QString &path);
 
     void goForward(int tabId);
     void goBack(int tabId);
@@ -53,24 +53,24 @@ public slots:
     void removeHistoryEntry(int linkId);
     void clearHistory();
 
-    void saveSetting(QString name, QString value);
+    void saveSetting(const QString &name, const QString &value);
     SettingsMap getSettings();
-    void deleteSetting(QString name);
+    void deleteSetting(const QString &name);
 
 signals:
     void tabsAvailable(QList<Tab> tabs);
-    void thumbPathChanged(int tabId, QString path);
-    void titleChanged(QString url, QString title);
+    void thumbPathChanged(int tabId, const QString &path);
+    void titleChanged(const QString &url, const QString &title);
     void tabHistoryAvailable(int tabId, QList<Link>, int currentLinkId);
     void historyAvailable(QList<Link>);
-    void error(QString query);
+    void error(const QString &query);
 
 private:
-    HistoryResult addToBrowserHistory(QString url, QString title);
+    HistoryResult addToBrowserHistory(const QString &url, const QString &title);
     int addToTabHistory(int tabId, int linkId);
     Link getCurrentLink(int tabId);
     void clearDeprecatedTabHistory(int tabId, int currentLinkId);
-    int createLink(QString url, QString title = "", QString thumbPath = "");
+    int createLink(const QString &url, const QString &title = QString(), const QString &thumbPath = QString());
     void updateTab(int tabId, int tabHistoryId);
     int tabCount();
     int integerQuery(const QString &statement);

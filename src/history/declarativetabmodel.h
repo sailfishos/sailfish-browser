@@ -77,7 +77,7 @@ public:
     bool contains(int tabId) const;
 
 public slots:
-    void updateThumbnailPath(int tabId, QString path);
+    void updateThumbnailPath(int tabId, const QString &path);
     void onUrlChanged();
     void onTitleChanged();
 
@@ -89,7 +89,7 @@ signals:
     void tabClosed(int tabId);
     void loadedChanged();
     void waitingForNewTabChanged();
-    void newTabRequested(QString url, QString title, int parentId = 0);
+    void newTabRequested(const QString &url, const QString &title, int parentId = 0);
 
 protected:
     void addTab(const QString &url, const QString &title, int index);
@@ -99,10 +99,10 @@ protected:
     void updateUrl(int tabId, const QString &url, bool initialLoad);
 
     virtual void createTab(const Tab &tab) = 0;
-    virtual void updateTitle(int tabId, QString url, QString title) = 0;
+    virtual void updateTitle(int tabId, const QString &url, const QString &title) = 0;
     virtual void removeTab(int tabId) = 0;
-    virtual void navigateTo(int tabId, QString url, QString title, QString path) = 0;
-    virtual void updateThumbPath(int tabId, QString path) = 0;
+    virtual void navigateTo(int tabId, const QString &url, const QString &title, const QString &path) = 0;
+    virtual void updateThumbPath(int tabId, const QString &path) = 0;
 
     int nextActiveTabIndex(int index);
 

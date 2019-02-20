@@ -22,10 +22,10 @@ class PersistentTabModel : public DeclarativeTabModel
 
 protected:
     virtual void createTab(const Tab &tab);
-    virtual void updateTitle(int tabId, QString url, QString title);
+    virtual void updateTitle(int tabId, const QString &url, const QString &title);
     virtual void removeTab(int tabId);
-    virtual void navigateTo(int tabId, QString url, QString title, QString path);
-    virtual void updateThumbPath(int tabId, QString path);
+    virtual void navigateTo(int tabId, const QString &url, const QString &title, const QString &path);
+    virtual void updateThumbPath(int tabId, const QString &path);
 
 private slots:
     void saveActiveTab() const;

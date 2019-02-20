@@ -31,7 +31,7 @@ void PrivateTabModel::createTab(const Tab &tab) {
     Q_UNUSED(tab);
 }
 
-void PrivateTabModel::updateTitle(int tabId, QString url, QString title)
+void PrivateTabModel::updateTitle(int tabId, const QString &url, const QString &title)
 {
     Q_UNUSED(tabId)
     Q_UNUSED(url)
@@ -43,14 +43,14 @@ void PrivateTabModel::removeTab(int tabId)
     Q_UNUSED(tabId)
 }
 
-void PrivateTabModel::navigateTo(int tabId, QString url, QString title, QString path) {
+void PrivateTabModel::navigateTo(int tabId, const QString &url, const QString &title, const QString &path) {
     Q_UNUSED(tabId)
     Q_UNUSED(url)
     Q_UNUSED(title)
     Q_UNUSED(path)
 }
 
-void PrivateTabModel::updateThumbPath(int tabId, QString path)
+void PrivateTabModel::updateThumbPath(int tabId, const QString &path)
 {
     Q_UNUSED(tabId)
     Q_UNUSED(path)
