@@ -13,9 +13,12 @@
 #define BROWSERSERVICE_H
 
 #include <QObject>
+#include <QDBusContext>
 #include <QStringList>
 
-class BrowserService : public QObject
+class BrowserUIServicePrivate;
+
+class BrowserService : public QObject, protected QDBusContext
 {
     Q_OBJECT
 public:
@@ -42,10 +45,12 @@ signals:
     void dumpMemoryInfoRequested(const QString &fileName);
 
 private:
+    bool isPrivileged() const;
+
     bool m_registered;
 };
 
-class BrowserUIService : public QObject
+class BrowserUIService : public QObject, protected QDBusContext
 {
     Q_OBJECT
 public:
@@ -56,13 +61,19 @@ public:
 public slots:
     void openUrl(const QStringList &args);
     void activateNewTabView();
+    void requestTab(int id, const QString &url);
 
 signals:
     void openUrlRequested(const QString &url);
     void activateNewTabViewRequested();
+    void showChrome();
 
 private:
-    bool m_registered;
+    bool isPrivileged() const;
+
+    BrowserUIServicePrivate *d_ptr;
+    Q_DISABLE_COPY(BrowserUIService)
+    Q_DECLARE_PRIVATE(BrowserUIService)
 };
 
 #endif // BROWSERSERVICE_H

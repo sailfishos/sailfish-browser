@@ -36,6 +36,8 @@
 
 static const bool gForceLandscapeToPortrait = !qgetenv("BROWSER_FORCE_LANDSCAPE_TO_PORTRAIT").isEmpty();
 
+static DeclarativeWebContainer *s_instance = nullptr;
+
 DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     : QWindow(parent)
     , m_mozWindow(nullptr)
@@ -63,6 +65,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     , m_clearSurfaceTask(0)
     , m_closing(false)
 {
+    Q_ASSERT(!s_instance);
 
     QSize screenSize = QGuiApplication::primaryScreen()->size();
     resize(screenSize.width(), screenSize.height());;
@@ -105,6 +108,8 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
             this, &DeclarativeWebContainer::updateWindowFlags);
 
     qApp->installEventFilter(this);
+
+    s_instance = this;
 }
 
 DeclarativeWebContainer::~DeclarativeWebContainer()
@@ -119,6 +124,12 @@ DeclarativeWebContainer::~DeclarativeWebContainer()
         SailfishOS::WebEngine *webEngine = SailfishOS::WebEngine::instance();
         webEngine->CancelTask(m_clearSurfaceTask);
     }
+}
+
+DeclarativeWebContainer *DeclarativeWebContainer::instance()
+{
+    Q_ASSERT(s_instance);
+    return s_instance;
 }
 
 DeclarativeWebPage *DeclarativeWebContainer::webPage() const
@@ -463,6 +474,18 @@ void DeclarativeWebContainer::goBack()
         DBManager::instance()->goBack(m_webPage->tabId());
         m_webPage->goBack();
     }
+}
+
+int DeclarativeWebContainer::activateTab(int tabId, const QString &url)
+{
+    bool activated = m_model->activateTabById(tabId);
+    if (!activated) {
+        tabId = m_model->newTab(url, "");
+    } else {
+        load(url, QString(), true);
+    }
+
+    return tabId;
 }
 
 bool DeclarativeWebContainer::activatePage(const Tab& tab, bool force, int parentId)
@@ -869,16 +892,10 @@ void DeclarativeWebContainer::onDownloadStarted()
     }
 }
 
-void DeclarativeWebContainer::onNewTabRequested(const QString &url, const QString &title, int parentId)
+void DeclarativeWebContainer::onNewTabRequested(const Tab &tab, int parentId)
 {
-    // TODO: Remove unused title argument.
-    Q_UNUSED(title);
-    Tab tab;
-    tab.setTabId(m_model->nextTabId());
-    tab.setUrl(url);
-
     if (activatePage(tab, false, parentId)) {
-        m_webPage->loadTab(url, false);
+        m_webPage->loadTab(tab.url(), false);
     }
 }
 

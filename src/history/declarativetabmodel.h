@@ -47,7 +47,7 @@ public:
     Q_INVOKABLE bool activateTab(const QString &url);
     Q_INVOKABLE void activateTab(int index);
     Q_INVOKABLE void closeActiveTab();
-    Q_INVOKABLE void newTab(const QString &url, const QString &title, int parentId = 0);
+    Q_INVOKABLE int newTab(const QString &url, const QString &title, int parentId = 0);
     Q_INVOKABLE QString url(int tabId) const;
 
     Q_INVOKABLE void dumpTabs() const;
@@ -89,7 +89,7 @@ signals:
     void tabClosed(int tabId);
     void loadedChanged();
     void waitingForNewTabChanged();
-    void newTabRequested(const QString &url, const QString &title, int parentId = 0);
+    void newTabRequested(const Tab& tab, int parentId = 0);
 
 protected:
     void addTab(const QString &url, const QString &title, int index);

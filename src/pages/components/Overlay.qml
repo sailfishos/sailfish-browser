@@ -67,13 +67,13 @@ Background {
         overlayAnimator.showOverlay(action === PageStackAction.Immediate)
     }
 
-    function dismiss(canShowChrome) {
+    function dismiss(canShowChrome, immadiate) {
         toolBar.resetFind()
         if (webView.contentItem && webView.contentItem.fullscreen) {
             // Web content is in fullscreen mode thus we don't show chrome
             overlay.animator.updateState("fullscreenWebPage")
         } else if (canShowChrome) {
-            overlay.animator.showChrome()
+            overlay.animator.showChrome(immadiate)
         } else {
             overlay.animator.hide()
         }

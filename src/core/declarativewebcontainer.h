@@ -79,6 +79,8 @@ public:
     DeclarativeWebContainer(QWindow *parent = 0);
     ~DeclarativeWebContainer();
 
+    static DeclarativeWebContainer *instance();
+
     DeclarativeWebPage *webPage() const;
     QMozWindow *mozWindow() const;
 
@@ -134,6 +136,8 @@ public:
     Q_INVOKABLE void reload(bool force = true);
     Q_INVOKABLE void goForward();
     Q_INVOKABLE void goBack();
+
+    Q_INVOKABLE int activateTab(int tabId, const QString &url);
 
     Q_INVOKABLE void updatePageFocus(bool focus);
     Q_INVOKABLE void dumpPages() const;
@@ -202,7 +206,7 @@ private slots:
     void initialize();
     void onActiveTabChanged(int activeTabId);
     void onDownloadStarted();
-    void onNewTabRequested(const QString &url, const QString &title, int parentId);
+    void onNewTabRequested(const Tab &tab, int parentId);
     void releasePage(int tabId);
     void closeWindow();
     void updateLoadProgress();

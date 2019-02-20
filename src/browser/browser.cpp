@@ -27,7 +27,7 @@
 
 BrowserPrivate::BrowserPrivate(QQuickView *view)
     : view(view)
-    , closeEventFilter(0)
+    , closeEventFilter(nullptr)
 {
 }
 
@@ -97,6 +97,13 @@ void Browser::openNewTabView()
     Q_D(Browser);
     d->closeEventFilter->cancelStopApplication();
     emit DeclarativeWebUtils::instance()->activateNewTabViewRequested();
+}
+
+void Browser::showChrome()
+{
+    Q_D(Browser);
+    d->closeEventFilter->cancelStopApplication();
+    emit DeclarativeWebUtils::instance()->showChrome();
 }
 
 void Browser::cancelDownload(int transferId)

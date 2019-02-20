@@ -191,10 +191,19 @@ void DeclarativeTabModel::closeActiveTab()
     }
 }
 
-void DeclarativeTabModel::newTab(const QString &url, const QString &title, int parentId)
+int DeclarativeTabModel::newTab(const QString &url, const QString &title, int parentId)
 {
     setWaitingForNewTab(true);
-    emit newTabRequested(url, title, parentId);
+
+    // TODO: Remove unused title argument.
+    Q_UNUSED(title);
+    Tab tab;
+    tab.setTabId(nextTabId());
+    tab.setUrl(url);
+
+    emit newTabRequested(tab, parentId);
+
+    return tab.tabId();
 }
 
 QString DeclarativeTabModel::url(int tabId) const

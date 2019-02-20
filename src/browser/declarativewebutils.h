@@ -48,6 +48,8 @@ signals:
     void homePageChanged();
     void openUrlRequested(const QString &url);
     void activateNewTabViewRequested();
+    void showChrome();
+
     void firstUseDoneChanged();
     void dumpMemoryInfo(const QString &fileName);
     void cssPixelRatioChanged();

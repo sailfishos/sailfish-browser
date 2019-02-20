@@ -50,6 +50,8 @@ public slots:
     void openUrl(const QStringList &args);
     void activateNewTabView();
 
+    void requestTab(int tabId, const QString &url);
+
 private:
     BrowserUIService *m_BrowserService;
 };

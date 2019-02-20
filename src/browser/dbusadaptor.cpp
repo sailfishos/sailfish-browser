@@ -58,3 +58,8 @@ void UIServiceDBusAdaptor::activateNewTabView()
 {
     m_BrowserService->activateNewTabView();
 }
+
+void UIServiceDBusAdaptor::requestTab(int tabId, const QString &url)
+{
+    m_BrowserService->requestTab(tabId, url);
+}
