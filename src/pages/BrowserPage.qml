@@ -328,8 +328,7 @@ Page {
             webView.grabActivePage()
             if (!webView.tabModel.activateTab(url)) {
                 webView.clearSelection()
-                // Open new tab with empty title
-                webView.tabModel.newTab(url, "")
+                webView.tabModel.newTab(url)
                 overlay.dismiss(true, !Qt.application.active /* immadiate */)
             }
             bringToForeground(webView.chromeWindow)

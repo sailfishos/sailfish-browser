@@ -422,7 +422,7 @@ bool DeclarativeWebContainer::isActiveTab(int tabId)
     return m_webPage && m_webPage->tabId() == tabId;
 }
 
-void DeclarativeWebContainer::load(const QString &url, const QString &title, bool force)
+void DeclarativeWebContainer::load(const QString &url, bool force)
 {
     QString tmpUrl = url;
     if (tmpUrl.isEmpty()) {
@@ -438,7 +438,7 @@ void DeclarativeWebContainer::load(const QString &url, const QString &title, boo
         m_initialUrl = tmpUrl;
     } else if (m_model && m_model->count() == 0) {
         // Browser running all tabs are closed.
-        m_model->newTab(tmpUrl, title);
+        m_model->newTab(tmpUrl);
     }
 }
 
@@ -480,9 +480,9 @@ int DeclarativeWebContainer::activateTab(int tabId, const QString &url)
 {
     bool activated = m_model->activateTabById(tabId);
     if (!activated) {
-        tabId = m_model->newTab(url, "");
+        tabId = m_model->newTab(url);
     } else {
-        load(url, QString(), true);
+        load(url, true);
     }
 
     return tabId;
@@ -853,8 +853,7 @@ void DeclarativeWebContainer::initialize()
     bool firstUseDone = DeclarativeWebUtils::instance()->firstUseDone();
     if ((m_model->waitingForNewTab() || m_model->count() == 0) && (firstUseDone || !m_initialUrl.isEmpty())) {
         QString url = m_initialUrl.isEmpty() ? DeclarativeWebUtils::instance()->homePage() : m_initialUrl;
-        QString title = "";
-        m_model->newTab(url, title);
+        m_model->newTab(url);
     } else if (m_model->count() > 0 && !m_webPage) {
         Tab tab = m_model->activeTab();
         if (!m_initialUrl.isEmpty()) {

@@ -30,9 +30,9 @@ Background {
     property alias searchField: searchField
     readonly property alias enteringNewTabUrl: searchField.enteringNewTabUrl
 
-    property var enteredPage
+    property string enteredUrl
 
-    function loadPage(url, title)  {
+    function loadPage(url)  {
         if (url == "about:config") {
             pageStack.animatorPush(Qt.resolvedUrl("ConfigWarning.qml"), {"browserPage": browserPage})
         } else {
@@ -41,19 +41,15 @@ Background {
             }
             // let gecko figure out how to handle malformed URLs
             var pageUrl = url
-            var pageTitle = title || ""
             if (!isNaN(pageUrl) && pageUrl.trim()) {
                 pageUrl = "\"" + pageUrl.trim() + "\""
             }
 
             if (!searchField.enteringNewTabUrl) {
-                webView.load(pageUrl, pageTitle)
+                webView.load(pageUrl)
             } else {
                 // Loading will start once overlay animator has animated chrome visible.
-                enteredPage = {
-                    "url": pageUrl,
-                    "title": pageTitle
-                }
+                enteredUrl = pageUrl
                 webView.tabModel.waitingForNewTab = true
             }
         }
@@ -107,9 +103,9 @@ Background {
             if (atBottom) {
                 searchField.enteringNewTabUrl = false
 
-                if (enteredPage) {
-                    webView.tabModel.newTab(enteredPage.url, enteredPage.title)
-                    enteredPage = null
+                if (enteredUrl) {
+                    webView.tabModel.newTab(enteredUrl)
+                    enteredUrl = ""
                 } else if (!toolBar.findInPageActive) {
                     searchField.resetUrl(webView.url)
                 }
@@ -255,7 +251,7 @@ Background {
                         onSearch: {
                             // Open new tab with the search uri.
                             controller.clearSelection()
-                            webView.tabModel.newTab(controller.searchUri, "")
+                            webView.tabModel.newTab(controller.searchUri)
                             overlay.animator.showChrome(true)
                         }
                         onClear: {
@@ -469,7 +465,7 @@ Background {
 
                 onMovingChanged: if (moving) historyList.focus = true
                 onSearchChanged: if (search !== webView.url) historyModel.search(search)
-                onLoad: overlay.loadPage(url, title)
+                onLoad: overlay.loadPage(url)
 
                 Behavior on opacity { FadeAnimator {} }
             }
@@ -494,13 +490,13 @@ Background {
                 }
 
                 onMovingChanged: if (moving) favoriteGrid.focus = true
-                onLoad: overlay.loadPage(url, title)
+                onLoad: overlay.loadPage(url)
                 onNewTab: {
                     searchField.resetUrl(url)
                     // Not the best property name but functionality of opening a favorite
                     // to a new tab is exactly the same as opening new tab by typing a url.
                     searchField.enteringNewTabUrl = true
-                    overlay.loadPage(url, title)
+                    overlay.loadPage(url)
                 }
 
                 onShare: pageStack.animatorPush("Sailfish.WebView.Popups.ShareLinkPage", {"link" : url, "linkTitle": title})

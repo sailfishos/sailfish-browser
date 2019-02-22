@@ -132,7 +132,7 @@ public:
     bool activatePage(const Tab& tab, bool force = false, int parentId = 0);
     int findParentTabId(int tabId) const;
 
-    Q_INVOKABLE void load(const QString &url = QString(), const QString &title = QString(), bool force = false);
+    Q_INVOKABLE void load(const QString &url = QString(), bool force = false);
     Q_INVOKABLE void reload(bool force = true);
     Q_INVOKABLE void goForward();
     Q_INVOKABLE void goBack();

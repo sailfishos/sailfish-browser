@@ -27,7 +27,7 @@ Component {
         MenuItem {
             //% "Open in new tab"
             text: qsTrId("sailfish_browser-me-open_new_tab")
-            onClicked: view.newTab(url, title)
+            onClicked: view.newTab(url)
         }
 
         MenuItem {
