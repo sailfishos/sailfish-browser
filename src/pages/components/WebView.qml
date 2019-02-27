@@ -339,6 +339,7 @@ WebContainer {
                 case "Content:SelectionCopied": {
                     if (data.succeeded && textSelectionController) {
                         textSelectionController.showNotification()
+                        response.message = {"": ""}
                     }
                     break
                 }

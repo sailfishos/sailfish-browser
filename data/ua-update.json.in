@@ -63,7 +63,7 @@
   "youku.com": "Maemo; Linux;#Android 4.4.2;",
   // JB#39351
   "iqiyi.com": "Maemo; Linux; U; #Android 4.4.2;",
-  "facebook.com": "Mozilla/5.0 (Mobile; rv:38.0) Gecko/38.0 Firefox/38.0",
+  "facebook.com": "Mozilla/5.0 (Mobile; rv:45.0) Gecko/45.0 Firefox/45.0",
   "engadget.com": "Maemo; Linux; U; # ;",
   // JB#39351, sohu.com
   "sohu.com": "Maemo; Linux; U; Sailfish# ; Android",
@@ -91,14 +91,17 @@
   "chinaz.com": "Maemo; Linux; U; #Android; U; ",
   // JB#39351, tmall.com
   "tmall.com": "Maemo; Linux; U; #Android; U; ",
-  "youtube.com": "Mozilla/5.0 (Maemo; Android 4.4.2; U; Sailfish; rv:38.0) Gecko/38.0 Firefox/38.0 SailfishBrowser/1.0 like Safari/538.1",
-  "yahoo.com": "Mozilla/5.0 (Mobile; rv:38.0) Gecko/38.0 Firefox/38.0",
-  "yandex.com": "Mozilla/5.0 (Mobile; rv:38.0) Gecko/38.0 Firefox/38.0",
-  "yandex.net": "Mozilla/5.0 (Mobile; rv:38.0) Gecko/38.0 Firefox/38.0",
-  "yandex.ru": "Mozilla/5.0 (Mobile; rv:38.0) Gecko/38.0 Firefox/38.0",
-  "yastatic.net": "Mozilla/5.0 (Mobile; rv:38.0) Gecko/38.0 Firefox/38.0",
+  "youtube.com": "Mozilla/5.0 (Maemo; Android 4.4.2; U; Sailfish; rv:45.0) Gecko/45.0 Firefox/45.0 SailfishBrowser/1.0 like Safari/538.1",
+  "yahoo.com": "Mozilla/5.0 (Mobile; rv:45.0) Gecko/45.0 Firefox/45.0",
+  "yandex.com": "Mozilla/5.0 (Mobile; rv:45.0) Gecko/45.0 Firefox/45.0",
+  "yandex.net": "Mozilla/5.0 (Mobile; rv:45.0) Gecko/45.0 Firefox/45.0",
+  "yandex.ru": "Mozilla/5.0 (Mobile; rv:45.0) Gecko/45.0 Firefox/45.0",
+  "yastatic.net": "Mozilla/5.0 (Mobile; rv:45.0) Gecko/45.0 Firefox/45.0",
   // JB#27828, elisa.fi
   "elisa.fi": "Maemo; Linux;#Android 4.4.2;",
   // JB#39970, slashdot.org
-  "slashdot.org": "Maemo; Linux;#Android 4.4.2;"
+  "slashdot.org": "Maemo; Linux;#Android 4.4.2;",
+  "verkkokauppa.com": "Mozilla/5.0 (Android 4.4.2; U; Sailfish; rv:45.0) Gecko/45.0 Firefox/45.0 SailfishBrowser/1.0 like Safari/538.1",
+  "verk.net": "Mozilla/5.0 (Android 4.4.2; U; Sailfish; rv:45.0) Gecko/45.0 Firefox/45.0 SailfishBrowser/1.0 like Safari/538.1",
+  "digicert.com": "Mozilla/5.0 (Mobile; rv:45.0) Gecko/45.0 Firefox/45.0"
 }
