@@ -1,107 +1,80 @@
 // Everything after the first // on a line will be removed by the preproccesor.
 // Send these sites a custom user-agent. Bugs should be included with an entry.
 {
+  // Ref: "Mozilla/5.0 (Linux; U; Sailfish 3.0; Mobile; rv:45.0) Gecko/45.0 Firefox/45.0 SailfishBrowser/1.0"
   // bug 826347, msn.com
-  "msn.com": "\\(Maemo; Linux; U; Sailfish#(Android 4.4.4",
+  "msn.com": "\\(Linux; U; Sailfish 3.0#(Android 4.4.4",
   // bug 826353, itau.com.br
-  "itau.com.br": "\\(Maemo; Linux; U; Sailfish#(Android",
+  "itau.com.br": "\\(Linux; U; Sailfish 3.0#(Android",
   // bug 826510, r7.com
-  "r7.com": "\\(Maemo; Linux; U; Sailfish#(Android",
+  "r7.com": "\\(Linux; U; Sailfish 3.0#(Android",
   // JB#39252, baidu.com
-  "baidu.com": "Maemo; Linux;#Android 4.4.2;",
+  "baidu.com": "Linux;#Android 4.4.2;",
   // bug 827622, bing.com
-  "bing.com": "\\(Maemo; Linux; U; Sailfish#(Android",
-  "live.com": "Maemo; Linux; U; Sailfish# Android 4.4.2;",
-  // JB#20376, forbes.com
-  "forbes.com": "Maemo; Linux; U; Sailfish# Android 4.4.2;",
+  "bing.com": "\\(Linux; U; Sailfish 3.0#(Android",
   // bug 827626, magazineluiza.com.br
-  "magazineluiza.com.br": "\\(Maemo; Linux; U; Sailfish#(Android",
+  "magazineluiza.com.br": "\\(Linux; U; Sailfish 3.0#(Android",
   // bug 827670, elpais.com.co
-  "elpais.com.co": "\\(Maemo; Linux; U; Sailfish#(Android 4.4.4",
+  "elpais.com.co": "\\(Linux; U; Sailfish 3.0#(Android 4.4.4",
   // bug 828416, loteriasyapuestas.es
-  "loteriasyapuestas.es": "\\(Maemo; Linux; U; Sailfish#(Android",
+  "loteriasyapuestas.es": "\\(Linux; U; Sailfish 3.0#(Android",
   // bug 828418, bbva.es
-  "bbva.es": "\\(Maemo; Linux; U; Sailfish#(Android",
-  // bug 828439, movistar.com.ve
-  "movistar.com.ve": "\\(Maemo; Linux; U; Sailfish#(Android",
+  "bbva.es": "\\(Linux; U; Sailfish 3.0#(Android",
   // bug 843132, comunio.es
-  "comunio.es": "\\(Maemo; Linux; U; Sailfish#(Android",
-  // bug 843151, citibank.com
-  "citibank.com": "\\(Maemo; Linux; U; Sailfish#(Android",
-  "citi.com": "\\(Maemo; Linux; U; Sailfish#(Android",
+  "comunio.es": "\\(Linux; U; Sailfish 3.0#(Android",
   // bug 843153, games.com
-  "games.com": "\\(Maemo; Linux; U; Sailfish#(Android",
+  "games.com": "\\(Linux; U; Sailfish 3.0#(Android",
   // JB#39252, jd.com
-  "jd.com": "Maemo; Linux;#Android 4.4.2;",
-  // bug 843160, ehow.com
-  "ehow.com": "\\(Maemo; Linux; U; Sailfish#(Android",
+  "jd.com": "Linux;#Android 4.4.2;",
   // bug 878228, blikk.hu
-  "blikk.hu": "\\(Maemo; Linux; U; Sailfish#(Android",
-  // bug 878238, koponyeg.hu
-  "koponyeg.hu": "\\(Maemo; Linux; U; Sailfish#(Android",
+  "blikk.hu": "\\(Linux; U; Sailfish 3.0#(Android",
   // bug 878240, kuruc.info
-  "kuruc.info": "\\(Maemo; Linux; U; Sailfish#(Android",
-  // bug 878242, nemzetisport.hu
-  "nemzetisport.hu": "\\(Maemo; Linux; U; Sailfish#(Android",
-  // bug 878246, port.hu
-  "port.hu": "\\(Maemo; Linux; U; Sailfish#(Android",
+  "kuruc.info": "\\(Linux; U; Sailfish 3.0#(Android",
   // bug 878249, portfolio.hu
-  "portfolio.hu": "\\(Maemo; Linux; U; Sailfish#(Android",
-  // bug 878260, cdm.me
-  "cdm.me": "\\(Maemo; Linux; U; Sailfish#(Android",
+  "portfolio.hu": "\\(Linux; U; Sailfish 3.0#(Android",
   // bug 878262, download.com
-  "download.com": "\\(Maemo; Linux; U; Sailfish#(Android",
-  "cnet.com": "\\(Maemo; Linux; U; Sailfish#(Android",
-  // bug 878273, livescore.com
-  "livescore.com": "\\(Maemo; Linux; U; Sailfish#(Android",
-  // bug 878653, redstarbelgrade.info
-  "redstarbelgrade.info": "\\(Maemo; Linux; U; Sailfish#(Android",
-  // bug 826348, linkedin.com
-  "linkedin.com": "Mozilla/5.0 (Linux; Android 4.0.4; Galaxy Nexus Build/IMM76B) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.133 Mobile Safari/535.19",
-  "dailymotion.com": "Maemo; Linux;#Android 4.4.2;",
-  "le.com": "Maemo; Linux;#Android 4.4.2;",
-  "youku.com": "Maemo; Linux;#Android 4.4.2;",
+  "download.com": "\\(Linux; U; Sailfish 3.0#(Android",
+  "dailymotion.com": "Linux;#Android 4.4.2;",
+  "le.com": "Linux;#Android 4.4.2;",
+  "youku.com": "Linux;#Android 4.4.2;",
   // JB#39351
-  "iqiyi.com": "Maemo; Linux; U; #Android 4.4.2;",
+  "iqiyi.com": "Linux; U; #Android 4.4.2;",
   "facebook.com": "Mozilla/5.0 (Mobile; rv:45.0) Gecko/45.0 Firefox/45.0",
-  "engadget.com": "Maemo; Linux; U; # ;",
   // JB#39351, sohu.com
-  "sohu.com": "Maemo; Linux; U; Sailfish# ; Android",
+  "sohu.com": "Linux; U; Sailfish 3.0# ; Android",
   // JB#39351, qq.com
-  "qq.com": "Maemo; Linux;#Android 4.4.2;",
+  "qq.com": "Linux;#Android 4.4.2;",
   // JB#39351, tom.com
-  "tom.com": "Maemo; Linux; #Android 4.4.2;",
+  "tom.com": "Linux; #Android 4.4.2;",
   // JB#39351, zhihu.com
-  "zhihu.com": "Maemo; Linux; U; #Android;",
+  "zhihu.com": "Linux; U; #Android;",
   // JB#39351, 58.com
-  "58.com": "Maemo; Linux; U; #Android; U; ",
+  "58.com": "Linux; U; #Android; U; ",
   // JB#39351, dianping.com
-  "dianping.com": "Maemo; Linux; U; #Android; U; ",
+  "dianping.com": "Linux; U; #Android; U; ",
   // JB#39351, taobao.com
-  "taobao.com": "Maemo; Linux; U; #Android; U; ",
+  "taobao.com": "Linux; U; #Android; U; ",
   // JB#39351, soso.com
-  "soso.com": "Maemo; Linux; U; #Android; U; ",
+  "soso.com": "Linux; U; #Android; U; ",
   // JB#39351, 360.cn
-  "360.cn": "Maemo; Linux; U; #Android; U; ",
+  "360.cn": "Linux; U; #Android; U; ",
   // JB#39351, xinhuanet.com
-  "xinhuanet.com": "Maemo; Linux; U; #Android; U; ",
+  "xinhuanet.com": "Linux; U; #Android; U; ",
   // JB#39351, hao123.com
-  "hao123.com": "Maemo; Linux; U; #Android; U; ",
+  "hao123.com": "Linux; U; #Android; U; ",
   // JB#39351, chinaz.com
-  "chinaz.com": "Maemo; Linux; U; #Android; U; ",
+  "chinaz.com": "Linux; U; #Android; U; ",
   // JB#39351, tmall.com
-  "tmall.com": "Maemo; Linux; U; #Android; U; ",
-  "youtube.com": "Mozilla/5.0 (Maemo; Android 4.4.2; U; Sailfish; rv:45.0) Gecko/45.0 Firefox/45.0 SailfishBrowser/1.0 like Safari/538.1",
+  "tmall.com": "Linux; U; #Android; U; ",
+  "youtube.com": "Mozilla/5.0 (Android 4.4.2; U; Sailfish 3.0; rv:45.0) Gecko/45.0 Firefox/45.0 SailfishBrowser/1.0 like Safari/538.1",
   "yahoo.com": "Mozilla/5.0 (Mobile; rv:45.0) Gecko/45.0 Firefox/45.0",
   "yandex.com": "Mozilla/5.0 (Mobile; rv:45.0) Gecko/45.0 Firefox/45.0",
   "yandex.net": "Mozilla/5.0 (Mobile; rv:45.0) Gecko/45.0 Firefox/45.0",
   "yandex.ru": "Mozilla/5.0 (Mobile; rv:45.0) Gecko/45.0 Firefox/45.0",
   "yastatic.net": "Mozilla/5.0 (Mobile; rv:45.0) Gecko/45.0 Firefox/45.0",
-  // JB#27828, elisa.fi
-  "elisa.fi": "Maemo; Linux;#Android 4.4.2;",
   // JB#39970, slashdot.org
-  "slashdot.org": "Maemo; Linux;#Android 4.4.2;",
-  "verkkokauppa.com": "Mozilla/5.0 (Android 4.4.2; U; Sailfish; rv:45.0) Gecko/45.0 Firefox/45.0 SailfishBrowser/1.0 like Safari/538.1",
-  "verk.net": "Mozilla/5.0 (Android 4.4.2; U; Sailfish; rv:45.0) Gecko/45.0 Firefox/45.0 SailfishBrowser/1.0 like Safari/538.1",
+  "slashdot.org": "Linux;#Android 4.4.2;",
+  "verkkokauppa.com": "Mozilla/5.0 (Android 4.4.2; U; Sailfish 3.0; rv:45.0) Gecko/45.0 Firefox/45.0 SailfishBrowser/1.0 like Safari/538.1",
+  "verk.net": "Mozilla/5.0 (Android 4.4.2; U; Sailfish 3.0; rv:45.0) Gecko/45.0 Firefox/45.0 SailfishBrowser/1.0 like Safari/538.1",
   "digicert.com": "Mozilla/5.0 (Mobile; rv:45.0) Gecko/45.0 Firefox/45.0"
 }
