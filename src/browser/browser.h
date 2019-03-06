@@ -22,7 +22,7 @@ class Browser : public QObject
     Q_OBJECT
 
 public:
-    explicit Browser(QQuickView *view, QObject *parent = 0);
+    explicit Browser(QQuickView *view, QObject *parent = nullptr);
 
     void load();
 
@@ -31,6 +31,8 @@ public:
 public slots:
     void openUrl(const QString &url);
     void openNewTabView();
+
+    void showChrome();
 
     void cancelDownload(int transferId);
     void restartDownload(int transferid);

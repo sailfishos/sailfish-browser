@@ -36,6 +36,8 @@
 
 static const bool gForceLandscapeToPortrait = !qgetenv("BROWSER_FORCE_LANDSCAPE_TO_PORTRAIT").isEmpty();
 
+static DeclarativeWebContainer *s_instance = nullptr;
+
 DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     : QWindow(parent)
     , m_mozWindow(nullptr)
@@ -63,6 +65,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     , m_clearSurfaceTask(0)
     , m_closing(false)
 {
+    Q_ASSERT(!s_instance);
 
     QSize screenSize = QGuiApplication::primaryScreen()->size();
     resize(screenSize.width(), screenSize.height());;
@@ -105,6 +108,8 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
             this, &DeclarativeWebContainer::updateWindowFlags);
 
     qApp->installEventFilter(this);
+
+    s_instance = this;
 }
 
 DeclarativeWebContainer::~DeclarativeWebContainer()
@@ -119,6 +124,12 @@ DeclarativeWebContainer::~DeclarativeWebContainer()
         SailfishOS::WebEngine *webEngine = SailfishOS::WebEngine::instance();
         webEngine->CancelTask(m_clearSurfaceTask);
     }
+}
+
+DeclarativeWebContainer *DeclarativeWebContainer::instance()
+{
+    Q_ASSERT(s_instance);
+    return s_instance;
 }
 
 DeclarativeWebPage *DeclarativeWebContainer::webPage() const
@@ -411,22 +422,23 @@ bool DeclarativeWebContainer::isActiveTab(int tabId)
     return m_webPage && m_webPage->tabId() == tabId;
 }
 
-void DeclarativeWebContainer::load(QString url, QString title, bool force)
+void DeclarativeWebContainer::load(const QString &url, bool force)
 {
-    if (url.isEmpty()) {
-        url = "about:blank";
+    QString tmpUrl = url;
+    if (tmpUrl.isEmpty()) {
+        tmpUrl = "about:blank";
     }
 
     if (m_webPage && m_webPage->completed()) {
         if (m_loading) {
             m_webPage->stop();
         }
-        m_webPage->loadTab(url, force);
+        m_webPage->loadTab(tmpUrl, force);
     } else if (!canInitialize()) {
-        m_initialUrl = url;
+        m_initialUrl = tmpUrl;
     } else if (m_model && m_model->count() == 0) {
         // Browser running all tabs are closed.
-        m_model->newTab(url, title);
+        m_model->newTab(tmpUrl);
     }
 }
 
@@ -462,6 +474,18 @@ void DeclarativeWebContainer::goBack()
         DBManager::instance()->goBack(m_webPage->tabId());
         m_webPage->goBack();
     }
+}
+
+int DeclarativeWebContainer::activateTab(int tabId, const QString &url)
+{
+    bool activated = m_model->activateTabById(tabId);
+    if (!activated) {
+        tabId = m_model->newTab(url);
+    } else {
+        load(url, true);
+    }
+
+    return tabId;
 }
 
 bool DeclarativeWebContainer::activatePage(const Tab& tab, bool force, int parentId)
@@ -829,8 +853,7 @@ void DeclarativeWebContainer::initialize()
     bool firstUseDone = DeclarativeWebUtils::instance()->firstUseDone();
     if ((m_model->waitingForNewTab() || m_model->count() == 0) && (firstUseDone || !m_initialUrl.isEmpty())) {
         QString url = m_initialUrl.isEmpty() ? DeclarativeWebUtils::instance()->homePage() : m_initialUrl;
-        QString title = "";
-        m_model->newTab(url, title);
+        m_model->newTab(url);
     } else if (m_model->count() > 0 && !m_webPage) {
         Tab tab = m_model->activeTab();
         if (!m_initialUrl.isEmpty()) {
@@ -868,16 +891,10 @@ void DeclarativeWebContainer::onDownloadStarted()
     }
 }
 
-void DeclarativeWebContainer::onNewTabRequested(QString url, QString title, int parentId)
+void DeclarativeWebContainer::onNewTabRequested(const Tab &tab, int parentId)
 {
-    // TODO: Remove unused title argument.
-    Q_UNUSED(title);
-    Tab tab;
-    tab.setTabId(m_model->nextTabId());
-    tab.setUrl(url);
-
     if (activatePage(tab, false, parentId)) {
-        m_webPage->loadTab(url, false);
+        m_webPage->loadTab(tab.url(), false);
     }
 }
 

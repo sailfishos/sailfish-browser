@@ -82,7 +82,7 @@ void PersistentTabModel::createTab(const Tab &tab) {
     DBManager::instance()->createTab(tab);
 }
 
-void PersistentTabModel::updateTitle(int tabId, QString url, QString title)
+void PersistentTabModel::updateTitle(int tabId, const QString &url, const QString &title)
 {
     DBManager::instance()->updateTitle(tabId, url, title);
 }
@@ -92,14 +92,14 @@ void PersistentTabModel::removeTab(int tabId)
     DBManager::instance()->removeTab(tabId);
 }
 
-void PersistentTabModel::navigateTo(int tabId, QString url, QString title, QString path) {
+void PersistentTabModel::navigateTo(int tabId, const QString &url, const QString &title, const QString &path) {
     Q_UNUSED(title)
     Q_UNUSED(path)
 
     DBManager::instance()->navigateTo(tabId, url, "", "");
 }
 
-void PersistentTabModel::updateThumbPath(int tabId, QString path)
+void PersistentTabModel::updateThumbPath(int tabId, const QString &path)
 {
     DBManager::instance()->updateThumbPath(tabId, path);
 }

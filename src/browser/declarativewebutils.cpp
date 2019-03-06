@@ -65,7 +65,7 @@ DeclarativeWebUtils::~DeclarativeWebUtils()
     gSingleton = 0;
 }
 
-int DeclarativeWebUtils::getLightness(QColor color) const
+int DeclarativeWebUtils::getLightness(const QColor &color) const
 {
     return color.lightness();
 }
@@ -85,14 +85,14 @@ void DeclarativeWebUtils::clearStartupCacheIfNeeded()
     }
 }
 
-void DeclarativeWebUtils::handleDumpMemoryInfoRequest(QString fileName)
+void DeclarativeWebUtils::handleDumpMemoryInfoRequest(const QString &fileName)
 {
     if (qApp->arguments().contains("-debugMode")) {
         emit dumpMemoryInfo(fileName);
     }
 }
 
-void DeclarativeWebUtils::openUrl(QString url)
+void DeclarativeWebUtils::openUrl(const QString &url)
 {
 
     QFileInfo fileInfo(url);
@@ -112,8 +112,8 @@ void DeclarativeWebUtils::openUrl(QString url)
         }
     }
 
-    url = targetUrl.toEncoded();
-    emit openUrlRequested(url);
+    QString tmpUrl = targetUrl.toEncoded();
+    emit openUrlRequested(tmpUrl);
 }
 
 void DeclarativeWebUtils::updateWebEngineSettings()
@@ -197,7 +197,7 @@ DeclarativeWebUtils *DeclarativeWebUtils::instance()
     return gSingleton;
 }
 
-QString DeclarativeWebUtils::displayableUrl(QString fullUrl) const
+QString DeclarativeWebUtils::displayableUrl(const QString &fullUrl) const
 {
     QUrl url(fullUrl);
     // Leaving only the scheme, host address, and port (if present).
@@ -218,7 +218,7 @@ QString DeclarativeWebUtils::displayableUrl(QString fullUrl) const
     return !returnUrl.isEmpty() ? returnUrl : fullUrl;
 }
 
-void DeclarativeWebUtils::handleObserve(const QString message, const QVariant data)
+void DeclarativeWebUtils::handleObserve(const QString &message, const QVariant &data)
 {
     const QVariantMap dataMap = data.toMap();
     if (message == "clipboard:setdata") {

@@ -277,7 +277,7 @@ void DeclarativeWebPage::setVirtualKeyboardMargin(qreal margin)
     }
 }
 
-void DeclarativeWebPage::loadTab(QString newUrl, bool force)
+void DeclarativeWebPage::loadTab(const QString &newUrl, bool force)
 {
     // Always enable chrome when load is called.
     setChrome(true);

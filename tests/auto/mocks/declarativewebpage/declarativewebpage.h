@@ -92,7 +92,7 @@ public:
 
     MOCK_METHOD1(setPrivateMode, void(bool));
 
-    MOCK_METHOD2(Q_INVOKABLE loadTab, void(QString newUrl, bool force));
+    MOCK_METHOD2(Q_INVOKABLE loadTab, void(const QString &newUrl, bool force));
 
 signals:
     void canGoBackChanged();
@@ -114,8 +114,8 @@ signals:
     void domContentLoadedChanged();
     void resurrectedContentRectChanged();
     void clearGrabResult();
-    void grabResult(QString fileName);
-    void thumbnailResult(QString data);
+    void grabResult(const QString &fileName);
+    void thumbnailResult(const QString &data);
 };
 
 QDebug operator<<(QDebug, const DeclarativeWebPage *);

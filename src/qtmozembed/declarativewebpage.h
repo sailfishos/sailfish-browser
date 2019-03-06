@@ -67,7 +67,7 @@ public:
 
     void timerEvent(QTimerEvent *);
 
-    Q_INVOKABLE void loadTab(QString newUrl, bool force);
+    Q_INVOKABLE void loadTab(const QString &newUrl, bool force);
     Q_INVOKABLE void grabToFile(const QSize& size);
     Q_INVOKABLE void grabThumbnail(const QSize& size);
     Q_INVOKABLE void forceChrome(bool forcedChrome);
@@ -82,8 +82,8 @@ signals:
     void domContentLoadedChanged();
     void faviconChanged();
     void resurrectedContentRectChanged();
-    void grabResult(QString fileName);
-    void thumbnailResult(QString data);
+    void grabResult(const QString &fileName);
+    void thumbnailResult(const QString &data);
 
     void fullscreenHeightChanged();
     void toolbarHeightChanged();

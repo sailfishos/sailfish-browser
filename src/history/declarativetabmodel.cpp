@@ -191,10 +191,17 @@ void DeclarativeTabModel::closeActiveTab()
     }
 }
 
-void DeclarativeTabModel::newTab(const QString &url, const QString &title, int parentId)
+int DeclarativeTabModel::newTab(const QString &url, int parentId)
 {
     setWaitingForNewTab(true);
-    emit newTabRequested(url, title, parentId);
+
+    Tab tab;
+    tab.setTabId(nextTabId());
+    tab.setUrl(url);
+
+    emit newTabRequested(tab, parentId);
+
+    return tab.tabId();
 }
 
 QString DeclarativeTabModel::url(int tabId) const
@@ -407,7 +414,7 @@ int DeclarativeTabModel::nextActiveTabIndex(int index)
     return index;
 }
 
-void DeclarativeTabModel::updateThumbnailPath(int tabId, QString path)
+void DeclarativeTabModel::updateThumbnailPath(int tabId, const QString &path)
 {
     if (tabId <= 0)
         return;

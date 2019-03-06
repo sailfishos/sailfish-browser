@@ -35,28 +35,30 @@ public:
     void setFirstUseDone(bool firstUseDone);
     qreal cssPixelRatio() const;
 
-    Q_INVOKABLE int getLightness(QColor color) const;
-    Q_INVOKABLE QString displayableUrl(QString fullUrl) const;
+    Q_INVOKABLE int getLightness(const QColor &color) const;
+    Q_INVOKABLE QString displayableUrl(const QString &fullUrl) const;
 
 public slots:
     QString homePage() const;
     void clearStartupCacheIfNeeded();
-    void handleDumpMemoryInfoRequest(QString fileName);
-    void openUrl(QString url);
+    void handleDumpMemoryInfoRequest(const QString &fileName);
+    void openUrl(const QString &url);
 
 signals:
     void homePageChanged();
-    void openUrlRequested(QString url);
+    void openUrlRequested(const QString &url);
     void activateNewTabViewRequested();
+    void showChrome();
+
     void firstUseDoneChanged();
-    void dumpMemoryInfo(QString fileName);
+    void dumpMemoryInfo(const QString &fileName);
     void cssPixelRatioChanged();
     void touchTopRadiusChanged();
     void touchBottomRadiusChanged();
 
 private slots:
     void updateWebEngineSettings();
-    void handleObserve(const QString message, const QVariant data);
+    void handleObserve(const QString &message, const QVariant &data);
 
 private:
     explicit DeclarativeWebUtils();

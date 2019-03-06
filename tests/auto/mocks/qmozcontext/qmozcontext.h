@@ -29,7 +29,7 @@ public:
     explicit QMozContext(QObject *parent = 0) : QObject(parent) {};
 
     static QMozContext* instance();
-    MOCK_METHOD2(setPref, void(QString const &, QVariant const &));
+    MOCK_METHOD2(setPref, void(const QString &, QVariant const &));
     MOCK_METHOD1(setPixelRatio, void(float));
     MOCK_CONST_METHOD0(initialized, bool());
     MOCK_CONST_METHOD0(pixelRatio, float());

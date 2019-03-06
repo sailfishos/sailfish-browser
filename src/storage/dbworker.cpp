@@ -349,7 +349,7 @@ int DBWorker::integerQuery(const QString &statement)
     return 0;
 }
 
-void DBWorker::navigateTo(int tabId, QString url, QString title, QString path) {
+void DBWorker::navigateTo(int tabId, const QString &url, const QString &title, const QString &path) {
     // TODO: rollback in case of failure
     if (url.isEmpty()) {
         return;
@@ -447,7 +447,7 @@ void DBWorker::clearDeprecatedTabHistory(int tabId, int currentLinkId) {
 }
 
 // Adds url to table history if it is not already there
-HistoryResult DBWorker::addToBrowserHistory(QString url, QString title)
+HistoryResult DBWorker::addToBrowserHistory(const QString &url, const QString &title)
 {
 #if DEBUG_LOGS
     qDebug() << "link id:" << linkId;
@@ -521,7 +521,7 @@ int DBWorker::addToTabHistory(int tabId, int linkId)
     return lastId.toInt();
 }
 
-int DBWorker::createLink(QString url, QString title, QString thumbPath)
+int DBWorker::createLink(const QString &url, const QString &title, const QString &thumbPath)
 {
     QSqlQuery query = prepare("INSERT INTO link (url, title, thumb_path) VALUES (?, ?, ?);");
     query.bindValue(0, url);
@@ -621,7 +621,7 @@ void DBWorker::removeHistoryEntry(int linkId)
     execute(query);
 }
 
-void DBWorker::updateThumbPath(int tabId, QString path)
+void DBWorker::updateThumbPath(int tabId, const QString &path)
 {
     m_updateThumbPathQuery.bindValue(0, path);
     m_updateThumbPathQuery.bindValue(1, tabId);
@@ -630,7 +630,7 @@ void DBWorker::updateThumbPath(int tabId, QString path)
     }
 }
 
-void DBWorker::updateTitle(int tabId, QString url, QString title)
+void DBWorker::updateTitle(int tabId, const QString &url, const QString &title)
 {
     // TODO: add DB indices
     QSqlQuery query = prepare("SELECT link.link_id, link.url, link.title FROM tab "
@@ -669,7 +669,7 @@ void DBWorker::updateTitle(int tabId, QString url, QString title)
     }
 }
 
-void DBWorker::saveSetting(QString name, QString value)
+void DBWorker::saveSetting(const QString &name, const QString &value)
 {
     QSqlQuery query = prepare("SELECT value FROM settings WHERE name = ?;");
     query.bindValue(0, name);
@@ -700,7 +700,7 @@ SettingsMap DBWorker::getSettings()
     return settings;
 }
 
-void DBWorker::deleteSetting(QString name)
+void DBWorker::deleteSetting(const QString &name)
 {
     QSqlQuery query = prepare("DELETE FROM settings WHERE name = ?");
     query.bindValue(0, name);

@@ -137,6 +137,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
                      browser, &Browser::openUrl);
     browser->connect(uiService, &BrowserUIService::activateNewTabViewRequested,
                      browser, &Browser::openNewTabView);
+    browser->connect(uiService, &BrowserUIService::showChrome,
+                     browser, &Browser::showChrome);
 
     browser->connect(service, &BrowserService::cancelTransferRequested,
                      browser, &Browser::cancelDownload);

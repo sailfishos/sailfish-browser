@@ -32,21 +32,21 @@ public:
     void getAllTabs();
     void removeTab(int tabId);
     void removeAllTabs();
-    void navigateTo(int tabId, QString url, QString title = "", QString path = "");
+    void navigateTo(int tabId, const QString &url, const QString &title = QString(), const QString &path = QString());
     void goForward(int tabId);
     void goBack(int tabId);
 
-    void updateThumbPath(int tabId, QString path);
-    void updateTitle(int tabId, QString url, QString title);
+    void updateThumbPath(int tabId, const QString &path);
+    void updateTitle(int tabId, const QString &url, const QString &title);
 
     void removeHistoryEntry(int linkId);
     void clearHistory();
     void getHistory(const QString &filter = "");
     void getTabHistory(int tabId);
 
-    void saveSetting(QString name, QString value);
-    QString getSetting(QString name);
-    void deleteSetting(QString name);
+    void saveSetting(const QString &name, const QString &value);
+    QString getSetting(const QString &name);
+    void deleteSetting(const QString &name);
 
     int getMaxTabId();
 
@@ -54,8 +54,8 @@ signals:
     void tabsAvailable(QList<Tab> tab);
     void historyAvailable(QList<Link> links);
     void tabHistoryAvailable(int tabId, QList<Link> links, int currentLinkId);
-    void thumbPathChanged(int tabId, QString path);
-    void titleChanged(QString url, QString title);
+    void thumbPathChanged(int tabId, const QString &path);
+    void titleChanged(const QString &url, const QString &title);
     void settingsChanged();
 
 private:

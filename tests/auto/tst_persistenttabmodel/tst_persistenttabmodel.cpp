@@ -1,3 +1,4 @@
+
 /****************************************************************************
 **
 ** Copyright (C) 2015 Jolla Ltd.
@@ -610,7 +611,7 @@ void tst_persistenttabmodel::setUnloaded()
 void tst_persistenttabmodel::newTab()
 {
     QSignalSpy newTabRequestedSpy(tabModel, SIGNAL(newTabRequested(QString, QString, int)));
-    tabModel->newTab(QString(), QString(), 0);
+    tabModel->newTab(QString(), 0);
     QCOMPARE(newTabRequestedSpy.count(), 1);
     QCOMPARE(tabModel->waitingForNewTab(), true);
 }

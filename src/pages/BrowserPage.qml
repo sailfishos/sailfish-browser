@@ -328,14 +328,18 @@ Page {
             webView.grabActivePage()
             if (!webView.tabModel.activateTab(url)) {
                 webView.clearSelection()
-                // Open new tab with empty title
-                webView.tabModel.newTab(url, "")
-                overlay.animator.showChrome(true)
+                webView.tabModel.newTab(url)
+                overlay.dismiss(true, !Qt.application.active /* immadiate */)
             }
-            bringToForeground(webView)
+            bringToForeground(webView.chromeWindow)
+            window.activate()
         }
-        onActivateNewTabViewRequested: {
-            activateNewTabView()
+        onActivateNewTabViewRequested: activateNewTabView()
+        onShowChrome: {
+            pageStack.pop(browserPage, PageStackAction.Immediate)
+            overlay.dismiss(true, !Qt.application.active /* immadiate */)
+            bringToForeground(webView.chromeWindow)
+            window.activate()
         }
     }
 
