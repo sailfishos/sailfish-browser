@@ -76,5 +76,7 @@
   "slashdot.org": "Linux;#Android 4.4.2;",
   "verkkokauppa.com": "Mozilla/5.0 (Android 4.4.2; U; Sailfish 3.0; rv:45.0) Gecko/45.0 Firefox/45.0 SailfishBrowser/1.0 like Safari/538.1",
   "verk.net": "Mozilla/5.0 (Android 4.4.2; U; Sailfish 3.0; rv:45.0) Gecko/45.0 Firefox/45.0 SailfishBrowser/1.0 like Safari/538.1",
-  "digicert.com": "Mozilla/5.0 (Mobile; rv:45.0) Gecko/45.0 Firefox/45.0"
+  "digicert.com": "Mozilla/5.0 (Mobile; rv:45.0) Gecko/45.0 Firefox/45.0",
+  // JB#45164 and JB#21093, google.com
+  "google.com": "Linux#Maemo"
 }
