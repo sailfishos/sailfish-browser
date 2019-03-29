@@ -293,13 +293,15 @@ void DeclarativeWebPage::grabToFile(const QSize &size)
 {
     // grabToImage handles invalid geometry.
     m_grabResult = grabToImage(size);
-    if (m_grabResult) {
+    if (m_grabResult && active()) {
         if (!m_grabResult->isReady()) {
             connect(m_grabResult.data(), &QMozGrabResult::ready,
                     this, &DeclarativeWebPage::grabResultReady);
         } else {
             grabResultReady();
         }
+    } else {
+        m_grabResult.clear();
     }
 }
 
@@ -307,9 +309,11 @@ void DeclarativeWebPage::grabToFile(const QSize &size)
 void DeclarativeWebPage::grabThumbnail(const QSize &size)
 {
     m_thumbnailResult = grabToImage(size);
-    if (m_thumbnailResult) {
+    if (m_thumbnailResult && active()) {
         connect(m_thumbnailResult.data(), &QMozGrabResult::ready,
                 this, &DeclarativeWebPage::thumbnailReady);
+    } else {
+        m_thumbnailResult.clear();
     }
 }
 
@@ -351,9 +355,11 @@ void DeclarativeWebPage::timerEvent(QTimerEvent *te)
 
 void DeclarativeWebPage::grabResultReady()
 {
-    QImage image = m_grabResult->image();
+    if (active()) {
+        QImage image = m_grabResult->image();
+        m_grabWritter.setFuture(QtConcurrent::run(this, &DeclarativeWebPage::saveToFile, image));
+    }
     m_grabResult.clear();
-    m_grabWritter.setFuture(QtConcurrent::run(this, &DeclarativeWebPage::saveToFile, image));
 }
 
 void DeclarativeWebPage::grabWritten()
@@ -364,17 +370,19 @@ void DeclarativeWebPage::grabWritten()
 
 void DeclarativeWebPage::thumbnailReady()
 {
-    QImage image = m_thumbnailResult->image();
-    m_thumbnailResult.clear();
-    QByteArray iconData;
-    QBuffer buffer(&iconData);
-    buffer.open(QIODevice::WriteOnly);
-    if (image.save(&buffer, "jpg", 75)) {
-        buffer.close();
-        emit thumbnailResult(QString(BASE64_IMAGE).arg(QString(iconData.toBase64())));
-    } else {
-        emit thumbnailResult(DEFAULT_DESKTOP_BOOKMARK_ICON);
+    if (active()) {
+        QImage image = m_thumbnailResult->image();
+        QByteArray iconData;
+        QBuffer buffer(&iconData);
+        buffer.open(QIODevice::WriteOnly);
+        if (image.save(&buffer, "jpg", 75)) {
+            buffer.close();
+            emit thumbnailResult(QString(BASE64_IMAGE).arg(QString(iconData.toBase64())));
+        } else {
+            emit thumbnailResult(DEFAULT_DESKTOP_BOOKMARK_ICON);
+        }
     }
+    m_thumbnailResult.clear();
 }
 
 void DeclarativeWebPage::updateViewMargins()
@@ -453,7 +461,7 @@ void DeclarativeWebPage::sendVkbOpenCompositionMetrics()
 
 QString DeclarativeWebPage::saveToFile(QImage image)
 {
-    if (image.isNull()) {
+    if (image.isNull() || !active()) {
         return "";
     }
 
