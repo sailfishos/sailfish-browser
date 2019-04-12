@@ -40,6 +40,10 @@
 
 Q_DECL_EXPORT int main(int argc, char *argv[])
 {
+    // Disable crash guard and prefer egl for webgl.
+    setenv("MOZ_DISABLE_CRASH_GUARD", "1", 1);
+    setenv("MOZ_WEBGL_PREFER_EGL", "1", 1);
+
     QQuickWindow::setDefaultAlphaBuffer(true);
 
     if (!qgetenv("QML_DEBUGGING_ENABLED").isEmpty()) {
