@@ -77,6 +77,25 @@
   "verkkokauppa.com": "Mozilla/5.0 (Android 4.4.2; U; Sailfish 3.0; rv:45.0) Gecko/45.0 Firefox/45.0 SailfishBrowser/1.0 like Safari/538.1",
   "verk.net": "Mozilla/5.0 (Android 4.4.2; U; Sailfish 3.0; rv:45.0) Gecko/45.0 Firefox/45.0 SailfishBrowser/1.0 like Safari/538.1",
   "digicert.com": "Mozilla/5.0 (Mobile; rv:45.0) Gecko/45.0 Firefox/45.0",
-  // JB#45164 and JB#21093, google.com
-  "google.com": "Linux#Maemo"
+  // JB#45164 and JB#21093, google.com + some other country level domains
+  "google.com": "Linux#Maemo",
+  "google.de": "Linux#Maemo",
+  "google.fi": "Linux#Maemo",
+  "google.no": "Linux#Maemo",
+  "google.se": "Linux#Maemo",
+  "google.is": "Linux#Maemo",
+  "google.dk": "Linux#Maemo",
+  "google.co.uk": "Linux#Maemo",
+  "google.co.in": "Linux#Maemo",
+  "google.be": "Linux#Maemo",
+  "google.fr": "Linux#Maemo",
+  "google.nl": "Linux#Maemo",
+  "google.ee": "Linux#Maemo",
+  "google.pl": "Linux#Maemo",
+  "google.ru": "Linux#Maemo",
+  "google.es": "Linux#Maemo",
+  "google.cz": "Linux#Maemo",
+  "google.sk": "Linux#Maemo",
+  "google.ch": "Linux#Maemo",
+  "google.at": "Linux#Maemo"
 }
