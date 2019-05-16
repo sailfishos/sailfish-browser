@@ -9,7 +9,7 @@ Summary:    Sailfish Browser
 Version:    1.17.11
 Release:    1
 Group:      Applications/Internet
-License:    MPLv2
+License:    MPLv2.0
 Url:        https://github.com/sailfishos/sailfish-browser
 Source0:    %{name}-%{version}.tar.bz2
 Source1:    %{name}.privileges
