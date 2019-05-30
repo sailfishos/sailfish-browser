@@ -138,6 +138,7 @@ public:
     Q_INVOKABLE void goBack();
 
     Q_INVOKABLE int activateTab(int tabId, const QString &url);
+    Q_INVOKABLE void closeTab(int tabId);
 
     Q_INVOKABLE void updatePageFocus(bool focus);
     Q_INVOKABLE void dumpPages() const;

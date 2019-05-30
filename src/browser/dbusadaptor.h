@@ -51,6 +51,7 @@ public slots:
     void activateNewTabView();
 
     void requestTab(int tabId, const QString &url);
+    void closeTab(int tabId);
 
 private:
     BrowserUIService *m_BrowserService;
