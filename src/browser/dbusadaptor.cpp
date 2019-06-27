@@ -63,3 +63,8 @@ void UIServiceDBusAdaptor::requestTab(int tabId, const QString &url)
 {
     m_BrowserService->requestTab(tabId, url);
 }
+
+void UIServiceDBusAdaptor::closeTab(int tabId)
+{
+    m_BrowserService->closeTab(tabId);
+}

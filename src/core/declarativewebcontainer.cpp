@@ -476,6 +476,11 @@ void DeclarativeWebContainer::goBack()
     }
 }
 
+void DeclarativeWebContainer::closeTab(int tabId)
+{
+    m_model->removeTabById(tabId, false);
+}
+
 int DeclarativeWebContainer::activateTab(int tabId, const QString &url)
 {
     bool activated = m_model->activateTabById(tabId);

@@ -174,6 +174,20 @@ void BrowserUIService::requestTab(int tabId, const QString &url)
     emit showChrome();
 }
 
+void BrowserUIService::closeTab(int tabId)
+{
+    if (!isPrivileged()) {
+        return;
+    }
+
+    Q_D(BrowserUIService);
+
+    DeclarativeWebContainer::instance()->closeTab(tabId);
+    const QDBusMessage &msg = message();
+    QDBusMessage reply = msg.createReply();
+    connection().send(reply);
+}
+
 bool BrowserUIService::isPrivileged() const
 {
     IS_PRIVILEGED;
