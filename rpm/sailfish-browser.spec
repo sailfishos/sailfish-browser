@@ -29,6 +29,8 @@ BuildRequires:  qt5-qttools-linguist
 BuildRequires:  oneshot
 BuildRequires:  gtest-devel
 BuildRequires:  libgmock-devel
+BuildRequires:  pkgconfig(vault-unit) >= 0.1.0
+BuildRequires:  pkgconfig(qtaround) >= 0.2.0
 
 Requires: sailfishsilica-qt5 >= 1.0.11
 Requires: jolla-ambient >= 0.7.12
@@ -52,6 +54,11 @@ Requires: nemo-qml-plugin-policy-qt5 >= 0.0.4
 Requires: sailfish-components-media-qt5
 Requires: sailfish-components-pickers-qt5 >= 0.1.7
 Requires: nemo-qml-plugin-notifications-qt5 >= 1.0.12
+Requires: vault >= 0.2.3
+
+Requires(posttrans): vault >= 0.2.3
+Requires(postun): vault >= 0.2.3
+
 
 %{_oneshot_requires_post}
 
@@ -116,6 +123,13 @@ fi
 
 %{_bindir}/add-oneshot --user --late browser-update-default-data || :
 
+%posttrans
+vault -G -a register --data=name=Browser,translation=vault-ap-browser,group=apps,icon=icon-launcher-browser,script=%{_libexecdir}/jolla-vault/units/vault-browser || :
+
+%postun
+vault -G -a unregister --unit=Browser || :
+
+
 %files
 %defattr(-,root,root,-)
 %{_bindir}/%{name}
@@ -126,6 +140,7 @@ fi
 %{_datadir}/dbus-1/services/*.service
 %{_oneshotdir}/*
 %{_sharedstatedir}/environment/nemo/*
+%{_libexecdir}/jolla-vault/units/vault-browser
 
 %files settings
 %defattr(-,root,root,-)
@@ -142,3 +157,4 @@ fi
 %defattr(-,root,root,-)
 %{_datadir}/applications/test-sailfish-browser.desktop
 /opt/*
+
