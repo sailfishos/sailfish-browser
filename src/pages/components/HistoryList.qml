@@ -47,7 +47,7 @@ SilicaListView {
             Label {
                 text: Theme.highlightText(url, search, Theme.highlightColor)
                 textFormat: Text.StyledText
-                opacity: 0.6
+                opacity: Theme.opacityHigh
                 color: highlighted ? Theme.highlightColor : Theme.primaryColor
                 font.pixelSize: Theme.fontSizeSmall
                 truncationMode: TruncationMode.Fade

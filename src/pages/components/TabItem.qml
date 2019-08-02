@@ -64,8 +64,8 @@ BackgroundItem {
 
             gradient: Gradient {
                 GradientStop { position: 0.0; color: "transparent" }
-                GradientStop { position: 0.45; color: Qt.rgba(0, 0, 0, 0.5)}
-                GradientStop { position: 0.9; color: Qt.rgba(0, 0, 0, 0.8)}
+                GradientStop { position: 0.45; color: Qt.rgba(0, 0, 0, Theme.opacityLow)}
+                GradientStop { position: 0.9; color: Qt.rgba(0, 0, 0, Theme.opacityOverlay)}
             }
         },
         IconButton {

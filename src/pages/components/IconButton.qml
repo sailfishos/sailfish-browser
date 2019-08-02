@@ -23,7 +23,7 @@ IconButton {
 
     width: parent.width
     height: parent.height
-    icon.opacity: active ? 1.0 : 0.4
+    icon.opacity: active ? 1.0 : Theme.opacityLow
     icon.highlighted: active && down
 
     onClicked: {

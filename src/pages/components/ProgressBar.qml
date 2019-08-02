@@ -23,7 +23,7 @@ Item {
         height: parent.height
         width: progressBar.progress * parent.width
         gradient: Gradient {
-            GradientStop { position: 0.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.5) }
+            GradientStop { position: 0.0; color: Theme.rgba(Theme.highlightBackgroundColor, Theme.opacityHigh) }
             GradientStop { position: 1.0; color: Theme.rgba(Theme.highlightBackgroundColor, 0.0) }
         }
 

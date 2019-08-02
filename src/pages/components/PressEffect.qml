@@ -14,7 +14,7 @@ import Sailfish.Silica 1.0
 
 ShaderEffect {
     property variant source
-    property color color: Theme.rgba(Theme.highlightBackgroundColor, 0.4)
+    property color color: Theme.rgba(Theme.highlightBackgroundColor, Theme.opacityLow)
     fragmentShader: "
         uniform sampler2D source;
         uniform highp vec4 color;
