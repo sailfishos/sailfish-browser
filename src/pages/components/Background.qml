@@ -38,13 +38,13 @@ Item {
 
         Rectangle {
             color: Theme.overlayBackgroundColor ? Theme.overlayBackgroundColor : "black"
-            opacity: 0.948
+            opacity: 0.948 // TODO: constants?
             anchors.fill: parent
         }
 
         Image {
             id: glassTextureImage
-            opacity: 0.1
+            opacity: 0.1 // TODO: constants?
             source: "image://theme/graphic-shader-texture"
         }
     }
