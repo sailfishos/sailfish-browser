@@ -19,12 +19,18 @@ SilicaListView {
 
     property bool portrait
     property bool privateMode
+    property bool closingAllTabs
 
     signal hide
     signal enterNewTabUrl
     signal activateTab(int index)
     signal closeTab(int index)
     signal closeAll
+    signal closeAllCanceled
+    signal closeAllPending
+
+    onCountChanged: if (count > 0) closingAllTabs = false
+    onClosingAllTabsChanged: if (closingAllTabs) closeAllPending()
 
     width: parent.width
     height: parent.height
@@ -40,6 +46,10 @@ SilicaListView {
 
     delegate: TabItem {
         id: tabItem
+
+        enabled: !closingAllTabs
+        opacity: enabled ? 1.0 : 0.0
+        Behavior on opacity { FadeAnimator {}}
 
         anchors.horizontalCenter: parent.horizontalCenter
         width: browserPage.thumbnailSize.width
@@ -77,11 +87,6 @@ SilicaListView {
         defaultValue: true
     }
 
-    // Remorse popup for closing all tabs.
-    RemorsePopup {
-        id: closeAllTabsRemorse
-    }
-
     PullDownMenu {
         id: pullDownMenu
 
@@ -101,8 +106,19 @@ SilicaListView {
             visible: showCloseAllAction.value && webView.tabModel.count
             //% "Close all tabs"
             text: qsTrId("sailfish_browser-me-close_all")
-            //% "Closing all tabs"
-            onDelayedClick: closeAllTabsRemorse.execute(qsTrId("sailfish_browser-closing-all-tabs"), tabView.closeAll)
+            onClicked: {
+                var remorse = Remorse.popupAction(
+                            tabView,
+                            //% "Closed all tabs"
+                            qsTrId("sailfish_browser-closed-all-tabs"),
+                            function() { tabView.closeAll() })
+                closingAllTabs = true
+                remorse.canceled.connect(
+                            function() {
+                                closingAllTabs = false
+                                tabView.closeAllCanceled()
+                            })
+            }
         }
         MenuItem {
             //% "New tab"
@@ -116,7 +132,7 @@ SilicaListView {
     }
 
     ViewPlaceholder {
-        enabled: !webView.tabModel.count
+        enabled: !webView.tabModel.count || closingAllTabs
         //: Hint to create a new tab from pull down menu.
         //% "Pull down to create a new tab"
         text: qsTrId("sailfish_browser-la-pull_down_to_create_tab_hint")
