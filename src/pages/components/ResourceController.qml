@@ -11,7 +11,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import QtQuick 2.0
-import Sailfish.Media 1.0
+import Nemo.KeepAlive 1.2
 import Sailfish.WebEngine 1.0
 import org.freedesktop.contextkit 1.0
 import org.nemomobile.policy 1.0
@@ -112,9 +112,9 @@ Item {
         }
     }
 
-    ScreenBlank {
-        // This is stopping ScreenBlank timer.
-        suspend: videoActive
+    DisplayBlanking {
+        // This is stopping screen blank timer.
+        preventBlanking: videoActive
     }
 
     Timer {
