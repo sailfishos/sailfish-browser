@@ -1,13 +1,11 @@
-/****************************************************************************
-**
-** Copyright (C) 2013 Jolla Ltd.
-** Contact: Raine Makelainen <raine.makelainen@jollamobile.com>
-**
-****************************************************************************/
-
-/* This Source Code Form is subject to the terms of the Mozilla Public
+/*
+ * Copyright (c) 2013 - 2019 Jolla Ltd.
+ * Copyright (c) 2019 Open Mobile Platform LLC.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 
 #ifndef DECLARATIVEWEBCONTAINER_H
 #define DECLARATIVEWEBCONTAINER_H
@@ -15,6 +13,7 @@
 #include "settingmanager.h"
 
 #include <qmozcontext.h>
+#include <qmozsecurity.h>
 #include <QtGui/QWindow>
 #include <QtGui/QOpenGLFunctions>
 #include <QPointer>
@@ -75,6 +74,8 @@ class DeclarativeWebContainer : public QWindow, public QQmlParserStatus, protect
 
     Q_PROPERTY(Qt::ScreenOrientation pendingWebContentOrientation READ pendingWebContentOrientation NOTIFY pendingWebContentOrientationChanged FINAL)
 
+    Q_PROPERTY(QMozSecurity *security READ security NOTIFY securityChanged)
+
 public:
     DeclarativeWebContainer(QWindow *parent = 0);
     ~DeclarativeWebContainer();
@@ -122,6 +123,8 @@ public:
     void setReadyToPaint(bool ready);
 
     Qt::ScreenOrientation pendingWebContentOrientation() const;
+
+    QMozSecurity *security() const;
 
     int tabId() const;
     QString title() const;
@@ -184,6 +187,7 @@ signals:
 
     void pendingWebContentOrientationChanged();
     void webContentOrientationChanged(Qt::ScreenOrientation orientation);
+    void securityChanged();
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event);

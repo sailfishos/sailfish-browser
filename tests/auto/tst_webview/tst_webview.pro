@@ -2,7 +2,7 @@ TARGET = tst_webview
 
 CONFIG += link_pkgconfig
 
-PKGCONFIG += nemotransferengine-qt5 mlite5 sailfishwebengine
+PKGCONFIG += nemotransferengine-qt5 mlite5 sailfishwebengine systemsettings
 INCLUDEPATH += $$system(pkg-config --cflags sailfishwebengine)
 
 QT += quick concurrent sql gui-private
