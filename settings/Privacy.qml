@@ -15,10 +15,9 @@ import org.nemomobile.configuration 1.0
 import org.sailfishos.browser.settings 1.0
 
 Page {
+    id: page
 
-    RemorsePopup {
-        id: clearDataRemorse
-    }
+    property var remorse
 
     SilicaFlickable {
         anchors.fill: parent
@@ -55,80 +54,86 @@ Page {
                 text: qsTrId("settings_browser-ph-clear_private_data")
             }
 
-            TextSwitch {
-                id: clearHistory
-
-                //% "History"
-                text: qsTrId("settings_browser-la-clear_history")
-                checked: true
-
-                //: Description for clearing history. This will clear history and tabs.
-                //% "Clears history and open tabs"
-                description: qsTrId("settings_browser-la-clear_history_description")
-            }
-
-            TextSwitch {
-                id: clearCookies
-                //% "Cookies"
-                text: qsTrId("settings_browser-la-clear_cookies")
-                checked: true
-            }
-
-            TextSwitch {
-                id: clearSavedPasswords
-                //% "Saved passwords"
-                text: qsTrId("settings_browser-la-clear_passwords")
-                checked: true
-            }
-
-            TextSwitch {
-                id: clearCache
-                //% "Cache"
-                text: qsTrId("settings_browser-la-clear_cache")
-                checked: true
-            }
-
-            TextSwitch {
-                id: clearBookmarks
-                //% "Favorites"
-                text: qsTrId("settings_browser-la-clear_favorites")
-                checked: true
-            }
-
-            // Spacer between Button and switches
-            Item {
+            Column {
                 width: parent.width
-                height: Theme.paddingLarge
-            }
+                enabled: !(remorse && remorse.pending)
 
-            Button {
-                //: Button for clearing selected private data items.
-                //% "Clear"
-                text: qsTrId("settings_browser-bt-clear")
-                anchors.horizontalCenter: parent.horizontalCenter
+                TextSwitch {
+                    id: clearHistory
 
-                onClicked: {
-                    //: Remorse item for clearing private date
-                    //% "Clearing"
-                    clearDataRemorse.execute(qsTrId("settings_browser-la-clearing_private_data"),
-                                             function() {
-                                                 if (clearHistory.checked) {
-                                                     clearHistoryConfig.value = true
+                    //% "History"
+                    text: qsTrId("settings_browser-la-clear_history")
+                    checked: true
+
+                    //: Description for clearing history. This will clear history and tabs.
+                    //% "Clears history and open tabs"
+                    description: qsTrId("settings_browser-la-clear_history_description")
+                }
+
+                TextSwitch {
+                    id: clearCookies
+                    //% "Cookies"
+                    text: qsTrId("settings_browser-la-clear_cookies")
+                    checked: true
+                }
+
+                TextSwitch {
+                    id: clearSavedPasswords
+                    //% "Saved passwords"
+                    text: qsTrId("settings_browser-la-clear_passwords")
+                    checked: true
+                }
+
+                TextSwitch {
+                    id: clearCache
+                    //% "Cache"
+                    text: qsTrId("settings_browser-la-clear_cache")
+                    checked: true
+                }
+
+                TextSwitch {
+                    id: clearBookmarks
+                    //% "Favorites"
+                    text: qsTrId("settings_browser-la-clear_favorites")
+                    checked: true
+                }
+
+                // Spacer between Button and switches
+                Item {
+                    width: parent.width
+                    height: Theme.paddingLarge
+                }
+
+                Button {
+                    //: Button for clearing selected private data items.
+                    //% "Clear"
+                    text: qsTrId("settings_browser-bt-clear")
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    enabled: clearHistory.checked || clearCookies.checked || clearSavedPasswords.checked || clearCache.checked || clearBookmarks.checked
+
+                    onClicked: {
+                        //: Remorse item for clearing private data
+                        //% "Cleared"
+                        remorse = Remorse.popupAction(page, qsTrId("settings_browser-la-cleared_private_data"),
+                                                 function() {
+                                                     if (clearHistory.checked) {
+                                                         clearHistoryConfig.value = true
+                                                     }
+                                                     if (clearCookies.checked) {
+                                                         clearCookiesConfig.value = true
+                                                     }
+                                                     if (clearSavedPasswords.checked) {
+                                                         clearSavedPasswordsConfig.value = true
+                                                     }
+                                                     if (clearCache.checked) {
+                                                         clearCacheConfig.value = true
+                                                     }
+                                                     if (clearBookmarks.checked) {
+                                                         clearBookmarksConfig.value = true
+                                                     }
                                                  }
-                                                 if (clearCookies.checked) {
-                                                     clearCookiesConfig.value = true
-                                                 }
-                                                 if (clearSavedPasswords.checked) {
-                                                     clearSavedPasswordsConfig.value = true
-                                                 }
-                                                 if (clearCache.checked) {
-                                                     clearCacheConfig.value = true
-                                                 }
-                                                 if (clearBookmarks.checked) {
-                                                     clearBookmarksConfig.value = true
-                                                 }
-                                             }
-                    );
+                        );
+                    }
                 }
             }
         }

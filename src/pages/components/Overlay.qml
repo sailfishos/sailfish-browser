@@ -63,13 +63,13 @@ Background {
         overlayAnimator.showOverlay(action === PageStackAction.Immediate)
     }
 
-    function dismiss(canShowChrome, immadiate) {
+    function dismiss(canShowChrome, immediate) {
         toolBar.resetFind()
         if (webView.contentItem && webView.contentItem.fullscreen) {
             // Web content is in fullscreen mode thus we don't show chrome
             overlay.animator.updateState("fullscreenWebPage")
         } else if (canShowChrome) {
-            overlay.animator.showChrome(immadiate)
+            overlay.animator.showChrome(immediate)
         } else {
             overlay.animator.hide()
         }
@@ -549,6 +549,8 @@ Background {
                     }
                 }
 
+                onCloseAllPending: overlay.enterNewTabUrl(PageStackAction.Immediate)
+                onCloseAllCanceled: overlay.dismiss(true /* show chrome */, true /* immediate */)
                 onCloseAll: {
                     webView.tabModel.clear()
                     overlay.enterNewTabUrl(PageStackAction.Immediate)

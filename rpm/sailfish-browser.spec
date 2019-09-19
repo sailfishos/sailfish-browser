@@ -31,7 +31,7 @@ BuildRequires:  oneshot
 BuildRequires:  gtest-devel
 BuildRequires:  libgmock-devel
 
-Requires: sailfishsilica-qt5 >= 1.1.46
+Requires: sailfishsilica-qt5 >= 1.1.53
 Requires: sailfish-content-graphics
 Requires: xulrunner-qt5 >= %{min_xulrunner_version}
 Requires: embedlite-components-qt5 >= %{min_embedlite_components_version}

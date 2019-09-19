@@ -19,6 +19,8 @@ RemorsePopup {
 
     property int currentDownloadId
 
+    //% "Tap to cancel"
+    cancelText: qsTrId("sailfish_browser-la-tap_to_cancel")
     onCanceled: DownloadManager.cancel(currentDownloadId)
 
     Connections {
