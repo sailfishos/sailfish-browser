@@ -1,13 +1,11 @@
-/****************************************************************************
-**
-** Copyright (C) 2015 Jolla Ltd.
-** Contact: Dmitry Rozhkov <dmitry.rozhkov@jolla.com>
-**
-****************************************************************************/
-
-/* This Source Code Form is subject to the terms of the Mozilla Public
+/*
+ * Copyright (c) 2015 - 2019 Jolla Ltd.
+ * Copyright (c) 2019 Open Mobile Platform LLC.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 
 #ifndef DECLARATIVEWEBPAGE_H
 #define DECLARATIVEWEBPAGE_H
@@ -27,6 +25,7 @@
 #include "tab.h"
 
 class DeclarativeWebContainer;
+class QMozSecurity;
 
 class DeclarativeWebPage : public QObject
 {
@@ -94,6 +93,10 @@ public:
 
     MOCK_METHOD2(Q_INVOKABLE loadTab, void(const QString &newUrl, bool force));
 
+    MOCK_CONST_METHOD0(securityState, uint());
+    MOCK_CONST_METHOD0(securityStatus, QString());
+    MOCK_CONST_METHOD0(security, QMozSecurity *());
+
 signals:
     void canGoBackChanged();
     void canGoForwardChanged();
@@ -109,6 +112,7 @@ signals:
     void tabIdChanged();
     void urlChanged();
     void titleChanged();
+    void securityChanged(QString status, uint state);
     void forcedChromeChanged();
     void fullscreenChanged();
     void domContentLoadedChanged();

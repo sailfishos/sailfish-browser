@@ -1,7 +1,8 @@
 %global min_xulrunner_version 45.8.1.1
-%global min_qtmozembed_version 1.14.0
+%global min_qtmozembed_version 1.14.5
 %global min_embedlite_components_version 1.20.0
 %global min_sailfishwebengine_version 0.2.0
+%global min_systemsettings_version 0.5.25
 
 Name:       sailfish-browser
 
@@ -18,6 +19,7 @@ BuildRequires:  pkgconfig(Qt5Qml)
 BuildRequires:  pkgconfig(Qt5Gui)
 BuildRequires:  pkgconfig(Qt5Quick)
 BuildRequires:  pkgconfig(qt5embedwidget) >= %{min_qtmozembed_version}
+BuildRequires:  pkgconfig(systemsettings) >= %{min_systemsettings_version}
 BuildRequires:  pkgconfig(Qt5DBus)
 BuildRequires:  pkgconfig(Qt5Concurrent)
 BuildRequires:  pkgconfig(Qt5Sql)
@@ -53,6 +55,7 @@ Requires: nemo-qml-plugin-policy-qt5 >= 0.0.4
 Requires: libkeepalive >= 1.7.0
 Requires: sailfish-components-pickers-qt5 >= 0.1.7
 Requires: nemo-qml-plugin-notifications-qt5 >= 1.0.12
+Requires: nemo-qml-plugin-systemsettings >= %{min_systemsettings_version}
 
 %{_oneshot_requires_post}
 

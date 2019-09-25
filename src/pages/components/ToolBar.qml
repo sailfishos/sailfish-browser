@@ -1,14 +1,11 @@
-/****************************************************************************
-**
-** Copyright (C) 2014-2016 Jolla Ltd.
-** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jolla.com>
-** Contact: Raine Makelainen <raine.makelainen@jolla.com>
-**
-****************************************************************************/
-
-/* This Source Code Form is subject to the terms of the Mozilla Public
+/*
+ * Copyright (c) 2014 - 2019 Jolla Ltd.
+ * Copyright (c) 2019 Open Mobile Platform LLC.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 
 import QtQuick 2.2
 import Sailfish.Silica 1.0
@@ -23,12 +20,18 @@ Column {
     property real secondaryToolsHeight
     property bool secondaryToolsActive
     property bool findInPageActive
+    property real certOverlayHeight
+    property bool certOverlayActive
+    property real certOverlayAnimPos
+    property real certOverlayPreferedHeight: 4 * toolBarRow.height
     readonly property bool showFindButtons: webView.findInPageHasResult && findInPageActive
     property alias bookmarked: secondaryBar.bookmarked
     readonly property alias toolsHeight: toolsRow.height
 
     readonly property int horizontalOffset: largeScreen ? Theme.paddingLarge : Theme.paddingSmall
-    readonly property int iconWidth: largeScreen ? (Theme.iconSizeLarge + 3 * Theme.paddingMedium) : (Theme.iconSizeMedium + 2 * Theme.paddingMedium)
+    readonly property int buttonPadding: largeScreen || orientation === Orientation.Landscape || orientation === Orientation.LandscapeInverted ? Theme.paddingMedium : Theme.paddingSmall
+    readonly property int iconWidth: largeScreen ? (Theme.iconSizeLarge + 3 * buttonPadding) : (Theme.iconSizeMedium + 2 * buttonPadding)
+    readonly property int smallIconWidth: largeScreen ? (Theme.iconSizeMedium + 3 * buttonPadding) : (Theme.iconSizeSmall + 2 * buttonPadding)
     // Height of toolbar should be such that viewport height is
     // even number both chrome and fullscreen modes. For instance
     // height of 110px for toolbar would result 1px rounding
@@ -49,8 +52,10 @@ Column {
     signal showTabs
     signal showOverlay
     signal showSecondaryTools
+    signal showInfoOverlay
     signal showChrome
     signal closeActiveTab
+    signal showCertDetail
 
     // Used from SecondaryBar
     signal enterNewTabUrl
@@ -74,6 +79,44 @@ Column {
         // Down allow hiding of toolbar when finding text from the page.
         if (findInPageActive && webView.contentItem) {
             webView.contentItem.forceChrome(true)
+        }
+    }
+
+    Item {
+        id: certOverlay
+        visible: opacity > 0.0 || height > 0.0
+        opacity: certOverlayActive ? 1.0 : 0.0
+        height: certOverlayHeight
+        width: parent.width
+
+        Behavior on opacity { FadeAnimation {} }
+
+        onVisibleChanged: {
+            if (!visible && !certOverlayActive) {
+                certOverlayLoader.active = false
+            }
+        }
+
+        Loader {
+            id: certOverlayLoader
+            active: false
+            sourceComponent: CertificateInfo {
+                security: webView.security
+                width: certOverlay.width
+                height: certOverlayHeight
+                portrait: browserPage.isPortrait
+                opacity: Math.max((certOverlayAnimPos * 2.0) - 1.0, 0)
+
+                onShowCertDetail: toolBarRow.showCertDetail()
+                onCloseCertInfo: showChrome()
+
+                onContentHeightChanged: {
+                    if (contentHeight != 0) {
+                        certOverlayPreferedHeight = contentHeight
+                    }
+                }
+            }
+            onLoaded: toolBarRow.showInfoOverlay()
         }
     }
 
@@ -162,13 +205,55 @@ Column {
             onTapped: webView.goBack()
         }
 
+        Browser.ExpandingButton {
+            id: padlockIcon
+            property bool danger: webView.security && webView.security.validState && !webView.security.allGood
+            property real glow
+            expandedWidth: toolBarRow.smallIconWidth
+            icon.source: danger ? "image://theme/icon-s-filled-warning" : "image://theme/icon-s-outline-secure"
+            active: !toolBarRow.secondaryToolsActive && !findInPageActive
+            icon.color: danger ? Qt.tint(Theme.primaryColor,
+                                         Qt.rgba(Theme.errorColor.r, Theme.errorColor.g,
+                                                 Theme.errorColor.b, glow))
+                               : Theme.primaryColor
+            enabled: webView.security
+            onTapped: certOverlayActive ? showChrome() : certOverlayLoader.active = true
+
+            SequentialAnimation {
+                id: securityAnimation
+                PauseAnimation { duration: 2000 }
+                NumberAnimation {
+                    target: padlockIcon; property: "glow";
+                    to: 0.0; duration: 1000; easing.type: Easing.OutCubic
+                }
+            }
+
+            function warn() {
+                glow = 1.0
+                securityAnimation.start()
+            }
+
+            onDangerChanged: {
+                warn()
+            }
+
+            Connections {
+                target: webView
+                onLoadingChanged: {
+                    if (!webView.loading && padlockIcon.danger) {
+                        padlockIcon.warn()
+                    }
+                }
+            }
+        }
+
         MouseArea {
             id: touchArea
 
             readonly property bool down: pressed && containsMouse
 
             height: parent.height
-            width: toolBarRow.width - (tabButton.width + reloadButton.width + backIcon.width + menuButton.width)
+            width: toolBarRow.width - (tabButton.width + reloadButton.width + padlockIcon.width + backIcon.width + menuButton.width)
             enabled: !showFindButtons
 
             onClicked: {
@@ -242,7 +327,10 @@ Column {
             expandedWidth: toolBarRow.iconWidth
             icon.source: webView.loading ? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
             active: webView.contentItem && !toolBarRow.secondaryToolsActive && !findInPageActive
-            onTapped: webView.loading ? webView.stop() : webView.reload()
+            onTapped: {
+                webView.loading ? webView.stop() : webView.reload()
+                toolBarRow.showChrome()
+            }
         }
 
         Item {
@@ -253,7 +341,7 @@ Column {
 
             Browser.IconButton {
                 icon.source: "image://theme/icon-m-menu"
-                icon.anchors.horizontalCenterOffset: -toolBarRow.horizontalOffset
+                icon.anchors.horizontalCenterOffset: - toolBarRow.horizontalOffset
                 width: parent.width
                 opacity: secondaryToolsActive || findInPageActive ? 0.0 : 1.0
                 onTapped: showSecondaryTools()
@@ -270,7 +358,7 @@ Column {
 
             Browser.IconButton {
                 icon.source: "image://theme/icon-m-reset"
-                icon.anchors.horizontalCenterOffset: -toolBarRow.horizontalOffset
+                icon.anchors.horizontalCenterOffset: - toolBarRow.horizontalOffset
                 width: parent.width
                 opacity: !secondaryToolsActive && findInPageActive ? 1.0 : 0.0
                 onTapped: {

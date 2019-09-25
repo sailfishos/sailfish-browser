@@ -1,13 +1,11 @@
-/****************************************************************************
-**
-** Copyright (C) 2013 Jolla Ltd.
-** Contact: Raine Makelainen <raine.makelainen@jollamobile.com>
-**
-****************************************************************************/
-
-/* This Source Code Form is subject to the terms of the Mozilla Public
+/*
+ * Copyright (c) 2013 - 2019 Jolla Ltd.
+ * Copyright (c) 2019 Open Mobile Platform LLC.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 
 #include "declarativewebpage.h"
 #include "declarativewebcontainer.h"
@@ -27,6 +25,7 @@
 #include <QOpenGLFunctions_ES2>
 #include <QGuiApplication>
 #include <qmozwindow.h>
+#include <qmozsecurity.h>
 
 #include <qpa/qplatformnativeinterface.h>
 
@@ -171,6 +170,8 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage, bool trigg
                     this, &DeclarativeWebContainer::updateLoadProgress, Qt::UniqueConnection);
             connect(m_webPage.data(), &DeclarativeWebPage::contentOrientationChanged,
                     this, &DeclarativeWebContainer::handleContentOrientationChanged, Qt::UniqueConnection);
+            connect(m_webPage.data(), &DeclarativeWebPage::securityChanged,
+                    this, &DeclarativeWebContainer::securityChanged, Qt::UniqueConnection);
 
             // NB: these signals are not disconnected upon setting current m_webPage.
             connect(m_webPage.data(), &DeclarativeWebPage::urlChanged,
@@ -197,6 +198,7 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage, bool trigg
         emit canGoForwardChanged();
         emit urlChanged();
         emit titleChanged();
+        emit securityChanged();
 
         setLoadProgress(m_webPage ? m_webPage->loadProgress() : 0);
     }
@@ -399,6 +401,11 @@ void DeclarativeWebContainer::setReadyToPaint(bool ready)
 Qt::ScreenOrientation DeclarativeWebContainer::pendingWebContentOrientation() const
 {
     return m_mozWindow ? m_mozWindow->pendingOrientation() : Qt::PortraitOrientation;
+}
+
+QMozSecurity *DeclarativeWebContainer::security() const
+{
+    return m_webPage ? m_webPage->security() : nullptr;
 }
 
 int DeclarativeWebContainer::tabId() const
