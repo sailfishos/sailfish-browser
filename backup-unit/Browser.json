@@ -1,0 +1,6 @@
+{
+    "icon": "icon-launcher-browser",
+    "name": "Browser",
+    "script": "/usr/libexec/jolla-vault/units/vault-browser",
+    "translation": "vault-ap-browser"
+}

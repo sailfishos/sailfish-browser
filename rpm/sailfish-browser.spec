@@ -32,6 +32,8 @@ BuildRequires:  qt5-qttools-linguist
 BuildRequires:  oneshot
 BuildRequires:  gtest-devel
 BuildRequires:  libgmock-devel
+BuildRequires:  pkgconfig(vault) >= 1.0.1
+BuildRequires:  pkgconfig(qtaround) >= 0.2.0
 
 Requires: sailfishsilica-qt5 >= 1.1.53
 Requires: sailfish-content-graphics
@@ -67,8 +69,6 @@ Sailfish Web Browser
 
 %package settings
 Summary:  Browser plugin for Jolla Settings
-License:  MPLv2
-Group:    Applications/Internet
 Requires: jolla-settings >= 0.11.29
 
 %description settings
@@ -76,16 +76,12 @@ Browser plugin for Jolla Settings
 
 %package ts-devel
 Summary: Translation source for Sailfish browser
-License:   MPLv2
-Group:     Applications/Internet
 
 %description ts-devel
 Translation source for Sailfish Browser
 
 %package tests
 Summary: Tests for Sailfish browser
-License:   MPLv2
-Group: Applications/Internet
 BuildRequires:  pkgconfig(Qt5Test)
 Requires:   %{name} = %{version}-%{release}
 Requires:   qt5-qtdeclarative-devel-tools
@@ -136,6 +132,9 @@ fi
 # Let main package own import root level
 %dir %{_libdir}/qt5/qml/org/sailfishos/browser
 %{_sharedstatedir}/environment/nemo/*
+%{_libexecdir}/jolla-vault/units/vault-browser
+%{_datadir}/jolla-vault/units/Browser.json
+
 
 %files settings
 %defattr(-,root,root,-)
