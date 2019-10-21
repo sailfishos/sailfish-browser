@@ -10,6 +10,7 @@
 import QtQuick 2.2
 import Sailfish.Silica 1.0
 import Sailfish.Browser 1.0
+import Sailfish.Silica.private 1.0
 import "." as Browser
 
 Column {
@@ -263,6 +264,10 @@ Column {
                     toolBarRow.showOverlay()
                 }
             }
+
+            onPressed: DragFilter.begin(mouse.x, mouse.y)
+            onCanceled: DragFilter.end()
+            DragFilter.screenMargin: Theme.paddingMedium
 
             Label {
                 anchors.verticalCenter: parent.verticalCenter
