@@ -1,7 +1,7 @@
 INCLUDEPATH += $$PWD
 
 CONFIG += link_pkgconfig
-PKGCONFIG += sailfishpolicy
+PKGCONFIG += sailfishpolicy sailfishsilica
 
 # C++ sources
 SOURCES += \

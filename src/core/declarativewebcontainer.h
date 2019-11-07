@@ -31,6 +31,9 @@ class DeclarativeTabModel;
 class DeclarativeWebPage;
 class WebPages;
 class Tab;
+namespace Silica {
+    class Theme;
+}
 
 class DeclarativeWebContainer : public QWindow, public QQmlParserStatus, protected QOpenGLFunctions {
     Q_OBJECT
@@ -291,6 +294,8 @@ private:
     QMozContext::TaskHandle m_clearSurfaceTask;
 
     bool m_closing;
+
+    const Silica::Theme *m_silicaTheme;
 
     friend class tst_webview;
     friend class tst_declarativewebcontainer;

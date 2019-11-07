@@ -26,6 +26,7 @@
 #include <QGuiApplication>
 #include <qmozwindow.h>
 #include <qmozsecurity.h>
+#include <silicatheme.h>
 
 #include <qpa/qplatformnativeinterface.h>
 #include <libsailfishpolicy/policyvalue.h>
@@ -65,6 +66,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     , m_activeTabRendered(false)
     , m_clearSurfaceTask(0)
     , m_closing(false)
+    , m_silicaTheme(new Silica::Theme(this))
 {
     Q_ASSERT(!s_instance);
 
@@ -599,7 +601,9 @@ void DeclarativeWebContainer::clearWindowSurface()
     m_context->makeCurrent(this);
     QOpenGLFunctions_ES2* funcs = m_context->versionFunctions<QOpenGLFunctions_ES2>();
     Q_ASSERT(funcs);
-    funcs->glClearColor(1.0, 1.0, 1.0, 0.0);
+
+    QColor bgColor = m_silicaTheme->overlayBackgroundColor();
+    funcs->glClearColor(bgColor.redF(), bgColor.greenF(), bgColor.blueF(), 0.0);
     funcs->glClear(GL_COLOR_BUFFER_BIT);
     m_context->swapBuffers(this);
 }
@@ -1060,7 +1064,7 @@ void DeclarativeWebContainer::drawUnderlay()
 {
     Q_ASSERT(m_context);
 
-    QColor bgColor = m_webPage ? m_webPage->bgcolor() : QColor(Qt::white);
+    QColor bgColor = m_webPage ? m_webPage->bgcolor() : m_silicaTheme->overlayBackgroundColor();
     m_context->makeCurrent(this);
     QOpenGLFunctions_ES2* funcs = m_context->versionFunctions<QOpenGLFunctions_ES2>();
     if (funcs) {
