@@ -11,7 +11,6 @@
 
 import QtQuick 2.0
 import Sailfish.Silica 1.0
-import Sailfish.Silica.private 1.0
 
 IconButton {
     // Keep icon enabled so that drag area can filter mouse events.
@@ -32,10 +31,6 @@ IconButton {
             tapped()
         }
     }
-
-    onPressed: DragFilter.begin(mouse.x, mouse.y)
-    onCanceled: DragFilter.end()
-    DragFilter.screenMargin: Theme.paddingMedium
 
     Behavior on opacity { FadeAnimation {} }
 }
