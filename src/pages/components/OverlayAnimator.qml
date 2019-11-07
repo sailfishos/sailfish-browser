@@ -19,8 +19,6 @@ Item {
     property bool atTop
     property bool atBottom: true
     property int transitionDuration: !_immediate ? (state === _certOverlay ? proportionalDuration : 400) : 0
-    property real openYPosition: portrait ? overlay.toolBar.toolsHeight : 0
-
     readonly property bool allowContentUse: state === _chromeVisible || state === _fullscreenWebPage || state === _doubleToolBar
     readonly property bool dragging: state === _draggingOverlay
     readonly property bool secondaryTools: state === _doubleToolBar
@@ -93,6 +91,8 @@ Item {
 
         if ((state !== _fullscreenOverlay && state !== _certOverlay) || _midPos) {
             atTop = false
+        } else if (state == _fullscreenOverlay) {
+            atTop = true
         }
         if ((state !== _chromeVisible && state !== _fullscreenWebPage && state !== _doubleToolBar) || _midPos) {
             atBottom = false
