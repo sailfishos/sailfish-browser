@@ -28,6 +28,7 @@ BuildRequires:  pkgconfig(mlite5)
 BuildRequires:  pkgconfig(qdeclarative5-boostable)
 BuildRequires:  pkgconfig(sailfishwebengine) >= %{min_sailfishwebengine_version}
 BuildRequires:  pkgconfig(sailfishsilica)
+BuildRequires:  pkgconfig(sailfishpolicy)
 BuildRequires:  qt5-qttools
 BuildRequires:  qt5-qttools-linguist
 BuildRequires:  oneshot
@@ -53,6 +54,8 @@ Requires: qt5-qtgraphicaleffects
 Requires: nemo-qml-plugin-contextkit-qt5
 Requires: nemo-qml-plugin-connectivity
 Requires: nemo-qml-plugin-policy-qt5 >= 0.0.4
+Requires: sailfish-policy >= 0.3.31
+Requires: jolla-settings-system >= 1.0.70
 Requires: libkeepalive >= 1.7.0
 Requires: sailfish-components-pickers-qt5 >= 0.1.7
 Requires: nemo-qml-plugin-notifications-qt5 >= 1.0.12
@@ -71,6 +74,8 @@ Summary:  Browser plugin for Jolla Settings
 License:  MPLv2
 Group:    Applications/Internet
 Requires: jolla-settings >= 0.11.29
+Requires: jolla-settings-system >= 1.0.70
+Requires: sailfish-policy
 
 %description settings
 Browser plugin for Jolla Settings
