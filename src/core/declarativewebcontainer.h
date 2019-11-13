@@ -238,6 +238,7 @@ private:
     void loadTab(const Tab& tab, bool force);
     void updateMode();
     void setActiveTabRendered(bool rendered);
+    bool browserEnabled() const;
 
     // Clears window surface on the compositor thread. Can be called even when there are
     // no active views. In case this function is called too early during gecko initialization,

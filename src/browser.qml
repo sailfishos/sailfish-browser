@@ -1,6 +1,7 @@
 /****************************************************************************
 **
-** Copyright (C) 2013 Jolla Ltd.
+** Copyright (C) 2013 - 2019 Jolla Ltd.
+** Copyright (C) 2019 Open Mobile Platform LLC.
 ** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jollamobile.com>
 ** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **
@@ -14,6 +15,8 @@ import QtQuick 2.2
 import QtQuick.Window 2.2 as QuickWindow
 import Sailfish.Silica 1.0
 import Sailfish.Browser 1.0
+import Sailfish.Policy 1.0
+import com.jolla.settings.system 1.0
 import "pages"
 import "pages/components" as Browser
 
@@ -94,6 +97,22 @@ ApplicationWindow {
             parent: null
             anchors.fill: parent
             z: -1
+        }
+    }
+    
+    DisabledByMdmView {
+        enabled: !AccessPolicy.browserEnabled
+        //% "Web browsing"
+        activity: qsTrId("sailfish_browser-la-web_browsing");
+        onEnabledChanged: {
+            if (enabled) {
+                webView.privateMode = true
+                webView.tabModel.clear()
+                rootPage.overlay.toolBar.showOverlay()
+                pageStack.pop(null, PageStackAction.Immediate)
+            } else {
+                webView.privateMode = false
+            }
         }
     }
 }

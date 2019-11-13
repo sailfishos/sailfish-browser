@@ -29,12 +29,14 @@
 #include <silicatheme.h>
 
 #include <qpa/qplatformnativeinterface.h>
+#include <libsailfishpolicy/policyvalue.h>
 
 #ifndef DEBUG_LOGS
 #define DEBUG_LOGS 0
 #endif
 
 static const bool gForceLandscapeToPortrait = !qgetenv("BROWSER_FORCE_LANDSCAPE_TO_PORTRAIT").isEmpty();
+static const auto ABOUT_BLANK = QStringLiteral("about:blank");
 
 static DeclarativeWebContainer *s_instance = nullptr;
 
@@ -81,6 +83,8 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
 
     setTitle("BrowserContent");
     setObjectName("WebView");
+
+    if (!browserEnabled()) m_privateMode = true;
 
     WebPageFactory* pageFactory = new WebPageFactory(this);
     connect(this, &DeclarativeWebContainer::webPageComponentChanged,
@@ -315,7 +319,9 @@ void DeclarativeWebContainer::setPrivateMode(bool privateMode)
 {
     if (m_privateMode != privateMode) {
         m_privateMode = privateMode;
-        m_settingManager->setAutostartPrivateBrowsing(privateMode);
+        if (browserEnabled()) {
+            m_settingManager->setAutostartPrivateBrowsing(privateMode);
+        }
         updateMode();
         emit privateModeChanged();
     }
@@ -434,8 +440,8 @@ bool DeclarativeWebContainer::isActiveTab(int tabId)
 void DeclarativeWebContainer::load(const QString &url, bool force)
 {
     QString tmpUrl = url;
-    if (tmpUrl.isEmpty()) {
-        tmpUrl = "about:blank";
+    if (tmpUrl.isEmpty() || !browserEnabled()) {
+        tmpUrl = ABOUT_BLANK;
     }
 
     if (m_webPage && m_webPage->completed()) {
@@ -868,7 +874,15 @@ void DeclarativeWebContainer::initialize()
     // 2) model has tabs, load initial url or active tab.
     bool firstUseDone = DeclarativeWebUtils::instance()->firstUseDone();
     if ((m_model->waitingForNewTab() || m_model->count() == 0) && (firstUseDone || !m_initialUrl.isEmpty())) {
-        QString url = m_initialUrl.isEmpty() ? DeclarativeWebUtils::instance()->homePage() : m_initialUrl;
+        QString url = m_initialUrl;
+        if (m_initialUrl.isEmpty()) {
+            if (!browserEnabled()) {
+                url = ABOUT_BLANK;
+            } else {
+                url = DeclarativeWebUtils::instance()->homePage();
+            }
+        }
+
         m_model->newTab(url);
     } else if (m_model->count() > 0 && !m_webPage) {
         Tab tab = m_model->activeTab();
@@ -1011,6 +1025,11 @@ void DeclarativeWebContainer::updatePageFocus(bool focus)
 bool DeclarativeWebContainer::canInitialize() const
 {
     return SailfishOS::WebEngine::instance()->initialized() && m_model && m_model->loaded();
+}
+
+bool DeclarativeWebContainer::browserEnabled() const
+{
+    return Sailfish::PolicyValue::keyValue(Sailfish::PolicyValue::BrowserEnabled).toBool();
 }
 
 void DeclarativeWebContainer::loadTab(const Tab& tab, bool force)
