@@ -28,6 +28,7 @@ BuildRequires:  pkgconfig(mlite5)
 BuildRequires:  pkgconfig(qdeclarative5-boostable)
 BuildRequires:  pkgconfig(sailfishwebengine) >= %{min_sailfishwebengine_version}
 BuildRequires:  pkgconfig(sailfishpolicy)
+BuildRequires:  pkgconfig(sailfishsilica)
 BuildRequires:  qt5-qttools
 BuildRequires:  qt5-qttools-linguist
 BuildRequires:  oneshot
