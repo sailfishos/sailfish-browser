@@ -33,7 +33,7 @@ Background {
 
     property real _overlayHeight: browserPage.isPortrait ? toolBar.toolsHeight : 0
     property bool _showFindInPage
-    property bool _showUrlEntry
+    property bool _showUrlEntry: true
     property bool _showInfoOverlay
     readonly property bool _topGap: _showUrlEntry || _showFindInPage
 
@@ -103,8 +103,6 @@ Background {
         overlay: overlay
         portrait: browserPage.isPortrait
         webView: overlay.webView
-        // Favorite grid first row offset is negative. So, increase minumumY drag by that.
-        openYPosition: _overlayHeight
 
         readonly property real _fullHeight: isPortrait ? overlay.toolBar.toolsHeight : 0
         readonly property real _infoHeight: Math.max(webView.fullscreenHeight - overlay.toolBar.certOverlayPreferedHeight - overlay.toolBar.toolsHeight, 0)

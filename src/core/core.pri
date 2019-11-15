@@ -1,5 +1,8 @@
 INCLUDEPATH += $$PWD
 
+PKGCONFIG += \
+        sailfishsilica
+
 # C++ sources
 SOURCES += \
     $$PWD/declarativewebcontainer.cpp \
