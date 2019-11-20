@@ -218,6 +218,7 @@ Column {
                                : Theme.primaryColor
             enabled: webView.security
             onTapped: certOverlayActive ? showChrome() : certOverlayLoader.active = true
+            visible: webView.security && webView.security.validState
 
             SequentialAnimation {
                 id: securityAnimation
