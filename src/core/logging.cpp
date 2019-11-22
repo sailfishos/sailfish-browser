@@ -12,3 +12,4 @@
 #include "logging.h"
 
 Q_LOGGING_CATEGORY(lcCoreLog, "org.sailfishos.browser.core", QtWarningMsg)
+Q_LOGGING_CATEGORY(lcBackupLog, "org.sailfishos.browser.backup", QtWarningMsg)
