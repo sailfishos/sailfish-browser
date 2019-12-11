@@ -65,7 +65,7 @@ bool BrowserPaths::createDirectory(const QString &dirStr)
             return false;
         }
         uid_t uid = getuid();
-        // assumes that correct groupname is same as username (e.g. nemo:nemo)
+        // assumes that correct groupname is same as username
         int gid = getgrnam(getpwuid(uid)->pw_name)->gr_gid;
         int success = chown(dirStr.toLatin1().data(), uid, gid);
         Q_UNUSED(success);
