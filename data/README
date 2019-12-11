@@ -1,6 +1,7 @@
 How to update ua-update.json
 ============================
 
+0) git checkout next
 1) Edit ua-update.json.in
 2) Run preprocess-ua-update-json
 3) Copy preprocessed ua-update.json to ua/<engine-version>
