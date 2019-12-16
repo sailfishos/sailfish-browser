@@ -1,6 +1,7 @@
 /****************************************************************************
 **
-** Copyright (C) 2013-2016 Jolla Ltd.
+** Copyright (c) 2013 - 2019 Jolla Ltd.
+** Copyright (c) 2019 Open Mobile Platform LLC.
 ** Contact: Dmitry Rozhkov <dmitry.rozhkov@jollamobile.com>
 ** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **
@@ -12,8 +13,8 @@
 
 import QtQuick 2.1
 import Sailfish.Silica 1.0
+import MeeGo.QOfono 0.2
 import org.nemomobile.notifications 1.0
-import org.freedesktop.contextkit 1.0
 
 MouseArea {
     id: root
@@ -30,7 +31,7 @@ MouseArea {
     property string searchUri
     property bool isPhoneNumber
 
-    readonly property bool _canCall: !cellular1Status.disabled || !cellular2Status.disabled
+    readonly property bool _canCall: cellular1Status.registered || cellular2Status.registered
 
     // keep selection range we get from engine to move the draggers with
     // selection together when panning or zooming
@@ -210,14 +211,23 @@ MouseArea {
         previewSummary: qsTrId("sailfish_browser-la-selection_copied")
     }
 
-    ContextProperty {
-        id: cellular1Status
-        property bool disabled: value == "disabled" || value == undefined
-        key: "Cellular.Status"
+    OfonoManager {
+        id: ofonoManager
     }
-    ContextProperty {
+
+    OfonoNetworkRegistration {
+        id: cellular1Status
+
+        property bool registered: status == "registered" || status == "roaming"
+
+        modemPath: ofonoManager.modems[0] || ""
+    }
+
+    OfonoNetworkRegistration {
         id: cellular2Status
-        property bool disabled: value == "disabled" || value == undefined
-        key: "Cellular_1.Status"
+
+        property bool registered: status == "registered" || status == "roaming"
+
+        modemPath: ofonoManager.modems[1] || ""
     }
 }

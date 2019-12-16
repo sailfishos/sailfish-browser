@@ -1,6 +1,7 @@
 /****************************************************************************
 **
-** Copyright (C) 2013 Jolla Ltd.
+** Copyright (c) 2013 - 2019 Jolla Ltd.
+** Copyright (c) 2019 Open Mobile Platform LLC.
 ** Contact: Dmitry Rozhkov <dmitry.rozhkov@jolla.com>
 ** Contact: Raine Makelainen <raine.makelainen@jollamobile.com>
 **
@@ -13,7 +14,7 @@
 import QtQuick 2.0
 import Nemo.KeepAlive 1.2
 import Sailfish.WebEngine 1.0
-import org.freedesktop.contextkit 1.0
+import Nemo.DBus 2.0
 import org.nemomobile.policy 1.0
 
 // QtObject cannot have children
@@ -21,7 +22,7 @@ Item {
     property QtObject webPage
     property bool videoActive
     property bool audioActive
-    readonly property alias displayOff: screenBlanked.value
+    readonly property alias displayOff: screenBlanked.blanked
     property bool background
 
     property string _mediaState: "pause"
@@ -64,7 +65,7 @@ Item {
     }
 
     onAudioActiveChanged: {
-        if (!audioActive && screenBlanked.value) {
+        if (!audioActive && screenBlanked.blanked) {
             delayedSuspend.suspendIntention = true
         }
     }
@@ -95,13 +96,23 @@ Item {
         }
     }
 
-    ContextProperty {
+    DBusInterface {
         id: screenBlanked
-        key: "Screen.Blanked"
-        value: 0
 
-        onValueChanged: {
-            if (value && !audioActive) {
+        property bool blanked
+
+        function display_status_ind(state) {
+            blanked = (state === "off")
+        }
+
+        bus: DBus.SystemBus
+        service: 'com.nokia.mce'
+        path: '/com/nokia/mce/signal'
+        iface: 'com.nokia.mce.signal'
+        signalsEnabled: true
+
+        onBlankedChanged: {
+            if (blanked && !audioActive) {
                 delayedSuspend.suspendIntention = true
             } else {
                 // Return immediately from suspend.
