@@ -106,10 +106,10 @@ ApplicationWindow {
         activity: qsTrId("sailfish_browser-la-web_browsing");
         onEnabledChanged: {
             if (enabled) {
-                webView.privateMode = true
                 webView.tabModel.clear()
-                rootPage.overlay.toolBar.showOverlay()
+                webView.privateMode = true
                 pageStack.pop(null, PageStackAction.Immediate)
+                rootPage.overlay.toolBar.showOverlay()
             } else {
                 webView.privateMode = false
             }
