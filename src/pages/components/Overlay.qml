@@ -295,6 +295,9 @@ Background {
                 // from the top. After moving the overlay or the content, search field can be focused by tapping.
                 readonly property bool focusOut: dragArea.moved
 
+                readonly property bool browserEnabled: AccessPolicy.browserEnabled
+                onBrowserEnabledChanged: if (!browserEnabled) focus = false
+
                 property bool edited
                 property bool enteringNewTabUrl
 
