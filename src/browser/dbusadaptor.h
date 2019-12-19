@@ -27,12 +27,12 @@ public slots:
     // these two calls are kept in this service for compatibility
     // but any calls that require the UI to be shown should be added to
     // the UIServiceDBusAdaptor org.sailfishos.browser.ui service instead
-    void openUrl(QStringList args);
+    void openUrl(const QStringList &args);
     void activateNewTabView();
 
     void cancelTransfer(int transferId);
     void restartTransfer(int transferId);
-    void dumpMemoryInfo(QString fileName);
+    void dumpMemoryInfo(const QString &fileName);
 
 private:
     BrowserService *m_BrowserService;
@@ -47,8 +47,11 @@ public:
     UIServiceDBusAdaptor(BrowserUIService *browserService);
 
 public slots:
-    void openUrl(QStringList args);
+    void openUrl(const QStringList &args);
     void activateNewTabView();
+
+    void requestTab(int tabId, const QString &url);
+    void closeTab(int tabId);
 
 private:
     BrowserUIService *m_BrowserService;

@@ -1,13 +1,11 @@
-/****************************************************************************
-**
-** Copyright (C) 2014 Jolla Ltd.
-** Contact: Raine Makelainen <raine.makelainen@jollamobile.com>
-**
-****************************************************************************/
-
-/* This Source Code Form is subject to the terms of the Mozilla Public
+/*
+ * Copyright (c) 2014 - 2019 Jolla Ltd.
+ * Copyright (c) 2019 Open Mobile Platform LLC.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 
 #include "declarativewebpage.h"
 #include "declarativewebcontainer.h"
@@ -19,6 +17,7 @@
 #include <qmozwindow.h>
 #include <QGuiApplication>
 #include <QtConcurrent>
+#include <qmozsecurity.h>
 
 static const QString gFullScreenMessage("embed:fullscreenchanged");
 static const QString gDomContentLoadedMessage("chrome:contentloaded");
@@ -70,7 +69,6 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
     addMessageListener(gFindMessage);
     addMessageListener(gContentOrientationChanged);
 
-    loadFrameScript("chrome://embedlite/content/SelectAsyncHelper.js");
     loadFrameScript("chrome://embedlite/content/embedhelper.js");
 
     connect(this, &DeclarativeWebPage::recvAsyncMessage,
@@ -278,7 +276,7 @@ void DeclarativeWebPage::setVirtualKeyboardMargin(qreal margin)
     }
 }
 
-void DeclarativeWebPage::loadTab(QString newUrl, bool force)
+void DeclarativeWebPage::loadTab(const QString &newUrl, bool force)
 {
     // Always enable chrome when load is called.
     setChrome(true);
@@ -294,13 +292,15 @@ void DeclarativeWebPage::grabToFile(const QSize &size)
 {
     // grabToImage handles invalid geometry.
     m_grabResult = grabToImage(size);
-    if (m_grabResult) {
+    if (m_grabResult && active()) {
         if (!m_grabResult->isReady()) {
             connect(m_grabResult.data(), &QMozGrabResult::ready,
                     this, &DeclarativeWebPage::grabResultReady);
         } else {
             grabResultReady();
         }
+    } else {
+        m_grabResult.clear();
     }
 }
 
@@ -308,9 +308,11 @@ void DeclarativeWebPage::grabToFile(const QSize &size)
 void DeclarativeWebPage::grabThumbnail(const QSize &size)
 {
     m_thumbnailResult = grabToImage(size);
-    if (m_thumbnailResult) {
+    if (m_thumbnailResult && active()) {
         connect(m_thumbnailResult.data(), &QMozGrabResult::ready,
                 this, &DeclarativeWebPage::thumbnailReady);
+    } else {
+        m_thumbnailResult.clear();
     }
 }
 
@@ -352,9 +354,11 @@ void DeclarativeWebPage::timerEvent(QTimerEvent *te)
 
 void DeclarativeWebPage::grabResultReady()
 {
-    QImage image = m_grabResult->image();
+    if (active()) {
+        QImage image = m_grabResult->image();
+        m_grabWritter.setFuture(QtConcurrent::run(this, &DeclarativeWebPage::saveToFile, image));
+    }
     m_grabResult.clear();
-    m_grabWritter.setFuture(QtConcurrent::run(this, &DeclarativeWebPage::saveToFile, image));
 }
 
 void DeclarativeWebPage::grabWritten()
@@ -365,17 +369,19 @@ void DeclarativeWebPage::grabWritten()
 
 void DeclarativeWebPage::thumbnailReady()
 {
-    QImage image = m_thumbnailResult->image();
-    m_thumbnailResult.clear();
-    QByteArray iconData;
-    QBuffer buffer(&iconData);
-    buffer.open(QIODevice::WriteOnly);
-    if (image.save(&buffer, "jpg", 75)) {
-        buffer.close();
-        emit thumbnailResult(QString(BASE64_IMAGE).arg(QString(iconData.toBase64())));
-    } else {
-        emit thumbnailResult(DEFAULT_DESKTOP_BOOKMARK_ICON);
+    if (active()) {
+        QImage image = m_thumbnailResult->image();
+        QByteArray iconData;
+        QBuffer buffer(&iconData);
+        buffer.open(QIODevice::WriteOnly);
+        if (image.save(&buffer, "jpg", 75)) {
+            buffer.close();
+            emit thumbnailResult(QString(BASE64_IMAGE).arg(QString(iconData.toBase64())));
+        } else {
+            emit thumbnailResult(DEFAULT_DESKTOP_BOOKMARK_ICON);
+        }
     }
+    m_thumbnailResult.clear();
 }
 
 void DeclarativeWebPage::updateViewMargins()
@@ -454,7 +460,7 @@ void DeclarativeWebPage::sendVkbOpenCompositionMetrics()
 
 QString DeclarativeWebPage::saveToFile(QImage image)
 {
-    if (image.isNull()) {
+    if (image.isNull() || !active()) {
         return "";
     }
 
@@ -515,3 +521,4 @@ QDebug operator<<(QDebug dbg, const DeclarativeWebPage *page)
                   << ", active = " << page->active() << ", enabled = " << page->enabled() << ")";
     return dbg.space();
 }
+

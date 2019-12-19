@@ -18,7 +18,7 @@
 class Tab
 {
 public:
-    explicit Tab(int tabId, QString url, QString title, QString thumbPath);
+    explicit Tab(int tabId, const QString &url, const QString &title, const QString &thumbPath);
     explicit Tab();
 
     int tabId() const;

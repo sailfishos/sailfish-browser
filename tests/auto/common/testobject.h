@@ -22,7 +22,7 @@ static const QByteArray EMPTY_QML = \
         "Item { width: 100; height: 100 }\n";
 
 struct TestTab {
-    TestTab(QString url, QString title) : url(url), title(title) {}
+    TestTab(const QString &url, const QString &title) : url(url), title(title) {}
 
     QString url;
     QString title;

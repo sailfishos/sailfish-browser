@@ -1,13 +1,11 @@
-/****************************************************************************
-**
-** Copyright (C) 2013 Jolla Ltd.
-** Contact: Raine Makelainen <raine.makelainen@jollamobile.com>
-**
-****************************************************************************/
-
-/* This Source Code Form is subject to the terms of the Mozilla Public
+/*
+ * Copyright (c) 2013 - 2019 Jolla Ltd.
+ * Copyright (c) 2019 Open Mobile Platform LLC.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 
 #ifndef DECLARATIVEWEBCONTAINER_H
 #define DECLARATIVEWEBCONTAINER_H
@@ -15,6 +13,7 @@
 #include "settingmanager.h"
 
 #include <qmozcontext.h>
+#include <qmozsecurity.h>
 #include <QtGui/QWindow>
 #include <QtGui/QOpenGLFunctions>
 #include <QPointer>
@@ -75,9 +74,13 @@ class DeclarativeWebContainer : public QWindow, public QQmlParserStatus, protect
 
     Q_PROPERTY(Qt::ScreenOrientation pendingWebContentOrientation READ pendingWebContentOrientation NOTIFY pendingWebContentOrientationChanged FINAL)
 
+    Q_PROPERTY(QMozSecurity *security READ security NOTIFY securityChanged)
+
 public:
     DeclarativeWebContainer(QWindow *parent = 0);
     ~DeclarativeWebContainer();
+
+    static DeclarativeWebContainer *instance();
 
     DeclarativeWebPage *webPage() const;
     QMozWindow *mozWindow() const;
@@ -121,6 +124,8 @@ public:
 
     Qt::ScreenOrientation pendingWebContentOrientation() const;
 
+    QMozSecurity *security() const;
+
     int tabId() const;
     QString title() const;
     QString url() const;
@@ -130,10 +135,13 @@ public:
     bool activatePage(const Tab& tab, bool force = false, int parentId = 0);
     int findParentTabId(int tabId) const;
 
-    Q_INVOKABLE void load(QString url = "", QString title = "", bool force = false);
+    Q_INVOKABLE void load(const QString &url = QString(), bool force = false);
     Q_INVOKABLE void reload(bool force = true);
     Q_INVOKABLE void goForward();
     Q_INVOKABLE void goBack();
+
+    Q_INVOKABLE int activateTab(int tabId, const QString &url);
+    Q_INVOKABLE void closeTab(int tabId);
 
     Q_INVOKABLE void updatePageFocus(bool focus);
     Q_INVOKABLE void dumpPages() const;
@@ -179,6 +187,7 @@ signals:
 
     void pendingWebContentOrientationChanged();
     void webContentOrientationChanged(Qt::ScreenOrientation orientation);
+    void securityChanged();
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event);
@@ -202,7 +211,7 @@ private slots:
     void initialize();
     void onActiveTabChanged(int activeTabId);
     void onDownloadStarted();
-    void onNewTabRequested(QString url, QString title, int parentId);
+    void onNewTabRequested(const Tab &tab, int parentId);
     void releasePage(int tabId);
     void closeWindow();
     void updateLoadProgress();
@@ -226,6 +235,7 @@ private:
     void loadTab(const Tab& tab, bool force);
     void updateMode();
     void setActiveTabRendered(bool rendered);
+    bool browserEnabled() const;
 
     // Clears window surface on the compositor thread. Can be called even when there are
     // no active views. In case this function is called too early during gecko initialization,

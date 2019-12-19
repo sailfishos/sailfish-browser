@@ -52,15 +52,7 @@ include(qtmozembed/qtmozembed.pri)
 include(factories/factories.pri)
 
 # C++ sources
-SOURCES += \
-    main.cpp \
-    browserservice.cpp \
-    dbusadaptor.cpp
-
-# C++ headers
-HEADERS += \
-    browserservice.h \
-    dbusadaptor.h
+SOURCES += main.cpp
 
 OTHER_FILES = *.qml \
               cover/*.qml \

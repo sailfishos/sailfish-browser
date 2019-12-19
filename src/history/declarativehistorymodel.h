@@ -50,7 +50,7 @@ signals:
 
 private slots:
     void historyAvailable(QList<Link> linkList);
-    void updateTitle(QString url, QString title);
+    void updateTitle(const QString &url, const QString &title);
 
 private:
     void updateModel(QList<Link> linkList);

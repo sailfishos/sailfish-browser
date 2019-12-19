@@ -22,16 +22,16 @@ class Bookmark : public QObject {
     Q_PROPERTY(QString favicon READ favicon WRITE setFavicon NOTIFY faviconChanged)
 
 public:
-    Bookmark(QString title, QString url, QString favicon, bool hasTouchIcon, QObject* parent = 0);
+    Bookmark(const QString &title, const QString &url, const QString &favicon, bool hasTouchIcon, QObject* parent = 0);
 
     QString title() const;
-    void setTitle(QString title);
+    void setTitle(const QString &title);
 
     QString url() const;
-    void setUrl(QString url);
+    void setUrl(const QString &url);
 
     QString favicon() const;
-    void setFavicon(QString favicon);
+    void setFavicon(const QString &favicon);
 
     bool hasTouchIcon() const;
     void setHasTouchIcon(bool hasTouchIcon);

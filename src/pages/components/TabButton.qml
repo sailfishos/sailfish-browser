@@ -29,7 +29,7 @@ Browser.IconButton {
         }
         font.pixelSize: Theme.fontSizeExtraSmall
         font.bold: true
-        color: down ?   Theme.highlightColor : Theme.primaryColor
+        color: down ? Theme.highlightColor : Theme.primaryColor
         horizontalAlignment: Text.AlignHCenter
     }
 }

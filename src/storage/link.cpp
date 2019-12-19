@@ -11,7 +11,7 @@
 
 #include "link.h"
 
-Link::Link(int linkId, QString urlString, QString thumbPath, QString title) :
+Link::Link(int linkId, const QString &urlString, const QString &thumbPath, const QString &title) :
     m_linkId(linkId), m_url(urlString), m_thumbPath(thumbPath), m_title(title)
 {
 }

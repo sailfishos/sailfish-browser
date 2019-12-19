@@ -14,6 +14,7 @@ include(../mocks/declarativewebpage/declarativewebpage_mock.pri)
 include(../mocks/declarativewebutils/declarativewebutils_mock.pri)
 include(../mocks/downloadmanager/downloadmanager_mock.pri)
 include(../mocks/opensearchconfigs/opensearchconfigs_mock.pri)
+include(../mocks/qmozsecurity/qmozsecurity.pri)
 
 include(../test_common.pri)
 include(../../../common/paths.pri)

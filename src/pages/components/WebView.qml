@@ -16,6 +16,7 @@ import Sailfish.Browser 1.0
 import Sailfish.WebView.Pickers 1.0 as Pickers
 import Sailfish.WebView.Popups 1.0 as Popups
 import Qt5Mozilla 1.0
+import Sailfish.Policy 1.0
 import "." as Browser
 
 WebContainer {
@@ -38,7 +39,7 @@ WebContainer {
     property var _webPageCreator: WebPageCreator {
         activeWebPage: contentItem
         // onNewWindowRequested is always handled as synchronous operation (not through newTab).
-        onNewWindowRequested: tabModel.newTab(url, "", parentId)
+        onNewWindowRequested: tabModel.newTab(url, parentId)
     }
 
     property Component textSelectionControllerComponent: Component {
@@ -101,7 +102,7 @@ WebContainer {
                     (contentItem && contentItem.fullscreen)
 
     touchBlocked: contentItem && contentItem.popupOpener && contentItem.popupOpener.active ||
-                  webView.contentItem && webView.contentItem.textSelectionActive || false
+                  webView.contentItem && webView.contentItem.textSelectionActive || !AccessPolicy.browserEnabled || false
     favicon: contentItem ? contentItem.favicon : ""
 
     webPageComponent: Component {
@@ -339,6 +340,7 @@ WebContainer {
                 case "Content:SelectionCopied": {
                     if (data.succeeded && textSelectionController) {
                         textSelectionController.showNotification()
+                        response.message = {"": ""}
                     }
                     break
                 }

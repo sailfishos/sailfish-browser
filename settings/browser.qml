@@ -13,6 +13,8 @@ import QtQuick 2.0
 import Sailfish.Silica 1.0
 import org.nemomobile.configuration 1.0
 import org.sailfishos.browser.settings 1.0
+import com.jolla.settings.system 1.0
+import Sailfish.Policy 1.0
 
 Page {
     id: page
@@ -38,8 +40,12 @@ Page {
                 title: qsTrId("settings_browser-ph-browser")
             }
 
+            DisabledByMdmBanner {
+                active: !AccessPolicy.browserEnabled
+            }
             TextField {
                 id: homePage
+                enabled: AccessPolicy.browserEnabled
 
                 width: parent.width
                 //: Label for home page text field
@@ -60,6 +66,7 @@ Page {
 
             ComboBox {
                 id: searchEngine
+                enabled: AccessPolicy.browserEnabled
 
                 width: parent.width
                 //: Label for combobox that sets search engine used in browser
@@ -101,6 +108,7 @@ Page {
                 //: Button for opening privacy settings page.
                 //% "Privacy"
                 text: qsTrId("settings_browser-bt-privacy")
+                enabled: AccessPolicy.browserEnabled
                 onClicked: pageStack.animatorPush(Qt.resolvedUrl("Privacy.qml"))
             }
 
@@ -111,6 +119,7 @@ Page {
                 //% "Upon exiting Sailfish Browser all open tabs will be closed"
                 description: qsTrId("settings_browser-la-close_all_tabs_description")
                 checked: closeAllTabsConfig.value
+                enabled: AccessPolicy.browserEnabled
 
                 onCheckedChanged: closeAllTabsConfig.value = checked
             }

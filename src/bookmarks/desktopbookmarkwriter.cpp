@@ -87,7 +87,7 @@ QString DesktopBookmarkWriter::uniqueDesktopFileName(QString title)
     return QString(DESKTOP_FILE_PATTERN).arg(filePath, title).arg(count);
 }
 
-QString DesktopBookmarkWriter::write(QString url, QString title, QString icon)
+QString DesktopBookmarkWriter::write(const QString &url, const QString &title, const QString &icon)
 {
     QString fileName = uniqueDesktopFileName(title);
     QString desktopFileData = QString("[Desktop Entry]\n" \

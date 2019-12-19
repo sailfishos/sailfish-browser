@@ -1,19 +1,19 @@
-/****************************************************************************
-**
-** Copyright (C) 2014-2015 Jolla Ltd.
-** Contact: Raine Makelainen <raine.makelainen@jolla.com>
-**
-****************************************************************************/
-
-/* This Source Code Form is subject to the terms of the Mozilla Public
+/*
+ * Copyright (c) 2014 - 2019 Jolla Ltd.
+ * Copyright (c) 2019 Open Mobile Platform LLC.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 
 import QtQuick 2.2
 import QtQuick.Window 2.2 as QuickWindow
 import Sailfish.Silica 1.0
 import Sailfish.Silica.private 1.0 as Private
 import Sailfish.Browser 1.0
+import Sailfish.Policy 1.0
+import com.jolla.settings.system 1.0
 import "." as Browser
 
 Background {
@@ -30,9 +30,15 @@ Background {
     property alias searchField: searchField
     readonly property alias enteringNewTabUrl: searchField.enteringNewTabUrl
 
-    property var enteredPage
+    property string enteredUrl
 
-    function loadPage(url, title)  {
+    property real _overlayHeight: browserPage.isPortrait ? toolBar.toolsHeight : 0
+    property bool _showFindInPage
+    property bool _showUrlEntry: true
+    property bool _showInfoOverlay
+    readonly property bool _topGap: _showUrlEntry || _showFindInPage
+
+    function loadPage(url)  {
         if (url == "about:config") {
             pageStack.animatorPush(Qt.resolvedUrl("ConfigWarning.qml"), {"browserPage": browserPage})
         } else {
@@ -41,19 +47,15 @@ Background {
             }
             // let gecko figure out how to handle malformed URLs
             var pageUrl = url
-            var pageTitle = title || ""
             if (!isNaN(pageUrl) && pageUrl.trim()) {
                 pageUrl = "\"" + pageUrl.trim() + "\""
             }
 
             if (!searchField.enteringNewTabUrl) {
-                webView.load(pageUrl, pageTitle)
+                webView.load(pageUrl)
             } else {
                 // Loading will start once overlay animator has animated chrome visible.
-                enteredPage = {
-                    "url": pageUrl,
-                    "title": pageTitle
-                }
+                enteredUrl = pageUrl
                 webView.tabModel.waitingForNewTab = true
             }
         }
@@ -63,17 +65,19 @@ Background {
 
     function enterNewTabUrl(action) {
         searchField.enteringNewTabUrl = true
+        _showUrlEntry = true
+        _overlayHeight = Qt.binding(function () { return overlayAnimator._fullHeight })
         searchField.resetUrl("")
         overlayAnimator.showOverlay(action === PageStackAction.Immediate)
     }
 
-    function dismiss(canShowChrome) {
+    function dismiss(canShowChrome, immediate) {
         toolBar.resetFind()
         if (webView.contentItem && webView.contentItem.fullscreen) {
             // Web content is in fullscreen mode thus we don't show chrome
             overlay.animator.updateState("fullscreenWebPage")
         } else if (canShowChrome) {
-            overlay.animator.showChrome()
+            overlay.animator.showChrome(immediate)
         } else {
             overlay.animator.hide()
         }
@@ -100,16 +104,17 @@ Background {
         overlay: overlay
         portrait: browserPage.isPortrait
         webView: overlay.webView
-        // Favorite grid first row offset is negative. So, increase minumumY drag by that.
-        openYPosition: dragArea.drag.minimumY
+
+        readonly property real _fullHeight: isPortrait ? overlay.toolBar.toolsHeight : 0
+        readonly property real _infoHeight: Math.max(webView.fullscreenHeight - overlay.toolBar.certOverlayPreferedHeight - overlay.toolBar.toolsHeight, 0)
 
         onAtBottomChanged: {
             if (atBottom) {
                 searchField.enteringNewTabUrl = false
 
-                if (enteredPage) {
-                    webView.tabModel.newTab(enteredPage.url, enteredPage.title)
-                    enteredPage = null
+                if (enteredUrl) {
+                    webView.tabModel.newTab(enteredUrl)
+                    enteredUrl = ""
                 } else if (!toolBar.findInPageActive) {
                     searchField.resetUrl(webView.url)
                 }
@@ -120,13 +125,23 @@ Background {
                 if (!WebUtils.firstUseDone) {
                     WebUtils.firstUseDone = true
                 }
+
+                _showFindInPage = false
+                _showUrlEntry = false
+                _showInfoOverlay = false
             }
             dragArea.moved = false
         }
 
         onAtTopChanged: {
-            if (!atTop) {
-                dragArea.moved = true
+            if (atTop) {
+                if (_showFindInPage || _showUrlEntry) {
+                    _showInfoOverlay = false
+                }
+            } else {
+                if (!_showInfoOverlay) {
+                    dragArea.moved = true
+                }
             }
         }
     }
@@ -151,10 +166,10 @@ Background {
         id: dragArea
 
         property bool moved
-        property int dragThreshold: state === "fullscreenOverlay" ? toolBar.toolsHeight * 1.5 :
-                                                                    state === "doubleToolBar" ?
-                                                                        (webView.fullscreenHeight - toolBar.toolsHeight * 4) :
-                                                                        (webView.fullscreenHeight - toolBar.toolsHeight * 2)
+        property int dragThreshold: state === "fullscreenOverlay" ? toolBar.toolsHeight * 1.5
+                                                                  : state === "certOverlay"
+                                                                    ? (overlayAnimator._infoHeight + toolBar.toolsHeight * 0.5)
+                                                                    : (webView.fullscreenHeight - toolBar.toolsHeight * 2)
 
         width: parent.width
         height: historyContainer.height
@@ -164,13 +179,17 @@ Background {
         drag.filterChildren: true
         drag.axis: Drag.YAxis
         // Favorite grid first row offset is negative. So, increase minumumY drag by that.
-        drag.minimumY: browserPage.isPortrait ? toolBar.toolsHeight : 0
+        drag.minimumY: _overlayHeight
         drag.maximumY: webView.fullscreenHeight - toolBar.toolsHeight
 
         drag.onActiveChanged: {
             if (!drag.active) {
                 if (overlay.y < dragThreshold) {
-                    overlayAnimator.showOverlay(false)
+                    if (state === "certOverlay") {
+                        overlayAnimator.showInfoOverlay(false)
+                    } else {
+                        overlayAnimator.showOverlay(false)
+                    }
                 } else {
                     dismiss(true)
                 }
@@ -196,7 +215,7 @@ Background {
         Item {
             id: historyContainer
 
-            readonly property bool showFavorites: !overlayAnimator.atBottom && (!searchField.edited && searchField.text === webView.url || !searchField.text)
+            readonly property bool showFavorites: !overlayAnimator.atBottom && (!searchField.edited && searchField.text === webView.url || !searchField.text) && !toolBar.findInPageActive && _showUrlEntry
 
             width: parent.width
             height: toolBar.toolsHeight + historyList.height
@@ -255,7 +274,7 @@ Background {
                         onSearch: {
                             // Open new tab with the search uri.
                             controller.clearSelection()
-                            webView.tabModel.newTab(controller.searchUri, "")
+                            webView.tabModel.newTab(controller.searchUri)
                             overlay.animator.showChrome(true)
                         }
                         onClear: {
@@ -263,70 +282,14 @@ Background {
                                 controller.clearSelection()
                             }
                         }
-
                     }
                 }
-            }
-
-            Browser.ToolBar {
-                id: toolBar
-
-                property real crossfadeRatio: (overlay.y - webView.fullscreenHeight/2)  / (webView.fullscreenHeight/2 - toolBar.height)
-
-                url: webView.contentItem && webView.contentItem.url || ""
-                findText: searchField.text
-                bookmarked: bookmarkModel.activeUrlBookmarked
-
-                opacity: textSelectionToolbar.active ? 0.0 : crossfadeRatio
-                Behavior on opacity {
-                    enabled: overlayAnimator.atBottom
-                    FadeAnimation {}
-                }
-
-                visible: opacity > 0.0
-                secondaryToolsActive: overlayAnimator.secondaryTools
-
-                onShowOverlay: {
-                    searchField.resetUrl(webView.url)
-                    overlayAnimator.showOverlay()
-                }
-                onShowTabs: {
-                    overlayAnimator.showChrome()
-                    // Push the currently active tab index.
-                    // Changing of active tab cannot cause blinking.
-                    webView.grabActivePage()
-                    pageStack.animatorPush(tabView)
-                }
-                onShowSecondaryTools: overlayAnimator.showSecondaryTools()
-                onShowChrome: overlayAnimator.showChrome()
-
-                onCloseActiveTab: {
-                    // Activates (loads) the tab next to the currect active.
-                    webView.tabModel.closeActiveTab()
-                    if (webView.tabModel.count == 0) {
-                        overlay.enterNewTabUrl()
-                    }
-                }
-
-                onEnterNewTabUrl: overlay.enterNewTabUrl()
-                onFindInPage: {
-                    searchField.resetUrl("")
-                    overlayAnimator.showOverlay()
-                }
-                onShareActivePage: {
-                    pageStack.animatorPush("Sailfish.WebView.Popups.ShareLinkPage", {
-                                               "link": webView.url,
-                                               "linkTitle": webView.title
-                                           })
-                }
-                onBookmarkActivePage: favoriteGrid.fetchAndSaveBookmark()
-                onRemoveActivePageFromBookmarks: bookmarkModel.remove(webView.url)
             }
 
             TextField {
                 id: searchField
 
-                readonly property bool requestingFocus: overlayAnimator.atTop && browserPage.active && !dragArea.moved
+                readonly property bool requestingFocus: AccessPolicy.browserEnabled && overlayAnimator.atTop && browserPage.active && !dragArea.moved && (_showFindInPage || _showUrlEntry)
 
                 // Release focus when ever history list or favorite grid is moved and overlay itself starts moving
                 // from the top. After moving the overlay or the content, search field can be focused by tapping.
@@ -430,7 +393,8 @@ Background {
             MouseArea {
                 anchors {
                     fill: historyList
-                    topMargin: searchField.height
+                    topMargin: _topGap ? searchField.height : 0
+                    bottomMargin: _topGap ? 0 : searchField.height
                 }
                 enabled: toolBar.findInPageActive || favoriteGrid.enabled
 
@@ -449,13 +413,91 @@ Background {
                 }
             }
 
+            Browser.ToolBar {
+                id: toolBar
+
+                property real crossfadeRatio: (_showFindInPage || _showUrlEntry) ? (overlay.y - webView.fullscreenHeight/2)  / (webView.fullscreenHeight/2 - toolBar.height) : 1.0
+
+                url: webView.contentItem && webView.contentItem.url || ""
+                findText: searchField.text
+                bookmarked: bookmarkModel.activeUrlBookmarked
+
+                opacity: textSelectionToolbar.active ? 0.0 : crossfadeRatio
+                Behavior on opacity {
+                    enabled: overlayAnimator.atBottom
+                    FadeAnimation {}
+                }
+
+                visible: opacity > 0.0
+                secondaryToolsActive: overlayAnimator.secondaryTools
+                certOverlayActive: _showInfoOverlay
+                certOverlayHeight: !_showInfoOverlay
+                                   ? 0
+                                   : Math.max((webView.fullscreenHeight - overlay.y - overlay.toolBar.toolsHeight)
+                                              - overlay.toolBar.secondaryToolsHeight, 0)
+
+                certOverlayAnimPos: Math.min(Math.max((webView.fullscreenHeight - overlay.y - overlay.toolBar.toolsHeight)
+                                                      / (webView.fullscreenHeight - overlayAnimator._infoHeight
+                                                         - overlay.toolBar.toolsHeight), 0.0), 1.0)
+
+                onShowOverlay: {
+                    _showUrlEntry = true
+                    _overlayHeight = Qt.binding(function() { return overlayAnimator._fullHeight })
+                    searchField.resetUrl(webView.url)
+                    overlayAnimator.showOverlay()
+                }
+                onShowTabs: {
+                    // Push the currently active tab index.
+                    // Changing of active tab cannot cause blinking.
+                    webView.grabActivePage()
+                    pageStack.animatorPush(tabView)
+                }
+                onShowSecondaryTools: overlayAnimator.showSecondaryTools()
+                onShowInfoOverlay: {
+                    _showInfoOverlay = true
+                    _overlayHeight = Qt.binding(function() { return overlayAnimator._infoHeight })
+                    overlayAnimator.showInfoOverlay(false)
+                }
+                onShowChrome: overlayAnimator.showChrome()
+
+                onCloseActiveTab: {
+                    // Activates (loads) the tab next to the currect active.
+                    webView.tabModel.closeActiveTab()
+                    if (webView.tabModel.count == 0) {
+                        overlay.enterNewTabUrl()
+                    }
+                }
+
+                onEnterNewTabUrl: overlay.enterNewTabUrl()
+                onFindInPage: {
+                    _showFindInPage = true
+                    searchField.resetUrl("")
+                    _overlayHeight = Qt.binding(function () { return overlayAnimator._fullHeight })
+                    overlayAnimator.showOverlay()
+                }
+                onShareActivePage: {
+                    pageStack.animatorPush("Sailfish.WebView.Popups.ShareLinkPage", {
+                                               "link": webView.url,
+                                               "linkTitle": webView.title
+                                           })
+                }
+                onBookmarkActivePage: favoriteGrid.fetchAndSaveBookmark()
+                onRemoveActivePageFromBookmarks: bookmarkModel.remove(webView.url)
+
+                onShowCertDetail: {
+                    if (webView.security && !webView.security.certIsNull) {
+                        pageStack.animatorPush("com.jolla.settings.system.CertificateDetailsPage", {"website": webView.security.subjectDisplayName, "details": webView.security.serverCertDetails})
+                    }
+                }
+            }
+
             Browser.HistoryList {
                 id: historyList
 
                 property int panelSize: favoriteGrid.contextMenu && favoriteGrid.contextMenu.active ? 0 : virtualKeyboardObserver.panelSize
 
                 width: parent.width
-                height: browserPage.height - dragArea.drag.minimumY - panelSize
+                height: browserPage.height - _overlayHeight - panelSize
 
                 header: Item {
                     width: parent.width
@@ -465,11 +507,11 @@ Background {
                 search: searchField.text
                 opacity: historyContainer.showFavorites || toolBar.opacity > 0.9 ? 0.0 : 1.0
                 enabled: overlayAnimator.atTop
-                visible: !overlayAnimator.atBottom && !toolBar.findInPageActive && !historyContainer.showFavorites
+                visible: !overlayAnimator.atBottom && !historyContainer.showFavorites && _showUrlEntry
 
                 onMovingChanged: if (moving) historyList.focus = true
                 onSearchChanged: if (search !== webView.url) historyModel.search(search)
-                onLoad: overlay.loadPage(url, title)
+                onLoad: overlay.loadPage(url)
 
                 Behavior on opacity { FadeAnimator {} }
             }
@@ -480,7 +522,7 @@ Background {
                 height: historyList.height
                 opacity: historyContainer.showFavorites && toolBar.opacity < 0.9 ? 1.0 : 0.0
                 enabled: overlayAnimator.atTop
-                visible: !overlayAnimator.atBottom && !toolBar.findInPageActive && historyContainer.showFavorites
+                visible: historyContainer.showFavorites
                 _quickScrollRightMargin: -(browserPage.width - width) / 2
 
                 header: Item {
@@ -494,13 +536,14 @@ Background {
                 }
 
                 onMovingChanged: if (moving) favoriteGrid.focus = true
-                onLoad: overlay.loadPage(url, title)
+                onLoad: overlay.loadPage(url)
                 onNewTab: {
                     searchField.resetUrl(url)
                     // Not the best property name but functionality of opening a favorite
                     // to a new tab is exactly the same as opening new tab by typing a url.
                     searchField.enteringNewTabUrl = true
-                    overlay.loadPage(url, title)
+                    _showUrlEntry = true
+                    overlay.loadPage(url)
                 }
 
                 onShare: pageStack.animatorPush("Sailfish.WebView.Popups.ShareLinkPage", {"link" : url, "linkTitle": title})
@@ -553,6 +596,8 @@ Background {
                     }
                 }
 
+                onCloseAllPending: overlay.enterNewTabUrl(PageStackAction.Immediate)
+                onCloseAllCanceled: overlay.dismiss(true /* show chrome */, true /* immediate */)
                 onCloseAll: {
                     webView.tabModel.clear()
                     overlay.enterNewTabUrl(PageStackAction.Immediate)

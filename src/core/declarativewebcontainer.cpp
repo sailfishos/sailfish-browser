@@ -1,13 +1,11 @@
-/****************************************************************************
-**
-** Copyright (C) 2013 Jolla Ltd.
-** Contact: Raine Makelainen <raine.makelainen@jollamobile.com>
-**
-****************************************************************************/
-
-/* This Source Code Form is subject to the terms of the Mozilla Public
+/*
+ * Copyright (c) 2013 - 2019 Jolla Ltd.
+ * Copyright (c) 2019 Open Mobile Platform LLC.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
 
 #include "declarativewebpage.h"
 #include "declarativewebcontainer.h"
@@ -27,14 +25,19 @@
 #include <QOpenGLFunctions_ES2>
 #include <QGuiApplication>
 #include <qmozwindow.h>
+#include <qmozsecurity.h>
 
 #include <qpa/qplatformnativeinterface.h>
+#include <libsailfishpolicy/policyvalue.h>
 
 #ifndef DEBUG_LOGS
 #define DEBUG_LOGS 0
 #endif
 
 static const bool gForceLandscapeToPortrait = !qgetenv("BROWSER_FORCE_LANDSCAPE_TO_PORTRAIT").isEmpty();
+static const auto ABOUT_BLANK = QStringLiteral("about:blank");
+
+static DeclarativeWebContainer *s_instance = nullptr;
 
 DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     : QWindow(parent)
@@ -63,6 +66,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     , m_clearSurfaceTask(0)
     , m_closing(false)
 {
+    Q_ASSERT(!s_instance);
 
     QSize screenSize = QGuiApplication::primaryScreen()->size();
     resize(screenSize.width(), screenSize.height());;
@@ -77,6 +81,8 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
 
     setTitle("BrowserContent");
     setObjectName("WebView");
+
+    if (!browserEnabled()) m_privateMode = true;
 
     WebPageFactory* pageFactory = new WebPageFactory(this);
     connect(this, &DeclarativeWebContainer::webPageComponentChanged,
@@ -105,6 +111,8 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
             this, &DeclarativeWebContainer::updateWindowFlags);
 
     qApp->installEventFilter(this);
+
+    s_instance = this;
 }
 
 DeclarativeWebContainer::~DeclarativeWebContainer()
@@ -119,6 +127,12 @@ DeclarativeWebContainer::~DeclarativeWebContainer()
         SailfishOS::WebEngine *webEngine = SailfishOS::WebEngine::instance();
         webEngine->CancelTask(m_clearSurfaceTask);
     }
+}
+
+DeclarativeWebContainer *DeclarativeWebContainer::instance()
+{
+    Q_ASSERT(s_instance);
+    return s_instance;
 }
 
 DeclarativeWebPage *DeclarativeWebContainer::webPage() const
@@ -160,6 +174,8 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage, bool trigg
                     this, &DeclarativeWebContainer::updateLoadProgress, Qt::UniqueConnection);
             connect(m_webPage.data(), &DeclarativeWebPage::contentOrientationChanged,
                     this, &DeclarativeWebContainer::handleContentOrientationChanged, Qt::UniqueConnection);
+            connect(m_webPage.data(), &DeclarativeWebPage::securityChanged,
+                    this, &DeclarativeWebContainer::securityChanged, Qt::UniqueConnection);
 
             // NB: these signals are not disconnected upon setting current m_webPage.
             connect(m_webPage.data(), &DeclarativeWebPage::urlChanged,
@@ -186,6 +202,7 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage, bool trigg
         emit canGoForwardChanged();
         emit urlChanged();
         emit titleChanged();
+        emit securityChanged();
 
         setLoadProgress(m_webPage ? m_webPage->loadProgress() : 0);
     }
@@ -300,7 +317,9 @@ void DeclarativeWebContainer::setPrivateMode(bool privateMode)
 {
     if (m_privateMode != privateMode) {
         m_privateMode = privateMode;
-        m_settingManager->setAutostartPrivateBrowsing(privateMode);
+        if (browserEnabled()) {
+            m_settingManager->setAutostartPrivateBrowsing(privateMode);
+        }
         updateMode();
         emit privateModeChanged();
     }
@@ -390,6 +409,11 @@ Qt::ScreenOrientation DeclarativeWebContainer::pendingWebContentOrientation() co
     return m_mozWindow ? m_mozWindow->pendingOrientation() : Qt::PortraitOrientation;
 }
 
+QMozSecurity *DeclarativeWebContainer::security() const
+{
+    return m_webPage ? m_webPage->security() : nullptr;
+}
+
 int DeclarativeWebContainer::tabId() const
 {
     Q_ASSERT(!!m_model);
@@ -411,22 +435,23 @@ bool DeclarativeWebContainer::isActiveTab(int tabId)
     return m_webPage && m_webPage->tabId() == tabId;
 }
 
-void DeclarativeWebContainer::load(QString url, QString title, bool force)
+void DeclarativeWebContainer::load(const QString &url, bool force)
 {
-    if (url.isEmpty()) {
-        url = "about:blank";
+    QString tmpUrl = url;
+    if (tmpUrl.isEmpty() || !browserEnabled()) {
+        tmpUrl = ABOUT_BLANK;
     }
 
     if (m_webPage && m_webPage->completed()) {
         if (m_loading) {
             m_webPage->stop();
         }
-        m_webPage->loadTab(url, force);
+        m_webPage->loadTab(tmpUrl, force);
     } else if (!canInitialize()) {
-        m_initialUrl = url;
+        m_initialUrl = tmpUrl;
     } else if (m_model && m_model->count() == 0) {
         // Browser running all tabs are closed.
-        m_model->newTab(url, title);
+        m_model->newTab(tmpUrl);
     }
 }
 
@@ -462,6 +487,23 @@ void DeclarativeWebContainer::goBack()
         DBManager::instance()->goBack(m_webPage->tabId());
         m_webPage->goBack();
     }
+}
+
+void DeclarativeWebContainer::closeTab(int tabId)
+{
+    m_model->removeTabById(tabId, false);
+}
+
+int DeclarativeWebContainer::activateTab(int tabId, const QString &url)
+{
+    bool activated = m_model->activateTabById(tabId);
+    if (!activated) {
+        tabId = m_model->newTab(url);
+    } else {
+        load(url, true);
+    }
+
+    return tabId;
 }
 
 bool DeclarativeWebContainer::activatePage(const Tab& tab, bool force, int parentId)
@@ -557,6 +599,7 @@ void DeclarativeWebContainer::clearWindowSurface()
     m_context->makeCurrent(this);
     QOpenGLFunctions_ES2* funcs = m_context->versionFunctions<QOpenGLFunctions_ES2>();
     Q_ASSERT(funcs);
+
     funcs->glClearColor(1.0, 1.0, 1.0, 0.0);
     funcs->glClear(GL_COLOR_BUFFER_BIT);
     m_context->swapBuffers(this);
@@ -828,9 +871,16 @@ void DeclarativeWebContainer::initialize()
     // 2) model has tabs, load initial url or active tab.
     bool firstUseDone = DeclarativeWebUtils::instance()->firstUseDone();
     if ((m_model->waitingForNewTab() || m_model->count() == 0) && (firstUseDone || !m_initialUrl.isEmpty())) {
-        QString url = m_initialUrl.isEmpty() ? DeclarativeWebUtils::instance()->homePage() : m_initialUrl;
-        QString title = "";
-        m_model->newTab(url, title);
+        QString url = m_initialUrl;
+        if (m_initialUrl.isEmpty()) {
+            if (!browserEnabled()) {
+                url = ABOUT_BLANK;
+            } else {
+                url = DeclarativeWebUtils::instance()->homePage();
+            }
+        }
+
+        m_model->newTab(url);
     } else if (m_model->count() > 0 && !m_webPage) {
         Tab tab = m_model->activeTab();
         if (!m_initialUrl.isEmpty()) {
@@ -868,16 +918,10 @@ void DeclarativeWebContainer::onDownloadStarted()
     }
 }
 
-void DeclarativeWebContainer::onNewTabRequested(QString url, QString title, int parentId)
+void DeclarativeWebContainer::onNewTabRequested(const Tab &tab, int parentId)
 {
-    // TODO: Remove unused title argument.
-    Q_UNUSED(title);
-    Tab tab;
-    tab.setTabId(m_model->nextTabId());
-    tab.setUrl(url);
-
     if (activatePage(tab, false, parentId)) {
-        m_webPage->loadTab(url, false);
+        m_webPage->loadTab(tab.url(), false);
     }
 }
 
@@ -978,6 +1022,11 @@ void DeclarativeWebContainer::updatePageFocus(bool focus)
 bool DeclarativeWebContainer::canInitialize() const
 {
     return SailfishOS::WebEngine::instance()->initialized() && m_model && m_model->loaded();
+}
+
+bool DeclarativeWebContainer::browserEnabled() const
+{
+    return Sailfish::PolicyValue::keyValue(Sailfish::PolicyValue::BrowserEnabled).toBool();
 }
 
 void DeclarativeWebContainer::loadTab(const Tab& tab, bool force)

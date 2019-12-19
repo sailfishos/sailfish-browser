@@ -29,8 +29,8 @@ IconGridViewBase {
     readonly property int minOffsetIndex: contextMenu ? currentIndex - (currentIndex % columns) + columns : 0
     readonly property int yOffset: contextMenu ? contextMenu.height : 0
 
-    signal load(string url, string title)
-    signal newTab(string url, string title)
+    signal load(string url)
+    signal newTab(string url)
     signal share(string url, string title)
 
     function fetchAndSaveBookmark() {

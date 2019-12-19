@@ -256,7 +256,7 @@ void tst_declarativewebcontainer::load()
 {
     // No page and no model set => set initial url
     EXPECT_CALL(*SailfishOS::WebEngine::instance(), initialized()).WillOnce(Return(false));
-    m_webContainer->load(QString(), QString(), true);
+    m_webContainer->load(QString(), true);
     QCOMPARE(m_webContainer->m_initialUrl, QString("about:blank"));
 
     // Test the path for uninitialized container => set initial url
@@ -265,7 +265,7 @@ void tst_declarativewebcontainer::load()
     m_webContainer->setWebPage(&page);
     EXPECT_CALL(page, completed()).WillOnce(Return(false));
     EXPECT_CALL(*SailfishOS::WebEngine::instance(), initialized()).WillOnce(Return(false));
-    m_webContainer->load(QString("http://example1.com"), QString(), true);
+    m_webContainer->load(QString("http://example1.com"), true);
     QCOMPARE(m_webContainer->m_initialUrl, QString("http://example1.com"));
 
     // Initialized container, empty model => add new tab to model
@@ -273,13 +273,13 @@ void tst_declarativewebcontainer::load()
     m_webContainer->setTabModel(&model);
     EXPECT_CALL(*SailfishOS::WebEngine::instance(), initialized()).WillOnce(Return(true));
     EXPECT_CALL(page, completed()).WillOnce(Return(false));
-    m_webContainer->load(QString(), QString(), true);
+    m_webContainer->load(QString(), true);
 
     // There is a complete web page => page->loadTab()
     EXPECT_CALL(page, completed()).WillOnce(Return(true));
     QString testurl("http://example2.com");
     EXPECT_CALL(page, loadTab(testurl, true));
-    m_webContainer->load(testurl, QString(), true);
+    m_webContainer->load(testurl, true);
 }
 
 void tst_declarativewebcontainer::reload()

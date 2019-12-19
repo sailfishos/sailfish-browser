@@ -11,7 +11,7 @@
 
 #include "tab.h"
 
-Tab::Tab(int tabId, QString url, QString title, QString thumbPath) :
+Tab::Tab(int tabId, const QString &url, const QString &title, const QString &thumbPath) :
     m_tabId(tabId), m_url(url), m_title(title), m_thumbPath(thumbPath)
 {
 }

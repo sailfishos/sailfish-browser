@@ -13,9 +13,12 @@
 #define BROWSERSERVICE_H
 
 #include <QObject>
+#include <QDBusContext>
 #include <QStringList>
 
-class BrowserService : public QObject
+class BrowserUIServicePrivate;
+
+class BrowserService : public QObject, protected QDBusContext
 {
     Q_OBJECT
 public:
@@ -27,25 +30,27 @@ public slots:
     // these two calls are kept in this service for compatibility
     // but any calls that require the UI to be shown should be added to
     // the BrowserUIService service instead
-    void openUrl(QStringList args);
+    void openUrl(const QStringList &args);
     void activateNewTabView();
 
     void cancelTransfer(int transferId);
     void restartTransfer(int transferId);
-    void dumpMemoryInfo(QString fileName);
+    void dumpMemoryInfo(const QString &fileName);
 
 signals:
-    void openUrlRequested(QString url);
+    void openUrlRequested(const QString &url);
     void activateNewTabViewRequested();
     void cancelTransferRequested(int transferId);
     void restartTransferRequested(int transferId);
-    void dumpMemoryInfoRequested(QString fileName);
+    void dumpMemoryInfoRequested(const QString &fileName);
 
 private:
+    bool isPrivileged() const;
+
     bool m_registered;
 };
 
-class BrowserUIService : public QObject
+class BrowserUIService : public QObject, protected QDBusContext
 {
     Q_OBJECT
 public:
@@ -54,15 +59,22 @@ public:
     QString serviceName() const;
 
 public slots:
-    void openUrl(QStringList args);
+    void openUrl(const QStringList &args);
     void activateNewTabView();
+    void requestTab(int id, const QString &url);
+    void closeTab(int id);
 
 signals:
-    void openUrlRequested(QString url);
+    void openUrlRequested(const QString &url);
     void activateNewTabViewRequested();
+    void showChrome();
 
 private:
-    bool m_registered;
+    bool isPrivileged() const;
+
+    BrowserUIServicePrivate *d_ptr;
+    Q_DISABLE_COPY(BrowserUIService)
+    Q_DECLARE_PRIVATE(BrowserUIService)
 };
 
 #endif // BROWSERSERVICE_H
