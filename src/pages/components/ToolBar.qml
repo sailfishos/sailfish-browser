@@ -29,7 +29,8 @@ Column {
     readonly property alias toolsHeight: toolsRow.height
 
     readonly property int horizontalOffset: largeScreen ? Theme.paddingLarge : Theme.paddingSmall
-    readonly property int buttonPadding: largeScreen || orientation === Orientation.Landscape || orientation === Orientation.LandscapeInverted ? Theme.paddingMedium : Theme.paddingSmall
+    readonly property int buttonPadding: largeScreen || orientation === Orientation.Landscape || orientation === Orientation.LandscapeInverted
+                                         ? Theme.paddingMedium : Theme.paddingSmall
     readonly property int iconWidth: largeScreen ? (Theme.iconSizeLarge + 3 * buttonPadding) : (Theme.iconSizeMedium + 2 * buttonPadding)
     readonly property int smallIconWidth: largeScreen ? (Theme.iconSizeMedium + 3 * buttonPadding) : (Theme.iconSizeSmall + 2 * buttonPadding)
     // Height of toolbar should be such that viewport height is
@@ -46,7 +47,7 @@ Column {
                                                   WebUtils.cssPixelRatio) * WebUtils.cssPixelRatio
     property int scaledLandscapeHeight: Screen.width -
                                         Math.floor((Screen.width - Settings.toolbarSmall * Theme.pixelRatio) /
-                                                  WebUtils.cssPixelRatio) * WebUtils.cssPixelRatio
+                                                   WebUtils.cssPixelRatio) * WebUtils.cssPixelRatio
 
 
     signal showTabs
@@ -211,14 +212,19 @@ Column {
             property real glow
             expandedWidth: toolBarRow.smallIconWidth
             icon.source: danger ? "image://theme/icon-s-filled-warning" : "image://theme/icon-s-outline-secure"
-            active: !toolBarRow.secondaryToolsActive && !findInPageActive
+            active: webView.security && webView.security.validState && (!toolBarRow.secondaryToolsActive && !findInPageActive)
             icon.color: danger ? Qt.tint(Theme.primaryColor,
                                          Qt.rgba(Theme.errorColor.r, Theme.errorColor.g,
                                                  Theme.errorColor.b, glow))
                                : Theme.primaryColor
             enabled: webView.security
-            onTapped: certOverlayActive ? showChrome() : certOverlayLoader.active = true
-            visible: webView.security && webView.security.validState
+            onTapped: {
+                if (certOverlayActive) {
+                    showChrome()
+                } else {
+                    certOverlayLoader.active = true
+                }
+            }
 
             SequentialAnimation {
                 id: securityAnimation
@@ -329,7 +335,11 @@ Column {
             icon.source: webView.loading ? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
             active: webView.contentItem && !toolBarRow.secondaryToolsActive && !findInPageActive
             onTapped: {
-                webView.loading ? webView.stop() : webView.reload()
+                if (webView.loading) {
+                    webView.stop()
+                } else {
+                    webView.reload()
+                }
                 toolBarRow.showChrome()
             }
         }
