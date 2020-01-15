@@ -36,7 +36,7 @@ BuildRequires:  libgmock-devel
 BuildRequires:  pkgconfig(vault) >= 1.0.1
 BuildRequires:  pkgconfig(qtaround) >= 0.2.0
 
-Requires: sailfishsilica-qt5 >= 1.1.64
+Requires: sailfishsilica-qt5 >= 1.1.79
 Requires: sailfish-content-graphics
 Requires: xulrunner-qt5 >= %{min_xulrunner_version}
 Requires: embedlite-components-qt5 >= %{min_embedlite_components_version}
