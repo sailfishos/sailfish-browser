@@ -1,7 +1,7 @@
 /****************************************************************************
 **
-** Copyright (C) 2015 Jolla Ltd.
-** Contact: Raine Makelainen <raine.makelainen@jolla.com>
+** Copyright (c) 2015 - 2020 Jolla Ltd.
+** Copyright (c) 2020 Open Mobile Platform LLC.
 **
 ****************************************************************************/
 
@@ -53,15 +53,11 @@ Rectangle {
             }
 
             PropertyAction {
-                target: page
                 properties: 'width,height,rotation,orientation'
             }
 
             ScriptAction {
                 script: {
-                    // Restores the Bindings to width, height and rotation
-                    page._defaultTransition = false
-                    page._defaultTransition = true
                     orientationFader.applyContentOrientation()
                 }
             }
