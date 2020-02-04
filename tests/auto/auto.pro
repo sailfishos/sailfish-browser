@@ -7,7 +7,6 @@ SUBDIRS += tst_dbmanager \
     tst_downloadmimetypehandler \
     tst_persistenttabmodel \
     tst_desktopbookmarkwriter \
-    tst_linkvalidator \
     tst_webutils \
     tst_webpages \
     tst_webpagefactory \
