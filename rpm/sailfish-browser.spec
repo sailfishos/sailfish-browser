@@ -52,7 +52,6 @@ Requires: mapplauncherd >= 4.1.17
 Requires: mapplauncherd-booster-browser
 Requires: desktop-file-utils
 Requires: qt5-qtgraphicaleffects
-Requires: nemo-qml-plugin-contextkit-qt5
 Requires: nemo-qml-plugin-connectivity
 Requires: nemo-qml-plugin-policy-qt5 >= 0.0.4
 Requires: sailfish-policy >= 0.3.31
