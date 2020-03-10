@@ -12,6 +12,7 @@
 #include "downloadmanager.h"
 #include "downloadmimetypehandler.h"
 #include "browserpaths.h"
+#include "logging.h"
 
 #include <transferengineinterface.h>
 #include <transfertypes.h>
@@ -56,7 +57,6 @@ DownloadManager::~DownloadManager()
 
 void DownloadManager::recvObserve(const QString message, const QVariant data)
 {
-
     if (message != "embed:download") {
         // here we are interested in download messages only
         return;
@@ -67,6 +67,11 @@ void DownloadManager::recvObserve(const QString message, const QVariant data)
     QString targetPath = dataMap.value(QStringLiteral("targetPath")).toString();
     qulonglong downloadId(dataMap.value(QStringLiteral("id")).toULongLong());
     bool needPlatformTransfersUpdate = this->needPlatformTransfersUpdate(targetPath);
+
+    qCInfo(lcDownloadLog) << "Browser received embed:download message:" << msg
+                          << "needs platform transfer:" << needPlatformTransfersUpdate
+                          << "target path:" << targetPath
+                          << "existing transfer:" << m_download2transferMap.contains(downloadId);
 
     if (msg == QLatin1Literal("dl-start")
             && needPlatformTransfersUpdate
@@ -104,8 +109,10 @@ void DownloadManager::recvObserve(const QString message, const QVariant data)
         }
     } else if (msg == QLatin1Literal("dl-progress") && needPlatformTransfersUpdate) {
         qreal progress(dataMap.value(QStringLiteral("percent")).toULongLong() / 100.0);
+        qCInfo(lcDownloadLog) << "Browser update download progress:" << progress;
         m_transferClient->updateTransferProgress(m_download2transferMap.value(downloadId), progress);
     } else if (msg == QLatin1Literal("dl-done")) {
+        qCInfo(lcDownloadLog) << "Browser download done.";
         if (needPlatformTransfersUpdate) {
             m_transferClient->finishTransfer(m_download2transferMap.value(downloadId),
                                              TransferEngineData::TransferFinished,
@@ -241,8 +248,12 @@ void DownloadManager::setPreferences()
     webEngineSettings->setPreference(QString("browser.download.useJSTransfer"), QVariant(true));
     // see https://developer.mozilla.org/en-US/docs/Download_Manager_preferences
     // Use custom downloads location defined in browser.download.dir
+
+    // NS_PREF_DOWNLOAD_FOLDERLIST of nsExternalHelperAppService
     webEngineSettings->setPreference(QString("browser.download.folderList"), QVariant(2));
+    // NS_PREF_DOWNLOAD_DIR of nsExternalHelperAppService
     webEngineSettings->setPreference(QString("browser.download.dir"), BrowserPaths::downloadLocation());
+
     // Downloads should never be removed automatically
     webEngineSettings->setPreference(QString("browser.download.manager.retention"), QVariant(2));
     // Downloads will be canceled on quit
