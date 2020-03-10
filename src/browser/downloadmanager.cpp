@@ -260,8 +260,6 @@ void DownloadManager::setPreferences()
     // TODO: this doesn't really work. Instead the incomplete downloads get restarted
     //       on browser launch.
     webEngineSettings->setPreference(QString("browser.download.manager.quitBehavior"), QVariant(2));
-    // TODO: this doesn't really work too
-    webEngineSettings->setPreference(QString("browser.helperApps.deleteTempFileOnExit"), QVariant(true));
 
     DownloadMimetypeHandler::update();
 }
