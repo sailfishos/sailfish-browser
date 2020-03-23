@@ -43,9 +43,7 @@ private slots:
     bool clearCookies();
     bool clearPasswords();
     bool clearCache();
-    void setSearchEngine();
     void doNotTrack();
-    void handleObserve(const QString &message, const QVariant &data);
 
 private:
     explicit SettingManager(QObject *parent = 0);
@@ -54,7 +52,6 @@ private:
     MGConfItem *m_clearCookiesConfItem;
     MGConfItem *m_clearPasswordsConfItem;
     MGConfItem *m_clearCacheConfItem;
-    MGConfItem *m_searchEngineConfItem;
     MGConfItem *m_doNotTrackConfItem;
     MGConfItem *m_autostartPrivateBrowsing;
 
@@ -62,9 +59,6 @@ private:
     MGConfItem *m_toolbarLarge;
 
     bool m_initialized;
-    bool m_searchEnginesInitialized;
-
-    QStringList *m_addedSearchEngines;
 };
 
 #endif

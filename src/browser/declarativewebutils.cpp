@@ -140,8 +140,7 @@ void DeclarativeWebUtils::updateWebEngineSettings()
                             << "clipboard:setdata"
                             << "media-decoder-info"
                             << "embed:download"
-                            << "embed:allprefs"
-                            << "embed:search");
+                            << "embed:allprefs");
 
     // Enable internet search
     webEngineSettings->setPreference(QString("keyword.enabled"), QVariant(true));

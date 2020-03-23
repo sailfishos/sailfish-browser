@@ -12,8 +12,6 @@ import.files = qmldir
 import.path = $$TARGETPATH
 target.path = $$TARGETPATH
 
-include(../common/opensearchconfigs.pri)
-
 SOURCES += \
         declarative_plugin.cpp \
         browsersettings.cpp
