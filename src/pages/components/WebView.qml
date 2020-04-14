@@ -40,7 +40,7 @@ WebContainer {
     property var _webPageCreator: WebPageCreator {
         activeWebPage: contentItem
         // onNewWindowRequested is always handled as synchronous operation (not through newTab).
-        onNewWindowRequested: tabModel.newTab(url, parentId)
+        onNewWindowRequested: tabModel.newTab("", parentId)
     }
 
     property Component textSelectionControllerComponent: Component {
