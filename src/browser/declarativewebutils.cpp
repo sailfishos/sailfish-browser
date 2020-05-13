@@ -34,8 +34,9 @@
 #include "declarativewebutils.h"
 #include "browserpaths.h"
 
-static const QString gSystemComponentsTimeStamp("/var/lib/_MOZEMBED_CACHE_CLEAN_");
-static const QString gProfilePath("/.mozilla/mozembed");
+static const auto gSystemComponentsTimeStamp = QStringLiteral("/var/lib/_MOZEMBED_CACHE_CLEAN_");
+static const auto gProfilePath = QStringLiteral("/.mozilla/mozembed");
+static const auto defaultUserAgentUpdateUrl = QStringLiteral("https://browser.sailfishos.org/gecko/%APP_VERSION%/ua-update.json");
 
 static DeclarativeWebUtils *gSingleton = 0;
 
@@ -121,10 +122,14 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     SailfishOS::WebEngineSettings *webEngineSettings = SailfishOS::WebEngineSettings::instance();
     SailfishOS::WebEngine *webEngine = SailfishOS::WebEngine::instance();
 
+    webEngineSettings->setPreference(QStringLiteral("general.useragent.updates.enabled"),
+                        MGConfItem(QStringLiteral("/apps/sailfish-browser/settings/useragent_update_enabled")).value(QVariant(true)));
     webEngineSettings->setPreference(QStringLiteral("general.useragent.updates.url"),
-                        QStringLiteral("https://browser.sailfishos.org/gecko/%APP_VERSION%/ua-update.json"));
-    webEngineSettings->setPreference(QStringLiteral("general.useragent.updates.interval"), QVariant(172800)); // every 2nd day
-    webEngineSettings->setPreference(QStringLiteral("general.useragent.updates.retry"), QVariant(86400)); // 1 day
+                        MGConfItem(QStringLiteral("/apps/sailfish-browser/settings/useragent_update_url")).value(defaultUserAgentUpdateUrl));
+    webEngineSettings->setPreference(QStringLiteral("general.useragent.updates.interval"),
+                        MGConfItem(QStringLiteral("/apps/sailfish-browser/settings/useragent_update_interval")).value(QVariant(172800))); // every 2nd day
+    webEngineSettings->setPreference(QStringLiteral("general.useragent.updates.retry"),
+                        MGConfItem(QStringLiteral("/apps/sailfish-browser/settings/useragent_update_retry")).value(QVariant(86400))); // 1 day
 
     // Without this pref placeholders get cleaned as soon as a character gets committed
     // by VKB and that happens only when Enter is pressed or comma/space/dot is entered.
