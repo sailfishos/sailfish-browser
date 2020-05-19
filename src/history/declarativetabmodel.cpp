@@ -18,7 +18,6 @@
 #include "declarativewebcontainer.h"
 #include "declarativewebpage.h"
 #include "declarativetabmodel.h"
-#include "linkvalidator.h"
 
 #ifndef DEBUG_LOGS
 #define DEBUG_LOGS 0
@@ -50,10 +49,6 @@ QHash<int, QByteArray> DeclarativeTabModel::roleNames() const
 }
 
 void DeclarativeTabModel::addTab(const QString& url, const QString &title, int index) {
-    if (!LinkValidator::navigable(QUrl(url))) {
-        return;
-    }
-
     Q_ASSERT(index >= 0 && index <= m_tabs.count());
 
     const Tab tab(m_nextTabId, url, title, "");
@@ -303,13 +298,6 @@ bool DeclarativeTabModel::contains(int tabId) const
 
 void DeclarativeTabModel::updateUrl(int tabId, const QString &url, bool initialLoad)
 {
-    if (!LinkValidator::navigable(QUrl(url))) {
-#if DEBUG_LOGS
-        qDebug() << "invalid url: " << url;
-#endif
-        return;
-    }
-
     int tabIndex = findTabIndex(tabId);
     bool isActiveTab = m_activeTabId == tabId;
     bool updateDb = false;

@@ -21,14 +21,6 @@ IconGridViewBase {
     rows: Math.floor(pageHeight / minimumCellHeight)
     columns: Math.floor(browserPage.width / minimumCellWidth)
 
-    readonly property Item contextMenu: currentItem ? currentItem._menuItem : null
-    readonly property bool contextMenuActive: contextMenu && contextMenu.active
-
-    // Figure out which delegates need to be moved down to make room
-    // for the context menu when it's open.
-    readonly property int minOffsetIndex: contextMenu ? currentIndex - (currentIndex % columns) + columns : 0
-    readonly property int yOffset: contextMenu ? contextMenu.height : 0
-
     signal load(string url)
     signal newTab(string url)
     signal share(string url, string title)
@@ -52,31 +44,14 @@ IconGridViewBase {
     displaced: Transition { NumberAnimation { properties: "x,y"; easing.type: Easing.InOutQuad; duration: 200 } }
     cacheBuffer: cellHeight * 2
 
-    onVisibleChanged: {
-        if (!visible && contextMenuActive) {
-            contextMenu.hide()
-        }
-    }
-
-    delegate: ListItem {
-        id: container
-
-        property real offsetY: largeScreen
-                               ? - (((-favoriteGrid.originY+container.contentHeight/2)%favoriteGrid.pageHeight)/favoriteGrid.pageHeight - 0.5) * (Theme.paddingLarge*4)
-                               : 0
+    delegate: FavoriteItem {
+        id: favoriteItem
 
         signal addToLauncher
         signal editBookmark
 
-        width: favoriteGrid.cellWidth
-        _showPress: false
-        contentHeight: favoriteGrid.cellHeight
         menu: favoriteContextMenu
-        down: favoriteItem.down
         openMenuOnPressAndHold: false
-        // Do not capture mouse events here. This ListItem only handles
-        // menu creation and destruction.
-        enabled: false
 
         onAddToLauncher: {
             // url, title, favicon
@@ -98,33 +73,25 @@ IconGridViewBase {
                                    })
         }
 
-        FavoriteItem {
-            id: favoriteItem
 
-            width: favoriteGrid.cellWidth
-            height: favoriteGrid.cellHeight
-            y: index >= favoriteGrid.minOffsetIndex ? favoriteGrid.yOffset : 0.0
-
-            onClicked: favoriteGrid.load(model.url, model.title)
-            onShowContextMenuChanged: {
-                if (showContextMenu) {
-                    // Set currentIndex for grid to make minOffsetIndex calculation to work.
-                    favoriteGrid.currentIndex = model.index
-                    container.openMenu(
-                                {
-                                    "view": favoriteGrid,
-                                    "delegate": container,
-                                    "title": model.title,
-                                    "url": model.url,
-                                    "index": model.index
-                                })
-                }
+        onClicked: favoriteGrid.load(model.url, model.title)
+        onShowContextMenuChanged: {
+            if (showContextMenu) {
+                openMenu(
+                            {
+                                "view": favoriteGrid,
+                                "delegate": favoriteItem,
+                                "title": model.title,
+                                "url": model.url,
+                                "index": model.index
+                            })
             }
-
-            GridView.onAdd: AddAnimation { target: favoriteItem }
-            GridView.onRemove: animateRemoval()
         }
+
+        GridView.onAdd: AddAnimation { target: favoriteItem }
+        GridView.onRemove: animateRemoval()
     }
+
 
     FavoriteContextMenu {
         id: favoriteContextMenu

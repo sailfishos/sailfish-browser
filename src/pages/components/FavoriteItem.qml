@@ -12,7 +12,7 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
 
-BackgroundItem {
+GridItem {
     readonly property bool showContextMenu: down && _pressAndHold && window.pageStack.panelSize === 0
     property bool _pressAndHold
 

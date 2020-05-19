@@ -15,5 +15,7 @@
 #include <QLoggingCategory>
 
 Q_DECLARE_LOGGING_CATEGORY(lcCoreLog)
+Q_DECLARE_LOGGING_CATEGORY(lcBackupLog)
+Q_DECLARE_LOGGING_CATEGORY(lcDownloadLog)
 
 #endif
