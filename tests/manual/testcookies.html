@@ -1,0 +1,73 @@
+<html>
+    <head>
+        <title>Test Cookie</title>
+        <script>
+            function setCookie(key, value, minutes) {
+                var d = new Date();
+                d.setTime(d.getTime() + (minutes*60*1000));
+                var expires = "expires="+ d.toUTCString();
+                document.cookie = key + "=" + value + ";" + expires + ";path=/";
+            }
+
+            function getCookie(key) {
+                var cookies = decodeURIComponent(document.cookie).split(";");
+                for (const cookie of cookies) {
+                   var pair = cookie.trim().split("=");
+                   if (pair.length > 1 && pair[0] == key) {
+                       return pair[1].trim();
+                   }
+                }
+
+                return ""
+            }
+
+            function promptName() {
+                var inputText = prompt("Please enter name", "John Doe");
+                setCookie("name", inputText, 2);
+                setWelcomeMessage(inputText);
+            }
+
+            function setWelcomeMessage(msg) {
+                document.getElementById("msg").innerHTML = "Nice to see you " + msg;
+            }
+
+            function removeCookie() {
+                document.cookie = "name=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            }
+
+            function checkCookie() {
+                var username = getCookie("name");
+                if (username) {
+                    setWelcomeMessage("again " + username);
+                } else {
+                    promptName();
+                }
+            }
+        </script>
+        <style>
+            button {
+                font-size: 40pt
+            }
+            div, a {
+                font-size: 40pt;
+            }
+            p {
+                font-size: 40pt;
+            }
+
+            input {
+                width:100%;
+                height:80px;
+                font-size: 60px;
+            }
+        </style>
+    </head>
+    <body onload="checkCookie()">
+        <br/>
+        <button onclick="removeCookie()">Remove cookie</button>
+        <br/>
+        <p>After you have entered a name and restarted browser you should see "Nice to see you again 'name'"</p>
+        <div id="msg"></div>
+
+    </body>
+</html>
