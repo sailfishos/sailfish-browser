@@ -244,10 +244,4 @@ void DeclarativeWebUtils::setRenderingPreferences()
     webEngineSettings->setPreference(QString("gfx.compositor.external-window"), QVariant(true));
     webEngineSettings->setPreference(QString("gfx.compositor.clear-context"), QVariant(false));
     webEngineSettings->setPreference(QString("embedlite.compositor.external_gl_context"), QVariant(true));
-
-    if (webEngineSettings->pixelRatio() >= 2.0) {
-        // Don't use too small low precision buffers for high dpi devices. This reduces
-        // a bit the blurriness.
-        webEngineSettings->setPreference(QString("layers.low-precision-resolution"), QString("0.5f"));
-    }
 }
