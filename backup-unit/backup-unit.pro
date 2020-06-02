@@ -6,8 +6,7 @@ SOURCES += browserunit.cpp \
 
 CONFIG += link_pkgconfig
 
-PKGCONFIG += qtaround   \
-             vault
+PKGCONFIG += vault
 
 TARGETPATH = /usr/libexec/jolla-vault/units
 target.path = $$TARGETPATH

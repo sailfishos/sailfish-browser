@@ -34,7 +34,6 @@ BuildRequires:  oneshot
 BuildRequires:  gtest-devel
 BuildRequires:  libgmock-devel
 BuildRequires:  pkgconfig(vault) >= 1.0.1
-BuildRequires:  pkgconfig(qtaround) >= 0.2.0
 
 Requires: sailfishsilica-qt5 >= 1.1.79
 Requires: sailfish-content-graphics
