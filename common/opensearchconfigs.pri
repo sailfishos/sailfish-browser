@@ -1,5 +1,5 @@
 isEmpty(EMBEDLITE_CONTENT_PATH) {
-  DEFINES += EMBEDLITE_CONTENT_PATH=\"\\\"/usr/lib/mozembedlite/chrome/embedlite/content/\\\"\"
+  DEFINES += EMBEDLITE_CONTENT_PATH=\"\\\"$$[QT_INSTALL_LIBS]/mozembedlite/chrome/embedlite/content/\\\"\"
 } else {
   DEFINES += EMBEDLITE_CONTENT_PATH=\"\\\"$$EMBEDLITE_CONTENT_PATH\\\"\"
 }
