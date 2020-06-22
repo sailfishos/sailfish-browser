@@ -328,7 +328,7 @@ Page {
             if (url == "") {
                 bringToForeground(webView.chromeWindow)
                 if (!WebUtils.firstUseDone) {
-                    overlay.animator.showOverlay(true)
+                    overlay.enterNewTabUrl(PageStackAction.Immediate)
                 }
 
                 return
