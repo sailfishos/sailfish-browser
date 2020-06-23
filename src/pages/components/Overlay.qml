@@ -35,7 +35,7 @@ Background {
 
     property real _overlayHeight: browserPage.isPortrait ? toolBar.toolsHeight : 0
     property bool _showFindInPage
-    property bool _showUrlEntry: true
+    property bool _showUrlEntry
     property bool _showInfoOverlay
     readonly property bool _topGap: _showUrlEntry || _showFindInPage
 
