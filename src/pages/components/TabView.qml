@@ -1,7 +1,7 @@
 /****************************************************************************
 **
-** Copyright (C) 2014 Jolla Ltd.
-** Contact: Raine Makelainen <raine.makelainen@jolla.com>
+** Copyright (c) 2014 - 2019 Jolla Ltd.
+** Copyright (c) 2019 - 2020 Open Mobile Platform LLC.
 **
 ****************************************************************************/
 
@@ -20,6 +20,8 @@ SilicaListView {
     property bool portrait
     property bool privateMode
     property bool closingAllTabs
+
+    property var remorsePopup
 
     signal hide
     signal enterNewTabUrl
@@ -100,23 +102,34 @@ SilicaListView {
                     //: Menu item switching to private browser
                     //% "Private browsing"
                     qsTrId("sailfish_browser-me-private_browsing")
-            onDelayedClick: tabView.privateMode = !tabView.privateMode
+            onDelayedClick: {
+                if (remorsePopup) {
+                    remorsePopup.trigger()
+                }
+
+                tabView.privateMode = !tabView.privateMode
+
+            }
         }
         MenuItem {
             visible: showCloseAllAction.value && webView.tabModel.count
             //% "Close all tabs"
             text: qsTrId("sailfish_browser-me-close_all")
             onClicked: {
-                var remorse = Remorse.popupAction(
+                remorsePopup = Remorse.popupAction(
                             tabView,
                             //% "Closed all tabs"
                             qsTrId("sailfish_browser-closed-all-tabs"),
-                            function() { tabView.closeAll() })
+                            function() {
+                                tabView.closeAll()
+                                remorsePopup = null
+                            })
                 closingAllTabs = true
-                remorse.canceled.connect(
+                remorsePopup.canceled.connect(
                             function() {
                                 closingAllTabs = false
                                 tabView.closeAllCanceled()
+                                remorsePopup = null
                             })
             }
         }
