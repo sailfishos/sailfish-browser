@@ -404,12 +404,10 @@ void DeclarativeWebPage::resetViewMargins()
 
     // Reset margins always when fullscreen mode is enabled.
     QMargins margins;
-    bool chromeVisible = false;
     if (!m_fullscreen) {
         qreal threshold = qMax(m_fullScreenHeight * 1.5f, (m_fullScreenHeight + (m_toolbarHeight*2)));
         if (contentHeight() < threshold) {
             margins.setBottom(m_toolbarHeight);
-            chromeVisible = true;
         }
     }
 
@@ -417,8 +415,6 @@ void DeclarativeWebPage::resetViewMargins()
     if (contentHeight() > 0) {
         m_marginChangeThrottleTimer = startTimer(200);
     }
-
-    forceChrome(chromeVisible);
 
     qCDebug(lcCoreLog) << "WebPage: set margins:" << margins;
     setMargins(margins);
