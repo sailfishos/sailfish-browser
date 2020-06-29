@@ -14,6 +14,7 @@
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
+#include <QtCore/QFileInfoList>
 #include <QtCore/QLocale>
 #include <QtCore/QSettings>
 #include <QtCore/QStandardPaths>
@@ -35,7 +36,7 @@
 #include "browserpaths.h"
 
 static const auto gSystemComponentsTimeStamp = QStringLiteral("/var/lib/_MOZEMBED_CACHE_CLEAN_");
-static const auto gProfilePath = QStringLiteral("/.mozilla/mozembed");
+static const auto gStartupCacheDir = QStringLiteral("/.mozilla/mozembed/startupCache");
 static const auto defaultUserAgentUpdateUrl = QStringLiteral("https://browser.sailfishos.org/gecko/%APP_VERSION%/ua-update.json");
 
 static DeclarativeWebUtils *gSingleton = 0;
@@ -71,17 +72,19 @@ int DeclarativeWebUtils::getLightness(const QColor &color) const
     return color.lightness();
 }
 
+// Checks the modified date of the startupCache and deletes it if the embedlite-components-qt5
+// install is newer (determined using the modified time of /var/lib/_MOZEMBED_CACHE_CLEAN_).
 void DeclarativeWebUtils::clearStartupCacheIfNeeded()
 {
     QFileInfo systemStamp(gSystemComponentsTimeStamp);
     if (systemStamp.exists()) {
-        QString mostProfilePath = QDir::homePath() + gProfilePath;
-        QString localStampString(mostProfilePath + QString("/_CACHE_CLEAN_"));
-        QFileInfo localStamp(localStampString);
-        if (localStamp.exists() && systemStamp.lastModified() > localStamp.lastModified()) {
-            QDir cacheDir(mostProfilePath + "/startupCache");
-            cacheDir.removeRecursively();
-            QFile(localStampString).remove();
+        QDir cacheDir(QDir::homePath() + gStartupCacheDir);
+        if (cacheDir.exists()) {
+            QFileInfoList files = cacheDir.entryInfoList(QDir::Files, QDir::Time);
+            if (files.count() > 0 && systemStamp.lastModified() > files.first().lastModified()) {
+                qDebug("Removing cache to synchronise with fresh embedlite-components-qt5");
+                cacheDir.removeRecursively();
+            }
         }
     }
 }
