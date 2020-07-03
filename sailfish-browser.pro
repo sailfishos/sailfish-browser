@@ -12,8 +12,7 @@ dbus_service.path = /usr/share/dbus-1/services
 chrome_scripts.files = chrome/*.js
 chrome_scripts.path = $$[QT_INSTALL_LIBS]/mozembedlite/chrome/embedlite/content
 
-oneshots.files = oneshot.d/browser-cleanup-startup-cache \
-                 oneshot.d/browser-update-default-data
+oneshots.files = oneshot.d/browser-update-default-data
 oneshots.path  = /usr/lib/oneshot.d
 
 data.files = data/prefs.js \
