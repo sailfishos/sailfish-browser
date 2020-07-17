@@ -134,9 +134,6 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     // Without this pref placeholders get cleaned as soon as a character gets committed
     // by VKB and that happens only when Enter is pressed or comma/space/dot is entered.
     webEngineSettings->setPreference(QString("dom.placeholder.show_on_focus"), QVariant(false));
-
-    webEngineSettings->setPreference(QString("security.alternate_certificate_error_page"), QString("certerror"));
-
     webEngineSettings->setPreference(QString("geo.wifi.scan"), QVariant(false));
     webEngineSettings->setPreference(QString("media.resource_handler_disabled"), QVariant(true));
 
@@ -152,13 +149,6 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     webEngineSettings->setPreference(QString("keyword.enabled"), QVariant(true));
 
     setRenderingPreferences();
-
-    // Disable SSLv3
-    webEngineSettings->setPreference(QString("security.tls.version.min"), QVariant(1));
-
-    // Content Security Policy is enabled by default,
-    // this enables the spec compliant mode.
-    webEngineSettings->setPreference(QString("security.csp.speccompliant"), QVariant(true));
 }
 
 void DeclarativeWebUtils::setFirstUseDone(bool firstUseDone) {
