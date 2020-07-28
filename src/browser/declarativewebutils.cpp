@@ -34,8 +34,6 @@
 #include "declarativewebutils.h"
 #include "browserpaths.h"
 
-static const auto gSystemComponentsTimeStamp = QStringLiteral("/var/lib/_MOZEMBED_CACHE_CLEAN_");
-static const auto gProfilePath = QStringLiteral("/.mozilla/mozembed");
 static const auto defaultUserAgentUpdateUrl = QStringLiteral("https://browser.sailfishos.org/gecko/%APP_VERSION%/ua-update.json");
 
 static DeclarativeWebUtils *gSingleton = 0;
@@ -69,21 +67,6 @@ DeclarativeWebUtils::~DeclarativeWebUtils()
 int DeclarativeWebUtils::getLightness(const QColor &color) const
 {
     return color.lightness();
-}
-
-void DeclarativeWebUtils::clearStartupCacheIfNeeded()
-{
-    QFileInfo systemStamp(gSystemComponentsTimeStamp);
-    if (systemStamp.exists()) {
-        QString mostProfilePath = QDir::homePath() + gProfilePath;
-        QString localStampString(mostProfilePath + QString("/_CACHE_CLEAN_"));
-        QFileInfo localStamp(localStampString);
-        if (localStamp.exists() && systemStamp.lastModified() > localStamp.lastModified()) {
-            QDir cacheDir(mostProfilePath + "/startupCache");
-            cacheDir.removeRecursively();
-            QFile(localStampString).remove();
-        }
-    }
 }
 
 void DeclarativeWebUtils::handleDumpMemoryInfoRequest(const QString &fileName)
