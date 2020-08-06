@@ -196,6 +196,19 @@ QString DeclarativeWebUtils::displayableUrl(const QString &fullUrl) const
     return !returnUrl.isEmpty() ? returnUrl : fullUrl;
 }
 
+QString DeclarativeWebUtils::pageName(const QString &fullUrl) const
+{
+    QUrl url(fullUrl);
+
+    // Leaving only the path (if present).
+    QString returnPageName = url.toDisplayString(QUrl::RemoveScheme |
+                                                 QUrl::RemoveAuthority |
+                                                 QUrl::RemoveQuery |
+                                                 QUrl::StripTrailingSlash);
+
+    return returnPageName.remove(0, returnPageName.lastIndexOf("/") + 1);
+}
+
 void DeclarativeWebUtils::handleObserve(const QString &message, const QVariant &data)
 {
     const QVariantMap dataMap = data.toMap();

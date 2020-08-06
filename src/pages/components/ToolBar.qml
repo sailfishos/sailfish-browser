@@ -64,6 +64,7 @@ Column {
     signal shareActivePage
     signal bookmarkActivePage
     signal removeActivePageFromBookmarks
+    signal savePageAsPDF
 
     function resetFind() {
         webView.sendAsyncMessage("embedui:find", { text: "", backwards: false, again: false })

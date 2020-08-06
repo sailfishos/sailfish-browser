@@ -37,6 +37,7 @@ public:
 
     Q_INVOKABLE int getLightness(const QColor &color) const;
     Q_INVOKABLE QString displayableUrl(const QString &fullUrl) const;
+    Q_INVOKABLE QString pageName(const QString &fullUrl) const;
 
 public slots:
     QString homePage() const;
