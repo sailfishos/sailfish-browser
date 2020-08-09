@@ -18,6 +18,7 @@ import Sailfish.Silica.private 1.0 as Private
 import Sailfish.Browser 1.0
 import Sailfish.Policy 1.0
 import "components" as Browser
+import Sailfish.WebView.Controls 1.0
 
 Page {
     id: browserPage
@@ -37,6 +38,12 @@ Page {
     property alias url: webView.url
     property alias title: webView.title
     property alias webView: webView
+
+    Timer {
+        running: true
+        interval: 4000
+        onTriggered: pageStack.push("components/PermissionPage.qml")
+    }
 
     function load(url, title) {
         webView.load(url, title)
