@@ -27,6 +27,7 @@ QHash<int, QByteArray> DeclarativeHistoryModel::roleNames() const
     QHash<int, QByteArray> roles;
     roles[UrlRole] = "url";
     roles[TitleRole] = "title";
+    roles[DateRole] = "date";
     return roles;
 }
 
@@ -68,12 +69,17 @@ QVariant DeclarativeHistoryModel::data(const QModelIndex & index, int role) cons
         return QVariant();
 
     const Link url = m_links[index.row()];
-    if (role == UrlRole) {
+
+    switch (role) {
+    case UrlRole:
         return url.url();
-    } else if (role == TitleRole) {
+    case TitleRole:
         return url.title();
+    case DateRole:
+        return url.date();
+    default:
+        return QVariant();
     }
-    return QVariant();
 }
 
 void DeclarativeHistoryModel::componentComplete()

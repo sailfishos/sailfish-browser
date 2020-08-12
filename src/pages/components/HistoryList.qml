@@ -36,7 +36,7 @@ SilicaListView {
 
             Label {
                 id: titleText
-                text: Theme.highlightText(title, search, Theme.highlightColor)
+                text: Theme.highlightText(model.title, search, Theme.highlightColor)
                 textFormat: Text.StyledText
                 color: highlighted ? Theme.highlightColor : Theme.primaryColor
                 font.pixelSize: Theme.fontSizeSmall
@@ -45,7 +45,7 @@ SilicaListView {
             }
 
             Label {
-                text: Theme.highlightText(url, search, Theme.highlightColor)
+                text: Theme.highlightText(model.url, search, Theme.highlightColor)
                 textFormat: Text.StyledText
                 opacity: Theme.opacityHigh
                 color: highlighted ? Theme.highlightColor : Theme.primaryColor
@@ -72,16 +72,6 @@ SilicaListView {
                 }
             }
         }
-    }
-
-    ViewPlaceholder {
-        x: (view.width - width) / 2
-        y: view.originY + (view.height - height) / 2
-        enabled: !history.count
-
-        //: Shown as placeholder in history list when entered text or url did not match to history.
-        //% "Press enter to open"
-        text: qsTrId("sailfish_browser-la-press_enter_to_open")
     }
 
     VerticalScrollDecorator {

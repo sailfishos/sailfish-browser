@@ -167,11 +167,11 @@ Item {
             changes: [
                 PropertyChanges {
                     target: overlay
-                    y: webView.fullscreenHeight - overlay.toolBar.toolsHeight * 3
+                    y: webView.fullscreenHeight - overlay.toolBar.toolsHeight * 4
                 },
                 PropertyChanges {
                     target: overlay.toolBar
-                    secondaryToolsHeight: overlay.toolBar.toolsHeight * 2
+                    secondaryToolsHeight: overlay.toolBar.toolsHeight * 3
                 }
             ]
         },
