@@ -57,6 +57,7 @@ Column {
     signal showChrome
     signal closeActiveTab
     signal showCertDetail
+    signal loadPage(string url)
 
     // Used from SecondaryBar
     signal enterNewTabUrl

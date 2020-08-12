@@ -14,11 +14,12 @@
 
 #include <QString>
 #include <QDebug>
+#include <QDate>
 
 class Link
 {
 public:
-    explicit Link(int linkId, const QString &url, const QString &thumbPath, const QString &title);
+    explicit Link(int linkId, const QString &url, const QString &thumbPath, const QString &title, const QDate &date = QDate());
     explicit Link();
     Link(const Link& l);
 
@@ -39,11 +40,15 @@ public:
     bool operator==(const Link &other) const;
     bool operator!=(const Link &other) const;
 
+    QDate date() const;
+    void setDate(const QDate &date);
+
 private:
     int m_linkId;
     QString m_url;
     QString m_thumbPath;
     QString m_title;
+    QDate m_date;
 };
 
 QDebug operator<<(QDebug, const Link *);

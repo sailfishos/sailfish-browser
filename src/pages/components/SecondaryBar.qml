@@ -41,6 +41,22 @@ Column {
         }
     }
 
+    OverlayListItem {
+        height: overlay.toolBar.toolsHeight
+
+        iconWidth: root.iconWidth
+        horizontalOffset: root.horizontalOffset
+        //% "History"
+        text: qsTrId("sailfish_browser-la-history")
+        iconSource: "image://theme/icon-m-history"
+
+        onClicked: {
+            showChrome()
+            var historyPage = pageStack.push("HistoryPage.qml", { model: historyModel })
+            historyPage.loadPage.connect(loadPage)
+        }
+    }
+
     Row {
         width: parent.width
         height: overlay.toolBar.toolsHeight
