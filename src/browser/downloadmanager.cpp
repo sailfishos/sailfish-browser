@@ -254,11 +254,11 @@ void DownloadManager::setPreferences()
     // NS_PREF_DOWNLOAD_DIR of nsExternalHelperAppService
     webEngineSettings->setPreference(QString("browser.download.dir"), BrowserPaths::downloadLocation());
 
-    // Downloads should never be removed automatically
+    // Cleanup these when moving to ESR60 (JB#50828).
+    // Downloads should never be removed automatically.
+    // Partial downloads are removed in the embedlite-components (see JB#50127)
     webEngineSettings->setPreference(QString("browser.download.manager.retention"), QVariant(2));
     // Downloads will be canceled on quit
-    // TODO: this doesn't really work. Instead the incomplete downloads get restarted
-    //       on browser launch.
     webEngineSettings->setPreference(QString("browser.download.manager.quitBehavior"), QVariant(2));
 
     DownloadMimetypeHandler::update();
