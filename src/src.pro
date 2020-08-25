@@ -42,6 +42,7 @@ EE_QM = $$OUT_PWD/sailfish-browser_eng_en.qm
 include(../translations/translations.pri)
 
 include(../defaults.pri)
+include(../common/browserapp.pri)
 include(../common/opensearchconfigs.pri)
 include(../common/paths.pri)
 include(core/core.pri)

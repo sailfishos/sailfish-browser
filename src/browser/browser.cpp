@@ -15,6 +15,7 @@
 #include "declarativewebutils.h"
 #include "downloadmanager.h"
 #include "settingmanager.h"
+#include "browserapp.h"
 
 #include <QDir>
 #include <QGuiApplication>
@@ -77,7 +78,7 @@ Browser::Browser(QQuickView *view, QObject *parent)
     Q_ASSERT(view);
     Q_ASSERT(qGuiApp);
 
-    SailfishOS::WebEngine::initialize("mozembed");
+    SailfishOS::WebEngine::initialize(BrowserApp::profileName());
     SailfishOS::WebEngineSettings::initialize();
 
     DeclarativeWebUtils *utils = DeclarativeWebUtils::instance();

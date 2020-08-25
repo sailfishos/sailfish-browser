@@ -17,6 +17,7 @@
 #include "webpagefactory.h"
 #include "webpages.h"
 #include "browserpaths.h"
+#include "browserapp.h"
 
 #include <webengine.h>
 #include <QTimerEvent>

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Captive Portal Browser
+X-MeeGo-Logical-Id=sailfish-browser-ap-name
+X-MeeGo-Translation-Catalog=sailfish-browser-captiveportal
+Icon=icon-launcher-browser
+Exec=invoker -s --type=browser -G /usr/bin/sailfish-browser-captiveportal -captiveportal %U
+Comment=Sailfish UI application

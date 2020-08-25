@@ -2,11 +2,12 @@ TEMPLATE = subdirs
 SUBDIRS += src tests settings backup-unit
 
 # The .desktop file
-desktop.files = sailfish-browser.desktop open-url.desktop
+desktop.files = sailfish-browser.desktop sailfish-browser-captiveportal.desktop open-url.desktop
 desktop.path = /usr/share/applications
 
 dbus_service.files = org.sailfishos.browser.service \
-                     org.sailfishos.browser.ui.service
+                     org.sailfishos.browser.ui.service \
+                     org.sailfishos.browser.captiveportal.service
 dbus_service.path = /usr/share/dbus-1/services
 
 chrome_scripts.files = chrome/*.js

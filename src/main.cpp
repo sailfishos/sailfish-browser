@@ -20,6 +20,7 @@
 #include <QDBusPendingCall>
 
 #include "browser.h"
+#include "browserapp.h"
 // Registered QML types
 #include "declarativebookmarkmodel.h"
 #include "desktopbookmarkwriter.h"
@@ -93,7 +94,9 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
         return 0;
     }
 
-    BrowserUIService *uiService = new BrowserUIService(app.data());
+    BrowserUIService *uiService = nullptr;
+    if (!BrowserApp::captivePortal())
+        uiService = new BrowserUIService(app.data());
 
     QString translationPath("/usr/share/translations/");
     QTranslator engineeringEnglish;
@@ -107,8 +110,11 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     //% "Browser"
     view->setTitle(qtTrId("sailfish-browser-ap-name"));
 
-    app->setApplicationName(QString("sailfish-browser"));
-    app->setOrganizationName(QString("org.sailfishos"));
+    if (BrowserApp::captivePortal())
+        app->setApplicationName(QStringLiteral("sailfish-browser-captiveportal"));
+    else
+        app->setApplicationName(QStringLiteral("sailfish-browser"));
+    app->setOrganizationName(QStringLiteral("org.sailfishos"));
 
     const char *uri = "Sailfish.Browser";
 
@@ -137,12 +143,15 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     browser->connect(service, &BrowserService::dumpMemoryInfoRequested,
                      browser, &Browser::dumpMemoryInfo);
 
-    browser->connect(uiService, &BrowserUIService::openUrlRequested,
-                     browser, &Browser::openUrl);
-    browser->connect(uiService, &BrowserUIService::activateNewTabViewRequested,
-                     browser, &Browser::openNewTabView);
-    browser->connect(uiService, &BrowserUIService::showChrome,
-                     browser, &Browser::showChrome);
+    if (uiService)
+    {
+        browser->connect(uiService, &BrowserUIService::openUrlRequested,
+                        browser, &Browser::openUrl);
+        browser->connect(uiService, &BrowserUIService::activateNewTabViewRequested,
+                        browser, &Browser::openNewTabView);
+        browser->connect(uiService, &BrowserUIService::showChrome,
+                        browser, &Browser::showChrome);
+    }
 
     browser->connect(service, &BrowserService::cancelTransferRequested,
                      browser, &Browser::cancelDownload);
