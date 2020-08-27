@@ -2,6 +2,7 @@ INCLUDEPATH += $$PWD
 
 # C++ sources
 SOURCES += \
+    $$PWD/bookmarkfiltermodel.cpp \
     $$PWD/declarativebookmarkmodel.cpp \
     $$PWD/desktopbookmarkwriter.cpp \
     $$PWD/bookmarkmanager.cpp \
@@ -10,6 +11,7 @@ SOURCES += \
 
 # C++ headers
 HEADERS += \
+    $$PWD/bookmarkfiltermodel.h \
     $$PWD/declarativebookmarkmodel.h \
     $$PWD/desktopbookmarkwriter.h \
     $$PWD/bookmarkmanager.h \
