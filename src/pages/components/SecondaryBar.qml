@@ -15,7 +15,7 @@ import Sailfish.Browser 1.0
 import org.nemomobile.dbus 2.0
 import "." as Browser
 
-Item {
+Column {
     id: root
     property bool bookmarked
     property int horizontalOffset
@@ -26,9 +26,24 @@ Item {
     height: isPortrait ? Settings.toolbarLarge : Settings.toolbarSmall
     clip: opacity < 1.0
 
+    OverlayListItem {
+        height: overlay.toolBar.toolsHeight
+
+        iconWidth: root.iconWidth
+        horizontalOffset: root.horizontalOffset
+        iconSource: "image://theme/icon-m-favorite-selected"
+        //% "Favourites"
+        text: qsTrId("sailfish_browser-la-favourites")
+
+        onClicked: {
+            showChrome()
+            pageStack.push("BookmarkPage.qml")
+        }
+    }
+
     Row {
         width: parent.width
-        height: parent.height
+        height: overlay.toolBar.toolsHeight
 
         Browser.TabButton {
             id: addTabButton
