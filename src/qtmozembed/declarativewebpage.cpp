@@ -19,12 +19,11 @@
 #include <QtConcurrent>
 #include <qmozsecurity.h>
 
-static const QString gFullScreenMessage("embed:fullscreenchanged");
-static const QString gDomContentLoadedMessage("chrome:contentloaded");
-
-static const QString gContentOrientationChanged("embed:contentOrientationChanged");
-static const QString gLinkAddedMessage("chrome:linkadded");
-static const QString gFindMessage("embed:find");
+#define FULLSCREEN_MESSAGE "embed:fullscreenchanged"
+#define DOM_CONTENT_LOADED_MESSAGE "chrome:contentloaded"
+#define CONTENT_ORIENTATION_CHANGED_MESSAGE "embed:contentOrientationChanged"
+#define LINK_ADDED_MESSAGE "chrome:linkadded"
+#define FIND_MESSAGE "embed:find"
 
 bool isBlack(QRgb rgb)
 {
@@ -62,14 +61,16 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
     , m_virtualKeyboardMargin(0.f)
     , m_marginChangeThrottleTimer(0)
 {
-    addMessageListener(gFullScreenMessage);
-    addMessageListener(gDomContentLoadedMessage);
 
-    addMessageListener(gLinkAddedMessage);
-    addMessageListener(gFindMessage);
-    addMessageListener(gContentOrientationChanged);
+    // subscribe to gecko messages
+    std::vector<std::string> messages = { FULLSCREEN_MESSAGE,
+                                          DOM_CONTENT_LOADED_MESSAGE,
+                                          LINK_ADDED_MESSAGE,
+                                          FIND_MESSAGE,
+                                          CONTENT_ORIENTATION_CHANGED_MESSAGE };
 
     loadFrameScript("chrome://embedlite/content/embedhelper.js");
+    addMessageListeners(messages);
 
     connect(this, &DeclarativeWebPage::recvAsyncMessage,
             this, &DeclarativeWebPage::onRecvAsyncMessage);
@@ -467,18 +468,18 @@ QString DeclarativeWebPage::saveToFile(QImage image)
 
 void DeclarativeWebPage::onRecvAsyncMessage(const QString& message, const QVariant& data)
 {
-    if (message == gFullScreenMessage) {
+    if (message == QLatin1String(FULLSCREEN_MESSAGE)) {
         setFullscreen(data.toMap().value(QString("fullscreen")).toBool());
-    } else if (message == gDomContentLoadedMessage) {
+    } else if (message == QLatin1String(DOM_CONTENT_LOADED_MESSAGE)) {
         setContentLoaded();
-    } else if (message == gContentOrientationChanged) {
-        QString orientation = data.toMap().value("orientation").toString();
+    } else if (message == QLatin1String(CONTENT_ORIENTATION_CHANGED_MESSAGE)) {
+        QString orientation = data.toMap().value(QStringLiteral("orientation")).toString();
         Qt::ScreenOrientation mappedOrientation = Qt::PortraitOrientation;
-        if (orientation == QStringLiteral("landscape-primary")) {
+        if (orientation == QLatin1String("landscape-primary")) {
             mappedOrientation = Qt::LandscapeOrientation;
-        } else if (orientation == QStringLiteral("landscape-secondary")) {
+        } else if (orientation == QLatin1String("landscape-secondary")) {
             mappedOrientation = Qt::InvertedLandscapeOrientation;
-        } else if (orientation == QStringLiteral("portrait-secondary")) {
+        } else if (orientation == QLatin1String("portrait-secondary")) {
             mappedOrientation = Qt::InvertedPortraitOrientation;
         }
         emit contentOrientationChanged(mappedOrientation);
