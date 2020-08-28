@@ -121,12 +121,12 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     webEngineSettings->setPreference(QString("media.resource_handler_disabled"), QVariant(true));
 
     // subscribe to gecko messages
-    webEngine->addObservers(QStringList()
-                            << "clipboard:setdata"
-                            << "media-decoder-info"
-                            << "embed:download"
-                            << "embed:allprefs"
-                            << "embed:search");
+    std::vector<std::string> messages = { "clipboard:setdata",
+                                          "media-decoder-info",
+                                          "embed:download",
+                                          "embed:allprefs",
+                                          "embed:search" };
+    webEngine->addObservers(messages);
 
     // Enable internet search
     webEngineSettings->setPreference(QString("keyword.enabled"), QVariant(true));

@@ -14,6 +14,8 @@
 
 #include <QObject>
 #include <QVariant>
+#include <vector>
+#include <string>
 
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
@@ -41,8 +43,8 @@ public:
     MOCK_METHOD2(notifyObservers, void(const QString &, const QString &));
     MOCK_METHOD2(notifyObservers, void(const QString &, const QVariant &));
 
-    MOCK_METHOD1(addObserver, void(const QString &));
-    MOCK_METHOD1(addObservers, void(const QStringList &));
+    MOCK_METHOD1(addObserver, void(const std::string &));
+    MOCK_METHOD1(addObservers, void(const std::vector<std::string> &));
 
 signals:
     void onInitialized();
