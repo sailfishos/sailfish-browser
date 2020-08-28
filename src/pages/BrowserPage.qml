@@ -22,7 +22,6 @@ import "components" as Browser
 Page {
     id: browserPage
 
-    readonly property bool __hasBackground: true
     readonly property rect inputMask: inputMaskForOrientation(orientation)
     readonly property bool active: status == PageStatus.Active
     property bool tabPageActive
@@ -83,6 +82,8 @@ Page {
         }
         return mask
     }
+
+    background: null
 
     onStatusChanged: {
         if (overlay.enteringNewTabUrl || webView.tabModel.count === 0) {

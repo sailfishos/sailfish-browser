@@ -55,36 +55,7 @@ ApplicationWindow {
 
     cover: null
 
-    Browser.Background {
-        id: pushBackground
-        parent: null
-        anchors.fill: parent
-        z: -1
-    }
-
-    pageStack.onCurrentPageChanged: {
-        var currentContainer = pageStack._currentContainer
-
-        // synchronous x binding does not work with the new animator-based page pushes
-        // the push is performed using placeholder page, the background is handled with pushBackground above
-        var isPlaceholderPage = pageStack.currentPage && pageStack.currentPage.hasOwnProperty("__placeholder")
-        var newBackground = pageStack.currentPage && !pageStack.currentPage.hasOwnProperty("__hasBackground")
-        if (isPlaceholderPage) {
-            pushBackground.parent = pageStack.currentPage
-        } else if (newBackground) {
-            var background = pushBackgroundComponent.createObject(pageStack.currentPage)
-            background.parent = pageStack.currentPage
-        }
-    }
-
-    Component {
-        id: pushBackgroundComponent
-        Browser.Background {
-            parent: null
-            anchors.fill: parent
-            z: -1
-        }
-    }
+    pageStack.pageBackground: Component { Browser.Background {} }
 
     DisabledByMdmView {
         enabled: !AccessPolicy.browserEnabled
