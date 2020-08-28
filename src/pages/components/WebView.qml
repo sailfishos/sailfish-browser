@@ -365,9 +365,9 @@ WebContainer {
             }
 
             Component.onCompleted: {
-                addMessageListeners(["Content:SelectionRange",
-                                     "Content:SelectionCopied",
-                                     "Content:SelectionSwap"])
+                addMessageListener("Content:SelectionRange")
+                addMessageListener("Content:SelectionCopied")
+                addMessageListener("Content:SelectionSwap")
             }
         }
     }

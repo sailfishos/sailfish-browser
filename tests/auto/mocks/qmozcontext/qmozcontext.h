@@ -42,7 +42,7 @@ public:
     MOCK_METHOD2(notifyObservers, void(const QString &, const QVariant &));
 
     MOCK_METHOD1(addObserver, void(const QString &));
-    MOCK_METHOD1(addObservers, void(const QStringList &));
+    MOCK_METHOD1(addObservers, void(const std::vector<std::string> &));
 
 signals:
     void onInitialized();
