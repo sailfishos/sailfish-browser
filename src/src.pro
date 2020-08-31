@@ -61,3 +61,4 @@ OTHER_FILES = *.qml \
               pages/components/*.qml \
               pages/components/*.js \
               rpm/sailfish-browser.spec
+

@@ -91,10 +91,12 @@ Browser::Browser(QQuickView *view, QObject *parent)
     d->closeEventFilter = new CloseEventFilter(downloadManager, this);
     d->view->installEventFilter(d->closeEventFilter);
 
+    QString mainQml = BrowserApp::captivePortal() ? "captiveportal.qml" : "browser.qml";
+
 #ifdef USE_RESOURCES
-    d->view->setSource(QUrl("qrc:///browser.qml"));
+    d->view->setSource(QUrl(QString("qrc:///") + mainQml));
 #else
-    d->view->setSource(QUrl::fromLocalFile(Browser::applicationFilePath() + "browser.qml"));
+    d->view->setSource(QUrl::fromLocalFile(Browser::applicationFilePath() + mainQml));
 #endif
 }
 

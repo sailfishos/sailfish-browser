@@ -1,7 +1,6 @@
 /****************************************************************************
 **
-** Copyright (c) 2013 - 2019 Jolla Ltd.
-** Copyright (c) 2019 - 2020 Open Mobile Platform LLC.
+** Copyright (c) 2020 Open Mobile Platform LLC.
 **
 ****************************************************************************/
 
@@ -15,8 +14,9 @@ import "pages"
 BrowserWindow {
     id: window
 
+    coverMode: false
     initialPage: Component {
-        BrowserPage {
+        CaptivePortalPage {
             id: browserPage
 
             Component.onCompleted: {

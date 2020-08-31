@@ -122,12 +122,16 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     qmlRegisterRevision<QQuickItem, 1>(uri, 1, 0);
     qmlRegisterRevision<QWindow, 1>(uri, 1, 0);
 
-    qmlRegisterType<DeclarativeBookmarkModel>(uri, 1, 0, "BookmarkModel");
     qmlRegisterUncreatableType<DeclarativeTabModel>(uri, 1, 0, "TabModel", "TabModel is abstract!");
-    qmlRegisterUncreatableType<PersistentTabModel>(uri, 1, 0, "PersistentTabModel", "");
     qmlRegisterUncreatableType<PrivateTabModel>(uri, 1, 0, "PrivateTabModel", "");
+
+    if (!BrowserApp::captivePortal())
+    {
+        qmlRegisterType<DeclarativeBookmarkModel>(uri, 1, 0, "BookmarkModel");
+        qmlRegisterUncreatableType<PersistentTabModel>(uri, 1, 0, "PersistentTabModel", "");
+        qmlRegisterType<DeclarativeHistoryModel>(uri, 1, 0, "HistoryModel");
+    }
     qmlRegisterUncreatableType<DownloadStatus>(uri, 1, 0, "DownloadStatus", "");
-    qmlRegisterType<DeclarativeHistoryModel>(uri, 1, 0, "HistoryModel");
     qmlRegisterType<DeclarativeWebContainer>(uri, 1, 0, "WebContainer");
     qmlRegisterType<DeclarativeWebPage>(uri, 1, 0, "WebPage");
     qmlRegisterType<DeclarativeWebPageCreator>(uri, 1, 0, "WebPageCreator");
