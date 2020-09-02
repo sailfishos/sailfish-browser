@@ -1,2 +1,2 @@
 #!/bin/sh
-rm -rf /home/$USER/.mozilla/mozembed/startupCache
+rm -rf ~/.mozilla/mozembed/startupCache
