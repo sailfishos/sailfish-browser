@@ -1,5 +1,5 @@
 #!/bin/sh
-MOZEMBED_DIR=/home/$USER/.mozilla/mozembed
+MOZEMBED_DIR=~/.mozilla/mozembed
 BROWSER_DATA_DIR=/usr/share/sailfish-browser/data
 
 if [ ! -d "$MOZEMBED_DIR" ]; then
