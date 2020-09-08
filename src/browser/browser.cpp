@@ -22,13 +22,50 @@
 #include <QQuickView>
 #include <QTimer>
 #include <QUrl>
+#include <QDebug>
 #include <webengine.h>
 #include <webenginesettings.h>
+
+const auto MOZILLA_DATA_DIR = QStringLiteral("/.mozilla/mozembed/");
+const auto MOZILLA_DATA_UA_UPDATE = QStringLiteral("ua-update.json");
+const auto MOZILLA_DATA_UA_UPDATE_SOURCE = QStringLiteral("/usr/share/sailfish-browser/data/ua-update.json.in");
+const auto MOZILLA_DATA_PREFS = QStringLiteral("prefs.js");
+const auto MOZILLA_DATA_PREFS_SOURCE = QStringLiteral("/usr/share/sailfish-browser/data/prefs.js");
 
 BrowserPrivate::BrowserPrivate(QQuickView *view)
     : view(view)
     , closeEventFilter(nullptr)
 {
+    initUserData();
+}
+
+void BrowserPrivate::initUserData()
+{
+    QDir dir(QDir::homePath() + MOZILLA_DATA_DIR);
+    if (!dir.exists())
+        dir.mkpath(dir.path());
+
+    QFile ua(QDir::homePath() + MOZILLA_DATA_DIR + MOZILLA_DATA_UA_UPDATE);
+    if (!ua.exists()) {
+        if (ua.open(QIODevice::WriteOnly)) {
+            QFile source(MOZILLA_DATA_UA_UPDATE_SOURCE);
+            if (source.open(QIODevice::ReadOnly)) {
+                QByteArray line;
+                while (!source.atEnd()) {
+                    line = source.readLine();
+                    if (!line.trimmed().startsWith("//"))
+                        ua.write(line);
+                }
+                source.close();
+            }
+            ua.close();
+        } else {
+            qWarning() << "Could not open ua-update.json";
+        }
+    }
+
+    if (!QFile::exists(QDir::homePath() + MOZILLA_DATA_DIR + MOZILLA_DATA_PREFS))
+        QFile::copy(MOZILLA_DATA_PREFS_SOURCE, QDir::homePath() + MOZILLA_DATA_DIR + MOZILLA_DATA_PREFS);
 }
 
 Browser::Browser(QQuickView *view, QObject *parent)
