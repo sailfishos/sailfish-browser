@@ -16,9 +16,15 @@ class CloseEventFilter;
 class QQuickView;
 
 class BrowserPrivate {
+    friend class Browser;
+
 public:
     BrowserPrivate(QQuickView *view);
 
+private:
+    void initUserData();
+
+protected:
     QQuickView *view;
     CloseEventFilter *closeEventFilter;
 };

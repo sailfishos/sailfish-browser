@@ -117,10 +117,9 @@ install -m 644 -p %{SOURCE1} %{buildroot}%{_datadir}/mapplauncherd/privileges.d/
 
 # Upgrade, count is 2 or higher (depending on the number of versions installed)
 if [ "$1" -ge 2 ]; then
-%{_bindir}/add-oneshot --all-users --now browser-cleanup-startup-cache || :
+    %{_bindir}/add-oneshot --all-users --now browser-cleanup-startup-cache || :
+    %{_bindir}/add-oneshot --new-users --all-users --late browser-update-default-data || :
 fi
-
-%{_bindir}/add-oneshot --new-users --all-users --late browser-update-default-data || :
 
 %files
 %defattr(-,root,root,-)
