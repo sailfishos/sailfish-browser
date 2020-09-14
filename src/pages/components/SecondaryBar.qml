@@ -20,7 +20,7 @@ Item {
     property bool bookmarked
     property int horizontalOffset
     property int iconWidth
-    property real midIconWidth: iconWidth + (iconWidth - forwardButton.width) / 3
+    property real midIconWidth: iconWidth + (iconWidth - forwardButton.width) / 4
 
     width: parent.width
     height: isPortrait ? Settings.toolbarLarge : Settings.toolbarSmall
@@ -49,7 +49,7 @@ Item {
         // Spacer for pushing Search, Favorite, Share, Downloads to the right hand side
         Item {
             height: parent.height
-            width: parent.width - addTabButton.width - forwardButton.width - midIconWidth * 3 - downloadsButton.width
+            width: parent.width - addTabButton.width - forwardButton.width - midIconWidth * 4 - downloadsButton.width
         }
 
         Browser.IconButton {
@@ -80,6 +80,13 @@ Item {
             icon.source: "image://theme/icon-m-share"
             active: webView.contentItem
             onTapped: shareActivePage()
+        }
+
+        Browser.IconButton {
+            width: midIconWidth
+            icon.source: "image://theme/icon-m-file-download-as-pdf"
+            active: webView.contentItem && webView.contentItem.active && !webView.loading
+            onTapped: savePageAsPDF()
         }
 
         Browser.IconButton {

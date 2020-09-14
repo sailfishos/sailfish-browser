@@ -14,6 +14,7 @@ import Sailfish.Silica.private 1.0 as Private
 import Sailfish.Browser 1.0
 import Sailfish.Policy 1.0
 import Sailfish.WebView.Controls 1.0
+import Sailfish.WebEngine 1.0
 import com.jolla.settings.system 1.0
 import "." as Browser
 
@@ -485,6 +486,15 @@ Background {
                     if (webView.security && !webView.security.certIsNull) {
                         pageStack.animatorPush("com.jolla.settings.system.CertificateDetailsPage", {"website": webView.security.subjectDisplayName, "details": webView.security.serverCertDetails})
                     }
+                }
+                onSavePageAsPDF: {
+                    var filename = ((webView.title && webView.title.length !== 0) ? webView.title : (WebUtils.pageName(webView.url) || "unnamed_file")) + ".pdf"
+                    var targetUrl = DownloadHelper.createUniqueFileUrl(filename, StandardPaths.download)
+                    WebEngine.notifyObservers("embedui:download",
+                                              {
+                                                  "msg": "saveAsPdf",
+                                                  "to": targetUrl
+                                              })
                 }
             }
 
