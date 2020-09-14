@@ -113,8 +113,7 @@ WebContainer {
         WebPage {
             id: webPage
 
-            property int iconSize
-            property string iconType
+            property bool acceptedTouchIcon
             property int frameCounter
             property bool rendered
             readonly property bool textSelectionActive: textSelectionController && textSelectionController.active
@@ -260,8 +259,7 @@ WebContainer {
                     userHasDraggedWhileLoading = false
                     webPage.chrome = true
                     favicon = ""
-                    iconType = ""
-                    iconSize = 0
+                    acceptedTouchIcon = false
                 }
             }
 
@@ -281,35 +279,12 @@ WebContainer {
                 }
 
                 switch (message) {
-                case "chrome:linkadded": {
-                    var parsedFavicon = false
-                    var acceptedTouchIcon = (iconType === "apple-touch-icon" || iconType === "apple-touch-icon-precomposed")
-                    var acceptableTouchIcon = (data.rel === "apple-touch-icon" || data.rel === "apple-touch-icon-precomposed")
-                    if (data.href && (data.rel === "icon" || acceptableTouchIcon)) {
-                        var sizes = []
-                        if (data.sizes) {
-                            var digits = data.sizes.split("x")
-                            var size = digits && digits.length > 0 && digits[0]
-                            if (size) {
-                                sizes.push(size)
-                            }
-                        }
+                case "Link:SetIcon": {
+                    if (acceptedTouchIcon)
+                        return
 
-                        for (var i in sizes) {
-                            var faviconSize = parseInt(sizes[i])
-                            // Accept largest icon but one that is still smaller than Theme.itemSizeExtraLarge.
-                            if (faviconSize && faviconSize > iconSize && faviconSize <= Theme.itemSizeExtraLarge * 2) {
-                                iconSize = faviconSize
-                                parsedFavicon = true
-                            }
-                        }
-                    }
-
-                    // Always pick at least one touch icon, parsed favicons are always based on size (good enough quality)
-                    if (!acceptedTouchIcon && acceptableTouchIcon || parsedFavicon) {
-                        favicon = data.href
-                        iconType = iconSize >= Theme.iconSizeMedium ? data.rel : ""
-                    }
+                    acceptedTouchIcon = data.isRichIcon
+                    favicon = data.url
                     break
                 }
                 case "Content:SelectionRange": {
