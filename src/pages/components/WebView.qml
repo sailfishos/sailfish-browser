@@ -18,6 +18,7 @@ import Sailfish.WebView.Popups 1.0 as Popups
 import Sailfish.WebView.Controls 1.0
 import Qt5Mozilla 1.0
 import Sailfish.Policy 1.0
+import Sailfish.TextLinking 1.0
 import "." as Browser
 
 WebContainer {
@@ -58,6 +59,8 @@ WebContainer {
             Behavior on opacity { FadeAnimator {} }
         }
     }
+
+    property var linkHandler: LinkHandler {}
 
     function stop() {
         if (contentItem) {
@@ -332,6 +335,12 @@ WebContainer {
                     } else {
                         webView.findInPageHasResult = false
                     }
+                    break
+                }
+                // embed:OpenLink listener is registered only in the captive portal mode
+                case "embed:OpenLink": {
+                    linkHandler.handleLink(data.uri)
+                    break
                 }
                 }
             }

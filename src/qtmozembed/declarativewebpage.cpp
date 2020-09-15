@@ -10,6 +10,7 @@
 #include "declarativewebpage.h"
 #include "declarativewebcontainer.h"
 #include "dbmanager.h"
+#include "browserapp.h"
 #include "browserpaths.h"
 #include "logging.h"
 
@@ -25,6 +26,7 @@ static const QString gDomContentLoadedMessage("chrome:contentloaded");
 static const QString gContentOrientationChanged("embed:contentOrientationChanged");
 static const QString gLinkAddedMessage("chrome:linkadded");
 static const QString gFindMessage("embed:find");
+static const QString gOpenLink("embed:OpenLink");
 
 bool isBlack(QRgb rgb)
 {
@@ -70,6 +72,11 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
     addMessageListener(gContentOrientationChanged);
 
     loadFrameScript("chrome://embedlite/content/embedhelper.js");
+
+    if (BrowserApp::captivePortal()) {
+        addMessageListener(gOpenLink);
+        loadFrameScript("file:///usr/share/sailfish-browser/pages/captiveportal.js");
+    }
 
     connect(this, &DeclarativeWebPage::recvAsyncMessage,
             this, &DeclarativeWebPage::onRecvAsyncMessage);
