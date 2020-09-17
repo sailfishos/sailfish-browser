@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=1">
+  <style>
+    @keyframes pop {
+      from {background-color: green;}
+      to {background-color: white;}
+    }
+
+    .rect {
+      position: absolute;
+      top: 1em;
+      width: 35%;
+      height: 3em;
+      border: 2px solid black;
+      background-color: red;
+      animation-name: pop;
+      animation-duration: 1s;
+      animation-fill-mode: forwards;
+      animation-timing-function: ease-out;
+      display: table-cell;
+      text-align: center;
+      line-height: 3em;
+    }
+
+    .section {
+      position: relative; width: 90%; left: 5%;
+      border: 2px dotted grey;
+      margin-top: 1em;
+      top: 4em;
+    }
+
+    .block {
+      position:relative; width: calc(100% - 2em);
+      height: 3em;
+      margin: 1em;
+    }
+  </style>
+  <script type="text/javascript">
+    function resetAnim(item) {
+      var elm = document.getElementById(item);
+      var newone = elm.cloneNode(true);
+      elm.parentNode.replaceChild(newone, elm);
+    }
+
+    function applyStopProp(event) {
+      event.stopPropagation();
+      resetAnim("showtouchstart");
+    }
+    function applyPreventDefault(event) {
+      event.preventDefault();
+      resetAnim("showtouchstart");
+    }
+    function clickThings(event) {
+      resetAnim("showmousedown");
+    }
+  </script>
+  </head>
+
+  <body>
+    <div id="showtouchstart" class="rect" style="left: 10%;">Touch Start</div>
+    <div id="showmousedown" class="rect" style="left: 55%;">Mouse Down</div>
+
+    <div class="section" style=";">
+      <p>Apply stopPropagation()</p>
+
+      <form method="GET" action="/" ontouchstart="applyStopProp(event)" onmousedown="clickThings(event)">
+        <input id="input" class="block" type="text" value="This is a text entry field" />
+      </form>
+
+      <a href="#" class="block" ontouchstart="applyStopProp(event)" onmousedown="clickThings(event)">This is a link</a>
+      <div class="block" style="border: 1px solid blue;" ontouchstart="applyStopProp(event)" onmousedown="clickThings(event)">This is a div</div>
+    </div>
+
+    <div class="section" style=";">
+      <p>Apply preventDefault()</p>
+
+      <form method="GET" action="/" ontouchstart="applyPreventDefault(event)" onmousedown="clickThings(event)">
+        <input id="input" class="block" type="text" value="This is a text entry field" />
+      </form>
+
+      <a href="#" class="block" ontouchstart="applyPreventDefault(event)" onmousedown="clickThings(event)">This is a link</a>
+      <div class="block" style="border: 1px solid blue;" ontouchstart="applyPreventDefault(event)" onmousedown="clickThings(event)">This is a div</div>
+    </div>
+
+  </body>
+</html>
+
+

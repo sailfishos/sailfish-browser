@@ -1,0 +1,90 @@
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="initial-scale=1">
+    <!-- More info: https://css-tricks.com/almanac/properties/t/touch-action/ -->
+    <style>
+      body {
+        display: flex;
+        flex-wrap: wrap;
+      }
+
+      .box {
+        margin: 1rem;
+        width: 240px;
+        height: 240px;
+        overflow: scroll;
+        position: relative;
+        margin-bottom: 15px;
+      }
+      .desc {
+        position: absolute;
+        width: 100%;
+        text-align: center;
+        font-weight: bold;
+        top: 130px;
+        font-size: 24px;
+      }
+      .touch-auto {
+        touch-action: auto;
+      }
+      .touch-none {
+        touch-action: none;
+      }
+      .touch-pan-x {
+        touch-action: pan-x;
+      }
+      .touch-pan-y {
+        touch-action: pan-y;
+      }
+      .touch-pan-right {
+        touch-action: pan-right;
+      }
+      .touch-manipulation {
+        touch-action: manipulation;
+      }
+
+      .back {
+        background-image: linear-gradient(45deg, #8F8 25%, transparent 25%, transparent),
+                          linear-gradient(-45deg, #8F8 25%, transparent 25%, transparent),
+                          linear-gradient(45deg, transparent 75%, #8F8 75%),
+                          linear-gradient(-45deg, transparent 75%, #8F8 75%);
+        background-size: 80px 80px;
+        width: 1200px;
+        height: 1200px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="box touch-auto">
+    <div class="back" />&nbsp;</div>
+    <code class="desc">touch-action: auto;</code>
+    </div>
+
+    <div class="box touch-none">
+    <div class="back" />&nbsp;</div>
+    <code class="desc">touch-action: none;</code>
+    </div>
+
+    <div class="box touch-pan-x">
+    <div class="back" />&nbsp;</div>
+    <code class="desc">touch-action: pan-x;</code>
+    </div>
+
+    <div class="box touch-pan-y">
+    <div class="back" />&nbsp;</div>
+    <code class="desc">touch-action: pan-y;</code>
+    </div>
+
+    <div class="box touch-pan-right">
+    <div class="back" />&nbsp;</div>
+    <code class="desc">touch-action: pan-right;</code>
+    </div>
+
+    <div class="box touch-manipulation">
+    <div class="back" />&nbsp;</div>
+    <code class="desc">touch-action: manipulation;</code>
+    </div>
+  </body>
+</html>
+
