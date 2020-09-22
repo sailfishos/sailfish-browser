@@ -22,7 +22,9 @@
 #define FULLSCREEN_MESSAGE "embed:fullscreenchanged"
 #define DOM_CONTENT_LOADED_MESSAGE "chrome:contentloaded"
 #define CONTENT_ORIENTATION_CHANGED_MESSAGE "embed:contentOrientationChanged"
-#define LINK_ADDED_MESSAGE "chrome:linkadded"
+#define LINK_SET_ICON "Link:SetIcon"
+#define LINK_ADD_FEED "Link:AddFeed"
+#define LINK_ADD_SEARCH "Link:AddSearch"
 #define FIND_MESSAGE "embed:find"
 
 bool isBlack(QRgb rgb)
@@ -65,7 +67,9 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
     // subscribe to gecko messages
     std::vector<std::string> messages = { FULLSCREEN_MESSAGE,
                                           DOM_CONTENT_LOADED_MESSAGE,
-                                          LINK_ADDED_MESSAGE,
+                                          LINK_SET_ICON,
+                                          LINK_ADD_FEED,
+                                          LINK_ADD_SEARCH,
                                           FIND_MESSAGE,
                                           CONTENT_ORIENTATION_CHANGED_MESSAGE };
 
