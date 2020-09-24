@@ -1,2 +1,3 @@
 #!/bin/sh
 rm -rf ~/.mozilla/mozembed/startupCache
+rm -rf ~/.mozilla/captiveportal/startupCache

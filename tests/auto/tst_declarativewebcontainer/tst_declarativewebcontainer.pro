@@ -17,6 +17,7 @@ include(../mocks/opensearchconfigs/opensearchconfigs_mock.pri)
 include(../mocks/qmozsecurity/qmozsecurity.pri)
 
 include(../test_common.pri)
+include(../../../common/browserapp.pri)
 include(../../../common/paths.pri)
 include(../../../src/core/core.pri)
 include(../../../src/history/history.pri)

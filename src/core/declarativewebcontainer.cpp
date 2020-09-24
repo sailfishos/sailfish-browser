@@ -17,6 +17,7 @@
 #include "webpagefactory.h"
 #include "webpages.h"
 #include "browserpaths.h"
+#include "browserapp.h"
 
 #include <webengine.h>
 #include <QTimerEvent>
@@ -92,7 +93,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     m_persistentTabModel = new PersistentTabModel(maxTabid + 1, this);
     m_privateTabModel = new PrivateTabModel(maxTabid + 1001, this);
 
-    setTabModel(privateMode() ? m_privateTabModel.data() : m_persistentTabModel.data());
+    setTabModel((BrowserApp::captivePortal() || m_privateMode) ? m_privateTabModel.data() : m_persistentTabModel.data());
 
     connect(DownloadManager::instance(), &DownloadManager::downloadStarted,
             this, &DeclarativeWebContainer::onDownloadStarted);
@@ -535,7 +536,7 @@ int DeclarativeWebContainer::findParentTabId(int tabId) const
 
 void DeclarativeWebContainer::updateMode()
 {
-    setTabModel(privateMode() ? m_privateTabModel.data() : m_persistentTabModel.data());
+    setTabModel((BrowserApp::captivePortal() || m_privateMode) ? m_privateTabModel.data() : m_persistentTabModel.data());
     emit tabIdChanged();
 
     // Reload active tab from new mode

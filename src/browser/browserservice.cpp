@@ -12,6 +12,7 @@
 #include "browserservice.h"
 #include "browserservice_p.h"
 #include "declarativewebcontainer.h"
+#include "browserapp.h"
 
 #include "dbusadaptor.h"
 #include <QDBusConnection>
@@ -20,6 +21,7 @@
 
 #define SAILFISH_BROWSER_SERVICE QLatin1String("org.sailfishos.browser")
 #define SAILFISH_BROWSER_UI_SERVICE QLatin1String("org.sailfishos.browser.ui")
+#define SAILFISH_BROWSER_CAPTIVE_PORTAL_SERVICE QLatin1String("org.sailfishos.browser.captiveportal")
 
 #define IS_PRIVILEGED \
     if (!calledFromDBus()) { \
@@ -42,7 +44,7 @@ BrowserService::BrowserService(QObject * parent)
     new DBusAdaptor(this);
     QDBusConnection connection = QDBusConnection::sessionBus();
     if(!connection.registerObject("/", this)
-            || !connection.registerService(SAILFISH_BROWSER_SERVICE)) {
+            || !connection.registerService(serviceName())) {
         m_registered = false;
     }
 }
@@ -54,7 +56,10 @@ bool BrowserService::registered() const
 
 QString BrowserService::serviceName() const
 {
-    return SAILFISH_BROWSER_SERVICE;
+    if (BrowserApp::captivePortal())
+        return SAILFISH_BROWSER_CAPTIVE_PORTAL_SERVICE;
+    else
+        return SAILFISH_BROWSER_SERVICE;
 }
 
 void BrowserService::openUrl(const QStringList &args)
@@ -116,7 +121,6 @@ BrowserUIService::BrowserUIService(QObject *parent)
     : QObject(parent)
     , QDBusContext()
     , d_ptr(new BrowserUIServicePrivate())
-
 {
     Q_D(BrowserUIService);
 

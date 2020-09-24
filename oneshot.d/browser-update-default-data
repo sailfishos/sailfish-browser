@@ -1,24 +1,27 @@
 #!/bin/sh
 MOZEMBED_DIR=~/.mozilla/mozembed
+CAPTIVE_PORTAL_DIR=~/.mozilla/captiveportal
 BROWSER_DATA_DIR=/usr/share/sailfish-browser/data
 
-if [ ! -d "$MOZEMBED_DIR" ]; then
-    mkdir -p $MOZEMBED_DIR
-fi
+for PROFILE_DIR in $MOZEMBED_DIR $CAPTIVE_PORTAL_DIR; do
+    if [ ! -d "$PROFILE_DIR" ]; then
+        mkdir -p $PROFILE_DIR
+    fi
 
-if [ ! -f "$MOZEMBED_DIR/ua-update.json" -o ! -s "$MOZEMBED_DIR/ua-update.json" ]; then
-    # Remove lines starting with a comment.
-    sed  '\|^\s*//|d' $BROWSER_DATA_DIR/ua-update.json.in > "$MOZEMBED_DIR/ua-update.json"
-fi
+    if [ ! -f "$PROFILE_DIR/ua-update.json" -o ! -s "$PROFILE_DIR/ua-update.json" ]; then
+        # Remove lines starting with a comment.
+        sed  '\|^\s*//|d' $BROWSER_DATA_DIR/ua-update.json.in > "$PROFILE_DIR/ua-update.json"
+    fi
 
-if [ ! -f "$MOZEMBED_DIR/prefs.js" ]; then
-    cp $BROWSER_DATA_DIR/prefs.js $MOZEMBED_DIR
-else
-    while IFS='' read -r line || [[ -n "$line" ]]; do
-        prefKey=$(echo "$line" | cut -d "," -f1)
-        foundKey=$(grep "$prefKey" $MOZEMBED_DIR/prefs.js | wc -l)
-        if [ $foundKey -eq 0 ]; then
-            echo "$line" >> $MOZEMBED_DIR/prefs.js
-        fi
-    done < "$BROWSER_DATA_DIR/prefs.js"
-fi
+    if [ ! -f "$PROFILE_DIR/prefs.js" ]; then
+        cp $BROWSER_DATA_DIR/prefs.js $PROFILE_DIR
+    else
+        while IFS='' read -r line || [[ -n "$line" ]]; do
+            prefKey=$(echo "$line" | cut -d "," -f1)
+            foundKey=$(grep "$prefKey" $PROFILE_DIR/prefs.js | wc -l)
+            if [ $foundKey -eq 0 ]; then
+                echo "$line" >> $PROFILE_DIR/prefs.js
+            fi
+        done < "$BROWSER_DATA_DIR/prefs.js"
+    fi
+done
