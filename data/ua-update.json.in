@@ -1,7 +1,7 @@
 // Everything after the first // on a line will be removed by the preproccesor.
 // Send these sites a custom user-agent. Bugs should be included with an entry.
 {
-  // Ref: "Mozilla/5.0 (Linux; U; Sailfish 3.0; Mobile; rv:52.0) Gecko/52.0 Firefox/52.0 SailfishBrowser/1.0"
+  // Ref: "Mozilla/5.0 (Linux; U; Sailfish 3.0; Mobile; rv:60.9) Gecko/60.9 Firefox/60.9 SailfishBrowser/1.0"
   // bug 826347, msn.com
   "msn.com": "\\(Linux; U; Sailfish 3.0#(Android 8.1.0",
   // bug 826353, itau.com.br
@@ -39,7 +39,7 @@
   "youku.com": "Linux;#Android 8.1.0;",
   // JB#39351
   "iqiyi.com": "Linux; U; #Android 8.1.0;",
-  "facebook.com": "Mozilla/5.0 (Mobile; rv:52.0) Gecko/52.0 Firefox/52.0",
+  "facebook.com": "Mozilla/5.0 (Mobile; rv:60.9) Gecko/60.9 Firefox/60.9",
   // JB#39351, sohu.com
   "sohu.com": "Linux; U; Sailfish 3.0# ; Android",
   // JB#39351, qq.com
@@ -66,38 +66,38 @@
   "chinaz.com": "Linux; U; #Android; U; ",
   // JB#39351, tmall.com
   "tmall.com": "Linux; U; #Android; U; ",
-  "youtube.com": "Mozilla/5.0 (Android 8.1.0; U; Sailfish 3.0; rv:52.0) Gecko/52.0 Firefox/52.0 SailfishBrowser/1.0 like Safari/538.1",
-  "yahoo.com": "Mozilla/5.0 (Mobile; rv:52.0) Gecko/52.0 Firefox/52.0",
-  "yandex.com": "Mozilla/5.0 (Mobile; rv:52.0) Gecko/52.0 Firefox/52.0",
-  "yandex.net": "Mozilla/5.0 (Mobile; rv:52.0) Gecko/52.0 Firefox/52.0",
-  "yandex.ru": "Mozilla/5.0 (Mobile; rv:52.0) Gecko/52.0 Firefox/52.0",
-  "yastatic.net": "Mozilla/5.0 (Mobile; rv:52.0) Gecko/52.0 Firefox/52.0",
+  "youtube.com": "Mozilla/5.0 (Android 8.1.0; U; Sailfish 3.0; rv:60.9) Gecko/60.9 Firefox/60.9 SailfishBrowser/1.0 like Safari/538.1",
+  "yahoo.com": "Mozilla/5.0 (Mobile; rv:60.9) Gecko/60.9 Firefox/60.9",
+  "yandex.com": "Mozilla/5.0 (Mobile; rv:60.9) Gecko/60.9 Firefox/60.9",
+  "yandex.net": "Mozilla/5.0 (Mobile; rv:60.9) Gecko/60.9 Firefox/60.9",
+  "yandex.ru": "Mozilla/5.0 (Mobile; rv:60.9) Gecko/60.9 Firefox/60.9",
+  "yastatic.net": "Mozilla/5.0 (Mobile; rv:60.9) Gecko/60.9 Firefox/60.9",
   // JB#39970, slashdot.org
   "slashdot.org": "Linux;#Android 8.1.0;",
-  "verkkokauppa.com": "Mozilla/5.0 (Android 8.1.0; U; Sailfish 3.0; rv:52.0) Gecko/52.0 Firefox/52.0 SailfishBrowser/1.0 like Safari/538.1",
-  "verk.net": "Mozilla/5.0 (Android 8.1.0; U; Sailfish 3.0; rv:52.0) Gecko/52.0 Firefox/52.0 SailfishBrowser/1.0 like Safari/538.1",
-  "digicert.com": "Mozilla/5.0 (Mobile; rv:52.0) Gecko/52.0 Firefox/52.0",
+  "verkkokauppa.com": "Mozilla/5.0 (Android 8.1.0; U; Sailfish 3.0; rv:60.9) Gecko/60.9 Firefox/60.9 SailfishBrowser/1.0 like Safari/538.1",
+  "verk.net": "Mozilla/5.0 (Android 8.1.0; U; Sailfish 3.0; rv:60.9) Gecko/60.9 Firefox/60.9 SailfishBrowser/1.0 like Safari/538.1",
+  "digicert.com": "Mozilla/5.0 (Mobile; rv:60.9) Gecko/60.9 Firefox/60.9",
   // JB#48647, JB#45164 and JB#21093, google.com + some other country level domains
-  "google.com": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:52.0) Gecko/52.0 SailfishBrowser/1.0",
-  "google.de": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:52.0) Gecko/52.0 SailfishBrowser/1.0",
-  "google.fi": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:52.0) Gecko/52.0 SailfishBrowser/1.0",
-  "google.no": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:52.0) Gecko/52.0 SailfishBrowser/1.0",
-  "google.se": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:52.0) Gecko/52.0 SailfishBrowser/1.0",
-  "google.is": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:52.0) Gecko/52.0 SailfishBrowser/1.0",
-  "google.dk": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:52.0) Gecko/52.0 SailfishBrowser/1.0",
-  "google.co.uk": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:52.0) Gecko/52.0 SailfishBrowser/1.0",
-  "google.co.in": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:52.0) Gecko/52.0 SailfishBrowser/1.0",
-  "google.be": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:52.0) Gecko/52.0 SailfishBrowser/1.0",
-  "google.fr": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:52.0) Gecko/52.0 SailfishBrowser/1.0",
-  "google.nl": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:52.0) Gecko/52.0 SailfishBrowser/1.0",
-  "google.ee": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:52.0) Gecko/52.0 SailfishBrowser/1.0",
-  "google.pl": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:52.0) Gecko/52.0 SailfishBrowser/1.0",
-  "google.ru": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:52.0) Gecko/52.0 SailfishBrowser/1.0",
-  "google.es": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:52.0) Gecko/52.0 SailfishBrowser/1.0",
-  "google.cz": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:52.0) Gecko/52.0 SailfishBrowser/1.0",
-  "google.sk": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:52.0) Gecko/52.0 SailfishBrowser/1.0",
-  "google.ch": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:52.0) Gecko/52.0 SailfishBrowser/1.0",
-  "google.at": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:52.0) Gecko/52.0 SailfishBrowser/1.0",
+  "google.com": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:60.9) Gecko/60.9 SailfishBrowser/1.0",
+  "google.de": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:60.9) Gecko/60.9 SailfishBrowser/1.0",
+  "google.fi": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:60.9) Gecko/60.9 SailfishBrowser/1.0",
+  "google.no": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:60.9) Gecko/60.9 SailfishBrowser/1.0",
+  "google.se": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:60.9) Gecko/60.9 SailfishBrowser/1.0",
+  "google.is": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:60.9) Gecko/60.9 SailfishBrowser/1.0",
+  "google.dk": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:60.9) Gecko/60.9 SailfishBrowser/1.0",
+  "google.co.uk": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:60.9) Gecko/60.9 SailfishBrowser/1.0",
+  "google.co.in": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:60.9) Gecko/60.9 SailfishBrowser/1.0",
+  "google.be": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:60.9) Gecko/60.9 SailfishBrowser/1.0",
+  "google.fr": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:60.9) Gecko/60.9 SailfishBrowser/1.0",
+  "google.nl": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:60.9) Gecko/60.9 SailfishBrowser/1.0",
+  "google.ee": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:60.9) Gecko/60.9 SailfishBrowser/1.0",
+  "google.pl": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:60.9) Gecko/60.9 SailfishBrowser/1.0",
+  "google.ru": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:60.9) Gecko/60.9 SailfishBrowser/1.0",
+  "google.es": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:60.9) Gecko/60.9 SailfishBrowser/1.0",
+  "google.cz": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:60.9) Gecko/60.9 SailfishBrowser/1.0",
+  "google.sk": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:60.9) Gecko/60.9 SailfishBrowser/1.0",
+  "google.ch": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:60.9) Gecko/60.9 SailfishBrowser/1.0",
+  "google.at": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:60.9) Gecko/60.9 SailfishBrowser/1.0",
   "twitter.com": "Linux#Android 8.1.0",
   "apkpure.com": "Linux#Android 8.1.0",
   "zingmp3.vn": "Linux#Android 8.1.0"
