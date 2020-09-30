@@ -2,82 +2,154 @@
     <head>
         <meta name="viewport" content="width=device-width, user-scalable=false;">
         <title>Simple Geolocation smoke test</title>
+        <style type="text/css">
+            button {
+                width: 140px;
+                height: 50px;
+                margin: 5px;
+                vertical-align: bottom;
+            }
+        </style>
         <script>
-            var watchId = 0;
-            var options = 0;
+            var actionStatusElement;
+            var responseStatusElement;
+            var watchListElement;
 
-            function outputData(position) {
-                // Write each attribute from position data.
-                var data = document.getElementById("data");
-                for (var i in position.coords) {
-                    var dataRow = document.createElement("h2");
-                    var positionData = document.createTextNode(i + " : " + position.coords[i]);
-                    dataRow.appendChild(positionData);
-                    data.appendChild(dataRow);
-                }
-            }
+            var geolocationSupportError = "Geolocation is not supported by this browser.";
+
+            var lastWatchId = -1;
+            var watchList = [];
+            var showPositionCounter = 0;
+            var errorCounter = 0;
+
+            options = {
+                enableHighAccuracy: false,
+                timeout: 3000,
+                maximumAge: 1000
+            };
+
             function init() {
-                navigator.geolocation.getCurrentPosition(outputData);
+                actionStatusElement = document.getElementById("action_element");
+                responseStatusElement = document.getElementById("status_element");
+                watchListElement = document.getElementById("watchlist_element");
             }
 
-            function geoLocate(out, track) {
-                var output = document.getElementById(out);
+            function updateWatchList() {
+                watchListElement.innerHTML = watchList.length > 0 ? "" : "-";
+                watchList.forEach(function(item, index, array) {
+                    watchListElement.innerHTML += "<button onclick=\"clearWatch(" + item + ")\">Stop watch #" + item + "</button> "
+                });
+            }
 
-                if (!navigator.geolocation){
-                  output.innerHTML = "<p>Geolocation is not supported by your browser</p>";
-                  return;
-                }
-
-                function success(position) {
-                    var latitude  = position.coords.latitude;
-                    var longitude = position.coords.longitude;
-
-                    output.innerHTML = '<p>Latitude is ' + latitude + '° <br>Longitude is ' + longitude + '°</p>';
-
-                    var img = new Image();
-                    img.src = "https://maps.googleapis.com/maps/api/staticmap?center=" + latitude + "," + longitude + "&zoom=13&size=300x300&sensor=false";
-
-                    output.appendChild(img);
-                }
-
-                function error() {
-                    output.innerHTML = "Unable to retrieve your location";
-                }
-
-                output.innerHTML = "<p>Locating…</p>";
-                if (track == "track") {
-                    options = {
-                      enableHighAccuracy: true,
-                      timeout: 5000,
-                      maximumAge: 1000
-                    };
-                    watchID = navigator.geolocation.watchPosition(success, error, options);
+            function startWatch() {
+                if (navigator.geolocation) {
+                    lastWatchId = navigator.geolocation.watchPosition(showPosition, error, options);
+                    watchList.push(lastWatchId);
+                    updateWatchList();
                 } else {
-                    watchID = navigator.geolocation.getCurrentPosition(success, error);
+                    responseStatusElement.innerHTML = geolocationSupportError;
+                }
+                return lastWatchId;
+            }
+
+            function stopWatch(watchId) {
+                if (navigator.geolocation) {
+                    navigator.geolocation.clearWatch(watchId);
+                    watchList = watchList.filter(val => val !== watchId);
+                    updateWatchList();
+                } else {
+                    responseStatusElement.innerHTML = geolocationSupportError;
                 }
             }
 
-            function clearWatch() {
-                if (watchID) {
-                    navigator.geolocation.clearWatch(watchID);
+            function clearWatch(watchId) {
+                if (navigator.geolocation) {
+                    actionStatusElement.innerHTML = "stop watch: <b>#" + watchId + "</b>";
+                    responseStatusElement.innerHTML = "-";
+                    stopWatch(watchId);
+                } else {
+                    responseStatusElement.innerHTML = geolocationSupportError;
                 }
+            }
+
+            function watchPosition() {
+                if (navigator.geolocation) {
+                    var id = startWatch();
+                    actionStatusElement.innerHTML = "start watch: <b>#" + id + "</b>";
+                    responseStatusElement.innerHTML = "Locating...";
+                } else {
+                    responseStatusElement.innerHTML = geolocationSupportError;
+                }
+            }
+
+            function watchPositionClearWatch() {
+                if (navigator.geolocation) {
+                    var id = startWatch();
+                    actionStatusElement.innerHTML = "start watch: <b>#" + id + "</b>, ";
+                    stopWatch(id);
+                    actionStatusElement.innerHTML += "stop watch: <b>#" + id + "</b>";
+                    responseStatusElement.innerHTML = "-";
+                } else {
+                    responseStatusElement.innerHTML = geolocationSupportError;
+                }
+            }
+
+            function clearWatchWatchPosition() {
+                if (navigator.geolocation) {
+                    var id = lastWatchId + 1;
+                    stopWatch(id);
+                    actionStatusElement.innerHTML = "stop watch: <b>#" + id + "</b>, ";
+                    id = lastWatchId + 2;
+                    stopWatch(id);
+                    actionStatusElement.innerHTML += "stop watch: <b>#" + id + "</b>, ";
+                    id = startWatch();
+                    actionStatusElement.innerHTML += "start watch: <b>#" + id + "</b>";
+                    responseStatusElement.innerHTML = "Locating...";
+                } else {
+                    responseStatusElement.innerHTML = geolocationSupportError;
+                }
+            }
+
+            function getCurrentPosition() {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(showPosition, error, options);
+                    actionStatusElement.innerHTML = "Get current position";
+                    responseStatusElement.innerHTML = "Locating...";
+                } else {
+                    responseStatusElement.innerHTML = geolocationSupportError;
+                }
+            }
+
+            function showPosition(position) {
+                showPositionCounter += 1;
+                responseStatusElement.innerHTML = "position update id: <b>" + showPositionCounter + "</b><br/>";
+
+                // Write each attribute from position data.
+                for (var i in position.coords) {
+                    responseStatusElement.innerHTML += i + ": <b>" + position.coords[i] + "</b><br/>";
+                }
+
+                responseStatusElement.innerHTML += "timestamp: <b>" + position.timestamp + "</b><br/>";
+                responseStatusElement.innerHTML += "time: <b>" + new Date(position.timestamp) + "</b><br/>";
+                responseStatusElement.innerHTML += "<a href=\"geo:" + position.coords.latitude + "," + position.coords.longitude + "\">pass coordinates to an application</a>";
+            }
+
+            function error(err) {
+                errorCounter += 1;
+                responseStatusElement.innerHTML = "error update id: <b>" + errorCounter + "</b><br/>";
+                responseStatusElement.innerHTML += "message: <b>" + err.message + "</b><br/>";
+                responseStatusElement.innerHTML += "last watchId: <b>#" + lastWatchId + "</b>";
             }
         </script>
     </head>
     <body onload="init()">
-    <h1>Geolocation data will be written below</h1>
-    </br>
-    <h1><a href="geo:61.4943844,23.7755181">Jolla Headquarters</a></h1>
-    <div id="data"></div>
-
-    <h1>Locate me</h1>
-    <div id="locate_me_out"></div>
-    <button onclick='geoLocate("locate_me_out")'>Locate</button>
-
-
-    <h1>Watch me</h1>
-    <div id="watch_me_out"></div>
-    <button onclick='geoLocate("watch_me_out", "watch")'>Watch</button>
-    <button onclick="clearWatch()">Stop watch</button>
+        <h1><a href="geo:61.4943844,23.7755181">Jolla Headquarters</a></h1>
+        <button onclick='watchPosition()'>Start watch</button>
+        <button onclick='getCurrentPosition()'>Get position</button>
+        <button onclick='watchPositionClearWatch()'>Start and stop watch</button>
+        <button onclick='clearWatchWatchPosition()'>Stop and start watch</button>
+        <h2>Action</h2><span id="action_element"> --- </span><br/>
+        <h2>Status</h2><span id="status_element"> --- </span><br/>
+        <h2>Watch list</h2><span id="watchlist_element"> --- </span>
     </body>
 </html>
