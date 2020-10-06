@@ -74,6 +74,11 @@ SilicaListView {
         }
     }
 
+    footer: Item {
+        width: 1
+        height: Theme.itemSizeLarge
+    }
+
     ViewPlaceholder {
         x: (view.width - width) / 2
         y: view.originY + (view.height - height) / 2

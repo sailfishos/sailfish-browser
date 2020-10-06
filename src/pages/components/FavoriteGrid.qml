@@ -44,6 +44,11 @@ IconGridViewBase {
     displaced: Transition { NumberAnimation { properties: "x,y"; easing.type: Easing.InOutQuad; duration: 200 } }
     cacheBuffer: cellHeight * 2
 
+    footer: Item {
+        width: 1
+        height: Theme.itemSizeLarge
+    }
+
     delegate: FavoriteItem {
         id: favoriteItem
 
