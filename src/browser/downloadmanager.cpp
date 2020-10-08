@@ -33,7 +33,8 @@
 static DownloadManager *gSingleton = 0;
 
 DownloadManager::DownloadManager()
-    : QObject()
+    : QObject(),
+      m_pdfPrinting(false)
 {
     m_transferClient = new TransferEngineInterface("org.nemo.transferengine",
                                                    "/org/nemo/transferengine",
@@ -65,6 +66,7 @@ void DownloadManager::recvObserve(const QString message, const QVariant data)
     QVariantMap dataMap(data.toMap());
     QString msg = dataMap.value(QStringLiteral("msg")).toString();
     QString targetPath = dataMap.value(QStringLiteral("targetPath")).toString();
+    bool isSaveAsPdf = dataMap.value(QStringLiteral("saveAsPdf")).toBool();
     qulonglong downloadId(dataMap.value(QStringLiteral("id")).toULongLong());
     bool needPlatformTransfersUpdate = this->needPlatformTransfersUpdate(targetPath);
 
@@ -72,6 +74,16 @@ void DownloadManager::recvObserve(const QString message, const QVariant data)
                           << "needs platform transfer:" << needPlatformTransfersUpdate
                           << "target path:" << targetPath
                           << "existing transfer:" << m_download2transferMap.contains(downloadId);
+
+    if (isSaveAsPdf) {
+        if (msg == QLatin1Literal("dl-start")) {
+            setPdfPrinting(true);
+        } else if (msg == QLatin1Literal("dl-done") ||
+                  msg == QLatin1Literal("dl-fail") ||
+                  msg == QLatin1Literal("dl-cancel")) {
+            setPdfPrinting(false);
+        }
+    }
 
     if (msg == QLatin1Literal("dl-start")
             && needPlatformTransfersUpdate
@@ -264,6 +276,13 @@ void DownloadManager::setPreferences()
     DownloadMimetypeHandler::update();
 }
 
+void DownloadManager::setPdfPrinting(const bool pdfPrinting) {
+    if (m_pdfPrinting != pdfPrinting) {
+        m_pdfPrinting = pdfPrinting;
+        emit pdfPrintingChanged();
+    }
+}
+
 DownloadManager *DownloadManager::instance()
 {
     if (!gSingleton) {
@@ -283,6 +302,11 @@ bool DownloadManager::existActiveTransfers()
         }
     }
     return exists;
+}
+
+bool DownloadManager::pdfPrinting() const
+{
+    return m_pdfPrinting;
 }
 
 void DownloadManager::checkAllTransfers()
