@@ -24,15 +24,21 @@ class TransferEngineInterface;
 class DownloadManager : public QObject
 {
     Q_OBJECT
+
+    Q_PROPERTY(bool pdfPrinting READ pdfPrinting NOTIFY pdfPrintingChanged FINAL)
+
     Q_ENUMS(DownloadStatus::Status)
 public:
     static DownloadManager *instance();
 
     bool existActiveTransfers();
 
+    bool pdfPrinting() const;
+
 signals:
     void downloadStarted();
     void downloadStatusChanged(int downloadId, int status, QVariant info);
+    void pdfPrintingChanged();
     void allTransfersCompleted();
 
 public slots:
@@ -57,6 +63,7 @@ private:
     void restartTransfer(int transferId);
 
     void setPreferences();
+    void setPdfPrinting(const bool pdfPrinting);
 
     // TODO: unlike Gecko downloads and Sailfish transfers these mappings
     //       are not persistent -> after user has browser closed transfers can't be
@@ -66,6 +73,8 @@ private:
     QHash<qulonglong, DownloadStatus::Status> m_statusCache;
 
     TransferEngineInterface *m_transferClient;
+
+    bool m_pdfPrinting;
 
     friend class Browser;
 };

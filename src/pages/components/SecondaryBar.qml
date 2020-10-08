@@ -100,7 +100,7 @@ Column {
         Browser.IconButton {
             width: midIconWidth
             icon.source: "image://theme/icon-m-file-download-as-pdf"
-            active: webView.contentItem && webView.contentItem.active && !webView.loading
+            active: webView.contentItem && webView.contentItem.active && !webView.loading && !DownloadManager.pdfPrinting
             onTapped: savePageAsPDF()
         }
 
