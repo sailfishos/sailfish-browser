@@ -11,38 +11,44 @@
 import QtQuick 2.6
 import Sailfish.Silica 1.0
 
-MouseArea {
+BackgroundItem {
     id: root
 
     property alias text: label.text
     property alias iconSource: icon.source
+    property int horizontalOffset
+    property int iconWidth
 
     width: parent.width
 
-    Row {
-        leftPadding: Theme.horizontalPageMargin
-        spacing: Theme.paddingMedium
+    Item {
+        id: iconContainer
 
+        width: iconWidth
         height: parent.height
-
         Icon {
             id: icon
-
-            anchors.verticalCenter: parent.verticalCenter
-            source: "image://theme/icon-m-favorite"
-            highlighted: root.pressed
+            anchors {
+                centerIn: parent
+                horizontalCenterOffset: horizontalOffset
+            }
+            highlighted: root.highlighted
             color: Theme.primaryColor
         }
-        Label {
-            id: label
+    }
 
-            anchors.verticalCenter: parent.verticalCenter
-            width: parent.width - icon.width
-            color: root.pressed ? Theme.highlightColor : Theme.primaryColor
-
-            truncationMode: TruncationMode.Fade
-
-            Behavior on opacity { FadeAnimation {} }
+    Label {
+        id: label
+        anchors {
+            left: iconContainer.right
+            leftMargin: Theme.paddingMedium
+            right: parent.right
+            rightMargin: Theme.horizontalPageMargin
+            verticalCenter: parent.verticalCenter
         }
+        color: root.highlighted ? Theme.highlightColor : Theme.primaryColor
+        truncationMode: TruncationMode.Fade
+
+        Behavior on opacity { FadeAnimation {} }
     }
 }

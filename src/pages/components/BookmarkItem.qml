@@ -48,7 +48,7 @@ ListItem {
         anchors {
             verticalCenter: parent.verticalCenter
             left: favoriteIcon.right
-            leftMargin: Theme.paddingSmall
+            leftMargin: Theme.paddingMedium
             right: parent.right
             rightMargin: Theme.horizontalPageMargin
         }

@@ -15,7 +15,7 @@ import Sailfish.Browser 1.0
 import org.nemomobile.dbus 2.0
 import "." as Browser
 
-Item {
+Column {
     id: root
     property bool bookmarked
     property int horizontalOffset
@@ -26,90 +26,90 @@ Item {
     height: isPortrait ? Settings.toolbarLarge : Settings.toolbarSmall
     clip: opacity < 1.0
 
-    Column {
-        width: parent.width
+    SecondaryBarItem {
+        height: overlay.toolBar.toolsHeight
 
-        SecondaryBarItem {
-            height: overlay.toolBar.toolsHeight
-            iconSource: "image://theme/icon-m-favorite"
-            //% "Favourites"
-            text: qsTrId("sailfish_browser-la-favourites")
-            onClicked: {
-                showChrome()
-                pageStack.push("BookmarkPage.qml")
+        iconWidth: root.iconWidth
+        horizontalOffset: root.horizontalOffset
+        iconSource: "image://theme/icon-m-favorite-selected"
+        //% "Favourites"
+        text: qsTrId("sailfish_browser-la-favourites")
+
+        onClicked: {
+            showChrome()
+            pageStack.push("BookmarkPage.qml")
+        }
+    }
+
+    Row {
+        width: parent.width
+        height: overlay.toolBar.toolsHeight
+
+        Browser.TabButton {
+            id: addTabButton
+            width: iconWidth + horizontalOffset
+            horizontalOffset: root.horizontalOffset
+            label.text: "+"
+            onTapped: enterNewTabUrl()
+        }
+
+        Browser.ExpandingButton {
+            id: forwardButton
+            expandedWidth: iconWidth
+            icon.source: "image://theme/icon-m-forward"
+            active: webView.canGoForward
+            onTapped: webView.goForward()
+        }
+
+        // Spacer for pushing Search, Favorite, Share, Downloads to the right hand side
+        Item {
+            height: parent.height
+            width: parent.width - addTabButton.width - forwardButton.width - midIconWidth * 4 - downloadsButton.width
+        }
+
+        Browser.IconButton {
+            width: midIconWidth
+            icon.source: "image://theme/icon-m-search"
+            active: webView.contentItem
+            onTapped: {
+                findInPageActive = true
+                findInPage()
             }
         }
 
-        Row {
-            width: parent.width
-            height: overlay.toolBar.toolsHeight
-
-            Browser.TabButton {
-                id: addTabButton
-                width: iconWidth + horizontalOffset
-                horizontalOffset: root.horizontalOffset
-                label.text: "+"
-                onTapped: enterNewTabUrl()
-            }
-
-            Browser.ExpandingButton {
-                id: forwardButton
-                expandedWidth: iconWidth
-                icon.source: "image://theme/icon-m-forward"
-                active: webView.canGoForward
-                onTapped: webView.goForward()
-            }
-
-            // Spacer for pushing Search, Favorite, Share, Downloads to the right hand side
-            Item {
-                height: parent.height
-                width: parent.width - addTabButton.width - forwardButton.width - midIconWidth * 4 - downloadsButton.width
-            }
-
-            Browser.IconButton {
-                width: midIconWidth
-                icon.source: "image://theme/icon-m-search"
-                active: webView.contentItem
-                onTapped: {
-                    findInPageActive = true
-                    findInPage()
+        Browser.IconButton {
+            width: midIconWidth
+            icon.source: bookmarked ? "image://theme/icon-m-favorite-selected" : "image://theme/icon-m-favorite"
+            active: webView.contentItem
+            onClicked: {
+                if (bookmarked) {
+                    removeActivePageFromBookmarks()
+                } else {
+                    bookmarkActivePage()
                 }
             }
+        }
 
-            Browser.IconButton {
-                width: midIconWidth
-                icon.source: bookmarked ? "image://theme/icon-m-favorite-selected" : "image://theme/icon-m-favorite"
-                active: webView.contentItem
-                onClicked: {
-                    if (bookmarked) {
-                        removeActivePageFromBookmarks()
-                    } else {
-                        bookmarkActivePage()
-                    }
-                }
-            }
+        Browser.IconButton {
+            width: midIconWidth
+            icon.source: "image://theme/icon-m-share"
+            active: webView.contentItem
+            onTapped: shareActivePage()
+        }
 
-            Browser.IconButton {
-                width: midIconWidth
-                icon.source: "image://theme/icon-m-share"
-                active: webView.contentItem
-                onTapped: shareActivePage()
-            }
+        Browser.IconButton {
+            width: midIconWidth
+            icon.source: "image://theme/icon-m-file-download-as-pdf"
+            active: webView.contentItem && webView.contentItem.active && !webView.loading
+            onTapped: savePageAsPDF()
+        }
 
-            Browser.IconButton {
-                width: midIconWidth
-                icon.source: "image://theme/icon-m-file-download-as-pdf"
-                active: webView.contentItem && webView.contentItem.active && !webView.loading
-                onTapped: savePageAsPDF()
-            }
-
-            Browser.IconButton {
-                id: downloadsButton
-                width: iconWidth + horizontalOffset
-                icon.source: "image://theme/icon-m-transfer"
-                icon.anchors.horizontalCenterOffset: -horizontalOffset
-                onTapped: settingsApp.call("showTransfers", [])
-            }
+        Browser.IconButton {
+            id: downloadsButton
+            width: iconWidth + horizontalOffset
+            icon.source: "image://theme/icon-m-transfer"
+            icon.anchors.horizontalCenterOffset: -horizontalOffset
+            onTapped: settingsApp.call("showTransfers", [])
         }
     }
 
