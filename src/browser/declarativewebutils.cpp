@@ -1,6 +1,7 @@
 /****************************************************************************
 **
-** Copyright (C) 2013 Jolla Ltd.
+** Copyright (c) 2013 - 2018 Jolla Ltd.
+** Copyright (c) 2020 Open Mobile Platform LLC.
 ** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jollamobile.com>
 **
 ****************************************************************************/
@@ -98,6 +99,11 @@ void DeclarativeWebUtils::openUrl(const QString &url)
 
     QString tmpUrl = targetUrl.toEncoded();
     emit openUrlRequested(tmpUrl);
+}
+
+void DeclarativeWebUtils::openSettings()
+{
+    emit openSettingsRequested();
 }
 
 void DeclarativeWebUtils::updateWebEngineSettings()

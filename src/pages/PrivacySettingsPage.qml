@@ -1,6 +1,7 @@
 /****************************************************************************
 **
-** Copyright (C) 2014 Jolla Ltd.
+** Copyright (c) 2014 - 2016 Jolla Ltd.
+** Copyright (c) 2020 Open Mobile Platform LLC.
 ** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **
 ****************************************************************************/
@@ -12,7 +13,6 @@
 import QtQuick 2.1
 import Sailfish.Silica 1.0
 import org.nemomobile.configuration 1.0
-import org.sailfishos.browser.settings 1.0
 
 Page {
     id: page
@@ -29,8 +29,8 @@ Page {
 
             PageHeader {
                 //: Privacy settings page header
-                //% "Privacy"
-                title: qsTrId("settings_browser-ph-privacy")
+                //% "Privacy settings"
+                title: qsTrId("sailfish_browser-he-privacy-settingsf")
             }
 
             TextSwitch {
@@ -180,5 +180,4 @@ Page {
         key: "/apps/sailfish-browser/actions/clear_bookmarks"
         defaultValue: false
     }
-
 }

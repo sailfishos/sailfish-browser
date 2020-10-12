@@ -1,6 +1,7 @@
 /****************************************************************************
 **
-** Copyright (C) 2016 Jolla Ltd.
+** Copyright (c) 2016 Jolla Ltd.
+** Copyright (c) 2020 Open Mobile Platform LLC.
 ** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **
 ****************************************************************************/
@@ -30,6 +31,7 @@ public:
 
 public slots:
     void openUrl(const QString &url);
+    void openSettings();
     void openNewTabView();
 
     void showChrome();

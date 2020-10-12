@@ -1,6 +1,7 @@
 /****************************************************************************
 **
-** Copyright (C) 2013-2016 Jolla Ltd.
+** Copyright (c) 2013 - 2016 Jolla Ltd.
+** Copyright (c) 2020 Open Mobile Platform LLC.
 ** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jolla.com>
 ** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **
@@ -33,6 +34,7 @@
 #include "declarativewebcontainer.h"
 #include "declarativewebpage.h"
 #include "declarativewebpagecreator.h"
+#include "browsersettings.h"
 #include "iconfetcher.h"
 #include "inputregion.h"
 
@@ -140,6 +142,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     qmlRegisterType<DesktopBookmarkWriter>(uri, 1, 0, "DesktopBookmarkWriter");
     qmlRegisterType<IconFetcher>(uri, 1, 0, "IconFetcher");
     qmlRegisterType<InputRegion>(uri, 1, 0, "InputRegion");
+    qmlRegisterType<BrowserSettings>(uri, 1, 0, "BrowserSettings");
 
     Browser *browser = new Browser(view.data(), app.data());
     browser->connect(service, &BrowserService::openUrlRequested,
@@ -153,6 +156,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     {
         browser->connect(uiService, &BrowserUIService::openUrlRequested,
                         browser, &Browser::openUrl);
+        browser->connect(uiService, &BrowserUIService::openSettingsRequested,
+                        browser, &Browser::openSettings);
         browser->connect(uiService, &BrowserUIService::activateNewTabViewRequested,
                         browser, &Browser::openNewTabView);
         browser->connect(uiService, &BrowserUIService::showChrome,

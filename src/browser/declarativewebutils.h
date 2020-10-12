@@ -1,6 +1,7 @@
 /****************************************************************************
 **
-** Copyright (C) 2013 Jolla Ltd.
+** Copyright (c) 2013 - 2018 Jolla Ltd.
+** Copyright (c) 2020 Open Mobile Platform LLC.
 ** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jollamobile.com>
 **
 ****************************************************************************/
@@ -43,10 +44,12 @@ public slots:
     QString homePage() const;
     void handleDumpMemoryInfoRequest(const QString &fileName);
     void openUrl(const QString &url);
+    void openSettings();
 
 signals:
     void homePageChanged();
     void openUrlRequested(const QString &url);
+    void openSettingsRequested();
     void activateNewTabViewRequested();
     void showChrome();
 
