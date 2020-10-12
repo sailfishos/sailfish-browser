@@ -43,6 +43,8 @@ Background {
     function loadPage(url)  {
         if (url == "about:config") {
             pageStack.animatorPush(Qt.resolvedUrl("ConfigWarning.qml"), {"browserPage": browserPage})
+        } else if (url == "about:settings") {
+            pageStack.animatorPush(Qt.resolvedUrl("../SettingsPage.qml"))
         } else {
             if (webView && webView.tabModel.count === 0) {
                 webView.clearSurface();

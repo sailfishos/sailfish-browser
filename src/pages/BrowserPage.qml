@@ -356,6 +356,12 @@ Page {
             bringToForeground(webView.chromeWindow)
             window.activate()
         }
+        onOpenSettingsRequested: {
+            pageStack.pop(browserPage, PageStackAction.Immediate)
+            pageStack.push(Qt.resolvedUrl("SettingsPage.qml"), {}, PageStackAction.Immediate)
+            bringToForeground(webView.chromeWindow)
+            window.activate()
+        }
     }
 
     Component.onCompleted: {

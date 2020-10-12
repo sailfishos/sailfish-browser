@@ -1,6 +1,7 @@
 /****************************************************************************
 **
-** Copyright (C) 2013 Jolla Ltd.
+** Copyright (c) 2013 - 2019 Jolla Ltd.
+** Copyright (c) 2020 Open Mobile Platform LLC.
 ** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jollamobile.com>
 **
 ****************************************************************************/
@@ -52,6 +53,11 @@ UIServiceDBusAdaptor::UIServiceDBusAdaptor(BrowserUIService *browserService)
 void UIServiceDBusAdaptor::openUrl(const QStringList &args)
 {
     m_BrowserService->openUrl(args);
+}
+
+void UIServiceDBusAdaptor::openSettings()
+{
+    m_BrowserService->openSettings();
 }
 
 void UIServiceDBusAdaptor::activateNewTabView()

@@ -1,6 +1,7 @@
 /****************************************************************************
 **
-** Copyright (C) 2016 Jolla Ltd.
+** Copyright (c) 2016 - 2018 Jolla Ltd.
+** Copyright (c) 2020 Open Mobile Platform LLC.
 ** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **
 ****************************************************************************/
@@ -128,6 +129,11 @@ void Browser::openUrl(const QString &url)
     Q_D(Browser);
     d->closeEventFilter->cancelStopApplication();
     DeclarativeWebUtils::instance()->openUrl(url);
+}
+
+void Browser::openSettings()
+{
+    DeclarativeWebUtils::instance()->openSettings();
 }
 
 void Browser::openNewTabView()
