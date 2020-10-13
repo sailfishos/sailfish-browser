@@ -3,12 +3,23 @@ import Sailfish.Silica 1.0
 import Sailfish.Browser 1.0
 
 Page {
+    id: root
+
+    property alias model: view.model
+
+    signal loadPage(string url)
+
     HistoryList {
         id: view
 
         anchors.fill: parent
+        showDeleteButton: true
 
-        model: HistoryModel { id: historyModel }
+        onLoad: {
+            view.focus = true
+            pageStack.pop()
+            root.loadPage(url)
+        }
 
         header: Column {
             width: parent.width
@@ -23,7 +34,7 @@ Page {
                 placeholderText: qsTrId("sailfish_browser-ph-search")
                 EnterKey.onClicked: focus = false
                 onTextChanged: {
-                    historyModel.search(searchField.text)
+                    model.search(searchField.text)
                     view.search = searchField.text
                 }
             }
@@ -31,16 +42,17 @@ Page {
         section {
             property: "date"
             delegate: SectionHeader {
-                text: Format.formatDate(section, Formatter.TimepointSectionRelative)
+                property string formattedDate: Format.formatDate(section, Formatter.TimepointSectionRelative)
+
+                //% "Today"
+                text: formattedDate ? formattedDate : qsTrId("sailfish_browser-la-today")
             }
         }
-
-        delegate: HistoryItem { search: view.search }
 
         ViewPlaceholder {
             //% "Websites you visit show up here"
             text: qsTrId("sailfish_browser-la-websites-show-up-here")
-            enabled: !historyModel.count
+            enabled: !model.count
         }
     }
 }

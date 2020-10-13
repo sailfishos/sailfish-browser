@@ -52,7 +52,8 @@ Column {
 
         onClicked: {
             showChrome()
-            pageStack.push("HistoryPage.qml")
+            var historyPage = pageStack.push("HistoryPage.qml", { model: historyModel })
+            historyPage.loadPage.connect(loadPage)
         }
     }
 

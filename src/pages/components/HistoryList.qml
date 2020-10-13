@@ -15,67 +15,45 @@ import Sailfish.Silica 1.0
 SilicaListView {
     id: view
     property string search
+    property bool showDeleteButton
 
     signal load(string url, string title)
 
     // To prevent model to steal focus
     currentIndex: -1
 
-    delegate: ListItem {
+    delegate: HistoryItem {
         id: historyDelegate
-        width: view.width
-        contentHeight: titleText.height * 2 + Theme.paddingMedium
         menu: contextMenuComponent
-
-        ListView.onAdd: AddAnimation { target: historyDelegate }
-
-        Column {
-            width: view.width - Theme.paddingLarge * 2
-            x: Theme.paddingLarge
-            anchors.verticalCenter: parent.verticalCenter
-
-            Label {
-                id: titleText
-                text: Theme.highlightText(model.title, search, Theme.highlightColor)
-                textFormat: Text.StyledText
-                color: highlighted ? Theme.highlightColor : Theme.primaryColor
-                font.pixelSize: Theme.fontSizeSmall
-                truncationMode: TruncationMode.Fade
-                width: parent.width
-            }
-
-            Label {
-                text: Theme.highlightText(model.url, search, Theme.highlightColor)
-                textFormat: Text.StyledText
-                opacity: Theme.opacityHigh
-                color: highlighted ? Theme.highlightColor : Theme.primaryColor
-                font.pixelSize: Theme.fontSizeSmall
-                truncationMode: TruncationMode.Fade
-                width: parent.width
-            }
-        }
-
-        ListView.onRemove: animateRemoval()
-        onClicked: {
-            view.focus = true
-            view.load(model.url, model.title)
-        }
+        search: view.search
+        showDeleteButton: view.showDeleteButton
 
         Component {
             id: contextMenuComponent
+
             ContextMenu {
                 MenuItem {
-                  //: Delete history entry
-                  //% "Delete"
-                  text: qsTrId("sailfish_browser-me-delete")
-                  onClicked: view.model.remove(model.index)
+                    //: Share link from browser history pulley menu
+                    //% "Share"
+                    text: qsTrId("sailfish_browser-me-share-link")
+                    onClicked: pageStack.animatorPush("Sailfish.WebView.Popups.ShareLinkPage",
+                                                      {"link" : model.url, "linkTitle": model.title})
+                }
+                MenuItem {
+                    //% "Copy to clipboard"
+                    text: qsTrId("sailfish_browser-me-copy-to-clipboard")
+                    onClicked: Clipboard.text = model.url
+                }
+
+                MenuItem {
+                    //: Delete history entry
+                    //% "Delete"
+                    text: qsTrId("sailfish_browser-me-delete")
+                    onClicked: remove()
                 }
             }
         }
     }
 
-    VerticalScrollDecorator {
-        parent: view
-        flickable: view
-    }
+    VerticalScrollDecorator {}
 }
