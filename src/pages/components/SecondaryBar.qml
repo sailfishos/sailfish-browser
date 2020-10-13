@@ -116,8 +116,14 @@ Column {
         Browser.IconButton {
             width: midIconWidth
             icon.source: "image://theme/icon-m-file-download-as-pdf"
-            active: webView.contentItem && webView.contentItem.active && !webView.loading && !DownloadManager.pdfPrinting
-            onTapped: savePageAsPDF()
+            active: webView.contentItem && webView.contentItem.active && !webView.loading
+            onTapped: {
+                if (DownloadManager.pdfPrinting) {
+                    pdfPrintingNotice.show()
+                } else {
+                    savePageAsPDF()
+                }
+            }
         }
 
         Browser.IconButton {
@@ -127,6 +133,14 @@ Column {
             icon.anchors.horizontalCenterOffset: -horizontalOffset
             onTapped: settingsApp.call("showTransfers", [])
         }
+    }
+
+    Notice {
+        id: pdfPrintingNotice
+        duration: 3000
+        //% "Already saving pdf"
+        text: qsTrId("sailfish_browser-la-already_printing_pdf")
+        verticalOffset: -overlay.toolBar.toolsHeight * 4
     }
 
     DBusInterface {
