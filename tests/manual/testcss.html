@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=0.5, user-scalable=no">
+  <head>
+    <style type="text/css">
+      @font-face {
+          font-family:Material Icons;
+          src:url(https://raw.githubusercontent.com/google/material-design-icons/master/font/MaterialIcons-Regular.ttf) format("truetype")
+      }
+
+      .material-icons {
+          font-family: Material Icons;
+          font-size: 48px;
+      }
+
+      @font-face {
+          font-family:Rye;
+          src:url(https://fonts.gstatic.com/s/rye/v8/r05XGLJT86YzEZ7t.woff2) format("woff2")
+      }
+
+      .rye {
+          font-family: Rye;
+          font-size: 48px;
+      }
+
+      .sansserif {
+          font-family: sans-serif;
+          font-size: 48px;
+      }
+
+      .serif {
+          font-family: serif;
+          font-size: 48px;
+      }
+
+      .fantasy {
+          font-family: fantasy;
+          font-size: 48px;
+      }
+    </style>
+
+    <style type="text/css">
+      section {
+        max-width: 400px;
+      }
+
+      .shape {
+        float: left;
+        width: 150px;
+        height: 150px;
+        background-color: maroon;
+        clip-path: polygon(0 0, 150px 150px, 0 150px);
+        shape-outside: polygon(0 0, 150px 150px, 0 150px);
+        shape-margin: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>CSS Fonts</h1>
+    <p/>
+    The following should appear as circular symbols rather than text. 
+    <p/>
+    <span class="material-icons">add_circle remove_circle cancel check_circle</span>
+    <p/>
+    The following lines should all show different fonts.
+    <p/>Rye remote download woff2
+    <p/>
+    <span class="rye">ABCDEFGabcdefg</span>
+    <p/>Default sans-serif
+    <p/>
+    <span class="sansserif">ABCDEFGabcdefg</span>
+    <p/>Default serif
+    <p/>
+    <span class="serif">ABCDEFGabcdefg</span>
+    <p/>Default typewriter (monospaced)
+    <p/>
+    <tt style="font-size:48px;">ABCDEFGabcdefg</tt>
+    <p/>Default fantasy
+    <p/>
+    <span class="fantasy">ABCDEFGabcdefg</span>
+
+    <h1>CSS Shapes</h1>
+    <p/>Example taken from the 
+    <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/shape-margin#Examples">MDN docs</a>.
+    This should show a right-angle isosceles triangle in maroon with text flowing 
+    diagonally along the edge of the shape. The shape feature was introduced in ESR60. 
+    The text flow feature was introduced in ESR62.
+    <section/>
+    <div class="shape"></div>
+
+    We are not quite sure of any one thing in biology; our knowledge of geology
+    is relatively very slight, and the economic laws of society are
+    uncertain to every one except some individual who attempts to set them
+    forth; but before the world was fashioned the square on the hypotenuse
+    was equal to the sum of the squares on the other two sides of a right
+    triangle, and it will be so after this world is dead; and the inhabitant
+    of Mars, if he exists, probably knows its truth as we know it.</section>
+  </body>
+</html>
+
