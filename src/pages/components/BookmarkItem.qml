@@ -54,19 +54,17 @@ ListItem {
         }
 
         Label {
-            text: Theme.highlightText(url, searchText, Theme.highlightColor)
+            text: Theme.highlightText(title, searchText, Theme.highlightColor)
             textFormat: Text.StyledText
-            opacity: Theme.opacityHigh
             color: highlighted ? Theme.highlightColor : Theme.primaryColor
             font.pixelSize: Theme.fontSizeSmall
             truncationMode: TruncationMode.Fade
             width: parent.width
         }
-
         Label {
-            text: Theme.highlightText(title, searchText, Theme.highlightColor)
+            text: Theme.highlightText(url, searchText, Theme.highlightColor)
             textFormat: Text.StyledText
-            color: highlighted ? Theme.highlightColor : Theme.primaryColor
+            color: highlighted ? Theme.secondaryHighlightColor : Theme.secondaryColor
             font.pixelSize: Theme.fontSizeSmall
             truncationMode: TruncationMode.Fade
             width: parent.width
