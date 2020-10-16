@@ -466,6 +466,7 @@ Background {
                     }
                 }
 
+                onLoadPage: overlay.loadPage(url)
                 onEnterNewTabUrl: overlay.enterNewTabUrl()
                 onFindInPage: {
                     _showFindInPage = true
@@ -518,8 +519,10 @@ Background {
 
                 onMovingChanged: if (moving) historyList.focus = true
                 onSearchChanged: if (search !== webView.url) historyModel.search(search)
-                onLoad: overlay.loadPage(url)
-
+                onLoad: {
+                    historyList.focus = true
+                    overlay.loadPage(url)
+                }
                 Behavior on opacity { FadeAnimator {} }
             }
 

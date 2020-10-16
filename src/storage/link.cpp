@@ -10,19 +10,24 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "link.h"
+#include <QDebug>
 
-Link::Link(int linkId, const QString &urlString, const QString &thumbPath, const QString &title) :
-    m_linkId(linkId), m_url(urlString), m_thumbPath(thumbPath), m_title(title)
+Link::Link(int linkId, const QString &urlString, const QString &thumbPath, const QString &title, const QDate &date) :
+    m_linkId(linkId), m_url(urlString), m_thumbPath(thumbPath), m_title(title), m_date(date)
 {
 }
 
 Link::Link() :
-    m_linkId(0), m_url(""), m_thumbPath(""), m_title("")
+    m_linkId(0), m_url(""), m_thumbPath(""), m_title(""), m_date(QDate())
 {
 }
 
 Link::Link(const Link& l) :
-    m_linkId(l.m_linkId), m_url(l.m_url), m_thumbPath(l.m_thumbPath), m_title(l.m_title)
+    m_linkId(l.m_linkId),
+    m_url(l.m_url),
+    m_thumbPath(l.m_thumbPath),
+    m_title(l.m_title),
+    m_date(l.m_date)
 {
 }
 
@@ -73,12 +78,26 @@ bool Link::isValid() const
 
 bool Link::operator==(const Link &other) const
 {
-    return (m_linkId == other.linkId() && m_url == other.url() && m_thumbPath == other.thumbPath() && m_title == other.title());
+    return (m_linkId == other.linkId()
+            && m_url == other.url()
+            && m_thumbPath == other.thumbPath()
+            && m_title == other.title()
+            && m_date == other.date());
 }
 
 bool Link::operator!=(const Link &other) const
 {
     return !(*this == other);
+}
+
+QDate Link::date() const
+{
+    return m_date;
+}
+
+void Link::setDate(const QDate &date)
+{
+    m_date = date;
 }
 
 QDebug operator<<(QDebug dbg, const Link *link) {
@@ -87,6 +106,7 @@ QDebug operator<<(QDebug dbg, const Link *link) {
     }
 
     dbg.nospace() << "Link(linkId = " << link->linkId() << ", isValid = " << link->isValid()
-                  << ", url = " << link->url() << ", title = " << link->title() << ", thumbnailPath = " << link->thumbPath() << ")";
+                  << ", url = " << link->url() << ", title = " << link->title()
+                  << ", thumbnailPath = " << link->thumbPath() << ", date = " << link->date() << ")";
     return dbg.space();
 }

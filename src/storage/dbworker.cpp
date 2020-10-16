@@ -450,7 +450,7 @@ void DBWorker::clearDeprecatedTabHistory(int tabId, int currentLinkId) {
 HistoryResult DBWorker::addToBrowserHistory(const QString &url, const QString &title)
 {
 #if DEBUG_LOGS
-    qDebug() << "link id:" << linkId;
+    qDebug() << "url:" << url << "title:" << title;
 #endif
 
     // Skip adding any urls with 'about:' prefix
@@ -550,13 +550,13 @@ void DBWorker::getHistory(const QString &filter)
 
     if (!filter.isEmpty()) {
         filterQuery = filterQuery.arg(QString("(url LIKE :search OR title LIKE :search)"));
-        order = QString("visited_count DESC, date ASC, LENGTH(url), title");
+        order = QString("date DESC, visited_count DESC, LENGTH(url), title");
     } else {
         filterQuery = filterQuery.arg(1);
         order = QString("date DESC");
     }
 
-    QString queryString = QString("SELECT DISTINCT id, url, title "
+    QString queryString = QString("SELECT id, url, title, date, visited_count "
                                   "FROM browser_history "
                                   "%1"
                                   "ORDER BY %2 LIMIT 20;").arg(filterQuery).arg(order);
@@ -571,12 +571,14 @@ void DBWorker::getHistory(const QString &filter)
 
     QList<Link> linkList;
     while (query.next()) {
+        qint64 timestamp = query.value(3).toLongLong();
         Link link(query.value(0).toInt(),
                   query.value(1).toString(),
                   "",
-                  query.value(2).toString());
+                  query.value(2).toString(),
+                  QDateTime::fromMSecsSinceEpoch(timestamp*1000).date());
 #if DEBUG_LOGS
-        qDebug() << &link;
+        qDebug() << &link << "visitedCount:" << query.value(4).toInt();
 #endif
         linkList.append(link);
     }
