@@ -290,7 +290,8 @@ Page {
         }
 
         onActiveChanged: {
-            if (active && webView.contentItem && !overlay.enteringNewTabUrl && !webView.contentItem.fullscreen) {
+            var isFullScreen = webView.contentItem && webView.contentItem.fullscreen
+            if (!isFullScreen && active && !overlay.enteringNewTabUrl) {
                 overlay.animator.showChrome()
             }
 
