@@ -54,6 +54,18 @@ void DeclarativeHistoryModel::remove(int index)
     emit countChanged();
 }
 
+void DeclarativeHistoryModel::remove(const QString &url)
+{
+    int index = 0;
+    for (const auto &link : m_links) {
+        if (link.url() == url) {
+            remove(index);
+            return;
+        }
+        index++;
+    }
+}
+
 void DeclarativeHistoryModel::search(const QString &filter)
 {
     DBManager::instance()->getHistory(filter);
