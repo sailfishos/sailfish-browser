@@ -18,6 +18,12 @@ ListItem {
     property string search
     property bool showDeleteButton
 
+    function remove(url) {
+        remorseDelete(function() {
+            view.model.remove(url)
+        })
+    }
+
     width: parent.width
     contentHeight: Math.max(Theme.itemSizeMedium, column.height + 2*Theme.paddingMedium)
 
@@ -56,7 +62,7 @@ ListItem {
             id: deleteButton
             visible: showDeleteButton
             icon.source: "image://theme/icon-m-clear"
-            onClicked: view.model.remove(model.index)
+            onClicked: remove(model.url)
         }
     }
 

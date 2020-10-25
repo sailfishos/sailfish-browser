@@ -49,7 +49,7 @@ SilicaListView {
                     //: Delete history entry
                     //% "Delete"
                     text: qsTrId("sailfish_browser-me-delete")
-                    onClicked: view.model.remove(model.index)
+                    onClicked: historyDelegate.remove(model.url)
                 }
             }
         }
