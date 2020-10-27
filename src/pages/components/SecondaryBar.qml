@@ -1,6 +1,7 @@
 /****************************************************************************
 **
-** Copyright (C) 2014 Jolla Ltd.
+** Copyright (c) 2014 - 2015 Jolla Ltd.
+** Copyright (c) 2020 Open Mobile Platform LLC.
 ** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jolla.com>
 **
 ****************************************************************************/
@@ -54,6 +55,21 @@ Column {
             showChrome()
             var historyPage = pageStack.push("HistoryPage.qml", { model: historyModel })
             historyPage.loadPage.connect(loadPage)
+        }
+    }
+
+    OverlayListItem {
+        height: overlay.toolBar.rowHeight
+
+        iconWidth: root.iconWidth
+        horizontalOffset: root.horizontalOffset
+        //% "Settings"
+        text: qsTrId("sailfish_browser-la-setting")
+        iconSource: "image://theme/icon-m-setting"
+
+        onClicked: {
+            showChrome()
+            pageStack.push(Qt.resolvedUrl("../SettingsPage.qml"))
         }
     }
 
