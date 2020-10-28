@@ -50,6 +50,7 @@ include(browser/browser.pri)
 include(history/history.pri)
 include(bookmarks/bookmarks.pri)
 include(qtmozembed/qtmozembed.pri)
+include(settings/settings.pri)
 include(factories/factories.pri)
 
 # C++ sources

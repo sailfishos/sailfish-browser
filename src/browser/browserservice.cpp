@@ -1,6 +1,7 @@
 /****************************************************************************
 **
-** Copyright (C) 2013 Jolla Ltd.
+** Copyright (c) 2013 - 2019 Jolla Ltd.
+** Copyright (c) 2020 Open Mobile Platform LLC.
 ** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jollamobile.com>
 **
 ****************************************************************************/
@@ -151,6 +152,11 @@ void BrowserUIService::openUrl(const QStringList &args)
     } else {
         emit openUrlRequested(QString());
     }
+}
+
+void BrowserUIService::openSettings()
+{
+    emit openSettingsRequested();
 }
 
 void BrowserUIService::activateNewTabView()
