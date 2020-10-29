@@ -10,8 +10,6 @@
   "baidu.com": "Linux;#Android 8.1.0;",
   // bug 827622, bing.com
   "bing.com": "\\(Linux; U; Sailfish 3.0#(Android",
-  // bug 827626, magazineluiza.com.br
-  "magazineluiza.com.br": "\\(Linux; U; Sailfish 3.0#(Android",
   // bug 827670, elpais.com.co
   "elpais.com.co": "\\(Linux; U; Sailfish 3.0#(Android 8.1.0",
   // bug 828416, loteriasyapuestas.es
