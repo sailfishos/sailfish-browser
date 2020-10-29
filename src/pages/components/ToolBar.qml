@@ -108,7 +108,6 @@ Column {
                 security: webView.security
                 width: certOverlay.width
                 height: certOverlayHeight
-                portrait: browserPage.isPortrait
                 opacity: Math.max((certOverlayAnimPos * 2.0) - 1.0, 0)
 
                 onShowCertDetail: toolBarRow.showCertDetail()

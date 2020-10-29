@@ -343,6 +343,8 @@ WebContainer {
                 addMessageListener("Content:SelectionRange")
                 addMessageListener("Content:SelectionCopied")
                 addMessageListener("Content:SelectionSwap")
+
+                PermissionManager.instance()
             }
         }
     }
