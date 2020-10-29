@@ -16,7 +16,8 @@ Column {
     id: toolBarRow
 
     property string url
-    readonly property real toolsHeight: height
+    readonly property real rowHeight: height
+    readonly property int maxRowCount: 1
 
     readonly property int horizontalOffset: largeScreen ? Theme.paddingLarge : Theme.paddingSmall
     readonly property int buttonPadding: largeScreen || orientation === Orientation.Landscape || orientation === Orientation.LandscapeInverted

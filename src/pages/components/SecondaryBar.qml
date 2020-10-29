@@ -27,7 +27,7 @@ Column {
     clip: opacity < 1.0
 
     OverlayListItem {
-        height: overlay.toolBar.toolsHeight
+        height: overlay.toolBar.rowHeight
 
         iconWidth: root.iconWidth
         horizontalOffset: root.horizontalOffset
@@ -42,7 +42,7 @@ Column {
     }
 
     OverlayListItem {
-        height: overlay.toolBar.toolsHeight
+        height: overlay.toolBar.rowHeight
 
         iconWidth: root.iconWidth
         horizontalOffset: root.horizontalOffset
@@ -59,7 +59,7 @@ Column {
 
     Row {
         width: parent.width
-        height: overlay.toolBar.toolsHeight
+        height: overlay.toolBar.rowHeight
 
         Browser.TabButton {
             id: addTabButton
@@ -140,7 +140,7 @@ Column {
         duration: 3000
         //% "Already saving pdf"
         text: qsTrId("sailfish_browser-la-already_printing_pdf")
-        verticalOffset: -overlay.toolBar.toolsHeight * 4
+        verticalOffset: -overlay.toolBar.rowHeight * overlay.toolBar.maxRowCount
     }
 
     DBusInterface {

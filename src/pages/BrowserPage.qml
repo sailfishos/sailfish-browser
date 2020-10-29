@@ -150,7 +150,7 @@ Page {
         fullscreenHeight: portrait ? Screen.height : Screen.width
         portrait: browserPage.isPortrait
         maxLiveTabCount: 3
-        toolbarHeight: overlay.toolBar.toolsHeight
+        toolbarHeight: overlay.toolBar.rowHeight
         rotationHandler: browserPage
         imOpened: virtualKeyboardObserver.opened
         canShowSelectionMarkers: !orientationFader.waitForWebContentOrientationChanged
@@ -231,7 +231,7 @@ Page {
         baseOpacity: overlay.baseOpacity
         dimmerOpacity: overlay.animator.atBottom
                        ? 0.0
-                       : 0.9 - (overlay.y / (webView.fullscreenHeight - overlay.toolBar.toolsHeight)) * 0.9
+                       : 0.9 - (overlay.y / (webView.fullscreenHeight - overlay.toolBar.rowHeight)) * 0.9
 
         MouseArea {
             anchors.fill: parent
@@ -261,7 +261,7 @@ Page {
         opacity: privateModeTexture.visible ? 1.0 : 0.0
         anchors {
             bottom: contentDimmer.bottom
-            bottomMargin: (overlay.toolBar.toolsHeight - height) / 2
+            bottomMargin: (overlay.toolBar.rowHeight - height) / 2
         }
 
         //: Label for private browsing above address bar
