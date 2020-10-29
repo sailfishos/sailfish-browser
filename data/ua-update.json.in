@@ -12,8 +12,6 @@
   "bing.com": "\\(Linux; U; Sailfish 3.0#(Android",
   // bug 827670, elpais.com.co
   "elpais.com.co": "\\(Linux; U; Sailfish 3.0#(Android 8.1.0",
-  // bug 828418, bbva.es
-  "bbva.es": "\\(Linux; U; Sailfish 3.0#(Android",
   // bug 843132, comunio.es
   "comunio.es": "\\(Linux; U; Sailfish 3.0#(Android",
   // bug 843153, games.com
