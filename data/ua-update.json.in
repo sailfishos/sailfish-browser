@@ -4,8 +4,6 @@
   // Ref: "Mozilla/5.0 (Linux; U; Sailfish 3.0; Mobile; rv:60.9) Gecko/60.9 Firefox/60.9 SailfishBrowser/1.0"
   // bug 826347, msn.com
   "msn.com": "\\(Linux; U; Sailfish 3.0#(Android 8.1.0",
-  // bug 826353, itau.com.br
-  "itau.com.br": "\\(Linux; U; Sailfish 3.0#(Android",
   // bug 826510, r7.com
   "r7.com": "\\(Linux; U; Sailfish 3.0#(Android",
   // JB#39252, baidu.com
