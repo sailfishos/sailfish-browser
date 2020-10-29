@@ -22,8 +22,6 @@
   "qq.com": "Linux;#Android 8.1.0;",
   // JB#39351, tom.com
   "tom.com": "Linux; #Android 8.1.0;",
-  // JB#39351, zhihu.com
-  "zhihu.com": "Linux; U; #Android;",
   // JB#39351, 58.com
   "58.com": "Linux; U; #Android; U; ",
   // JB#39351, dianping.com
