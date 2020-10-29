@@ -71,7 +71,6 @@
   "yandex.com": "Mozilla/5.0 (Mobile; rv:60.9) Gecko/60.9 Firefox/60.9",
   "yandex.net": "Mozilla/5.0 (Mobile; rv:60.9) Gecko/60.9 Firefox/60.9",
   "yandex.ru": "Mozilla/5.0 (Mobile; rv:60.9) Gecko/60.9 Firefox/60.9",
-  "yastatic.net": "Mozilla/5.0 (Mobile; rv:60.9) Gecko/60.9 Firefox/60.9",
   // JB#39970, slashdot.org
   "slashdot.org": "Linux;#Android 8.1.0;",
   "verkkokauppa.com": "Mozilla/5.0 (Android 8.1.0; U; Sailfish 3.0; rv:60.9) Gecko/60.9 Firefox/60.9 SailfishBrowser/1.0 like Safari/538.1",
