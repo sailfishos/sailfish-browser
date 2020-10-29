@@ -4,50 +4,24 @@
   // Ref: "Mozilla/5.0 (Linux; U; Sailfish 3.0; Mobile; rv:60.9) Gecko/60.9 Firefox/60.9 SailfishBrowser/1.0"
   // bug 826347, msn.com
   "msn.com": "\\(Linux; U; Sailfish 3.0#(Android 8.1.0",
-  // bug 826353, itau.com.br
-  "itau.com.br": "\\(Linux; U; Sailfish 3.0#(Android",
   // bug 826510, r7.com
   "r7.com": "\\(Linux; U; Sailfish 3.0#(Android",
   // JB#39252, baidu.com
   "baidu.com": "Linux;#Android 8.1.0;",
   // bug 827622, bing.com
   "bing.com": "\\(Linux; U; Sailfish 3.0#(Android",
-  // bug 827626, magazineluiza.com.br
-  "magazineluiza.com.br": "\\(Linux; U; Sailfish 3.0#(Android",
   // bug 827670, elpais.com.co
   "elpais.com.co": "\\(Linux; U; Sailfish 3.0#(Android 8.1.0",
-  // bug 828416, loteriasyapuestas.es
-  "loteriasyapuestas.es": "\\(Linux; U; Sailfish 3.0#(Android",
-  // bug 828418, bbva.es
-  "bbva.es": "\\(Linux; U; Sailfish 3.0#(Android",
-  // bug 843132, comunio.es
-  "comunio.es": "\\(Linux; U; Sailfish 3.0#(Android",
-  // bug 843153, games.com
-  "games.com": "\\(Linux; U; Sailfish 3.0#(Android",
-  // JB#39252, jd.com
-  "jd.com": "Linux;#Android 8.1.0;",
-  // bug 878228, blikk.hu
-  "blikk.hu": "\\(Linux; U; Sailfish 3.0#(Android",
   // bug 878240, kuruc.info
   "kuruc.info": "\\(Linux; U; Sailfish 3.0#(Android",
-  // bug 878249, portfolio.hu
-  "portfolio.hu": "\\(Linux; U; Sailfish 3.0#(Android",
-  // bug 878262, download.com
-  "download.com": "\\(Linux; U; Sailfish 3.0#(Android",
-  "dailymotion.com": "Linux;#Android 8.1.0;",
-  "le.com": "Linux;#Android 8.1.0;",
   "youku.com": "Linux;#Android 8.1.0;",
   // JB#39351
   "iqiyi.com": "Linux; U; #Android 8.1.0;",
   "facebook.com": "Mozilla/5.0 (Mobile; rv:60.9) Gecko/60.9 Firefox/60.9",
-  // JB#39351, sohu.com
-  "sohu.com": "Linux; U; Sailfish 3.0# ; Android",
   // JB#39351, qq.com
   "qq.com": "Linux;#Android 8.1.0;",
   // JB#39351, tom.com
   "tom.com": "Linux; #Android 8.1.0;",
-  // JB#39351, zhihu.com
-  "zhihu.com": "Linux; U; #Android;",
   // JB#39351, 58.com
   "58.com": "Linux; U; #Android; U; ",
   // JB#39351, dianping.com
@@ -58,8 +32,6 @@
   "soso.com": "Linux; U; #Android; U; ",
   // JB#39351, 360.cn
   "360.cn": "Linux; U; #Android; U; ",
-  // JB#39351, xinhuanet.com
-  "xinhuanet.com": "Linux; U; #Android; U; ",
   // JB#39351, hao123.com
   "hao123.com": "Linux; U; #Android; U; ",
   // JB#39351, chinaz.com
@@ -71,11 +43,9 @@
   "yandex.com": "Mozilla/5.0 (Mobile; rv:60.9) Gecko/60.9 Firefox/60.9",
   "yandex.net": "Mozilla/5.0 (Mobile; rv:60.9) Gecko/60.9 Firefox/60.9",
   "yandex.ru": "Mozilla/5.0 (Mobile; rv:60.9) Gecko/60.9 Firefox/60.9",
-  "yastatic.net": "Mozilla/5.0 (Mobile; rv:60.9) Gecko/60.9 Firefox/60.9",
   // JB#39970, slashdot.org
   "slashdot.org": "Linux;#Android 8.1.0;",
   "verkkokauppa.com": "Mozilla/5.0 (Android 8.1.0; U; Sailfish 3.0; rv:60.9) Gecko/60.9 Firefox/60.9 SailfishBrowser/1.0 like Safari/538.1",
-  "verk.net": "Mozilla/5.0 (Android 8.1.0; U; Sailfish 3.0; rv:60.9) Gecko/60.9 Firefox/60.9 SailfishBrowser/1.0 like Safari/538.1",
   "digicert.com": "Mozilla/5.0 (Mobile; rv:60.9) Gecko/60.9 Firefox/60.9",
   // JB#48647, JB#45164 and JB#21093, google.com + some other country level domains
   "google.com": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:60.9) Gecko/60.9 SailfishBrowser/1.0",
@@ -98,7 +68,6 @@
   "google.sk": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:60.9) Gecko/60.9 SailfishBrowser/1.0",
   "google.ch": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:60.9) Gecko/60.9 SailfishBrowser/1.0",
   "google.at": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:60.9) Gecko/60.9 SailfishBrowser/1.0",
-  "twitter.com": "Linux#Android 8.1.0",
   "apkpure.com": "Linux#Android 8.1.0",
   "zingmp3.vn": "Linux#Android 8.1.0",
   "vk.com": "Linux; U; # "
