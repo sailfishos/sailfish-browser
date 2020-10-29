@@ -18,8 +18,6 @@
   // JB#39351
   "iqiyi.com": "Linux; U; #Android 8.1.0;",
   "facebook.com": "Mozilla/5.0 (Mobile; rv:60.9) Gecko/60.9 Firefox/60.9",
-  // JB#39351, sohu.com
-  "sohu.com": "Linux; U; Sailfish 3.0# ; Android",
   // JB#39351, qq.com
   "qq.com": "Linux;#Android 8.1.0;",
   // JB#39351, tom.com
