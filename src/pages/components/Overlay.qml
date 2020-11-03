@@ -34,7 +34,7 @@ Background {
 
     property string enteredUrl
 
-    property real _overlayHeight: browserPage.isPortrait ? toolBar.toolsHeight : 0
+    property real _overlayHeight: browserPage.isPortrait ? toolBar.rowHeight : 0
     property bool _showFindInPage
     property bool _showUrlEntry
     property bool _showInfoOverlay
@@ -88,7 +88,7 @@ Background {
         searchField.enteringNewTabUrl = false
     }
 
-    y: webView.fullscreenHeight - toolBar.toolsHeight
+    y: webView.fullscreenHeight - toolBar.rowHeight
 
     Private.VirtualKeyboardObserver {
         id: virtualKeyboardObserver
@@ -109,8 +109,8 @@ Background {
         portrait: browserPage.isPortrait
         webView: overlay.webView
 
-        readonly property real _fullHeight: isPortrait ? overlay.toolBar.toolsHeight : 0
-        readonly property real _infoHeight: Math.max(webView.fullscreenHeight - overlay.toolBar.certOverlayPreferedHeight - overlay.toolBar.toolsHeight, 0)
+        readonly property real _fullHeight: isPortrait ? overlay.toolBar.rowHeight : 0
+        readonly property real _infoHeight: Math.max(webView.fullscreenHeight - overlay.toolBar.certOverlayPreferedHeight - overlay.toolBar.rowHeight, 0)
 
         onAtBottomChanged: {
             if (atBottom) {
@@ -170,10 +170,10 @@ Background {
         id: dragArea
 
         property bool moved
-        property int dragThreshold: state === "fullscreenOverlay" ? toolBar.toolsHeight * 1.5
+        property int dragThreshold: state === "fullscreenOverlay" ? toolBar.rowHeight * 1.5
                                                                   : state === "certOverlay"
-                                                                    ? (overlayAnimator._infoHeight + toolBar.toolsHeight * 0.5)
-                                                                    : (webView.fullscreenHeight - toolBar.toolsHeight * 2)
+                                                                    ? (overlayAnimator._infoHeight + toolBar.rowHeight * 0.5)
+                                                                    : (webView.fullscreenHeight - toolBar.rowHeight * 2)
 
         width: parent.width
         height: historyContainer.height
@@ -184,7 +184,7 @@ Background {
         drag.axis: Drag.YAxis
         // Favorite grid first row offset is negative. So, increase minumumY drag by that.
         drag.minimumY: _overlayHeight
-        drag.maximumY: webView.fullscreenHeight - toolBar.toolsHeight
+        drag.maximumY: webView.fullscreenHeight - toolBar.rowHeight
 
         drag.onActiveChanged: {
             if (!drag.active) {
@@ -210,7 +210,7 @@ Background {
         Browser.ProgressBar {
             id: progressBar
             width: parent.width
-            height: toolBar.toolsHeight
+            height: toolBar.rowHeight
             visible: !searchField.enteringNewTabUrl
             opacity: webView.loading ? 1.0 : 0.0
             progress: webView.loadProgress / 100.0
@@ -222,7 +222,7 @@ Background {
             readonly property bool showFavorites: !overlayAnimator.atBottom && (!searchField.edited && searchField.text === webView.url || !searchField.text) && !toolBar.findInPageActive && _showUrlEntry
 
             width: parent.width
-            height: toolBar.toolsHeight + historyList.height
+            height: toolBar.rowHeight + historyList.height
             // Clip only when content has been moved and we're at top or animating downwards.
             clip: (overlayAnimator.atTop ||
                    overlayAnimator.direction === "downwards" ||
@@ -433,12 +433,12 @@ Background {
                 certOverlayActive: _showInfoOverlay
                 certOverlayHeight: !_showInfoOverlay
                                    ? 0
-                                   : Math.max((webView.fullscreenHeight - overlay.y - overlay.toolBar.toolsHeight)
+                                   : Math.max((webView.fullscreenHeight - overlay.y - overlay.toolBar.rowHeight)
                                               - overlay.toolBar.secondaryToolsHeight, 0)
 
-                certOverlayAnimPos: Math.min(Math.max((webView.fullscreenHeight - overlay.y - overlay.toolBar.toolsHeight)
+                certOverlayAnimPos: Math.min(Math.max((webView.fullscreenHeight - overlay.y - overlay.toolBar.rowHeight)
                                                       / (webView.fullscreenHeight - overlayAnimator._infoHeight
-                                                         - overlay.toolBar.toolsHeight), 0.0), 1.0)
+                                                         - overlay.toolBar.rowHeight), 0.0), 1.0)
 
                 onShowOverlay: {
                     _showUrlEntry = true

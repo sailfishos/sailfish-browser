@@ -26,7 +26,8 @@ Column {
     property real certOverlayPreferedHeight: 4 * toolBarRow.height
     readonly property bool showFindButtons: webView.findInPageHasResult && findInPageActive
     property alias bookmarked: secondaryBar.bookmarked
-    readonly property alias toolsHeight: toolsRow.height
+    readonly property alias rowHeight: toolsRow.height
+    readonly property int maxRowCount: 4
 
     readonly property int horizontalOffset: largeScreen ? Theme.paddingLarge : Theme.paddingSmall
     readonly property int buttonPadding: largeScreen || orientation === Orientation.Landscape || orientation === Orientation.LandscapeInverted

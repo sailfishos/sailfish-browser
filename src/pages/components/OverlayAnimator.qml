@@ -134,7 +134,7 @@ Item {
             changes: [
                 PropertyChanges {
                     target: overlay
-                    y: webView.fullscreenHeight - overlay.toolBar.toolsHeight
+                    y: webView.fullscreenHeight - overlay.toolBar.rowHeight
                 }
             ]
         },
@@ -167,11 +167,11 @@ Item {
             changes: [
                 PropertyChanges {
                     target: overlay
-                    y: webView.fullscreenHeight - overlay.toolBar.toolsHeight * 4
+                    y: webView.fullscreenHeight - (overlay.toolBar.rowHeight * overlay.toolBar.maxRowCount)
                 },
                 PropertyChanges {
                     target: overlay.toolBar
-                    secondaryToolsHeight: overlay.toolBar.toolsHeight * 3
+                    secondaryToolsHeight: overlay.toolBar.rowHeight * (overlay.toolBar.maxRowCount - 1)
                 }
             ]
         },
