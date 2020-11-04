@@ -92,6 +92,7 @@ Page {
 
         if (status == PageStatus.Inactive && overlay.visible) {
             overlay.animator.hide()
+            overlay.toolBar.certOverlayActive = false
         }
     }
 

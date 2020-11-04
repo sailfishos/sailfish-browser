@@ -88,18 +88,18 @@ Column {
 
     Item {
         id: certOverlay
+
+        readonly property bool canDestroy: !visible && !certOverlayActive
+        onCanDestroyChanged: {
+            if (canDestroy) certOverlayLoader.active = false
+        }
+
         visible: opacity > 0.0 || height > 0.0
         opacity: certOverlayActive ? 1.0 : 0.0
         height: certOverlayHeight
         width: parent.width
 
         Behavior on opacity { FadeAnimation {} }
-
-        onVisibleChanged: {
-            if (!visible && !certOverlayActive) {
-                certOverlayLoader.active = false
-            }
-        }
 
         Loader {
             id: certOverlayLoader
