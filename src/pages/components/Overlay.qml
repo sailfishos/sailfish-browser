@@ -37,7 +37,6 @@ Background {
     property real _overlayHeight: browserPage.isPortrait ? toolBar.rowHeight : 0
     property bool _showFindInPage
     property bool _showUrlEntry
-    property bool _showInfoOverlay
     readonly property bool _topGap: _showUrlEntry || _showFindInPage
 
     function loadPage(url)  {
@@ -132,7 +131,7 @@ Background {
 
                 _showFindInPage = false
                 _showUrlEntry = false
-                _showInfoOverlay = false
+                toolBar.certOverlayActive = false
             }
             dragArea.moved = false
         }
@@ -140,10 +139,10 @@ Background {
         onAtTopChanged: {
             if (atTop) {
                 if (_showFindInPage || _showUrlEntry) {
-                    _showInfoOverlay = false
+                    toolBar.certOverlayActive = false
                 }
             } else {
-                if (!_showInfoOverlay) {
+                if (!toolBar.certOverlayActive) {
                     dragArea.moved = true
                 }
             }
@@ -430,8 +429,7 @@ Background {
 
                 visible: opacity > 0.0
                 secondaryToolsActive: overlayAnimator.secondaryTools
-                certOverlayActive: _showInfoOverlay
-                certOverlayHeight: !_showInfoOverlay
+                certOverlayHeight: !toolBar.certOverlayActive
                                    ? 0
                                    : Math.max((webView.fullscreenHeight - overlay.y - overlay.toolBar.rowHeight)
                                               - overlay.toolBar.secondaryToolsHeight, 0)
@@ -454,7 +452,7 @@ Background {
                 }
                 onShowSecondaryTools: overlayAnimator.showSecondaryTools()
                 onShowInfoOverlay: {
-                    _showInfoOverlay = true
+                    toolBar.certOverlayActive = true
                     _overlayHeight = Qt.binding(function() { return overlayAnimator._infoHeight })
                     overlayAnimator.showInfoOverlay(false)
                 }
