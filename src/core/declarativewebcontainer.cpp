@@ -98,7 +98,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     connect(DownloadManager::instance(), &DownloadManager::downloadStarted,
             this, &DeclarativeWebContainer::onDownloadStarted);
     SailfishOS::WebEngine *webEngine = SailfishOS::WebEngine::instance();
-    connect(webEngine, &SailfishOS::WebEngine::onInitialized,
+    connect(webEngine, &SailfishOS::WebEngine::initialized,
             this, &DeclarativeWebContainer::initialize);
     connect(webEngine, &SailfishOS::WebEngine::lastViewDestroyed,
             this, &DeclarativeWebContainer::onLastViewDestroyed);
@@ -825,7 +825,7 @@ void DeclarativeWebContainer::onActiveTabChanged(int activeTabId)
 
 void DeclarativeWebContainer::initialize()
 {
-    if (SailfishOS::WebEngine::instance()->initialized() && !m_mozWindow) {
+    if (SailfishOS::WebEngine::instance()->isInitialized() && !m_mozWindow) {
         m_mozWindow.reset(new QMozWindow(QWindow::size()));
         connect(m_mozWindow.data(), &QMozWindow::requestGLContext,
                 this, &DeclarativeWebContainer::createGLContext, Qt::DirectConnection);
@@ -1022,7 +1022,7 @@ void DeclarativeWebContainer::updatePageFocus(bool focus)
 
 bool DeclarativeWebContainer::canInitialize() const
 {
-    return SailfishOS::WebEngine::instance()->initialized() && m_model && m_model->loaded();
+    return SailfishOS::WebEngine::instance()->isInitialized() && m_model && m_model->loaded();
 }
 
 bool DeclarativeWebContainer::browserEnabled() const

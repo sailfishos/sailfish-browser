@@ -255,7 +255,7 @@ void tst_declarativewebcontainer::setChromeWindow()
 void tst_declarativewebcontainer::load()
 {
     // No page and no model set => set initial url
-    EXPECT_CALL(*SailfishOS::WebEngine::instance(), initialized()).WillOnce(Return(false));
+    EXPECT_CALL(*SailfishOS::WebEngine::instance(), isInitialized()).WillOnce(Return(false));
     m_webContainer->load(QString(), true);
     QCOMPARE(m_webContainer->m_initialUrl, QString("about:blank"));
 
@@ -264,14 +264,14 @@ void tst_declarativewebcontainer::load()
     EXPECT_CALL(page, loadProgress());
     m_webContainer->setWebPage(&page);
     EXPECT_CALL(page, completed()).WillOnce(Return(false));
-    EXPECT_CALL(*SailfishOS::WebEngine::instance(), initialized()).WillOnce(Return(false));
+    EXPECT_CALL(*SailfishOS::WebEngine::instance(), isInitialized()).WillOnce(Return(false));
     m_webContainer->load(QString("http://example1.com"), true);
     QCOMPARE(m_webContainer->m_initialUrl, QString("http://example1.com"));
 
     // Initialized container, empty model => add new tab to model
     PrivateTabModel model(NEXT_TAB_ID);
     m_webContainer->setTabModel(&model);
-    EXPECT_CALL(*SailfishOS::WebEngine::instance(), initialized()).WillOnce(Return(true));
+    EXPECT_CALL(*SailfishOS::WebEngine::instance(), isInitialized()).WillOnce(Return(true));
     EXPECT_CALL(page, completed()).WillOnce(Return(false));
     m_webContainer->load(QString(), true);
 
