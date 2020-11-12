@@ -43,6 +43,10 @@ void DBusAdaptor::dumpMemoryInfo(const QString &fileName)
     m_BrowserService->dumpMemoryInfo(fileName);
 }
 
+void DBusAdaptor::closeBrowser()
+{
+    m_BrowserService->closeBrowser();
+}
 
 UIServiceDBusAdaptor::UIServiceDBusAdaptor(BrowserUIService *browserService)
     : QDBusAbstractAdaptor(browserService)
