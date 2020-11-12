@@ -20,6 +20,12 @@ ListItem {
         pageStack.pop()
     }
 
+    function remove(url) {
+        remorseDelete(function() {
+            bookmarkModel.remove(url)
+        })
+    }
+
     contentHeight: Math.max(Theme.itemSizeMedium, column.height + 2*Theme.paddingMedium)
 
     menu: contextMenuComponent
@@ -110,7 +116,7 @@ ListItem {
             MenuItem {
                 //% "Delete"
                 text: qsTrId("sailfish_browser-me-delete")
-                onClicked: bookmarkModel.remove(model.url)
+                onClicked: root.remove(model.url)
             }
         }
     }
