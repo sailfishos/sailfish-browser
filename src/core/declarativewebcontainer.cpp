@@ -515,7 +515,7 @@ bool DeclarativeWebContainer::activatePage(const Tab& tab, bool force, int paren
     }
 
     m_webPages->initialize(this);
-    if ((m_model->loaded() || force) && tab.tabId() > 0 && m_webPages->initialized() && m_webPageComponent) {
+    if ((m_model->loaded() || force) && tab.tabId() > 0 && m_webPages->isInitialized() && m_webPageComponent) {
         WebPageActivationData activationData = m_webPages->page(tab, parentId);
         setWebPage(activationData.webPage);
         // Reset always height so that orentation change is taken into account.

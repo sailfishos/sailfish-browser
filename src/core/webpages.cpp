@@ -112,7 +112,7 @@ void WebPages::delayVirtualization()
                this, &WebPages::delayVirtualization);
 }
 
-bool WebPages::initialized() const
+bool WebPages::isInitialized() const
 {
     return m_webContainer;
 }
