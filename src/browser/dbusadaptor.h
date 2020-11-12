@@ -34,7 +34,8 @@ public slots:
     void cancelTransfer(int transferId);
     void restartTransfer(int transferId);
     void dumpMemoryInfo(const QString &fileName);
-
+    // for captive portal browser
+    void closeBrowser();
 private:
     BrowserService *m_BrowserService;
 };

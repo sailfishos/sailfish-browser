@@ -19,6 +19,7 @@
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
 #include <QFileInfo>
+#include <QCoreApplication>
 
 #define SAILFISH_BROWSER_SERVICE QLatin1String("org.sailfishos.browser")
 #define SAILFISH_BROWSER_UI_SERVICE QLatin1String("org.sailfishos.browser.ui")
@@ -111,6 +112,18 @@ void BrowserService::dumpMemoryInfo(const QString &fileName)
 bool BrowserService::isPrivileged() const
 {
     IS_PRIVILEGED;
+}
+
+void BrowserService::closeBrowser()
+{
+    if (!BrowserApp::captivePortal()) {
+        return;
+    }
+    QEvent closeEvent(QEvent::Close);
+    QCoreApplication::sendEvent(QCoreApplication::instance(), &closeEvent);
+    const QDBusMessage &msg = message();
+    QDBusMessage reply = msg.createReply();
+    connection().send(reply);
 }
 
 BrowserUIServicePrivate::BrowserUIServicePrivate()
