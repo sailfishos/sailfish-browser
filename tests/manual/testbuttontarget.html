@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script>
+            function colswap(style, col1, col2) {
+                style.backgroundColor = style.backgroundColor == col1 ? col2 : col1;
+            }
+        </script>
+    </head>
+    <body>
+        <p/>This demonstrates how the target of a &lt;button&gt; element is chosen.
+        <p/>Everything should be clickable, everything should change colour.
+        <p/>Broken in ESR60, should be fixed in ESR68, see mozilla bug 1089326.
+        <p/>
+        <button style="padding: 0; width: 600px; height: 300px; background-color: blue;" onClick="colswap(this.style, 'blue', 'cyan')">
+            <div style="width: 50%; height: 200%; background-color: red;" onClick="colswap(this.style, 'red', 'green')" />
+        </button>
+    </body>
+</html>
+
