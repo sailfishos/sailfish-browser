@@ -15,6 +15,7 @@ import QtQuick 2.0
 import Nemo.KeepAlive 1.2
 import Sailfish.WebEngine 1.0
 import Nemo.DBus 2.0
+import MeeGo.Connman 0.2
 import org.nemomobile.policy 1.0
 
 // QtObject cannot have children
@@ -81,6 +82,8 @@ Item {
 
     Connections {
         target: WebEngine
+
+        onInitialized: networkManager.notifyOfflineStatus()
         onRecvObserve: {
             if (message === "media-decoder-info") {
                 if (data.state === "meta") {
@@ -94,6 +97,22 @@ Item {
                 calculateStatus()
             }
         }
+    }
+
+    NetworkManager {
+        id: networkManager
+        readonly property bool online: state == "online"
+
+        function notifyOfflineStatus() {
+            if (WebEngine.isInitialized) {
+                WebEngine.notifyObservers("embed-network-link-status",
+                                          {
+                                              "offline": !networkManager.online
+                                          })
+            }
+        }
+
+        onOnlineChanged: notifyOfflineStatus()
     }
 
     DBusInterface {
