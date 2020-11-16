@@ -93,8 +93,8 @@ Page {
 
                 TextSwitch {
                     id: clearBookmarks
-                    //% "Favorites"
-                    text: qsTrId("settings_browser-la-clear_favorites")
+                    //% "Bookmarks"
+                    text: qsTrId("settings_browser-la-clear_bookmarks")
                     checked: true
                 }
 

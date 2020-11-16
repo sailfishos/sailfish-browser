@@ -45,15 +45,15 @@ Component {
         }
 
         MenuItem {
-            //% "Edit favorite"
-            text: qsTrId("sailfish_browser-me-edit_favorite")
+            //% "Edit"
+            text: qsTrId("sailfish_browser-me-edit")
             onClicked: delegate.editBookmark()
         }
 
         MenuItem {
-            //: "Remove favorited / bookmarked web page"
-            //% "Remove favorite"
-            text: qsTrId("sailfish_browser-me-remove_favorite")
+            //: "Remove bookmarked web page"
+            //% "Remove"
+            text: qsTrId("sailfish_browser-me-remove")
             onClicked: {
                 var d = delegate
                 var i = index
