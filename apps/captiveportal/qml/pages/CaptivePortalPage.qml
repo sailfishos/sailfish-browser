@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (c) 2020 Open Mobile Platform LLC.
+** Copyright (c) 2020 - 2021 Open Mobile Platform LLC.
 **
 ****************************************************************************/
 
@@ -105,6 +105,7 @@ Page {
             PropertyChanges {
                 target: webView.contentItem
                 virtualKeyboardMargin: virtualKeyboardObserver.panelSize
+                virtualKeyboardHeight: virtualKeyboardObserver.imSize
             }
         }
     }

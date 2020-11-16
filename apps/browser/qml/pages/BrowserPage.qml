@@ -139,6 +139,7 @@ Page {
             PropertyChanges {
                 target: webView.contentItem
                 virtualKeyboardMargin: virtualKeyboardObserver.panelSize
+                virtualKeyboardHeight: virtualKeyboardObserver.imSize
             }
         }
     }
