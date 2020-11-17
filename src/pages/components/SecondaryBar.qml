@@ -38,7 +38,7 @@ Column {
 
         onClicked: {
             showChrome()
-            pageStack.push("BookmarkPage.qml")
+            pageStack.push("BookmarkPage.qml", { bookmarkModel: bookmarkModel })
         }
     }
 
