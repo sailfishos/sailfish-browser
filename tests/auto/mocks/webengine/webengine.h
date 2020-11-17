@@ -34,7 +34,7 @@ public:
 
     static void initialize(const QString &profilePath, const QString &userAgent = QLatin1String(""));
     static WebEngine* instance();
-    MOCK_CONST_METHOD0(initialized, bool());
+    MOCK_CONST_METHOD0(isInitialized, bool());
     MOCK_METHOD1(CancelTask, void(void *));
     MOCK_METHOD2(PostCompositorTask, TaskHandle(TaskCallback, void *));
     MOCK_METHOD2(sendObserve, void(const QString &, const QString &));
@@ -47,7 +47,7 @@ public:
     MOCK_METHOD1(addObservers, void(const std::vector<std::string> &));
 
 signals:
-    void onInitialized();
+    void initialized();
     void contextDestroyed();
     void lastViewDestroyed();
     void lastWindowDestroyed();

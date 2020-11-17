@@ -43,7 +43,7 @@ public:
     ~WebPages();
 
     void initialize(DeclarativeWebContainer *webContainer);
-    bool initialized() const;
+    bool isInitialized() const;
     int count() const;
 
     bool setMaxLivePages(int count);
