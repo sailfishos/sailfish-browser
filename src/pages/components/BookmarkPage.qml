@@ -15,7 +15,7 @@ import Sailfish.Browser 1.0
 Page {
     property string searchText
 
-    BookmarkModel { id: bookmarkModel }
+    property BookmarkModel bookmarkModel
 
     BookmarkFilterModel {
         id: bookmarkFilterModel
