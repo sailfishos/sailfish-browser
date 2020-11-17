@@ -23,10 +23,10 @@ UserPrompt {
 
     canAccept: urlField.text && titleField.text && (urlField.text !== url || titleField.text !== title)
 
-    //% "Edit favorite"
-    title: qsTrId("sailfish_browser-he-edit_favorite")
+    //% "Edit"
+    title: qsTrId("sailfish_browser-he-edit")
 
-    //: Save the bookmark/favorite
+    //: Accept text of bookmark edit dialog
     //% "Save"
     acceptText: qsTrId("sailfish_browser-la-accept_edit")
 

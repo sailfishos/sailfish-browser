@@ -33,8 +33,8 @@ Column {
         iconWidth: root.iconWidth
         horizontalOffset: root.horizontalOffset
         iconSource: "image://theme/icon-m-favorite-selected"
-        //% "Favourites"
-        text: qsTrId("sailfish_browser-la-favourites")
+        //% "Bookmarks"
+        text: qsTrId("sailfish_browser-la-bookmarks")
 
         onClicked: {
             showChrome()
@@ -93,7 +93,7 @@ Column {
             onTapped: webView.goForward()
         }
 
-        // Spacer for pushing Search, Favorite, Share, Downloads to the right hand side
+        // Spacer for pushing Search, Bookmark, Share, Downloads to the right hand side
         Item {
             height: parent.height
             width: parent.width - addTabButton.width - forwardButton.width - midIconWidth * 4 - downloadsButton.width
