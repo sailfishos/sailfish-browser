@@ -31,6 +31,8 @@ Page {
             root.loadPage(url)
         }
 
+        Component.onCompleted: model.search("")
+
         header: Column {
             width: parent.width
             PageHeader {
