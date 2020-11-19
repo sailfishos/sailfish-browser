@@ -38,7 +38,7 @@ Column {
 
         onClicked: {
             showChrome()
-            pageStack.push("BookmarkPage.qml", { bookmarkModel: bookmarkModel })
+            pageStack.push("../BookmarkPage.qml", { bookmarkModel: bookmarkModel })
         }
     }
 
@@ -53,7 +53,7 @@ Column {
 
         onClicked: {
             showChrome()
-            var historyPage = pageStack.push("HistoryPage.qml", { model: historyModel })
+            var historyPage = pageStack.push("../HistoryPage.qml", { model: historyModel })
             historyPage.loadPage.connect(loadPage)
         }
     }
