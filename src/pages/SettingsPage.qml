@@ -10,7 +10,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import QtQuick 2.0
+import QtQuick 2.6
 import Sailfish.Silica 1.0
 import Sailfish.Browser 1.0
 import org.nemomobile.configuration 1.0
@@ -138,6 +138,29 @@ Page {
                 checked: WebEngineSettings.javascriptEnabled
                 enabled: AccessPolicy.browserEnabled
                 onCheckedChanged: WebEngineSettings.javascriptEnabled = checked;
+            }
+
+            BackgroundItem {
+                width: parent.width
+                contentHeight: Theme.itemSizeMedium
+                Row {
+                    width: parent.width - 2*Theme.horizontalPageMargin
+                    x: Theme.horizontalPageMargin
+                    spacing: Theme.paddingMedium
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    Icon {
+                        id: permissionIcon
+                        source: "image://theme/icon-m-browser-permissions"
+                    }
+                    Label {
+                        width: parent.width - parent.spacing - permissionIcon.width
+                        //% "Permissions"
+                        text: qsTrId("settings_browser-la-permissions")
+                        anchors.verticalCenter: permissionIcon.verticalCenter
+                    }
+                }
+                onClicked: pageStack.push("PermissionPage.qml")
             }
         }
     }
