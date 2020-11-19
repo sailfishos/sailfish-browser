@@ -15,6 +15,7 @@ import Sailfish.Silica 1.0
 import Sailfish.Browser 1.0
 import Sailfish.WebView.Pickers 1.0 as Pickers
 import Sailfish.WebView.Popups 1.0 as Popups
+import Sailfish.WebView.Controls 1.0
 import Qt5Mozilla 1.0
 import Sailfish.Policy 1.0
 import "." as Browser
@@ -39,7 +40,7 @@ WebContainer {
     property var _webPageCreator: WebPageCreator {
         activeWebPage: contentItem
         // onNewWindowRequested is always handled as synchronous operation (not through newTab).
-        onNewWindowRequested: tabModel.newTab(url, parentId)
+        onNewWindowRequested: tabModel.newTab("", parentId)
     }
 
     property Component textSelectionControllerComponent: Component {
@@ -95,7 +96,7 @@ WebContainer {
         }
     }
 
-    foreground: visibility >= QuickWindow.Window.Maximized
+    foreground: visibility >= QuickWindow.Window.Maximized && Qt.application.state === Qt.ApplicationActive
     readyToPaint: resourceController.videoActive ? webView.visible && !resourceController.displayOff : webView.visible && webView.contentItem && webView.contentItem.domContentLoaded
     allowHiding: !resourceController.videoActive && !resourceController.audioActive
     fullscreenMode: (contentItem && !contentItem.chrome) ||

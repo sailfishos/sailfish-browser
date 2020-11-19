@@ -13,6 +13,7 @@ import Sailfish.Silica 1.0
 import Sailfish.Silica.private 1.0 as Private
 import Sailfish.Browser 1.0
 import Sailfish.Policy 1.0
+import Sailfish.WebView.Controls 1.0
 import com.jolla.settings.system 1.0
 import "." as Browser
 
@@ -34,7 +35,7 @@ Background {
 
     property real _overlayHeight: browserPage.isPortrait ? toolBar.toolsHeight : 0
     property bool _showFindInPage
-    property bool _showUrlEntry: true
+    property bool _showUrlEntry
     property bool _showInfoOverlay
     readonly property bool _topGap: _showUrlEntry || _showFindInPage
 
@@ -257,30 +258,23 @@ Background {
                 }
 
                 sourceComponent: Component {
-                    Browser.TextSelectionToolbar {
-                        property Item controller: webView && webView.contentItem && webView.contentItem.textSelectionController
-                        horizontalOffset: toolBar.horizontalOffset
-                        iconWidth: toolBar.iconWidth
-                        isPhoneNumber: active && controller.isPhoneNumber
+                    TextSelectionToolbar {
+                        controller: webView && webView.contentItem && webView.contentItem.textSelectionController
+                        width: textSelectionToolbar.width
+                        height: textSelectionToolbar.height
+                        leftPadding: toolBar.horizontalOffset
+                        rightPadding: toolBar.horizontalOffset
                         onCall: {
                             Qt.openUrlExternally("tel:" + controller.text)
-                            controller.clearSelection()
                         }
 
                         onShare: {
-                            controller.clearSelection()
                             pageStack.animatorPush("Sailfish.WebView.Popups.ShareTextPage", {"text" : controller.text })
                         }
                         onSearch: {
                             // Open new tab with the search uri.
-                            controller.clearSelection()
                             webView.tabModel.newTab(controller.searchUri)
                             overlay.animator.showChrome(true)
-                        }
-                        onClear: {
-                            if (controller) {
-                                controller.clearSelection()
-                            }
                         }
                     }
                 }

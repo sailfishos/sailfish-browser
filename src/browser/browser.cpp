@@ -46,8 +46,6 @@ Browser::Browser(QQuickView *view, QObject *parent)
     DeclarativeWebUtils *utils = DeclarativeWebUtils::instance();
     DownloadManager *downloadManager = DownloadManager::instance();
 
-    utils->clearStartupCacheIfNeeded();
-
     d->view->rootContext()->setContextProperty("WebUtils", utils);
     d->view->rootContext()->setContextProperty("Settings", SettingManager::instance());
     d->view->rootContext()->setContextProperty("DownloadManager", downloadManager);

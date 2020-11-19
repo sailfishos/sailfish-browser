@@ -1,7 +1,7 @@
 /****************************************************************************
 **
-** Copyright (C) 2013 - 2019 Jolla Ltd.
-** Copyright (C) 2019 Open Mobile Platform LLC.
+** Copyright (c) 2013 - 2019 Jolla Ltd.
+** Copyright (c) 2019 - 2020 Open Mobile Platform LLC.
 ** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jollamobile.com>
 ** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **
@@ -52,6 +52,7 @@ ApplicationWindow {
     _resizeContent: !window.rootPage.active
     _mainWindow: webView
     _backgroundVisible: false
+    _opaque: false
 
     cover: null
     initialPage: Component {

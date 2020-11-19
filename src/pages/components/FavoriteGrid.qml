@@ -89,7 +89,6 @@ IconGridViewBase {
         }
 
         GridView.onAdd: AddAnimation { target: favoriteItem }
-        GridView.onRemove: animateRemoval()
     }
 
 

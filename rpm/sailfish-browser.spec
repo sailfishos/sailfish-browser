@@ -1,7 +1,7 @@
 %global min_xulrunner_version 45.8.1.1
 %global min_qtmozembed_version 1.14.7
 %global min_embedlite_components_version 1.20.0
-%global min_sailfishwebengine_version 0.2.0
+%global min_sailfishwebengine_version 1.0.6
 %global min_systemsettings_version 0.5.25
 
 Name:       sailfish-browser
@@ -34,9 +34,8 @@ BuildRequires:  oneshot
 BuildRequires:  gtest-devel
 BuildRequires:  libgmock-devel
 BuildRequires:  pkgconfig(vault) >= 1.0.1
-BuildRequires:  pkgconfig(qtaround) >= 0.2.0
 
-Requires: sailfishsilica-qt5 >= 1.1.79
+Requires: sailfishsilica-qt5 >= 1.1.107
 Requires: sailfish-content-graphics
 Requires: xulrunner-qt5 >= %{min_xulrunner_version}
 Requires: embedlite-components-qt5 >= %{min_embedlite_components_version}
@@ -118,10 +117,10 @@ install -m 644 -p %{SOURCE1} %{buildroot}%{_datadir}/mapplauncherd/privileges.d/
 
 # Upgrade, count is 2 or higher (depending on the number of versions installed)
 if [ "$1" -ge 2 ]; then
-%{_bindir}/add-oneshot --user --now browser-cleanup-startup-cache || :
+%{_bindir}/add-oneshot --all-users --now browser-cleanup-startup-cache || :
 fi
 
-%{_bindir}/add-oneshot --user --late browser-update-default-data || :
+%{_bindir}/add-oneshot --new-users --all-users --late browser-update-default-data || :
 
 %files
 %defattr(-,root,root,-)

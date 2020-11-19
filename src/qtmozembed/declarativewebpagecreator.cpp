@@ -38,10 +38,10 @@ void DeclarativeWebPageCreator::setActiveWebPage(DeclarativeWebPage *activeWebPa
     }
 }
 
-quint32 DeclarativeWebPageCreator::createView(const QString &url, const quint32 &parentId)
+quint32 DeclarativeWebPageCreator::createView(const quint32 &parentId)
 {
     QPointer<DeclarativeWebPage> oldPage = m_activeWebPage;
-    emit newWindowRequested(url, parentId);
+    emit newWindowRequested(parentId);
     if (m_activeWebPage && oldPage != m_activeWebPage) {
         return m_activeWebPage->uniqueID();
     }

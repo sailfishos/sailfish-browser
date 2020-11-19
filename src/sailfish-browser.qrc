@@ -17,8 +17,6 @@
         <file>pages/components/Overlay.qml</file>
         <file>pages/components/OverlayAnimator.qml</file>
         <file>pages/components/ProgressBar.qml</file>
-        <file>pages/components/TextSelectionController.qml</file>
-        <file>pages/components/TextSelectionHandle.qml</file>
         <file>pages/components/ToolBar.qml</file>
         <file>pages/components/TabItem.qml</file>
         <file>pages/components/WebView.qml</file>

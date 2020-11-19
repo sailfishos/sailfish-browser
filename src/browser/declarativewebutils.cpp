@@ -34,8 +34,7 @@
 #include "declarativewebutils.h"
 #include "browserpaths.h"
 
-static const QString gSystemComponentsTimeStamp("/var/lib/_MOZEMBED_CACHE_CLEAN_");
-static const QString gProfilePath("/.mozilla/mozembed");
+static const auto defaultUserAgentUpdateUrl = QStringLiteral("https://browser.sailfishos.org/gecko/%APP_VERSION%/ua-update.json");
 
 static DeclarativeWebUtils *gSingleton = 0;
 
@@ -68,21 +67,6 @@ DeclarativeWebUtils::~DeclarativeWebUtils()
 int DeclarativeWebUtils::getLightness(const QColor &color) const
 {
     return color.lightness();
-}
-
-void DeclarativeWebUtils::clearStartupCacheIfNeeded()
-{
-    QFileInfo systemStamp(gSystemComponentsTimeStamp);
-    if (systemStamp.exists()) {
-        QString mostProfilePath = QDir::homePath() + gProfilePath;
-        QString localStampString(mostProfilePath + QString("/_CACHE_CLEAN_"));
-        QFileInfo localStamp(localStampString);
-        if (localStamp.exists() && systemStamp.lastModified() > localStamp.lastModified()) {
-            QDir cacheDir(mostProfilePath + "/startupCache");
-            cacheDir.removeRecursively();
-            QFile(localStampString).remove();
-        }
-    }
 }
 
 void DeclarativeWebUtils::handleDumpMemoryInfoRequest(const QString &fileName)
@@ -121,17 +105,18 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     SailfishOS::WebEngineSettings *webEngineSettings = SailfishOS::WebEngineSettings::instance();
     SailfishOS::WebEngine *webEngine = SailfishOS::WebEngine::instance();
 
+    webEngineSettings->setPreference(QStringLiteral("general.useragent.updates.enabled"),
+                        MGConfItem(QStringLiteral("/apps/sailfish-browser/settings/useragent_update_enabled")).value(QVariant(true)));
     webEngineSettings->setPreference(QStringLiteral("general.useragent.updates.url"),
-                        QStringLiteral("https://browser.sailfishos.org/gecko/%APP_VERSION%/ua-update.json"));
-    webEngineSettings->setPreference(QStringLiteral("general.useragent.updates.interval"), QVariant(172800)); // every 2nd day
-    webEngineSettings->setPreference(QStringLiteral("general.useragent.updates.retry"), QVariant(86400)); // 1 day
+                        MGConfItem(QStringLiteral("/apps/sailfish-browser/settings/useragent_update_url")).value(defaultUserAgentUpdateUrl));
+    webEngineSettings->setPreference(QStringLiteral("general.useragent.updates.interval"),
+                        MGConfItem(QStringLiteral("/apps/sailfish-browser/settings/useragent_update_interval")).value(QVariant(172800))); // every 2nd day
+    webEngineSettings->setPreference(QStringLiteral("general.useragent.updates.retry"),
+                        MGConfItem(QStringLiteral("/apps/sailfish-browser/settings/useragent_update_retry")).value(QVariant(86400))); // 1 day
 
     // Without this pref placeholders get cleaned as soon as a character gets committed
     // by VKB and that happens only when Enter is pressed or comma/space/dot is entered.
     webEngineSettings->setPreference(QString("dom.placeholder.show_on_focus"), QVariant(false));
-
-    webEngineSettings->setPreference(QString("security.alternate_certificate_error_page"), QString("certerror"));
-
     webEngineSettings->setPreference(QString("geo.wifi.scan"), QVariant(false));
     webEngineSettings->setPreference(QString("media.resource_handler_disabled"), QVariant(true));
 
@@ -147,13 +132,6 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     webEngineSettings->setPreference(QString("keyword.enabled"), QVariant(true));
 
     setRenderingPreferences();
-
-    // Disable SSLv3
-    webEngineSettings->setPreference(QString("security.tls.version.min"), QVariant(1));
-
-    // Content Security Policy is enabled by default,
-    // this enables the spec compliant mode.
-    webEngineSettings->setPreference(QString("security.csp.speccompliant"), QVariant(true));
 }
 
 void DeclarativeWebUtils::setFirstUseDone(bool firstUseDone) {
@@ -239,10 +217,4 @@ void DeclarativeWebUtils::setRenderingPreferences()
     webEngineSettings->setPreference(QString("gfx.compositor.external-window"), QVariant(true));
     webEngineSettings->setPreference(QString("gfx.compositor.clear-context"), QVariant(false));
     webEngineSettings->setPreference(QString("embedlite.compositor.external_gl_context"), QVariant(true));
-
-    if (webEngineSettings->pixelRatio() >= 2.0) {
-        // Don't use too small low precision buffers for high dpi devices. This reduces
-        // a bit the blurriness.
-        webEngineSettings->setPreference(QString("layers.low-precision-resolution"), QString("0.5f"));
-    }
 }

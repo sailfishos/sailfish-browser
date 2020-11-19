@@ -29,11 +29,11 @@ public:
     DeclarativeWebPage *activeWebPage() const;
     void setActiveWebPage(DeclarativeWebPage *activeWebPage);
 
-    virtual quint32 createView(const QString &url, const quint32 &parentId);
+    virtual quint32 createView(const quint32 &parentId);
 
 signals:
     void activeWebPageChanged();
-    void newWindowRequested(const QString &url, const quint32 &parentId);
+    void newWindowRequested(const quint32 &parentId);
 
 private:
     QPointer<DeclarativeWebPage> m_activeWebPage;
