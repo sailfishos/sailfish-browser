@@ -16,6 +16,7 @@ import Sailfish.Browser 1.0
 import org.nemomobile.configuration 1.0
 import com.jolla.settings.system 1.0
 import Sailfish.Policy 1.0
+import Sailfish.WebEngine 1.0
 
 Page {
     id: page
@@ -123,6 +124,20 @@ Page {
                 enabled: AccessPolicy.browserEnabled
 
                 onCheckedChanged: closeAllTabsConfig.value = checked
+            }
+
+            TextSwitch {
+                //: Label for text switch that enables JavaScript globally for all tabs
+                //% "Enable JavaScript"
+                text: qsTrId("settings_browser-la-enable_javascript")
+                description: WebEngineSettings.javascriptEnabled ?
+                                     //% "Allowed (recommended)"
+                                     qsTrId("settings_browser-la-enabled_javascript_description") :
+                                     //% "Blocked, some sites may not work correctly"
+                                     qsTrId("settings_browser-la-disable_javascript_description")
+                checked: WebEngineSettings.javascriptEnabled
+                enabled: AccessPolicy.browserEnabled
+                onCheckedChanged: WebEngineSettings.javascriptEnabled = checked;
             }
         }
     }
