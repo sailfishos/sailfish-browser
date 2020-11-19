@@ -11,6 +11,7 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
 import Sailfish.Browser 1.0
+import "components"
 
 Page {
     property string searchText
@@ -23,34 +24,26 @@ Page {
         search: searchText
     }
 
-    Column {
-        id: column
-        width: parent.width
-        PageHeader {
-            //% "Bookmarks"
-            title: qsTrId("sailfish_browser-he-bookmarks")
-        }
-        SearchField {
-            width: parent.width
-            //% "Search"
-            placeholderText: qsTrId("sailfish_browser-ph-search")
-            EnterKey.onClicked: focus = false
-            onTextChanged: searchText = text
-        }
-    }
-
     SilicaListView {
         id: listView
 
-        clip: true
-
-        width: parent.width
-        anchors {
-            bottom: parent.bottom
-            top: column.bottom
-        }
-
+        anchors.fill: parent
         model: bookmarkFilterModel
+
+        header: Column {
+            width: parent.width
+            PageHeader {
+                //% "Bookmarks"
+                title: qsTrId("sailfish_browser-he-bookmarks")
+            }
+            SearchField {
+                width: parent.width
+                //% "Search"
+                placeholderText: qsTrId("sailfish_browser-ph-search")
+                EnterKey.onClicked: focus = false
+                onTextChanged: searchText = text
+            }
+        }
 
         delegate: BookmarkItem { width: listView.width }
 
