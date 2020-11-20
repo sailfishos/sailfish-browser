@@ -101,7 +101,7 @@ Item {
 
     NetworkManager {
         id: networkManager
-        readonly property bool online: state == "online"
+        readonly property bool online: state == "online" || state == "ready"
 
         function notifyOfflineStatus() {
             if (WebEngine.isInitialized) {
