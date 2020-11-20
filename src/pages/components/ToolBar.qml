@@ -149,6 +149,7 @@ Column {
             Browser.TabButton {
                 id: tabs
 
+                icon.source: webView.privateMode ? "image://theme/icon-m-incognito" : "image://theme/icon-m-tabs"
                 opacity: secondaryToolsActive || findInPageActive ? 0.0 : 1.0
                 horizontalOffset: toolBarRow.horizontalOffset
                 label.text: webView.tabModel.count
@@ -158,24 +159,23 @@ Column {
                     id: rotationAnimator
                     target: tabs.icon
                     duration: 1500
-                    easing.type: Easing.InOutQuad
                     alwaysRunToEnd: true
                 }
 
                 Connections {
                     target: webView.tabModel
                     onNewTabRequested: {
-                        // New tab request triggers 90 degrees clockwise rotation
+                        // New tab request triggers 360 degrees clockwise rotation
                         // for the tab icon.
-                        rotationAnimator.from = rotationAnimator.to
-                        rotationAnimator.to = rotationAnimator.from + 90
+                        rotationAnimator.from = 0
+                        rotationAnimator.to = 360
                         rotationAnimator.restart()
                     }
 
                     onTabClosed: {
                         // Counter closewise when closing.
-                        rotationAnimator.from = rotationAnimator.to
-                        rotationAnimator.to = rotationAnimator.from - 90
+                        rotationAnimator.from = 0
+                        rotationAnimator.to = -360
                         rotationAnimator.restart()
                     }
                 }
