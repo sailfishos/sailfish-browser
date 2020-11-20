@@ -18,7 +18,6 @@ Browser.IconButton {
     property int horizontalOffset
     // Don't pass touch events through if opaque
     enabled: opacity === 1.0
-    icon.source: "image://theme/icon-m-tabs"
     icon.anchors.horizontalCenterOffset: horizontalOffset
 
     Label {
