@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Open Mobile Platform LLC.
+ * Copyright (c) 2019-2020 Open Mobile Platform LLC.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
@@ -10,36 +10,37 @@ import QtQuick 2.2
 import Sailfish.Silica 1.0
 
 Item {
+    id: root
+
+    property real rootWidth
     property alias key: keyLabel.text
     property alias value: valueLabel.text
-    property alias valueColor: valueLabel.color
     property alias keyLabel: keyLabel
-    property int keyWidth
-    property bool _wrap: keyLabel.implicitWidth > keyWidth
+    property bool _wrap: valueLabel.implicitWidth > (rootWidth - keyLabel.width - Theme.paddingMedium)
 
-    property bool insecure
     visible: value && value.length > 0
-    width: parent.width - 2 * Theme.horizontalPageMargin
+    width: _wrap
+           ? rootWidth
+           : keyLabel.width + valueLabel.implicitWidth + Theme.paddingMedium
     x: Theme.horizontalPageMargin
-    height: _wrap ? keyLabel.height + valueLabel.height : Math.max(keyLabel.height, valueLabel.height)
+    height: Math.max(keyLabel.height, valueLabel.implicitHeight)
 
     Label {
         id: keyLabel
-        color: Theme.highlightColor
-        width: keyWidth
+
+        color: Theme.secondaryHighlightColor
     }
 
     Label {
         id: valueLabel
+
         anchors {
-            left: _wrap ? keyLabel.left : keyLabel.right
-            leftMargin: _wrap ? 0 : Theme.paddingMedium
-            top: _wrap ? keyLabel.bottom : keyLabel.top
+            left: keyLabel.right
+            leftMargin: Theme.paddingMedium
         }
 
-        width: _wrap ? parent.width : parent.width - keyLabel.width - Theme.paddingMedium
-        wrapMode: Text.Wrap
-        color: insecure ? Theme.errorColor : Theme.secondaryHighlightColor
-        opacity: insecure ? Theme.opacityHigh : 1.0
+        width: _wrap ? rootWidth - keyLabel.width - Theme.paddingMedium : implicitWidth
+        wrapMode: Text.WrapAtWordBoundaryOrAnywhere
+        color: Theme.highlightColor
     }
 }

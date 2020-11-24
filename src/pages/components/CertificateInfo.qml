@@ -12,55 +12,25 @@ import Sailfish.Silica.private 1.0 as Private
 import Sailfish.Browser 1.0
 import Qt5Mozilla 1.0
 import "." as Browser
+import Sailfish.WebView.Controls 1.0
 
 SilicaFlickable {
     id: root
     property QMozSecurity security
     readonly property bool _validCert: security && security.subjectDisplayName.length > 0
-    contentHeight: certInfoColumn.height + certInfoColumn.y + showMore.height + calculatedHeight + 2 * Theme.paddingSmall
+    contentHeight: certInfoColumn.height
     clip: contentHeight > height
-    property alias buttonHeight: showMore.height
     readonly property bool _secure: security && security.allGood
-    property bool portrait
-    property bool initialized
-    property int implicitKeyWidth: Theme.itemSizeExtraLarge
-    property int keyWidth: implicitKeyWidth
-    property int maximumKeyWidth: width / 2
-    property int calculatedHeight
 
     signal showCertDetail
     signal closeCertInfo
 
-    function updateKeyWidth() {
-        if (!initialized) return
-
-        var width = implicitKeyWidth
-        for (var i in keyValuePairs.children) {
-            var child = keyValuePairs.children[i]
-            if (child.keyLabel !== undefined) {
-                var childWidth = Math.ceil(child.keyLabel.implicitWidth)
-                if (childWidth > maximumKeyWidth) continue
-                width = Math.max(width, childWidth)
-            }
-        }
-        keyWidth = width
-
-        // Column won't layout until the next frame, so we have to calculate the height ourselves
-        calculatedHeight = 0
-        for (var i in keyValuePairs.children) {
-            var child = keyValuePairs.children[i]
-            if ((child.keyLabel !== undefined) && (child.value.length > 0)) {
-                calculatedHeight += child.height + Theme.paddingSmall
-            }
-        }
-        if (calculatedHeight > 0) {
-            calculatedHeight -= Theme.paddingSmall
-        }
-    }
-
-    Component.onCompleted: {
-        initialized = true // avoid unnecessary re-layouting during initialization
-        updateKeyWidth()
+    function openSiteSettings() {
+        pageStack.push("../SitePermissionPage.qml", {
+                           title: webView.title,
+                           url: toolBarRow.url,
+                           permissionModel: permissionIndicationModel
+                       })
     }
 
     onSecurityChanged: {
@@ -68,7 +38,10 @@ SilicaFlickable {
         contentY = originY
     }
 
-    onMaximumKeyWidthChanged: updateKeyWidth()
+    PermissionModel {
+        id: permissionIndicationModel
+        host: toolBarRow.url
+    }
 
     VerticalScrollDecorator {}
 
@@ -79,18 +52,21 @@ SilicaFlickable {
 
     Column {
         id: certInfoColumn
-        spacing: Theme.paddingSmall
         width: parent.width
-        y: Theme.paddingMedium
-        bottomPadding: showMore.enabled ? 0 : Theme.paddingLarge
+        spacing: Theme.paddingMedium
+        topPadding: Theme.paddingLarge
 
+        Image {
+            source: _secure ? "image://theme/icon-m-device-lock" : "image://theme/icon-m-warning"
+            anchors.horizontalCenter: parent.horizontalCenter
+        }
         Label {
             width: parent.width - 2 * Theme.horizontalPageMargin
             x: Theme.horizontalPageMargin
+            horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
             font.pixelSize: Theme.fontSizeLarge
-            color: _secure ? (palette.colorScheme === Theme.LightOnDark ? "#22ff22" : "#007700")
-                           : Theme.errorColor
+            color: _secure ? Theme.primaryColor : Theme.errorColor
             text: {
                 if (_secure) {
                     //: The SSL/TLS connection is good
@@ -103,146 +79,102 @@ SilicaFlickable {
             }
         }
 
+        CertificateLabel {
+            //: Label for the issuer field of a TLS certificate
+            //% "Verified by"
+            key: qsTrId("sailfish_browser-la-cert_issuer")
+            value: security ? security.issuerDisplayName : ""
+            rootWidth: root.width - 2*Theme.horizontalPageMargin
+            anchors.horizontalCenter: parent.horizontalCenter
+        }
+
         Label {
             width: parent.width - 2 * Theme.horizontalPageMargin
             x: Theme.horizontalPageMargin
+            horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
-            visible: text.length > 0
+            color:  Theme.secondaryHighlightColor
+            visible: !_secure
+            //% "Do not enter personal data, passwords, card details on this site"
+            text: qsTrId("sailfish_browser-sh-do_not-enter_personal_data")
+        }
 
-            text: {
-                if (security) {
-                    if (security.certIsNull) {
-                        //% "The page does't offer any security"
-                        return qsTrId("sailfish_browser-la-cert_none")
-                    } else if (security.domainMismatch) {
-                        // "The website doesn't match the name on the security certificate"
-                        //: The domain in the TLS certificate and the domain connected to are not the same
-                        //% "This site may not be legitimate and any information you enter could be stolen by attackers"
-                        return qsTrId("sailfish_browser-la-cert_domain_mismatch")
-                    } else if (security.notValidAtThisTime) {
-                        //: The TLS certificate has expired or is not yet valid
-                        //% "The security certificate has expired or isn't valid yet"
-                        return qsTrId("sailfish_browser-la-cert_not_valid_at_this_time")
-                    } else if (security.usesWeakCrypto) {
-                        //: The TLS certificate is insecure because it uses weak encryption or hashing methods
-                        //% "The conection only provides weak security"
-                        return qsTrId("sailfish_browser-la-cert_weak_crypto")
-                    } else if (security.loadedMixedActiveContent) {
-                        //% "Some content on the page is transmitted insecurely"
-                        return qsTrId("sailfish_browser-la-cert_insecure_content_loaded")
-                    } else if (security.loadedMixedDisplayContent) {
-                        // Display the same message as for mixed content
-                        return qsTrId("sailfish_browser-la-cert_insecure_content_loaded")
-                    } else if (security.blockedMixedActiveContent) {
-                        //% "Parts of the page that are not secure have been blocked"
-                        return qsTrId("sailfish_browser-la-cert_content_active_blocked")
-                    } else if (security.blockedMixedDisplayContent) {
-                        //% "Parts of the page that are not secure have been blocked"
-                        return qsTrId("sailfish_browser-la-cert_content_display_blocked")
+        Button {
+            anchors.horizontalCenter: parent.horizontalCenter
+            //: Details for certificate info
+            //% "Details"
+            text: qsTrId("sailfish_browser-sh-details")
+            enabled: security && !security.certIsNull
+            visible: enabled
+            onClicked: showCertDetail()
+        }
+
+        Button {
+            anchors.horizontalCenter: parent.horizontalCenter
+            //: Manage permission for current site
+            //% "Site settings"
+            text: qsTrId("sailfish_browser-sh-site-settings")
+            visible: permissionIndicationRepeater.count === 0
+            onClicked: openSiteSettings()
+        }
+
+        MouseArea {
+            id: permissionArea
+            width: parent.width
+            height: permissionColumn.height
+            onClicked: openSiteSettings()
+
+            Column {
+                id: permissionColumn
+                width: parent.width
+                spacing: Theme.paddingMedium
+                anchors.horizontalCenter: parent.horizontalCenter
+                visible: permissionIndicationRepeater.count > 0
+
+                Label {
+                    width: parent.width - 2 * Theme.horizontalPageMargin
+                    x: Theme.horizontalPageMargin
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.Wrap
+                    color:  Theme.highlightColor
+                    //% "Current permissions"
+                    text: qsTrId("sailfish_browser-sh-current-permissions")
+                }
+
+                Grid {
+                    rows: Math.ceil(permissionIndicationModel.count / 5)
+                    columns: Math.min(permissionIndicationModel.count, 5)
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    spacing: Theme.paddingLarge
+                    Repeater {
+                        id: permissionIndicationRepeater
+                        model: permissionIndicationModel
+                        delegate: Icon {
+                            source: {
+                                var blocked = (model.capability === PermissionManager.Deny)
+                                if (model.type === "geolocation") {
+                                    return "image://theme/icon-m-browser-location" + (blocked ? "-template" : "")
+                                } else if (model.type === "cookie") {
+                                    return "image://theme/icon-m-browser-cookies" + (blocked ? "-template" : "")
+                                } else if (model.type === "popup") {
+                                    return "image://theme/icon-m-browser-popup" + (blocked ? "-template" : "")
+                                }
+                            }
+                            highlighted: permissionArea.pressed
+                            Icon {
+                                anchors {
+                                    bottom: parent.bottom
+                                    right: parent.right
+                                }
+                                source: "image://theme/icon-s-blocked"
+
+                                color: Theme.errorColor
+                                visible: model.capability === PermissionManager.Deny
+                            }
+                        }
                     }
                 }
-                return ""
             }
-            color: Theme.errorColor
-            opacity: Theme.opacityHigh
-        }
-
-        SectionHeader {
-            //: Header separating out the main security info from the details
-            //% "Certificate"
-            text: qsTrId("sailfish_browser-sh-cert_details")
-            visible: security && !security.certIsNull
-        }
-    }
-
-    Column {
-        id: keyValuePairs
-        width: parent.width
-        spacing: Theme.paddingSmall
-        anchors {
-            top: certInfoColumn.bottom
-            topMargin: Theme.paddingSmall
-        }
-
-        onHeightChanged: calculatedHeight = height
-
-        CertificateLabel {
-            //: Label for the owner field of a TLS certificate
-            //% "Owner"
-            key: qsTrId("sailfish_browser-la-cert_owner")
-            value: security ? security.subjectOrganization : ""
-            valueColor: _secure ? palette.colorScheme === Theme.LightOnDark
-                                  ? "#22ff22" : "#007700" : Theme.secondaryHighlightColor
-            keyWidth: root.keyWidth
-        }
-
-        CertificateLabel {
-            //: Label for the subject field of a TLS certificate
-            //% "Website"
-            key: qsTrId("sailfish_browser-la-cert_subject")
-            value: security ? security.subjectDisplayName : ""
-            keyWidth: root.keyWidth
-        }
-
-        CertificateLabel {
-            //: Label for the issuer field of a TLS certificate
-            //% "Issuer"
-            key: qsTrId("sailfish_browser-la-cert_issuer")
-            value: security ? security.issuerDisplayName : ""
-            keyWidth: root.keyWidth
-        }
-
-        CertificateLabel {
-            //: Label for the TLS certificate validity period (dates)
-            //% "Valid"
-            key: qsTrId("sailfish_browser-la-cert_valid_dates")
-            value: insecure ? Format.formatDate(security.effectiveDate, Formatter.DateMedium)
-                            + " — "
-                            + Format.formatDate(security.expiryDate, Formatter.DateMedium)
-                          : ""
-            insecure: security && !security.certIsNull && security.notValidAtThisTime
-            keyWidth: root.keyWidth
-        }
-
-        CertificateLabel {
-            //: Label prefixing the status of whether tracking tech is being used on a page
-            //% "Tracking"
-            key: qsTrId("sailfish_browser-la-cert_tracking")
-            value: {
-                if (security) {
-                    if (security.loadedTrackingContent) {
-                        //% "The page includes items used to track your behaviour"
-                        return qsTrId("sailfish_browser-la-cert_tracking_content_loaded")
-                    } else if (security.blockedTrackingContent) {
-                        //% "Items used to track your behaviour have been blocked"
-                        return qsTrId("sailfish_browser-la-cert_tracking_content_blocked")
-                    }
-                }
-                return ""
-            }
-            insecure: security && security.loadedTrackingContent
-            keyWidth: root.keyWidth
-        }
-    }
-
-    BackgroundItem {
-        id: showMore
-        height: enabled ? portrait ? Theme.itemSizeSmall : Theme.itemSizeExtraSmall : 0
-        enabled: security && !security.certIsNull
-        visible: enabled
-        anchors {
-            top: keyValuePairs.bottom
-            topMargin: Theme.paddingSmall
-        }
-
-        onClicked: showCertDetail()
-
-        Private.ShowMoreButton {
-            x: Theme.horizontalPageMargin
-            width: parent.width - 2 * x
-            anchors.verticalCenter: parent.verticalCenter
-            highlighted: showMore.highlighted
-            enabled: false
         }
     }
 }
