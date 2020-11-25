@@ -120,6 +120,7 @@ ln -s %{name} %{buildroot}%{_bindir}/%{name}-captiveportal
 if [ "$1" -ge 2 ]; then
     %{_bindir}/add-oneshot --all-users --now browser-cleanup-startup-cache || :
     %{_bindir}/add-oneshot --new-users --all-users --late browser-update-default-data || :
+    %{_bindir}/add-oneshot --all-users browser-move-data-to-new-location || :
 fi
 
 %files
