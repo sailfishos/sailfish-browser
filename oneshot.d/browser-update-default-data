@@ -1,9 +1,9 @@
 #!/bin/sh
-MOZEMBED_DIR=~/.mozilla/mozembed
-CAPTIVE_PORTAL_DIR=~/.mozilla/captiveportal
+BROWSER_PROFILE_DIR=~/.local/share/org.sailfishos/sailfish-browser/.mozilla
+CAPTIVE_PORTAL_PROFILE_DIR=~/.local/share/org.sailfishos/sailfish-browser-captiveportal/.mozilla
 BROWSER_DATA_DIR=/usr/share/sailfish-browser/data
 
-for PROFILE_DIR in $MOZEMBED_DIR $CAPTIVE_PORTAL_DIR; do
+for PROFILE_DIR in $BROWSER_PROFILE_DIR $CAPTIVE_PORTAL_PROFILE_DIR; do
     if [ ! -d "$PROFILE_DIR" ]; then
         mkdir -p $PROFILE_DIR
     fi

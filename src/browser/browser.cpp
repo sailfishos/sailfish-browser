@@ -27,8 +27,8 @@
 #include <QDebug>
 #include <webengine.h>
 #include <webenginesettings.h>
+#include <browserapp.h>
 
-const auto MOZILLA_DATA_DIR = QStringLiteral("/.mozilla/mozembed/");
 const auto MOZILLA_DATA_UA_UPDATE = QStringLiteral("ua-update.json");
 const auto MOZILLA_DATA_UA_UPDATE_SOURCE = QStringLiteral("/usr/share/sailfish-browser/data/ua-update.json.in");
 const auto MOZILLA_DATA_PREFS = QStringLiteral("prefs.js");
@@ -43,11 +43,12 @@ BrowserPrivate::BrowserPrivate(QQuickView *view)
 
 void BrowserPrivate::initUserData()
 {
-    QDir dir(QDir::homePath() + MOZILLA_DATA_DIR);
+    QString mozillaDir = QString("%1/.mozilla/").arg(BrowserApp::profileName());
+    QDir dir(mozillaDir);
     if (!dir.exists())
         dir.mkpath(dir.path());
 
-    QFile ua(QDir::homePath() + MOZILLA_DATA_DIR + MOZILLA_DATA_UA_UPDATE);
+    QFile ua(mozillaDir + MOZILLA_DATA_UA_UPDATE);
     if (!ua.exists()) {
         if (ua.open(QIODevice::WriteOnly)) {
             QFile source(MOZILLA_DATA_UA_UPDATE_SOURCE);
@@ -66,8 +67,8 @@ void BrowserPrivate::initUserData()
         }
     }
 
-    if (!QFile::exists(QDir::homePath() + MOZILLA_DATA_DIR + MOZILLA_DATA_PREFS))
-        QFile::copy(MOZILLA_DATA_PREFS_SOURCE, QDir::homePath() + MOZILLA_DATA_DIR + MOZILLA_DATA_PREFS);
+    if (!QFile::exists(mozillaDir + MOZILLA_DATA_PREFS))
+        QFile::copy(MOZILLA_DATA_PREFS_SOURCE, mozillaDir + MOZILLA_DATA_PREFS);
 }
 
 Browser::Browser(QQuickView *view, QObject *parent)

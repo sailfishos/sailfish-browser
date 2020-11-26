@@ -10,6 +10,7 @@
 
 #include <QCoreApplication>
 #include <QString>
+#include <QStandardPaths>
 #include "browserapp.h"
 
 bool BrowserApp::captivePortal()
@@ -18,7 +19,7 @@ bool BrowserApp::captivePortal()
     static bool argsChecked = false;
 
     if (!argsChecked) {
-        if (QCoreApplication::arguments().contains(QStringLiteral("-captiveportal")))
+        if (QCoreApplication::arguments().contains(QLatin1String("-captiveportal")))
             captivePortalMode = true;
         argsChecked = true;
     }
@@ -28,20 +29,10 @@ bool BrowserApp::captivePortal()
 
 QString BrowserApp::profileName()
 {
-    static QString profileName = QStringLiteral("mozembed");
-    static bool argsChecked = false;
-
-    if (!argsChecked) {
-        const QStringList &arguments = QCoreApplication::arguments();
-
-        if (arguments.contains(QStringLiteral("-profile"))) {
-            int index = arguments.indexOf(QStringLiteral("-profile"));
-            if (index + 1 < arguments.size()) {
-                profileName = arguments.at(index + 1);
-            }
-        } else if (BrowserApp::captivePortal()) {
-            profileName = QStringLiteral("captiveportal");
-        }
+    const QStringList &arguments = QCoreApplication::arguments();
+    int index = arguments.indexOf(QLatin1String("-profile"));
+    if (index >= 0 && index + 1 < arguments.size()) {
+        return arguments.at(index + 1);
     }
-    return profileName;
+    return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
 }
