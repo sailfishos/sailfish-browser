@@ -81,7 +81,8 @@ Column {
             id: addTabButton
             width: iconWidth + horizontalOffset
             horizontalOffset: root.horizontalOffset
-            label.text: "+"
+            icon.source: webView.privateMode ? "image://theme/icon-m-incognito-new" : "image://theme/icon-m-tabs"
+            label.text: webView.privateMode ? "" : "+"
             onTapped: enterNewTabUrl()
         }
 
