@@ -45,19 +45,16 @@ Page {
             DisabledByMdmBanner {
                 active: !AccessPolicy.browserEnabled
             }
+
             TextField {
                 id: homePage
                 enabled: AccessPolicy.browserEnabled
 
-                width: parent.width
                 //: Label for home page text field
                 //% "Home Page"
                 label: qsTrId("settings_browser-la-home_page")
                 text: homePageConfig.value == "about:blank" ? "" : homePageConfig.value
 
-                //: No home page, type home page
-                //% "Type home page"
-                placeholderText: qsTrId("settings_browser-ph-type_home_page")
                 inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase | Qt.ImhUrlCharactersOnly
 
                 onTextChanged: homePageConfig.value = text || "about:blank"

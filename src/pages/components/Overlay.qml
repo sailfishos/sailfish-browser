@@ -307,7 +307,6 @@ Background {
                 y: -((historyContainer.showFavorites ? favoriteGrid.contentY : historyList.contentY) + height)
                 // On top of HistoryList and FavoriteGrid
                 z: 1
-                width: parent.width
                 height: Theme.itemSizeMedium
                 textLeftMargin: Theme.paddingLarge
                 textRightMargin: Theme.paddingLarge
