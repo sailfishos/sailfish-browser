@@ -79,13 +79,20 @@ SilicaFlickable {
             }
         }
 
-        CertificateLabel {
+        DetailItem {
             //: Label for the issuer field of a TLS certificate
             //% "Verified by"
-            key: qsTrId("sailfish_browser-la-cert_issuer")
+            label: qsTrId("sailfish_browser-la-cert_issuer")
             value: security ? security.issuerDisplayName : ""
-            rootWidth: root.width - 2*Theme.horizontalPageMargin
-            anchors.horizontalCenter: parent.horizontalCenter
+            visible: value && value.length > 0
+        }
+
+        DetailItem {
+            //: Label for the cipher suite field of a TLS certificate
+            //% "Cipher suite"
+            label: qsTrId("sailfish_browser-la-cipher_suite")
+            value: security ? security.cipherName : ""
+            visible: value && value.length > 0
         }
 
         Label {
@@ -109,67 +116,82 @@ SilicaFlickable {
             onClicked: showCertDetail()
         }
 
-        Button {
+
+        Loader {
+            height: Theme.fontSizeMedium + Theme.iconSizeMedium + Theme.paddingMedium
+            width: permissionIndicationModel.count === 0 ? implicitWidth : parent.width
             anchors.horizontalCenter: parent.horizontalCenter
-            //: Manage permission for current site
-            //% "Site permissions"
-            text: qsTrId("sailfish_browser-sh-site-permissions")
-            visible: permissionIndicationRepeater.count === 0
-            onClicked: openSiteSettings()
+            sourceComponent: permissionIndicationModel.count === 0 ? permissionButtonComponent : permissionComponent
         }
 
-        MouseArea {
-            id: permissionArea
-            width: parent.width
-            height: permissionColumn.height
-            onClicked: openSiteSettings()
+        Component {
+            id: permissionButtonComponent
 
-            Column {
-                id: permissionColumn
+            Button {
+                //: Manage permission for current site
+                //% "Site permissions"
+                text: qsTrId("sailfish_browser-sh-site-permissions")
+                onClicked: openSiteSettings()
+            }
+        }
+
+        Component {
+            id: permissionComponent
+
+            MouseArea {
+                id: permissionArea
                 width: parent.width
-                spacing: Theme.paddingMedium
-                anchors.horizontalCenter: parent.horizontalCenter
-                visible: permissionIndicationRepeater.count > 0
+                height: permissionColumn.height
+                onClicked: openSiteSettings()
 
-                Label {
-                    width: parent.width - 2 * Theme.horizontalPageMargin
-                    x: Theme.horizontalPageMargin
-                    horizontalAlignment: Text.AlignHCenter
-                    wrapMode: Text.Wrap
-                    color:  Theme.highlightColor
-                    //% "Current permissions"
-                    text: qsTrId("sailfish_browser-sh-current-permissions")
-                }
-
-                Grid {
-                    rows: Math.ceil(permissionIndicationModel.count / 5)
-                    columns: Math.min(permissionIndicationModel.count, 5)
+                Column {
+                    id: permissionColumn
+                    width: parent.width
+                    spacing: Theme.paddingMedium
                     anchors.horizontalCenter: parent.horizontalCenter
-                    spacing: Theme.paddingLarge
-                    Repeater {
-                        id: permissionIndicationRepeater
-                        model: permissionIndicationModel
-                        delegate: Icon {
-                            source: {
-                                var blocked = (model.capability === PermissionManager.Deny)
-                                if (model.type === "geolocation") {
-                                    return "image://theme/icon-m-browser-location" + (blocked ? "-template" : "")
-                                } else if (model.type === "cookie") {
-                                    return "image://theme/icon-m-browser-cookies" + (blocked ? "-template" : "")
-                                } else if (model.type === "popup") {
-                                    return "image://theme/icon-m-browser-popup" + (blocked ? "-template" : "")
-                                }
-                            }
-                            highlighted: permissionArea.pressed
-                            Icon {
-                                anchors {
-                                    bottom: parent.bottom
-                                    right: parent.right
-                                }
-                                source: "image://theme/icon-s-blocked"
+                    visible: permissionIndicationRepeater.count > 0
 
-                                color: Theme.errorColor
-                                visible: model.capability === PermissionManager.Deny
+                    Label {
+                        id: permissionLabel
+                        width: parent.width - 2 * Theme.horizontalPageMargin
+                        x: Theme.horizontalPageMargin
+                        horizontalAlignment: Text.AlignHCenter
+                        wrapMode: Text.Wrap
+                        color:  Theme.highlightColor
+                        //% "Current permissions"
+                        text: qsTrId("sailfish_browser-sh-current-permissions")
+                    }
+
+                    Grid {
+                        rows: Math.max(1, Math.ceil(permissionIndicationModel.count / 5))
+                        columns: Math.min(permissionIndicationModel.count, 5)
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        spacing: Theme.paddingLarge
+                        Repeater {
+                            id: permissionIndicationRepeater
+                            model: permissionIndicationModel
+                            delegate: Icon {
+                                source: {
+                                    var blocked = (model.capability === PermissionManager.Deny)
+                                    if (model.type === "geolocation") {
+                                        return "image://theme/icon-m-browser-location" + (blocked ? "-template" : "")
+                                    } else if (model.type === "cookie") {
+                                        return "image://theme/icon-m-browser-cookies" + (blocked ? "-template" : "")
+                                    } else if (model.type === "popup") {
+                                        return "image://theme/icon-m-browser-popup" + (blocked ? "-template" : "")
+                                    }
+                                }
+                                highlighted: permissionArea.pressed
+                                Icon {
+                                    anchors {
+                                        bottom: parent.bottom
+                                        right: parent.right
+                                    }
+                                    source: "image://theme/icon-s-blocked"
+
+                                    color: Theme.errorColor
+                                    visible: model.capability === PermissionManager.Deny
+                                }
                             }
                         }
                     }
