@@ -112,8 +112,8 @@ SilicaFlickable {
         Button {
             anchors.horizontalCenter: parent.horizontalCenter
             //: Manage permission for current site
-            //% "Site settings"
-            text: qsTrId("sailfish_browser-sh-site-settings")
+            //% "Site permissions"
+            text: qsTrId("sailfish_browser-sh-site-permissions")
             visible: permissionIndicationRepeater.count === 0
             onClicked: openSiteSettings()
         }
