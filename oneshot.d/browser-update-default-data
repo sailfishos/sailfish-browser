@@ -1,6 +1,6 @@
 #!/bin/sh
-BROWSER_PROFILE_DIR=~/.local/share/org.sailfishos/sailfish-browser/.mozilla
-CAPTIVE_PORTAL_PROFILE_DIR=~/.local/share/org.sailfishos/sailfish-browser-captiveportal/.mozilla
+BROWSER_PROFILE_DIR=~/.local/share/org.sailfishos/browser/.mozilla
+CAPTIVE_PORTAL_PROFILE_DIR=~/.local/share/org.sailfishos/captiveportal/.mozilla
 BROWSER_DATA_DIR=/usr/share/sailfish-browser/data
 
 for PROFILE_DIR in $BROWSER_PROFILE_DIR $CAPTIVE_PORTAL_PROFILE_DIR; do

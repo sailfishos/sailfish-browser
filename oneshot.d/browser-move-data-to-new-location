@@ -1,10 +1,10 @@
 #!/bin/sh
 # Moves Browser and Captive portal profiles to new location
 OLD_BROWSER_PROFILE_PATH="$HOME/.mozilla/mozembed"
-NEW_BROWSER_PROFILE_PATH="$HOME/.local/share/org.sailfishos/sailfish-browser/.mozilla"
+NEW_BROWSER_PROFILE_PATH="$HOME/.local/share/org.sailfishos/browser/.mozilla"
 
 OLD_CAPTIVE_PORTAL_PROFILE_PATH="$HOME/.mozilla/captiveportal"
-NEW_CAPTIVE_PORTAL_PROFILE_PATH="$HOME/.local/share/org.sailfishos/sailfish-browser-captiveportal/.mozilla"
+NEW_CAPTIVE_PORTAL_PROFILE_PATH="$HOME/.local/share/org.sailfishos/captiveportal/.mozilla"
 
 if [ -e "$OLD_BROWSER_PROFILE_PATH/" ] && [ ! -e "$NEW_BROWSER_PROFILE_PATH/" ]
 then

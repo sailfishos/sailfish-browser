@@ -4,6 +4,8 @@
 %global min_sailfishwebengine_version 1.0.6
 %global min_systemsettings_version 0.5.25
 
+%global captiveportal sailfish-captiveportal
+
 Name:       sailfish-browser
 
 Summary:    Sailfish Browser
@@ -47,8 +49,7 @@ Requires: sailfish-components-webview-qt5-pickers >= %{min_sailfishwebengine_ver
 Requires: qt5-plugin-imageformat-ico
 Requires: qt5-plugin-imageformat-gif
 Requires: qt5-plugin-position-geoclue
-Requires: mapplauncherd >= 4.1.17
-Requires: mapplauncherd-booster-browser
+Requires: sailjail-launch-approval
 Requires: desktop-file-utils
 Requires: qt5-qtgraphicaleffects
 Requires: nemo-qml-plugin-connectivity
@@ -111,7 +112,7 @@ cp -f data/70-browser.conf %{buildroot}/%{_sharedstatedir}/environment/nemo/
 
 mkdir -p %{buildroot}%{_datadir}/mapplauncherd/privileges.d
 install -m 644 -p %{SOURCE1} %{buildroot}%{_datadir}/mapplauncherd/privileges.d/
-ln -s %{name} %{buildroot}%{_bindir}/%{name}-captiveportal
+ln -s %{name} %{buildroot}%{_bindir}/%{captiveportal}
 
 %post
 /usr/bin/update-desktop-database -q || :
@@ -126,9 +127,9 @@ fi
 %files
 %defattr(-,root,root,-)
 %{_bindir}/%{name}
-%{_bindir}/%{name}-captiveportal
+%{_bindir}/%{captiveportal}
 %{_datadir}/applications/%{name}.desktop
-%{_datadir}/applications/%{name}-captiveportal.desktop
+%{_datadir}/applications/%{captiveportal}.desktop
 %{_datadir}/applications/open-url.desktop
 %{_datadir}/%{name}
 %{_datadir}/translations/%{name}*.qm

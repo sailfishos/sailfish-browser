@@ -114,9 +114,9 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     view->setTitle(qtTrId("sailfish-browser-ap-name"));
 
     if (BrowserApp::captivePortal())
-        app->setApplicationName(QStringLiteral("sailfish-browser-captiveportal"));
+        app->setApplicationName(QStringLiteral("captiveportal"));
     else
-        app->setApplicationName(QStringLiteral("sailfish-browser"));
+        app->setApplicationName(QStringLiteral("browser"));
     app->setOrganizationName(QStringLiteral("org.sailfishos"));
 
     const char *uri = "Sailfish.Browser";
