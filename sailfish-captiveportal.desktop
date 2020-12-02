@@ -7,6 +7,9 @@ X-MeeGo-Translation-Catalog=sailfish-captiveportal
 Icon=icon-launcher-browser
 Exec=/usr/bin/sailjail -p sailfish-captiveportal.desktop /usr/bin/sailfish-captiveportal -captiveportal %U
 Comment=Sailfish captive portal
+X-Maemo-Service=org.sailfishos.captiveportal
+X-Maemo-Method=org.sailfishos.captiveportal.openUrl
+
 [X-Sailjail]
 Permissions=CaptivePortal;Privileged;Audio;Location;Internet;Downloads
 OrganizationName=org.sailfishos

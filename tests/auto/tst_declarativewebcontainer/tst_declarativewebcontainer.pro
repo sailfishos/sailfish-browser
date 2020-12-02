@@ -18,9 +18,8 @@ include(../mocks/qmozsecurity/qmozsecurity.pri)
 
 include(../test_common.pri)
 include(../../../common/browserapp.pri)
-include(../../../common/paths.pri)
-include(../../../src/core/core.pri)
-include(../../../src/history/history.pri)
+include(../../../apps/core/core.pri)
+include(../../../apps/history/history.pri)
 
 SOURCES += tst_declarativewebcontainer.cpp
 

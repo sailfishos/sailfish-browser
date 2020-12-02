@@ -1,5 +1,5 @@
 TEMPLATE = subdirs
-SUBDIRS += src tests settings backup-unit
+SUBDIRS += apps tests settings backup-unit
 
 # The .desktop file
 desktop.files = sailfish-browser.desktop sailfish-captiveportal.desktop open-url.desktop

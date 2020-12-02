@@ -1,8 +1,8 @@
 TARGET = vault-browser
-INCLUDEPATH += $$PWD/../src/core
-HEADERS += $$PWD/../src/core/logging.h
+INCLUDEPATH += $$PWD/../apps/core
+HEADERS += $$PWD/../apps/core/logging.h
 SOURCES += browserunit.cpp \
-           $$PWD/../src/core/logging.cpp
+           $$PWD/../apps/core/logging.cpp
 
 CONFIG += link_pkgconfig
 
