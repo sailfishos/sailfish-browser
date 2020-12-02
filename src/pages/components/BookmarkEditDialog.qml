@@ -21,7 +21,17 @@ UserPrompt {
     property alias editedUrl: urlField.text
     property alias editedTitle: titleField.text
 
-    canAccept: urlField.text && titleField.text && (urlField.text !== url || titleField.text !== title)
+    canAccept: urlField.acceptableInput && titleField.acceptableInput
+
+    onAcceptBlocked: {
+        if (!titleField.acceptableInput) {
+            titleField.errorHighlight = true
+        }
+
+        if (!urlField.acceptableInput) {
+            urlField.errorHighlight = true
+        }
+    }
 
     //% "Edit"
     title: qsTrId("sailfish_browser-he-edit")
@@ -36,15 +46,19 @@ UserPrompt {
 
         TextField {
             id: titleField
+
             text: title
-            width: parent.width
             focus: true
-            //% "Enter title"
-            placeholderText: qsTrId("sailfish_browser-ph-title_edit")
+
+            acceptableInput: text.length > 0
+            onActiveFocusChanged: if (!activeFocus) errorHighlight = !acceptableInput
+            onAcceptableInputChanged: if (acceptableInput) errorHighlight = false
 
             //: Label for bookmark/favorite's title edit field
             //% "Title"
             label: qsTrId("sailfish_browser-la-title_editor")
+            //% "Title is required"
+            description: errorHighlight ? qsTrId("sailfish_browser-la-title_editor_error") : ""
 
             EnterKey.iconSource: "image://theme/icon-m-enter-next"
             EnterKey.onClicked: urlField.focus = true
@@ -53,26 +67,21 @@ UserPrompt {
         TextField {
             id: urlField
             text: url
-            width: parent.width
 
-            //: Placeholder for textfield to edit bookmark's URL
-            //% "Enter URL"
-            placeholderText: qsTrId("sailfish_browser-ph-url_edit")
+            acceptableInput: text.length > 0
+            onActiveFocusChanged: if (!activeFocus) errorHighlight = !acceptableInput
+            onAcceptableInputChanged: if (acceptableInput) errorHighlight = false
 
             //: Label for textfield to edit bookmark's URL
             //% "URL"
             label: qsTrId("sailfish_browser-la-url_editor")
+            //% "URL is required"
+            description: errorHighlight ? qsTrId("sailfish_browser-la-url_editor_error") : ""
             inputMethodHints: Qt.ImhNoAutoUppercase | Qt.ImhUrlCharactersOnly
 
-            EnterKey.iconSource: canAccept ? "image://theme/icon-m-enter-accept"
-                                           : "image://theme/icon-m-enter-next"
-            EnterKey.onClicked: {
-                if (canAccept) {
-                    accept()
-                } else {
-                    titleField.focus = true
-                }
-            }
+            EnterKey.enabled: canAccept
+            EnterKey.iconSource: "image://theme/icon-m-enter-accept"
+            EnterKey.onClicked: accept()
         }
     }
 }
