@@ -1,3 +1,0 @@
-[D-BUS Service]
-Name=org.sailfishos.browser.captiveportal
-Exec=/usr/bin/invoker -s --type=browser -G /usr/bin/sailfish-browser-captiveportal -prestart -captiveportal

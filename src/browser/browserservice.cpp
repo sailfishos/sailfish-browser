@@ -23,7 +23,7 @@
 
 #define SAILFISH_BROWSER_SERVICE QLatin1String("org.sailfishos.browser")
 #define SAILFISH_BROWSER_UI_SERVICE QLatin1String("org.sailfishos.browser.ui")
-#define SAILFISH_BROWSER_CAPTIVE_PORTAL_SERVICE QLatin1String("org.sailfishos.browser.captiveportal")
+#define SAILFISH_BROWSER_CAPTIVE_PORTAL_SERVICE QLatin1String("org.sailfishos.captiveportal")
 
 #define IS_PRIVILEGED \
     if (!calledFromDBus()) { \

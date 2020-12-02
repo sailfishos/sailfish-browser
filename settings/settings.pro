@@ -1,4 +1,18 @@
-TEMPLATE = aux
+TEMPLATE = lib
+TARGET = browsersettingsplugin
+TARGET = $$qtLibraryTarget($$TARGET)
+
+MODULENAME = org/sailfishos/browser/settings
+TARGETPATH = $$[QT_INSTALL_QML]/$$MODULENAME
+
+QT += qml
+CONFIG += plugin
+
+import.files = qmldir
+import.path = $$TARGETPATH
+target.path = $$TARGETPATH
+
+SOURCES +=  plugin.cpp
 
 qmlpages.path = /usr/share/jolla-settings/pages/browser
 qmlpages.files = browser.qml
@@ -6,7 +20,12 @@ qmlpages.files = browser.qml
 plugin_entry.path = /usr/share/jolla-settings/entries
 plugin_entry.files = browser.json
 
-INSTALLS += plugin_entry qmlpages
+INSTALLS += target import plugin_entry qmlpages
 
 OTHER_FILES += *.qml *.json
 
+# Translations
+TS_PATH = $$PWD
+TS_FILE = $$OUT_PWD/settings-sailfish-browser.ts
+EE_QM = $$OUT_PWD/settings-sailfish-browser_eng_en.qm
+include(../translations/translations.pri)

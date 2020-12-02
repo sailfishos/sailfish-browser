@@ -2,7 +2,6 @@
 **
 ** Copyright (c) 2013 - 2015 Jolla Ltd.
 ** Copyright (c) 2020 Open Mobile Platform LLC.
-** Contact: Dmitry Rozhkov <dmitry.rozhkov@jolla.com>
 **
 ****************************************************************************/
 
@@ -12,24 +11,16 @@
 
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import org.sailfishos.browser.settings 1.0
 import org.nemomobile.dbus 2.0
+import com.jolla.settings 1.0
 
-Page {
-    id: page
-
-    Connections {
-        target: pageStack
-        onCurrentPageChanged: {
-            if (pageStack.currentPage === page) {
-                window.deactivate()
-                browserApp.load("about:settings")
-            }
-        }
-        onBusyChanged: {
-            if (pageStack.busy === false && pageStack.currentPage === page) {
-                pageStack.pop()
-            }
-        }
+ApplicationSettings {
+    Button {
+        anchors.horizontalCenter: parent.horizontalCenter
+        //% "Settings"
+        text: qsTrId("settings_browser-la-settings")
+        onClicked: browserApp.load("about:settings")
     }
 
     DBusInterface {

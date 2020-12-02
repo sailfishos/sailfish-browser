@@ -5,7 +5,7 @@ isEmpty(EMBEDLITE_CONTENT_PATH) {
 }
 
 isEmpty(USER_OPENSEARCH_PATH) {
-  DEFINES += USER_OPENSEARCH_PATH=\"\\\"/.local/share/org.sailfishos/sailfish-browser/searchEngines/\\\"\"
+  DEFINES += USER_OPENSEARCH_PATH=\"\\\"/.local/share/org.sailfishos/browser/searchEngines/\\\"\"
 } else {
   DEFINES += USER_OPENSEARCH_PATH=\"\\\"$$USER_OPENSEARCH_PATH\\\"\"
 }

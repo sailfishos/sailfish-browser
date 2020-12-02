@@ -18,8 +18,8 @@ fi
 USERNAME=`loginctl list-sessions | grep seat0 | tr -s " " | cut -d " " -f 4`
 
 for line in `cat $SITES`; do
-  sqlite3 /home/$USERNAME/.local/share/org.sailfishos/sailfish-browser/sailfish-browser.sqlite "insert into link (url) values (\"http://$line\");"
-  sqlite3 /home/$USERNAME/.local/share/org.sailfishos/sailfish-browser/sailfish-browser.sqlite "insert into tab_history (tab_id, link_id) values ((select max(tab_id)+1 from tab), (select max(link_id) from link)); insert into tab (tab_id, tab_history_id) values ((select max(tab_id)+1 from tab), (select max(id) from tab_history));"
+  sqlite3 /home/$USERNAME/.local/share/org.sailfishos/browser/sailfish-browser.sqlite "insert into link (url) values (\"http://$line\");"
+  sqlite3 /home/$USERNAME/.local/share/org.sailfishos/browser/sailfish-browser.sqlite "insert into tab_history (tab_id, link_id) values ((select max(tab_id)+1 from tab), (select max(link_id) from link)); insert into tab (tab_id, tab_history_id) values ((select max(tab_id)+1 from tab), (select max(id) from tab_history));"
   i=$((i+1))
   echo "Adding $line ($i/$webSites)"
 

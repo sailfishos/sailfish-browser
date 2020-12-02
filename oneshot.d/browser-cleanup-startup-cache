@@ -3,5 +3,5 @@
 rm -rf ~/.mozilla/mozembed/startupCache
 rm -rf ~/.mozilla/captiveportal/startupCache
 # New startup cache location
-rm -rf ~/.local/share/sailfish-browser/.mozilla/startupCache
-rm -rf ~/.local/share/sailfish-browser-captiveportal/.mozilla/startupCache
+rm -rf ~/.local/share/org.sailfishos/browser/.mozilla/startupCache
+rm -rf ~/.local/share/org.sailfishos/captiveportal/.mozilla/startupCache
