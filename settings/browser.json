@@ -5,7 +5,7 @@
         "path": "applications/sailfish-browser.desktop",
         "title": "Browser",
         "translation_id": "settings_applications-browser",
-        "type": "page",
+        "type": "application",
         "icon": "image://theme/icon-m-browser",
         "order": 100,
         "params": {

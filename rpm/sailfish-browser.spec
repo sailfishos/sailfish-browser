@@ -136,15 +136,18 @@ fi
 %{_datadir}/dbus-1/services/*.service
 %{_datadir}/mapplauncherd/privileges.d/*
 %{_oneshotdir}/*
+# Let main package own import root level
+%dir %{_libdir}/qt5/qml/org/sailfishos/browser
 %{_sharedstatedir}/environment/nemo/*
 %{_libexecdir}/jolla-vault/units/vault-browser
 %{_datadir}/jolla-vault/units/Browser.json
 
-
 %files settings
 %defattr(-,root,root,-)
+%{_libdir}/qt5/qml/org/sailfishos/browser/settings
 %{_datadir}/jolla-settings/entries/browser.json
 %{_datadir}/jolla-settings/pages/browser
+%{_datadir}/translations/settings-%{name}_eng_en.qm
 
 %files ts-devel
 %defattr(-,root,root,-)
