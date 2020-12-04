@@ -3,12 +3,12 @@ TARGET = tst_downloadmimetypehandler
 QT -= gui
 
 include(../test_common.pri)
-include(../../../common/paths.pri)
+include(../../../common/browserapp.pri)
 
-INCLUDEPATH += $$BROWSERSRCDIR
+INCLUDEPATH += $$CORESRCDIR
 
 SOURCES += tst_downloadmimetypehandler.cpp \
-           $$BROWSERSRCDIR/downloadmimetypehandler.cpp
+           $$CORESRCDIR/downloadmimetypehandler.cpp
 
 HEADERS += \
-           $$BROWSERSRCDIR/downloadmimetypehandler.h
+           $$CORESRCDIR/downloadmimetypehandler.h

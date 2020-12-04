@@ -6,7 +6,8 @@ CONFIG += c++11
 
 include(../../defaults.pri)
 
-SRCDIR = $$PWD/../../src
+SRCDIR = $$PWD/../../apps
+CORESRCDIR = $$SRCDIR/core
 BROWSERSRCDIR = $$SRCDIR/browser
 
 CONFIG(gcov) {

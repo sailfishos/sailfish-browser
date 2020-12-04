@@ -112,7 +112,6 @@ cp -f data/70-browser.conf %{buildroot}/%{_sharedstatedir}/environment/nemo/
 
 mkdir -p %{buildroot}%{_datadir}/mapplauncherd/privileges.d
 install -m 644 -p %{SOURCE1} %{buildroot}%{_datadir}/mapplauncherd/privileges.d/
-ln -s %{name} %{buildroot}%{_bindir}/%{captiveportal}
 
 %post
 /usr/bin/update-desktop-database -q || :
@@ -132,6 +131,7 @@ fi
 %{_datadir}/applications/%{captiveportal}.desktop
 %{_datadir}/applications/open-url.desktop
 %{_datadir}/%{name}
+%{_datadir}/%{captiveportal}
 %{_datadir}/translations/%{name}*.qm
 %{_datadir}/dbus-1/services/*.service
 %{_datadir}/mapplauncherd/privileges.d/*

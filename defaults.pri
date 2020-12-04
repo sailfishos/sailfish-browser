@@ -5,3 +5,6 @@ isEmpty(DEFAULT_COMPONENT_PATH) {
 } else {
   DEFINES += DEFAULT_COMPONENTS_PATH=\"\\\"$$DEFAULT_COMPONENT_PATH\\\"\"
 }
+
+DEFINES += BASE64_IMAGE=\\\"data\:image\/png\;base64,%1\\\"
+DEFINES += DEFAULT_DESKTOP_BOOKMARK_ICON=\\\"icon-launcher-bookmark\\\"

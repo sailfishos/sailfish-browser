@@ -35,6 +35,8 @@ public:
     static void initialize(const QString &profilePath, const QString &userAgent = QLatin1String(""));
     static WebEngine* instance();
     MOCK_CONST_METHOD0(isInitialized, bool());
+    MOCK_CONST_METHOD0(stopEmbedding, bool());
+
     MOCK_METHOD1(CancelTask, void(void *));
     MOCK_METHOD2(PostCompositorTask, TaskHandle(TaskCallback, void *));
     MOCK_METHOD2(sendObserve, void(const QString &, const QString &));
