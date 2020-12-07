@@ -53,7 +53,6 @@ lapinkansa.fi
 lappeenrannanuutiset.fi
 lily.fi
 maaseuduntulevaisuus.fi
-m.foreca.fi
 maku.fi
 mbnet.fi
 monster.fi
@@ -99,8 +98,7 @@ tekniikanmaailma.fi
 tiede.fi
 tieku.fi
 ts.fi
-tuulilasi.fi
-tut.fi
+tuni.fi
 uusimaa.fi
 uusisuomi.fi
 uutisvuoksi.fi
