@@ -24,7 +24,12 @@ Rectangle {
     signal applyContentOrientation
 
     anchors.fill: parent
-    opacity: running || waitForWebContentOrientationChanged ? 1.0 : 0.0
+    opacity: (running || waitForWebContentOrientationChanged) && orientationChangeTimeout.running ? 1.0 : 0.0
+
+    Timer {
+        id: orientationChangeTimeout
+        interval: 3500
+    }
 
     Behavior on opacity {
         FadeAnimation {
@@ -59,6 +64,7 @@ Rectangle {
             ScriptAction {
                 script: {
                     orientationFader.applyContentOrientation()
+                    orientationChangeTimeout.restart()
                 }
             }
 
