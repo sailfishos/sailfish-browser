@@ -66,25 +66,25 @@ void stop_browser()
 
 namespace {
 
-const QString browser_dir = ".local/share/org.sailfishos/sailfish-browser";
-const QString moz_dir = ".mozilla/mozembed";
+const QString browser_dir = ".local/share/org.sailfishos/browser";
+const QString moz_dir = browser_dir + "/.mozilla";
 // thumbs
-const QString cache_dir = ".cache/org.sailfishos/sailfish-browser";
+const QString cache_dir = ".cache/org.sailfishos/browser";
 
-    const QVariantMap info = {
-        {"home", QVariantMap({
-                    {"data", QVariantList({
-                                      browser_dir + "/bookmarks.json"
-                                    })}
-                    , {"bin", QVariantList({
-                                      moz_dir + "/key3.db"
-                                    , browser_dir + "/sailfish-browser.sqlite"
-                                    , cache_dir
-                                    , moz_dir + "/signons.sqlite"
-                                    })
-                            }})}
-        , {"options", QVariantMap({{"overwrite", true}})}
-    };
+const QVariantMap info = {
+    {"home", QVariantMap({
+                {"data", QVariantList({
+                                  browser_dir + "/bookmarks.json"
+                                })}
+                , {"bin", QVariantList({
+                                  moz_dir + "/key3.db"
+                                , browser_dir + "/sailfish-browser.sqlite"
+                                , cache_dir
+                                , moz_dir + "/signons.sqlite"
+                                })
+                        }})}
+    , {"options", QVariantMap({{"overwrite", true}})}
+};
 }
 
 int main(int argc, char *argv[])
