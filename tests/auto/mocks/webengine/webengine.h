@@ -32,7 +32,7 @@ public:
 
     explicit WebEngine(QObject *parent = 0) : QObject(parent) {};
 
-    static void initialize(const QString &profilePath, const QString &userAgent = QLatin1String(""));
+    static void initialize(const QString &profilePath);
     static WebEngine* instance();
     MOCK_CONST_METHOD0(isInitialized, bool());
     MOCK_CONST_METHOD0(stopEmbedding, bool());
