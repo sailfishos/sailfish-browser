@@ -19,10 +19,21 @@ Page {
     property alias model: proxyModel.sourceModel
     property alias permissionType: proxyModel.permissionType
     property string title
+    property string iconSource
 
     PermissionFilterProxyModel {
         id: proxyModel
         onlyPermanent: true
+    }
+
+    Component {
+        id: permissionCreateDialog
+
+        PermissionCreateDialog {
+            label: page.title
+            iconSource: page.iconSource
+            onAccepted: proxyModel.add(uri, page.permissionType, capability)
+        }
     }
 
     SilicaListView {
@@ -83,6 +94,14 @@ Page {
                     text: qsTrId("sailfish_browser-me-delete")
                     onClicked: remove(model.index)
                 }
+            }
+        }
+
+        PullDownMenu {
+            MenuItem {
+                //% "Add new"
+                text: qsTrId("sailfish_browser-me-add-new")
+                onClicked: pageStack.push(permissionCreateDialog)
             }
         }
 
