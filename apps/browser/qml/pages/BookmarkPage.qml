@@ -29,6 +29,7 @@ Page {
 
         anchors.fill: parent
         model: bookmarkFilterModel
+        currentIndex: -1
 
         header: Column {
             width: parent.width
