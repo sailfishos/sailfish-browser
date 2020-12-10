@@ -74,6 +74,8 @@ signals:
 
 private:
     bool isPrivileged() const;
+    uint getCallerPid() const;
+    bool matchesOwner(uint pid) const;
 
     BrowserUIServicePrivate *d_ptr;
     Q_DISABLE_COPY(BrowserUIService)
