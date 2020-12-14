@@ -343,7 +343,9 @@ Page {
             }
 
             webView.grabActivePage()
-            if (!webView.tabModel.activateTab(url)) {
+            if (webView.tabModel.activateTab(url)) {
+                webView.releaseActiveTabOwnership()
+            } else {
                 webView.clearSelection()
                 webView.tabModel.newTab(url)
                 overlay.dismiss(true, !Qt.application.active /* immadiate */)

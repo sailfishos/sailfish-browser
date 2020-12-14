@@ -21,20 +21,21 @@
 #include <QFileInfo>
 #include <QCoreApplication>
 
-#define SAILFISH_BROWSER_UI_SERVICE QLatin1String("org.sailfishos.browser.ui")
+namespace {
+const auto ProcDir = QStringLiteral("/proc/%1");
+const auto ErrorPidIsNotPrivileged = QStringLiteral("PID %1 is not in privileged group");
+const auto SailfishBrowserUiService = QStringLiteral("org.sailfishos.browser.ui");
+}
 
-#define IS_PRIVILEGED \
+#define GET_PID() connection().interface()->servicePid(message().service())
+
+#define IS_PRIVILEGED() \
     if (!calledFromDBus()) { \
         return true; \
     } \
-    uint pid = connection().interface()->servicePid(message().service()); \
-    QFileInfo info(QString("/proc/%1").arg(pid)); \
-    if (info.group() != "privileged" && info.owner() != "root") { \
-        sendErrorReply(QDBusError::AccessDenied, \
-            QString("PID %1 is not in privileged group").arg(pid)); \
-        return false; \
-    } \
-    return true;
+    uint pid = GET_PID(); \
+    QFileInfo info(ProcDir.arg(pid)); \
+    return info.group() == "privileged" || info.owner() == "root";
 
 BrowserService::BrowserService(QObject * parent)
     : QObject(parent)
@@ -106,7 +107,15 @@ void BrowserService::dumpMemoryInfo(const QString &fileName)
 
 bool BrowserService::isPrivileged() const
 {
-    IS_PRIVILEGED;
+    auto isPrivileged = [=] {
+        IS_PRIVILEGED();
+    };
+    if (!isPrivileged()) {
+        sendErrorReply(QDBusError::AccessDenied,
+                ErrorPidIsNotPrivileged.arg(GET_PID()));
+        return false;
+    }
+    return true;
 }
 
 BrowserUIServicePrivate::BrowserUIServicePrivate()
@@ -124,7 +133,7 @@ BrowserUIService::BrowserUIService(QObject *parent)
     new UIServiceDBusAdaptor(this);
     QDBusConnection connection = QDBusConnection::sessionBus();
     if(!connection.registerObject("/ui", this) ||
-            !connection.registerService(SAILFISH_BROWSER_UI_SERVICE)) {
+            !connection.registerService(SailfishBrowserUiService)) {
         d->registered = false;
     }
 }
@@ -138,7 +147,7 @@ bool BrowserUIService::registered() const
 
 QString BrowserUIService::serviceName() const
 {
-    return SAILFISH_BROWSER_UI_SERVICE;
+    return SailfishBrowserUiService;
 }
 
 void BrowserUIService::openUrl(const QStringList &args)
@@ -158,6 +167,8 @@ void BrowserUIService::openSettings()
 void BrowserUIService::activateNewTabView()
 {
     if (!isPrivileged()) {
+        sendErrorReply(QDBusError::AccessDenied,
+                ErrorPidIsNotPrivileged.arg(GET_PID()));
         return;
     }
 
@@ -166,13 +177,9 @@ void BrowserUIService::activateNewTabView()
 
 void BrowserUIService::requestTab(int tabId, const QString &url)
 {
-    if (!isPrivileged()) {
-        return;
-    }
-
     Q_D(BrowserUIService);
 
-    int activatedTabId = DeclarativeWebContainer::instance()->activateTab(tabId, url);
+    int activatedTabId = DeclarativeWebContainer::instance()->requestTabWithOwner(tabId, url, getCallerPid());
     const QDBusMessage &msg = message();
     QDBusMessage reply = msg.createReply(activatedTabId);
     connection().send(reply);
@@ -182,7 +189,10 @@ void BrowserUIService::requestTab(int tabId, const QString &url)
 
 void BrowserUIService::closeTab(int tabId)
 {
-    if (!isPrivileged()) {
+    // Let privileged and the process that created the tab to also destroy it
+    if (!isPrivileged() && !matchesOwner(DeclarativeWebContainer::instance()->tabOwner(tabId))) {
+        sendErrorReply(QDBusError::AccessDenied,
+                QStringLiteral("PID %1 is not the owner or in privileged group").arg(GET_PID()));
         return;
     }
 
@@ -196,5 +206,16 @@ void BrowserUIService::closeTab(int tabId)
 
 bool BrowserUIService::isPrivileged() const
 {
-    IS_PRIVILEGED;
+    IS_PRIVILEGED();
+}
+
+uint BrowserUIService::getCallerPid() const
+{
+    return calledFromDBus() ? GET_PID() : 0;
+}
+
+bool BrowserUIService::matchesOwner(uint pid) const
+{
+    uint caller = getCallerPid();
+    return caller != 0 && caller == pid;
 }

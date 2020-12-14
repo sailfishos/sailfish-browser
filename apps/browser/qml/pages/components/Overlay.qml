@@ -56,6 +56,7 @@ Shared.Background {
             }
 
             if (!searchField.enteringNewTabUrl) {
+                webView.releaseActiveTabOwnership()
                 webView.load(pageUrl)
             } else {
                 // Loading will start once overlay animator has animated chrome visible.

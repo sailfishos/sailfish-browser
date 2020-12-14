@@ -18,6 +18,7 @@
 #include "webpages.h"
 #include "browserpaths.h"
 #include "browserapp.h"
+#include "logging.h"
 
 #include <webengine.h>
 #include <QTimerEvent>
@@ -497,14 +498,35 @@ void DeclarativeWebContainer::closeTab(int tabId)
 
 int DeclarativeWebContainer::activateTab(int tabId, const QString &url)
 {
+    return requestTabWithOwner(tabId, url, 0);
+}
+
+int DeclarativeWebContainer::requestTabWithOwner(int tabId, const QString &url, uint ownerPid)
+{
     bool activated = m_model->activateTabById(tabId);
     if (!activated) {
         tabId = m_model->newTab(url);
+        if (ownerPid) {
+            m_tabOwners.insert(tabId, ownerPid);
+        }
     } else {
         load(url, true);
     }
 
     return tabId;
+}
+
+uint DeclarativeWebContainer::tabOwner(int tabId) const
+{
+    return m_tabOwners.value(tabId);
+}
+
+void DeclarativeWebContainer::releaseActiveTabOwnership()
+{
+    qCDebug(lcCoreLog) << "Releasing ownership of active tab";
+    if (m_model) {
+        m_tabOwners.remove(m_model->activeTabId());
+    }
 }
 
 bool DeclarativeWebContainer::activatePage(const Tab& tab, bool force, int parentId)
@@ -928,6 +950,7 @@ void DeclarativeWebContainer::onNewTabRequested(const Tab &tab, int parentId)
 
 void DeclarativeWebContainer::releasePage(int tabId)
 {
+    m_tabOwners.remove(tabId);
     if (m_webPages) {
         m_webPages->release(tabId);
         // Successfully destroyed. Emit relevant property changes.

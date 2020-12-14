@@ -134,6 +134,10 @@ public:
     bool isActiveTab(int tabId);
     bool activatePage(const Tab& tab, bool force = false, int parentId = 0);
     int findParentTabId(int tabId) const;
+    // For D-Bus interfaces
+    uint tabOwner(int tabId) const;
+    int requestTabWithOwner(int tabId, const QString &url, uint ownerPid);
+    Q_INVOKABLE void releaseActiveTabOwnership();
 
     Q_INVOKABLE void load(const QString &url = QString(), bool force = false);
     Q_INVOKABLE void reload(bool force = true);
@@ -291,6 +295,8 @@ private:
     QMozContext::TaskHandle m_clearSurfaceTask;
 
     bool m_closing;
+
+    QHash<int, uint> m_tabOwners;
 
     friend class tst_webview;
     friend class tst_declarativewebcontainer;
