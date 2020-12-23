@@ -100,5 +100,10 @@
   // JB#51909 is.fi
   "is.fi": "Sailfish 4.0#Android",
   "ruutu.fi": "Sailfish 4.0#Android",
-  "iltalehti.fi": "Sailfish 4.0#Android"
+  "iltalehti.fi": "Sailfish 4.0#Android",
+  // JB#52587 alibi.fi, hymy.fi, ampparit.com, 1tv.ru
+  "alibi.fi": "Sailfish 4.0#Linux",
+  "hymy.fi": "Sailfish 4.0#Linux",
+  "ampparit.com": "Sailfish 4.0#Linux",
+  "1tv.ru": "Sailfish 4.0#Linux"
 }
