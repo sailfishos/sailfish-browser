@@ -6,6 +6,8 @@ testdata.files = *.txt \
                  *.html \
                  *.js \
                  *.css \
+                 mix-blend-mode/*.png \
+                 mix-blend-mode/*.svg \
                  icon-launcher-testbrowser.png
 testdata.path = /opt/tests/sailfish-browser/manual/
 
