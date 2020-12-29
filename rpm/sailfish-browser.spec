@@ -11,7 +11,6 @@ Name:       sailfish-browser
 Summary:    Sailfish Browser
 Version:    1.17.11
 Release:    1
-Group:      Applications/Internet
 License:    MPLv2.0
 Url:        https://github.com/sailfishos/sailfish-browser
 Source0:    %{name}-%{version}.tar.bz2
@@ -52,7 +51,6 @@ Requires: qt5-plugin-position-geoclue
 Requires: sailjail-launch-approval
 Requires: desktop-file-utils
 Requires: qt5-qtgraphicaleffects
-Requires: nemo-qml-plugin-connectivity
 Requires: nemo-qml-plugin-policy-qt5 >= 0.0.4
 Requires: sailfish-policy >= 0.3.31
 Requires: jolla-settings-system >= 1.0.70
