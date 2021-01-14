@@ -16,7 +16,9 @@ import "components"
 Page {
     id: root
 
-    property alias model: view.model
+    property QtObject model
+    property var remorse
+    readonly property bool pendingRemorse: remorse ? remorse.pending : false
 
     signal loadPage(string url)
 
@@ -25,6 +27,7 @@ Page {
 
         anchors.fill: parent
         showDeleteButton: true
+        model: pendingRemorse ? null : root.model
 
         onLoad: {
             view.focus = true
@@ -45,6 +48,8 @@ Page {
                 width: parent.width
                 //% "Search"
                 placeholderText: qsTrId("sailfish_browser-ph-search")
+                enabled: !pendingRemorse && view.model && view.model.count > 0
+
                 EnterKey.onClicked: focus = false
                 onTextChanged: {
                     model.search(searchField.text)
@@ -62,10 +67,27 @@ Page {
             }
         }
 
+        PullDownMenu {
+            visible: view.model && view.model.count
+            MenuItem {
+                //% "Clear history"
+                text: qsTrId("sailfish_browser-me-clear-history")
+                onClicked: {
+                    root.remorse = Remorse.popupAction(
+                                root,
+                                //% "Cleared history"
+                                qsTrId("sailfish_browser-cleared-history"),
+                                function() {
+                                    model.clear()
+                                })
+                }
+            }
+        }
+
         ViewPlaceholder {
             //% "Websites you visit show up here"
             text: qsTrId("sailfish_browser-la-websites-show-up-here")
-            enabled: !model.count
+            enabled: root.pendingRemorse || !model.count
         }
     }
 }
