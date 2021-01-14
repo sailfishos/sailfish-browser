@@ -81,13 +81,6 @@ ListItem {
     onClicked: openLink()
 
     Component {
-        id: editDialog
-        BookmarkEditDialog {
-            onAccepted: bookmarkModel.edit(index, editedUrl, editedTitle)
-        }
-    }
-
-    Component {
         id: contextMenuComponent
         ContextMenu {
             MenuItem {
@@ -100,6 +93,17 @@ ListItem {
                 //% "Copy to clipboard"
                 text: qsTrId("sailfish_browser-me-copy-to-clipboard")
                 onClicked: Clipboard.text = model.url
+            }
+            MenuItem {
+                text: qsTrId("sailfish_browser-me-add_to_launcher")
+                onClicked: pageStack.animatorPush("AddToAppGridDialog.qml",
+                                                  {
+                                                      "url": url,
+                                                      "title": title,
+                                                      "icon": favicon,
+                                                      "desktopBookmarkWriter": desktopBookmarkWriter,
+                                                      "bookmarkWriterParent": pageStack
+                                                  })
             }
             MenuItem {
                 //% "Edit"
@@ -118,6 +122,20 @@ ListItem {
                 text: qsTrId("sailfish_browser-me-delete")
                 onClicked: root.remove(model.url)
             }
+        }
+    }
+
+    Component {
+        id: desktopBookmarkWriter
+        DesktopBookmarkWriter {
+            onSaved: destroy()
+        }
+    }
+
+    Component {
+        id: editDialog
+        BookmarkEditDialog {
+            onAccepted: bookmarkModel.edit(index, editedUrl, editedTitle)
         }
     }
 }

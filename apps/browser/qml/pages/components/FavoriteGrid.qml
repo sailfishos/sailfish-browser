@@ -55,11 +55,13 @@ IconGridViewBase {
 
         onAddToLauncher: {
             // url, title, favicon
-            pageStack.animatorPush(addToLauncherDialog,
+            pageStack.animatorPush("AddToAppGridDialog.qml",
                                    {
                                        "url": url,
                                        "title": title,
-                                       "icon": favicon
+                                       "icon": favicon,
+                                       "desktopBookmarkWriter": desktopBookmarkWriter,
+                                       "bookmarkWriterParent": pageStack
                                    })
         }
 
@@ -158,23 +160,6 @@ IconGridViewBase {
         id: editDialog
         BookmarkEditDialog {
             onAccepted: bookmarkModel.edit(index, editedUrl, editedTitle)
-        }
-    }
-
-    Component {
-        id: addToLauncherDialog
-        BookmarkEditDialog {
-            property string icon
-            property var bookmarkWriter
-
-            //: Title of the "Add to App Grid" dialog.
-            //% "Add to App Grid"
-            title: qsTrId("sailfish_browser-he-add_bookmark_to_launcher")
-            canAccept: editedUrl !== "" && editedTitle !== ""
-            onAccepted: {
-                bookmarkWriter = desktopBookmarkWriter.createObject(favoriteGrid)
-                bookmarkWriter.save(editedUrl, editedTitle, icon)
-            }
         }
     }
 }
