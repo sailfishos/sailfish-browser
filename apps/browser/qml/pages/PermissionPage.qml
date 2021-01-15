@@ -90,48 +90,22 @@ Page {
         }
         model: permissionTypesModel
 
-        delegate: ListItem {
-            id: listItem
-
-            width: parent.width
-
-            contentHeight: Theme.itemSizeMedium
-
-            onClicked: openMenu()
-
-            Row {
-                width: parent.width - 2*Theme.horizontalPageMargin
-                x: Theme.horizontalPageMargin
-                anchors.verticalCenter: parent.verticalCenter
-
-                Icon {
-                    id: icon
-                    source: model.iconSource
-                }
-
-                ValueButton {
-                    label: model.title
-                    width: parent.width - icon.width
-                    labelColor: listItem.highlighted ? Theme.highlightColor : Theme.primaryColor
-                    valueColor: Theme.highlightColor
-                    enabled: false
-                    opacity: 1.0
-
-                    value: {
-                        switch(model.capability) {
-                        case PermissionManager.Allow:
-                            //% "Allow"
-                            return qsTrId("sailfish_browser-me-allow")
-                        case PermissionManager.Deny:
-                            //% "Block"
-                            return qsTrId("sailfish_browser-me-block")
-                        case PermissionManager.Prompt:
-                            //% "Ask"
-                            return qsTrId("sailfish_browser-me-ask")
-                        }
-                    }
+        delegate: PermissionListItem {
+            label: model.title
+            value: {
+                switch(model.capability) {
+                case PermissionManager.Allow:
+                    //% "Allow"
+                    return qsTrId("sailfish_browser-me-allow")
+                case PermissionManager.Deny:
+                    //% "Block"
+                    return qsTrId("sailfish_browser-me-block")
+                case PermissionManager.Prompt:
+                    //% "Ask"
+                    return qsTrId("sailfish_browser-me-ask")
                 }
             }
+            iconSource: model.iconSource
 
             menu: ContextMenu {
                 MenuItem {
@@ -165,7 +139,8 @@ Page {
                                        {
                                            model: permissionExceptionsModel,
                                            permissionType: model.type,
-                                           title: model.title
+                                           title: model.title,
+                                           iconSource: model.iconSource
                                        })
                     }
                 }
