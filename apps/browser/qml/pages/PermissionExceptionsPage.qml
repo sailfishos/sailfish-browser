@@ -16,14 +16,18 @@ import "components"
 Page {
     id: page
 
-    property alias model: proxyModel.sourceModel
+    property PermissionModel model
     property alias permissionType: proxyModel.permissionType
     property string title
     property string iconSource
 
+    property var remorse
+    readonly property bool pendingRemorse: remorse ? remorse.pending : false
+
     PermissionFilterProxyModel {
         id: proxyModel
         onlyPermanent: true
+        sourceModel: page.model
     }
 
     Component {
@@ -43,7 +47,7 @@ Page {
         header: PageHeader {
             title: page.title
         }
-        model: proxyModel
+        model: pendingRemorse ? null : proxyModel
 
         delegate: ListItem {
             id: listItem
@@ -52,9 +56,9 @@ Page {
 
             contentHeight: Theme.itemSizeMedium
 
-            function remove(index) {
+            function remove(uri, type, capability) {
                 remorseDelete(function() {
-                    proxyModel.remove(index)
+                    proxyModel.remove(uri, type, capability)
                 })
             }
 
@@ -92,12 +96,26 @@ Page {
                 MenuItem {
                     //% "Delete"
                     text: qsTrId("sailfish_browser-me-delete")
-                    onClicked: remove(model.index)
+                    onClicked: remove(model.uri, model.type, model.capability)
                 }
             }
         }
 
         PullDownMenu {
+            MenuItem {
+                //% "Delete all exceptions"
+                text: qsTrId("sailfish_browser-me-delete-all-exceptions")
+                visible: model && (view.count > 0)
+                onClicked: {
+                    remorse = Remorse.popupAction(
+                                page,
+                                //% "Deleted exceptions"
+                                qsTrId("sailfish_browser-deleted-exceptions"),
+                                function() {
+                                    page.model.removeAllForPermissionType(proxyModel.permissionType)
+                                })
+                }
+            }
             MenuItem {
                 //% "Add new"
                 text: qsTrId("sailfish_browser-me-add-new")
@@ -106,7 +124,7 @@ Page {
         }
 
         ViewPlaceholder {
-            enabled: view.count === 0
+            enabled: page.pendingRemorse || (view.count === 0)
 
             //% "You have no exceptions"
             text: qsTrId("sailfish_browser-la-have-no-exceptions")
