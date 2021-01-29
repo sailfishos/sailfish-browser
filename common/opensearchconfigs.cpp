@@ -1,7 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2015
-** Contact: Siteshwar Vashisht <siteshwar@gmail.com>
+** Copyright (C) 2015 - 2021 Jolla Ltd.
 **
 ****************************************************************************/
 
@@ -20,7 +19,7 @@ OpenSearchConfigs *OpenSearchConfigs::openSearchConfigs = 0;
 OpenSearchConfigs::OpenSearchConfigs(QObject *parent):QObject(parent)
 {
     m_openSearchPathList << QString(EMBEDLITE_CONTENT_PATH);
-    m_openSearchPathList << QDir::homePath() + USER_OPENSEARCH_PATH;
+    m_openSearchPathList << getOpenSearchConfigPath();
 }
 
 const StringMap OpenSearchConfigs::parseOpenSearchConfigs()
@@ -74,4 +73,9 @@ const QStringList OpenSearchConfigs::getSearchEngineList()
 const StringMap OpenSearchConfigs::getAvailableOpenSearchConfigs()
 {
     return getInstance()->parseOpenSearchConfigs();
+}
+
+const QString OpenSearchConfigs::getOpenSearchConfigPath()
+{
+    return QDir::homePath() + USER_OPENSEARCH_PATH;
 }

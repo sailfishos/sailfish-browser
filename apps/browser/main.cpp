@@ -1,9 +1,7 @@
 /****************************************************************************
 **
-** Copyright (c) 2013 - 2016 Jolla Ltd.
+** Copyright (c) 2013 - 2021 Jolla Ltd.
 ** Copyright (c) 2020 Open Mobile Platform LLC.
-** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jolla.com>
-** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **
 ****************************************************************************/
 
@@ -35,7 +33,7 @@
 #include "declarativewebpage.h"
 #include "declarativewebpagecreator.h"
 #include "browsersettings.h"
-#include "iconfetcher.h"
+#include "datafetcher.h"
 #include "inputregion.h"
 
 #ifdef HAS_BOOSTER
@@ -135,7 +133,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     qmlRegisterType<DeclarativeWebPage>(uri, 1, 0, "WebPage");
     qmlRegisterType<DeclarativeWebPageCreator>(uri, 1, 0, "WebPageCreator");
     qmlRegisterType<DesktopBookmarkWriter>(uri, 1, 0, "DesktopBookmarkWriter");
-    qmlRegisterType<IconFetcher>(uri, 1, 0, "IconFetcher");
+    qmlRegisterType<DataFetcher>(uri, 1, 0, "DataFetcher");
     qmlRegisterType<InputRegion>(uri, 1, 0, "InputRegion");
     qmlRegisterType<BrowserSettings>(uri, 1, 0, "BrowserSettings");
 

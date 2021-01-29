@@ -1,7 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2014 Jolla Ltd.
-** Contact: Raine Makelainen <raine.makelainen@jollamobile.com>
+** Copyright (C) 2014 - 2021 Jolla Ltd.
 **
 ****************************************************************************/
 
@@ -114,7 +113,7 @@ IconGridViewBase {
     Component {
         id: iconFetcher
 
-        IconFetcher {
+        DataFetcher {
             id: fetcher
             property url url
             property string title
