@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (c) 2020 Open Mobile Platform LLC.
+** Copyright (c) 2020 - 2021 Open Mobile Platform LLC.
 **
 ****************************************************************************/
 
@@ -17,6 +17,7 @@ ListItem {
 
     property string search
     property bool showDeleteButton
+    property bool showFavicon
 
     function remove(url) {
         remorseDelete(function() {
@@ -36,9 +37,20 @@ ListItem {
         anchors.verticalCenter: parent.verticalCenter
         spacing: Theme.paddingMedium
 
+        Icon {
+            id: favicon
+            visible: showFavicon
+            sourceSize.width: Theme.iconSizeSmallPlus
+            sourceSize.height: Theme.iconSizeSmallPlus
+            source: "image://theme/icon-cover-backup"
+            highlighted: deleteButton._showPress
+            anchors.verticalCenter: parent.verticalCenter
+        }
+
         Column {
             id: column
-            width: parent.width - (deleteButton.visible ? deleteButton.width : 0)
+            width: parent.width - (deleteButton.visible ? deleteButton.width : 0) -
+                   (favicon.visible ? favicon.width : 0)
             Label {
                 text: Theme.highlightText(model.title, search, Theme.highlightColor)
                 textFormat: Text.StyledText
