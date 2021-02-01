@@ -1,7 +1,7 @@
 /****************************************************************************
 **
 ** Copyright (c) 2013 - 2021 Jolla Ltd.
-** Copyright (c) 2020 Open Mobile Platform LLC.
+** Copyright (c) 2020 - 2021 Open Mobile Platform LLC.
 **
 ****************************************************************************/
 
@@ -16,6 +16,7 @@ import org.nemomobile.configuration 1.0
 import com.jolla.settings.system 1.0
 import Sailfish.Policy 1.0
 import Sailfish.WebEngine 1.0
+import Sailfish.Pickers 1.0
 import "components"
 
 Page {
@@ -150,6 +151,47 @@ Page {
                 }
                 onClicked: pageStack.push("PermissionPage.qml")
             }
+
+            BrowserListItem {
+                //% "Save destination"
+                label: qsTrId("settings_browser-la-save_destination")
+                iconSource: "image://theme/icon-m-download"
+                value: {
+                    if (WebEngineSettings.useDownloadDir) {
+                        //% "Download to %1"
+                        return qsTrId("sailfish_browser-me-download_to").arg(WebEngineSettings.downloadDir.split("/").pop())
+                    } else {
+                        //% "Always ask"
+                        return qsTrId("sailfish_browser-me-always_ask")
+                    }
+                }
+
+                description: {
+                    if (WebEngineSettings.useDownloadDir) {
+                        //% "Downloaded files will be saved to %1 folder"
+                        return qsTrId("sailfish_browser-me-will_be_saved_to_download").arg(WebEngineSettings.downloadDir)
+                    } else {
+                        //% "You will be asked where to save files"
+                        return qsTrId("sailfish_browser-me-you_will_be_asked_where_to_save_files")
+                    }
+                }
+
+                menu: ContextMenu {
+                    MenuItem {
+                        //% "Select a download folder"
+                        text: qsTrId("sailfish_browser-me-select_download_folder")
+                        onClicked: {
+                            WebEngineSettings.useDownloadDir = true
+                            pageStack.animatorPush(folderPickerPage)
+                        }
+                    }
+                    MenuItem {
+                        //% "Always ask"
+                        text: qsTrId("sailfish_browser-me-always_ask")
+                        onClicked: WebEngineSettings.useDownloadDir = false
+                    }
+                }
+            }
         }
     }
 
@@ -186,6 +228,18 @@ Page {
             //% "%1 search installed"
             searchInstalledNotice.text = qsTrId("sailfish_browser-la-search_installed").arg(title)
             searchInstalledNotice.show()
+        }
+    }
+
+    Component {
+        id: folderPickerPage
+
+        FolderPickerPage {
+            showSystemFiles: false
+            //% "Download to"
+            dialogTitle: qsTrId("sailfish_browser-ti-download-to")
+
+            onSelectedPathChanged: WebEngineSettings.downloadDir = selectedPath
         }
     }
 }
