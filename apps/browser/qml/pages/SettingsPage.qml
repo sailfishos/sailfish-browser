@@ -63,26 +63,71 @@ Page {
                 //: Label for combobox that sets search engine used in browser
                 //% "Search with"
                 label: qsTrId("settings_browser-la-search_with")
+                value: searchEngineConfig.value
 
                 menu: ContextMenu {
                     Repeater {
                         model: SearchEngineModel
-                        delegate: Component {
-                            MenuItem {
-                                text: title
-                                Component.onCompleted: {
-                                    if (text && (text === searchEngineConfig.value)) {
-                                        searchEngine.currentIndex = index
+                        delegate: MenuItem {
+                            id: menuItem
+
+                            //: Shown on Settings -> Search engine for user installable search services
+                            //% "Tap to install"
+                            property string description: qsTrId("settings_browser-la-tap_to_install")
+
+                            text: SearchEngineModel.count > 5 ? title : ""
+                            Component.onCompleted: {
+                                if (text && (text === searchEngineConfig.value)) {
+                                    searchEngine.currentIndex = index
+                                }
+                            }
+
+                            onClicked: {
+                                if (title !== searchEngineConfig.value) {
+                                    searchEngineConfig.value = title
+                                }
+                            }
+
+                            Loader {
+                                active: SearchEngineModel.count <= 5
+                                width: parent.width
+                                height: parent.height
+                                sourceComponent: Column {
+                                    readonly property real verticalY: (menuItem.height - titleText.implicitHeight) / 2
+                                    y: installed ? verticalY : (verticalY - tapToInstall.implicitHeight / 2)
+                                    width: parent.width
+
+                                    MenuItem {
+                                        id: titleText
+                                        x: 0
+                                        width: parent.width
+                                        height: implicitHeight
+                                        text: title
+                                        down: menuItem.down
+                                        highlighted: menuItem.highlighted
+
+                                        Rectangle {
+                                            anchors.fill: parent
+                                            color: "red"
+                                            opacity: 0.5
+                                        }
+                                    }
+
+
+                                    MenuItem {
+                                        id: tapToInstall
+                                        x: 0
+                                        width: parent.width
+                                        height: visible ? implicitHeight : 0
+                                        visible: !installed
+                                        font.pixelSize: Theme.fontSizeExtraSmall
+                                        down: menuItem.down
+                                        highlighted: menuItem.highlighted
+                                        text: menuItem.description
                                     }
                                 }
                             }
                         }
-                    }
-                }
-
-                onCurrentItemChanged: {
-                    if (currentItem.text !== searchEngineConfig.value) {
-                        searchEngineConfig.value = currentItem.text
                     }
                 }
             }

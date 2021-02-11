@@ -19,6 +19,10 @@ SearchEngineModel::SearchEngineModel(QObject *parent)
         SearchEngine engine(QUrl(), name, true);
         m_searchEngines.append(engine);
     }
+
+    // Swap to real data
+//    m_searchEngines.append(SearchEngine(QUrl("www.twitter.com"), "Twitter", false));
+//    m_searchEngines.append(SearchEngine(QUrl("forum.sailfishos.org"), "Sailfish OS Forum", false));
 }
 
 SearchEngineModel::~SearchEngineModel()
@@ -57,6 +61,13 @@ QHash<int, QByteArray> SearchEngineModel::roleNames() const
     roles[TitleRole] = "title";
     roles[InstalledRole] = "installed";
     return roles;
+}
+
+void SearchEngineModel::addEngine(const QUrl &url, const QString &title, bool installed)
+{
+    beginInsertRows(QModelIndex(), rowCount(), rowCount());
+    m_searchEngines.append(SearchEngine(url, title, installed));
+    endInsertRows();
 }
 
 void SearchEngineModel::classBegin()
