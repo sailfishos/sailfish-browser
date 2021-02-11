@@ -316,6 +316,43 @@ Page {
         }
     }
 
+    Component {
+        id: desktopBookmarkWriter_
+        DesktopBookmarkWriter {
+            onSaved: destroy()
+        }
+    }
+
+    Browser.PopUpMenu {
+        id: secondaryBar
+
+        anchors {
+            right: parent.right
+            rightMargin: Theme.paddingMedium
+            bottom: parent.bottom
+            bottomMargin: Theme.paddingMedium
+        }
+
+        active: overlay.toolBar.secondaryToolsActive
+        menuItem: Component {
+            Browser.PopUpMenuItem {
+                desktopBookmarkWriter: desktopBookmarkWriter_
+                iconWidth: Theme.iconSizeMedium + Theme.paddingLarge
+            }
+        }
+
+        footer: Component {
+           Browser.PopUpMenuFooter {
+               iconWidth: overlay.toolBar.iconWidth
+               height: isPortrait
+                       ? overlay.toolBar.scaledPortraitHeight - secondaryBar.anchors.bottomMargin
+                       : Theme.itemSizeMedium
+           }
+        }
+
+        onClosed: overlay.dismiss(true)
+    }
+
     CoverActionList {
         enabled: (browserPage.status === PageStatus.Active || browserPage.tabPageActive || !webView.tabModel || webView.tabModel.count === 0)
         iconBackground: true

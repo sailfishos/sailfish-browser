@@ -19,7 +19,7 @@ Item {
     property bool atTop
     property bool atBottom: true
     property int transitionDuration: !_immediate ? (state === _certOverlay ? proportionalDuration : 400) : 0
-    readonly property bool allowContentUse: state === _chromeVisible || state === _fullscreenWebPage || state === _doubleToolBar
+    readonly property bool allowContentUse: state === _chromeVisible || state === _fullscreenWebPage && state !== _doubleToolBar
     readonly property bool dragging: state === _draggingOverlay
     readonly property bool secondaryTools: state === _doubleToolBar
     readonly property bool certOverlay: state === _certOverlay
@@ -196,11 +196,8 @@ Item {
             changes: [
                 PropertyChanges {
                     target: overlay
-                    y: webView.fullscreenHeight - (overlay.toolBar.rowHeight * overlay.toolBar.maxRowCount)
-                },
-                PropertyChanges {
-                    target: overlay.toolBar
-                    secondaryToolsHeight: overlay.toolBar.rowHeight * (overlay.toolBar.maxRowCount - 1)
+                    y: webView.fullscreenHeight - overlay.toolBar.rowHeight
+                    enabled: false
                 }
             ]
         },

@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (c) 2020 Open Mobile Platform LLC
+** Copyright (c) 2020 - 2021 Open Mobile Platform LLC
 **
 ****************************************************************************/
 
@@ -16,6 +16,8 @@ BackgroundItem {
 
     property alias text: label.text
     property alias iconSource: icon.source
+    property alias checked: toggle.checked
+    property bool checkable
     property int horizontalOffset
     property int iconWidth
 
@@ -26,6 +28,7 @@ BackgroundItem {
 
         width: iconWidth
         height: parent.height
+        x: Theme.paddingMedium
 
         Icon {
             id: icon
@@ -45,12 +48,22 @@ BackgroundItem {
             left: iconContainer.right
             leftMargin: Theme.paddingMedium
             right: parent.right
-            rightMargin: Theme.horizontalPageMargin
+            rightMargin: toggle.visible ? toggle.width + Theme.paddingMedium : Theme.horizontalPageMargin
             verticalCenter: parent.verticalCenter
         }
         color: root.highlighted ? Theme.highlightColor : Theme.primaryColor
         truncationMode: TruncationMode.Fade
 
         Behavior on opacity { FadeAnimation {} }
+    }
+    Switch {
+        id: toggle
+        anchors {
+            right: parent.right
+            verticalCenter: parent.verticalCenter
+        }
+
+        visible: checkable
+        onClicked: root.clicked(mouse)
     }
 }
