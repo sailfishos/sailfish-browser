@@ -21,12 +21,6 @@ import Sailfish.WebEngine 1.0
 Page {
     id: page
 
-    property var _nameMap: ({})
-
-    function name2index(name) {
-        return _nameMap[name] !== undefined ? _nameMap[name] : 0
-    }
-
     SilicaFlickable {
         anchors.fill: parent
         contentHeight: contentColumn.height
@@ -66,32 +60,24 @@ Page {
             ComboBox {
                 id: searchEngine
                 enabled: AccessPolicy.browserEnabled
-
                 width: parent.width
                 //: Label for combobox that sets search engine used in browser
                 //% "Search engine"
                 label: qsTrId("settings_browser-la-search_engine")
-                currentIndex: name2index(searchEngineConfig.value)
-
                 menu: ContextMenu {
-                    id: searchEngineMenu
-
-                    Component {
-                        id: menuItemComp
-
-                        MenuItem {}
-                    }
-
-                    Component.onCompleted: {
-                        var index = 0
-                        settings.searchEngineList.forEach(function(name) {
-                            var map = page._nameMap
-                            // FIXME: _contentColumn should not be used to add items dynamicly
-                            menuItemComp.createObject(searchEngineMenu._contentColumn, {"text": name})
-                            map[name] = index
-                            page._nameMap = map
-                            index++
-                        })
+                    Repeater {
+                        id: preintalledSearchEngines
+                        model: settings.searchEngineList
+                        delegate: Component {
+                            MenuItem {
+                                text: modelData
+                                Component.onCompleted: {
+                                    if (text && (text === searchEngineConfig.value)) {
+                                        searchEngine.currentIndex = index
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -173,12 +159,6 @@ Page {
 
         key: "/apps/sailfish-browser/settings/search_engine"
         defaultValue: "Google"
-
-        onValueChanged: {
-            if (searchEngine.currentItem.text !== value) {
-                searchEngine.currentIndex = name2index(value)
-            }
-        }
     }
 
     ConfigurationValue {
