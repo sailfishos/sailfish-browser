@@ -66,11 +66,10 @@ Page {
 
                 menu: ContextMenu {
                     Repeater {
-                        id: preintalledSearchEngines
-                        model: settings.searchEngineList
+                        model: SearchEngineModel
                         delegate: Component {
                             MenuItem {
-                                text: modelData
+                                text: title
                                 Component.onCompleted: {
                                     if (text && (text === searchEngineConfig.value)) {
                                         searchEngine.currentIndex = index
