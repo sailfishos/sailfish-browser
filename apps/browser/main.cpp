@@ -35,10 +35,18 @@
 #include "browsersettings.h"
 #include "datafetcher.h"
 #include "inputregion.h"
+#include "searchenginemodel.h"
 
 #ifdef HAS_BOOSTER
 #include <MDeclarativeCache>
 #endif
+
+namespace {
+static QObject *search_model_factory(QQmlEngine *, QJSEngine *)
+{
+    return new SearchEngineModel;
+}
+}
 
 Q_DECL_EXPORT int main(int argc, char *argv[])
 {
@@ -136,6 +144,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     qmlRegisterType<DataFetcher>(uri, 1, 0, "DataFetcher");
     qmlRegisterType<InputRegion>(uri, 1, 0, "InputRegion");
     qmlRegisterType<BrowserSettings>(uri, 1, 0, "BrowserSettings");
+    qmlRegisterSingletonType<SearchEngineModel>(uri, 1, 0, "SearchEngineModel", search_model_factory);
 
     Browser *browser = new Browser(view.data(), app.data());
     browser->connect(service, &BrowserService::openUrlRequested,

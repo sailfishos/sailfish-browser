@@ -1,0 +1,70 @@
+/****************************************************************************
+**
+** Copyright (c) 2021 Jolla Ltd.
+**
+****************************************************************************/
+
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "searchenginemodel.h"
+#include "opensearchconfigs.h"
+
+SearchEngineModel::SearchEngineModel(QObject *parent)
+    : QAbstractListModel(parent)
+{
+    QStringList searchEngineList = OpenSearchConfigs::getSearchEngineList();
+    for (const QString &name : searchEngineList) {
+        SearchEngine engine(QUrl(), name, true);
+        m_searchEngines.append(engine);
+    }
+}
+
+SearchEngineModel::~SearchEngineModel()
+{
+
+}
+
+int SearchEngineModel::rowCount(const QModelIndex &parent) const
+{
+    Q_UNUSED(parent);
+    return m_searchEngines.count();
+}
+
+QVariant SearchEngineModel::data(const QModelIndex &index, int role) const
+{
+    if (index.row() < 0 || index.row() >= m_searchEngines.count())
+        return QVariant();
+
+    const SearchEngine &searchEngine = m_searchEngines.at(index.row());
+    switch (role) {
+    case UrlRole:
+        return searchEngine.url;
+    case TitleRole:
+        return searchEngine.title;
+    case InstalledRole:
+        return searchEngine.installed;
+    default:
+        return QVariant();
+    }
+}
+
+QHash<int, QByteArray> SearchEngineModel::roleNames() const
+{
+    QHash<int, QByteArray> roles;
+    roles[UrlRole] = "url";
+    roles[TitleRole] = "title";
+    roles[InstalledRole] = "installed";
+    return roles;
+}
+
+void SearchEngineModel::classBegin()
+{
+
+}
+
+void SearchEngineModel::componentComplete()
+{
+
+}
