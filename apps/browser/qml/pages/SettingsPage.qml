@@ -16,6 +16,7 @@ import org.nemomobile.configuration 1.0
 import com.jolla.settings.system 1.0
 import Sailfish.Policy 1.0
 import Sailfish.WebEngine 1.0
+import "components"
 
 Page {
     id: page
@@ -67,9 +68,11 @@ Page {
                 menu: ContextMenu {
                     Repeater {
                         model: SearchEngineModel
-                        delegate: MenuItem {
+                        delegate: SearchEngineMenuItem {
                             text: title
-
+                            //: Shown on Settings -> Search engine for user installable search services
+                            //% "Tap to install"
+                            description: installed ? "" : qsTrId("settings_browser-la-tap_to_install")
                             onClicked: {
                                 if (title != searchEngineConfig.value) {
                                     if (installed) {
