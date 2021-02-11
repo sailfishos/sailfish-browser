@@ -5,6 +5,7 @@ QT += concurrent network
 include(../test_common.pri)
 include(../../../apps/browser/bookmarks/bookmarks.pri)
 include(../../../common/browserapp.pri)
+include(../../../common/opensearchconfigs.pri)
 
 SOURCES += tst_desktopbookmarkwriter.cpp
 

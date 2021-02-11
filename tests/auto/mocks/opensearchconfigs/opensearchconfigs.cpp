@@ -1,7 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2016
-** Contact: Raine Makelainen <raine.makelainen@jolla.com>
+** Copyright (C) 2016 - 2021 Jolla Ltd.
 **
 ****************************************************************************/
 
@@ -19,4 +18,9 @@ const StringMap OpenSearchConfigs::getAvailableOpenSearchConfigs()
 const QStringList OpenSearchConfigs::getSearchEngineList()
 {
     return QStringList();
+}
+
+const QString OpenSearchConfigs::getOpenSearchConfigPath()
+{
+    return QString();
 }

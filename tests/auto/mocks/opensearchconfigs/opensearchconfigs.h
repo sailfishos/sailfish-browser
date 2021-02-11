@@ -1,7 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2016
-** Contact: Raine Makelainen <raine.makelainen@jolla.com>
+** Copyright (C) 2016 - 2021 Jolla Ltd.
 **
 ****************************************************************************/
 
@@ -20,6 +19,7 @@ class OpenSearchConfigs : public QObject {
 public:
     static const StringMap getAvailableOpenSearchConfigs();
     static const QStringList getSearchEngineList();
+    static const QString getOpenSearchConfigPath();
 
 private:
     OpenSearchConfigs(QObject* parent=0);

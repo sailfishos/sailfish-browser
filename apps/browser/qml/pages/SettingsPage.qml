@@ -1,8 +1,7 @@
 /****************************************************************************
 **
-** Copyright (c) 2013 - 2019 Jolla Ltd.
+** Copyright (c) 2013 - 2021 Jolla Ltd.
 ** Copyright (c) 2020 Open Mobile Platform LLC.
-** Contact: Dmitry Rozhkov <dmitry.rozhkov@jolla.com>
 **
 ****************************************************************************/
 
@@ -62,8 +61,9 @@ Page {
                 enabled: AccessPolicy.browserEnabled
                 width: parent.width
                 //: Label for combobox that sets search engine used in browser
-                //% "Search engine"
-                label: qsTrId("settings_browser-la-search_engine")
+                //% "Search with"
+                label: qsTrId("settings_browser-la-search_with")
+
                 menu: ContextMenu {
                     Repeater {
                         id: preintalledSearchEngines

@@ -1,7 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2015
-** Contact: Siteshwar Vashisht <siteshwar@gmail.com>
+** Copyright (C) 2015 - 2021 Jolla Ltd.
 **
 ****************************************************************************/
 
@@ -21,6 +20,7 @@ class OpenSearchConfigs : public QObject {
 public:
     static const StringMap getAvailableOpenSearchConfigs();
     static const QStringList getSearchEngineList();
+    static const QString getOpenSearchConfigPath();
 
 private:
     QStringList m_openSearchPathList;

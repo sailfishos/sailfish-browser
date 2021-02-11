@@ -20,7 +20,7 @@ packagesExist(qdeclarative5-boostable) {
 }
 
 # Translations
-TS_PATH = $$PWD
+TS_PATH = $$PWD $$PWD/../shared
 TS_FILE = $$OUT_PWD/sailfish-browser.ts
 EE_QM = $$OUT_PWD/sailfish-browser_eng_en.qm
 include(../../translations/translations.pri)
