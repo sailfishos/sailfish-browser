@@ -33,6 +33,10 @@ public:
     explicit SearchEngineModel(QObject *parent = 0);
     virtual ~SearchEngineModel();
 
+    QStringList searchEngines();
+    Q_INVOKABLE void add(const QString& title, const QString& url);
+    Q_INVOKABLE void install(const QString& title);
+
     // From QAbstractListModel
     int rowCount(const QModelIndex & parent = QModelIndex()) const override;
     QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const override;
