@@ -74,7 +74,7 @@ Page {
                             //% "Tap to install"
                             description: installed ? "" : qsTrId("settings_browser-la-tap_to_install")
                             onClicked: {
-                                if (title != searchEngineConfig.value) {
+                                if (title !== searchEngineConfig.value) {
                                     if (installed) {
                                         searchEngineConfig.value = title
                                     } else {
