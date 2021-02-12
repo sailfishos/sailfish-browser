@@ -67,22 +67,25 @@ Page {
                 menu: ContextMenu {
                     Repeater {
                         model: SearchEngineModel
-                        delegate: Component {
-                            MenuItem {
-                                text: title
-                                Component.onCompleted: {
-                                    if (text && (text === searchEngineConfig.value)) {
-                                        searchEngine.currentIndex = index
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                        delegate: MenuItem {
+                                    text: title
 
-                onCurrentItemChanged: {
-                    if (currentItem.text !== searchEngineConfig.value) {
-                        searchEngineConfig.value = currentItem.text
+                                    onClicked: {
+                                        if (title != searchEngineConfig.value) {
+                                            if (installed) {
+                                                searchEngineConfig.value = title
+                                            } else {
+                                                SearchEngineModel.install(title)
+                                            }
+                                        }
+                                    }
+
+                                    Component.onCompleted: {
+                                        if (text && (text === searchEngineConfig.value)) {
+                                            searchEngine.currentIndex = index
+                                        }
+                                    }
+                        }
                     }
                 }
             }

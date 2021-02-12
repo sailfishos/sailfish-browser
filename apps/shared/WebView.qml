@@ -61,8 +61,6 @@ WebContainer {
 
     property var linkHandler: LinkHandler {}
 
-    property var searchEngine: SearchEngine {}
-
     function stop() {
         if (contentItem) {
             contentItem.stop()
@@ -319,13 +317,9 @@ WebContainer {
                     break
                 }
                 case "Link:AddSearch": {
-                    // TODO: proper implementation
-                    /*if (searchEngine.searchEngines().indexOf(data.engine.title)) {
-                        searchEngine.url = data.url
-                        searchEngine.href = data.engine.href
-                        searchEngine.title = data.engine.title
-                        searchEngine.addSearchEngine()
-                    }*/
+                    // This adds this search as available if not already there
+                    //TODO: commented out for now
+                    //SearchEngineModel.add(data.engine.title, data.engine.href)
                 }
                 }
             }
