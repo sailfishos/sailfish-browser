@@ -61,13 +61,7 @@ WebContainer {
 
     property var linkHandler: LinkHandler {}
 
-    property var searchEngine: SearchEngine {
-        property var browserSettings: BrowserSettings {}
-
-        function searchEngines() {
-            return browserSettings.searchEngineList;
-        }
-    }
+    property var searchEngine: SearchEngine {}
 
     function stop() {
         if (contentItem) {

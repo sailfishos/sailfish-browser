@@ -32,7 +32,6 @@
 #include "declarativewebcontainer.h"
 #include "declarativewebpage.h"
 #include "declarativewebpagecreator.h"
-#include "browsersettings.h"
 #include "datafetcher.h"
 #include "inputregion.h"
 #include "searchenginemodel.h"
@@ -143,7 +142,6 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     qmlRegisterType<DesktopBookmarkWriter>(uri, 1, 0, "DesktopBookmarkWriter");
     qmlRegisterType<DataFetcher>(uri, 1, 0, "DataFetcher");
     qmlRegisterType<InputRegion>(uri, 1, 0, "InputRegion");
-    qmlRegisterType<BrowserSettings>(uri, 1, 0, "BrowserSettings");
     qmlRegisterSingletonType<SearchEngineModel>(uri, 1, 0, "SearchEngineModel", search_model_factory);
 
     Browser *browser = new Browser(view.data(), app.data());
