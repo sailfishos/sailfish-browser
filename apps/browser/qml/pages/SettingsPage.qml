@@ -166,8 +166,4 @@ Page {
         key: "/apps/sailfish-browser/settings/home_page"
         defaultValue: "http://jolla.com/"
     }
-
-    BrowserSettings {
-        id: settings
-    }
 }
