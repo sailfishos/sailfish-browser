@@ -318,8 +318,7 @@ WebContainer {
                 }
                 case "Link:AddSearch": {
                     // This adds this search as available if not already there
-                    //TODO: commented out for now
-                    //SearchEngineModel.add(data.engine.title, data.engine.href)
+                    SearchEngineModel.add(data.engine.title, data.engine.href)
                 }
                 }
             }
