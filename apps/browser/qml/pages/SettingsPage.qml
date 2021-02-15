@@ -16,6 +16,7 @@ import org.nemomobile.configuration 1.0
 import com.jolla.settings.system 1.0
 import Sailfish.Policy 1.0
 import Sailfish.WebEngine 1.0
+import "components"
 
 Page {
     id: page
@@ -67,24 +68,26 @@ Page {
                 menu: ContextMenu {
                     Repeater {
                         model: SearchEngineModel
-                        delegate: MenuItem {
-                                    text: title
-
-                                    onClicked: {
-                                        if (title != searchEngineConfig.value) {
-                                            if (installed) {
-                                                searchEngineConfig.value = title
-                                            } else {
-                                                SearchEngineModel.install(title)
-                                            }
-                                        }
+                        delegate: SearchEngineMenuItem {
+                            text: title
+                            //: Shown on Settings -> Search engine for user installable search services
+                            //% "Tap to install"
+                            description: installed ? "" : qsTrId("settings_browser-la-tap_to_install")
+                            onClicked: {
+                                if (title !== searchEngineConfig.value) {
+                                    if (installed) {
+                                        searchEngineConfig.value = title
+                                    } else {
+                                        SearchEngineModel.install(title)
                                     }
+                                }
+                            }
 
-                                    Component.onCompleted: {
-                                        if (text && (text === searchEngineConfig.value)) {
-                                            searchEngine.currentIndex = index
-                                        }
-                                    }
+                            Component.onCompleted: {
+                                if (text && (text === searchEngineConfig.value)) {
+                                    searchEngine.currentIndex = index
+                                }
+                            }
                         }
                     }
                 }
@@ -116,10 +119,10 @@ Page {
                 //% "Enable JavaScript"
                 text: qsTrId("settings_browser-la-enable_javascript")
                 description: WebEngineSettings.javascriptEnabled ?
-                                     //% "Allowed (recommended)"
-                                     qsTrId("settings_browser-la-enabled_javascript_description") :
-                                     //% "Blocked, some sites may not work correctly"
-                                     qsTrId("settings_browser-la-disable_javascript_description")
+                                 //% "Allowed (recommended)"
+                                 qsTrId("settings_browser-la-enabled_javascript_description") :
+                                 //% "Blocked, some sites may not work correctly"
+                                 qsTrId("settings_browser-la-disable_javascript_description")
                 checked: WebEngineSettings.javascriptEnabled
                 enabled: AccessPolicy.browserEnabled
                 onCheckedChanged: WebEngineSettings.javascriptEnabled = checked;
