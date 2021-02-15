@@ -16,6 +16,7 @@
 #include <MGConfItem>
 
 const auto SEARCH_ENGINE_CONFIG = QStringLiteral("/apps/sailfish-browser/settings/search_engine");
+const auto SEARCH_ENGINES_AVAILABLE_CONFIG = QStringLiteral("/apps/sailfish-browser/settings/search_engines_available");
 
 SearchEngineModel::SearchEngineModel(QObject *parent)
     : QAbstractListModel(parent)
@@ -23,6 +24,13 @@ SearchEngineModel::SearchEngineModel(QObject *parent)
     QStringList searchEngineList = OpenSearchConfigs::getSearchEngineList();
     for (const QString &name : searchEngineList) {
         SearchEngine engine(QUrl(), name, true);
+        m_searchEngines.append(engine);
+    }
+
+    MGConfItem gconf(SEARCH_ENGINES_AVAILABLE_CONFIG);
+    QMap<QString, QVariant> engines = gconf.value().toMap();
+    for (const QString &name : engines.keys()) {
+        SearchEngine engine(engines.value(name).toString(), name, false);
         m_searchEngines.append(engine);
     }
 }
@@ -87,6 +95,11 @@ void SearchEngineModel::add(const QString& title, const QString& url)
     m_searchEngines.append(engine);
     endInsertRows();
     emit countChanged();
+
+    MGConfItem gconf(SEARCH_ENGINES_AVAILABLE_CONFIG);
+    QMap<QString, QVariant> engines = gconf.value().toMap();
+    engines.insert(title, url);
+    gconf.set(engines);
 }
 
 void SearchEngineModel::install(const QString& title)
@@ -98,10 +111,14 @@ void SearchEngineModel::install(const QString& title)
             connect(fetcher, &DataFetcher::statusChanged, [this, fetcher, i]() {
                 if (fetcher->status() == DataFetcher::Status::Ready) {
                     m_searchEngines[i].installed = true;
-                    emit dataChanged(index(i), index(i), QVector<int>(InstalledRole));
+                    emit dataChanged(index(i), index(i), QVector<int>() << InstalledRole);
 
                     MGConfItem gconf(SEARCH_ENGINE_CONFIG);
                     gconf.set(m_searchEngines[i].title);
+                    MGConfItem available(SEARCH_ENGINES_AVAILABLE_CONFIG);
+                    QMap<QString, QVariant> engines = available.value().toMap();
+                    engines.remove(m_searchEngines[i].title);
+                    available.set(engines);
 
                     fetcher->deleteLater();
                 } else if (fetcher->status() == DataFetcher::Status::Error) {
