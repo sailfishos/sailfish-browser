@@ -1,20 +1,19 @@
 sailfish-browser
 ================
-Sailfish Browser is web browser for Jolla's Sailfish OS and is shipping with Jolla device. Sailfish Browser uses Sailfish Silica Qt components for the browser chrome and gecko engine with embedlite Qt5 binding.
-More information about the architecture can be found from http://blog.idempotent.info/posts/whats-behind-sailfish-browser.html
+Sailfish Browser is web browser for Sailfish OS and is shipping with Sailfish OS devices. Sailfish Browser uses Sailfish Silica Qt components for the browser chrome and gecko engine with embedlite Qt5 binding.
+More information about the architecture can be found from https://web.archive.org/web/20180830103541/http://blog.idempotent.info/posts/whats-behind-sailfish-browser.html
 
 Maintainers
 -----------
-- Dmitry Rozhkov (rojkov)
 - Raine Mäkeläinen (rainemak)
-- Vesa-Matti Hartikainen (veskuh)
+- David Llewellyn-Jones (llewelld)
 
 Engine and adaptation
 ---------------------
-- QtMozEmbed - Qt bindings - https://github.com/tmeshkova/qtmozembed
-embedlite components - 
-- Embedding Compontents - https://github.com/tmeshkova/embedlite-components
-- Gecko with embedlite - browser engine with embedding API - https://github.com/tmeshkova/gecko-dev/tree/embedlite/embedding/embedlite  
+- Sailfish WebView - https://github.com/sailfishos/sailfish-components-webview
+- QtMozEmbed - Qt bindings - https://git.sailfishos.org/mer-core/qtmozembed
+- Embedlite components - https://git.sailfishos.org/mer-core/embedlite-components
+- Gecko browser engine with embedlite API - https://git.sailfishos.org/mer-core/gecko-dev
 
 Tools
 -----
