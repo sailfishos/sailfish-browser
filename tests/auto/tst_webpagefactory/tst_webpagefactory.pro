@@ -6,9 +6,9 @@ include(../mocks/declarativewebcontainer/declarativewebcontainer_mock.pri)
 include(../mocks/declarativewebpage/declarativewebpage_mock.pri)
 
 include(../test_common.pri)
-include(../../../common/paths.pri)
-include(../../../src/storage/storage.pri)
-include(../../../src/factories/factories.pri)
+include(../../../common/browserapp.pri)
+include(../../../apps/storage/storage.pri)
+include(../../../apps/factories/factories.pri)
 
 SOURCES += tst_webpagefactory.cpp
 

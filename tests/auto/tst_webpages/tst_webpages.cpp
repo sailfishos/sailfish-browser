@@ -82,9 +82,9 @@ void tst_webpages::initialize()
     DeclarativeWebContainer webContainer;
     webContainer.setForeground(true);
 
-    QVERIFY(!m_webPages->initialized());
+    QVERIFY(!m_webPages->isInitialized());
     m_webPages->initialize(&webContainer);
-    QVERIFY(m_webPages->initialized());
+    QVERIFY(m_webPages->isInitialized());
 
     // check that the connection with ::updateBackgroundTimestamp() has been created
     webContainer.setForeground(false);

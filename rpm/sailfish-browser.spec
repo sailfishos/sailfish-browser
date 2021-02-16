@@ -1,15 +1,16 @@
 %global min_xulrunner_version 45.8.1.1
-%global min_qtmozembed_version 1.14.7
+%global min_qtmozembed_version 1.52.3
 %global min_embedlite_components_version 1.20.0
 %global min_sailfishwebengine_version 1.0.6
 %global min_systemsettings_version 0.5.25
+
+%global captiveportal sailfish-captiveportal
 
 Name:       sailfish-browser
 
 Summary:    Sailfish Browser
 Version:    1.17.11
 Release:    1
-Group:      Applications/Internet
 License:    MPLv2.0
 Url:        https://github.com/sailfishos/sailfish-browser
 Source0:    %{name}-%{version}.tar.bz2
@@ -35,7 +36,7 @@ BuildRequires:  gtest-devel
 BuildRequires:  libgmock-devel
 BuildRequires:  pkgconfig(vault) >= 1.0.1
 
-Requires: sailfishsilica-qt5 >= 1.1.107
+Requires: sailfishsilica-qt5 >= 1.2.33
 Requires: sailfish-content-graphics
 Requires: xulrunner-qt5 >= %{min_xulrunner_version}
 Requires: embedlite-components-qt5 >= %{min_embedlite_components_version}
@@ -47,11 +48,9 @@ Requires: sailfish-components-webview-qt5-pickers >= %{min_sailfishwebengine_ver
 Requires: qt5-plugin-imageformat-ico
 Requires: qt5-plugin-imageformat-gif
 Requires: qt5-plugin-position-geoclue
-Requires: mapplauncherd >= 4.1.17
-Requires: mapplauncherd-booster-browser
+Requires: sailjail-launch-approval
 Requires: desktop-file-utils
 Requires: qt5-qtgraphicaleffects
-Requires: nemo-qml-plugin-connectivity
 Requires: nemo-qml-plugin-policy-qt5 >= 0.0.4
 Requires: sailfish-policy >= 0.3.31
 Requires: jolla-settings-system >= 1.0.70
@@ -117,17 +116,20 @@ install -m 644 -p %{SOURCE1} %{buildroot}%{_datadir}/mapplauncherd/privileges.d/
 
 # Upgrade, count is 2 or higher (depending on the number of versions installed)
 if [ "$1" -ge 2 ]; then
-%{_bindir}/add-oneshot --all-users --now browser-cleanup-startup-cache || :
+    %{_bindir}/add-oneshot --all-users --now browser-cleanup-startup-cache || :
+    %{_bindir}/add-oneshot --new-users --all-users --late browser-update-default-data || :
+    %{_bindir}/add-oneshot --all-users browser-move-data-to-new-location || :
 fi
-
-%{_bindir}/add-oneshot --new-users --all-users --late browser-update-default-data || :
 
 %files
 %defattr(-,root,root,-)
 %{_bindir}/%{name}
+%{_bindir}/%{captiveportal}
 %{_datadir}/applications/%{name}.desktop
+%{_datadir}/applications/%{captiveportal}.desktop
 %{_datadir}/applications/open-url.desktop
 %{_datadir}/%{name}
+%{_datadir}/%{captiveportal}
 %{_datadir}/translations/%{name}*.qm
 %{_datadir}/dbus-1/services/*.service
 %{_datadir}/mapplauncherd/privileges.d/*
@@ -137,7 +139,6 @@ fi
 %{_sharedstatedir}/environment/nemo/*
 %{_libexecdir}/jolla-vault/units/vault-browser
 %{_datadir}/jolla-vault/units/Browser.json
-
 
 %files settings
 %defattr(-,root,root,-)

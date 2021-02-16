@@ -17,9 +17,9 @@ include(../mocks/opensearchconfigs/opensearchconfigs_mock.pri)
 include(../mocks/qmozsecurity/qmozsecurity.pri)
 
 include(../test_common.pri)
-include(../../../common/paths.pri)
-include(../../../src/core/core.pri)
-include(../../../src/history/history.pri)
+include(../../../common/browserapp.pri)
+include(../../../apps/core/core.pri)
+include(../../../apps/history/history.pri)
 
 LIBS += -lgtest -lgmock
 

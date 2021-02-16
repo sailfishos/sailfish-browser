@@ -14,6 +14,8 @@
 
 #include <QObject>
 #include <QVariant>
+#include <vector>
+#include <string>
 
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
@@ -30,9 +32,11 @@ public:
 
     explicit WebEngine(QObject *parent = 0) : QObject(parent) {};
 
-    static void initialize(const QString &profilePath, const QString &userAgent = QLatin1String(""));
+    static void initialize(const QString &profilePath);
     static WebEngine* instance();
-    MOCK_CONST_METHOD0(initialized, bool());
+    MOCK_CONST_METHOD0(isInitialized, bool());
+    MOCK_CONST_METHOD0(stopEmbedding, bool());
+
     MOCK_METHOD1(CancelTask, void(void *));
     MOCK_METHOD2(PostCompositorTask, TaskHandle(TaskCallback, void *));
     MOCK_METHOD2(sendObserve, void(const QString &, const QString &));
@@ -41,11 +45,11 @@ public:
     MOCK_METHOD2(notifyObservers, void(const QString &, const QString &));
     MOCK_METHOD2(notifyObservers, void(const QString &, const QVariant &));
 
-    MOCK_METHOD1(addObserver, void(const QString &));
-    MOCK_METHOD1(addObservers, void(const QStringList &));
+    MOCK_METHOD1(addObserver, void(const std::string &));
+    MOCK_METHOD1(addObservers, void(const std::vector<std::string> &));
 
 signals:
-    void onInitialized();
+    void initialized();
     void contextDestroyed();
     void lastViewDestroyed();
     void lastWindowDestroyed();

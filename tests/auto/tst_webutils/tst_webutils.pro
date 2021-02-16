@@ -6,16 +6,16 @@ PKGCONFIG += mlite5
 include(../mocks/webengine/webengine.pri)
 include(../test_common.pri)
 include(../../../common/opensearchconfigs.pri)
-include(../../../common/paths.pri)
+include(../../../common/browserapp.pri)
 
 LIBS += -lgtest -lgmock
 
 INCLUDEPATH += $$SRCDIR \
-    $$BROWSERSRCDIR
+    $$CORESRCDIR
 
 SOURCES += tst_webutils.cpp \
-           $$BROWSERSRCDIR/declarativewebutils.cpp
+           $$CORESRCDIR/declarativewebutils.cpp
 
-HEADERS += $$BROWSERSRCDIR/declarativewebutils.h
+HEADERS += $$CORESRCDIR/declarativewebutils.h
 
 INCLUDEPATH -= $$absolute_path(../../../../qtmozembed/src)

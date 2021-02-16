@@ -1,7 +1,7 @@
 /****************************************************************************
 **
-** Copyright (C) 2013 Jolla Ltd.
-** Contact: Dmitry Rozhkov <dmitry.rozhkov@jolla.com>
+** Copyright (c) 2013 - 2015 Jolla Ltd.
+** Copyright (c) 2020 Open Mobile Platform LLC.
 **
 ****************************************************************************/
 
@@ -11,148 +11,30 @@
 
 import QtQuick 2.0
 import Sailfish.Silica 1.0
-import org.nemomobile.configuration 1.0
 import org.sailfishos.browser.settings 1.0
-import com.jolla.settings.system 1.0
-import Sailfish.Policy 1.0
+import org.nemomobile.dbus 2.0
+import com.jolla.settings 1.0
 
-Page {
-    id: page
-
-    property var _nameMap: ({})
-
-    function name2index(name) {
-        return _nameMap[name] !== undefined ? _nameMap[name] : 0
+ApplicationSettings {
+    Button {
+        anchors.horizontalCenter: parent.horizontalCenter
+        //% "Settings"
+        text: qsTrId("settings_browser-la-settings")
+        onClicked: browserApp.load("about:settings")
     }
 
-    SilicaFlickable {
-        anchors.fill: parent
-        contentHeight: contentColumn.height
+    DBusInterface {
+        id: browserApp
 
-        Column {
-            id: contentColumn
+        service: "org.sailfishos.browser.ui"
+        path: "/ui"
+        iface: "org.sailfishos.browser.ui"
 
-            width: parent.width
-            spacing: Theme.paddingMedium
-
-            PageHeader {
-                //% "Browser"
-                title: qsTrId("settings_browser-ph-browser")
-            }
-
-            DisabledByMdmBanner {
-                active: !AccessPolicy.browserEnabled
-            }
-            TextField {
-                id: homePage
-                enabled: AccessPolicy.browserEnabled
-
-                width: parent.width
-                //: Label for home page text field
-                //% "Home Page"
-                label: qsTrId("settings_browser-la-home_page")
-                text: homePageConfig.value == "about:blank" ? "" : homePageConfig.value
-
-                //: No home page, type home page
-                //% "Type home page"
-                placeholderText: qsTrId("settings_browser-ph-type_home_page")
-                inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase | Qt.ImhUrlCharactersOnly
-
-                onTextChanged: homePageConfig.value = text || "about:blank"
-
-                EnterKey.iconSource: "image://theme/icon-m-enter-close"
-                EnterKey.onClicked: focus = false
-            }
-
-            ComboBox {
-                id: searchEngine
-                enabled: AccessPolicy.browserEnabled
-
-                width: parent.width
-                //: Label for combobox that sets search engine used in browser
-                //% "Search engine"
-                label: qsTrId("settings_browser-la-search_engine")
-                currentIndex: name2index(searchEngineConfig.value)
-
-                menu: ContextMenu {
-                    id: searchEngineMenu
-
-                    Component {
-                        id: menuItemComp
-
-                        MenuItem {}
-                    }
-
-                    Component.onCompleted: {
-                        var index = 0
-                        settings.searchEngineList.forEach(function(name) {
-                            var map = page._nameMap
-                            // FIXME: _contentColumn should not be used to add items dynamicly
-                            menuItemComp.createObject(searchEngineMenu._contentColumn, {"text": name})
-                            map[name] = index
-                            page._nameMap = map
-                            index++
-                        })
-                    }
-                }
-
-                onCurrentItemChanged: {
-                    if (currentItem.text !== searchEngineConfig.value) {
-                        searchEngineConfig.value = currentItem.text
-                    }
-                }
-            }
-
-            Button {
-                anchors.horizontalCenter: parent.horizontalCenter
-                //: Button for opening privacy settings page.
-                //% "Privacy"
-                text: qsTrId("settings_browser-bt-privacy")
-                enabled: AccessPolicy.browserEnabled
-                onClicked: pageStack.animatorPush(Qt.resolvedUrl("Privacy.qml"))
-            }
-
-            TextSwitch {
-                //: Label for text switch that makes all tabs closed upon closing browser application
-                //% "Close all tabs on exit"
-                text: qsTrId("settings_browser-la-close_all_tabs")
-                //% "Upon exiting Sailfish Browser all open tabs will be closed"
-                description: qsTrId("settings_browser-la-close_all_tabs_description")
-                checked: closeAllTabsConfig.value
-                enabled: AccessPolicy.browserEnabled
-
-                onCheckedChanged: closeAllTabsConfig.value = checked
-            }
+        function load(url) {
+            call("openSettings", [], function() {
+            }, function(error, message) {
+                console.warn("Failed to open settings:", url, "error:", error, "message:", message)
+            })
         }
-    }
-
-    ConfigurationValue {
-        id: closeAllTabsConfig
-        key: "/apps/sailfish-browser/settings/close_all_tabs"
-        defaultValue: false
-    }
-
-    ConfigurationValue {
-        id: searchEngineConfig
-
-        key: "/apps/sailfish-browser/settings/search_engine"
-        defaultValue: "Google"
-
-        onValueChanged: {
-            if (searchEngine.currentItem.text !== value) {
-                searchEngine.currentIndex = name2index(value)
-            }
-        }
-    }
-
-    ConfigurationValue {
-        id: homePageConfig
-
-        key: "/apps/sailfish-browser/settings/home_page"
-        defaultValue: "http://jolla.com/"
-    }
-
-    BrowserSettings {
-        id: settings
     }
 }

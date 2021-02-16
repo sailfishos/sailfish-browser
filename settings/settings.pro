@@ -12,17 +12,10 @@ import.files = qmldir
 import.path = $$TARGETPATH
 target.path = $$TARGETPATH
 
-include(../common/opensearchconfigs.pri)
-
-SOURCES += \
-        declarative_plugin.cpp \
-        browsersettings.cpp
-
-HEADERS += \
-        browsersettings.h
+SOURCES +=  plugin.cpp
 
 qmlpages.path = /usr/share/jolla-settings/pages/browser
-qmlpages.files = browser.qml Privacy.qml
+qmlpages.files = browser.qml
 
 plugin_entry.path = /usr/share/jolla-settings/entries
 plugin_entry.files = browser.json

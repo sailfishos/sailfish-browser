@@ -1,0 +1,77 @@
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, user-scalable=no"/>
+        <meta charset="utf-8"/>
+        <style>
+            button {
+                font-size: 40pt
+            }
+
+            div {
+                width: 90%;
+                font-size: 20pt;
+                margin-left: 5%;
+                margin-right: 5%;
+                margin-top: 20px;
+                margin-bottom: 20px;
+                background-color: blue;
+                color: white;
+            }
+
+            div.header {
+                color: blue;
+                background-color: white;
+                margin-bottom: 0;
+            }
+
+            .slider {
+                width: 100%;
+            }
+        </style>
+    </head>
+    <body>
+
+    <div class="header"><h1>HTML5 video test</h1></div>
+
+    <div>
+    <video controls
+        src="https://archive.org/download/BigBuckBunny_124/Content/big_buck_bunny_720p_surround.mp4"
+        poster="https://peach.blender.org/wp-content/uploads/title_anouncement.jpg?x11217"
+        width="100%">
+
+        Sorry, your browser doesn't support embedded videos.
+    </video>
+    </div>
+
+    <div class="header"><h3 id="volumeLevel"></h3></div>
+
+    <div><input type="range" min="1" max="100" value="100" class="slider" id="volumeSlider"></div>
+    </body>
+
+    <script>
+        video = document.querySelector('video');
+        volumeLevel = document.getElementById("volumeLevel");
+        volumeLevel.innerHTML = "Initial volume: " + video.volume;
+
+        console.log("Initial volume:", video.volume);
+        video.addEventListener('volumechange', (event) => {
+            console.log("Volume changed:", video.volume);
+            volumeLevel.innerHTML = "The volume changed: " + video.volume;
+        });
+
+        volumeSlider = document.getElementById("volumeSlider");
+        volumeSlider.oninput = function() {
+            video.volume = this.value / 100;
+        }
+    </script>
+
+    <div class="header"><h2>Looping video</h2></div>
+
+    <div style="width: 248px; height: 442px;">
+    <video autoplay="autoplay" loop>
+    <source src="https://web.archive.org/web/20201017005511im_/https://omprussia.ru/assets/images/carousel_gestures/Pulleymenu-1.mp4" type="video/mp4">
+    </video>
+    </div>
+
+
+</html>

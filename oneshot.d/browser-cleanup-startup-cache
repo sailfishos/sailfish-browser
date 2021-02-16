@@ -1,2 +1,7 @@
 #!/bin/sh
-rm -rf /home/$USER/.mozilla/mozembed/startupCache
+# Old startup cache location
+rm -rf ~/.mozilla/mozembed/startupCache
+rm -rf ~/.mozilla/captiveportal/startupCache
+# New startup cache location
+rm -rf ~/.local/share/org.sailfishos/browser/.mozilla/startupCache
+rm -rf ~/.local/share/org.sailfishos/captiveportal/.mozilla/startupCache
