@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014 - 2019 Jolla Ltd.
- * Copyright (c) 2019 Open Mobile Platform LLC.
+ * Copyright (c) 2019 - 2021 Open Mobile Platform LLC.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
@@ -31,6 +31,7 @@ Item {
     readonly property string _doubleToolBar: "doubleToolBar"
     readonly property string _chromeVisible: "chromeVisible"
     readonly property string _fullscreenWebPage: "fullscreenWebPage"
+    readonly property string _startPage: "startPage"
     readonly property string _draggingOverlay: "draggingOverlay"
     readonly property string _certOverlay: "certOverlay"
     readonly property string _noOverlay: "noOverlay"
@@ -42,6 +43,10 @@ Item {
 
     function showChrome(immediate) {
         updateState(_chromeVisible, immediate || false)
+    }
+
+    function showStartPage(immediate) {
+        updateState(_startPage, immediate || false)
     }
 
     function showOverlay(immediate) {
@@ -86,12 +91,12 @@ Item {
     onStateChanged: {
         // Animation end changes to true state. Hence not like atTop = state !== _fullscreenOverlay
         var wasAtMiddle = (!atBottom && !atTop) || _midPos
-        var goingUp = (atBottom || wasAtMiddle) && state === _fullscreenOverlay
-        var goingDown = (atTop || wasAtMiddle) && (state === _chromeVisible || state === _fullscreenWebPage || state === _doubleToolBar || state === _noOverlay || state === _draggingOverlay || state === _certOverlay)
+        var goingUp = (atBottom || wasAtMiddle) && (state === _fullscreenOverlay || state === _startPage)
+        var goingDown = (atTop || wasAtMiddle) && (state === _chromeVisible || state === _fullscreenWebPage || state === _doubleToolBar || state === _noOverlay || state === _draggingOverlay || state === _certOverlay || state === _startPage )
 
-        if ((state !== _fullscreenOverlay && state !== _certOverlay) || _midPos) {
+        if ((state !== _fullscreenOverlay && state !== _certOverlay && state !== _startPage) || _midPos) {
             atTop = false
-        } else if (state == _fullscreenOverlay) {
+        } else if (state == _fullscreenOverlay || state == _startPage) {
             atTop = true
         }
         if ((state !== _chromeVisible && state !== _fullscreenWebPage && state !== _doubleToolBar) || _midPos) {
@@ -163,6 +168,22 @@ Item {
         },
 
         State {
+            name: _startPage
+            changes: [
+                PropertyChanges {
+                    target: overlay
+                    y: webView.privateMode ? _fullHeight : 0
+                    height: webView.fullscreenHeight
+                },
+                PropertyChanges {
+                    target: overlay.toolBar
+                    secondaryToolsHeight: 0
+                    visible: false
+                }
+            ]
+        },
+
+        State {
             name: _doubleToolBar
             changes: [
                 PropertyChanges {
@@ -190,7 +211,7 @@ Item {
     transitions: [
         Transition {
             id: overlayTransition
-            to: "fullscreenWebPage,chromeVisible,loadProgressOverlay,fullscreenOverlay,noOverlay,doubleToolBar,certOverlay"
+            to: "fullscreenWebPage,chromeVisible,loadProgressOverlay,fullscreenOverlay,noOverlay,doubleToolBar,certOverlay,startPage"
 
             SequentialAnimation {
                 NumberAnimation { target: webView; property: "height"; duration: transitionDuration; easing.type: Easing.InOutQuad }
@@ -198,7 +219,7 @@ Item {
                     script: {
                         if (animator.state === _chromeVisible || animator.state === _fullscreenWebPage || animator.state === _doubleToolBar) {
                             atBottom = true
-                        } else if (animator.state === _fullscreenOverlay || animator.state === _certOverlay) {
+                        } else if (animator.state === _fullscreenOverlay || animator.state === _certOverlay || animator.state === _startPage) {
                             atTop = true
                         }
 
