@@ -120,6 +120,8 @@ void SearchEngineModel::install(const QString& title)
                     engines.remove(m_searchEngines[i].title);
                     available.set(engines);
 
+                    emit installed(m_searchEngines[i].title);
+
                     fetcher->deleteLater();
                 } else if (fetcher->status() == DataFetcher::Status::Error) {
                     // TODO: error notification

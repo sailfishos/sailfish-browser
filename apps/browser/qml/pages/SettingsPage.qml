@@ -172,4 +172,20 @@ Page {
         key: "/apps/sailfish-browser/settings/home_page"
         defaultValue: "http://jolla.com/"
     }
+
+    Notice {
+        id: searchInstalledNotice
+        duration: 3000
+        verticalOffset: -Theme.paddingLarge
+    }
+
+    Connections {
+        target: SearchEngineModel
+
+        onInstalled: {
+            //% "%1 search installed"
+            searchInstalledNotice.text = qsTrId("sailfish_browser-la-search_installed").arg(title)
+            searchInstalledNotice.show()
+        }
+    }
 }
