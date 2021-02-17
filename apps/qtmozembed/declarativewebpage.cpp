@@ -150,6 +150,7 @@ void DeclarativeWebPage::setInitialTab(const Tab& tab)
     Q_ASSERT(m_initialTab.tabId() == 0);
 
     m_initialTab = tab;
+    setDesktopMode(m_initialTab.desktopMode());
     emit tabIdChanged();
     connect(DBManager::instance(), &DBManager::tabHistoryAvailable,
             this, &DeclarativeWebPage::onTabHistoryAvailable);

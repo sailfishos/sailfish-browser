@@ -33,6 +33,9 @@ public:
     QString title() const;
     void setTitle(const QString &title);
 
+    bool desktopMode() const;
+    void setDesktopMode(bool desktopMode);
+
     bool isValid() const;
 
     bool operator==(const Tab &other) const;
@@ -43,6 +46,7 @@ private:
     QString m_url;
     QString m_title;
     QString m_thumbPath;
+    bool m_desktopMode;
 };
 
 QDebug operator<<(QDebug, const Tab *);

@@ -74,6 +74,21 @@ Column {
         }
     }
 
+    TextSwitch {
+        height: overlay.toolBar.rowHeight
+        enabled: webView.contentItem
+        automaticCheck: false
+
+        //: Label for text switch that reloads page in desktop mode
+        //% "Desktop site"
+        text: qsTrId("settings_browser-la-desktop_site")
+        checked: webView.contentItem ? webView.contentItem.desktopMode : false
+        onClicked: {
+            showChrome()
+            webView.contentItem.desktopMode = !checked
+        }
+    }
+
     Row {
         width: parent.width
         height: overlay.toolBar.rowHeight
