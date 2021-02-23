@@ -72,13 +72,13 @@ Page {
                             text: title
                             //: Shown on Settings -> Search engine for user installable search services
                             //% "Tap to install"
-                            description: installed ? "" : qsTrId("settings_browser-la-tap_to_install")
+                            description: status == SearchEngineModel.Available ? qsTrId("settings_browser-la-tap_to_install") : ""
                             onClicked: {
                                 if (title !== searchEngineConfig.value) {
-                                    if (installed) {
-                                        searchEngineConfig.value = title
-                                    } else {
+                                    if (status == SearchEngineModel.Available) {
                                         SearchEngineModel.install(title)
+                                    } else {
+                                        searchEngineConfig.value = title
                                     }
                                 }
                             }
