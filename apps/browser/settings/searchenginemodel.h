@@ -48,6 +48,7 @@ public:
 
 signals:
     void countChanged();
+    void installed(const QString &title);
 
 private:
     struct SearchEngine {
