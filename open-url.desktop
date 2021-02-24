@@ -1,6 +1,7 @@
 [Desktop Entry]
 Type=Application
 Name=Browser
+Icon=icon-launcher-browser
 NoDisplay=true
 X-MeeGo-Logical-Id=sailfish-browser-ap-name
 X-MeeGo-Translation-Catalog=sailfish-browser
