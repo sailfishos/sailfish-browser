@@ -25,14 +25,14 @@ Shared.Background {
     property bool active
     property QtObject webView
     property Item browserPage
-    property alias historyModel: historyList.model
+    property var historyModel
     property alias toolBar: toolBar
     property alias progressBar: progressBar
     property alias animator: overlayAnimator
     property alias dragArea: dragArea
     property alias searchField: searchField
     readonly property alias enteringNewTabUrl: searchField.enteringNewTabUrl
-
+    property var favoriteGrid: historyList.headerItem
     property string enteredUrl
 
     property real _overlayHeight: browserPage.isPortrait ? toolBar.rowHeight : 0
@@ -228,7 +228,13 @@ Shared.Background {
         Item {
             id: historyContainer
 
-            readonly property bool showFavorites: !overlayAnimator.atBottom && (!searchField.edited && searchField.text === webView.url || !searchField.text) && !toolBar.findInPageActive && _showUrlEntry
+            readonly property bool showFavorites: !overlayAnimator.atBottom && !toolBar.findInPageActive && _showUrlEntry
+            readonly property bool showHistoryList: showFavorites && (searchField.edited
+                                                                      && searchField.text !== webView.url
+                                                                      && searchField.text)
+            readonly property bool showHistoryButton: !toolBar.findInPageActive && (!searchField.edited
+                                                                                    && searchField.text === webView.url
+                                                                                    || !searchField.text)
 
             width: parent.width
             height: toolBar.rowHeight + historyList.height
@@ -242,7 +248,6 @@ Shared.Background {
             PrivateModeTexture {
                 opacity: toolBar.visible && webView.privateMode ? toolBar.opacity : 0.0
             }
-
 
             Loader {
                 id: textSelectionToolbar
@@ -314,7 +319,10 @@ Shared.Background {
                 }
 
                 // Follow grid / list position.
-                y: -((historyContainer.showFavorites ? favoriteGrid.contentY : historyList.contentY) + (historyContainer.showFavorites ? favoriteGrid.headerItem.height : height))
+                y: -((!historyContainer.showHistoryList ? favoriteGrid.contentY : favoriteGrid.count > 0
+                                                          ? historyList.contentY + favoriteGrid.cellHeight + favoriteGrid.menuHeight
+                                                          : historyList.contentY) + favoriteGrid.headerItem.height + favoriteGrid.menuHeight)
+
                 // On top of HistoryList and FavoriteGrid
                 z: 1
                 height: toolBar.rowHeight
@@ -360,7 +368,7 @@ Shared.Background {
                 visible: opacity > 0.0 && y >= -searchField.height
 
                 onYChanged: {
-                    if (y < 0) {
+                    if (y < -height && historyList.contentY !== favoriteGrid.contentY) {
                         dragArea.moved = true
                     }
                 }
@@ -400,17 +408,17 @@ Shared.Background {
 
             OverlayListItem {
                 id: historyButton
-                height: toolBar.rowHeight
+                height: historyContainer.showHistoryButton ? toolBar.rowHeight : 0
                 iconWidth: toolBar.iconWidth
                 horizontalOffset: toolBar.horizontalOffset
                 // Follow grid / list position.
-                y: -((historyContainer.showFavorites ? -searchField.y : historyList.contentY) - height)
+                y: -((historyContainer.showHistoryButton ? -searchField.y : historyList.contentY) - height)
                 // On top of HistoryList and FavoriteGrid
                 z: 1
 
                 text: qsTrId("sailfish_browser-la-history")
                 iconSource: "image://theme/icon-m-history"
-                visible: historyContainer.showFavorites
+                visible: historyContainer.showHistoryButton
                 opacity: visible && toolBar.opacity < 0.9 ? 1.0 : 0.0
                 enabled: overlayAnimator.atTop
 
@@ -437,7 +445,7 @@ Shared.Background {
                     // flickable binding.
                     flickable: historyList
                     x: (historyList.width - width) / 2
-                    y: historyList.originY + (historyList.height - height) / 2
+                    y: favoriteGrid.originY + (historyList.height - height) / 2
 
                     enabled: toolBar.findInPageActive && searchField.text
 
@@ -534,6 +542,11 @@ Shared.Background {
                 }
             }
 
+            BookmarkModel {
+                id: bookmarkModel
+                activeUrl: toolBar.url
+            }
+
             Browser.HistoryList {
                 id: historyList
 
@@ -542,56 +555,56 @@ Shared.Background {
                 width: parent.width
                 height: webView.tabModel.count !== 0 || webView.privateMode ? browserPage.height - _overlayHeight - panelSize : browserPage.height - panelSize
 
-                header: Item {
-                    width: parent.width
-                    height: searchField.height
+                header: Browser.FavoriteGrid {
+                    id: favoriteGrid
+                    height: !historyContainer.showHistoryList ? historyList.height : count > 0 ? cellHeight + headerItem.height + menuHeight : headerItem.height
+                    opacity: visible && toolBar.opacity < 0.9 ? 1.0 : 0.0
+                    enabled: overlayAnimator.atTop
+                    visible: historyContainer.showFavorites
+                    _quickScrollRightMargin: -(browserPage.width - width) / 2
+
+                    header: Item {
+                        width: parent.width
+                        height: searchField.height + historyButton.height
+                    }
+
+                    model: BookmarkFilterModel {
+                        sourceModel: bookmarkModel
+                        maxDisplayedItems: search ? favoriteGrid.columns : bookmarkModel.count
+                        search: historyContainer.showHistoryList ? searchField.text : ""
+                    }
+
+                    onMovingChanged: if (moving) favoriteGrid.focus = true
+                    onLoad: overlay.loadPage(url)
+                    onNewTab: {
+                        searchField.resetUrl(url)
+                        // Not the best property name but functionality of opening a favorite
+                        // to a new tab is exactly the same as opening new tab by typing a url.
+                        searchField.enteringNewTabUrl = true
+                        _showUrlEntry = true
+                        overlay.loadPage(url)
+                    }
+
+                    onShare: pageStack.animatorPush("Sailfish.WebView.Popups.ShareLinkPage", {"link" : url, "linkTitle": title})
+
+                    Behavior on opacity { FadeAnimator {} }
                 }
 
                 search: searchField.text
-                opacity: historyContainer.showFavorites || toolBar.opacity > 0.9 ? 0.0 : 1.0
+                opacity: visible && toolBar.opacity < 0.9 ? 1.0 : 0.0
                 enabled: overlayAnimator.atTop
-                visible: !overlayAnimator.atBottom && !historyContainer.showFavorites && _showUrlEntry
-
+                visible: !overlayAnimator.atBottom && _showUrlEntry
                 onMovingChanged: if (moving) historyList.focus = true
                 onSearchChanged: if (search !== webView.url) historyModel.search(search)
+                model: historyContainer.showHistoryList ? historyModel : 0
+                contentY: favoriteGrid.y
+                showDeleteButton: true
                 onLoad: {
                     historyList.focus = true
                     overlay.loadPage(url)
                 }
-                Behavior on opacity { FadeAnimator {} }
-            }
-
-            Browser.FavoriteGrid {
-                id: favoriteGrid
-
-                height: historyList.height
-                opacity: historyContainer.showFavorites && toolBar.opacity < 0.9 ? 1.0 : 0.0
-                enabled: overlayAnimator.atTop
-                visible: historyContainer.showFavorites
-                _quickScrollRightMargin: -(browserPage.width - width) / 2
-
-                header: Item {
-                    width: parent.width
-                    height: searchField.height + historyButton.height
-                }
-
-                model: BookmarkModel {
-                    id: bookmarkModel
-                    activeUrl: toolBar.url
-                }
-
-                onMovingChanged: if (moving) favoriteGrid.focus = true
-                onLoad: overlay.loadPage(url)
-                onNewTab: {
-                    searchField.resetUrl(url)
-                    // Not the best property name but functionality of opening a favorite
-                    // to a new tab is exactly the same as opening new tab by typing a url.
-                    searchField.enteringNewTabUrl = true
-                    _showUrlEntry = true
-                    overlay.loadPage(url)
-                }
-
-                onShare: pageStack.animatorPush("Sailfish.WebView.Popups.ShareLinkPage", {"link" : url, "linkTitle": title})
+                // necessary for correct display of context menu of FavoriteGrid
+                onContentHeightChanged: if (menuClosed) contentY = favoriteGrid.y
 
                 Behavior on opacity { FadeAnimator {} }
             }
