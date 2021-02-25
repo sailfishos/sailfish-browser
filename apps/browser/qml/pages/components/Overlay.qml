@@ -313,10 +313,10 @@ Shared.Background {
                 }
 
                 // Follow grid / list position.
-                y: -((historyContainer.showFavorites ? favoriteGrid.contentY : historyList.contentY) + height)
+                y: -((historyContainer.showFavorites ? favoriteGrid.contentY : historyList.contentY) + (historyContainer.showFavorites ? favoriteGrid.headerItem.height : height))
                 // On top of HistoryList and FavoriteGrid
                 z: 1
-                height: Theme.itemSizeMedium
+                height: toolBar.rowHeight
                 textLeftMargin: Theme.paddingLarge
                 textRightMargin: Theme.paddingLarge
                 focusOutBehavior: FocusBehavior.ClearPageFocus
@@ -394,6 +394,28 @@ Shared.Background {
                     if (!edited && text !== webView.url) {
                         edited = true
                     }
+                }
+            }
+
+            OverlayListItem {
+                id: historyButton
+                height: toolBar.rowHeight
+                iconWidth: toolBar.iconWidth
+                horizontalOffset: toolBar.horizontalOffset
+                // Follow grid / list position.
+                y: -((historyContainer.showFavorites ? -searchField.y : historyList.contentY) - height)
+                // On top of HistoryList and FavoriteGrid
+                z: 1
+
+                text: qsTrId("sailfish_browser-la-history")
+                iconSource: "image://theme/icon-m-history"
+                visible: historyContainer.showFavorites
+                opacity: visible && toolBar.opacity < 0.9 ? 1.0 : 0.0
+                enabled: overlayAnimator.atTop
+
+                onClicked: {
+                    var historyPage = pageStack.push("../HistoryPage.qml", { model: historyModel })
+                    historyPage.loadPage.connect(loadPage)
                 }
             }
 
@@ -549,7 +571,7 @@ Shared.Background {
 
                 header: Item {
                     width: parent.width
-                    height: searchField.height
+                    height: searchField.height + historyButton.height
                 }
 
                 model: BookmarkModel {
