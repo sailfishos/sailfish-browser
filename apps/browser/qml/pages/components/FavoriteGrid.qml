@@ -1,6 +1,7 @@
 /****************************************************************************
 **
 ** Copyright (C) 2014 Jolla Ltd.
+** Copyright (C) 2021 Open Mobile Platform LLC.
 ** Contact: Raine Makelainen <raine.makelainen@jollamobile.com>
 **
 ****************************************************************************/
@@ -16,6 +17,10 @@ import Sailfish.Browser 1.0
 
 IconGridViewBase {
     id: favoriteGrid
+
+    readonly property bool searched: historyContainer.showHistoryList
+    readonly property int startHeight: overlay.height - toolBar.rowHeight
+    property int menuHeight
 
     pageHeight: Math.ceil(browserPage.height + pageStack.panelSize)
     rows: Math.floor(pageHeight / minimumCellHeight)
@@ -39,6 +44,8 @@ IconGridViewBase {
         }
     }
 
+    onCountChanged: height = !searched ? startHeight : count ? cellHeight + headerItem.height : headerItem.height
+
     currentIndex: -1
 
     displaced: Transition { NumberAnimation { properties: "x,y"; easing.type: Easing.InOutQuad; duration: 200 } }
@@ -52,6 +59,16 @@ IconGridViewBase {
 
         menu: favoriteContextMenu
         openMenuOnPressAndHold: false
+
+        onMenuOpenChanged: {
+            if (menuOpen) {
+                favoriteGrid.menuHeight = headerItem.height + cellHeight
+                favoriteGrid.height = searched ? menuHeight + cellHeight : startHeight
+            } else {
+                favoriteGrid.menuHeight = 0
+                favoriteGrid.height = searched ? headerItem.height + cellHeight : startHeight
+            }
+        }
 
         onAddToLauncher: {
             // url, title, favicon
@@ -74,7 +91,6 @@ IconGridViewBase {
                                        "index": index,
                                    })
         }
-
 
         onClicked: favoriteGrid.load(model.url, model.title)
         onShowContextMenuChanged: {
