@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (c) 2020 Open Mobile Platform LLC
+** Copyright (c) 2020 - 2021 Open Mobile Platform LLC
 **
 ****************************************************************************/
 
@@ -28,11 +28,23 @@ bool BookmarkFilterModel::filterAcceptsRow(int sourceRow, const QModelIndex &sou
 {
     QModelIndex index = sourceModel()->index(sourceRow, 0, sourceParent);
 
-    if (sourceModel()->data(index, DeclarativeBookmarkModel::UrlRole).toString().trimmed().contains(search(), Qt::CaseInsensitive)
-            || sourceModel()->data(index, DeclarativeBookmarkModel::TitleRole).toString().trimmed().contains(search(), Qt::CaseInsensitive)) {
+    if (m_countFilterAccepts < m_maxDisplayedItems && (sourceModel()->data(index, DeclarativeBookmarkModel::UrlRole).toString().trimmed().contains(m_search, Qt::CaseInsensitive)
+         || sourceModel()->data(index, DeclarativeBookmarkModel::TitleRole).toString().trimmed().contains(m_search, Qt::CaseInsensitive))) {
+        m_countFilterAccepts++;
         return true;
     }
     return false;
+}
+
+void BookmarkFilterModel::setSourceModel(QAbstractItemModel *sourceModel)
+{
+    if (sourceModel) {
+        beginResetModel();
+        m_countFilterAccepts = 0;
+        m_maxDisplayedItems = sourceModel->rowCount();
+        QSortFilterProxyModel::setSourceModel(sourceModel);
+        endResetModel();
+    }
 }
 
 QString BookmarkFilterModel::search() const
@@ -40,12 +52,29 @@ QString BookmarkFilterModel::search() const
     return m_search;
 }
 
+int BookmarkFilterModel::maxDisplayedItems() const
+{
+    return m_maxDisplayedItems;
+}
+
 void BookmarkFilterModel::setSearch(const QString &search)
 {
     if (m_search == search)
         return;
 
+    m_countFilterAccepts = 0;
     m_search = search;
+    invalidateFilter();
     emit searchChanged(m_search);
-    invalidate();
+}
+
+void BookmarkFilterModel::setMaxDisplayedItems(const int maxDisplayedItems)
+{
+    if (m_maxDisplayedItems == maxDisplayedItems)
+        return;
+
+    m_countFilterAccepts = 0;
+    m_maxDisplayedItems = maxDisplayedItems;
+    invalidateFilter();
+    emit maxDisplayedItemsChanged(m_maxDisplayedItems);
 }
