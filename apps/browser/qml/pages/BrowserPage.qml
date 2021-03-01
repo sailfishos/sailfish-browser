@@ -27,7 +27,7 @@ Page {
     readonly property rect inputMask: inputMaskForOrientation(orientation)
     readonly property bool active: status == PageStatus.Active
     property bool tabPageActive
-    readonly property size thumbnailSize: Qt.size((Screen.width - (largeScreen ? (2 * Theme.horizontalPageMargin) : 0)), (largeScreen ? Theme.itemSizeExtraLarge + (2 * Theme.paddingLarge) : Screen.height / 5))
+    readonly property size thumbnailSize: Qt.size(width - Theme.horizontalPageMargin * 2, Math.max(height / 2.5, width / 1.66) - (Theme.iconSizeSmall + Theme.paddingMedium * 2))
     property Item debug
     property Component tabPageComponent
 

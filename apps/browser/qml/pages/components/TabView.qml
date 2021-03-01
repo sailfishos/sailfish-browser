@@ -14,7 +14,7 @@ import Sailfish.Silica 1.0
 import org.nemomobile.configuration 1.0
 import "." as Browser
 
-SilicaListView {
+SilicaGridView {
     id: tabView
 
     property bool portrait
@@ -22,6 +22,15 @@ SilicaListView {
     property bool closingAllTabs
 
     property var remorsePopup
+    readonly property bool largeScreen: Screen.sizeCategory > Screen.Medium
+    readonly property real thumbnailHeight: largeScreen
+                                            ? Screen.width / 3
+                                            : !portrait ? parent.height / 2.5 : parent.width / 1.66
+    readonly property real columns: largeScreen
+                                        ? portrait ? 2 : 3
+                                        : parent.width < 2 * parent.height
+                                          ? parent.width <= height ? 1 : 2 : 3
+    readonly property real thumbnailWidth: (parent.width - Theme.horizontalPageMargin * 2 - (Theme.paddingLarge * (columns - 1))) / columns
 
     signal hide
     signal enterNewTabUrl
@@ -34,8 +43,9 @@ SilicaListView {
     onCountChanged: if (count > 0) closingAllTabs = false
     onClosingAllTabsChanged: if (closingAllTabs) closeAllPending()
 
-    width: parent.width
+    width: parent.width - Theme.horizontalPageMargin
     height: parent.height
+    x: Theme.horizontalPageMargin
     currentIndex: -1
     header: PageHeader {
         //: Tabs
@@ -43,8 +53,8 @@ SilicaListView {
         title: qsTrId("sailfish_browser-he-tabs")
     }
     footer: spacer
-
-    spacing: Theme.paddingMedium
+    cellHeight: thumbnailHeight + Theme.paddingLarge
+    cellWidth: thumbnailWidth + Theme.paddingLarge
 
     delegate: TabItem {
         id: tabItem
@@ -53,14 +63,13 @@ SilicaListView {
         opacity: enabled ? 1.0 : 0.0
         Behavior on opacity { FadeAnimator {}}
 
-        anchors.horizontalCenter: parent.horizontalCenter
-        width: browserPage.thumbnailSize.width
-        height: browserPage.thumbnailSize.height
+        width: thumbnailWidth
+        height: thumbnailHeight
 
-        ListView.onAdd: AddAnimation {
+        GridView.onAdd: AddAnimation {
             target: tabItem
         }
-        ListView.onRemove: RemoveAnimation {
+        GridView.onRemove: RemoveAnimation {
             target: tabItem
         }
     }
