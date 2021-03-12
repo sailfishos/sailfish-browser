@@ -96,10 +96,9 @@ QList<Bookmark*> BookmarkManager::load() {
     QJsonDocument doc = QJsonDocument::fromJson(file->readAll());
     if (doc.isArray()) {
         QJsonArray array = doc.array();
-        QJsonArray::iterator i;
-        for (i=array.begin(); i != array.end(); ++i) {
-            if ((*i).isObject()) {
-                QJsonObject obj = (*i).toObject();
+        for (const QJsonValue &value : array) {
+            if (value.isObject()) {
+                QJsonObject obj = value.toObject();
                 QString url = obj.value("url").toString();
                 QString favicon = obj.value("favicon").toString();
                 Bookmark* m = new Bookmark(obj.value("title").toString(),
