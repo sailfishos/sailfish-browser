@@ -1,7 +1,7 @@
 /****************************************************************************
 **
 ** Copyright (C) 2013 - 2019 Jolla Ltd.
-** Copyright (c) 2019 Open Mobile Platform LLC.
+** Copyright (c) 2019 - 2021 Open Mobile Platform LLC.
 ** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jollamobile.com>
 **
 ****************************************************************************/
@@ -17,6 +17,7 @@ import Sailfish.Silica 1.0
 import Sailfish.Silica.private 1.0 as Private
 import Sailfish.Browser 1.0
 import Sailfish.Policy 1.0
+import Sailfish.WebEngine 1.0
 import "components" as Browser
 import "../shared" as Shared
 
@@ -379,6 +380,27 @@ Page {
                 debug = component.createObject(browserPage)
             } else {
                 console.warn("Failed to create DebugOverlay " + component.errorString())
+            }
+        }
+    }
+
+    Connections {
+        target: WebEngine
+        onRecvObserve: {
+            if (message === "embed:downloadpicker") {
+                var page = pageStack.push("Sailfish.Pickers.FolderPickerPage", {
+                                              showSystemFiles: false,
+                                              //% "Download to"
+                                              dialogTitle: qsTrId("sailfish_browser-ti-download-to")
+                                          })
+                page.onSelectedPathChanged.connect(function() {
+                    WebEngine.notifyObservers("embedui:downloadpicker",
+                                              {
+                                                  "downloadDirectory": page.selectedPath,
+                                                  "defaultFileName": data.defaultFileName,
+                                                  "suggestedFileExtension": data.suggestedFileExtension
+                                              })
+                })
             }
         }
     }
