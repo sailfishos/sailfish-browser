@@ -18,6 +18,7 @@
 #include <QJsonDocument>
 #include <QRegularExpression>
 #include <MGConfItem>
+#include <QStandardPaths>
 
 #include "bookmark.h"
 #include "browserpaths.h"
@@ -112,6 +113,44 @@ QList<Bookmark*> BookmarkManager::load() {
         qWarning() << "Bookmarks.json should be an array of items";
     }
     file->close();
+
+    // Cleanup after next stop release. See JB#53083 and JB#52736
+    bookmarkFile = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation)
+            + QLatin1String("/org.sailfishos/sailfish-browser/bookmarks.json");
+    file.reset(new QFile(bookmarkFile));
+    if (file->exists() && file->open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QJsonDocument doc = QJsonDocument::fromJson(file->readAll());
+        if (doc.isArray()) {
+            QJsonArray array = doc.array();
+            for (const QJsonValue &value : array) {
+                if (value.isObject()) {
+                    QJsonObject obj = value.toObject();
+                    QString url = obj.value("url").toString();
+
+                    bool migrate = true;
+                    for (const Bookmark *bookmark : bookmarks) {
+                        if (bookmark->url() == url) {
+                            migrate = false;
+                            break;
+                        }
+                    }
+
+                    if (migrate) {
+                        Bookmark* m = new Bookmark(obj.value("title").toString(),
+                                                   url,
+                                                   obj.value("favicon").toString(),
+                                                   obj.value("hasTouchIcon").toBool());
+                        bookmarks.append(m);
+                    }
+                }
+            }
+        }
+        file->close();
+        file->remove();
+        save(bookmarks);
+    }
+    // End of stop release cleanup...
+
     return bookmarks;
 }
 
