@@ -131,6 +131,7 @@ fi
 %{_datadir}/%{name}
 %{_datadir}/%{captiveportal}
 %{_datadir}/translations/%{name}*.qm
+%{_datadir}/translations/%{captiveportal}*.qm
 %{_datadir}/dbus-1/services/*.service
 %{_datadir}/mapplauncherd/privileges.d/*
 %{_oneshotdir}/*

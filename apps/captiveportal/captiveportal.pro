@@ -19,8 +19,10 @@ packagesExist(qdeclarative5-boostable) {
     warning("qdeclarative5-boostable not available; startup times will be slower")
 }
 
-# Translations are handled by the browser app
-# See apps/browser/qml/captiveportaltranslations.qml
+TS_PATH = $$PWD
+TS_FILE = $$OUT_PWD/sailfish-captiveportal.ts
+EE_QM = $$OUT_PWD/sailfish-captiveportal_eng_en.qm
+include(../../translations/translations.pri)
 
 include(../../defaults.pri)
 include(../../common/browserapp.pri)
