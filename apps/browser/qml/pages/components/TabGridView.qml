@@ -1,7 +1,7 @@
 /****************************************************************************
 **
 ** Copyright (c) 2014 - 2019 Jolla Ltd.
-** Copyright (c) 2019 - 2020 Open Mobile Platform LLC.
+** Copyright (c) 2019 - 2021 Open Mobile Platform LLC.
 **
 ****************************************************************************/
 
@@ -20,6 +20,7 @@ SilicaGridView {
     property bool portrait
     property bool privateMode
     property bool closingAllTabs
+    property bool loaded
 
     property var remorsePopup
     readonly property bool largeScreen: Screen.sizeCategory > Screen.Medium
@@ -47,14 +48,8 @@ SilicaGridView {
     height: parent.height
     x: Theme.horizontalPageMargin
     currentIndex: -1
-    header: PageHeader {
-        //: Tabs
-        //% "Tabs"
-        title: qsTrId("sailfish_browser-he-tabs")
-    }
-    footer: spacer
-    cellHeight: thumbnailHeight + Theme.paddingLarge
     cellWidth: thumbnailWidth + Theme.paddingLarge
+    cellHeight: thumbnailHeight + Theme.paddingLarge
 
     delegate: TabItem {
         id: tabItem
@@ -72,18 +67,16 @@ SilicaGridView {
         GridView.onRemove: RemoveAnimation {
             target: tabItem
         }
+
+        Component.onCompleted:  {
+            if ((index / columns * cellHeight) > tabView.height) {
+                tabView.loaded = true
+            }
+        }
     }
 
     // Behind tab delegates
     children: [
-        PrivateModeTexture {
-            z: -1
-            visible: opacity > 0.0
-            opacity: privateMode ? 1.0 : 0.0
-
-            Behavior on opacity { FadeAnimation {} }
-        },
-
         MouseArea {
             z: -1
             width: tabView.width
@@ -102,26 +95,12 @@ SilicaGridView {
         id: pullDownMenu
 
         flickable: tabView
+        x: flickable.contentX + (flickable.width - Theme.horizontalPageMargin - width)/2
+        width: Math.min(parent.width + Theme.horizontalPageMargin, screen.sizeCategory > Screen.Medium ? Screen.width*0.7 : Screen.width)
+        on_InactiveHeightChanged: console.log("POS ", _inactiveHeight)
 
         MenuItem {
-            text: tabView.privateMode ?
-                    //: Menu item switching back to normal browser
-                    //% "Normal browsing"
-                    qsTrId("sailfish_browser-me-normal_browsing") :
-                    //: Menu item switching to private browser
-                    //% "Private browsing"
-                    qsTrId("sailfish_browser-me-private_browsing")
-            onDelayedClick: {
-                if (remorsePopup) {
-                    remorsePopup.trigger()
-                }
-
-                tabView.privateMode = !tabView.privateMode
-
-            }
-        }
-        MenuItem {
-            visible: showCloseAllAction.value && webView.tabModel.count
+            visible: showCloseAllAction.value && model.count
             //% "Close all tabs"
             text: qsTrId("sailfish_browser-me-close_all")
             onClicked: {
@@ -149,22 +128,26 @@ SilicaGridView {
         }
     }
 
-    VerticalScrollDecorator {
-        flickable: tabView
+    Item {
+        y: tabs.tabBarHeight
+        height: parent.height - y
+        anchors.right: parent.right
+        width: Math.round(Theme.paddingSmall/2)
+
+        VerticalScrollDecorator {
+            _forcedParent: parent
+            flickable: tabView
+        }
     }
 
     ViewPlaceholder {
-        enabled: !webView.tabModel.count || closingAllTabs
+        x: -Theme.horizontalPageMargin
+        width: parent.width + Theme.horizontalPageMargin
+        enabled: !model.count || closingAllTabs
         //: Hint to create a new tab from pull down menu.
         //% "Pull down to create a new tab"
         text: qsTrId("sailfish_browser-la-pull_down_to_create_tab_hint")
     }
 
-    Component {
-        id: spacer
-        Item {
-            width: tabView.width
-            height: Theme.paddingMedium
-        }
-    }
+    onLoadedChanged: positionViewAtIndex(model.activeTabIndex, GridView.Center)
 }

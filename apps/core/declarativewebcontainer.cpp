@@ -689,6 +689,16 @@ bool DeclarativeWebContainer::event(QEvent *event)
     return QWindow::event(event);
 }
 
+DeclarativeTabModel *DeclarativeWebContainer::privateTabModel() const
+{
+    return m_privateTabModel;
+}
+
+DeclarativeTabModel *DeclarativeWebContainer::persistentTabModel() const
+{
+    return m_persistentTabModel;
+}
+
 void DeclarativeWebContainer::exposeEvent(QExposeEvent*)
 {
     // Filter out extra expose event spam. We often get 3-4 expose events
