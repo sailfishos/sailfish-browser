@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014 - 2019 Jolla Ltd.
- * Copyright (c) 2019 Open Mobile Platform LLC.
+ * Copyright (c) 2019 - 2021 Open Mobile Platform LLC.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
@@ -40,7 +40,7 @@ Shared.Background {
     property bool _showUrlEntry
     readonly property bool _topGap: _showUrlEntry || _showFindInPage
 
-    function loadPage(url)  {
+    function loadPage(url) {
         if (url == "about:config") {
             pageStack.animatorPush(Qt.resolvedUrl("ConfigWarning.qml"), {"browserPage": browserPage})
         } else if (url == "about:settings") {
@@ -74,6 +74,13 @@ Shared.Background {
         _overlayHeight = Qt.binding(function () { return overlayAnimator._fullHeight })
         searchField.resetUrl("")
         overlayAnimator.showOverlay(action === PageStackAction.Immediate)
+    }
+
+    function startPage() {
+        searchField.enteringNewTabUrl = true
+        _showUrlEntry = true
+        searchField.resetUrl("")
+        overlay.animator.updateState("startPage", PageStackAction.Immediate)
     }
 
     function dismiss(canShowChrome, immediate) {
@@ -321,7 +328,11 @@ Shared.Background {
                 textTopMargin: height/2 - _editor.implicitHeight/2
                 labelVisible: false
                 inputMethodHints: Qt.ImhUrlCharactersOnly
-                background: null
+                background: Rectangle {
+                    anchors.fill: parent
+                    color: Theme.primaryColor
+                    opacity: 0.1
+                }
 
                 placeholderText: toolBar.findInPageActive ?
                                      //: Placeholder text for finding text from the web page
@@ -354,7 +365,7 @@ Shared.Background {
                 }
 
                 onRequestingFocusChanged: {
-                    if (requestingFocus) {
+                    if (requestingFocus && webView.tabModel.count !== 0) {
                         forceActiveFocus()
                     }
                 }
@@ -462,8 +473,8 @@ Shared.Background {
                 onCloseActiveTab: {
                     // Activates (loads) the tab next to the currect active.
                     webView.tabModel.closeActiveTab()
-                    if (webView.tabModel.count == 0) {
-                        overlay.enterNewTabUrl()
+                    if (webView.tabModel.count === 0) {
+                        overlay.startPage()
                     }
                 }
 
@@ -506,7 +517,7 @@ Shared.Background {
                 property int panelSize: favoriteGrid.contextMenu && favoriteGrid.contextMenu.active ? 0 : virtualKeyboardObserver.panelSize
 
                 width: parent.width
-                height: browserPage.height - _overlayHeight - panelSize
+                height: webView.tabModel.count !== 0 || webView.privateMode ? browserPage.height - _overlayHeight - panelSize : browserPage.height - panelSize
 
                 header: Item {
                     width: parent.width
@@ -593,7 +604,11 @@ Shared.Background {
                 }
 
                 onEnterNewTabUrl: {
-                    overlay.enterNewTabUrl(PageStackAction.Immediate)
+                    if (webView.tabModel.count === 0) {
+                        overlay.startPage()
+                    } else {
+                        overlay.enterNewTabUrl(PageStackAction.Immediate)
+                    }
                     pageStack.pop()
                 }
                 onActivateTab: {
@@ -603,7 +618,7 @@ Shared.Background {
                 onCloseTab: {
                     webView.tabModel.remove(index)
                     if (webView.tabModel.count === 0) {
-                        overlay.enterNewTabUrl(PageStackAction.Immediate)
+                        overlay.startPage()
                     }
                 }
 
@@ -611,7 +626,7 @@ Shared.Background {
                 onCloseAllCanceled: overlay.dismiss(true /* show chrome */, true /* immediate */)
                 onCloseAll: {
                     webView.tabModel.clear()
-                    overlay.enterNewTabUrl(PageStackAction.Immediate)
+                    overlay.startPage()
                 }
 
                 Component.onCompleted: {

@@ -1,6 +1,7 @@
 /****************************************************************************
 **
 ** Copyright (C) 2013 Jolla Ltd.
+** Copyright (C) 2021 Open Mobile Platform LLC.
 ** Contact: Petri M. Gerdt <petri.gerdt@jolla.com>
 ** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **
@@ -189,6 +190,10 @@ void DeclarativeTabModel::closeActiveTab()
 
 int DeclarativeTabModel::newTab(const QString &url, int parentId)
 {
+    // When browser opens without tabs
+    if ((url.isEmpty() || url == QStringLiteral("about:blank")) && m_tabs.isEmpty())
+        return 0;
+
     setWaitingForNewTab(true);
 
     Tab tab;

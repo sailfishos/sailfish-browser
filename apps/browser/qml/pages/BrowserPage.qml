@@ -210,7 +210,7 @@ Page {
         target: AccessPolicy.browserEnabled && webView && webView.tabModel || null
         ignoreUnknownSignals: true
         // Animate overlay to top if needed.
-        onCountChanged: webView.handleModelChanges(false)
+        onCountChanged: webView.tabModel.count !== 0 ? overlay.animator.showChrome() : webView.handleModelChanges(false)
         onWaitingForNewTabChanged: window.opaqueBackground = webView.tabModel.waitingForNewTab
     }
 
@@ -295,7 +295,11 @@ Page {
         onActiveChanged: {
             var isFullScreen = webView.contentItem && webView.contentItem.fullscreen
             if (!isFullScreen && active && !overlay.enteringNewTabUrl) {
-                overlay.animator.showChrome()
+                if (webView.tabModel.count !== 0 || (WebUtils.homePage !== "about:blank" && WebUtils.homePage.length > 0)) {
+                    overlay.animator.showChrome()
+                } else {
+                    overlay.startPage()
+                }
             }
 
             if (!active) {
