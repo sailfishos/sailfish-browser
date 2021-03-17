@@ -1,6 +1,7 @@
 /****************************************************************************
 **
 ** Copyright (c) 2020 Open Mobile Platform LLC.
+** Copyright (c) 2021 Jolla Ltd.
 **
 ****************************************************************************/
 
@@ -77,15 +78,15 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 
     QString translationPath("/usr/share/translations/");
     QTranslator engineeringEnglish;
-    engineeringEnglish.load("sailfish-browser_eng_en", translationPath);
+    engineeringEnglish.load("sailfish-captiveportal_eng_en", translationPath);
     qApp->installTranslator(&engineeringEnglish);
 
     QTranslator translator;
-    translator.load(QLocale(), "sailfish-browser", "-", translationPath);
+    translator.load(QLocale(), "sailfish-captiveportal", "-", translationPath);
     qApp->installTranslator(&translator);
 
-    //% "Browser"
-    view->setTitle(qtTrId("sailfish-browser-ap-name"));
+    //% "Network login portal"
+    view->setTitle(qtTrId("sailfish-captiveportal-ap-name"));
 
     app->setApplicationName(QStringLiteral("captiveportal"));
     app->setOrganizationName(QStringLiteral("org.sailfishos"));

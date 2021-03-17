@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 - 2019 Jolla Ltd.
+ * Copyright (c) 2014 - 2021 Jolla Ltd.
  * Copyright (c) 2019 Open Mobile Platform LLC.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -54,10 +54,9 @@ Column {
         width: parent.width
         height: toolsRow.height
         verticalAlignment: Text.AlignVCenter
-        // Keep this insync the captiveportaltranslations.qml
         //: Shown when sign in to captive portal
         //% "Sign in"
-        text: qsTrId("sailfish_browser-la-sign_in")
+        text: qsTrId("sailfish_captiveportal-la-sign_in")
         maximumLineCount: 1
         truncationMode: TruncationMode.Fade
         color: Theme.highlightColor
@@ -88,7 +87,7 @@ Column {
                     // Keep the translation id insync with ToolBar.qml's
                     //% "Loading"
                     //: Loading text that is visible when url is not yet resolved.
-                    return qsTrId("sailfish_browser-la-loading")
+                    return qsTrId("sailfish_captiveportal-la-loading")
                 }
             }
 
