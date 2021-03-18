@@ -7,6 +7,6 @@ Icon=icon-launcher-browser
 Exec=/usr/bin/sailjail -p sailfish-browser.desktop /usr/bin/sailfish-browser %U
 Comment=Sailfish UI application
 [X-Sailjail]
-Permissions=Mozilla;Audio;Location;Privileged;Internet;Downloads;Documents;Pictures;Videos;Music;Sharing
+Permissions=WebView;Audio;Location;Privileged;Internet;Downloads;Documents;Pictures;Videos;Music;Sharing
 OrganizationName=org.sailfishos
 ApplicationName=browser
