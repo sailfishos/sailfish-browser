@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 - 2019 Jolla Ltd.
+ * Copyright (c) 2014 - 2021 Jolla Ltd.
  * Copyright (c) 2019 - 2021 Open Mobile Platform LLC.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -76,11 +76,12 @@ Shared.Background {
         overlayAnimator.showOverlay(action === PageStackAction.Immediate)
     }
 
-    function startPage() {
+    function startPage(action) {
         searchField.enteringNewTabUrl = true
         _showUrlEntry = true
+        _overlayHeight = Qt.binding(function () { return overlayAnimator._fullHeight })
         searchField.resetUrl("")
-        overlay.animator.updateState("startPage", PageStackAction.Immediate)
+        overlayAnimator.showStartPage(action !== PageStackAction.Animated)
     }
 
     function dismiss(canShowChrome, immediate) {
@@ -496,7 +497,7 @@ Shared.Background {
                     // Activates (loads) the tab next to the currect active.
                     webView.tabModel.closeActiveTab()
                     if (webView.tabModel.count === 0) {
-                        overlay.startPage()
+                        overlay.startPage(PageStackAction.Animated)
                     }
                 }
 
