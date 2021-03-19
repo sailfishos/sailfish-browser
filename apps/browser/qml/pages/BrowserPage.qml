@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2013 - 2019 Jolla Ltd.
+** Copyright (C) 2013 - 2021 Jolla Ltd.
 ** Copyright (c) 2019 - 2021 Open Mobile Platform LLC.
 ** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jollamobile.com>
 **
@@ -210,7 +210,13 @@ Page {
         target: AccessPolicy.browserEnabled && webView && webView.tabModel || null
         ignoreUnknownSignals: true
         // Animate overlay to top if needed.
-        onCountChanged: webView.tabModel.count !== 0 ? overlay.animator.showChrome() : webView.handleModelChanges(false)
+        onCountChanged: {
+            if (webView.tabModel.count === 0) {
+                webView.handleModelChanges(false)
+            } else if (!webView.tabModel.waitingForNewTab) {
+                overlay.animator.showChrome()
+            }
+        }
         onWaitingForNewTabChanged: window.opaqueBackground = webView.tabModel.waitingForNewTab
     }
 
