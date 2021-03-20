@@ -320,6 +320,11 @@ WebContainer {
                 case "Link:AddSearch": {
                     // This adds this search as available if not already there
                     SearchEngineModel.add(data.engine.title, data.engine.href)
+                    break
+                }
+                case "embed:popupblocked": {
+                    pageStack.push("PopupBlockedDialog.qml", { host: data.host })
+                    break
                 }
                 }
             }
@@ -347,6 +352,7 @@ WebContainer {
                 addMessageListener("Content:SelectionRange")
                 addMessageListener("Content:SelectionCopied")
                 addMessageListener("Content:SelectionSwap")
+                addMessageListener("embed:popupblocked")
 
                 PermissionManager.instance()
             }
