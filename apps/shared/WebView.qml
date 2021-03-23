@@ -1,6 +1,7 @@
 /****************************************************************************
 **
 ** Copyright (C) 2014 - 2021 Jolla Ltd.
+** Copyright (c) 2021 Open Mobile Platform LLC.
 **
 ****************************************************************************/
 
@@ -82,10 +83,10 @@ WebContainer {
     }
 
     function thumbnailCaptureSize() {
-        var ratio = Screen.width / browserPage.thumbnailSize.width
+        var ratio = browserPage.width / browserPage.thumbnailSize.width
         var height = browserPage.thumbnailSize.height * ratio
 
-        return Qt.size(Screen.width, height)
+        return Qt.size(browserPage.width, height)
     }
 
     function grabActivePage() {
