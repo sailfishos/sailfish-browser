@@ -255,16 +255,11 @@ void DownloadManager::restartTransfer(int transferId)
 void DownloadManager::setPreferences()
 {
     SailfishOS::WebEngineSettings *webEngineSettings = SailfishOS::WebEngineSettings::instance();
-    // Use autodownload, never ask
-    webEngineSettings->setPreference(QString("browser.download.useDownloadDir"), QVariant(true));
     webEngineSettings->setPreference(QString("browser.download.useJSTransfer"), QVariant(true));
     // see https://developer.mozilla.org/en-US/docs/Download_Manager_preferences
-    // Use custom downloads location defined in browser.download.dir
 
     // NS_PREF_DOWNLOAD_FOLDERLIST of nsExternalHelperAppService
     webEngineSettings->setPreference(QString("browser.download.folderList"), QVariant(2));
-    // NS_PREF_DOWNLOAD_DIR of nsExternalHelperAppService
-    webEngineSettings->setPreference(QString("browser.download.dir"), BrowserPaths::downloadLocation());
 
     // Partial downloads are removed in the embedlite-components (see JB#50127)
     DownloadMimetypeHandler::update();
