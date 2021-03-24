@@ -25,6 +25,7 @@ namespace {
 const auto ProcDir = QStringLiteral("/proc/%1");
 const auto ErrorPidIsNotPrivileged = QStringLiteral("PID %1 is not in privileged group");
 const auto SailfishBrowserUiService = QStringLiteral("org.sailfishos.browser.ui");
+const auto TransferEngine = QStringLiteral("org.nemo.transferengine");
 }
 
 #define GET_PID() connection().interface()->servicePid(message().service())
@@ -80,7 +81,7 @@ void BrowserService::activateNewTabView()
 
 void BrowserService::cancelTransfer(int transferId)
 {
-    if (!isPrivileged()) {
+    if (!isCalledFromTransfers()) {
         return;
     }
 
@@ -89,7 +90,7 @@ void BrowserService::cancelTransfer(int transferId)
 
 void BrowserService::restartTransfer(int transferId)
 {
-    if (!isPrivileged()) {
+    if (!isCalledFromTransfers()) {
         return;
     }
 
@@ -116,6 +117,25 @@ bool BrowserService::isPrivileged() const
         return false;
     }
     return true;
+}
+
+bool BrowserService::isCalledFromTransfers() const
+{
+    auto isPrivileged = [=] {
+        IS_PRIVILEGED();
+    };
+
+    uint callerServicePid = GET_PID().value();
+
+    // Test this against pid of 'org.nemo.transferengine' which works also inside
+    // sandbox. If that matches, then the caller is transferengine.
+    if (isPrivileged() || callerServicePid == connection().interface()->servicePid(TransferEngine).value()) {
+        return true;
+    }
+
+    sendErrorReply(QDBusError::AccessDenied,
+                   QStringLiteral("PID %1 is not the owner of '%2' or in privileged group").arg(callerServicePid).arg(TransferEngine));
+    return false;
 }
 
 BrowserUIServicePrivate::BrowserUIServicePrivate()
