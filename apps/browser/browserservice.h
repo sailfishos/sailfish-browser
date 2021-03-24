@@ -47,6 +47,7 @@ signals:
 
 private:
     bool isPrivileged() const;
+    bool isCalledFromTransfers() const;
 
     bool m_registered;
 };
