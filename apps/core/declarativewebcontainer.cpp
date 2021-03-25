@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 - 2019 Jolla Ltd.
+ * Copyright (c) 2013 - 2021 Jolla Ltd.
  * Copyright (c) 2019 Open Mobile Platform LLC.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -19,6 +19,7 @@
 #include "browserpaths.h"
 #include "browserapp.h"
 #include "logging.h"
+#include "declarativehistorymodel.h"
 
 #include <webengine.h>
 #include <QTimerEvent>
@@ -192,6 +193,16 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage, bool trigg
                     this, &DeclarativeWebContainer::updateActiveTabRendered, Qt::UniqueConnection);
             connect(m_webPage.data(), &DeclarativeWebPage::domContentLoadedChanged,
                     this, &DeclarativeWebContainer::updateActiveTabRendered, Qt::UniqueConnection);
+
+            connect(m_webPage.data(), &DeclarativeWebPage::neterror, [this]() {
+                if (m_historyModel)
+                    m_historyModel->remove(m_webPage->url().toString());
+            });
+
+            connect(m_webPage.data(), &DeclarativeWebPage::urlChanged, [this]() {
+                if (!BrowserApp::captivePortal() && !m_privateMode && m_historyModel)
+                    m_historyModel->add(m_webPage->url().toString(), QString());
+            });
 
             if (m_webPage->completed() && m_webPage->active() && m_webPage->domContentLoaded()) {
                 m_webPage->update();
@@ -1104,5 +1115,18 @@ void DeclarativeWebContainer::handleContentOrientationChanged(Qt::ScreenOrientat
 {
     if (orientation == pendingWebContentOrientation()) {
         emit webContentOrientationChanged(orientation);
+    }
+}
+
+DeclarativeHistoryModel *DeclarativeWebContainer::historyModel() const
+{
+    return m_historyModel;
+}
+
+void DeclarativeWebContainer::setHistoryModel(DeclarativeHistoryModel *model)
+{
+    if (model != m_historyModel) {
+        m_historyModel = model;
+        emit historyModelChanged();
     }
 }

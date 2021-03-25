@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 - 2019 Jolla Ltd.
+ * Copyright (c) 2014 - 2021 Jolla Ltd.
  * Copyright (c) 2019 Open Mobile Platform LLC.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -88,6 +88,7 @@ signals:
     void toolbarHeightChanged();
     void virtualKeyboardMarginChanged();
     void securityChanged();
+    void neterror();
 
 private slots:
     void setFullscreen(const bool fullscreen);
