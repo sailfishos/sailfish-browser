@@ -619,7 +619,7 @@ Shared.Background {
 
             onStatusChanged: browserPage.tabPageActive = (status == PageStatus.Active)
 
-            Browser.TabView {
+            Browser.TabGridView {
                 id: tabViewItem
 
                 model: webView.tabModel
