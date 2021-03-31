@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<script type="text/javascript">
+// Popup window code
+function newPopup(url) {
+  setTimeout(() =>
+	popupWindow = window.open(url), 2000)
+}
+window.addEventListener('load', function() {
+    window.open('about:blank');
+});
+</script>
+<div id="div" style="width400px;height:150px">
+    <h1>This page tried to open a pop-up when it loaded.</h1>
+<div id="div" style="width:400px;height:150px">
+  <h1><a href="JavaScript:newPopup('about:blank');">Open a pop-up window after 2s delay</a></h1></div>
