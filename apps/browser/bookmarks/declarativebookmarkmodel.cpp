@@ -1,7 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2013 Jolla Ltd.
-** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jollamobile.com>
+** Copyright (c) 2013 - 2021 Jolla Ltd.
 **
 ****************************************************************************/
 
@@ -21,7 +20,7 @@ DeclarativeBookmarkModel::DeclarativeBookmarkModel(QObject *parent) :
 
     // Generate mapping URL -> bookmark's index in the loaded list.
     int index(0);
-    foreach (Bookmark* bookmark, bookmarks) {
+    for (const Bookmark* const bookmark : bookmarks) {
         // Use multi insert as there might be multiple bookmark instances with the same url.
         bookmarkIndexes.insertMulti(bookmark->url(), index);
         index++;

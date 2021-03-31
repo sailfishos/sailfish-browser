@@ -26,11 +26,12 @@ const StringMap OpenSearchConfigs::parseOpenSearchConfigs()
 {
     StringMap configs;
 
-    foreach(QString openSearchPath, m_openSearchPathList) {
+    for (const QString &openSearchPath : m_openSearchPathList) {
         QDir configDir(openSearchPath);
         configDir.setSorting(QDir::Name);
 
-        foreach (QString fileName, configDir.entryList(QStringList("*.xml"))) {
+        const QStringList configFiles = configDir.entryList(QStringList("*.xml"));
+        for (const QString &fileName : configFiles) {
             QFile xmlFile(openSearchPath + fileName);
             xmlFile.open(QIODevice::ReadOnly | QIODevice::Text);
             QXmlStreamReader xml(&xmlFile);

@@ -185,7 +185,7 @@ void DeclarativeWebPage::restoreHistory() {
     QList<QString> urls;
     int index(-1);
     int i(0);
-    foreach (Link link, m_restoredTabHistory) {
+    for (const Link &link : m_restoredTabHistory) {
         urls << link.url();
         if (link.linkId() == m_restoredCurrentLinkId) {
             index = i;
