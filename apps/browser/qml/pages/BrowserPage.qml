@@ -2,7 +2,6 @@
 **
 ** Copyright (C) 2013 - 2021 Jolla Ltd.
 ** Copyright (c) 2019 - 2021 Open Mobile Platform LLC.
-** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jollamobile.com>
 **
 ****************************************************************************/
 
@@ -157,6 +156,7 @@ Page {
         rotationHandler: browserPage
         imOpened: virtualKeyboardObserver.opened
         canShowSelectionMarkers: !orientationFader.waitForWebContentOrientationChanged
+        historyModel: historyModel
 
         // Show overlay immediately at top if needed.
         onTabModelChanged: handleModelChanges(true)

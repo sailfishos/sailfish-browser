@@ -1,7 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2013 Jolla Ltd.
-** Contact: Petri M. Gerdt <petri.gerdt@jollamobile.com>
+** Copyright (C) 2013 - 2021 Jolla Ltd.
 **
 ****************************************************************************/
 
@@ -51,6 +50,8 @@ public slots:
     void getTabHistory(int tabId);
 
     void removeHistoryEntry(int linkId);
+    void removeHistoryEntry(const QString &url);
+    void addHistoryEntry(const QString &url, const QString &title);
     void clearHistory();
 
     void saveSetting(const QString &name, const QString &value);
@@ -66,7 +67,6 @@ signals:
     void error(const QString &query);
 
 private:
-    HistoryResult addToBrowserHistory(const QString &url, const QString &title);
     int addToTabHistory(int tabId, int linkId);
     Link getCurrentLink(int tabId);
     void clearDeprecatedTabHistory(int tabId, int currentLinkId);

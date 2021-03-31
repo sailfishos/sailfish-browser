@@ -1,7 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2013 Jolla Ltd.
-** Contact: Petri M. Gerdt <petri.gerdt@jollamobile.com>
+** Copyright (C) 2013 - 2021 Jolla Ltd.
 **
 ****************************************************************************/
 
@@ -226,10 +225,6 @@ void DBWorker::createTab(const Tab &tab)
 
     int linkId = createLink(tab.url(), tab.title(), tab.thumbnailPath());
 
-    if (addToBrowserHistory(tab.url(), tab.title()) == Error) {
-        qWarning() << Q_FUNC_INFO << "failed to add url to history" << tab.url();
-    }
-
     int historyId = addToTabHistory(tab.tabId(), linkId);
     if (historyId > 0) {
         updateTab(tab.tabId(), historyId);
@@ -365,10 +360,6 @@ void DBWorker::navigateTo(int tabId, const QString &url, const QString &title, c
 
     int linkId = createLink(url, title, path);
 
-    if (addToBrowserHistory(url, title) == Error) {
-        qWarning() << Q_FUNC_INFO << "failed to add url to history" << url;
-    }
-
     int historyId = addToTabHistory(tabId, linkId);
     if (historyId > 0) {
         updateTab(tabId, historyId);
@@ -446,8 +437,7 @@ void DBWorker::clearDeprecatedTabHistory(int tabId, int currentLinkId) {
     execute(query);
 }
 
-// Adds url to table history if it is not already there
-HistoryResult DBWorker::addToBrowserHistory(const QString &url, const QString &title)
+void DBWorker::addHistoryEntry(const QString &url, const QString &title)
 {
 #if DEBUG_LOGS
     qDebug() << "url:" << url << "title:" << title;
@@ -455,13 +445,13 @@ HistoryResult DBWorker::addToBrowserHistory(const QString &url, const QString &t
 
     // Skip adding any urls with 'about:' prefix
     if (url.startsWith("about:")) {
-        return Skipped;
+        return;
     }
     QSqlQuery query = prepare("SELECT 1 FROM browser_history WHERE url = ?;");
 
     query.bindValue(0, url);
     if (!execute(query)) {
-        return Error;
+        return;
     }
 
     // Update history entry if it exists
@@ -476,15 +466,15 @@ HistoryResult DBWorker::addToBrowserHistory(const QString &url, const QString &t
             query.bindValue(1, title);
             query.bindValue(2, url);
         }
-        return execute(query) ? Added : Error;
+        execute(query);
+    } else {
+        // Otherwise create a new history entry
+        query = prepare("INSERT INTO browser_history (url, title, date) VALUES (?, ?, ?);");
+        query.bindValue(0, url);
+        query.bindValue(1, title);
+        query.bindValue(2, QDateTime::currentDateTimeUtc().toTime_t());
+        execute(query);
     }
-
-    // Otherwise create a new history entry
-    query = prepare("INSERT INTO browser_history (url, title, date) VALUES (?, ?, ?);");
-    query.bindValue(0, url);
-    query.bindValue(1, title);
-    query.bindValue(2, QDateTime::currentDateTimeUtc().toTime_t());
-    return execute(query) ? Added : Error;
 }
 
 void DBWorker::clearHistory()
@@ -544,8 +534,7 @@ int DBWorker::createLink(const QString &url, const QString &title, const QString
 
 void DBWorker::getHistory(const QString &filter)
 {
-    // Skip empty titles always
-    QString filterQuery("WHERE (NULLIF(title, '') IS NOT NULL AND url NOT LIKE 'about:%' AND %1) ");
+    QString filterQuery("WHERE url NOT LIKE 'about:%' AND %1 ");
     QString order;
 
     if (!filter.isEmpty()) {
@@ -623,6 +612,13 @@ void DBWorker::removeHistoryEntry(int linkId)
     execute(query);
 }
 
+void DBWorker::removeHistoryEntry(const QString &url)
+{
+    QSqlQuery query = prepare("DELETE FROM browser_history WHERE url = ?");
+    query.bindValue(0, url);
+    execute(query);
+}
+
 void DBWorker::updateThumbPath(int tabId, const QString &path)
 {
     m_updateThumbPathQuery.bindValue(0, path);
@@ -645,6 +641,8 @@ void DBWorker::updateTitle(int tabId, const QString &url, const QString &title)
         return;
     }
 
+    bool historyUpdated = false;
+
     if (query.first()) {
         int linkId = query.value(0).toInt();
         QString oldUrl = query.value(1).toString();
@@ -655,8 +653,7 @@ void DBWorker::updateTitle(int tabId, const QString &url, const QString &title)
             query.bindValue(0, title);
             query.bindValue(1, linkId);
             if (execute(query)) {
-                // For browsing history
-                emit titleChanged(url, title);
+                historyUpdated = true;
             } else {
                 qWarning() << "Failed to update link's title";
             }
@@ -666,8 +663,15 @@ void DBWorker::updateTitle(int tabId, const QString &url, const QString &title)
     query = prepare("UPDATE browser_history SET title = ? WHERE url = ?;");
     query.bindValue(0, title);
     query.bindValue(1, url);
-    if (!execute(query)) {
+    if (execute(query)) {
+        historyUpdated = true;
+    } else {
         qWarning() << "Failed to add title to browser history";
+    }
+
+    if (historyUpdated) {
+        // For browsing history
+        emit titleChanged(url, title);
     }
 }
 

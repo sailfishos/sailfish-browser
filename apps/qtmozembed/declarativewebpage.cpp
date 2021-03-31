@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 - 2019 Jolla Ltd.
+ * Copyright (c) 2014 - 2021 Jolla Ltd.
  * Copyright (c) 2019 Open Mobile Platform LLC.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -484,6 +484,9 @@ void DeclarativeWebPage::onRecvAsyncMessage(const QString& message, const QVaria
         setFullscreen(data.toMap().value(QString("fullscreen")).toBool());
     } else if (message == QLatin1String(DOM_CONTENT_LOADED_MESSAGE)) {
         setContentLoaded();
+        QString docuri = data.toMap().value("docuri").toString();
+        if (docuri.startsWith("about:neterror") && !docuri.contains("e=netOffline"))
+            emit neterror();
     } else if (message == QLatin1String(CONTENT_ORIENTATION_CHANGED_MESSAGE)) {
         QString orientation = data.toMap().value(QStringLiteral("orientation")).toString();
         Qt::ScreenOrientation mappedOrientation = Qt::PortraitOrientation;
