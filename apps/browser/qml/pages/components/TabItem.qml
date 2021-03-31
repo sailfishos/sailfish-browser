@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2014 Jolla Ltd.
+** Copyright (c) 2014 Jolla Ltd.
 ** Copyright (c) 2021 Open Mobile Platform LLC.
 ** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **

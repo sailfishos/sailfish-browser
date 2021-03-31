@@ -1,7 +1,7 @@
 /****************************************************************************
 **
-** Copyright (C) 2013 Jolla Ltd.
-** Copyright (C) 2021 Open Mobile Platform LLC.
+** Copyright (c) 2013 Jolla Ltd.
+** Copyright (c) 2021 Open Mobile Platform LLC.
 ** Contact: Petri M. Gerdt <petri.gerdt@jolla.com>
 ** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **
