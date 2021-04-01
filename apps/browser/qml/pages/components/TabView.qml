@@ -43,7 +43,7 @@ SilicaGridView {
     onCountChanged: if (count > 0) closingAllTabs = false
     onClosingAllTabsChanged: if (closingAllTabs) closeAllPending()
 
-    width: parent.width - Theme.horizontalPageMargin
+    width: parent.width - 2 * Theme.horizontalPageMargin
     height: parent.height
     x: Theme.horizontalPageMargin
     currentIndex: -1
