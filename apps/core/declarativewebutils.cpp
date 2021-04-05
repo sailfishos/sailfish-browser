@@ -132,8 +132,7 @@ void DeclarativeWebUtils::updateWebEngineSettings()
                                           "media-decoder-info",
                                           "embed:download",
                                           "embed:allprefs",
-                                          "embed:search",
-                                          "embed:downloadpicker" };
+                                          "embed:search" };
     webEngine->addObservers(messages);
 
     // Enable internet search
