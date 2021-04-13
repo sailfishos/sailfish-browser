@@ -23,6 +23,5 @@ for PROFILE_DIR in $BROWSER_PROFILE_DIR $CAPTIVE_PORTAL_PROFILE_DIR; do
                 echo "$line" >> $PROFILE_DIR/prefs.js
             fi
         done < "$BROWSER_DATA_DIR/prefs.js"
-        sed -i /^user_pref\(\"general.useragent.override\"/d $PROFILE_DIR/prefs.js
     fi
 done
