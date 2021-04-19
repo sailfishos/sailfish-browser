@@ -116,15 +116,14 @@ BackgroundItem {
 
                     anchors {
                         right: parent.right
-                        rightMargin: Theme.paddingMedium
                         top: parent.top
                         verticalCenter: iconHeader.verticalCenter
                     }
-                    width: icon.width
-                    height: icon.height
                     icon.color: Theme.primaryColor
                     icon.highlightColor: root.highlightColor
                     icon.highlighted: down
+                    icon.anchors.horizontalCenterOffset: Theme.paddingMedium
+
                     icon.source: "image://theme/icon-s-clear-opaque-cross"
                     onClicked: {
                         // Break binding, so that texture size would not change when
