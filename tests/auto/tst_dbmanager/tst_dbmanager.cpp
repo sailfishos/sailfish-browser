@@ -1,7 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2014 Jolla Ltd.
-** Contact: Raine Makelainen <raine.makelainen@jolla.com>
+** Copyright (c) 2014 - 2021 Jolla Ltd.
 **
 ****************************************************************************/
 
@@ -120,7 +119,7 @@ void tst_dbmanager::getAllTabs()
     QFETCH(QList<Tab>, initialTabs);
 
     // initialize the case
-    foreach (Tab tab, initialTabs) {
+    for (const Tab &tab : initialTabs) {
         DBManager::instance()->createTab(tab);
     }
 
@@ -167,7 +166,7 @@ void tst_dbmanager::removeTab()
     QFETCH(int, expectedTabsAvailable);
 
     // initialize the case
-    foreach (Tab tab, initialTabs) {
+    for (const Tab &tab : initialTabs) {
         DBManager::instance()->createTab(tab);
     }
 
@@ -206,7 +205,7 @@ void tst_dbmanager::removeAllTabs()
     QFETCH(QList<Tab>, initialTabs);
 
     // initialize the case
-    foreach (Tab tab, initialTabs) {
+    for (const Tab &tab : initialTabs) {
         DBManager::instance()->createTab(tab);
     }
 
@@ -248,7 +247,7 @@ void tst_dbmanager::clearHistory()
     QFETCH(int, expectedTabsAvailable);
 
     // initialize the case
-    foreach (Tab tab, initialTabs) {
+    for (const Tab &tab : initialTabs) {
         DBManager::instance()->createTab(tab);
     }
 

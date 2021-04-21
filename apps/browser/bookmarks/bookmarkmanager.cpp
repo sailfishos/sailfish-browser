@@ -1,7 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2014 Jolla Ltd.
-** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jollamobile.com>
+** Copyright (c) 2014 - 2021 Jolla Ltd.
 **
 ****************************************************************************/
 
@@ -59,7 +58,7 @@ void BookmarkManager::save(const QList<Bookmark*> & bookmarks)
     QTextStream out(&file);
     QJsonArray items;
 
-    foreach (Bookmark* bookmark, bookmarks) {
+    for (const Bookmark* const bookmark : bookmarks) {
         QJsonObject title;
         title.insert("url", QJsonValue(bookmark->url()));
         title.insert("title", QJsonValue(bookmark->title()));

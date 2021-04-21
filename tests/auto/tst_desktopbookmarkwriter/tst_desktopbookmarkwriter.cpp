@@ -1,7 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2014 Jolla Ltd.
-** Contact: Raine Makelainen <raine.makelainen@jolla.com>
+** Copyright (c) 2014 - 2021 Jolla Ltd.
 **
 ****************************************************************************/
 
@@ -136,7 +135,7 @@ void tst_desktopbookmarkwriter::writeDesktopFile()
 
 void tst_desktopbookmarkwriter::cleanupTestCase()
 {
-    foreach (QString desktopFile, desktopFiles) {
+    for (const QString &desktopFile : desktopFiles) {
         QFile file(desktopFile);
         file.remove();
     }

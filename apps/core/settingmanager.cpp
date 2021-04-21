@@ -1,7 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2013 Jolla Ltd.
-** Contact: Dmitry Rozhkov <dmitry.rozhkov@jollamobile.com>
+** Copyright (c) 2013 - 2021 Jolla Ltd.
 **
 ****************************************************************************/
 
@@ -182,7 +181,7 @@ void SettingManager::handleObserve(const QString &message, const QVariant &data)
             SailfishOS::WebEngine *webEngine = SailfishOS::WebEngine::instance();
 
             // Add newly installed configs
-            foreach (QString searchName, configuredEngines) {
+            for (const QString &searchName : configuredEngines) {
                 if (registeredSearches.contains(searchName)) {
                     registeredSearches.removeAll(searchName);
                 } else {
@@ -196,7 +195,8 @@ void SettingManager::handleObserve(const QString &message, const QVariant &data)
             }
 
             // Remove uninstalled OpenSearch configs
-            foreach(QString searchName, registeredSearches) {
+            const QStringList removeUninstalled = registeredSearches;
+            for (const QString &searchName : removeUninstalled) {
                 QVariantMap removeMsg;
                 removeMsg.insert(QLatin1String("msg"), QVariant(QLatin1String("remove")));
                 removeMsg.insert(QLatin1String("name"), QVariant(searchName));

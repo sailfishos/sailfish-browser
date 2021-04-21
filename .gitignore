@@ -4,3 +4,6 @@
 *.moc
 moc_*.cpp
 *.qm
+Makefile
+*.so
+RPMS/*

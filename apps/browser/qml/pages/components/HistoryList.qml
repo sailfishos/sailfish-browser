@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2014 Jolla Ltd.
+** Copyright (c) 2014 Jolla Ltd.
 ** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jolla.com>
 **
 ****************************************************************************/

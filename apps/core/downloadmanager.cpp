@@ -1,7 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2013 Jolla Ltd.
-** Contact: Dmitry Rozhkov <dmitry.rozhkov@jollamobile.com>
+** Copyright (c) 2013 - 2021 Jolla Ltd.
 **
 ****************************************************************************/
 
@@ -210,7 +209,7 @@ void DownloadManager::finishMyAppDownload(const QString &targetPath) const
 
 void DownloadManager::cancelActiveTransfers()
 {
-    foreach (qulonglong downloadId, m_statusCache.keys()) {
+    for (qulonglong downloadId : m_statusCache.keys()) {
         if (m_statusCache.value(downloadId) == DownloadStatus::Started) {
             cancelTransfer(m_download2transferMap.value(downloadId));
         }
@@ -284,7 +283,7 @@ bool DownloadManager::existActiveTransfers()
 {
     bool exists(false);
 
-    foreach (DownloadStatus::Status status, m_statusCache) {
+    for (DownloadStatus::Status status : m_statusCache) {
         if (status == DownloadStatus::Started) {
             exists = true;
             break;
