@@ -20,7 +20,7 @@ packagesExist(qdeclarative5-boostable) {
 }
 
 # Translations
-TS_PATH = $$PWD
+TS_PATH = $$PWD $$PWD/../shared
 TS_FILE = $$OUT_PWD/sailfish-browser.ts
 EE_QM = $$OUT_PWD/sailfish-browser_eng_en.qm
 include(../../translations/translations.pri)
@@ -33,6 +33,7 @@ include(../browser/browser.pri)
 include(../history/history.pri)
 include(../qtmozembed/qtmozembed.pri)
 include(../factories/factories.pri)
+include(../shared/shared.pri)
 include(settings/settings.pri)
 include(bookmarks/bookmarks.pri)
 
@@ -40,10 +41,6 @@ include(bookmarks/bookmarks.pri)
 qml.path = $$DEPLOYMENT_PATH
 qml.files = qml/*.qml qml/pages qml/cover
 INSTALLS += qml
-
-qmlshared.path = $$DEPLOYMENT_PATH/shared
-qmlshared.files = ../shared/*
-INSTALLS += qmlshared
 
 # C++ sources
 SOURCES += main.cpp

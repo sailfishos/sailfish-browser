@@ -19,7 +19,7 @@ packagesExist(qdeclarative5-boostable) {
     warning("qdeclarative5-boostable not available; startup times will be slower")
 }
 
-TS_PATH = $$PWD
+TS_PATH = $$PWD $$PWD/../shared
 TS_FILE = $$OUT_PWD/sailfish-captiveportal.ts
 EE_QM = $$OUT_PWD/sailfish-captiveportal_eng_en.qm
 include(../../translations/translations.pri)
@@ -31,15 +31,12 @@ include(../core/core.pri)
 include(../history/history.pri)
 include(../qtmozembed/qtmozembed.pri)
 include(../factories/factories.pri)
+include(../shared/shared.pri)
 
 # QML files and folders of captiveportal
 qml.path = $$DEPLOYMENT_PATH
 qml.files = qml/captiveportal.qml qml/pages
 INSTALLS += qml
-
-qmlshared.path = $$DEPLOYMENT_PATH/shared
-qmlshared.files = ../shared/*
-INSTALLS += qmlshared
 
 # Captive portal sources
 SOURCES += captiveportaladaptor.cpp \
