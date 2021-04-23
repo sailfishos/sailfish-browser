@@ -1,6 +1,7 @@
 /****************************************************************************
 **
 ** Copyright (c) 2014 Jolla Ltd.
+** Copyright (c) 2021 Open Mobile Platform LLC.
 ** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jolla.com>
 **
 ****************************************************************************/
@@ -16,6 +17,7 @@ SilicaListView {
     id: view
     property string search
     property bool showDeleteButton
+    property bool menuClosed
 
     signal load(string url, string title)
 
@@ -27,6 +29,7 @@ SilicaListView {
         menu: contextMenuComponent
         search: view.search
         showDeleteButton: view.showDeleteButton
+        onMenuOpenChanged: view.menuClosed = !menuOpen
 
         Component {
             id: contextMenuComponent

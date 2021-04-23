@@ -1,6 +1,7 @@
 /****************************************************************************
 **
 ** Copyright (c) 2014 - 2021 Jolla Ltd.
+** Copyright (c) 2021 Open Mobile Platform LLC.
 **
 ****************************************************************************/
 
@@ -15,6 +16,8 @@ import Sailfish.Browser 1.0
 
 IconGridViewBase {
     id: favoriteGrid
+
+    property real menuHeight: 0
 
     pageHeight: Math.ceil(browserPage.height + pageStack.panelSize)
     rows: Math.floor(pageHeight / minimumCellHeight)
@@ -52,6 +55,8 @@ IconGridViewBase {
         menu: favoriteContextMenu
         openMenuOnPressAndHold: false
 
+        onMenuOpenChanged: menuOpen && historyContainer.showHistoryList ? favoriteGrid.menuHeight = cellHeight : favoriteGrid.menuHeight = 0
+
         onAddToLauncher: {
             // url, title, favicon
             pageStack.animatorPush("AddToAppGridDialog.qml",
@@ -73,7 +78,6 @@ IconGridViewBase {
                                        "index": index,
                                    })
         }
-
 
         onClicked: favoriteGrid.load(model.url, model.title)
         onShowContextMenuChanged: {
