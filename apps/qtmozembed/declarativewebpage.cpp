@@ -75,7 +75,6 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
                                           FIND_MESSAGE,
                                           CONTENT_ORIENTATION_CHANGED_MESSAGE };
 
-    loadFrameScript("chrome://embedlite/content/embedhelper.js");
     addMessageListeners(messages);
 
     if (BrowserApp::captivePortal()) {

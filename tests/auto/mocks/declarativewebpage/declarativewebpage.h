@@ -37,7 +37,7 @@ public:
     MOCK_CONST_METHOD0(contentRect, QRectF());
     MOCK_METHOD1(setWindow, void(QWindow *));
     MOCK_CONST_METHOD0(completed, bool());
-    MOCK_CONST_METHOD0(uniqueID, quint32());
+    MOCK_CONST_METHOD0(uniqueId, quint32());
     MOCK_CONST_METHOD0(isPainted, bool());
     MOCK_CONST_METHOD0(loadProgress, int());
     MOCK_CONST_METHOD0(loading, bool());
@@ -65,7 +65,7 @@ public:
     MOCK_CONST_METHOD0(contentHeight, qreal());
     MOCK_CONST_METHOD0(resolution, float());
     MOCK_METHOD2(sendAsyncMessage, void(const QString&, const QVariant&));
-    MOCK_METHOD1(setParentID, void(unsigned));
+    MOCK_METHOD1(setParentId, void(unsigned));
     MOCK_CONST_METHOD0(active, bool());
     MOCK_METHOD1(setActive, void(bool));
 

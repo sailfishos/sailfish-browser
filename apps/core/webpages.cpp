@@ -197,7 +197,7 @@ void WebPages::updateStates(DeclarativeWebPage *oldActivePage, DeclarativeWebPag
 {
     if (oldActivePage) {
         // Allow suspending only the current active page if it is not the creator (parent).
-        if (newActivePage->parentId() != (int)oldActivePage->uniqueID()) {
+        if (newActivePage->parentId() != (int)oldActivePage->uniqueId()) {
             if (oldActivePage->loading()) {
                 oldActivePage->stop();
             }
