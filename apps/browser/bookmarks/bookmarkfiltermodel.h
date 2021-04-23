@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (c) 2020 Open Mobile Platform LLC
+** Copyright (c) 2020 - 2021 Open Mobile Platform LLC
 **
 ****************************************************************************/
 
@@ -17,21 +17,28 @@ class BookmarkFilterModel : public QSortFilterProxyModel
 {
     Q_OBJECT
     Q_PROPERTY(QString search READ search WRITE setSearch NOTIFY searchChanged)
+    Q_PROPERTY(int maxDisplayedItems READ maxDisplayedItems WRITE setMaxDisplayedItems NOTIFY maxDisplayedItemsChanged)
 public:
     BookmarkFilterModel(QObject *parent = nullptr);
 
     Q_INVOKABLE int getIndex(int currentIndex);
 
     bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const override;
+    void setSourceModel(QAbstractItemModel *sourceModel) override;
 
     QString search() const;
+    int maxDisplayedItems() const;
     void setSearch(const QString &search);
+    void setMaxDisplayedItems(const int maxDisplayedItems);
 
 signals:
     void searchChanged(QString search);
+    void maxDisplayedItemsChanged(int maxDisplayedItems);
 
 private:
     QString m_search;
+    int m_maxDisplayedItems;
+    mutable int m_countFilterAccepts;
 };
 
 #endif // BOOKMARKFILTERMODEL_H
