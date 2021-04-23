@@ -36,9 +36,16 @@ signals:
     void maxDisplayedItemsChanged(int maxDisplayedItems);
 
 private:
+    void resetCounts();
+    void extendCheckPosition(int sourceRow, const QModelIndex &sourceParent) const;
+    bool filterAcceptsRowUnbounded(int sourceRow, const QModelIndex &sourceParent) const;
+
+private:
     QString m_search;
     int m_maxDisplayedItems;
     mutable int m_countFilterAccepts;
+    mutable int m_sourceMaxAccept;
+    mutable int m_maxSourceModelPosition;
 };
 
 #endif // BOOKMARKFILTERMODEL_H
