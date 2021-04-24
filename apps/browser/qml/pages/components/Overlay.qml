@@ -14,6 +14,7 @@ import Sailfish.Silica.private 1.0 as Private
 import Sailfish.Browser 1.0
 import Sailfish.Policy 1.0
 import Sailfish.WebView.Controls 1.0
+import Sailfish.WebView.Popups 1.0
 import Sailfish.WebEngine 1.0
 import com.jolla.settings.system 1.0
 import "." as Browser
@@ -284,9 +285,8 @@ Shared.Background {
                         onCall: {
                             Qt.openUrlExternally("tel:" + controller.text)
                         }
-
                         onShare: {
-                            pageStack.animatorPush("Sailfish.WebView.Popups.ShareTextPage", {"text" : controller.text })
+                            webShareAction.shareText(controller.text)
                         }
                         onSearch: {
                             // Open new tab with the search uri.
@@ -517,12 +517,7 @@ Shared.Background {
                     _overlayHeight = Qt.binding(function () { return overlayAnimator._fullHeight })
                     overlayAnimator.showOverlay()
                 }
-                onShareActivePage: {
-                    pageStack.animatorPush("Sailfish.WebView.Popups.ShareLinkPage", {
-                                               "link": webView.url,
-                                               "linkTitle": webView.title
-                                           })
-                }
+                onShareActivePage: webShareAction.shareLink(webView.url, webView.title)
                 onBookmarkActivePage: favoriteGrid.fetchAndSaveBookmark()
                 onRemoveActivePageFromBookmarks: bookmarkModel.remove(webView.url)
 
@@ -576,6 +571,7 @@ Shared.Background {
 
                     onMovingChanged: if (moving) favoriteGrid.focus = true
                     onLoad: overlay.loadPage(url)
+                    onShare: webShareAction.shareLink(url, title)
                     onNewTab: {
                         searchField.resetUrl(url)
                         // Not the best property name but functionality of opening a favorite
@@ -584,8 +580,6 @@ Shared.Background {
                         _showUrlEntry = true
                         overlay.loadPage(url)
                     }
-
-                    onShare: pageStack.animatorPush("Sailfish.WebView.Popups.ShareLinkPage", {"link" : url, "linkTitle": title})
 
                     Behavior on opacity { FadeAnimator {} }
                 }
@@ -678,5 +672,9 @@ Shared.Background {
                 tabViewItem.positionViewAtIndex(webView.tabModel.activeTabIndex, ListView.Center)
             }
         }
+    }
+
+    WebShareAction {
+        id: webShareAction
     }
 }
