@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="initial-scale=1">
+  </head>
+  <body>
+    <h1>Form tests</h1>
+
+    <h2>Register</h2>
+    <form name="loginform" action="#" method="post">
+      <div>
+        <label for="user_login">New username</label>
+        <div>
+          <input type="text" name="username" value="" size="20" autocapitalize="off" />
+        </div>
+        <label for="user_pass">New password</label>
+        <div>
+          <input type="password" name="password" value="" size="20" />
+        </div>
+        <label for="user_pass">Confirm password</label>
+        <div>
+          <input type="password" name="pwd_confirm" value="" size="20" />
+        </div>
+      </div>
+      <p>
+        <input type="submit" name="submit" id="submit_register" value="Register" />
+        <input type="reset" name="reset" id="reset_register" value="Reset" />
+        <input type="hidden" name="hiddenvalue" value="1" />
+      </p>
+    </form>
+
+    <hr />
+
+    <h2>Login</h2>
+    <form name="loginform" id="loginform" action="#" method="post">
+      <div>
+        <label for="user_login">Username</label>
+        <div>
+          <input type="text" name="username" value="" size="20" autocapitalize="off" />
+        </div>
+        <label for="user_pass">Password</label>
+        <div>
+          <input type="password" name="password" value="" size="20" />
+        </div>
+      </div>
+      <p>
+        <input name="rememberme" type="checkbox" value="forever" />
+        <label for="rememberme">Remember Me</label>
+      </p>
+      <p>
+        <input type="submit" name="submit" value="Log In" />
+        <input type="reset" name="reset" value="Reset" />
+        <input type="hidden" name="hiddenvalue" value="1" />
+      </p>
+    </form>
+
+  </body>
+</html>
+
