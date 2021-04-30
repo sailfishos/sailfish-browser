@@ -30,7 +30,7 @@ Page {
             PageHeader {
                 //: Privacy settings page header
                 //% "Privacy settings"
-                title: qsTrId("sailfish_browser-he-privacy-settingsf")
+                title: qsTrId("sailfish_browser-he-privacy-settings")
             }
 
             TextSwitch {
