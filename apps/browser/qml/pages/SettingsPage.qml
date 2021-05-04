@@ -65,6 +65,15 @@ Page {
                 //: Label for combobox that sets search engine used in browser
                 //% "Search with"
                 label: qsTrId("settings_browser-la-search_with")
+                leftMargin: 2*Theme.horizontalPageMargin + searchIcon.width
+                contentHeight: Theme.itemSizeMedium
+
+                Icon {
+                    id: searchIcon
+                    source: "image://theme/icon-m-search"
+                    anchors.verticalCenter: parent.verticalCenter
+                    x: Theme.horizontalPageMargin
+                }
 
                 menu: ContextMenu {
                     Repeater {
