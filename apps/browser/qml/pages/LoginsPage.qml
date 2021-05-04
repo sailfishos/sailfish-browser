@@ -77,10 +77,16 @@ Page {
                 spacing: Theme.paddingMedium
                 anchors.verticalCenter: parent.verticalCenter
 
-                Icon {
-                    anchors.verticalCenter: parent.verticalCenter
+                FavoriteIcon {
                     id: loginsIcon
-                    source: "image://theme/icon-m-contact"
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    icon: model.favicon
+
+                    sourceSize.width: Theme.iconSizeMedium
+                    sourceSize.height: Theme.iconSizeMedium
+                    width: Theme.iconSizeMedium
+                    height: Theme.iconSizeMedium
                 }
 
                 Column {

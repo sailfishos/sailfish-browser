@@ -144,6 +144,12 @@ WebContainer {
                     webView.grabActivePage()
                     contextMenuRequested(data)
                 }
+
+                onLoginSaved: {
+                    FaviconManager.grabIcon("logins", webPage,
+                                            Qt.size(Theme.iconSizeMedium,
+                                                    Theme.iconSizeMedium));
+                }
             }
 
             signal selectionCopied(var data)
