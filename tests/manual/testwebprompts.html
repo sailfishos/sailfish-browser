@@ -45,6 +45,18 @@
         document.getElementById("msg").innerHTML="Long Alert pressed"
       }
 
+      function multiple_popups() {
+        alert("Alert 1/9")
+        alert("Alert 2/9")
+        alert("Alert 3/9")
+        confirm("Confirm 4/9")
+        confirm("Confirm 5/9")
+        confirm("Confirm 6/9")
+        prompt("Prompt 7/9")
+        prompt("Prompt 8/9")
+        prompt("Prompt 9/9")
+      }
+
       function disp_short_confirm() {
         var inputtxt = confirm("Ok or cancel?") ? "ok" : "cancel"
         document.getElementById("msg").innerHTML=inputtxt
@@ -119,6 +131,7 @@
     <button onclick="disp_short_alert()">Short Alert</button> <br /><br />
     <button onclick="disp_medium_alert()">Medium Alert</button> <br /><br />
     <button onclick="disp_long_alert()">Long Alert</button> <br /><br />
+    <button onclick="multiple_popups()">Multiple popups</button> <br /><br />
     <button onclick="disp_short_confirm()">Short Confirm</button> <br/><br />
     <button onclick="disp_medium_confirm()">Medium Confirm</button> <br/><br />
     <button onclick="disp_long_confirm()">Long Confirm</button> <br/><br />
