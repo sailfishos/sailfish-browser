@@ -10,7 +10,7 @@
 
 #include "searchenginemodel.h"
 #include "opensearchconfigs.h"
-#include "../bookmarks/datafetcher.h"
+#include "datafetcher.h"
 
 #include <QString>
 #include <QFile>

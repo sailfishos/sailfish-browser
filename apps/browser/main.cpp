@@ -144,8 +144,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
         qmlRegisterType<BookmarkFilterModel>(uri, 1, 0, "BookmarkFilterModel");
         qmlRegisterType<DeclarativeLoginModel>(uri, 1, 0, "LoginModel");
         qmlRegisterType<LoginFilterModel>(uri, 1, 0, "LoginFilterModel");
-        qmlRegisterSingletonType<FaviconManager>(uri, 1, 0, "FaviconManager", faviconmanager_factory);
     }
+    qmlRegisterSingletonType<FaviconManager>(uri, 1, 0, "FaviconManager", faviconmanager_factory);
     qmlRegisterUncreatableType<DownloadStatus>(uri, 1, 0, "DownloadStatus", "");
     qmlRegisterType<DeclarativeWebContainer>(uri, 1, 0, "WebContainer");
     qmlRegisterType<DeclarativeWebPage>(uri, 1, 0, "WebPage");

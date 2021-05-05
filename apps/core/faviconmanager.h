@@ -27,6 +27,7 @@ public:
     Q_INVOKABLE void remove(const QString &type, const QString &hostname);
     QString get(const QString &type, const QString &hostname);
     Q_INVOKABLE void grabIcon(const QString &type, DeclarativeWebPage *webPage, const QSize &size);
+    Q_INVOKABLE void clear(const QString &type);
 
 private:
     FaviconManager(QObject *parent = nullptr);

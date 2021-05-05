@@ -209,3 +209,10 @@ void FaviconManager::grabIcon(const QString &type, DeclarativeWebPage *webPage, 
     dataFetcher->fetch(webPage->property("favicon").toString());
 }
 
+void FaviconManager::clear(const QString &type)
+{
+    FaviconSet faviconSet;
+    faviconSet.loaded = true;
+    m_faviconSets.insert(type, faviconSet);
+    save(type);
+}
