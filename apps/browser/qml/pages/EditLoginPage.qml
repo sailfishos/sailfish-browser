@@ -11,11 +11,13 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
 import Sailfish.Browser 1.0
+import "components"
 
 Dialog {
     id: page
     property int uid: -1
     property LoginModel loginModel
+    property SecureAction secureAction
     property alias hostname: hostnameField.text
     property alias username: usernameField.text
     property alias password: passwordField.text
@@ -63,6 +65,17 @@ Dialog {
             PasswordField {
                 id: passwordField
                 EnterKey.onClicked: focus = false
+                showEchoModeToggle: secureAction.available
+
+                _automaticEchoModeToggle: false
+
+                on_EchoModeToggleClicked: {
+                    if (_usePasswordEchoMode) {
+                        secureAction.perform(function () { _usePasswordEchoMode = false });
+                    } else {
+                        _usePasswordEchoMode = true
+                    }
+                }
             }
 
             Item {
