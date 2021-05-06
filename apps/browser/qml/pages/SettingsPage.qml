@@ -22,6 +22,12 @@ import "components"
 Page {
     id: page
 
+    function removeProtocolTypeFromUri(uri) {
+        if (uri.length === 0)
+            return uri
+       return uri.replace(/(^\w+:|^)\/\//, '')
+    }
+
     SilicaFlickable {
         anchors.fill: parent
         contentHeight: contentColumn.height
@@ -41,21 +47,44 @@ Page {
                 active: !AccessPolicy.browserEnabled
             }
 
-            TextField {
+            ComboBox {
                 id: homePage
                 enabled: AccessPolicy.browserEnabled
 
+                width: parent.width
                 //: Label for home page text field
                 //% "Home Page"
                 label: qsTrId("settings_browser-la-home_page")
-                text: homePageConfig.value == "about:blank" ? "" : homePageConfig.value
+                //% "Default"
+                value: homePageConfig.value === "about:blank" ? qsTrId("sailfish_browser-la-home_page_default") : removeProtocolTypeFromUri(homePageConfig.value)
+                leftMargin: 2*Theme.horizontalPageMargin + homePageIcon.width
+                contentHeight: Theme.itemSizeMedium
 
-                inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase | Qt.ImhUrlCharactersOnly
+                Icon {
+                    id: homePageIcon
+                    source: "image://theme/icon-m-home"
+                    anchors.verticalCenter: parent.verticalCenter
+                    x: Theme.horizontalPageMargin
+                }
 
-                onTextChanged: homePageConfig.value = text || "about:blank"
+                menu: ContextMenu {
+                    MenuItem {
+                        //% "Default home page"
+                        text: qsTrId("sailfish_browser-me-home_page_default")
+                        onClicked: homePageConfig.value = "about:blank"
+                    }
+                    MenuItem {
+                        readonly property string site: removeProtocolTypeFromUri(homePageConfig.value)
+                        //: Instead of %1 site address will be displayed
+                        //% "Custom website %1"
+                        property string title: qsTrId("sailfish_browser-me-home_page_custom").arg(homePageConfig.value === "about:blank" ? "" : site)
 
-                EnterKey.iconSource: "image://theme/icon-m-enter-close"
-                EnterKey.onClicked: focus = false
+                        textFormat: Text.StyledText
+                        color: highlighted ? Theme.highlightColor : Theme.primaryColor
+                        text: Theme.highlightText(title, site, Theme.highlightColor)
+                        onClicked: pageStack.animatorPush(Qt.resolvedUrl("components/AddHomePageDialog.qml"))
+                    }
+                }
             }
 
             ComboBox {
