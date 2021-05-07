@@ -11,6 +11,8 @@ include(../test_common.pri)
 include(../mocks/opensearchconfigs/opensearchconfigs_mock.pri)
 include(../common/testobject.pri)
 include(../../../apps/browser/bookmarks/bookmarks.pri)
+include(../../../apps/browser/settings/settings.pri)
+include(../../../apps/browser/browser.pri)
 include(../../../apps/core/core.pri)
 include(../../../apps/qtmozembed/qtmozembed.pri)
 include(../../../apps/factories/factories.pri)
@@ -22,3 +24,7 @@ SOURCES += tst_webview.cpp
 OTHER_FILES = *.qml
 
 RESOURCES = tst_webview.qrc
+
+START_FILE = $$clean_path($$join(target.path, "", "", "/../manual/testpage.html"))
+DEFINES += 'START_URL=\'\"file://$$START_FILE\"\''
+message("START_FILE: $$START_FILE")

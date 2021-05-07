@@ -54,6 +54,7 @@ ApplicationWindow {
             height: window.height
             privateMode: false
             rotationHandler: browserPage
+            historyModel: historyModel
         }
         HistoryModel {
             id: historyModel

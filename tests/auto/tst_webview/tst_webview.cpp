@@ -1,9 +1,10 @@
-/****************************************************************************
-**
-** Copyright (c) 2014 Jolla Ltd.
-** Contact: Raine Makelainen <raine.makelainen@jolla.com>
-**
-****************************************************************************/
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2014 - 2021 Jolla Ltd.
+ * Copyright (c) 2021 Open Mobile Platform LLC.
+ */
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
@@ -14,15 +15,45 @@
 #include <webengine.h>
 #include <webenginesettings.h>
 
+// Registered QML types
 #include "declarativehistorymodel.h"
 #include "persistenttabmodel.h"
 #include "declarativewebcontainer.h"
 #include "declarativewebpage.h"
 #include "declarativewebpagecreator.h"
+#include "privatetabmodel.h"
+#include "declarativebookmarkmodel.h"
+#include "bookmarkfiltermodel.h"
+#include "declarativeloginmodel.h"
+#include "loginfiltermodel.h"
+#include "faviconmanager.h"
+#include "downloadstatus.h"
+#include "desktopbookmarkwriter.h"
+#include "datafetcher.h"
+#include "inputregion.h"
+#include "searchenginemodel.h"
+
 #include "declarativewebutils.h"
 #include "webpages.h"
 #include "browserpaths.h"
 #include "testobject.h"
+
+#ifndef START_URL
+// This should be defined in the build scripts
+#define START_URL "file:///opt/tests/sailfish-browser/manual/testpage.html"
+#endif
+
+static const QString startPage(START_URL);
+
+static QObject *search_model_factory(QQmlEngine *, QJSEngine *)
+{
+   return new SearchEngineModel;
+}
+
+static QObject *faviconmanager_factory(QQmlEngine *, QJSEngine *)
+{
+   return FaviconManager::instance();
+}
 
 class tst_webview : public TestObject
 {
@@ -71,9 +102,6 @@ tst_webview::tst_webview()
 
 void tst_webview::initTestCase()
 {
-    // Create singleton.
-    DeclarativeWebUtils::instance();
-
     init(QUrl("qrc:///tst_webview.qml"));
     webContainer = TestObject::qmlObject<DeclarativeWebContainer>("webView");
     QVERIFY(webContainer);
@@ -85,10 +113,16 @@ void tst_webview::initTestCase()
 
     tabModel = TestObject::qmlObject<DeclarativeTabModel>("tabModel");
     QVERIFY(tabModel);
+    tabModel->clear();
     QSignalSpy tabAddedSpy(tabModel, SIGNAL(tabAdded(int)));
 
     historyModel = TestObject::qmlObject<DeclarativeHistoryModel>("historyModel");
     QVERIFY(historyModel);
+
+    QTest::qWait(500);
+
+    qDebug() << "Initial page: " << startPage;
+    webContainer->load(startPage);
 
     waitSignals(completedChanged, 1);
     waitSignals(loadingChanged, 2);
@@ -102,15 +136,15 @@ void tst_webview::initTestCase()
 
     DeclarativeWebPage *webPage = webContainer->webPage();
     QVERIFY(webPage);
-    QCOMPARE(webPage->url().toString(), DeclarativeWebUtils::instance()->homePage());
+    QCOMPARE(webPage->url().toString(), startPage);
     QCOMPARE(webPage->title(), QString("TestPage"));
-    QCOMPARE(webContainer->url(), DeclarativeWebUtils::instance()->homePage());
+    QCOMPARE(webContainer->url(), startPage);
     QCOMPARE(webContainer->title(), QString("TestPage"));
     QCOMPARE(tabModel->count(), 1);
     QCOMPARE(webContainer->m_webPages->count(), 1);
     QCOMPARE(webContainer->m_webPages->m_activePages.count(), 1);
 
-    baseUrl = QUrl(DeclarativeWebUtils::instance()->homePage()).toLocalFile();
+    baseUrl = QUrl(startPage).toLocalFile();
     baseUrl = QFileInfo(baseUrl).canonicalPath();
 
     QCOMPARE(tabAddedSpy.count(), 1);
@@ -128,7 +162,7 @@ void tst_webview::testNewTab_data()
     QTest::addColumn<int>("activeTabIndex");
     QTest::addColumn<QStringList>("activeTabs");
 
-    QString homePage = DeclarativeWebUtils::instance()->homePage();
+    QString homePage = startPage;
     QStringList activeTabOrder = QStringList() << homePage
                                                << formatUrl("testselect.html");
     QTest::newRow("testselect") << formatUrl("testselect.html") << "TestSelect"
@@ -475,8 +509,8 @@ void tst_webview::load(QString url, bool expectTitleChange)
         waitSignals(titleChangedSpy, 1);
     }
     waitSignals(loadingChanged, 2);
-    waitSignals(painted, 2);
-    QTest::qWait(500);
+    waitSignals(painted, 1);
+    QTest::qWait(100);
 }
 
 void tst_webview::goBack()
@@ -527,7 +561,7 @@ void tst_webview::forwardBackwardNavigation()
     QVERIFY(webContainer->canGoForward());
 
     // Verify that spy counters will not update (1sec should be enough)
-    QTest::qWait(1000);
+    QTest::qWait(500);
     QCOMPARE(forwardSpy.count(), 1);
     QCOMPARE(backSpy.count(), 2);
     QCOMPARE(urlChangedSpy.count(), 2);
@@ -549,7 +583,7 @@ void tst_webview::forwardBackwardNavigation()
     titleChangedSpy.clear();
     goBack();
 
-    QTest::qWait(1000);
+    QTest::qWait(500);
     QCOMPARE(forwardSpy.count(), 1);
     QCOMPARE(backSpy.count(), 1);
     QCOMPARE(urlChangedSpy.count(), 1);
@@ -614,7 +648,7 @@ void tst_webview::forwardBackwardNavigation()
     QCOMPARE(webContainer->m_webPages->count(), webContainer->maxLiveTabCount());
     QCOMPARE(webContainer->m_webPages->m_activePages.count(), webContainer->maxLiveTabCount());
 
-    QTest::qWait(1000);
+    QTest::qWait(500);
 }
 
 void tst_webview::clear()
@@ -622,7 +656,7 @@ void tst_webview::clear()
     QSignalSpy tabClosed(tabModel, SIGNAL(tabClosed(int)));
     historyModel->clear();
     tabModel->clear();
-    QTest::qWait(1000);
+    QTest::qWait(500);
     waitSignals(tabClosed, 7);
 
     // From the previous case there should be 7 tabs to close
@@ -633,7 +667,7 @@ void tst_webview::clear()
     QVERIFY(!webContainer->m_webPages->m_activePages.activeWebPage());
     QVERIFY(!webContainer->m_webPage);
 
-    QTest::qWait(5000);
+    QTest::qWait(500);
 }
 
 void tst_webview::restart()
@@ -641,7 +675,7 @@ void tst_webview::restart()
     // Title "TestPage"
     QString testPageUrl = formatUrl("testpage.html");
     tabModel->newTab(testPageUrl);
-    QTest::qWait(5000);
+    load(testPageUrl, false /* expectTitleChange */);
 
     QCOMPARE(tabModel->activeTab().url(), testPageUrl);
     QCOMPARE(webContainer->url(), testPageUrl);
@@ -679,11 +713,11 @@ void tst_webview::restart()
     delete webContainer;
     webContainer = 0;
 
-    QTest::qWait(5000);
+    QTest::qWait(1000);
 
     setTestData(EMPTY_QML);
     setTestUrl(QUrl("qrc:///tst_webview.qml"));
-    QTest::qWait(5000);
+    QTest::qWait(1000);
 
     webContainer = TestObject::qmlObject<DeclarativeWebContainer>("webView");
     historyModel = TestObject::qmlObject<DeclarativeHistoryModel>("historyModel");
@@ -691,7 +725,7 @@ void tst_webview::restart()
 
     QTest::qWait(1000);
 
-    QVERIFY(tabModel->count() == 1);
+    QCOMPARE(tabModel->count(), 1);
     QCOMPARE(tabModel->activeTab().url(), testUserAgentUrl);
     QCOMPARE(webContainer->url(), testUserAgentUrl);
 
@@ -701,10 +735,13 @@ void tst_webview::restart()
     // After restart
     verifyHistory(historyOrder);
 
+    QSignalSpy urlChanged(webContainer, SIGNAL(urlChanged()));
     webContainer->goBack();
-    QTest::qWait(1000);
+    urlChanged.wait();
 
     // After back navigation
+    historyOrder.append(historyOrder.first());
+    historyOrder.pop_front();
     verifyHistory(historyOrder);
 
     QVERIFY(!webContainer->canGoBack());
@@ -721,12 +758,12 @@ void tst_webview::changeTabAndLoad()
 {
     int previousTab = tabModel->activeTab().tabId();
     tabModel->newTab(formatUrl("testwindowopen.html"));
-    QTest::qWait(1000);
+    QTest::qWait(500);
 
     QList<TestTab> historyOrder;
     historyOrder.append(TestTab(formatUrl("testwindowopen.html"), QString("Test window opening")));
-    historyOrder.append(TestTab(formatUrl("testuseragent.html"), QString("TestUserAgent")));
     historyOrder.append(TestTab(formatUrl("testpage.html"), QString("TestPage")));
+    historyOrder.append(TestTab(formatUrl("testuseragent.html"), QString("TestUserAgent")));
 
     verifyHistory(historyOrder);
 
@@ -750,7 +787,7 @@ void tst_webview::changeTabAndLoad()
 
 void tst_webview::cleanupTestCase()
 {
-    QTest::qWait(1000);
+    QTest::qWait(500);
 
     tabModel->clear();
     QVERIFY(tabModel->count() == 0);
@@ -760,7 +797,7 @@ void tst_webview::cleanupTestCase()
     // Wait for event loop of db manager
     tabModel->deleteLater();
     QTest::waitForEvents();
-    QTest::qWait(1000);
+    QTest::qWait(500);
 
     QString dbFileName = QString("%1/%2")
             .arg(BrowserPaths::dataLocation())
@@ -794,27 +831,52 @@ void tst_webview::verifyHistory(QList<TestTab> &historyOrder)
 
 int main(int argc, char *argv[])
 {
-    setenv("USE_ASYNC", "1", 1);
+    QScopedPointer<QGuiApplication> app(new QGuiApplication(argc, argv));
+    app->setQuitOnLastWindowClosed(false);
 
-    QGuiApplication app(argc, argv);
-    app.setAttribute(Qt::AA_Use96Dpi, true);
     tst_webview testcase;
+
+    const char *uri = "Sailfish.Browser";
+
+    // Use QtQuick 2.1 for Sailfish.Browser imports
+    qmlRegisterRevision<QQuickItem, 1>(uri, 1, 0);
+    qmlRegisterRevision<QWindow, 1>(uri, 1, 0);
+
+    qmlRegisterType<DeclarativeHistoryModel>(uri, 1, 0, "HistoryModel");
+    qmlRegisterUncreatableType<DeclarativeTabModel>(uri, 1, 0, "TabModel", "TabModel is abstract!");
+    qmlRegisterUncreatableType<PersistentTabModel>(uri, 1, 0, "PersistentTabModel", "");
+    qmlRegisterType<DeclarativeWebContainer>(uri, 1, 0, "WebContainer");
+    qmlRegisterType<DeclarativeWebPage>(uri, 1, 0, "WebPage");
+    qmlRegisterType<DeclarativeWebPageCreator>(uri, 1, 0, "WebPageCreator");
+
+    qmlRegisterUncreatableType<PrivateTabModel>(uri, 1, 0, "PrivateTabModel", "");
+    qmlRegisterType<DeclarativeBookmarkModel>(uri, 1, 0, "BookmarkModel");
+    qmlRegisterType<BookmarkFilterModel>(uri, 1, 0, "BookmarkFilterModel");
+    qmlRegisterType<DeclarativeLoginModel>(uri, 1, 0, "LoginModel");
+    qmlRegisterType<LoginFilterModel>(uri, 1, 0, "LoginFilterModel");
+    qmlRegisterSingletonType<FaviconManager>(uri, 1, 0, "FaviconManager", faviconmanager_factory);
+    qmlRegisterUncreatableType<DownloadStatus>(uri, 1, 0, "DownloadStatus", "");
+    qmlRegisterType<DesktopBookmarkWriter>(uri, 1, 0, "DesktopBookmarkWriter");
+    qmlRegisterType<DataFetcher>(uri, 1, 0, "DataFetcher");
+    qmlRegisterType<InputRegion>(uri, 1, 0, "InputRegion");
+    qmlRegisterSingletonType<SearchEngineModel>(uri, 1, 0, "SearchEngineModel", search_model_factory);
+
+    QString path = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+    qDebug() << "Profile path: " << path;
+    SailfishOS::WebEngine::initialize(path);
+    SailfishOS::WebEngineSettings::initialize();
+
     testcase.setContextProperty("WebUtils", DeclarativeWebUtils::instance());
+    testcase.setContextProperty("Settings", SettingManager::instance());
 
-    qmlRegisterType<DeclarativeHistoryModel>("Sailfish.Browser", 1, 0, "HistoryModel");
-    qmlRegisterUncreatableType<DeclarativeTabModel>("Sailfish.Browser", 1, 0, "TabModel", "TabModel is abstract!");
-    qmlRegisterUncreatableType<PersistentTabModel>("Sailfish.Browser", 1, 0, "PersistentTabModel", "");
-    qmlRegisterType<DeclarativeWebContainer>("Sailfish.Browser", 1, 0, "WebContainer");
-    qmlRegisterType<DeclarativeWebPage>("Sailfish.Browser", 1, 0, "WebPage");
-    qmlRegisterType<DeclarativeWebPageCreator>("Sailfish.Browser", 1, 0, "WebPageCreator");
-
-    QString componentPath(DEFAULT_COMPONENTS_PATH);
-    SailfishOS::WebEngine::instance()->addComponentManifest(componentPath + QString("/components/EmbedLiteBinComponents.manifest"));
-    SailfishOS::WebEngine::instance()->addComponentManifest(componentPath + QString("/components/EmbedLiteJSComponents.manifest"));
-    SailfishOS::WebEngine::instance()->addComponentManifest(componentPath + QString("/chrome/EmbedLiteJSScripts.manifest"));
-    SailfishOS::WebEngine::instance()->addComponentManifest(componentPath + QString("/chrome/EmbedLiteOverrides.manifest"));
-
-    QTimer::singleShot(0, SailfishOS::WebEngine::instance(), SLOT(runEmbedding()));
+    QString mozillaDir = QString("%1/.mozilla/").arg(path);
+    QDir dir(mozillaDir);
+    if (dir.exists()) {
+        // Remove any existing profile
+        dir.removeRecursively();
+    }
+    dir.mkpath(dir.path());
+    QFile::copy("/usr/share/sailfish-browser/data/prefs.js", mozillaDir + "prefs.js");
 
     return QTest::qExec(&testcase, argc, argv);
 }
