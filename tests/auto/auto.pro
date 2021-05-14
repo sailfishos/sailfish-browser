@@ -6,6 +6,7 @@ SUBDIRS += tst_dbmanager \
 #    tst_declarativewebcontainer \
     tst_desktopbookmarkwriter \
     tst_downloadmimetypehandler \
+    tst_logins \
     tst_persistenttabmodel \
 #    tst_webpages \
     tst_webpagefactory \
