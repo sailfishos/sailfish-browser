@@ -57,6 +57,11 @@ void DeclarativeLoginModel::modify(int uid, const QString &username, const QStri
         return;
     }
 
+    if (!canModify(uid, username, password)) {
+        qWarning() << "Can't modify login entry to one that already exists";
+        return;
+    }
+
     LoginInfo newLogin = oldLogin;
     newLogin.setUsername(username);
     newLogin.setPassword(password);
@@ -119,6 +124,8 @@ void DeclarativeLoginModel::handleRecvObserve(const QString &message, const QVar
 {
     if (message == ALL_LOGINS) {
         setLoginList(qvariant_cast<QVariantList>(data));
+        // We're only interested in receiving the message once
+        SailfishOS::WebEngine::instance()->removeObserver(ALL_LOGINS);
     }
 }
 
@@ -135,6 +142,7 @@ void DeclarativeLoginModel::setLoginList(const QVariantList &data)
         m_logins.append(UidLoginInfo(m_nextUid, LoginInfo(varMap)));
         ++m_nextUid;
     }
+
     endResetModel();
     emit countChanged();
 
@@ -171,7 +179,7 @@ void DeclarativeLoginModel::remove(int uid)
 
     // Update the index (every item above has its position decremented)
     for (int pos = index; pos < m_logins.count(); ++pos) {
-        m_index.insert(m_logins.at(pos).first, index);
+        m_index.insert(m_logins.at(pos).first, pos);
     }
 
     endRemoveRows();
