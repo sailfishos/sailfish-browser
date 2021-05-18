@@ -128,7 +128,6 @@ fi
 %{_bindir}/%{captiveportal}
 %{_datadir}/applications/%{name}.desktop
 %{_datadir}/applications/%{captiveportal}.desktop
-%{_datadir}/applications/open-url.desktop
 %{_datadir}/%{name}
 %{_datadir}/%{captiveportal}
 %{_datadir}/translations/%{name}*.qm

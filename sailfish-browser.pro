@@ -2,7 +2,7 @@ TEMPLATE = subdirs
 SUBDIRS += apps tests settings backup-unit
 
 # The .desktop file
-desktop.files = sailfish-browser.desktop sailfish-captiveportal.desktop open-url.desktop
+desktop.files = sailfish-browser.desktop sailfish-captiveportal.desktop
 desktop.path = /usr/share/applications
 
 dbus_service.files = org.sailfishos.browser.service \
