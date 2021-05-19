@@ -190,6 +190,29 @@ Page {
                 onClicked: pageStack.push("PermissionPage.qml")
             }
 
+            BackgroundItem {
+                width: parent.width
+                contentHeight: Theme.itemSizeMedium
+                Row {
+                    width: parent.width - 2*Theme.horizontalPageMargin
+                    x: Theme.horizontalPageMargin
+                    spacing: Theme.paddingMedium
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    Icon {
+                        id: loginsIcon
+                        source: "image://theme/icon-m-contact"
+                    }
+                    Label {
+                        width: parent.width - parent.spacing - permissionIcon.width
+                        //% "Logins and passwords"
+                        text: qsTrId("settings_browser-la-logins-and-passwords")
+                        anchors.verticalCenter: loginsIcon.verticalCenter
+                    }
+                }
+                onClicked: pageStack.push("LoginsPage.qml")
+            }
+
             BrowserListItem {
                 //% "Save destination"
                 label: qsTrId("settings_browser-la-save_destination")
