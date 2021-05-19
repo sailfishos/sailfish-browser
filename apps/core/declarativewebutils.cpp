@@ -145,12 +145,11 @@ void DeclarativeWebUtils::setFirstUseDone(bool firstUseDone) {
     QString path = BrowserPaths::dataLocation() + QStringLiteral("/.firstUseDone");
     if (m_firstUseDone != firstUseDone) {
         m_firstUseDone = firstUseDone;
+        QFile f(path);
         if (!firstUseDone) {
-            QFile f(path);
             f.remove();
         } else {
-            QProcess process;
-            process.startDetached("touch", QStringList() << path);
+            f.open(QIODevice::ReadWrite | QIODevice::Truncate);
         }
         emit firstUseDoneChanged();
     }
