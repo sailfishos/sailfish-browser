@@ -32,6 +32,8 @@
 #include "declarativewebcontainer.h"
 #include "declarativewebpage.h"
 #include "declarativewebpagecreator.h"
+#include "declarativeloginmodel.h"
+#include "loginfiltermodel.h"
 #include "datafetcher.h"
 #include "inputregion.h"
 #include "searchenginemodel.h"
@@ -134,6 +136,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
         qmlRegisterUncreatableType<PersistentTabModel>(uri, 1, 0, "PersistentTabModel", "");
         qmlRegisterType<DeclarativeHistoryModel>(uri, 1, 0, "HistoryModel");
         qmlRegisterType<BookmarkFilterModel>(uri, 1, 0, "BookmarkFilterModel");
+        qmlRegisterType<DeclarativeLoginModel>(uri, 1, 0, "LoginModel");
+        qmlRegisterType<LoginFilterModel>(uri, 1, 0, "LoginFilterModel");
     }
     qmlRegisterUncreatableType<DownloadStatus>(uri, 1, 0, "DownloadStatus", "");
     qmlRegisterType<DeclarativeWebContainer>(uri, 1, 0, "WebContainer");
