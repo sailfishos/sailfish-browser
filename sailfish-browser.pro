@@ -14,6 +14,7 @@ chrome_scripts.files = chrome/*.js
 chrome_scripts.path = $$[QT_INSTALL_LIBS]/mozembedlite/chrome/embedlite/content
 
 oneshots.files = oneshot.d/browser-cleanup-startup-cache \
+                 oneshot.d/browser-deprecate-dconf-keys \
                  oneshot.d/browser-update-default-data \
                  oneshot.d/browser-move-data-to-new-location
 oneshots.path  = /usr/lib/oneshot.d

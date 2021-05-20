@@ -32,7 +32,6 @@ SettingManager::SettingManager(QObject *parent)
     m_clearCacheConfItem = new MGConfItem("/apps/sailfish-browser/actions/clear_cache", this);
     m_searchEngineConfItem = new MGConfItem("/apps/sailfish-browser/settings/search_engine", this);
     m_doNotTrackConfItem = new MGConfItem("/apps/sailfish-browser/settings/do_not_track", this);
-    m_autostartPrivateBrowsing = new MGConfItem("/apps/sailfish-browser/settings/autostart_private_browsing", this);
 
     // Look and feel related settings
     m_toolbarSmall = new MGConfItem("/apps/sailfish-browser/settings/toolbar_small", this);
@@ -226,14 +225,4 @@ void SettingManager::handleObserve(const QString &message, const QVariant &data)
             }
         }
     }
-}
-
-void SettingManager::setAutostartPrivateBrowsing(bool privateMode)
-{
-    m_autostartPrivateBrowsing->set(privateMode);
-}
-
-bool SettingManager::autostartPrivateBrowsing() const
-{
-    return m_autostartPrivateBrowsing->value(false).toBool();
 }

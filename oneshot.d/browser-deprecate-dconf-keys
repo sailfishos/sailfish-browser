@@ -1,0 +1,4 @@
+#!/bin/sh
+# Removed in JB#52542, remove after next stop release
+dconf reset /apps/sailfish-browser/settings/autostart_private_browsing
+

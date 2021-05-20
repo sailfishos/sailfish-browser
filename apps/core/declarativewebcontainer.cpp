@@ -64,7 +64,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     , m_loadProgress(0)
     , m_completed(false)
     , m_initialized(false)
-    , m_privateMode(m_settingManager->autostartPrivateBrowsing())
+    , m_privateMode(false)
     , m_activeTabRendered(false)
     , m_clearSurfaceTask(0)
     , m_closing(false)
@@ -332,9 +332,6 @@ void DeclarativeWebContainer::setPrivateMode(bool privateMode)
 {
     if (m_privateMode != privateMode) {
         m_privateMode = privateMode;
-        if (browserEnabled()) {
-            m_settingManager->setAutostartPrivateBrowsing(privateMode);
-        }
         updateMode();
         emit privateModeChanged();
     }
