@@ -47,7 +47,7 @@ signals:
 
 private:
     bool isPrivileged() const;
-    bool isCalledFromTransfers() const;
+    bool callerMatchesService(const QString &serviceName) const;
 
     bool m_registered;
 };
@@ -75,6 +75,7 @@ signals:
 
 private:
     bool isPrivileged() const;
+    bool callerMatchesService(const QString &serviceName) const;
     uint getCallerPid() const;
     bool matchesOwner(uint pid) const;
 
