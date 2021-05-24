@@ -207,7 +207,7 @@ WebContainer {
                 }
             }
 
-            onBgcolorChanged: {
+            onBackgroundColorChanged: {
                 // Update only webPage
                 if (container.contentItem === webPage) {
                     sendAsyncMessage("Browser:SelectionColorUpdate",
