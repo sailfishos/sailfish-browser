@@ -24,7 +24,6 @@ import "." as Browser
 WebContainer {
     id: webView
 
-    property color _decoratorColor: Theme.highlightDimmerColor
     readonly property bool moving: contentItem ? contentItem.moving : false
     property bool findInPageHasResult
     property bool canShowSelectionMarkers: true
@@ -211,16 +210,6 @@ WebContainer {
             onBgcolorChanged: {
                 // Update only webPage
                 if (container.contentItem === webPage) {
-                    var bgLightness = WebUtils.getLightness(bgcolor)
-                    var dimmerLightness = WebUtils.getLightness(Theme.highlightDimmerColor)
-                    var highBgLightness = WebUtils.getLightness(Theme.highlightBackgroundColor)
-
-                    if (Math.abs(bgLightness - dimmerLightness) > Math.abs(bgLightness - highBgLightness)) {
-                        container._decoratorColor = Theme.highlightDimmerColor
-                    } else {
-                        container._decoratorColor =  Theme.highlightBackgroundColor
-                    }
-
                     sendAsyncMessage("Browser:SelectionColorUpdate",
                                      {
                                          "color": Theme.secondaryHighlightColor
@@ -358,36 +347,4 @@ WebContainer {
             }
         }
     }
-//    Rectangle {
-//        id: verticalScrollDecorator
-
-//        width: 5
-//        height: contentItem ? contentItem.verticalScrollDecorator.size : 0
-//        y: contentItem ? contentItem.verticalScrollDecorator.position : 0
-//        z: 1
-//        anchors.right: contentItem ? contentItem.right: undefined
-//        color: _decoratorColor
-//        smooth: true
-//        radius: 2.5
-//        visible: contentItem && contentItem.contentHeight > contentItem.height && !contentItem.pinching && !popupActive
-//        opacity: contentItem && contentItem.verticalScrollDecorator.moving ? 1.0 : 0.0
-//        Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
-//    }
-
-//    Rectangle {
-//        id: horizontalScrollDecorator
-
-//        width: contentItem ? contentItem.horizontalScrollDecorator.size : 0
-//        height: 5
-//        x: contentItem ? contentItem.horizontalScrollDecorator.position : 0
-//        y: webView.height - height
-//        z: 1
-//        color: _decoratorColor
-//        smooth: true
-//        radius: 2.5
-//        visible: contentItem && contentItem.contentWidth > contentItem.width && !contentItem.pinching && !popupActive
-//        opacity: contentItem && contentItem.horizontalScrollDecorator.moving ? 1.0 : 0.0
-//        Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
-//    }
-
 }
