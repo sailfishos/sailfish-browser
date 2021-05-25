@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014 - 2021 Jolla Ltd.
- * Copyright (c) 2019 Open Mobile Platform LLC.
+ * Copyright (c) 2019 - 2021 Open Mobile Platform LLC.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
@@ -36,7 +36,6 @@ class DeclarativeWebPage : public QOpenGLWebPage {
 
     Q_PROPERTY(qreal fullscreenHeight MEMBER m_fullScreenHeight NOTIFY fullscreenHeightChanged FINAL)
     Q_PROPERTY(qreal toolbarHeight READ toolbarHeight WRITE setToolbarHeight NOTIFY toolbarHeightChanged FINAL)
-    Q_PROPERTY(qreal virtualKeyboardMargin WRITE setVirtualKeyboardMargin READ virtualKeyboardMargin NOTIFY virtualKeyboardMarginChanged FINAL)
 
 public:
     DeclarativeWebPage(QObject *parent = 0);
@@ -53,9 +52,6 @@ public:
 
     qreal toolbarHeight() const;
     void setToolbarHeight(qreal);
-
-    qreal virtualKeyboardMargin() const;
-    void setVirtualKeyboardMargin(qreal);
 
     bool fullscreen() const;
     bool forcedChrome() const;
@@ -86,7 +82,6 @@ signals:
 
     void fullscreenHeightChanged();
     void toolbarHeightChanged();
-    void virtualKeyboardMarginChanged();
     void securityChanged();
     void neterror();
 
@@ -100,10 +95,6 @@ private slots:
     void thumbnailReady();
     void updateViewMargins();
     void resetViewMargins();
-
-    // These are here to inform embedlite-components that keyboard is open or close
-    // matching composition metrics.
-    void sendVkbOpenCompositionMetrics();
 
 private:
     QString saveToFile(QImage image);
@@ -130,7 +121,6 @@ private:
 
     qreal m_fullScreenHeight;
     qreal m_toolbarHeight;
-    qreal m_virtualKeyboardMargin;
 
     int m_marginChangeThrottleTimer;
     QMozSecurity m_security;

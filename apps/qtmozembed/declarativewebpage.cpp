@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014 - 2021 Jolla Ltd.
- * Copyright (c) 2019 Open Mobile Platform LLC.
+ * Copyright (c) 2019 - 2021 Open Mobile Platform LLC.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
@@ -62,7 +62,6 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
     , m_restoredCurrentLinkId(-1)
     , m_fullScreenHeight(0.f)
     , m_toolbarHeight(0.f)
-    , m_virtualKeyboardMargin(0.f)
     , m_marginChangeThrottleTimer(0)
 {
 
@@ -129,10 +128,6 @@ void DeclarativeWebPage::setContainer(DeclarativeWebContainer *container)
 {
     if (m_container != container) {
         m_container = container;
-        if (m_container) {
-            connect(m_container.data(), &DeclarativeWebContainer::portraitChanged,
-                    this, &DeclarativeWebPage::sendVkbOpenCompositionMetrics);
-        }
         Q_ASSERT(container->mozWindow());
         setMozWindow(container->mozWindow());
         emit containerChanged();
@@ -263,31 +258,6 @@ void DeclarativeWebPage::setToolbarHeight(qreal toolbarHeight)
     }
 }
 
-qreal DeclarativeWebPage::virtualKeyboardMargin() const
-{
-    return m_virtualKeyboardMargin;
-}
-
-void DeclarativeWebPage::setVirtualKeyboardMargin(qreal margin)
-{
-    qCDebug(lcCoreLog) << "WebPage: setting vkb margins:" << margin;
-    if (margin != m_virtualKeyboardMargin) {
-        m_virtualKeyboardMargin = margin;
-        if (m_virtualKeyboardMargin == 0.0) {
-            // Only place where we ignore view margins update guards.
-            // It must be allowed to close vkb while content is moving.
-            resetViewMargins();
-        } else {
-            QMargins margins;
-            margins.setBottom(m_virtualKeyboardMargin);
-            qCDebug(lcCoreLog) << "WebPage: set vkb margins:" << m_virtualKeyboardMargin;
-            setMargins(margins);
-        }
-        sendVkbOpenCompositionMetrics();
-        emit virtualKeyboardMarginChanged();
-    }
-}
-
 void DeclarativeWebPage::loadTab(const QString &newUrl, bool force)
 {
     // Always enable chrome when load is called.
@@ -403,7 +373,7 @@ void DeclarativeWebPage::updateViewMargins()
     // Don't update margins while panning, flicking, pinching, vkb is already open, or
     // margin update is ongoing (throttling).
     if ((m_container && !m_container->foreground()) || m_marginChangeThrottleTimer > 0 ||
-            moving() || m_virtualKeyboardMargin > 0) {
+            moving()) {
         return;
     }
 
@@ -430,40 +400,6 @@ void DeclarativeWebPage::resetViewMargins()
 
     qCDebug(lcCoreLog) << "WebPage: set margins:" << margins;
     setMargins(margins);
-}
-
-void DeclarativeWebPage::sendVkbOpenCompositionMetrics()
-{
-    // Send update only if the page is active.
-    if (!active()) {
-        return;
-    }
-
-    int winHeight(0);
-    int winWidth(0);
-
-    // Listen im state so that we don't send also updates when
-    // vkb state changes on the chrome side.
-
-    if (m_container) {
-      if (m_container->portrait()) {
-        winHeight = m_container->height();
-        winWidth = m_container->width();
-      } else {
-        winHeight = m_container->width();
-        winWidth = m_container->height();
-      }
-    }
-
-    QVariantMap map;
-    map.insert("imOpen", m_virtualKeyboardMargin > 0);
-    map.insert("pixelRatio", SailfishOS::WebEngineSettings::instance()->pixelRatio());
-    map.insert("bottomMargin", m_virtualKeyboardMargin);
-    map.insert("screenWidth", winWidth);
-    map.insert("screenHeight", winHeight);
-
-    QVariant data(map);
-    sendAsyncMessage("embedui:vkbOpenCompositionMetrics", data);
 }
 
 QString DeclarativeWebPage::saveToFile(QImage image)
