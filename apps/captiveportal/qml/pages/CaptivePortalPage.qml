@@ -83,7 +83,7 @@ Page {
         page: browserPage
         fadeTarget: overlay
         color: webView.contentItem ? (webView.resourceController.videoActive &&
-                                      webView.contentItem.fullscreen ? "black" : webView.contentItem.bgcolor)
+                                      webView.contentItem.fullscreen ? "black" : webView.contentItem.backgroundColor)
                                    : "white"
 
         onApplyContentOrientation: webView.applyContentOrientation(browserPage.orientation)

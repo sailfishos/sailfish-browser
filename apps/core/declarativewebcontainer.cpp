@@ -1099,7 +1099,7 @@ void DeclarativeWebContainer::drawUnderlay()
 {
     Q_ASSERT(m_context);
 
-    QColor bgColor = m_webPage ? m_webPage->bgcolor() : QColor(Qt::white);
+    QColor bgColor = m_webPage ? m_webPage->backgroundColor() : QColor(Qt::white);
     m_context->makeCurrent(this);
     QOpenGLFunctions_ES2* funcs = m_context->versionFunctions<QOpenGLFunctions_ES2>();
     if (funcs) {
