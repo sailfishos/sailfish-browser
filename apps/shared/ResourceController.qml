@@ -104,7 +104,7 @@ Item {
         readonly property bool online: state == "online" || state == "ready"
 
         function notifyOfflineStatus() {
-            if (WebEngine.isInitialized) {
+            if (WebEngine.initialized) {
                 WebEngine.notifyObservers("embed-network-link-status",
                                           {
                                               "offline": !networkManager.online
