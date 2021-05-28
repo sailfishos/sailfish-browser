@@ -82,7 +82,10 @@ Page {
                         textFormat: Text.StyledText
                         color: highlighted ? Theme.highlightColor : Theme.primaryColor
                         text: Theme.highlightText(title, site, Theme.highlightColor)
-                        onClicked: pageStack.animatorPush(Qt.resolvedUrl("components/AddHomePageDialog.qml"))
+                        onClicked: {
+                            pageStack.animatorPush(Qt.resolvedUrl("components/AddHomePageDialog.qml"),
+                                                   {homePageConfig: homePageConfig})
+                        }
                     }
                 }
             }

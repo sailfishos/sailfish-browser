@@ -15,6 +15,8 @@ import org.nemomobile.configuration 1.0
 
 Dialog {
     id: dialog
+
+    property ConfigurationValue homePageConfig
     canAccept: textField.text !== ""
     onAccepted: {
         homePageConfig.value = textField.text.trim() || "about:blank"
@@ -38,12 +40,5 @@ Dialog {
         label: placeholderText
         inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase | Qt.ImhUrlCharactersOnly
         EnterKey.onClicked: dialog.accept()
-    }
-
-    ConfigurationValue {
-        id: homePageConfig
-
-        key: "/apps/sailfish-browser/settings/home_page"
-        defaultValue: "http://jolla.com/"
     }
 }
