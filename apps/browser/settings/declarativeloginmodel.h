@@ -25,6 +25,7 @@ class DeclarativeLoginModel : public QAbstractListModel, public QQmlParserStatus
     Q_INTERFACES(QQmlParserStatus)
 
     Q_PROPERTY(int count READ rowCount NOTIFY countChanged)
+    Q_PROPERTY(bool populated READ populated NOTIFY populatedChanged)
 public:
     enum Roles {
         UidRole = Qt::UserRole,
@@ -46,8 +47,11 @@ public:
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     QHash<int, QByteArray> roleNames() const override;
 
+    bool populated() const;
+
 signals:
     void countChanged();
+    void populatedChanged();
 
 private:
     void setLoginList(const QVariantList &data);
@@ -64,6 +68,7 @@ private:
     // <uid, data>
     QList<UidLoginInfo> m_logins;
     int m_nextUid;
+    bool m_populated;
 };
 
 #endif // LOGINMODEL_H
