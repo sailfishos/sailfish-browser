@@ -9,7 +9,7 @@
 Name:       sailfish-browser
 
 Summary:    Sailfish Browser
-Version:    2.0.51
+Version:    2.1.0
 Release:    1
 License:    MPLv2.0
 Url:        https://github.com/sailfishos/sailfish-browser
