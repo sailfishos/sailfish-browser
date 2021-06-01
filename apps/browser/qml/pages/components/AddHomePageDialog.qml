@@ -14,6 +14,7 @@ import Sailfish.Policy 1.0
 import org.nemomobile.configuration 1.0
 
 Dialog {
+    id: dialog
     canAccept: textField.text !== ""
     onAccepted: {
         homePageConfig.value = textField.text.trim() || "about:blank"
@@ -36,8 +37,7 @@ Dialog {
         placeholderText: qsTrId("settings_browser-la-website_address")
         label: placeholderText
         inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase | Qt.ImhUrlCharactersOnly
-        EnterKey.iconSource: "image://theme/icon-m-enter-close"
-        EnterKey.onClicked: focus = false
+        EnterKey.onClicked: dialog.accept()
     }
 
     ConfigurationValue {
