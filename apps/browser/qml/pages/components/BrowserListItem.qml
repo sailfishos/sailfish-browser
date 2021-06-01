@@ -47,6 +47,8 @@ ListItem {
 
             width: parent.width - icon.width
             anchors.verticalCenter: parent.verticalCenter
+            leftMargin: Theme.paddingMedium
+            rightMargin: 0
             labelColor: root.highlighted ? palette.highlightColor : palette.primaryColor
             valueColor: Theme.highlightColor
             opacity: 1.0

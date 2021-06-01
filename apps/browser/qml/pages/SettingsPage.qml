@@ -22,6 +22,8 @@ import "components"
 Page {
     id: page
 
+    readonly property int _textSwitchIconCenter: Math.round((permissionIcon.width - Theme.itemSizeExtraSmall) / 2.0)
+
     function removeProtocolTypeFromUri(uri) {
         if (uri.length === 0)
             return uri
@@ -57,7 +59,7 @@ Page {
                 label: qsTrId("settings_browser-la-home_page")
                 //% "Default"
                 value: homePageConfig.value === "about:blank" ? qsTrId("sailfish_browser-la-home_page_default") : removeProtocolTypeFromUri(homePageConfig.value)
-                leftMargin: 2*Theme.horizontalPageMargin + homePageIcon.width
+                leftMargin: Theme.horizontalPageMargin + homePageIcon.width + Theme.paddingMedium
                 contentHeight: Theme.itemSizeMedium
 
                 Icon {
@@ -97,7 +99,7 @@ Page {
                 //: Label for combobox that sets search engine used in browser
                 //% "Search with"
                 label: qsTrId("settings_browser-la-search_with")
-                leftMargin: 2*Theme.horizontalPageMargin + searchIcon.width
+                leftMargin: Theme.horizontalPageMargin + searchIcon.width + Theme.paddingMedium
                 contentHeight: Theme.itemSizeMedium
 
                 Icon {
@@ -152,6 +154,9 @@ Page {
                 description: qsTrId("settings_browser-la-close_all_tabs_description")
                 checked: closeAllTabsConfig.value
                 enabled: AccessPolicy.browserEnabled
+                // Margins adjusted to align with other items on the page
+                leftMargin: Theme.horizontalPageMargin + Theme.paddingLarge + _textSwitchIconCenter
+                _label.anchors.leftMargin: Theme.paddingMedium + _textSwitchIconCenter
 
                 onCheckedChanged: closeAllTabsConfig.value = checked
             }
@@ -167,6 +172,10 @@ Page {
                                  qsTrId("settings_browser-la-disable_javascript_description")
                 checked: WebEngineSettings.javascriptEnabled
                 enabled: AccessPolicy.browserEnabled
+                // Margins adjusted to align with other items on the page
+                leftMargin: Theme.horizontalPageMargin + Theme.paddingLarge + _textSwitchIconCenter
+                _label.anchors.leftMargin: Theme.paddingMedium + _textSwitchIconCenter
+
                 onCheckedChanged: WebEngineSettings.javascriptEnabled = checked;
             }
 
