@@ -13,7 +13,7 @@ import QtQuick 2.1
 import Sailfish.Silica 1.0
 import Sailfish.WebView.Popups 1.0
 
-UserPrompt {
+UserPromptDialog {
     property string url
     property string title
     property int index
