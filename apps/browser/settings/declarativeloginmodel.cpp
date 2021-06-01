@@ -21,6 +21,7 @@ static const auto LOGINS_ACTION = QStringLiteral("embedui:logins");
 DeclarativeLoginModel::DeclarativeLoginModel(QObject *parent)
     : QAbstractListModel(parent)
     , m_nextUid(0)
+    , m_populated(false)
 {
     SailfishOS::WebEngine *webEngine = SailfishOS::WebEngine::instance();
     webEngine->addObserver(ALL_LOGINS);
@@ -105,6 +106,11 @@ QHash<int, QByteArray> DeclarativeLoginModel::roleNames() const
     return roles;
 }
 
+bool DeclarativeLoginModel::populated() const
+{
+    return m_populated;
+}
+
 void DeclarativeLoginModel::handleRecvObserve(const QString &message, const QVariant &data)
 {
     if (message == ALL_LOGINS) {
@@ -127,6 +133,11 @@ void DeclarativeLoginModel::setLoginList(const QVariantList &data)
     }
     endResetModel();
     emit countChanged();
+
+    if (!m_populated) {
+        m_populated = true;
+        emit populatedChanged();
+    }
 }
 
 void DeclarativeLoginModel::requestLogins()

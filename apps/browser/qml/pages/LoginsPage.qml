@@ -135,10 +135,14 @@ Page {
             }
         }
 
+        PageBusyIndicator {
+            running: !loginModel.populated
+        }
+
         ViewPlaceholder {
             //% "Your saved logins and passwords show up here"
             text: qsTrId("sailfish_browser-la-logins-none")
-            enabled: loginModel.count === 0
+            enabled: loginModel.count === 0 && loginModel.populated
         }
 
         VerticalScrollDecorator {
