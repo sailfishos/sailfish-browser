@@ -24,6 +24,7 @@ Item {
     readonly property bool secondaryTools: state === _doubleToolBar
     readonly property bool certOverlay: state === _certOverlay
 
+    property bool opened: isOpenedState()
     property bool _immediate
     property bool _midPos
 
@@ -65,6 +66,10 @@ Item {
         updateState(_noOverlay)
     }
 
+    function isOpenedState() {
+        return state !== _fullscreenOverlay && state !== _fullscreenWebPage && state !== _startPage && state !== _noOverlay
+    }
+
     // Wrapper from updating the state. Handy for debugging.
     function updateState(newState, immediate) {
         _immediate = immediate || false
@@ -101,6 +106,9 @@ Item {
         }
         if ((state !== _chromeVisible && state !== _fullscreenWebPage && state !== _doubleToolBar) || _midPos) {
             atBottom = false
+        }
+        if (!isOpenedState()) {
+            opened = false
         }
         _midPos = false
 
@@ -232,6 +240,9 @@ Item {
                         // Target reached, clear it.
                         if (atBottom || atTop) {
                             direction = ""
+                        }
+                        if (isOpenedState()) {
+                            opened = true
                         }
                     }
                 }

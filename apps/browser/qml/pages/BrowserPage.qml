@@ -151,7 +151,7 @@ Page {
         fullscreenHeight: portrait ? Screen.height : Screen.width
         portrait: browserPage.isPortrait
         maxLiveTabCount: 3
-        toolbarHeight: overlay.toolBar.rowHeight
+        toolbarHeight: overlay.animator.opened ? overlay.toolBar.rowHeight : 0
         rotationHandler: browserPage
         imOpened: virtualKeyboardObserver.opened
         canShowSelectionMarkers: !orientationFader.waitForWebContentOrientationChanged

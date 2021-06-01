@@ -60,8 +60,6 @@ public:
     bool initialLoadHasHappened() const;
     void setInitialLoadHasHappened();
 
-    void timerEvent(QTimerEvent *);
-
     Q_INVOKABLE void loadTab(const QString &newUrl, bool force);
     Q_INVOKABLE void grabToFile(const QSize& size);
     Q_INVOKABLE void grabThumbnail(const QSize& size);
@@ -94,7 +92,6 @@ private slots:
     void grabWritten();
     void thumbnailReady();
     void updateViewMargins();
-    void resetViewMargins();
 
 private:
     QString saveToFile(QImage image);
@@ -122,7 +119,6 @@ private:
     qreal m_fullScreenHeight;
     qreal m_toolbarHeight;
 
-    int m_marginChangeThrottleTimer;
     QMozSecurity m_security;
 };
 
