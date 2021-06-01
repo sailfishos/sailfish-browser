@@ -24,7 +24,7 @@ BackgroundItem {
     Item {
         id: iconContainer
 
-        width: iconWidth
+        width: iconWidth + horizontalOffset
         height: parent.height
 
         Icon {
