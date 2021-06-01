@@ -284,7 +284,7 @@ Page {
     Browser.Overlay {
         id: overlay
 
-        active: browserPage.status == PageStatus.Active
+        active: browserPage.status == PageStatus.Active &&  webView.tabModel.loaded
         webView: webView
         historyModel: historyModel
         browserPage: browserPage
