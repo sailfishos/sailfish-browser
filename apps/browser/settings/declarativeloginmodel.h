@@ -31,7 +31,8 @@ public:
         UidRole = Qt::UserRole,
         HostnameRole,
         UsernameRole,
-        PasswordRole
+        PasswordRole,
+        FavIconRole
     };
 
     DeclarativeLoginModel(QObject *parent = nullptr);

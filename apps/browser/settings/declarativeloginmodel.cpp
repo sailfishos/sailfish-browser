@@ -12,6 +12,7 @@
 #include <QPair>
 
 #include "webengine.h"
+#include "faviconmanager.h"
 
 #include "declarativeloginmodel.h"
 
@@ -85,6 +86,8 @@ QVariant DeclarativeLoginModel::data(const QModelIndex &index, int role) const
         return m_logins.at(index.row()).second.username();
     case PasswordRole:
         return m_logins.at(index.row()).second.password();
+    case FavIconRole:
+        return FaviconManager::instance()->get("logins", m_logins.at(index.row()).second.hostname());
     default:
         return QVariant();
     }
@@ -103,6 +106,7 @@ QHash<int, QByteArray> DeclarativeLoginModel::roleNames() const
     roles[HostnameRole] = "hostname";
     roles[UsernameRole] = "username";
     roles[PasswordRole] = "password";
+    roles[FavIconRole] = "favicon";
     return roles;
 }
 
@@ -172,6 +176,18 @@ void DeclarativeLoginModel::remove(int uid)
 
     endRemoveRows();
     emit countChanged();
+
+    // Check to see whether the list still contains this hostname
+    bool containsHostname = false;
+    QList<UidLoginInfo>::ConstIterator iter = m_logins.constBegin();
+    while (!containsHostname && iter != m_logins.constEnd()) {
+        containsHostname = ((*iter).second.hostname() == login.hostname());
+        ++iter;
+    }
+    if (!containsHostname) {
+        // This is the last of its kind, so we can remove its icon
+        FaviconManager::instance()->remove("logins", login.hostname());
+    }
 }
 
 bool DeclarativeLoginModel::canModify(int uid, const QString &username, const QString &password) const

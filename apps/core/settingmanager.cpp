@@ -11,6 +11,7 @@
 #include "settingmanager.h"
 #include "dbmanager.h"
 #include "opensearchconfigs.h"
+#include "faviconmanager.h"
 
 #include <MGConfItem>
 #include <QVariant>
@@ -121,6 +122,7 @@ bool SettingManager::clearPasswords()
     bool actionNeeded = m_clearPasswordsConfItem->value(false).toBool();
     if (actionNeeded) {
         SailfishOS::WebEngine::instance()->notifyObservers(QString("clear-private-data"), QString("passwords"));
+        FaviconManager::instance()->clear("logins");
         m_clearPasswordsConfItem->set(false);
     }
     return actionNeeded;

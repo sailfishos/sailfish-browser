@@ -37,6 +37,7 @@
 #include "datafetcher.h"
 #include "inputregion.h"
 #include "searchenginemodel.h"
+#include "faviconmanager.h"
 
 #ifdef HAS_BOOSTER
 #include <MDeclarativeCache>
@@ -46,6 +47,11 @@ namespace {
 static QObject *search_model_factory(QQmlEngine *, QJSEngine *)
 {
     return new SearchEngineModel;
+}
+
+static QObject *faviconmanager_factory(QQmlEngine *, QJSEngine *)
+{
+    return FaviconManager::instance();
 }
 }
 
@@ -139,6 +145,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
         qmlRegisterType<DeclarativeLoginModel>(uri, 1, 0, "LoginModel");
         qmlRegisterType<LoginFilterModel>(uri, 1, 0, "LoginFilterModel");
     }
+    qmlRegisterSingletonType<FaviconManager>(uri, 1, 0, "FaviconManager", faviconmanager_factory);
     qmlRegisterUncreatableType<DownloadStatus>(uri, 1, 0, "DownloadStatus", "");
     qmlRegisterType<DeclarativeWebContainer>(uri, 1, 0, "WebContainer");
     qmlRegisterType<DeclarativeWebPage>(uri, 1, 0, "WebPage");
