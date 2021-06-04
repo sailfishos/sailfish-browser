@@ -40,6 +40,8 @@ class DeclarativeWebContainer : public QWindow, public QQmlParserStatus, protect
     Q_PROPERTY(QQuickItem *rotationHandler MEMBER m_rotationHandler NOTIFY rotationHandlerChanged FINAL)
     Q_PROPERTY(DeclarativeWebPage *contentItem READ webPage NOTIFY contentItemChanged FINAL)
     Q_PROPERTY(DeclarativeTabModel *tabModel READ tabModel NOTIFY tabModelChanged FINAL)
+    Q_PROPERTY(DeclarativeTabModel *persistentTabModel READ persistentTabModel CONSTANT)
+    Q_PROPERTY(DeclarativeTabModel *privateTabModel READ privateTabModel CONSTANT)
     Q_PROPERTY(bool completed READ completed NOTIFY completedChanged FINAL)
     Q_PROPERTY(bool enabled MEMBER m_enabled NOTIFY enabledChanged FINAL)
     Q_PROPERTY(bool foreground READ foreground WRITE setForeground NOTIFY foregroundChanged FINAL)
@@ -88,6 +90,8 @@ public:
     QMozWindow *mozWindow() const;
 
     DeclarativeTabModel *tabModel() const;
+    DeclarativeTabModel *persistentTabModel() const;
+    DeclarativeTabModel *privateTabModel() const;
 
     bool completed() const;
 

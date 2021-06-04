@@ -622,9 +622,12 @@ Shared.Background {
             Browser.TabView {
                 id: tabViewItem
 
-                model: webView.tabModel
+                tabModel: webView.tabModel
                 portrait: tabPage.isPortrait
                 privateMode: webView.privateMode
+
+                scaledPortraitHeight: toolBar.scaledPortraitHeight
+                scaledLandscapeHeight: toolBar.scaledLandscapeHeight
 
                 onHide: pageStack.pop()
 
@@ -667,16 +670,10 @@ Shared.Background {
                 }
 
                 Component.onCompleted: {
-                    positionViewAtIndex(webView.tabModel.activeTabIndex, ListView.Center)
                     window.setBrowserCover(webView.tabModel)
                 }
 
                 Component.onDestruction: window.setBrowserCover(webView.tabModel)
-            }
-
-            Component.onCompleted: {
-                // order of completion of this an tabview is undefined. reposition on both.
-                tabViewItem.positionViewAtIndex(webView.tabModel.activeTabIndex, ListView.Center)
             }
         }
     }
