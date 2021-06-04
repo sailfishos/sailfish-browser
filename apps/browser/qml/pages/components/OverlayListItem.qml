@@ -39,6 +39,7 @@ BackgroundItem {
             }
             highlighted: root.highlighted
             color: Theme.primaryColor
+            opacity: root.enabled ? 1.0 : Theme.opacityLow
         }
     }
     Label {
@@ -52,6 +53,7 @@ BackgroundItem {
             verticalCenter: parent.verticalCenter
         }
         color: root.highlighted ? Theme.highlightColor : Theme.primaryColor
+        opacity: root.enabled ? 1.0 : Theme.opacityLow
         truncationMode: TruncationMode.Fade
 
         Behavior on opacity { FadeAnimation {} }

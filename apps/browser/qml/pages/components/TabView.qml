@@ -14,11 +14,9 @@ import Sailfish.Silica 1.0
 import Sailfish.Silica.private 1.0 as Private
 import Sailfish.Browser 1.0
 import org.nemomobile.configuration 1.0
-import "." as Browser
-import "../../shared" as Shared
 
-Item {
-    id: root
+SilicaControl {
+    id: tabView
 
     property bool portrait
     property bool privateMode
@@ -35,9 +33,7 @@ Item {
     signal closeAllPending
 
     property var _remorsePopup
-
-    // TODO: Delete height calculation for Pulley Menu after adding popup menu
-    readonly property int _pulleyMenuHeight: 7 * Theme.pixelRatio
+    property bool _closingAllTabs
 
     anchors.fill: parent
 
@@ -58,10 +54,7 @@ Item {
             }
 
             Rectangle {
-                anchors {
-                    fill: parent
-                    topMargin: _pulleyMenuHeight
-                }
+                anchors.fill: parent
 
                 z: -100
                 color: Theme.colorScheme == Theme.LightOnDark ? "black" : "white"
@@ -79,33 +72,36 @@ Item {
 
             TabGridView {
                 id: _tabView
-                privateMode: false
-                portrait: root.portrait
+
+                portrait: tabView.portrait
                 model: tabItem.privateMode ? webView.privateTabModel : webView.persistentTabModel
                 header: Item {
                     width: 1
-                    height: tabs.tabBarHeight + Theme.paddingLarge
+                    height: Theme.paddingLarge
                 }
 
-                onHide: root.hide()
-                onEnterNewTabUrl: root.enterNewTabUrl()
-                onActivateTab: root.activateTab(index)
-                onCloseTab: root.closeTab(index)
-                onCloseAll: root.closeAll()
-                onCloseAllCanceled: root.closeAllCanceled()
-                onCloseAllPending: root.closeAllPending()
+                onHide: tabView.hide()
+                onEnterNewTabUrl: tabView.enterNewTabUrl()
+                onActivateTab: tabView.activateTab(index)
+                onCloseTab: tabView.closeTab(index)
+                onCloseAll: tabView.closeAll()
+                onCloseAllCanceled: tabView.closeAllCanceled()
+                onCloseAllPending: tabView.closeAllPending()
             }
+
             onIsCurrentItemChanged: {
                 if (isCurrentItem) {
                     _remorsePopup = Qt.binding(function() { return _tabView.remorsePopup })
+                    _closingAllTabs = Qt.binding(function() { return _tabView.closingAllTabs })
                 }
             }
 
-            Rectangle {
-                color: Theme.colorScheme == Theme.LightOnDark ? "black" : "white"
-                width: parent.width
-                height: Math.max(0, _pulleyMenuHeight - y)
-                y: Math.max(0, _pulleyMenuHeight - _tabView.contentY + _tabView.originY)
+            Connections {
+                target: popupMenu
+                onCloseAllTabs: {
+                    if (isCurrentItem)
+                        _tabView.closeAllTabs()
+                }
             }
 
             PrivateModeTexture {
@@ -147,7 +143,7 @@ Item {
                 visible: false
                 Label {
                     anchors.centerIn: parent
-                    text: webView.persistentTabModel.count
+                    text: !privateMode && _closingAllTabs ? 0 : webView.persistentTabModel.count
                     font.pixelSize: Theme.fontSizeExtraSmall
                     font.bold: true
                     onTextChanged: parent.updateGrabImage()
@@ -157,6 +153,7 @@ Item {
             Item {
                 id: privateIcon
                 property string grabIcon
+                property bool isEmptyIcon: (privateMode && _closingAllTabs) || webView.privateTabModel.count === 0
 
                 function updateGrabImage() {
                     privateIcon.grabToImage(function(result) {
@@ -170,13 +167,13 @@ Item {
                 Image {
                     id: _privateIcon
 
-                    source: webView.privateTabModel.count > 0 ? "image://theme/icon-m-incognito-selected" : "image://theme/icon-m-incognito"
+                    source: privateIcon.isEmptyIcon ? "image://theme/icon-m-incognito" : "image://theme/icon-m-incognito-selected"
                     visible: false
                 }
 
                 Label {
                     anchors.fill: _privateIcon
-                    text: webView.privateTabModel.count > 0 ? webView.privateTabModel.count : ""
+                    text: !privateIcon.isEmptyIcon ? webView.privateTabModel.count : ""
                     font.pixelSize: Theme.fontSizeExtraSmall
                     font.bold: true
                     horizontalAlignment: Qt.AlignHCenter
@@ -203,10 +200,95 @@ Item {
 
         ]
     }
+
     TabsToolBar {
         id: tabsToolBar
         anchors.bottom: parent.bottom
         onBack: pageStack.pop()
-        onEnterNewTabUrl: root.enterNewTabUrl()
+        onEnterNewTabUrl: tabView.enterNewTabUrl()
+        onOpenMenu: popupMenu.active = true
+    }
+
+    PopUpMenu {
+        id: popupMenu
+
+        signal closeAllTabs
+
+        anchors.fill: parent
+        active: false
+
+        menuItem: Component {
+            Item {
+                id: menuItem_
+                readonly property int iconWidth: Theme.iconSizeMedium + Theme.paddingLarge
+                readonly property int verticalPadding: 3 * Theme.paddingSmall
+
+                height: content.height + verticalPadding * 2
+
+                Column {
+                    id: content
+
+                    y: verticalPadding
+                    width: parent.width
+                    spacing: Theme.paddingLarge
+
+                    Column {
+                        width: parent.width
+
+                        OverlayListItem {
+                            height: Theme.itemSizeSmall
+                            iconWidth: menuItem_.iconWidth
+                            iconSource: "image://theme/icon-m-tab-new"
+                            enabled: !_closingAllTabs
+                            //% "New tab"
+                            text: qsTrId("sailfish_browser-la-new_tab")
+                            onClicked: {
+                                popupMenu.visible = false
+                                // override to block animation
+                                tabs.currentIndex = privateMode ? 1 : 0
+                                tabView.privateMode = false
+                                tabView.enterNewTabUrl()
+                            }
+                        }
+
+                        OverlayListItem {
+                            height: Theme.itemSizeSmall
+                            iconWidth: menuItem_.iconWidth
+                            iconSource: "image://theme/icon-m-incognito-new"
+                            enabled: !_closingAllTabs
+                            //% "New private tab"
+                            text: qsTrId("sailfish_browser-la-new_private_tab")
+                            onClicked: {
+                                popupMenu.visible = false
+                                // override to block animation
+                                tabs.currentIndex = privateMode ? 1 : 0
+                                tabView.privateMode = true
+                                tabView.enterNewTabUrl()
+                            }
+                        }
+
+                        OverlayListItem {
+                            height: Theme.itemSizeSmall
+                            iconWidth: menuItem_.iconWidth
+                            iconSource: "image://theme/icon-m-tab-close"
+                            enabled: showCloseAllAction.value && webView.tabModel.count && !_closingAllTabs
+                            //% "Close all tabs"
+                            text: qsTrId("sailfish_browser-me-close_all")
+                            onClicked: {
+                                popupMenu.active = false
+                                popupMenu.closeAllTabs()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        onClosed: active = false
+    }
+
+    ConfigurationValue {
+        id: showCloseAllAction
+        key: "/apps/sailfish-browser/settings/show_close_all"
+        defaultValue: true
     }
 }
