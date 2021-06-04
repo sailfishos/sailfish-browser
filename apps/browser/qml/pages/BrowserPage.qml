@@ -326,12 +326,8 @@ Page {
     Browser.PopUpMenu {
         id: secondaryBar
 
-        anchors {
-            right: parent.right
-            rightMargin: Theme.paddingMedium
-            bottom: parent.bottom
-            bottomMargin: Theme.paddingMedium
-        }
+        width: parent.width
+        height: parent.height
 
         active: overlay.toolBar.secondaryToolsActive
         menuItem: Component {
@@ -343,10 +339,9 @@ Page {
 
         footer: Component {
            Browser.PopUpMenuFooter {
-               iconWidth: overlay.toolBar.iconWidth
-               height: isPortrait
-                       ? overlay.toolBar.scaledPortraitHeight - secondaryBar.anchors.bottomMargin
-                       : Theme.itemSizeMedium
+               height: (isPortrait
+                       ? overlay.toolBar.scaledPortraitHeight
+                       : overlay.toolBar.scaledLandscapeHeight) - secondaryBar.margin
            }
         }
 

@@ -8,35 +8,27 @@
 
 import QtQuick 2.2
 import Sailfish.Silica 1.0
-import QtGraphicalEffects 1.0
 import "../../shared" as Shared
 
 Rectangle {
     id: root
-    property int iconWidth
-    property int toolBarPortraitHeight
+
     readonly property real overlayOpacity: 0.15
 
-    height: Theme.itemSizeMedium
-    implicitWidth: content.width + Theme.paddingMedium * 2
-    color: Theme.colorScheme === Theme.LightOnDark ? "black" : "white"
-
-    ColorOverlay {
-        anchors.fill: parent
-        source: parent
-        color: Theme.primaryColor
-        opacity: overlayOpacity
-    }
+    height: Theme.itemSizeMedium - Theme.paddingMedium
+    implicitWidth: content.width
+    color: Qt.tint(
+               Theme.colorScheme === Theme.LightOnDark ? "black" : "white",
+               Theme.rgba(Theme.primaryColor, root.overlayOpacity))
 
     Row {
         id: content
-        height: parent.height
-        spacing: Theme.paddingLarge + Theme.paddingSmall + Theme.paddingSmall / 2
-        anchors.centerIn: parent
+
+        height: root.height
 
         Shared.IconButton {
             id: forwardButton
-            width: Theme.itemSizeSmall
+            width: Theme.itemSizeLarge
             icon.source: "image://theme/icon-m-forward"
             icon.opacity: enabled ? 1.0 : Theme.opacityLow
             enabled: webView.canGoForward
@@ -48,7 +40,7 @@ Rectangle {
 
         Shared.IconButton {
             id: shareButton
-            width: Theme.itemSizeSmall
+            width: Theme.itemSizeLarge
             icon.source: "image://theme/icon-m-share"
             icon.opacity: enabled ? 1.0 : Theme.opacityLow
             enabled: webView.contentItem
@@ -59,7 +51,7 @@ Rectangle {
         }
 
         Shared.IconButton {
-            width: Theme.itemSizeSmall
+            width: Theme.itemSizeLarge
             icon.source: overlay.toolBar.bookmarked ? "image://theme/icon-m-favorite-selected" : "image://theme/icon-m-favorite"
             icon.opacity: enabled ? 1.0 : Theme.opacityLow
             enabled: webView.contentItem
@@ -74,7 +66,7 @@ Rectangle {
 
         Shared.IconButton {
             id: reloadButton
-            width: Theme.itemSizeSmall
+            width: Theme.itemSizeLarge
             icon.source: webView.loading ? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
             icon.opacity: enabled ? 1.0 : Theme.opacityLow
             enabled: webView.contentItem
