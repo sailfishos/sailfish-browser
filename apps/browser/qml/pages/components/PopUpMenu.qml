@@ -30,44 +30,63 @@ SilicaControl {
         width: popUpMenu.width
         height: popUpMenu.height
 
-        animating: menuFadeAnimation.running
+        animating: menuAnimation.running
 
+        active: false
         source: menuComponent
 
         onAnimate: {
             if (item) {
-                item.opacity = 0
-                menuFadeAnimation.target = item
-                menuFadeAnimation.from = 0
-                menuFadeAnimation.to = 1
-                menuFadeAnimation.restart()
+                item.percentageClosed = 1
+                menuAnimation.target = item
+                menuAnimation.from = item.percentageClosed
+                menuAnimation.to = 0
+                menuAnimation.restart()
             } else if (replacedItem) {
-                menuFadeAnimation.target = replacedItem
-                menuFadeAnimation.from = 1
-                menuFadeAnimation.to = 0
-                menuFadeAnimation.restart()
+                menuAnimation.target = replacedItem
+                menuAnimation.from = 0
+                menuAnimation.to = 1
+                menuAnimation.restart()
             }
         }
     }
 
-    FadeAnimation {
-        id: menuFadeAnimation
+    NumberAnimation {
+        id: menuAnimation
 
         running: false
+        duration: 200
+        easing.type: Easing.InOutQuad
+        property: "percentageClosed"
     }
 
     Component {
         id: menuComponent
 
         Item {
+            id: menuItem
+
+            property real percentageClosed
+            readonly property real menuTop: Math.max(0, contentLoader.y - menuFlickable.contentY)
+
             width: popUpMenu.width
             height: popUpMenu.height
 
             SilicaFlickable {
                 id: menuFlickable
 
-                width: popUpMenu.width
-                height: popUpMenu.height
+                x: popUpMenu.width - width - popUpMenu.margin
+                y: popUpMenu.height
+                        - height
+                        - popUpMenu.margin
+                        + (menuItem.percentageClosed * (height - menuItem.menuTop + popUpMenu.margin))
+
+                width: Math.max(
+                            Theme.paddingLarge * widthRatio,
+                            footerLoader.item ? footerLoader.item.implicitWidth : 0)
+                height: Math.min(
+                            popUpMenu.height - (2 * popUpMenu.margin),
+                            contentLoader.height + footerLoader.height)
 
                 contentHeight: contentLoader.y + contentLoader.height + footerLoader.height
 
@@ -76,19 +95,16 @@ SilicaControl {
                 Private.AnimatedLoader {
                     id: contentLoader
 
-                    x: menuFlickable.width - width - popUpMenu.margin
-                    y: Math.max(popUpMenu.margin, footerLoader.y - popUpMenu.margin - (Screen.sizeCategory > Screen.Medium
+                    y: Math.max(0, footerLoader.y - height - (Screen.sizeCategory > Screen.Medium
                                 ? contentLoader.height
-                                : Math.min(contentLoader.height, isPortrait
-                                    ? Theme.paddingLarge * popUpMenu.heightRatio
-                                    : Screen.width - Theme.paddingMedium * 2)))
+                                : Math.min(contentLoader.height, Theme.paddingLarge * popUpMenu.heightRatio)))
 
-                    width: footerLoader.width
+                    width: menuFlickable.width
                     height: item ? item.height : 0
                     source: popUpMenu.menuItem
 
                     onInitializeItem: {
-                        item.width = Qt.binding(function() { return footerLoader.width })
+                        item.width = Qt.binding(function() { return menuFlickable.width })
                     }
                 }
 
@@ -96,8 +112,7 @@ SilicaControl {
                     Rectangle {
                         id: background
 
-                        x: contentLoader.x
-                        y: Math.max(popUpMenu.margin, contentLoader.y - menuFlickable.contentY)
+                        y: Math.max(0, contentLoader.y - menuFlickable.contentY)
                         z: -1
                         width: footerLoader.width
                         height: footerLoader.y - y
@@ -107,8 +122,7 @@ SilicaControl {
                                     Theme.rgba(popUpMenu.palette.primaryColor, Theme.opacityFaint))
                     },
                     Item {
-                        x: contentLoader.x
-                        y: Math.max(popUpMenu.margin, contentLoader.y - menuFlickable.contentY)
+                        y: background.y
                         width: footerLoader.width
                         height: footerLoader.y - y
 
@@ -123,16 +137,15 @@ SilicaControl {
                     Private.AnimatedLoader {
                         id: footerLoader
 
-                        x: menuFlickable.width - width - popUpMenu.margin
-                        y: menuFlickable.height - height - popUpMenu.margin
+                        y: menuFlickable.height - height
 
-                        width: Math.max(Theme.paddingLarge * widthRatio, item ? item.implicitWidth : 0)
+                        width: menuFlickable.width
                         height: item ? item.height: 0
 
                         source: popUpMenu.footer
 
                         onInitializeItem: {
-                            item.width = Qt.binding(function() { return footerLoader.width })
+                            item.width = Qt.binding(function() { return menuFlickable.width })
                         }
                     }
                 ]
@@ -145,8 +158,8 @@ SilicaControl {
             ShaderEffectSource {
                 id: menuShaderSource
 
-                width: popUpMenu.width
-                height: popUpMenu.height
+                width: menuFlickable.width
+                height: menuFlickable.height
 
                 sourceItem: menuFlickable
                 hideSource: true
@@ -156,21 +169,48 @@ SilicaControl {
             Background {
                 id: menuShaderItem
 
-                readonly property color backgroundColor: Qt.tint(
-                        popUpMenu.palette.colorScheme === Theme.LightOnDark ? "black" : "white",
-                        Theme.rgba(popUpMenu.palette.primaryColor, Theme.opacityFaint))
+                // The ShaderEffectSourceItem has its size fixed to the maximum open size of the
+                // menu, this is so each frame of animation doesn't have to allocate a new texture
+                // of a different size when the menu expands. This matrix transforms the normalized
+                // item rectangle coordinates to the visible sub rectangle of the source item.
+                readonly property matrix4x4 menuSourceMatrix: Qt.matrix4x4(
+                        1, 0, 0, 0,
+                        0, height / menuFlickable.height, 0, 0,
+                        0, 0, 1, 0,
+                        0, menuItem.menuTop / menuFlickable.height, 0, 1)
 
-                x: contentLoader.x
-                y: Math.max(popUpMenu.margin, contentLoader.y - menuFlickable.contentY)
-                width: footerLoader.width
-                height: footerLoader.y + footerLoader.height - y
+                x: menuFlickable.x
+                y: menuFlickable.y + menuItem.menuTop
+                width: menuFlickable.width
+                height: menuFlickable.height - menuItem.menuTop
 
                 radius: popUpMenu.cornerRadius
                 sourceItem: menuShaderSource
-                transformItem: __silica_applicationwindow_instance._rotatingItem
                 fillMode: Background.Stretch
 
                 material: Material {
+                    vertexShader: "
+                        attribute highp vec4 position;
+                        attribute highp vec2 normalizedPosition;
+
+                        uniform highp mat4 positionMatrix;
+
+                        uniform highp mat4 menuSourceMatrix;
+
+                        varying highp vec2 sourceCoord;
+
+                        void backgroundMain() {
+                            gl_Position = positionMatrix * position;
+                            sourceCoord = (menuSourceMatrix * vec4(normalizedPosition, 0, 1)).xy;
+                        }"
+                    fragmentShader: "
+                        uniform lowp sampler2D sourceTexture;
+
+                        varying highp vec2 sourceCoord;
+
+                        void backgroundMain() {
+                            gl_FragColor = texture2D(sourceTexture, sourceCoord);
+                        }"
                 }
             }
 
