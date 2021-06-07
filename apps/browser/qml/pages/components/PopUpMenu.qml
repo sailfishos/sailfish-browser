@@ -67,7 +67,7 @@ SilicaControl {
             id: menuItem
 
             property real percentageClosed
-            readonly property real menuTop: Math.max(0, contentLoader.y - menuFlickable.contentY)
+            readonly property real menuTop: Math.max(0, headerItem.y - menuFlickable.contentY)
 
             width: popUpMenu.width
             height: popUpMenu.height
@@ -86,18 +86,27 @@ SilicaControl {
                             footerLoader.item ? footerLoader.item.implicitWidth : 0)
                 height: Math.min(
                             popUpMenu.height - (2 * popUpMenu.margin),
-                            contentLoader.height + footerLoader.height)
+                            headerItem.height + contentLoader.height + footerLoader.height)
 
                 contentHeight: contentLoader.y + contentLoader.height + footerLoader.height
 
                 interactive: popUpMenu.active   // Don't handle mouse events during fade out.
 
-                Private.AnimatedLoader {
-                    id: contentLoader
+                Item {
+                    id: headerItem
 
                     y: Math.max(0, footerLoader.y - height - (Screen.sizeCategory > Screen.Medium
                                 ? contentLoader.height
                                 : Math.min(contentLoader.height, Theme.paddingLarge * popUpMenu.heightRatio)))
+
+                    width: menuFlickable.width
+                    height: Theme.paddingLarge
+                }
+
+                Private.AnimatedLoader {
+                    id: contentLoader
+
+                    y: headerItem.y + headerItem.height
 
                     width: menuFlickable.width
                     height: item ? item.height : 0
@@ -112,7 +121,7 @@ SilicaControl {
                     Rectangle {
                         id: background
 
-                        y: Math.max(0, contentLoader.y - menuFlickable.contentY)
+                        y: Math.max(0, headerItem.y - menuFlickable.contentY)
                         z: -1
                         width: footerLoader.width
                         height: footerLoader.y - y
@@ -122,13 +131,43 @@ SilicaControl {
                                     Theme.rgba(popUpMenu.palette.primaryColor, Theme.opacityFaint))
                     },
                     Item {
-                        y: background.y
+                        id: decoratorParent
+
+                        y: background.y + headerItem.height
                         width: footerLoader.width
                         height: footerLoader.y - y
 
                         VerticalScrollDecorator {
                             _forcedParent: parent
                             flickable: menuFlickable
+
+                            _sizeRatio: decoratorParent.height / (menuFlickable.contentHeight - contentLoader.y - footerLoader.height)
+                            y: menuFlickable.contentHeight > menuFlickable.height + headerItem.y
+                                    ? ((decoratorParent.height - height)
+                                        * Math.max(0, menuFlickable.contentY - headerItem.y)
+                                        / (menuFlickable.contentHeight - menuFlickable.height - headerItem.y))
+                                    : 0
+                        }
+                    },
+                    Rectangle {
+                        y: Math.max(0, headerItem.y - menuFlickable.contentY)
+                        width: headerItem.width
+                        height: headerItem.height + Theme.paddingMedium
+
+                        color: background.color
+
+                        Rectangle {
+                            x: (headerItem.width - width) / 2
+                            y: (headerItem.height - height)
+
+                            width: Theme.itemSizeLarge
+                            height: Theme.paddingSmall
+
+                            radius: height / 2
+
+                            color: popUpMenu.palette.primaryColor
+
+                            opacity: menuFlickable.contentY < headerItem.y ? 1 : Theme.opacityLow
                         }
                     },
                     MouseArea {
