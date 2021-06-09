@@ -139,10 +139,26 @@ Column {
             Browser.TabButton {
                 id: tabs
 
-                icon.source: webView.privateMode ? "image://theme/icon-m-incognito" : "image://theme/icon-m-tabs"
+                icon.source: {
+                    if (webView.privateMode) {
+                        return webView.tabModel.count > 0 ? "image://theme/icon-m-incognito-selected"
+                                                          : "image://theme/icon-m-incognito"
+                    } else {
+                        return "image://theme/icon-m-tabs"
+                    }
+                }
+
+                label.color: {
+                    if (webView.privateMode) {
+                        return Theme.overlayBackgroundColor ? Theme.overlayBackgroundColor : "black"
+                    } else {
+                        return highlighted ? Theme.highlightColor : Theme.primaryColor
+                    }
+                }
+
                 opacity: findInPageActive ? 0.0 : 1.0
                 horizontalOffset: toolBarRow.horizontalOffset
-                label.text: webView.tabModel.count
+                label.text: webView.privateMode && (webView.tabModel.count === 0) ? "" : webView.tabModel.count
                 onTapped: toolBarRow.showTabs()
 
                 RotationAnimator {
