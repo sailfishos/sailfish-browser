@@ -158,7 +158,8 @@ Item {
 
                 onClicked: {
                     overlay.animator.showChrome()
-                    pageStack.push("../HistoryPage.qml", { model: overlay.historyModel })
+                    var historyPage = pageStack.push("../HistoryPage.qml", { model: overlay.historyModel })
+                    historyPage.loadPage.connect(overlay.toolBar.loadPage)
                 }
             }
 
