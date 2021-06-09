@@ -29,7 +29,8 @@ public:
     enum UrlRoles {
         UrlRole = Qt::UserRole + 1,
         TitleRole,
-        DateRole
+        DateRole,
+        FaviconRole
     };
 
     Q_INVOKABLE void clear();
