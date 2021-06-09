@@ -179,6 +179,8 @@ SilicaFlickable {
                                         return "image://theme/icon-m-browser-cookies" + (blocked ? "-template" : "")
                                     } else if (model.type === "popup") {
                                         return "image://theme/icon-m-browser-popup" + (blocked ? "-template" : "")
+                                    } else if (model.type === "microphone") {
+                                        return "image://theme/icon-m-browser-microphone" + (blocked ? "-template" : "")
                                     }
                                 }
                                 highlighted: permissionArea.pressed
