@@ -140,7 +140,7 @@ Column {
                 id: tabs
 
                 icon.source: webView.privateMode ? "image://theme/icon-m-incognito" : "image://theme/icon-m-tabs"
-                opacity: secondaryToolsActive || findInPageActive ? 0.0 : 1.0
+                opacity: findInPageActive ? 0.0 : 1.0
                 horizontalOffset: toolBarRow.horizontalOffset
                 label.text: webView.tabModel.count
                 onTapped: toolBarRow.showTabs()
@@ -169,14 +169,6 @@ Column {
                         rotationAnimator.restart()
                     }
                 }
-            }
-
-            Shared.IconButton {
-                opacity: secondaryToolsActive && !findInPageActive ? 1.0 : 0.0
-                icon.source: "image://theme/icon-m-tab-close"
-                icon.anchors.horizontalCenterOffset: toolBarRow.horizontalOffset
-                active: webView.tabModel.count > 0
-                onTapped: closeActiveTab()
             }
 
             Shared.IconButton {
