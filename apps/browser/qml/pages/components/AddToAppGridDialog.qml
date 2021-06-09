@@ -7,7 +7,7 @@ BookmarkEditDialog {
     property QtObject bookmarkWriterParent
 
     //% "Add to App Grid"
-    title: qsTrId("sailfish_browser-he-add_bookmark_to_launcher")
+    description: qsTrId("sailfish_browser-he-add_bookmark_to_launcher")
     canAccept: editedUrl !== "" && editedTitle !== ""
     onAccepted: {
         if (desktopBookmarkWriter) {
