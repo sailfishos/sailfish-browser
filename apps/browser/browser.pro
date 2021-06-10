@@ -20,7 +20,10 @@ packagesExist(qdeclarative5-boostable) {
 }
 
 # Translations
-TS_PATH = $$PWD $$PWD/../shared
+TS_PATH = $$PWD
+# Shared translations in browser.pro should be skipped from other subprojects
+# to avoid duplicated ids
+TS_PATH += $$PWD/../shared
 TS_FILE = $$OUT_PWD/sailfish-browser.ts
 EE_QM = $$OUT_PWD/sailfish-browser_eng_en.qm
 include(../../translations/translations.pri)

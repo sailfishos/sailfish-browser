@@ -19,7 +19,11 @@ packagesExist(qdeclarative5-boostable) {
     warning("qdeclarative5-boostable not available; startup times will be slower")
 }
 
-TS_PATH = $$PWD $$PWD/../shared
+# Translations
+TS_PATH = $$PWD
+# Shared translations in browser.pro should be skipped from other subprojects
+# to avoid duplicated ids
+#TS_PATH += $$PWD/../shared
 TS_FILE = $$OUT_PWD/sailfish-captiveportal.ts
 EE_QM = $$OUT_PWD/sailfish-captiveportal_eng_en.qm
 include(../../translations/translations.pri)
