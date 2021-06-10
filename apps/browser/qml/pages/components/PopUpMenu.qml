@@ -7,90 +7,179 @@
  */
 
 import QtQuick 2.2
-import QtGraphicalEffects 1.0
 import Sailfish.Silica 1.0
+import Sailfish.Silica.Background 1.0
+import Sailfish.Silica.private 1.0 as Private
 
-Item {
+SilicaControl {
     id: popUpMenu
 
     property var menuItem
     property var footer
-    property bool active
+    property alias active: menuLoader.active
+    property int margin: Theme.paddingMedium
     readonly property int cornerRadius: 12
     readonly property int widthRatio: 18
     readonly property int heightRatio: 28
-    readonly property bool isTablet: Screen.sizeCategory > Screen.Medium
-    readonly property bool _open: active
-    readonly property int _menuItemHeight: isTablet
-                                          ? container.contentHeight + footer.height
-                                          : isPortrait ? Theme.paddingLarge * heightRatio : Screen.width - Theme.paddingMedium * 2
 
     signal closed
 
-    width: Math.max(Theme.paddingLarge * widthRatio, footer.implicitWidth)
-    height: Math.min(parent.height - Theme.paddingLarge * 2, _menuItemHeight)
+    Private.AnimatedLoader {
+        id: menuLoader
 
-    opacity: _open ? 1.0 : 0.0
-    visible: opacity > 0.0
-
-    Behavior on opacity { FadeAnimation {} }
-
-    InverseMouseArea {
-        anchors.fill: parent
-        enabled: active
-        stealPress: true
-        onPressedOutside: closed()
-    }
-
-    layer.enabled: true
-    layer.effect: OpacityMask {
-        source: popUpMenu
-        maskSource: Rectangle {
-            anchors.centerIn: parent
-            width: popUpMenu.width
-            height: popUpMenu.height
-            radius: popUpMenu.cornerRadius
-            visible: false
-        }
-    }
-
-    Rectangle {
         width: popUpMenu.width
         height: popUpMenu.height
-        color: Theme.colorScheme === Theme.LightOnDark ? "black" : "white"
-        radius: cornerRadius
 
-        ColorOverlay {
-            anchors.fill: parent
-            source: parent
-            color: Theme.primaryColor
-            opacity: Theme.opacityFaint
-        }
+        animating: menuFadeAnimation.running
 
-        SilicaFlickable {
-            id: container
-            width: parent.width
-            height: parent.height - footer.height
-            contentHeight: loader.height
-            clip: true
-            visible: popUpMenu.visible
-            onVisibleChanged: contentY = originY
+        source: menuComponent
 
-            Loader {
-                id: loader
-                width: parent.width
-                active: popUpMenu._open
-                sourceComponent: popUpMenu.menuItem
+        onAnimate: {
+            if (item) {
+                item.opacity = 0
+                menuFadeAnimation.target = item
+                menuFadeAnimation.from = 0
+                menuFadeAnimation.to = 1
+                menuFadeAnimation.restart()
+            } else if (replacedItem) {
+                menuFadeAnimation.target = replacedItem
+                menuFadeAnimation.from = 1
+                menuFadeAnimation.to = 0
+                menuFadeAnimation.restart()
             }
-            VerticalScrollDecorator {}
         }
+    }
 
-        Loader {
-            id: footer
-            width: parent.width
-            active: popUpMenu._open
-            sourceComponent: popUpMenu.footer
-            anchors.bottom: parent.bottom
+    FadeAnimation {
+        id: menuFadeAnimation
+
+        running: false
+    }
+
+    Component {
+        id: menuComponent
+
+        Item {
+            width: popUpMenu.width
+            height: popUpMenu.height
+
+            SilicaFlickable {
+                id: menuFlickable
+
+                width: popUpMenu.width
+                height: popUpMenu.height
+
+                contentHeight: contentLoader.y + contentLoader.height + footerLoader.height
+
+                interactive: popUpMenu.active   // Don't handle mouse events during fade out.
+
+                Private.AnimatedLoader {
+                    id: contentLoader
+
+                    x: menuFlickable.width - width - popUpMenu.margin
+                    y: Math.max(popUpMenu.margin, footerLoader.y - popUpMenu.margin - (Screen.sizeCategory > Screen.Medium
+                                ? contentLoader.height
+                                : Math.min(contentLoader.height, isPortrait
+                                    ? Theme.paddingLarge * popUpMenu.heightRatio
+                                    : Screen.width - Theme.paddingMedium * 2)))
+
+                    width: footerLoader.width
+                    height: item ? item.height : 0
+                    source: popUpMenu.menuItem
+
+                    onInitializeItem: {
+                        item.width = Qt.binding(function() { return footerLoader.width })
+                    }
+                }
+
+                children: [
+                    Rectangle {
+                        id: background
+
+                        x: contentLoader.x
+                        y: Math.max(popUpMenu.margin, contentLoader.y - menuFlickable.contentY)
+                        z: -1
+                        width: footerLoader.width
+                        height: footerLoader.y - y
+
+                        color: Qt.tint(
+                                    popUpMenu.palette.colorScheme === Theme.LightOnDark ? "black" : "white",
+                                    Theme.rgba(popUpMenu.palette.primaryColor, Theme.opacityFaint))
+                    },
+                    Item {
+                        x: contentLoader.x
+                        y: Math.max(popUpMenu.margin, contentLoader.y - menuFlickable.contentY)
+                        width: footerLoader.width
+                        height: footerLoader.y - y
+
+                        VerticalScrollDecorator {
+                            _forcedParent: parent
+                            flickable: menuFlickable
+                        }
+                    },
+                    MouseArea {
+                        anchors.fill: footerLoader
+                    },
+                    Private.AnimatedLoader {
+                        id: footerLoader
+
+                        x: menuFlickable.width - width - popUpMenu.margin
+                        y: menuFlickable.height - height - popUpMenu.margin
+
+                        width: Math.max(Theme.paddingLarge * widthRatio, item ? item.implicitWidth : 0)
+                        height: item ? item.height: 0
+
+                        source: popUpMenu.footer
+
+                        onInitializeItem: {
+                            item.width = Qt.binding(function() { return footerLoader.width })
+                        }
+                    }
+                ]
+            }
+
+            // To round the corners the menu is being rendered to a ShaderEffectSource which is
+            // used as the source item for a Background item which composites the menu with the
+            // rest of the UI with rounded corners. Using the ShaderEffectSource also means
+            // overlapping items in the menu won't blend together when the menu fades in and out.
+            ShaderEffectSource {
+                id: menuShaderSource
+
+                width: popUpMenu.width
+                height: popUpMenu.height
+
+                sourceItem: menuFlickable
+                hideSource: true
+                visible: false
+            }
+
+            Background {
+                id: menuShaderItem
+
+                readonly property color backgroundColor: Qt.tint(
+                        popUpMenu.palette.colorScheme === Theme.LightOnDark ? "black" : "white",
+                        Theme.rgba(popUpMenu.palette.primaryColor, Theme.opacityFaint))
+
+                x: contentLoader.x
+                y: Math.max(popUpMenu.margin, contentLoader.y - menuFlickable.contentY)
+                width: footerLoader.width
+                height: footerLoader.y + footerLoader.height - y
+
+                radius: popUpMenu.cornerRadius
+                sourceItem: menuShaderSource
+                transformItem: __silica_applicationwindow_instance._rotatingItem
+                fillMode: Background.Stretch
+
+                material: Material {
+                }
+            }
+
+            InverseMouseArea {
+                anchors.fill: menuShaderItem
+                enabled: popUpMenu.active
+                stealPress: true
+                onPressedOutside: closed()
+            }
         }
     }
 }
