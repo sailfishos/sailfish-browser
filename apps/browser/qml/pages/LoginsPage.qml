@@ -33,6 +33,21 @@ Page {
         return hostname
     }
 
+    function copyUsername(username) {
+        Clipboard.text = username
+        //% "Username copied"
+        notification.text = qsTrId("sailfish_browser-me-login_copied_username")
+        notification.show()
+    }
+
+    // Should only be called with SecureAction to avoid leaking passwords
+    function copyPassword(password) {
+        Clipboard.text = password
+        //% "Password copied"
+        notification.text = qsTrId("sailfish_browser-me-login_copied_password")
+        notification.show()
+    }
+
     SilicaListView {
         id: view
 
@@ -42,8 +57,8 @@ Page {
         header: Column {
             width: parent.width
             PageHeader {
-                //% "Logins and passwords"
-                title: qsTrId("sailfish_browser-he-logins")
+                //% "Passwords"
+                title: qsTrId("sailfish_browser-he-passwords")
             }
             SearchField {
                 width: parent.width
@@ -109,33 +124,57 @@ Page {
                 }
             }
 
-            menu: ContextMenu {
-                MenuItem {
-                    //% "Copy password"
-                    text: qsTrId("sailfish_browser-me-login_copy_password")
-                    onClicked: {
-                        Clipboard.text = model.password
-                        notification.show()
+            menu: Component {
+                ContextMenu {
+                    id: contextMenu
+                    MenuItem {
+                        visible: !secureAction.available
+                        //% "Copy username"
+                        text: qsTrId("sailfish_browser-me-login_copy_username")
+                        onClicked: copyUsername(model.username);
                     }
-                }
-                MenuItem {
-                    //% "Edit"
-                    text: qsTrId("sailfish_browser-me-login_edit")
-                    onClicked: {
-                        var page = pageStack.animatorPush("EditLoginPage.qml", {
-                                                              loginModel: loginModel,
-                                                              uid: model.uid,
-                                                              hostname: model.hostname,
-                                                              username: model.username,
-                                                              password: model.password
-                                                          })
+                    MenuItem {
+                        visible: secureAction.available
+                        //% "Copy"
+                        text: qsTrId("sailfish_browser-me-login_copy")
+                        onClicked: {
+                            // Hide existing menu items
+                            var content = contextMenu._contentColumn
+                            for (var i = 0; i < content.children.length; i++) {
+                                content.children[i].visible = false
+                            }
+                            // Block menu closing
+                            contextMenu.closeOnActivation = false
+                            // Reset highlight
+                            contextMenu._setHighlightedItem(null)
+                            // Add sub-menu menu items
+                            copyOptions.createObject(contextMenu, {
+                                                         menu: contextMenu,
+                                                         username: model.username,
+                                                         password: model.password
+                                                     })
+                        }
                     }
-                }
-                MenuItem {
-                    //% "Delete"
-                    text: qsTrId("sailfish_browser-me-login_delete")
-                    onClicked: {
-                        remove(model.uid);
+                    MenuItem {
+                        //% "Edit"
+                        text: qsTrId("sailfish_browser-me-login_edit")
+                        onClicked: {
+                            var page = pageStack.animatorPush("EditLoginPage.qml", {
+                                                                  loginModel: loginModel,
+                                                                  secureAction: secureAction,
+                                                                  uid: model.uid,
+                                                                  hostname: model.hostname,
+                                                                  username: model.username,
+                                                                  password: model.password
+                                                              })
+                        }
+                    }
+                    MenuItem {
+                        //% "Delete"
+                        text: qsTrId("sailfish_browser-me-login_delete")
+                        onClicked: {
+                            remove(model.uid);
+                        }
                     }
                 }
             }
@@ -160,9 +199,50 @@ Page {
     Notice {
         id: notification
         property bool published
-        duration: 3000
-        //% "Password copied"
-        text: qsTrId("sailfish_browser-me-login_copied_password")
+        duration: Notice.Short
         verticalOffset: -Theme.itemSizeMedium
+    }
+
+    SecureAction {
+        id: secureAction
+        //% "Unlock access to browser passwords"
+        message: qsTrId("sailfish_browser-me-login_unlock_password_access")
+    }
+
+    Component {
+        id: copyOptions
+
+        Item {
+            id: _copyOptions
+            property Item menu
+            property string username
+            property string password
+
+            // Order of items is reversed
+            MenuItem {
+                visible: secureAction.available
+                //% "Copy password"
+                text: qsTrId("sailfish_browser-me-login_copy_password")
+                parent: menu._contentColumn // context menu touch requires menu items are children of content area
+                onClicked: {
+                    secureAction.perform(copyPassword.bind(null, _copyOptions.password));
+                    menu.close()
+                }
+            }
+            MenuItem {
+                // "Copy username" (defined above in contextMenu)
+                text: qsTrId("sailfish_browser-me-login_copy_username")
+                parent: menu._contentColumn // context menu touch requires menu items are children of content area
+                onClicked: {
+                    copyUsername(username)
+                    menu.close()
+                }
+            }
+
+            Connections {
+                target: menu
+                onClosed: _copyOptions.destroy()
+            }
+        }
     }
 }

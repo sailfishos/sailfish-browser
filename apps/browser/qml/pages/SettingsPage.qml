@@ -213,12 +213,13 @@ Page {
 
                     Icon {
                         id: loginsIcon
-                        source: "image://theme/icon-m-contact"
+                        source: "image://theme/icon-m-keys"
                     }
                     Label {
                         width: parent.width - parent.spacing - permissionIcon.width
-                        //% "Logins and passwords"
-                        text: qsTrId("settings_browser-la-logins-and-passwords")
+                        //: The label for the button for accessing password management
+                        //% "Passwords"
+                        text: qsTrId("settings_browser-la-passwords")
                         anchors.verticalCenter: loginsIcon.verticalCenter
                     }
                 }
