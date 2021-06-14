@@ -106,11 +106,14 @@ ListItem {
                                                   })
             }
             MenuItem {
-                //% "Edit"
+                // Defined in FavoriteContextMenu.qml
+                // "Edit"
                 text: qsTrId("sailfish_browser-me-edit")
                 onClicked: {
                     var page = pageStack.animatorPush(editDialog,
                                            {
+                                               //% "Edit bookmark"
+                                               "description": qsTrId("sailfish_browser-he-edit-bookmark"),
                                                "url": url,
                                                "title": title,
                                                "index": bookmarkFilterModel.getIndex(model.index)

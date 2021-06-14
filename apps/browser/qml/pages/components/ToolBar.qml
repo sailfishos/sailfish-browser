@@ -139,10 +139,26 @@ Column {
             Browser.TabButton {
                 id: tabs
 
-                icon.source: webView.privateMode ? "image://theme/icon-m-incognito" : "image://theme/icon-m-tabs"
-                opacity: secondaryToolsActive || findInPageActive ? 0.0 : 1.0
+                icon.source: {
+                    if (webView.privateMode) {
+                        return webView.tabModel.count > 0 ? "image://theme/icon-m-incognito-selected"
+                                                          : "image://theme/icon-m-incognito"
+                    } else {
+                        return "image://theme/icon-m-tabs"
+                    }
+                }
+
+                label.color: {
+                    if (webView.privateMode) {
+                        return Theme.overlayBackgroundColor ? Theme.overlayBackgroundColor : "black"
+                    } else {
+                        return highlighted ? Theme.highlightColor : Theme.primaryColor
+                    }
+                }
+
+                opacity: findInPageActive ? 0.0 : 1.0
                 horizontalOffset: toolBarRow.horizontalOffset
-                label.text: webView.tabModel.count
+                label.text: webView.privateMode && (webView.tabModel.count === 0) ? "" : webView.tabModel.count
                 onTapped: toolBarRow.showTabs()
 
                 RotationAnimator {
@@ -169,14 +185,6 @@ Column {
                         rotationAnimator.restart()
                     }
                 }
-            }
-
-            Shared.IconButton {
-                opacity: secondaryToolsActive && !findInPageActive ? 1.0 : 0.0
-                icon.source: "image://theme/icon-m-tab-close"
-                icon.anchors.horizontalCenterOffset: toolBarRow.horizontalOffset
-                active: webView.tabModel.count > 0
-                onTapped: closeActiveTab()
             }
 
             Shared.IconButton {
