@@ -197,7 +197,8 @@ Page {
         // Both model change and model count change are connected to this.
         function handleModelChanges(openOverlayImmediately) {
             if (webView.completed && (!webView.tabModel || webView.tabModel.count === 0)) {
-                overlay.animator.showOverlay(openOverlayImmediately)
+                overlay.startPage(openOverlayImmediately ? PageStackAction.Immediate
+                                                         : PageStackAction.Animated)
             }
 
             window.setBrowserCover(webView.tabModel)
