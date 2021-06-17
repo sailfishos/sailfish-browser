@@ -8,7 +8,6 @@ BookmarkEditDialog {
 
     //% "Add to App Grid"
     description: qsTrId("sailfish_browser-he-add_bookmark_to_launcher")
-    canAccept: editedUrl !== "" && editedTitle !== ""
     onAccepted: {
         if (desktopBookmarkWriter) {
             var bookmarkWriter = desktopBookmarkWriter.createObject(bookmarkWriterParent)

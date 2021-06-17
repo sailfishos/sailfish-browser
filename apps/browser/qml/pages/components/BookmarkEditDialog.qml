@@ -83,20 +83,34 @@ UserPromptDialog {
                 id: urlField
                 text: url
 
-                acceptableInput: text.length > 0
                 onActiveFocusChanged: if (!activeFocus) errorHighlight = !acceptableInput
                 onAcceptableInputChanged: if (acceptableInput) errorHighlight = false
 
                 //: Label for textfield to edit bookmark's URL
                 //% "URL"
                 label: qsTrId("sailfish_browser-la-url_editor")
-                //% "URL is required"
-                description: errorHighlight ? qsTrId("sailfish_browser-la-url_editor_error") : ""
+                description: {
+                    if (!errorHighlight) {
+                        return ""
+                    } else if (text.length > 0) {
+                        var scheme = root.url.match(/^(https?):\/\/.+/)
+
+                        //% "URL scheme (%1) missing"
+                        return qsTrId("sailfish_browser-la-missing_url_scheme").arg(scheme && scheme.length > 1 ? scheme[1] : "https")
+                    } else {
+                        //% "URL is required"
+                        return qsTrId("sailfish_browser-la-url_editor_error")
+                    }
+                }
                 inputMethodHints: Qt.ImhNoAutoUppercase | Qt.ImhUrlCharactersOnly
 
                 EnterKey.enabled: canAccept
                 EnterKey.iconSource: "image://theme/icon-m-enter-accept"
                 EnterKey.onClicked: accept()
+
+                validator: RegExpValidator {
+                    regExp: /^https?:\/\/.+/
+                }
             }
         }
     }
