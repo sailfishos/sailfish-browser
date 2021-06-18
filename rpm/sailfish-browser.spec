@@ -32,8 +32,8 @@ BuildRequires:  pkgconfig(sailfishpolicy)
 BuildRequires:  qt5-qttools
 BuildRequires:  qt5-qttools-linguist
 BuildRequires:  oneshot
-BuildRequires:  gtest-devel
-BuildRequires:  libgmock-devel
+BuildRequires:  pkgconfig(gtest)
+BuildRequires:  pkgconfig(gmock)
 BuildRequires:  pkgconfig(vault) >= 1.0.1
 
 Requires: sailfishsilica-qt5 >= 1.2.33
