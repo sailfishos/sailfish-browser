@@ -150,7 +150,7 @@ Page {
                 //: Label for text switch that makes all tabs closed upon closing browser application
                 //% "Close all tabs on exit"
                 text: qsTrId("settings_browser-la-close_all_tabs")
-                //% "Upon exiting Sailfish Browser all open tabs will be closed"
+                //% "When Browser is started next time, selected home page will be loaded"
                 description: qsTrId("settings_browser-la-close_all_tabs_description")
                 checked: closeAllTabsConfig.value
                 enabled: AccessPolicy.browserEnabled
