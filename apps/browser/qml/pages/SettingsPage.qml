@@ -309,6 +309,7 @@ Page {
         id: folderPickerPage
 
         FolderPickerPage {
+            headerSpacing: 0
             showSystemFiles: false
             //% "Download to"
             dialogTitle: qsTrId("sailfish_browser-ti-download-to")
