@@ -25,5 +25,9 @@ data.path = /usr/share/sailfish-browser/data
 
 INSTALLS += desktop dbus_service chrome_scripts oneshots data
 
+usersession.path = /usr/lib/systemd/user/user-session.target.d
+usersession.files += 50-sailfish-browser.conf
+INSTALLS += usersession
+
 OTHER_FILES += \
     rpm/*.spec
