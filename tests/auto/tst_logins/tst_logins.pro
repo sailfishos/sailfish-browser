@@ -1,4 +1,4 @@
-TARGET = tst_webview
+TARGET = tst_logins
 
 CONFIG += link_pkgconfig
 
@@ -19,11 +19,11 @@ include(../../../apps/factories/factories.pri)
 include(../../../apps/history/history.pri)
 include(../../../common/browserapp.pri)
 
-SOURCES += tst_webview.cpp
+SOURCES += tst_logins.cpp
 
 OTHER_FILES = *.qml
 
-RESOURCES = tst_webview.qrc
+RESOURCES = tst_logins.qrc
 
 START_FILE = $$clean_path($$join(target.path, "", "", "/../manual/testpage.html"))
 DEFINES += 'START_URL=\'\"file://$$START_FILE\"\''
