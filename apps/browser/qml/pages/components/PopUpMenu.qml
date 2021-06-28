@@ -63,7 +63,7 @@ SilicaControl {
     Component {
         id: menuComponent
 
-        Item {
+        Rectangle {
             id: menuItem
 
             property real percentageClosed
@@ -71,6 +71,8 @@ SilicaControl {
 
             width: popUpMenu.width
             height: popUpMenu.height
+
+            color: Theme.rgba("black", Theme.opacityLow * (1 - percentageClosed))
 
             SilicaFlickable {
                 id: menuFlickable
