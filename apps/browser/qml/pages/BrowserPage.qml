@@ -28,6 +28,7 @@ Page {
     readonly property size thumbnailSize: Qt.size(width - Theme.horizontalPageMargin * 2, Math.max(height / 2.5, width / 1.66) - (Theme.iconSizeSmall + Theme.paddingMedium * 2))
     property Item debug
     property Component tabPageComponent
+    property string enteredUrl
 
     property alias overlay: overlay
     property alias tabs: webView.tabModel
@@ -301,7 +302,7 @@ Page {
         onActiveChanged: {
             var isFullScreen = webView.contentItem && webView.contentItem.fullscreen
             if (!isFullScreen && active && !overlay.enteringNewTabUrl) {
-                if (webView.tabModel.count !== 0 || webView.tabModel.waitingForNewTab || (WebUtils.homePage !== "about:blank" && WebUtils.homePage.length > 0)) {
+                if (webView.tabModel.count !== 0 || webView.tabModel.waitingForNewTab || browserPage.enteredUrl.length > 0 || (WebUtils.homePage !== "about:blank" && WebUtils.homePage.length > 0)) {
                     overlay.animator.showChrome()
                 } else {
                     overlay.startPage()
@@ -374,8 +375,9 @@ Page {
             // In case first use not done show the overlay immediately.
             if (url == "") {
                 bringToForeground(webView.chromeWindow)
-                if (!WebUtils.firstUseDone) {
-                    overlay.enterNewTabUrl(PageStackAction.Immediate)
+                // In case the first use is not done but the home page is set.
+                if (!WebUtils.firstUseDone && WebUtils.homePage !== "about:blank" && WebUtils.homePage.length > 0) {
+                    overlay.loadPage(WebUtils.homePage)
                 }
 
                 return
@@ -389,6 +391,8 @@ Page {
             if (webView.tabModel.activateTab(url)) {
                 webView.releaseActiveTabOwnership()
             } else {
+                // In case first use not done and default home page is set and the site is opened by specifying a parameter to application.
+                enteredUrl = url
                 webView.clearSelection()
                 webView.tabModel.newTab(url)
                 overlay.dismiss(true, !Qt.application.active /* immadiate */)
