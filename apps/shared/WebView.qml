@@ -1,7 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2014 Jolla Ltd.
-** Contact: Raine Makelainen <raine.makelainen@jolla.com>
+** Copyright (C) 2014 - 2021 Jolla Ltd.
 **
 ****************************************************************************/
 
@@ -316,6 +315,10 @@ WebContainer {
                 case "embed:OpenLink": {
                     linkHandler.handleLink(data.uri)
                     break
+                }
+                case "Link:AddSearch": {
+                    // This adds this search as available if not already there
+                    SearchEngineModel.add(data.engine.title, data.engine.href)
                 }
                 }
             }

@@ -45,6 +45,7 @@ QHash<int, QByteArray> DeclarativeTabModel::roleNames() const
     roles[UrlRole] = "url";
     roles[ActiveRole] = "activeTab";
     roles[TabIdRole] = "tabId";
+    roles[DesktopModeRole] = "desktopMode";
     return roles;
 }
 
@@ -250,6 +251,8 @@ QVariant DeclarativeTabModel::data(const QModelIndex & index, int role) const {
         return tab.tabId() == m_activeTabId;
     } else if (role == TabIdRole) {
         return tab.tabId();
+    } else if (role == DesktopModeRole) {
+        return tab.desktopMode();
     }
     return QVariant();
 }
@@ -451,6 +454,20 @@ void DeclarativeTabModel::onUrlChanged()
             }
         }
         webPage->setInitialLoadHasHappened();
+    }
+}
+
+void DeclarativeTabModel::onDesktopModeChanged()
+{
+    DeclarativeWebPage *webPage = qobject_cast<DeclarativeWebPage *>(sender());
+    if (webPage) {
+        int tabIndex = findTabIndex(webPage->tabId());
+        if (tabIndex >= 0 && m_tabs.at(tabIndex).desktopMode() != webPage->desktopMode()) {
+            QVector<int> roles;
+            roles << DesktopModeRole;
+            m_tabs[tabIndex].setDesktopMode(webPage->desktopMode());
+            emit dataChanged(index(tabIndex, 0), index(tabIndex, 0), roles);
+        }
     }
 }
 

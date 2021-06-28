@@ -28,7 +28,7 @@ Column {
     readonly property bool showFindButtons: webView.findInPageHasResult && findInPageActive
     property alias bookmarked: secondaryBar.bookmarked
     readonly property alias rowHeight: toolsRow.height
-    readonly property int maxRowCount: 5
+    readonly property int maxRowCount: 6
 
     readonly property int horizontalOffset: largeScreen ? Theme.paddingLarge : Theme.paddingSmall
     readonly property int buttonPadding: largeScreen || orientation === Orientation.Landscape || orientation === Orientation.LandscapeInverted

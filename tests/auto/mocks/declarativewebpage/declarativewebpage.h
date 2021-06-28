@@ -84,6 +84,8 @@ public:
 
     MOCK_CONST_METHOD0(url, QUrl());
 
+    MOCK_CONST_METHOD0(desktopMode, bool());
+
     MOCK_CONST_METHOD0(title, QString());
     MOCK_METHOD1(setTitle, void(const QString &title));
 

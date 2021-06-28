@@ -182,6 +182,8 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage, bool trigg
             // NB: these signals are not disconnected upon setting current m_webPage.
             connect(m_webPage.data(), &DeclarativeWebPage::urlChanged,
                     m_model.data(), &DeclarativeTabModel::onUrlChanged, Qt::UniqueConnection);
+            connect(m_webPage.data(), &DeclarativeWebPage::desktopModeChanged,
+                    m_model.data(), &DeclarativeTabModel::onDesktopModeChanged, Qt::UniqueConnection);
             connect(m_webPage.data(), &DeclarativeWebPage::titleChanged,
                     m_model.data(), &DeclarativeTabModel::onTitleChanged, Qt::UniqueConnection);
 
@@ -395,14 +397,18 @@ bool DeclarativeWebContainer::readyToPaint() const
 
 void DeclarativeWebContainer::setReadyToPaint(bool ready)
 {
-    if (m_mozWindow && m_mozWindow->setReadyToPaint(ready)) {
+    if (m_mozWindow) {
+        bool changed = m_mozWindow->setReadyToPaint(ready);
+
         if (ready) {
             m_mozWindow->resumeRendering();
         } else {
             m_mozWindow->suspendRendering();
         }
 
-        emit readyToPaintChanged();
+        if (changed) {
+            emit readyToPaintChanged();
+        }
     }
 }
 

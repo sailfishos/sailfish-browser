@@ -11,13 +11,18 @@
 
 #include "tab.h"
 
-Tab::Tab(int tabId, const QString &url, const QString &title, const QString &thumbPath) :
-    m_tabId(tabId), m_url(url), m_title(title), m_thumbPath(thumbPath)
+Tab::Tab(int tabId, const QString &url, const QString &title, const QString &thumbPath)
+    : m_tabId(tabId)
+    , m_url(url)
+    , m_title(title)
+    , m_thumbPath(thumbPath)
+    , m_desktopMode(false)
 {
 }
 
-Tab::Tab() :
-    m_tabId(0)
+Tab::Tab()
+    : m_tabId(0)
+    , m_desktopMode(false)
 {
 }
 
@@ -61,6 +66,16 @@ void Tab::setTitle(const QString &title)
     m_title = title;
 }
 
+bool Tab::desktopMode() const
+{
+    return m_desktopMode;
+}
+
+void Tab::setDesktopMode(bool desktopMode)
+{
+    m_desktopMode = desktopMode;
+}
+
 bool Tab::isValid() const
 {
     return m_tabId > 0;
@@ -85,6 +100,7 @@ QDebug operator<<(QDebug dbg, const Tab *tab) {
     }
 
     dbg.nospace() << "Tab(tabId = " << tab->tabId() << ", isValid = " << tab->isValid()
-                  << ", url = " << tab->url() << ", title = " << tab->title() << ", thumbnailPath = " << tab->thumbnailPath() << ")";
+                  << ", url = " << tab->url() << ", title = " << tab->title() << ", thumbnailPath = " << tab->thumbnailPath()
+                  << ", desktopMode = " << tab->desktopMode() << ")";
     return dbg.space();
 }

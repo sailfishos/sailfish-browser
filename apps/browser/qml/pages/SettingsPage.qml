@@ -1,8 +1,7 @@
 /****************************************************************************
 **
-** Copyright (c) 2013 - 2019 Jolla Ltd.
+** Copyright (c) 2013 - 2021 Jolla Ltd.
 ** Copyright (c) 2020 Open Mobile Platform LLC.
-** Contact: Dmitry Rozhkov <dmitry.rozhkov@jolla.com>
 **
 ****************************************************************************/
 
@@ -17,15 +16,10 @@ import org.nemomobile.configuration 1.0
 import com.jolla.settings.system 1.0
 import Sailfish.Policy 1.0
 import Sailfish.WebEngine 1.0
+import "components"
 
 Page {
     id: page
-
-    property var _nameMap: ({})
-
-    function name2index(name) {
-        return _nameMap[name] !== undefined ? _nameMap[name] : 0
-    }
 
     SilicaFlickable {
         anchors.fill: parent
@@ -66,38 +60,35 @@ Page {
             ComboBox {
                 id: searchEngine
                 enabled: AccessPolicy.browserEnabled
-
                 width: parent.width
                 //: Label for combobox that sets search engine used in browser
-                //% "Search engine"
-                label: qsTrId("settings_browser-la-search_engine")
-                currentIndex: name2index(searchEngineConfig.value)
+                //% "Search with"
+                label: qsTrId("settings_browser-la-search_with")
 
                 menu: ContextMenu {
-                    id: searchEngineMenu
+                    Repeater {
+                        model: SearchEngineModel
+                        delegate: SearchEngineMenuItem {
+                            text: title
+                            //: Shown on Settings -> Search engine for user installable search services
+                            //% "Tap to install"
+                            description: status == SearchEngineModel.Available ? qsTrId("settings_browser-la-tap_to_install") : ""
+                            onClicked: {
+                                if (title !== searchEngineConfig.value) {
+                                    if (status == SearchEngineModel.Available) {
+                                        SearchEngineModel.install(title)
+                                    } else {
+                                        searchEngineConfig.value = title
+                                    }
+                                }
+                            }
 
-                    Component {
-                        id: menuItemComp
-
-                        MenuItem {}
-                    }
-
-                    Component.onCompleted: {
-                        var index = 0
-                        settings.searchEngineList.forEach(function(name) {
-                            var map = page._nameMap
-                            // FIXME: _contentColumn should not be used to add items dynamicly
-                            menuItemComp.createObject(searchEngineMenu._contentColumn, {"text": name})
-                            map[name] = index
-                            page._nameMap = map
-                            index++
-                        })
-                    }
-                }
-
-                onCurrentItemChanged: {
-                    if (currentItem.text !== searchEngineConfig.value) {
-                        searchEngineConfig.value = currentItem.text
+                            Component.onCompleted: {
+                                if (text && (text === searchEngineConfig.value)) {
+                                    searchEngine.currentIndex = index
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -128,10 +119,10 @@ Page {
                 //% "Enable JavaScript"
                 text: qsTrId("settings_browser-la-enable_javascript")
                 description: WebEngineSettings.javascriptEnabled ?
-                                     //% "Allowed (recommended)"
-                                     qsTrId("settings_browser-la-enabled_javascript_description") :
-                                     //% "Blocked, some sites may not work correctly"
-                                     qsTrId("settings_browser-la-disable_javascript_description")
+                                 //% "Allowed (recommended)"
+                                 qsTrId("settings_browser-la-enabled_javascript_description") :
+                                 //% "Blocked, some sites may not work correctly"
+                                 qsTrId("settings_browser-la-disable_javascript_description")
                 checked: WebEngineSettings.javascriptEnabled
                 enabled: AccessPolicy.browserEnabled
                 onCheckedChanged: WebEngineSettings.javascriptEnabled = checked;
@@ -173,12 +164,6 @@ Page {
 
         key: "/apps/sailfish-browser/settings/search_engine"
         defaultValue: "Google"
-
-        onValueChanged: {
-            if (searchEngine.currentItem.text !== value) {
-                searchEngine.currentIndex = name2index(value)
-            }
-        }
     }
 
     ConfigurationValue {
@@ -188,7 +173,19 @@ Page {
         defaultValue: "http://jolla.com/"
     }
 
-    BrowserSettings {
-        id: settings
+    Notice {
+        id: searchInstalledNotice
+        duration: 3000
+        verticalOffset: -Theme.paddingLarge
+    }
+
+    Connections {
+        target: SearchEngineModel
+
+        onInstalled: {
+            //% "%1 search installed"
+            searchInstalledNotice.text = qsTrId("sailfish_browser-la-search_installed").arg(title)
+            searchInstalledNotice.show()
+        }
     }
 }

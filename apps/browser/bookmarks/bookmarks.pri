@@ -1,3 +1,5 @@
+PKGCONFIG += sailfishwebengine
+
 INCLUDEPATH += $$PWD
 
 # C++ sources
@@ -7,7 +9,7 @@ SOURCES += \
     $$PWD/desktopbookmarkwriter.cpp \
     $$PWD/bookmarkmanager.cpp \
     $$PWD/bookmark.cpp \
-    $$PWD/iconfetcher.cpp
+    $$PWD/datafetcher.cpp
 
 # C++ headers
 HEADERS += \
@@ -16,7 +18,7 @@ HEADERS += \
     $$PWD/desktopbookmarkwriter.h \
     $$PWD/bookmarkmanager.h \
     $$PWD/bookmark.h \
-    $$PWD/iconfetcher.h
+    $$PWD/datafetcher.h
 
 DEFINES += DESKTOP_FILE_PATTERN=\\\"%1/sailfish-browser-%2-%3.desktop\\\"
 DEFINES += DESKTOP_FILE=\\\"sailfish-browser-%2-%3.desktop\\\"
