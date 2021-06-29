@@ -48,14 +48,22 @@ Page {
             ComboBox {
                 id: homePage
 
+                readonly property bool _homePageBlank: homePageConfig.value === "about:blank"
+
                 width: parent.width
                 //: Label for home page text field
                 //% "Home Page"
                 label: qsTrId("settings_browser-la-home_page")
                 //% "Default"
-                value: homePageConfig.value === "about:blank" ? qsTrId("sailfish_browser-la-home_page_default") : removeProtocolTypeFromUri(homePageConfig.value)
+                value: _homePageBlank ? qsTrId("sailfish_browser-la-home_page_default") : removeProtocolTypeFromUri(homePageConfig.value)
                 leftMargin: Theme.horizontalPageMargin + homePageIcon.width + Theme.paddingMedium
                 contentHeight: Theme.itemSizeMedium
+
+                currentIndex: _homePageBlank
+                              ? 0 // For default home page (blank)
+                              : 1 // For custom home page
+
+                on_HomePageBlankChanged: currentIndex = _homePageBlank ? 0 : 1
 
                 Icon {
                     id: homePageIcon
@@ -72,9 +80,18 @@ Page {
                     }
                     MenuItem {
                         readonly property string site: removeProtocolTypeFromUri(homePageConfig.value)
-                        //: Instead of %1 site address will be displayed
-                        //% "Custom website %1"
-                        property string title: qsTrId("sailfish_browser-me-home_page_custom").arg(homePageConfig.value === "about:blank" ? "" : site)
+
+                        property string title: {
+                            if (homePage._homePageBlank || site.trim() === "") {
+                                //: Shown when site is empty
+                                //% "Custom website"
+                                return qsTrId("sailfish_browser-me-home_page_custom_empty")
+                            } else {
+                                //: Instead of %1 site address will be displayed
+                                //% "Custom website %1"
+                                qsTrId("sailfish_browser-me-home_page_custom").arg(site)
+                            }
+                        }
 
                         textFormat: Text.StyledText
                         color: highlighted ? Theme.highlightColor : Theme.primaryColor
