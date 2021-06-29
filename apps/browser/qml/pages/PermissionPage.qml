@@ -83,6 +83,15 @@ Page {
                                     })
 
         permissionTypesModel.append({
+                                        //% "Camera"
+                                        title: qsTrId("sailfish_browser-ti-camera"),
+                                        type: "camera",
+                                        capability: PermissionManager.Prompt,
+                                        iconSource: "image://theme/icon-m-browser-camera",
+                                        sensitiveData: true
+                                    })
+
+        permissionTypesModel.append({
                                         //% "Microphone"
                                         title: qsTrId("sailfish_browser-ti-microphone"),
                                         type: "microphone",
