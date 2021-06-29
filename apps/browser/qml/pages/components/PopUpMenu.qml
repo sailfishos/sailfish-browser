@@ -68,13 +68,16 @@ SilicaControl {
 
             property real percentageClosed
             readonly property real menuTop: Math.max(0, headerItem.y - menuFlickable.contentY)
+            readonly property real topPadding: Math.max(0, footerLoader.y - headerItem.height - (Screen.sizeCategory > Screen.Medium
+                    ? contentLoader.height
+                    : Math.min(contentLoader.height, Theme.paddingLarge * popUpMenu.heightRatio)))
 
             width: popUpMenu.width
             height: popUpMenu.height
 
             color: Theme.rgba("black", Theme.opacityLow * (1 - percentageClosed))
 
-            SilicaFlickable {
+            Flickable {
                 id: menuFlickable
 
                 x: popUpMenu.width - width - popUpMenu.margin
@@ -90,16 +93,25 @@ SilicaControl {
                             popUpMenu.height - (2 * popUpMenu.margin),
                             headerItem.height + contentLoader.height + footerLoader.height)
 
-                contentHeight: contentLoader.y + contentLoader.height + footerLoader.height
+                contentHeight: menuItem.topPadding + headerItem.height + contentLoader.height + footerLoader.height
 
                 interactive: popUpMenu.active   // Don't handle mouse events during fade out.
+
+                boundsBehavior: Flickable.DragOverBounds
+
+                onDragEnded: {
+                    if (contentY < -popUpMenu.margin - Theme.paddingLarge) {
+                        topMargin = -contentY
+                        popUpMenu.closed()
+                    }
+                }
 
                 Item {
                     id: headerItem
 
-                    y: Math.max(0, footerLoader.y - height - (Screen.sizeCategory > Screen.Medium
-                                ? contentLoader.height
-                                : Math.min(contentLoader.height, Theme.paddingLarge * popUpMenu.heightRatio)))
+                    y: menuItem.topPadding
+                        + Math.min(0, menuFlickable.contentY)
+                        - Math.min(0, menuFlickable.contentHeight - menuFlickable.height - menuFlickable.contentY)
 
                     width: menuFlickable.width
                     height: Theme.paddingLarge
@@ -221,7 +233,7 @@ SilicaControl {
                         0, menuItem.menuTop / menuFlickable.height, 0, 1)
 
                 x: menuFlickable.x
-                y: menuFlickable.y + menuItem.menuTop
+                y: menuFlickable.y + menuItem.menuTop - Math.min(0, menuFlickable.contentY)
                 width: menuFlickable.width
                 height: menuFlickable.height - menuItem.menuTop
 
