@@ -28,30 +28,9 @@ Page {
             width: parent.width
 
             PageHeader {
-                //: Privacy settings page header
-                //% "Privacy settings"
-                title: qsTrId("sailfish_browser-he-privacy-settings")
-            }
-
-            TextSwitch {
-                id: doNotTrack
-
-                checked: doNotTrackConfig.value
-
-                //: Tell sites that I do not want to be tracked.
-                //% "Do not track"
-                text: qsTrId("settings_browser-la-tracking")
-                //: Tell sites that I do not want to be tracked.
-                //% "Tell sites that I do not want to be tracked"
-                description: qsTrId("settings_browser-la-tracking_description")
-
-                onCheckedChanged: doNotTrackConfig.value = checked
-            }
-
-            SectionHeader {
-                //: Clear private data section header
+                //: Clear private data page header
                 //% "Clear private data"
-                text: qsTrId("settings_browser-ph-clear_private_data")
+                title: qsTrId("settings_browser-ph-clear_private_data")
             }
 
             Column {
@@ -137,13 +116,6 @@ Page {
                 }
             }
         }
-    }
-
-    ConfigurationValue {
-        id: doNotTrackConfig
-
-        key: "/apps/sailfish-browser/settings/do_not_track"
-        defaultValue: false
     }
 
     ConfigurationValue {
