@@ -1,6 +1,7 @@
 /****************************************************************************
 **
 ** Copyright (c) 2013 - 2021 Jolla Ltd.
+** Copyright (c) 2021 Open Mobile Platform LLC.
 **
 ****************************************************************************/
 
@@ -17,6 +18,8 @@
 #include <transfertypes.h>
 #include <QDir>
 #include <QFile>
+#include <QDBusMessage>
+#include <QDBusConnection>
 #include <QDebug>
 
 #include <webengine.h>
@@ -33,12 +36,21 @@ static DownloadManager *gSingleton = 0;
 
 DownloadManager::DownloadManager()
     : QObject(),
+      m_transferClient(nullptr),
       m_pdfPrinting(false)
 {
-    m_transferClient = new TransferEngineInterface("org.nemo.transferengine",
-                                                   "/org/nemo/transferengine",
-                                                   QDBusConnection::sessionBus(),
-                                                   this);
+    QDBusMessage msg = QDBusMessage::createMethodCall(
+            "org.nemo.transferengine.discovery",
+            "/",
+            "org.nemo.transferengine.discovery",
+            "peerToPeerAddress");
+    QDBusConnection::sessionBus().callWithCallback(
+            msg,
+            this,
+            SLOT(discoverySucceeded(QString)),
+            SLOT(discoveryFailed()),
+            15000); // allow 15 seconds for the transfer engine to start.
+
     setPreferences();
     SailfishOS::WebEngine *webEngine = SailfishOS::WebEngine::instance();
     connect(webEngine, &SailfishOS::WebEngine::recvObserve,
@@ -55,11 +67,38 @@ DownloadManager::~DownloadManager()
     gSingleton = 0;
 }
 
+void DownloadManager::discoveryFailed()
+{
+    qWarning() << "Unable to discover transfer-engine IPC socket address";
+}
+
+void DownloadManager::discoverySucceeded(const QString &p2pAddress)
+{
+    static int connectionCount = 0;
+    const QString name = QString::fromLatin1("transfer-engine-connection-dm-%1").arg(connectionCount++);
+    QDBusConnection p2pc = QDBusConnection::connectToPeer(p2pAddress, name);
+    if (!p2pc.isConnected()) {
+        qWarning() << "Unable to connect to transfer-engine on address:"
+                   << p2pAddress << ":" << p2pc.lastError()
+                   << p2pc.lastError().type() << p2pc.lastError().name();
+    } else {
+        m_transferClient = new TransferEngineInterface(
+                "org.nemo.transferengine",
+                "/org/nemo/transferengine",
+                p2pc,
+                this);
+    }
+}
+
 void DownloadManager::recvObserve(const QString message, const QVariant data)
 {
     if (message != "embed:download") {
         // here we are interested in download messages only
         return;
+    }
+
+    if (!m_transferClient) {
+        qWarning() << "DownloadManager::recvObserve: transfer client not initialized!";
     }
 
     QVariantMap dataMap(data.toMap());
@@ -229,7 +268,7 @@ void DownloadManager::cancelTransfer(int transferId)
 {
     if (m_transfer2downloadMap.contains(transferId)) {
         cancel(m_transfer2downloadMap.value(transferId));
-    } else {
+    } else if (m_transferClient) {
         m_transferClient->finishTransfer(transferId,
                                          TransferEngineData::TransferInterrupted,
                                          QString("Transfer got unavailable"));
@@ -244,7 +283,7 @@ void DownloadManager::restartTransfer(int transferId)
         data.insert("id", m_transfer2downloadMap.value(transferId));
         SailfishOS::WebEngine *webEngine = SailfishOS::WebEngine::instance();
         webEngine->notifyObservers(QString("embedui:download"), QVariant(data));
-    } else {
+    } else if (m_transferClient) {
         m_transferClient->finishTransfer(transferId,
                                          TransferEngineData::TransferInterrupted,
                                          QString("Transfer got unavailable"));

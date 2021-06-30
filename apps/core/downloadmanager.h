@@ -47,6 +47,8 @@ public slots:
 
 private slots:
     void recvObserve(const QString message, const QVariant data);
+    void discoveryFailed();
+    void discoverySucceeded(const QString &p2pAddress);
 
 private:
     explicit DownloadManager();
