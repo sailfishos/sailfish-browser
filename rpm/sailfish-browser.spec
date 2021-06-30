@@ -14,7 +14,6 @@ Release:    1
 License:    MPLv2.0
 Url:        https://github.com/sailfishos/sailfish-browser
 Source0:    %{name}-%{version}.tar.bz2
-Source1:    %{name}.privileges
 BuildRequires:  pkgconfig(Qt5Core)
 BuildRequires:  pkgconfig(Qt5Qml)
 BuildRequires:  pkgconfig(Qt5Gui)
@@ -58,6 +57,7 @@ Requires: libkeepalive >= 1.7.0
 Requires: sailfish-components-pickers-qt5 >= 0.1.7
 Requires: nemo-qml-plugin-notifications-qt5 >= 1.0.12
 Requires: nemo-qml-plugin-systemsettings >= %{min_systemsettings_version}
+Requires: mapplauncherd-booster-browser
 
 %{_oneshot_requires_post}
 
@@ -108,9 +108,6 @@ chmod +x %{buildroot}/%{_oneshotdir}/*
 mkdir -p %{buildroot}/%{_sharedstatedir}/environment/nemo/
 cp -f data/70-browser.conf %{buildroot}/%{_sharedstatedir}/environment/nemo/
 
-mkdir -p %{buildroot}%{_datadir}/mapplauncherd/privileges.d
-install -m 644 -p %{SOURCE1} %{buildroot}%{_datadir}/mapplauncherd/privileges.d/
-
 %post
 /usr/bin/update-desktop-database -q || :
 
@@ -133,8 +130,8 @@ fi
 %{_datadir}/translations/%{name}*.qm
 %{_datadir}/translations/%{captiveportal}*.qm
 %{_datadir}/dbus-1/services/*.service
-%{_datadir}/mapplauncherd/privileges.d/*
 %{_oneshotdir}/*
+%{_userunitdir}/user-session.target.d/50-sailfish-browser.conf
 # Let main package own import root level
 %dir %{_libdir}/qt5/qml/org/sailfishos/browser
 %{_sharedstatedir}/environment/nemo/*
