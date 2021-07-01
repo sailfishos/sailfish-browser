@@ -97,6 +97,7 @@ SilicaControl {
 
                 interactive: popUpMenu.active   // Don't handle mouse events during fade out.
 
+                flickableDirection: Flickable.VerticalFlick
                 boundsBehavior: Flickable.DragOverBounds
 
                 onDragEnded: {
