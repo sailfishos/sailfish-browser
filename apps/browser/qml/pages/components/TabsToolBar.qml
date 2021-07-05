@@ -18,50 +18,64 @@ Item {
     property int scaledPortraitHeight
     property int scaledLandscapeHeight
 
+    readonly property int horizontalOffset: largeScreen ? Theme.paddingLarge : Theme.paddingSmall
+    readonly property int buttonPadding: largeScreen || orientation === Orientation.Landscape || orientation === Orientation.LandscapeInverted
+                                         ? Theme.paddingMedium : Theme.paddingSmall
+    readonly property int iconWidth: largeScreen ? (Theme.iconSizeLarge + 3 * buttonPadding) : (Theme.iconSizeMedium + 2 * buttonPadding)
+
     signal back
     signal enterNewTabUrl
+    signal openMenu
 
     width: parent.width
     height: tabPage.isPortrait ? scaledPortraitHeight : scaledLandscapeHeight
 
     Rectangle {
         anchors.fill: parent
-        anchors {
-            verticalCenter: parent.verticalCenter
-        }
 
         color: Theme.colorScheme == Theme.LightOnDark ? "black" : "white"
     }
 
-    Shared.IconButton {
-        anchors {
-            left: parent.left
-            leftMargin: Theme.horizontalPageMargin
-            verticalCenter: parent.verticalCenter
-        }
-        width: Theme.itemSizeSmall
-        icon.source: "image://theme/icon-m-tab-return"
-        onTapped: root.back()
-    }
-    Browser.TabButton {
-        anchors {
-            centerIn: parent
-            verticalCenter: parent.verticalCenter
-        }
-        width: Theme.itemSizeSmall
-        icon.source: webView.privateMode ? "image://theme/icon-m-incognito-new" : "image://theme/icon-m-tab-new"
-        onTapped: root.enterNewTabUrl()
-    }
 
-    Shared.IconButton {
-        anchors {
-            right: parent.right
-            rightMargin: Theme.horizontalPageMargin
-            verticalCenter: parent.verticalCenter
+    Row {
+        width: parent.width
+        height: parent.height
+
+        Shared.IconButton {
+            id: returnIcon
+            width: iconWidth
+            icon.anchors.horizontalCenterOffset: root.horizontalOffset
+            icon.source: "image://theme/icon-m-tab-return"
+            onTapped: root.back()
         }
 
-        visible: false // TODO: Make visible after adding popup menu
-        width: Theme.itemSizeSmall
-        icon.source: "image://theme/icon-m-menu"
+        Item {
+            // Space between buttons
+            height: parent.height
+            width: (parent.width - (returnIcon.width + newTabIcon.width + menuIcon.width)) / 2
+        }
+
+        Browser.TabButton {
+            id: newTabIcon
+
+            width: iconWidth
+            icon.source: webView.privateMode ? "image://theme/icon-m-incognito-new" : "image://theme/icon-m-tab-new"
+            onTapped: root.enterNewTabUrl()
+        }
+
+        Item {
+            // Space between buttons
+            height: parent.height
+            width: (parent.width - (returnIcon.width + newTabIcon.width + menuIcon.width)) / 2
+        }
+
+        Shared.IconButton {
+            id: menuIcon
+
+            width: iconWidth
+            icon.source: "image://theme/icon-m-menu"
+            icon.anchors.horizontalCenterOffset: - root.horizontalOffset
+            onTapped: root.openMenu()
+        }
     }
 }
