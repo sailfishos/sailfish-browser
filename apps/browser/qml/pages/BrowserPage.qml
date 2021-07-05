@@ -213,8 +213,6 @@ Page {
         onCountChanged: {
             if (webView.tabModel.count === 0) {
                 webView.handleModelChanges(false)
-            } else if (!webView.tabModel.waitingForNewTab) {
-                overlay.animator.showChrome()
             }
         }
         onWaitingForNewTabChanged: window.opaqueBackground = webView.tabModel.waitingForNewTab

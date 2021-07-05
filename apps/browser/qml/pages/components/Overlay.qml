@@ -375,7 +375,7 @@ Shared.Background {
                 }
 
                 onRequestingFocusChanged: {
-                    if (requestingFocus && webView.tabModel.count !== 0) {
+                    if (requestingFocus) {
                         forceActiveFocus()
                     }
                 }
