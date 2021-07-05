@@ -222,7 +222,7 @@ bool BrowserUIService::isPrivileged() const
 
 bool BrowserUIService::callerMatchesService(const QString &serviceName) const
 {
-    uint callerServicePid = GET_PID().value();
+    uint callerServicePid = getCallerPid();
 
     // Test this against pid of serviceName which works also inside
     // sandbox. If that matches, then the caller is serviceName.
