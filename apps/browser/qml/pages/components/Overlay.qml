@@ -42,7 +42,7 @@ Shared.Background {
     property bool _showUrlEntry
     readonly property bool _topGap: _showUrlEntry || _showFindInPage
 
-    function loadPage(url) {
+    function loadPage(url, newTab) {
         if (url == "about:config") {
             pageStack.animatorPush(Qt.resolvedUrl("ConfigWarning.qml"), {"browserPage": browserPage})
         } else if (url == "about:settings") {
@@ -57,7 +57,7 @@ Shared.Background {
                 pageUrl = "\"" + pageUrl.trim() + "\""
             }
 
-            if (!searchField.enteringNewTabUrl) {
+            if (!searchField.enteringNewTabUrl && !newTab) {
                 webView.releaseActiveTabOwnership()
                 webView.load(pageUrl)
             } else {
@@ -426,6 +426,9 @@ Shared.Background {
                 onClicked: {
                     var historyPage = pageStack.push("../HistoryPage.qml", { model: historyModel })
                     historyPage.loadPage.connect(loadPage)
+                    historyPage.saveBookmark.connect(function(url, title) {
+                        bookmarkModel.add(url, title || url, "", true)
+                    })
                 }
             }
 
@@ -596,10 +599,11 @@ Shared.Background {
                 showDeleteButton: true
                 onLoad: {
                     historyList.focus = true
-                    overlay.loadPage(url)
+                    overlay.loadPage(url, newTab)
                 }
                 // necessary for correct display of context menu of FavoriteGrid
                 onContentHeightChanged: if (menuClosed) contentY = favoriteGrid.y
+                onSaveBookmark: bookmarkModel.add(url, title || url, "", true)
 
                 Behavior on opacity { FadeAnimator {} }
             }
