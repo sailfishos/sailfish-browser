@@ -65,6 +65,7 @@ Page {
             onClicked: openMenu()
 
             ValueButton {
+                anchors.verticalCenter: parent.verticalCenter
                 label: model.uri
                 labelColor: listItem.highlighted ? Theme.highlightColor : Theme.primaryColor
                 valueColor: Theme.highlightColor
