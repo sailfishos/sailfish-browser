@@ -22,6 +22,8 @@
 
 #include "faviconmanager.h"
 
+#include "declarativewebpage.h"
+
 FaviconManager::FaviconManager(QObject *parent)
     : QObject(parent)
     , m_faviconSets()
@@ -38,11 +40,11 @@ FaviconManager *FaviconManager::instance()
     return singleton;
 }
 
-static QString sanitiseHostname(const QString &hostname)
+QString FaviconManager::sanitizedHostname(const QString &hostname)
 {
-    QUrl url(hostname);
-    // Maybe port should be included too
-    return QString("%1://%2").arg(url.scheme()).arg(url.host());
+    // Should port should be included too?
+    const QUrl url(hostname);
+    return QStringLiteral("%1://%2").arg(url.scheme(), url.host());
 }
 
 void FaviconManager::save(const QString &type)
@@ -138,7 +140,7 @@ void FaviconManager::add(const QString &type, const QString &hostname, const QSt
 {
     load(type);
 
-    const QString host = sanitiseHostname(hostname);
+    const QString host = sanitizedHostname(hostname);
     FaviconSet faviconSet = m_faviconSets.value(type);
 
     if (faviconSet.favicons.contains(host)) {
@@ -165,7 +167,7 @@ void FaviconManager::remove(const QString &type, const QString &hostname)
 
     // After calling load() it's safe to assume the type exists in the map
     FaviconSet faviconSet = m_faviconSets.value(type);
-    faviconSet.favicons.remove(sanitiseHostname(hostname));
+    faviconSet.favicons.remove(sanitizedHostname(hostname));
     m_faviconSets.insert(type, faviconSet);
 
     save(type);
@@ -177,7 +179,7 @@ QString FaviconManager::get(const QString &type, const QString &hostname)
 
     // After calling load() it's safe to assume the type exists in the map
     QString favicon;
-    QString host = sanitiseHostname(hostname);
+    QString host = sanitizedHostname(hostname);
     if (m_faviconSets.value(type).favicons.contains(host)) {
         favicon = m_faviconSets.value(type).favicons.value(host).favicon;
     }
@@ -186,6 +188,10 @@ QString FaviconManager::get(const QString &type, const QString &hostname)
 
 void FaviconManager::grabIcon(const QString &type, DeclarativeWebPage *webPage, const QSize &size)
 {
+    if (!get(type, webPage->url().toString()).isEmpty()) {
+        return; // favicon was previously already loaded.
+    }
+
     DataFetcher *dataFetcher = new DataFetcher(this);
 
     std::shared_ptr<QMetaObject::Connection> dataConn = std::make_shared<QMetaObject::Connection>();

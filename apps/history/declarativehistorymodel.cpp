@@ -11,6 +11,9 @@
 #include "declarativehistorymodel.h"
 
 #include "dbmanager.h"
+#include "faviconmanager.h"
+
+#include <QUrl>
 
 DeclarativeHistoryModel::DeclarativeHistoryModel(QObject *parent)
     : QAbstractListModel(parent)
@@ -28,6 +31,7 @@ QHash<int, QByteArray> DeclarativeHistoryModel::roleNames() const
     roles[UrlRole] = "url";
     roles[TitleRole] = "title";
     roles[DateRole] = "date";
+    roles[FaviconRole] = "favicon";
     return roles;
 }
 
@@ -38,6 +42,7 @@ void DeclarativeHistoryModel::clear()
     m_links.clear();
     endResetModel();
     DBManager::instance()->clearHistory();
+    FaviconManager::instance()->clear(QStringLiteral("history"));
     emit countChanged();
 }
 
@@ -57,17 +62,26 @@ void DeclarativeHistoryModel::remove(int index)
 
 void DeclarativeHistoryModel::remove(const QString &url)
 {
+    const QString sanitizedUrl = FaviconManager::sanitizedHostname(url);
+    bool canClearFavicon = true;
     int index = 0;
     for (const auto &link : m_links) {
         if (link.url() == url) {
             remove(index);
-            return;
+        } else if (FaviconManager::sanitizedHostname(link.url()) == sanitizedUrl) {
+            // this site is still represented in history, so cannot clear icon
+            canClearFavicon = false;
         }
         index++;
     }
 
     // Not in model but remove from database anyway
     DBManager::instance()->removeHistoryEntry(url);
+
+    // And clean up favicon if no other urls from the same host
+    if (canClearFavicon) {
+        FaviconManager::instance()->remove(QStringLiteral("history"), url);
+    }
 }
 
 void DeclarativeHistoryModel::add(const QString &url, const QString &title)
@@ -100,6 +114,8 @@ QVariant DeclarativeHistoryModel::data(const QModelIndex & index, int role) cons
         return url.title().isEmpty() ? url.url() : url.title();
     case DateRole:
         return url.date();
+    case FaviconRole:
+        return FaviconManager::instance()->get(QStringLiteral("history"), url.url());
     default:
         return QVariant();
     }

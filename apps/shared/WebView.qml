@@ -240,6 +240,11 @@ WebContainer {
                         resurrectedContentRect = null
                     }
                     grabItem()
+
+                    // Update the favicon for history items.
+                    FaviconManager.grabIcon("history", webPage,
+                                            Qt.size(Theme.iconSizeMedium,
+                                                    Theme.iconSizeMedium))
                 }
 
                 // Refresh timers (if any) keep working even for suspended views. Hence

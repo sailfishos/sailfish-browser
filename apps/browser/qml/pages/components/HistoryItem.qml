@@ -81,9 +81,18 @@ ListItem {
         anchors.verticalCenter: parent.verticalCenter
         spacing: Theme.paddingMedium
 
+        FavoriteIcon {
+            id: websiteIcon
+            icon: model.favicon
+            sourceSize.width: Theme.iconSizeMedium
+            sourceSize.height: Theme.iconSizeMedium
+            width: height
+            height: column.height
+        }
+
         Column {
             id: column
-            width: parent.width - (deleteButton.visible ? deleteButton.width : 0)
+            width: parent.width - websiteIcon.width - (deleteButton.visible ? deleteButton.width : 0)
             Label {
                 text: Theme.highlightText(model.title, search, Theme.highlightColor)
                 textFormat: Text.StyledText
