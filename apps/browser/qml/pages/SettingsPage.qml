@@ -54,14 +54,14 @@ Page {
                 //: Label for home page text field
                 //% "Home Page"
                 label: qsTrId("settings_browser-la-home_page")
-                //% "Default"
-                value: _homePageBlank ? qsTrId("sailfish_browser-la-home_page_default") : removeProtocolTypeFromUri(homePageConfig.value)
+                //% "Start view"
+                value: _homePageBlank ? qsTrId("sailfish_browser-la-start_view") : removeProtocolTypeFromUri(homePageConfig.value)
                 leftMargin: Theme.horizontalPageMargin + homePageIcon.width + Theme.paddingMedium
                 contentHeight: Theme.itemSizeMedium
 
                 currentIndex: _homePageBlank
-                              ? 0 // For default home page (blank)
-                              : 1 // For custom home page
+                              ? 0 // For start view (blank)
+                              : 1 // For web page
 
                 on_HomePageBlankChanged: currentIndex = _homePageBlank ? 0 : 1
 
@@ -74,22 +74,22 @@ Page {
 
                 menu: ContextMenu {
                     MenuItem {
-                        //% "Default home page"
-                        text: qsTrId("sailfish_browser-me-home_page_default")
+                        //% "Start view"
+                        text: qsTrId("sailfish_browser-me-start_view")
                         onClicked: homePageConfig.value = "about:blank"
                     }
                     MenuItem {
                         readonly property string site: removeProtocolTypeFromUri(homePageConfig.value)
 
                         property string title: {
-                            if (homePage._homePageBlank || site.trim() === "") {
+                            if (homePage._homePageBlank || site === "") {
                                 //: Shown when site is empty
-                                //% "Custom website"
-                                return qsTrId("sailfish_browser-me-home_page_custom_empty")
+                                //% "Web page"
+                                return qsTrId("sailfish_browser-me-web_page_empty")
                             } else {
                                 //: Instead of %1 site address will be displayed
-                                //% "Custom website %1"
-                                qsTrId("sailfish_browser-me-home_page_custom").arg(site)
+                                //% "Web page %1"
+                                qsTrId("sailfish_browser-me-web_page").arg(site)
                             }
                         }
 
