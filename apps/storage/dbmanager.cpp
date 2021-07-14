@@ -13,6 +13,7 @@
 #include <QMetaObject>
 
 #include "dbworker.h"
+#include "faviconmanager.h"
 
 static DBManager *gDbManager = 0;
 
@@ -141,6 +142,7 @@ void DBManager::addHistoryEntry(const QString &url, const QString &title)
 
 void DBManager::clearHistory()
 {
+    FaviconManager::instance()->clear(QStringLiteral("history"));
     QMetaObject::invokeMethod(worker, "clearHistory", Qt::QueuedConnection);
 }
 
