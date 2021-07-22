@@ -242,8 +242,15 @@ Page {
 
         MouseArea {
             anchors.fill: parent
-            enabled: overlay.animator.atTop && webView.tabModel.count > 0
-            onClicked: overlay.dismiss(true)
+
+            property bool inEmptyPrivateMode: webView.privateMode && webView.privateTabModel.count === 0 && webView.persistentTabModel.count > 0
+            enabled: overlay.animator.atTop && (webView.tabModel.count > 0 || inEmptyPrivateMode)
+            onClicked: {
+                if (inEmptyPrivateMode) {
+                    webView.privateMode = false
+                }
+                overlay.dismiss(true)
+            }
         }
 
         Browser.PrivateModeTexture {
