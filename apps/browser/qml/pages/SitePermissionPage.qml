@@ -43,6 +43,7 @@ Page {
         "geolocation": PermissionManager.Prompt,
         "popup": _getPopupCapability(),
         "cookie": _getCookieCapability(),
+        "camera": PermissionManager.Prompt,
         "microphone": PermissionManager.Prompt
     }
 
@@ -64,6 +65,12 @@ Page {
                    title: qsTrId("sailfish_browser-ti-cookies"),
                    type: "cookie",
                    capability: permissions["cookie"]
+               })
+        permissionTypesModel.append({
+                   //% "Camera"
+                   title: qsTrId("sailfish_browser-ti-camera"),
+                   type: "camera",
+                   capability: permissions["camera"]
                })
         permissionTypesModel.append({
                    //% "Microphone"
