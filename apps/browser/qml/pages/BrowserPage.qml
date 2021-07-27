@@ -385,6 +385,7 @@ Page {
                     overlay.enterNewTabUrl(PageStackAction.Immediate)
                 }
 
+                window.activate()
                 return
             }
 

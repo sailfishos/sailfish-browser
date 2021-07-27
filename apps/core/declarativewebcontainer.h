@@ -233,6 +233,7 @@ private slots:
     void updateActiveTabRendered();
     void onLastViewDestroyed();
 
+    void onLastWindowDestroyed();
     void updateWindowFlags();
 
     // QMozWindow related slots:

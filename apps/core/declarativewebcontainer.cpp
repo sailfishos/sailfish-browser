@@ -104,6 +104,8 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
             this, &DeclarativeWebContainer::initialize);
     connect(webEngine, &SailfishOS::WebEngine::lastViewDestroyed,
             this, &DeclarativeWebContainer::onLastViewDestroyed);
+    connect(webEngine, &SailfishOS::WebEngine::lastWindowDestroyed,
+            this, &DeclarativeWebContainer::onLastWindowDestroyed);
 
     QString cacheLocation = BrowserPaths::cacheLocation();
     if (cacheLocation.isNull()) {
@@ -654,15 +656,23 @@ QObject *DeclarativeWebContainer::focusObject() const
 
 bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
 {
-    if (event->type() == QEvent::Close && m_mozWindow) {
-        m_mozWindow->suspendRendering();
-        m_closing = true;
-
-        if (m_webPages->count() == 0) {
-            m_mozWindow.reset();
+    if (obj == m_chromeWindow) {
+        if (event->type() == QEvent::Close) {
+            if (!m_closing) {
+                m_webPages->clear();
+                m_initialUrl = "";
+                m_initialized = false;
+                m_mozWindow.reset();
+                if (QMozContext::instance()->getNumberOfWindows() != 0) {
+                    m_closing = true;
+                }
+            }
+        } else if (event->type() == QEvent::Show) {
+            if (!handle()) {
+                create();
+                show();
+            }
         }
-
-        m_webPages->clear();
     }
 
     // Emit chrome exposed when both chrome window and browser window has been exposed. This way chrome
@@ -707,11 +717,13 @@ void DeclarativeWebContainer::exposeEvent(QExposeEvent*)
     static bool alreadyExposed = false;
 
     if (isExposed() && !alreadyExposed) {
+        initialize();
+
         if (m_chromeWindow) {
             m_chromeWindow->update();
         }
 
-        if (m_webPage) {
+        if (m_webPage && !m_closing) {
             m_webPage->update();
         } else {
             if (postClearWindowSurfaceTask()) {
@@ -871,8 +883,12 @@ void DeclarativeWebContainer::onActiveTabChanged(int activeTabId)
 
 void DeclarativeWebContainer::initialize()
 {
+    if (!isExposed() || m_closing) {
+        return;
+    }
+
     if (SailfishOS::WebEngine::instance()->isInitialized() && !m_mozWindow) {
-        m_mozWindow.reset(new QMozWindow(QWindow::size()));
+        m_mozWindow = new QMozWindow(QWindow::size());
         connect(m_mozWindow.data(), &QMozWindow::requestGLContext,
                 this, &DeclarativeWebContainer::createGLContext, Qt::DirectConnection);
         connect(m_mozWindow.data(), &QMozWindow::drawUnderlay,
@@ -1035,6 +1051,15 @@ void DeclarativeWebContainer::onLastViewDestroyed()
 {
     if (m_closing) {
         m_mozWindow.reset();
+    }
+}
+
+void DeclarativeWebContainer::onLastWindowDestroyed()
+{
+    m_closing = false;
+
+    if (isExposed()) {
+        initialize();
     }
 }
 
