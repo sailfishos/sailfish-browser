@@ -29,6 +29,16 @@ CloseEventFilter::CloseEventFilter(DownloadManager *dlMgr, QObject *parent)
             this, &CloseEventFilter::closeApplication);
 }
 
+void CloseEventFilter::applicationClosingStarted()
+{
+    if (!m_downloadManager->existActiveTransfers()) {
+        // Give the engine 60 seconds to send lastWindowDestroyed signal.
+        m_shutdownWatchdog.start(60000);
+    } else {
+        m_closing = true;
+    }
+}
+
 void CloseEventFilter::closeApplication()
 {
     if (m_downloadManager->existActiveTransfers()) {

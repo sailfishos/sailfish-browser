@@ -25,6 +25,7 @@ public:
     explicit CloseEventFilter(DownloadManager *dlMgr, QObject *parent = 0);
 
 public slots:
+    void applicationClosingStarted();
     void cancelCloseApplication();
     void closeApplication();
 

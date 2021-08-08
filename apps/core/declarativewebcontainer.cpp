@@ -661,6 +661,7 @@ bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
 {
     if (obj == m_chromeWindow) {
         if (event->type() == QEvent::Close) {
+            m_closeEventFilter->applicationClosingStarted();
             if (!m_closing) {
                 m_webPages->clear();
                 m_initialUrl = "";
