@@ -25,17 +25,18 @@ public:
     explicit CloseEventFilter(DownloadManager *dlMgr, QObject *parent = 0);
 
 public slots:
-    void cancelStopApplication();
+    void cancelCloseApplication();
+    void closeApplication();
 
 private slots:
-    void stopApplication();
-    void onLastWindowDestroyed();
     void onContextDestroyed();
     void onWatchdogTimeout();
+    void allTransfersCompleted();
 
 private:
     DownloadManager *m_downloadManager;
     QTimer m_shutdownWatchdog;
+    bool m_closing;
 };
 
 #endif

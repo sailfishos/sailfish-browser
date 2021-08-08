@@ -32,6 +32,7 @@ class DeclarativeWebPage;
 class WebPages;
 class Tab;
 class DeclarativeHistoryModel;
+class CloseEventFilter;
 
 class DeclarativeWebContainer : public QWindow, public QQmlParserStatus, protected QOpenGLFunctions {
     Q_OBJECT
@@ -310,6 +311,8 @@ private:
 
     QHash<int, uint> m_tabOwners;
     DeclarativeHistoryModel *m_historyModel;
+
+    CloseEventFilter *m_closeEventFilter;
 
     friend class tst_webview;
     friend class tst_declarativewebcontainer;

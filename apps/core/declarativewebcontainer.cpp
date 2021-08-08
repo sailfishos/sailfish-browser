@@ -20,6 +20,7 @@
 #include "browserapp.h"
 #include "logging.h"
 #include "declarativehistorymodel.h"
+#include "closeeventfilter.h"
 
 #include <webengine.h>
 #include <QTimerEvent>
@@ -68,6 +69,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     , m_activeTabRendered(false)
     , m_clearSurfaceTask(0)
     , m_closing(false)
+    , m_closeEventFilter(nullptr)
 {
     Q_ASSERT(!s_instance);
 
@@ -117,6 +119,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
 
     qApp->installEventFilter(this);
 
+    m_closeEventFilter = new CloseEventFilter(DownloadManager::instance(), this);
     s_instance = this;
 }
 
@@ -665,10 +668,13 @@ bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
                 destroyWindow();
                 if (QMozContext::instance()->getNumberOfWindows() != 0) {
                     m_closing = true;
+                } else {
+                    m_closeEventFilter->closeApplication();
                 }
             }
         } else if (event->type() == QEvent::Show) {
             if (!handle()) {
+                m_closeEventFilter->cancelCloseApplication();
                 create();
                 show();
             }
@@ -1081,6 +1087,9 @@ void DeclarativeWebContainer::onLastWindowDestroyed()
 
     if (isExposed()) {
         initialize();
+    }
+    if (!handle()) {
+        m_closeEventFilter->closeApplication();
     }
 }
 
