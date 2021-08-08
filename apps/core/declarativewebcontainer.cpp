@@ -662,7 +662,7 @@ bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
                 m_webPages->clear();
                 m_initialUrl = "";
                 m_initialized = false;
-                m_mozWindow.reset();
+                destroyWindow();
                 if (QMozContext::instance()->getNumberOfWindows() != 0) {
                     m_closing = true;
                 }
@@ -684,6 +684,24 @@ bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
     }
 
     return QObject::eventFilter(obj, event);
+}
+
+void DeclarativeWebContainer::destroyWindow()
+{
+    if (QMozContext::instance()->getNumberOfViews() != 0) {
+        return;
+    }
+
+    if (m_mozWindow) {
+        if (m_mozWindow->isReserved()) {
+            connect(m_mozWindow.data(), &QMozWindow::released,
+                    m_mozWindow.data(), &QObject::deleteLater);
+            m_mozWindow->release();
+        } else {
+            delete m_mozWindow;
+        }
+        m_mozWindow = nullptr;
+    }
 }
 
 bool DeclarativeWebContainer::event(QEvent *event)
@@ -1050,7 +1068,7 @@ void DeclarativeWebContainer::updateActiveTabRendered()
 void DeclarativeWebContainer::onLastViewDestroyed()
 {
     if (m_closing) {
-        m_mozWindow.reset();
+        destroyWindow();
     }
 }
 

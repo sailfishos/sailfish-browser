@@ -252,6 +252,7 @@ private:
     void setActiveTabRendered(bool rendered);
     bool browserEnabled() const;
 
+    void destroyWindow();
     // Clears window surface on the compositor thread. Can be called even when there are
     // no active views. In case this function is called too early during gecko initialization,
     // before compositor thread has actually been started the function returns false.
@@ -259,7 +260,7 @@ private:
     static void clearWindowSurfaceTask(void* data);
     void clearWindowSurface();
 
-    QScopedPointer<QMozWindow> m_mozWindow;
+    QPointer<QMozWindow> m_mozWindow;
     QPointer<QQuickItem> m_rotationHandler;
     QPointer<DeclarativeWebPage> m_webPage;
     QPointer<QQuickView> m_chromeWindow;
