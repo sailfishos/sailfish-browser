@@ -18,15 +18,15 @@ BuildRequires:  pkgconfig(Qt5Core)
 BuildRequires:  pkgconfig(Qt5Qml)
 BuildRequires:  pkgconfig(Qt5Gui)
 BuildRequires:  pkgconfig(Qt5Quick)
-BuildRequires:  pkgconfig(qt5embedwidget) >= %{min_qtmozembed_version}
-BuildRequires:  pkgconfig(systemsettings) >= %{min_systemsettings_version}
+BuildRequires:  pkgconfig(qt5embedwidget)
+BuildRequires:  pkgconfig(systemsettings)
 BuildRequires:  pkgconfig(Qt5DBus)
 BuildRequires:  pkgconfig(Qt5Concurrent)
 BuildRequires:  pkgconfig(Qt5Sql)
 BuildRequires:  pkgconfig(nemotransferengine-qt5)
 BuildRequires:  pkgconfig(mlite5)
 BuildRequires:  pkgconfig(qdeclarative5-boostable)
-BuildRequires:  pkgconfig(sailfishwebengine) >= %{min_sailfishwebengine_version}
+BuildRequires:  pkgconfig(sailfishwebengine)
 BuildRequires:  pkgconfig(sailfishpolicy)
 BuildRequires:  qt5-qttools
 BuildRequires:  qt5-qttools-linguist
@@ -37,13 +37,13 @@ BuildRequires:  pkgconfig(vault) >= 1.0.1
 
 Requires: sailfishsilica-qt5 >= 1.2.33
 Requires: sailfish-content-graphics
-Requires: xulrunner-qt5 >= %{min_xulrunner_version}
-Requires: embedlite-components-qt5 >= %{min_embedlite_components_version}
-Requires: qtmozembed-qt5 >= %{min_qtmozembed_version}
+Requires: xulrunner-qt5
+Requires: embedlite-components-qt5
+Requires: qtmozembed-qt5
 Requires: sailfish-browser-settings = %{version}
-Requires: sailfish-components-webview-qt5 >= %{min_sailfishwebengine_version}
-Requires: sailfish-components-webview-qt5-popups >= %{min_sailfishwebengine_version}
-Requires: sailfish-components-webview-qt5-pickers >= %{min_sailfishwebengine_version}
+Requires: sailfish-components-webview-qt5
+Requires: sailfish-components-webview-qt5-popups
+Requires: sailfish-components-webview-qt5-pickers
 Requires: qt5-plugin-imageformat-ico
 Requires: qt5-plugin-imageformat-gif
 Requires: qt5-plugin-position-geoclue

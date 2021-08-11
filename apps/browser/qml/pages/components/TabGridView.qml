@@ -85,6 +85,9 @@ SilicaGridView {
         }
 
         Component.onCompleted:  {
+            if (tabGridView.loaded)
+                return
+
             if ((index / columns * cellHeight) > tabGridView.height) {
                 tabGridView.loaded = true
             }
@@ -123,14 +126,4 @@ SilicaGridView {
     }
 
     onLoadedChanged: positionViewAtIndex(model.activeTabIndex, GridView.Center)
-
-    Connections {
-        target: model
-        // Force update GridView when deleting a tab
-        onTabClosed: {
-            var oldModel = tabGridView.model
-            tabGridView.model = undefined
-            tabGridView.model = oldModel
-        }
-    }
 }

@@ -71,6 +71,11 @@ BackgroundItem {
                     color: root.highlightColor
                     opacity: activeTab ? 0.1 : 0.0
                 }
+
+
+//                color: Qt.tint(
+//                            Theme.colorScheme === Theme.LightOnDark ? "black" : "white",
+//                            Theme.rgba(Theme.primaryColor, Theme.opacityFaint))
             }
 
             Item {
@@ -143,6 +148,10 @@ BackgroundItem {
                 y: header.height
                 width: root.implicitWidth
                 height: root.implicitHeight
+                sourceSize {
+          //          width: image.width
+                    height: image.height * 1.2
+                }
 
                 cache: false
                 asynchronous: true
