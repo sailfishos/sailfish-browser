@@ -320,8 +320,10 @@ WebContainer {
                     break
                 }
                 case "Link:AddSearch": {
-                    // This adds this search as available if not already there
-                    SearchEngineModel.add(data.engine.title, data.engine.href)
+                    if (!webView.privateMode) {
+                        // This adds this search as available if not already there
+                        SearchEngineModel.add(data.engine.title, data.engine.href)
+                    }
                     break
                 }
                 }
