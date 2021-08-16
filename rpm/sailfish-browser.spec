@@ -58,6 +58,7 @@ Requires: sailfish-components-pickers-qt5 >= 0.1.7
 Requires: nemo-qml-plugin-notifications-qt5 >= 1.0.12
 Requires: nemo-qml-plugin-systemsettings >= %{min_systemsettings_version}
 Requires: mapplauncherd-booster-browser
+Requires: nemo-qml-plugin-connectivity
 
 %{_oneshot_requires_post}
 

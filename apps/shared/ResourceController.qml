@@ -17,6 +17,7 @@ import Sailfish.WebEngine 1.0
 import Nemo.DBus 2.0
 import MeeGo.Connman 0.2
 import org.nemomobile.policy 1.0
+import Nemo.Connectivity 1.0
 
 // QtObject cannot have children
 Item {
@@ -83,7 +84,10 @@ Item {
     Connections {
         target: WebEngine
 
-        onInitialized: networkManager.notifyOfflineStatus()
+        onInitialized: {
+          WebEngine.addObserver("network-enable")
+          connectionHelper.notifyOfflineStatus()
+        }
         onRecvObserve: {
             if (message === "media-decoder-info") {
                 if (data.state === "meta") {
@@ -95,19 +99,20 @@ Item {
                     _lastStateOwner = data.owner
                 }
                 calculateStatus()
+            } else if (message === "network-enable") {
+                connectionHelper.attemptToConnectNetwork()
             }
         }
     }
 
-    NetworkManager {
-        id: networkManager
-        readonly property bool online: state == "online" || state == "ready"
+    ConnectionHelper {
+        id: connectionHelper
 
         function notifyOfflineStatus() {
             if (WebEngine.initialized) {
                 WebEngine.notifyObservers("embed-network-link-status",
                                           {
-                                              "offline": !networkManager.online
+                                              "offline": !connectionHelper.online
                                           })
             }
         }
