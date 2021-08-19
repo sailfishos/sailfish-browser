@@ -18,6 +18,7 @@ SOURCES += \
     $$PWD/faviconmanager.cpp \
     $$PWD/inputregion.cpp \
     $$PWD/logging.cpp \
+    $$PWD/secureaction.cpp \
     $$PWD/settingmanager.cpp \
     $$PWD/webpagequeue.cpp \
     $$PWD/webpages.cpp
@@ -37,6 +38,7 @@ HEADERS += \
     $$PWD/inputregion.h \
     $$PWD/inputregion_p.h \
     $$PWD/logging.h \
+    $$PWD/secureaction.h \
     $$PWD/settingmanager.h \
     $$PWD/webpagequeue.h \
     $$PWD/webpages.h
