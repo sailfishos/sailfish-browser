@@ -241,9 +241,18 @@ Page {
                        : 0.9 - (overlay.y / (webView.fullscreenHeight - overlay.toolBar.rowHeight)) * 0.9
 
         MouseArea {
+            property bool inEmptyPrivateMode: webView.privateMode && webView.privateTabModel.count === 0 && webView.persistentTabModel.count > 0
+
             anchors.fill: parent
-            enabled: overlay.animator.atTop && webView.tabModel.count > 0
-            onClicked: overlay.dismiss(true)
+            enabled: overlay.animator.atTop && (webView.tabModel.count > 0 || inEmptyPrivateMode)
+            onClicked: {
+                if (inEmptyPrivateMode) {
+                    webView.privateMode = false
+                    //% "Leaving private mode"
+                    Notices.show(qsTrId("sailfish_browser-la-leaving_private_mode"), Notice.Short, Notice.Top)
+                }
+                overlay.dismiss(true)
+            }
         }
 
         Browser.PrivateModeTexture {
