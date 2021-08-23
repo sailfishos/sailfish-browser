@@ -61,7 +61,7 @@ Page {
     function inputMaskForOrientation(orientation) {
         // mask is in portrait window coordinates
         var mask = Qt.rect(0, 0, Screen.width, Screen.height)
-        if (!window.opaqueBackground && webView.enabled && browserPage.active && !webView.touchBlocked && !downloadPopup.visible) {
+        if (webView.enabled && browserPage.active && !webView.touchBlocked && !downloadPopup.visible) {
             var overlayVisibleHeight = browserPage.height - overlay.y
 
             switch (orientation) {
@@ -104,20 +104,20 @@ Page {
         }
     }
 
-    orientationTransitions: orientationFader.orientationTransition
+//    orientationTransitions: orientationFader.orientationTransition
 
-    Shared.OrientationFader {
-        id: orientationFader
+//    Shared.OrientationFader {
+//        id: orientationFader
 
-        visible: webView.contentItem
-        page: browserPage
-        fadeTarget: overlay.animator.allowContentUse ? overlay : overlay.dragArea
-        color: webView.contentItem ? (webView.resourceController.videoActive &&
-                                      webView.contentItem.fullscreen ? "black" : webView.contentItem.backgroundColor)
-                                   : "white"
+//        visible: webView.contentItem
+//        page: browserPage
+//        fadeTarget: overlay.animator.allowContentUse ? overlay : overlay.dragArea
+//        color: webView.contentItem ? (webView.resourceController.videoActive &&
+//                                      webView.contentItem.fullscreen ? "black" : webView.contentItem.backgroundColor)
+//                                   : "white"
 
-        onApplyContentOrientation: webView.applyContentOrientation(browserPage.orientation)
-    }
+//        onApplyContentOrientation: webView.applyContentOrientation(browserPage.orientation)
+//    }
 
     HistoryModel {
         id: historyModel
@@ -154,7 +154,7 @@ Page {
         toolbarHeight: overlay.animator.opened ? overlay.toolBar.rowHeight : 0
         rotationHandler: browserPage
         imOpened: virtualKeyboardObserver.opened
-        canShowSelectionMarkers: !orientationFader.waitForWebContentOrientationChanged
+        canShowSelectionMarkers: true
         historyModel: historyModel
 
         // Show overlay immediately at top if needed.
@@ -172,10 +172,10 @@ Page {
             }
         }
 
-        onWebContentOrientationChanged: orientationFader.waitForWebContentOrientationChanged = false
+//        onWebContentOrientationChanged: orientationFader.waitForWebContentOrientationChanged = false
 
         function applyContentOrientation(orientation) {
-            orientationFader.waitForWebContentOrientationChanged = (contentItem && contentItem.active)
+            //orientationFader.waitForWebContentOrientationChanged = (contentItem && contentItem.active)
 
             switch (orientation) {
             case Orientation.None:
@@ -215,7 +215,7 @@ Page {
                 webView.handleModelChanges(false)
             }
         }
-        onWaitingForNewTabChanged: window.opaqueBackground = webView.tabModel.waitingForNewTab
+//        onWaitingForNewTabChanged: window.opaqueBackground = webView.tabModel.waitingForNewTab
     }
 
     InputRegion {
@@ -226,59 +226,59 @@ Page {
         height: inputMask.height
     }
 
-    Browser.DimmerEffect {
-        id: contentDimmer
+//    Browser.DimmerEffect {
+//        id: contentDimmer
 
-        readonly property bool canOpenContentDimmer: webView.activeTabRendered && overlay.animator.atBottom
+//        readonly property bool canOpenContentDimmer: webView.activeTabRendered && overlay.animator.atBottom
 
-        width: browserPage.width
-        height: Math.ceil(overlay.y)
+//        width: browserPage.width
+//        height: Math.ceil(overlay.y)
 
-        baseColor: overlay.baseColor
-        baseOpacity: overlay.baseOpacity
-        dimmerOpacity: overlay.animator.atBottom
-                       ? 0.0
-                       : 0.9 - (overlay.y / (webView.fullscreenHeight - overlay.toolBar.rowHeight)) * 0.9
+//        baseColor: overlay.baseColor
+//        baseOpacity: overlay.baseOpacity
+//        dimmerOpacity: overlay.animator.atBottom
+//                       ? 0.0
+//                       : 0.9 - (overlay.y / (webView.fullscreenHeight - overlay.toolBar.rowHeight)) * 0.9
 
-        MouseArea {
-            anchors.fill: parent
-            enabled: overlay.animator.atTop && webView.tabModel.count > 0
-            onClicked: overlay.dismiss(true)
-        }
+//        MouseArea {
+//            anchors.fill: parent
+//            enabled: overlay.animator.atTop && webView.tabModel.count > 0
+//            onClicked: overlay.dismiss(true)
+//        }
 
-        Browser.PrivateModeTexture {
-            id: privateModeTexture
-            anchors.fill: contentDimmer
-            visible: webView.privateMode && !overlay.animator.allowContentUse
-        }
+//        Browser.PrivateModeTexture {
+//            id: privateModeTexture
+//            anchors.fill: contentDimmer
+//            visible: webView.privateMode && !overlay.animator.allowContentUse
+//        }
 
-        onCanOpenContentDimmerChanged: {
-            if (canOpenContentDimmer) {
-                webView.tabModel.waitingForNewTab = false
-                window.opaqueBackground = false
-            }
-        }
-    }
+//        onCanOpenContentDimmerChanged: {
+//            if (canOpenContentDimmer) {
+//                webView.tabModel.waitingForNewTab = false
+//                window.opaqueBackground = false
+//            }
+//        }
+//    }
 
-    Label {
-        x: (contentDimmer.width - implicitWidth) / 2
-        // Allow only half of the width
-        width: parent.width / 2
-        truncationMode: TruncationMode.Fade
-        opacity: privateModeTexture.visible ? 1.0 : 0.0
-        anchors {
-            bottom: contentDimmer.bottom
-            bottomMargin: (overlay.toolBar.rowHeight - height) / 2
-        }
+//    Label {
+//        x: (contentDimmer.width - implicitWidth) / 2
+//        // Allow only half of the width
+//        width: parent.width / 2
+//        truncationMode: TruncationMode.Fade
+//        opacity: privateModeTexture.visible ? 1.0 : 0.0
+//        anchors {
+//            bottom: contentDimmer.bottom
+//            bottomMargin: (overlay.toolBar.rowHeight - height) / 2
+//        }
 
-        //: Label for private browsing above address bar
-        //% "Private browsing"
-        text: qsTrId("sailfish_browser-la-private_mode")
-        color: Theme.highlightColor
-        font.pixelSize: Theme.fontSizeLarge
+//        //: Label for private browsing above address bar
+//        //% "Private browsing"
+//        text: qsTrId("sailfish_browser-la-private_mode")
+//        color: Theme.highlightColor
+//        font.pixelSize: Theme.fontSizeLarge
 
-        Behavior on opacity { FadeAnimation {} }
-    }
+//        Behavior on opacity { FadeAnimation {} }
+//    }
 
     Browser.Overlay {
         id: overlay
@@ -288,7 +288,7 @@ Page {
         historyModel: historyModel
         browserPage: browserPage
 
-        onEnteringNewTabUrlChanged: window.opaqueBackground = webView.tabModel.waitingForNewTab || enteringNewTabUrl
+//        onEnteringNewTabUrlChanged: window.opaqueBackground = webView.tabModel.waitingForNewTab || enteringNewTabUrl
 
         animator.onAtBottomChanged: {
             if (!animator.atBottom) {

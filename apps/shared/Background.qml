@@ -30,6 +30,7 @@ Item {
             anchors.fill: parent
             color: Theme.lightPrimaryColor
             opacity: window.opaqueBackground ? 1 : 0
+            visible: false
             Behavior on opacity {
                 enabled: window.rootPage.active
                 FadeAnimation { }

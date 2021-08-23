@@ -1096,6 +1096,7 @@ void DeclarativeWebContainer::createGLContext()
         m_context->create();
         m_context->makeCurrent(this);
         initializeOpenGLFunctions();
+        qDebug() << Q_FUNC_INFO << "Created!!";
     } else {
         m_context->makeCurrent(this);
     }
