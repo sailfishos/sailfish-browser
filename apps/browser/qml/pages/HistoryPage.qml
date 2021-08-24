@@ -51,7 +51,7 @@ Page {
                 width: parent.width
                 //% "Search"
                 placeholderText: qsTrId("sailfish_browser-ph-search")
-                enabled: !pendingRemorse && view.model && view.model.count > 0
+                enabled: !pendingRemorse && view.model
 
                 EnterKey.onClicked: focus = false
                 onTextChanged: {
@@ -70,6 +70,8 @@ Page {
             }
         }
 
+        viewPlaceholder.enabled: root.pendingRemorse || !model.count
+
         PullDownMenu {
             visible: view.model && view.model.count
             MenuItem {
@@ -85,12 +87,6 @@ Page {
                                 })
                 }
             }
-        }
-
-        ViewPlaceholder {
-            //% "Websites you visit show up here"
-            text: qsTrId("sailfish_browser-la-websites-show-up-here")
-            enabled: root.pendingRemorse || !model.count
         }
     }
 }

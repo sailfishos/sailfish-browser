@@ -605,6 +605,8 @@ Shared.Background {
                 onContentHeightChanged: if (menuClosed) contentY = favoriteGrid.y
                 onSaveBookmark: bookmarkModel.add(url, title || url, "", true)
 
+                viewPlaceholder.enabled: historyList.model && !historyList.model.count
+
                 Behavior on opacity { FadeAnimator {} }
             }
         }

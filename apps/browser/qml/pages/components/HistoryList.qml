@@ -16,6 +16,8 @@ import Sailfish.WebView.Popups 1.0
 
 SilicaListView {
     id: view
+
+    property alias viewPlaceholder: viewPlaceholder
     property string search
     property bool showDeleteButton
     property bool menuClosed
@@ -38,6 +40,13 @@ SilicaListView {
 
     WebShareAction {
         id: webShareAction
+    }
+
+    ViewPlaceholder {
+        id: viewPlaceholder
+
+        //% "Websites you visit show up here"
+        text: qsTrId("sailfish_browser-la-websites-show-up-here")
     }
 
     VerticalScrollDecorator {}
