@@ -34,9 +34,9 @@ Dialog {
         anchors.top: header.bottom
         text: homePageConfig.value === "about:blank" ? "" : homePageConfig.value
         //% "Shown when the browser is opened with no tabs to load."
-        description: qsTrId("sailfish_browser-he-home_page_website-address")
-        //% "Website address"
-        placeholderText: qsTrId("settings_browser-la-website_address")
+        description: qsTrId("sailfish_browser-he-home_page_web_page-address")
+        //% "Web page address"
+        placeholderText: qsTrId("settings_browser-la-web_page_address")
         label: placeholderText
         inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase | Qt.ImhUrlCharactersOnly
         EnterKey.onClicked: dialog.accept()
