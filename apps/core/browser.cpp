@@ -128,7 +128,6 @@ QString Browser::applicationFilePath()
 void Browser::openUrl(const QString &url)
 {
     Q_D(Browser);
-    d->closeEventFilter->cancelStopApplication();
     DeclarativeWebUtils::instance()->openUrl(url);
 }
 
@@ -140,14 +139,12 @@ void Browser::openSettings()
 void Browser::openNewTabView()
 {
     Q_D(Browser);
-    d->closeEventFilter->cancelStopApplication();
     emit DeclarativeWebUtils::instance()->activateNewTabViewRequested();
 }
 
 void Browser::showChrome()
 {
     Q_D(Browser);
-    d->closeEventFilter->cancelStopApplication();
     emit DeclarativeWebUtils::instance()->showChrome();
 }
 

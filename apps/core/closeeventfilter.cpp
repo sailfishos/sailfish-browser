@@ -60,10 +60,3 @@ void CloseEventFilter::onWatchdogTimeout()
 {
     qFatal("Browser failed to terminate in acceptable time!");
 }
-
-void CloseEventFilter::cancelStopApplication()
-{
-    disconnect(m_downloadManager, &DownloadManager::allTransfersCompleted,
-               this, &CloseEventFilter::stopApplication);
-    m_shutdownWatchdog.stop();
-}

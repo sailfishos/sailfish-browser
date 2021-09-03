@@ -24,9 +24,6 @@ class CloseEventFilter : public QObject
 public:
     explicit CloseEventFilter(DownloadManager *dlMgr, QObject *parent = 0);
 
-public slots:
-    void cancelStopApplication();
-
 private slots:
     void stopApplication();
     void onLastWindowDestroyed();
