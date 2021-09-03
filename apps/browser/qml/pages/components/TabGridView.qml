@@ -123,14 +123,4 @@ SilicaGridView {
     }
 
     onLoadedChanged: positionViewAtIndex(model.activeTabIndex, GridView.Center)
-
-    Connections {
-        target: model
-        // Force update GridView when deleting a tab
-        onTabClosed: {
-            var oldModel = tabGridView.model
-            tabGridView.model = undefined
-            tabGridView.model = oldModel
-        }
-    }
 }
