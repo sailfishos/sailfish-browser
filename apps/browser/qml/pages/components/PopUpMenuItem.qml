@@ -94,6 +94,22 @@ Item {
 
             OverlayListItem {
                 height: Theme.itemSizeSmall
+                enabled: webView.contentItem
+                opacity: enabled ? 1.0 : 0.5
+                iconWidth: root.iconWidth
+                horizontalOffset: root.horizontalOffset
+                iconSource: "image://theme/icon-m-share"
+                //% "Share"
+                text: qsTrId("sailfish_browser-la-share")
+
+                onClicked: {
+                    overlay.toolBar.shareActivePage()
+                    overlay.animator.showChrome()
+                }
+            }
+
+            OverlayListItem {
+                height: Theme.itemSizeSmall
                 enabled: !DownloadManager.pdfPrinting
                 opacity: enabled ? 1.0 : 0.5
                 iconWidth: root.iconWidth

@@ -57,7 +57,6 @@ Column {
     signal showSecondaryTools
     signal showInfoOverlay
     signal showChrome
-    signal closeActiveTab
     signal showCertDetail
 
     // Used from the PopUpMenu
