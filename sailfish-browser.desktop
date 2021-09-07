@@ -12,6 +12,6 @@ X-Maemo-Object-Path=/ui
 X-Maemo-Method=org.sailfishos.browser.ui.openUrl
 
 [X-Sailjail]
-Permissions=WebView;Audio;Location;Internet;UserDirs;Sharing;RemovableMedia;MediaIndexing
+Permissions=WebView;Audio;Location;Internet;UserDirs;RemovableMedia;MediaIndexing
 OrganizationName=org.sailfishos
 ApplicationName=browser
