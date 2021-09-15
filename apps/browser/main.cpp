@@ -37,6 +37,7 @@
 #include "datafetcher.h"
 #include "inputregion.h"
 #include "searchenginemodel.h"
+#include "secureaction.h"
 #include "faviconmanager.h"
 
 #ifdef HAS_BOOSTER
@@ -153,6 +154,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     qmlRegisterType<DesktopBookmarkWriter>(uri, 1, 0, "DesktopBookmarkWriter");
     qmlRegisterType<DataFetcher>(uri, 1, 0, "DataFetcher");
     qmlRegisterType<InputRegion>(uri, 1, 0, "InputRegion");
+    qmlRegisterType<SecureAction>(uri, 1, 0, "SecureAction");
     qmlRegisterSingletonType<SearchEngineModel>(uri, 1, 0, "SearchEngineModel", search_model_factory);
 
     Browser *browser = new Browser(view.data(), app.data());
