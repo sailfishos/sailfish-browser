@@ -913,6 +913,8 @@ void DeclarativeWebContainer::initialize()
                 this, &DeclarativeWebContainer::drawUnderlay, Qt::DirectConnection);
         connect(m_mozWindow.data(), &QMozWindow::orientationChangeFiltered,
                 this, &DeclarativeWebContainer::handleContentOrientationChanged);
+        connect(m_mozWindow.data(), &QMozWindow::compositorCreated,
+                this, &DeclarativeWebContainer::postClearWindowSurfaceTask);
         m_mozWindow->reserve();
         m_mozWindow->setReadyToPaint(false);
         if (m_chromeWindow) {

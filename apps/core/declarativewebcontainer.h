@@ -241,6 +241,10 @@ private slots:
     void drawUnderlay();
 
     void handleContentOrientationChanged(Qt::ScreenOrientation orientation);
+    // Clears window surface on the compositor thread. Can be called even when there are
+    // no active views. In case this function is called too early during gecko initialization,
+    // before compositor thread has actually been started the function returns false.
+    bool postClearWindowSurfaceTask();
 
 private:
     void setWebPage(DeclarativeWebPage *webPage, bool triggerSignals = false);
@@ -253,10 +257,6 @@ private:
     bool browserEnabled() const;
 
     void destroyWindow();
-    // Clears window surface on the compositor thread. Can be called even when there are
-    // no active views. In case this function is called too early during gecko initialization,
-    // before compositor thread has actually been started the function returns false.
-    bool postClearWindowSurfaceTask();
     static void clearWindowSurfaceTask(void* data);
     void clearWindowSurface();
 
