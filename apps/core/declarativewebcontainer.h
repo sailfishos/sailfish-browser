@@ -32,6 +32,7 @@ class DeclarativeWebPage;
 class WebPages;
 class Tab;
 class DeclarativeHistoryModel;
+class CloseEventFilter;
 
 class DeclarativeWebContainer : public QWindow, public QQmlParserStatus, protected QOpenGLFunctions {
     Q_OBJECT
@@ -233,6 +234,7 @@ private slots:
     void updateActiveTabRendered();
     void onLastViewDestroyed();
 
+    void onLastWindowDestroyed();
     void updateWindowFlags();
 
     // QMozWindow related slots:
@@ -240,6 +242,10 @@ private slots:
     void drawUnderlay();
 
     void handleContentOrientationChanged(Qt::ScreenOrientation orientation);
+    // Clears window surface on the compositor thread. Can be called even when there are
+    // no active views. In case this function is called too early during gecko initialization,
+    // before compositor thread has actually been started the function returns false.
+    bool postClearWindowSurfaceTask();
 
 private:
     void setWebPage(DeclarativeWebPage *webPage, bool triggerSignals = false);
@@ -251,14 +257,11 @@ private:
     void setActiveTabRendered(bool rendered);
     bool browserEnabled() const;
 
-    // Clears window surface on the compositor thread. Can be called even when there are
-    // no active views. In case this function is called too early during gecko initialization,
-    // before compositor thread has actually been started the function returns false.
-    bool postClearWindowSurfaceTask();
+    void destroyWindow();
     static void clearWindowSurfaceTask(void* data);
     void clearWindowSurface();
 
-    QScopedPointer<QMozWindow> m_mozWindow;
+    QPointer<QMozWindow> m_mozWindow;
     QPointer<QQuickItem> m_rotationHandler;
     QPointer<DeclarativeWebPage> m_webPage;
     QPointer<QQuickView> m_chromeWindow;
@@ -308,6 +311,8 @@ private:
 
     QHash<int, uint> m_tabOwners;
     DeclarativeHistoryModel *m_historyModel;
+
+    CloseEventFilter *m_closeEventFilter;
 
     friend class tst_webview;
     friend class tst_declarativewebcontainer;

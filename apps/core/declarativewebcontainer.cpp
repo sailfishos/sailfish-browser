@@ -20,6 +20,7 @@
 #include "browserapp.h"
 #include "logging.h"
 #include "declarativehistorymodel.h"
+#include "closeeventfilter.h"
 
 #include <webengine.h>
 #include <QTimerEvent>
@@ -68,6 +69,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     , m_activeTabRendered(false)
     , m_clearSurfaceTask(0)
     , m_closing(false)
+    , m_closeEventFilter(nullptr)
 {
     Q_ASSERT(!s_instance);
 
@@ -104,6 +106,8 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
             this, &DeclarativeWebContainer::initialize);
     connect(webEngine, &SailfishOS::WebEngine::lastViewDestroyed,
             this, &DeclarativeWebContainer::onLastViewDestroyed);
+    connect(webEngine, &SailfishOS::WebEngine::lastWindowDestroyed,
+            this, &DeclarativeWebContainer::onLastWindowDestroyed);
 
     QString cacheLocation = BrowserPaths::cacheLocation();
     if (cacheLocation.isNull()) {
@@ -115,6 +119,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
 
     qApp->installEventFilter(this);
 
+    m_closeEventFilter = new CloseEventFilter(DownloadManager::instance(), this);
     s_instance = this;
 }
 
@@ -654,15 +659,27 @@ QObject *DeclarativeWebContainer::focusObject() const
 
 bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
 {
-    if (event->type() == QEvent::Close && m_mozWindow) {
-        m_mozWindow->suspendRendering();
-        m_closing = true;
-
-        if (m_webPages->count() == 0) {
-            m_mozWindow.reset();
+    if (obj == m_chromeWindow) {
+        if (event->type() == QEvent::Close) {
+            m_closeEventFilter->applicationClosingStarted();
+            if (!m_closing) {
+                m_webPages->clear();
+                m_initialUrl = "";
+                m_initialized = false;
+                destroyWindow();
+                if (QMozContext::instance()->getNumberOfWindows() != 0) {
+                    m_closing = true;
+                } else {
+                    m_closeEventFilter->closeApplication();
+                }
+            }
+        } else if (event->type() == QEvent::Show) {
+            if (!handle()) {
+                m_closeEventFilter->cancelCloseApplication();
+                create();
+                show();
+            }
         }
-
-        m_webPages->clear();
     }
 
     // Emit chrome exposed when both chrome window and browser window has been exposed. This way chrome
@@ -674,6 +691,24 @@ bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
     }
 
     return QObject::eventFilter(obj, event);
+}
+
+void DeclarativeWebContainer::destroyWindow()
+{
+    if (QMozContext::instance()->getNumberOfViews() != 0) {
+        return;
+    }
+
+    if (m_mozWindow) {
+        if (m_mozWindow->isReserved()) {
+            connect(m_mozWindow.data(), &QMozWindow::released,
+                    m_mozWindow.data(), &QObject::deleteLater);
+            m_mozWindow->release();
+        } else {
+            delete m_mozWindow;
+        }
+        m_mozWindow = nullptr;
+    }
 }
 
 bool DeclarativeWebContainer::event(QEvent *event)
@@ -707,11 +742,13 @@ void DeclarativeWebContainer::exposeEvent(QExposeEvent*)
     static bool alreadyExposed = false;
 
     if (isExposed() && !alreadyExposed) {
+        initialize();
+
         if (m_chromeWindow) {
             m_chromeWindow->update();
         }
 
-        if (m_webPage) {
+        if (m_webPage && !m_closing) {
             m_webPage->update();
         } else {
             if (postClearWindowSurfaceTask()) {
@@ -871,14 +908,21 @@ void DeclarativeWebContainer::onActiveTabChanged(int activeTabId)
 
 void DeclarativeWebContainer::initialize()
 {
+    if (!isExposed() || m_closing) {
+        return;
+    }
+
     if (SailfishOS::WebEngine::instance()->isInitialized() && !m_mozWindow) {
-        m_mozWindow.reset(new QMozWindow(QWindow::size()));
+        m_mozWindow = new QMozWindow(QWindow::size());
         connect(m_mozWindow.data(), &QMozWindow::requestGLContext,
                 this, &DeclarativeWebContainer::createGLContext, Qt::DirectConnection);
         connect(m_mozWindow.data(), &QMozWindow::drawUnderlay,
                 this, &DeclarativeWebContainer::drawUnderlay, Qt::DirectConnection);
         connect(m_mozWindow.data(), &QMozWindow::orientationChangeFiltered,
                 this, &DeclarativeWebContainer::handleContentOrientationChanged);
+        connect(m_mozWindow.data(), &QMozWindow::compositorCreated,
+                this, &DeclarativeWebContainer::postClearWindowSurfaceTask);
+        m_mozWindow->reserve();
         m_mozWindow->setReadyToPaint(false);
         if (m_chromeWindow) {
             updateContentOrientation(m_chromeWindow->contentOrientation());
@@ -1034,7 +1078,19 @@ void DeclarativeWebContainer::updateActiveTabRendered()
 void DeclarativeWebContainer::onLastViewDestroyed()
 {
     if (m_closing) {
-        m_mozWindow.reset();
+        destroyWindow();
+    }
+}
+
+void DeclarativeWebContainer::onLastWindowDestroyed()
+{
+    m_closing = false;
+
+    if (isExposed()) {
+        initialize();
+    }
+    if (!handle()) {
+        m_closeEventFilter->closeApplication();
     }
 }
 
