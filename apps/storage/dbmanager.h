@@ -41,7 +41,7 @@ public:
     void removeHistoryEntry(int linkId);
     void removeHistoryEntry(const QString &url);
     void addHistoryEntry(const QString &url, const QString &title);
-    void clearHistory();
+    void clearHistory(int period = 0);
     void getHistory(const QString &filter = "");
     void getTabHistory(int tabId);
 

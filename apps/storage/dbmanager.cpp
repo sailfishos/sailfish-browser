@@ -140,10 +140,9 @@ void DBManager::addHistoryEntry(const QString &url, const QString &title)
                               Q_ARG(QString, url), Q_ARG(QString, title));
 }
 
-void DBManager::clearHistory()
+void DBManager::clearHistory(int period)
 {
-    FaviconManager::instance()->clear(QStringLiteral("history"));
-    QMetaObject::invokeMethod(worker, "clearHistory", Qt::QueuedConnection);
+    QMetaObject::invokeMethod(worker, "clearHistory", Qt::QueuedConnection, Q_ARG(int, period));
 }
 
 void DBManager::getHistory(const QString &filter)
