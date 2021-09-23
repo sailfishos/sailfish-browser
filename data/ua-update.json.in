@@ -115,5 +115,6 @@
   "skype.com": "Mozilla/5.0 (Sailfish 4.0; Mobile; rv:60.0; Linux) Gecko/60.0 Firefox/60.0 SailfishBrowser/1.0 like Chrome/67.0.3396",
   "ok.ru": "Sailfish 4.0#Android",
   "zoom.us": "Sailfish 4.0#Android",
-  "corp.express": "Sailfish 4.0#Android"
+  "corp.express": "Sailfish 4.0#Android",
+  "mail.ru": "Sailfish 4.0#Android 8.1.0"
 }
