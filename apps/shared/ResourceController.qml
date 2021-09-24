@@ -1,7 +1,7 @@
 /****************************************************************************
 **
 ** Copyright (c) 2013 - 2019 Jolla Ltd.
-** Copyright (c) 2019 Open Mobile Platform LLC.
+** Copyright (c) 2019 - 2021 Open Mobile Platform LLC.
 ** Contact: Dmitry Rozhkov <dmitry.rozhkov@jolla.com>
 ** Contact: Raine Makelainen <raine.makelainen@jollamobile.com>
 **
@@ -107,17 +107,18 @@ Item {
 
     ConnectionHelper {
         id: connectionHelper
+        readonly property bool connected: status >= ConnectionHelper.Connected
 
         function notifyOfflineStatus() {
             if (WebEngine.initialized) {
                 WebEngine.notifyObservers("embed-network-link-status",
                                           {
-                                              "offline": !connectionHelper.online
+                                              "offline": !connectionHelper.connected
                                           })
             }
         }
 
-        onOnlineChanged: notifyOfflineStatus()
+        onConnectedChanged: notifyOfflineStatus()
     }
 
     DBusInterface {
