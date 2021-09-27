@@ -158,8 +158,12 @@ Item {
 
                 onClicked: {
                     overlay.animator.showChrome()
+                    var bookmarkModel = overlay.bookmarkModel
                     var historyPage = pageStack.push("../HistoryPage.qml", { model: overlay.historyModel })
                     historyPage.loadPage.connect(overlay.toolBar.loadPage)
+                    historyPage.saveBookmark.connect(function(url, title, favicon) {
+                        bookmarkModel.add(url, title || url, favicon, true)
+                    })
                 }
             }
 
