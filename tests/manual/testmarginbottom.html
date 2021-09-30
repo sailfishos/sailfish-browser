@@ -12,6 +12,20 @@
             height = window.innerHeight;
             content.style.height = height + "px";
             resize();
+            updateFullscreenStatus();
+
+            document.addEventListener("fullscreenchange", function() {
+                updateFullscreenStatus();
+            });
+            document.addEventListener("mozfullscreenchange", function() {
+                updateFullscreenStatus();
+            });
+            document.addEventListener("webkitfullscreenchange", function() {
+                updateFullscreenStatus();
+            });
+            document.addEventListener("msfullscreenchange", function() {
+                updateFullscreenStatus();
+            });
         }
 
         function resize() {
@@ -20,10 +34,14 @@
             var contentsize = document.getElementById("contentsize");
             windowsize.innerHTML = "Window height: " + window.innerHeight;
             contentsize.innerHTML = "Content height: " + content.clientHeight;
-
+            var frame = document.getElementById("frame");
+            frame.style.top = (content.clientHeight-100) + "px";
+            var bottominput = document.getElementById("bottominput");
+            bottominput.style.top = (content.clientHeight-25) + "px";
             // Add some delay
             delay(10000);
         }
+
         function changeheight(delta) {
             var content = document.getElementById("content");
             height += delta;
@@ -39,6 +57,43 @@
                  document.getElementById("hiddenvalue").innerHTML = check;
             }
         }
+
+        function inFullscreen() {
+            return ((document.fullscreenElement ||
+                     document.webkitFullscreenElement ||
+                     document.mozFullScreenElement ||
+                     document.msFullscreenElement) ? true : false);
+        }
+
+        function toggleFullscreen() {
+            if (!inFullscreen()) {
+                if (document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen();
+                } else if (document.documentElement.webkitRequestFullscreen) {
+                    document.documentElement.webkitRequestFullscreen();
+                } else if (document.documentElement.mozRequestFullScreen) {
+                    document.documentElement.mozRequestFullScreen();
+                } else if (document.documentElement.msRequestFullscreen) {
+                    document.documentElement.msRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+            }
+        }
+
+        function updateFullscreenStatus() {
+            var fullscreen = document.getElementById("fullscreen");
+            fullscreen.firstChild.data = (inFullscreen() ? "Exit fullscreen" : "Enter fullscreen");
+        }
+
         </script>
         <style>
             body {
@@ -69,6 +124,7 @@
                 top: 0px;
                 left: 0px;
                 z-index: -1;
+                box-sizing: border-box;
             }
             #background {
                 background-color: #555555;
@@ -83,10 +139,10 @@
             .arrowbar {
                 background-color: transparent;
                 border: solid #aaaaff 1px;
-                top: 16px;
+                top: 13px;
                 left: calc(100% - 26px);
                 width: 0px;
-                height: calc(100% - 28px);
+                height: calc(100% - 24px);
                 position: fixed;
             }
             .arrowhead {
@@ -100,12 +156,12 @@
             }
             .down {
                 transform: rotate(45deg);
-                top: calc(100% - 24px);
+                top: calc(100% - 27px);
                 left: calc(100% - 32px);
             }
             .up {
                 transform: rotate(-135deg);
-                top: 16px;
+                top: 13px;
                 left: calc(100% - 32px);
             }
             #windowsize {
@@ -113,6 +169,22 @@
             }
             #contentsize {
                 color: #00ff00;
+            }
+            #frame {
+                position: absolute;
+                border: 0px;
+                top: 200px;
+                right: 0px;
+                left: 0px;
+                box-sizing: border-box;
+                width: 100%;
+                height: 40px;
+            }
+            #bottominput {
+                position: absolute;
+                bottom: 15px;
+                left: 50%;
+                transform: translateX(-50%);
             }
         </style>
     </head>
@@ -122,16 +194,21 @@
         <i class="arrowhead up"></i>
         <i class="arrowhead down"></i>
         <div id="content" class="box">
-            <p/><div style="width: 10px; height: 16%;"></div>
+            <p/><div style="width: 10px; height: 6%;"></div>
             <center>
                 <p/><span id="windowsize"></span>
                 <p/><span id="contentsize"></span>
+                <br/>
                 <p/><span id="hiddenvalue" style="opacity: 0.0"></span>
-                <p/><input type="text" placeholder="Open keyboard"></input>
+                <p/><input type="text" placeholder="Open keyboard #1"></input>
                 <p/>
                 <button onclick="changeheight(+16)">More content</button>
                 <button onclick="changeheight(-16)">Less content</button>
+                <p/>
+                <button id="fullscreen" onclick="toggleFullscreen()">Enter fullscreen</button>
             </center>
+            <iframe id="frame" src="testmarginbottom-text-input-subframe.html" align="middle"></iframe>
+            <input id="bottominput" type="text" placeholder="Open keyboard #3"></input>
         </div>
     </body>
 </html>
