@@ -23,7 +23,7 @@ SilicaListView {
     property bool menuClosed
 
     signal load(string url, string title, bool newTab)
-    signal saveBookmark(string url, string title)
+    signal saveBookmark(string url, string title, string favicon)
 
     onLoad: if (newTab) webView.privateMode = !webView.privateMode
 

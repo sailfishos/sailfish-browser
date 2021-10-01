@@ -426,8 +426,8 @@ Shared.Background {
                 onClicked: {
                     var historyPage = pageStack.push("../HistoryPage.qml", { model: historyModel })
                     historyPage.loadPage.connect(loadPage)
-                    historyPage.saveBookmark.connect(function(url, title) {
-                        bookmarkModel.add(url, title || url, "", true)
+                    historyPage.saveBookmark.connect(function(url, title, favicon) {
+                        bookmarkModel.add(url, title || url, favicon, true)
                     })
                 }
             }
@@ -603,7 +603,7 @@ Shared.Background {
                 }
                 // necessary for correct display of context menu of FavoriteGrid
                 onContentHeightChanged: if (menuClosed) contentY = favoriteGrid.y
-                onSaveBookmark: bookmarkModel.add(url, title || url, "", true)
+                onSaveBookmark: bookmarkModel.add(url, title || url, favicon, true)
 
                 viewPlaceholder.enabled: historyList.model && !historyList.model.count
 

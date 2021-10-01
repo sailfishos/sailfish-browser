@@ -21,7 +21,7 @@ Page {
     readonly property bool pendingRemorse: remorse ? remorse.pending : false
 
     signal loadPage(string url, bool newTab)
-    signal saveBookmark(string url, string title)
+    signal saveBookmark(string url, string title, string favicon)
 
     HistoryList {
         id: view
@@ -36,7 +36,7 @@ Page {
             root.loadPage(url, newTab)
         }
 
-        onSaveBookmark: root.saveBookmark(url, title)
+        onSaveBookmark: root.saveBookmark(url, title, favicon)
 
         Component.onCompleted: model.search("")
 

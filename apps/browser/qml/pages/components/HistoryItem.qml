@@ -54,7 +54,7 @@ ListItem {
             MenuItem {
                 //% "Add to bookmarks"
                 text: qsTrId("sailfish_browser-me-add-to-bookmarks")
-                onClicked: view.saveBookmark(model.url, model.title)
+                onClicked: view.saveBookmark(model.url, model.title, model.favicon)
             }
             MenuItem {
                 //: Delete history entry
