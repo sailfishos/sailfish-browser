@@ -78,6 +78,14 @@ Page {
                     checked: true
                 }
 
+                TextSwitch {
+                    id: clearSitePermissions
+
+                    //% "Site permissions"
+                    text: qsTrId("settings_browser-la-clear_site_permissions")
+                    checked: true
+                }
+
                 // Spacer between Button and switches
                 Item {
                     width: parent.width
@@ -94,6 +102,7 @@ Page {
                              || clearSavedPasswords.checked
                              || clearCache.checked
                              || clearBookmarks.checked
+                             || clearSitePermissions.checked
 
                     onClicked: {
                         //: Remorse item for clearing private data
@@ -115,6 +124,9 @@ Page {
                                                      }
                                                      if (clearBookmarks.checked) {
                                                          BookmarkManager.clear()
+                                                     }
+                                                     if (clearSitePermissions.checked) {
+                                                         Settings.clearSitePermissions()
                                                      }
                                                  }
                         );

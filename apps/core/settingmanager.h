@@ -34,6 +34,7 @@ public:
     Q_INVOKABLE void clearCookies();
     Q_INVOKABLE void clearPasswords();
     Q_INVOKABLE void clearCache();
+    Q_INVOKABLE void clearSitePermissions();
     Q_INVOKABLE void removeAllTabs();
 
 signals:

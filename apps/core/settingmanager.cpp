@@ -92,6 +92,13 @@ void SettingManager::clearCache()
     SailfishOS::WebEngine::instance()->notifyObservers(QString("clear-private-data"), QString("cache"));
 }
 
+void SettingManager::clearSitePermissions()
+{
+    QVariantMap data;
+    data.insert(QStringLiteral("msg"), QStringLiteral("remove-all"));
+    SailfishOS::WebEngine::instance()->notifyObservers(QString("embedui:perms"), QVariant(data));
+}
+
 void SettingManager::removeAllTabs()
 {
     DBManager::instance()->removeAllTabs();
