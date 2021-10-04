@@ -270,7 +270,6 @@ private:
 
     QPointer<DeclarativeTabModel> m_model;
     QPointer<QQmlComponent> m_webPageComponent;
-    QPointer<SettingManager> m_settingManager;
     QPointer<WebPages> m_webPages;
     QPointer<DeclarativeTabModel> m_persistentTabModel;
     QPointer<DeclarativeTabModel> m_privateTabModel;

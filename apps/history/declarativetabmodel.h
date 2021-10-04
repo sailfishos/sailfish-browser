@@ -67,7 +67,6 @@ public:
     int nextTabId() const;
 
     bool loaded() const;
-    void setUnloaded();
 
     bool waitingForNewTab() const;
     void setWaitingForNewTab(bool waiting);

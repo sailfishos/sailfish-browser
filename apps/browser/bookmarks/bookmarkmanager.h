@@ -27,19 +27,15 @@ public:
     static BookmarkManager* instance();
 
     void save(const QList<Bookmark*> & bookmarks);
-    void clear();
     QList<Bookmark*> load();
+
+    Q_INVOKABLE void clear();
 
 signals:
     void cleared();
 
-private slots:
-    void clearBookmarks();
-
 private:
     BookmarkManager();
-
-    QPointer<MGConfItem> m_clearBookmarksConfItem;
 };
 
 #endif // BOOKMARKMANAGER_H

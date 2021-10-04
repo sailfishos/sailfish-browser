@@ -25,22 +25,16 @@
 BookmarkManager::BookmarkManager()
   : QObject(nullptr)
 {
-    m_clearBookmarksConfItem = new MGConfItem("/apps/sailfish-browser/actions/clear_bookmarks", this);
-
-    clearBookmarks();
-
-    connect(m_clearBookmarksConfItem.data(), &MGConfItem::valueChanged,
-            this, &BookmarkManager::clearBookmarks);
 }
 
 BookmarkManager* BookmarkManager::instance()
 {
-    static BookmarkManager* singleton;
-    if (!singleton) {
+    static QPointer <BookmarkManager> singleton;
+    if (singleton.isNull()) {
         singleton = new BookmarkManager();
     }
 
-    return singleton;
+    return singleton.data();
 }
 
 void BookmarkManager::save(const QList<Bookmark*> & bookmarks)
@@ -151,12 +145,4 @@ QList<Bookmark*> BookmarkManager::load() {
     // End of stop release cleanup...
 
     return bookmarks;
-}
-
-void BookmarkManager::clearBookmarks()
-{
-    if (m_clearBookmarksConfItem->value(false).toBool()) {
-        clear();
-        m_clearBookmarksConfItem->set(false);
-    }
 }

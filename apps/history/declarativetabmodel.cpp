@@ -267,14 +267,6 @@ bool DeclarativeTabModel::loaded() const
     return m_loaded;
 }
 
-void DeclarativeTabModel::setUnloaded()
-{
-    if (m_loaded) {
-        m_loaded = false;
-        emit loadedChanged();
-    }
-}
-
 bool DeclarativeTabModel::waitingForNewTab() const
 {
     return m_waitingForNewTab;

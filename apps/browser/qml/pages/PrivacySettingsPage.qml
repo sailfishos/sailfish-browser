@@ -13,6 +13,7 @@
 import QtQuick 2.1
 import Sailfish.Silica 1.0
 import org.nemomobile.configuration 1.0
+import Sailfish.Browser 1.0
 
 Page {
     id: page
@@ -77,6 +78,14 @@ Page {
                     checked: true
                 }
 
+                TextSwitch {
+                    id: clearSitePermissions
+
+                    //% "Site permissions"
+                    text: qsTrId("settings_browser-la-clear_site_permissions")
+                    checked: true
+                }
+
                 // Spacer between Button and switches
                 Item {
                     width: parent.width
@@ -88,7 +97,12 @@ Page {
                     //% "Clear"
                     text: qsTrId("settings_browser-bt-clear")
                     anchors.horizontalCenter: parent.horizontalCenter
-                    enabled: clearHistory.checked || clearCookies.checked || clearSavedPasswords.checked || clearCache.checked || clearBookmarks.checked
+                    enabled: clearHistory.checked
+                             || clearCookies.checked
+                             || clearSavedPasswords.checked
+                             || clearCache.checked
+                             || clearBookmarks.checked
+                             || clearSitePermissions.checked
 
                     onClicked: {
                         //: Remorse item for clearing private data
@@ -96,19 +110,23 @@ Page {
                         remorse = Remorse.popupAction(page, qsTrId("settings_browser-la-cleared_private_data"),
                                                  function() {
                                                      if (clearHistory.checked) {
-                                                         clearHistoryConfig.value = true
+                                                         Settings.clearHistory()
+                                                         Settings.removeAllTabs()
                                                      }
                                                      if (clearCookies.checked) {
-                                                         clearCookiesConfig.value = true
+                                                         Settings.clearCookies()
                                                      }
                                                      if (clearSavedPasswords.checked) {
-                                                         clearSavedPasswordsConfig.value = true
+                                                         Settings.clearPasswords()
                                                      }
                                                      if (clearCache.checked) {
-                                                         clearCacheConfig.value = true
+                                                         Settings.clearCache()
                                                      }
                                                      if (clearBookmarks.checked) {
-                                                         clearBookmarksConfig.value = true
+                                                         BookmarkManager.clear()
+                                                     }
+                                                     if (clearSitePermissions.checked) {
+                                                         Settings.clearSitePermissions()
                                                      }
                                                  }
                         );
@@ -116,40 +134,5 @@ Page {
                 }
             }
         }
-    }
-
-    ConfigurationValue {
-        id: clearHistoryConfig
-
-        key: "/apps/sailfish-browser/actions/clear_history"
-        defaultValue: false
-    }
-
-    ConfigurationValue {
-        id: clearCookiesConfig
-
-        key: "/apps/sailfish-browser/actions/clear_cookies"
-        defaultValue: false
-    }
-
-    ConfigurationValue {
-        id: clearSavedPasswordsConfig
-
-        key: "/apps/sailfish-browser/actions/clear_passwords"
-        defaultValue: false
-    }
-
-    ConfigurationValue {
-        id: clearCacheConfig
-
-        key: "/apps/sailfish-browser/actions/clear_cache"
-        defaultValue: false
-    }
-
-    ConfigurationValue {
-        id: clearBookmarksConfig
-
-        key: "/apps/sailfish-browser/actions/clear_bookmarks"
-        defaultValue: false
     }
 }
