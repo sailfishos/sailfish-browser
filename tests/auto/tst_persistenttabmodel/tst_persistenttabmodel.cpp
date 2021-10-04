@@ -63,7 +63,6 @@ private slots:
     void roleNames();
     void data_data();
     void data();
-    void setUnloaded();
     void newTab();
 
 private:
@@ -599,13 +598,6 @@ void tst_persistenttabmodel::data()
     } else if (role == DeclarativeTabModel::ActiveRole) {
         QCOMPARE(data.toBool(), false);
     }
-}
-
-void tst_persistenttabmodel::setUnloaded()
-{
-    QSignalSpy loadedChangedSpy(tabModel, SIGNAL(loadedChanged()));
-    tabModel->setUnloaded();
-    QCOMPARE(loadedChangedSpy.count(), 1);
 }
 
 void tst_persistenttabmodel::newTab()

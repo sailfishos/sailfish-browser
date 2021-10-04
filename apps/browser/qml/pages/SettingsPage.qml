@@ -153,9 +153,7 @@ Page {
             }
 
             TextSwitch {
-                id: doNotTrack
-
-                checked: doNotTrackConfig.value
+                checked: WebEngineSettings.doNotTrack
 
                 //: Tell sites that I do not want to be tracked.
                 //% "Do not track"
@@ -167,7 +165,7 @@ Page {
                 leftMargin: Theme.horizontalPageMargin + Theme.paddingLarge + _textSwitchIconCenter
                 _label.anchors.leftMargin: Theme.paddingMedium + _textSwitchIconCenter
 
-                onCheckedChanged: doNotTrackConfig.value = checked
+                onCheckedChanged: WebEngineSettings.doNotTrack = checked
             }
 
             TextSwitch {
@@ -310,13 +308,6 @@ Page {
                 }
             }
         }
-    }
-
-    ConfigurationValue {
-        id: doNotTrackConfig
-
-        key: "/apps/sailfish-browser/settings/do_not_track"
-        defaultValue: false
     }
 
     ConfigurationValue {

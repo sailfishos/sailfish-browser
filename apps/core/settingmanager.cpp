@@ -27,12 +27,7 @@ SettingManager::SettingManager(QObject *parent)
     , m_searchEnginesInitialized(false)
     , m_addedSearchEngines(0)
 {
-    m_clearHistoryConfItem = new MGConfItem("/apps/sailfish-browser/actions/clear_history", this);
-    m_clearCookiesConfItem = new MGConfItem("/apps/sailfish-browser/actions/clear_cookies", this);
-    m_clearPasswordsConfItem = new MGConfItem("/apps/sailfish-browser/actions/clear_passwords", this);
-    m_clearCacheConfItem = new MGConfItem("/apps/sailfish-browser/actions/clear_cache", this);
     m_searchEngineConfItem = new MGConfItem("/apps/sailfish-browser/settings/search_engine", this);
-    m_doNotTrackConfItem = new MGConfItem("/apps/sailfish-browser/settings/do_not_track", this);
 
     // Look and feel related settings
     m_toolbarSmall = new MGConfItem("/apps/sailfish-browser/settings/toolbar_small", this);
@@ -43,40 +38,19 @@ SettingManager::SettingManager(QObject *parent)
             this, &SettingManager::handleObserve);
 }
 
-bool SettingManager::clearHistoryRequested() const
-{
-    return m_clearHistoryConfItem->value(QVariant(false)).toBool();
-}
-
 bool SettingManager::initialize()
 {
     if (m_initialized) {
         return false;
     }
 
-    bool clearedData = clearCookies();
-    clearedData |= clearPasswords();
-    clearedData |= clearCache();
-    clearedData |= clearHistory();
-
     setSearchEngine();
-    doNotTrack();
 
-    connect(m_clearHistoryConfItem, &MGConfItem::valueChanged,
-            this, &SettingManager::clearHistory);
-    connect(m_clearCookiesConfItem, &MGConfItem::valueChanged,
-            this, &SettingManager::clearCookies);
-    connect(m_clearPasswordsConfItem, &MGConfItem::valueChanged,
-            this, &SettingManager::clearPasswords);
-    connect(m_clearCacheConfItem, &MGConfItem::valueChanged,
-            this, &SettingManager::clearCache);
     connect(m_searchEngineConfItem, &MGConfItem::valueChanged,
             this, &SettingManager::setSearchEngine);
-    connect(m_doNotTrackConfItem, &MGConfItem::valueChanged,
-            this, &SettingManager::doNotTrack);
 
     m_initialized = true;
-    return clearedData;
+    return m_initialized;
 }
 
 int SettingManager::toolbarSmall()
@@ -97,45 +71,30 @@ SettingManager *SettingManager::instance()
     return gSingleton;
 }
 
-bool SettingManager::clearHistory()
+void SettingManager::clearHistory()
 {
-    bool actionNeeded = m_clearHistoryConfItem->value(false).toBool();
-    if (actionNeeded) {
-        DBManager::instance()->clearHistory();
-        m_clearHistoryConfItem->set(false);
-    }
-    return actionNeeded;
+    DBManager::instance()->clearHistory();
 }
 
-bool SettingManager::clearCookies()
+void SettingManager::clearCookies()
 {
-    bool actionNeeded = m_clearCookiesConfItem->value(false).toBool();
-    if (actionNeeded) {
-        SailfishOS::WebEngine::instance()->notifyObservers(QString("clear-private-data"), QString("cookies"));
-        m_clearCookiesConfItem->set(false);
-    }
-    return actionNeeded;
+    SailfishOS::WebEngine::instance()->notifyObservers(QString("clear-private-data"), QString("cookies"));
 }
 
-bool SettingManager::clearPasswords()
+void SettingManager::clearPasswords()
 {
-    bool actionNeeded = m_clearPasswordsConfItem->value(false).toBool();
-    if (actionNeeded) {
-        SailfishOS::WebEngine::instance()->notifyObservers(QString("clear-private-data"), QString("passwords"));
-        FaviconManager::instance()->clear("logins");
-        m_clearPasswordsConfItem->set(false);
-    }
-    return actionNeeded;
+    SailfishOS::WebEngine::instance()->notifyObservers(QString("clear-private-data"), QString("passwords"));
+    FaviconManager::instance()->clear("logins");
 }
 
-bool SettingManager::clearCache()
+void SettingManager::clearCache()
 {
-    bool actionNeeded = m_clearCacheConfItem->value(false).toBool();
-    if (actionNeeded) {
-        SailfishOS::WebEngine::instance()->notifyObservers(QString("clear-private-data"), QString("cache"));
-        m_clearCacheConfItem->set(false);
-    }
-    return actionNeeded;
+    SailfishOS::WebEngine::instance()->notifyObservers(QString("clear-private-data"), QString("cache"));
+}
+
+void SettingManager::removeAllTabs()
+{
+    DBManager::instance()->removeAllTabs();
 }
 
 void SettingManager::setSearchEngine()
@@ -152,13 +111,6 @@ void SettingManager::setSearchEngine()
         SailfishOS::WebEngine *webEngine = SailfishOS::WebEngine::instance();
         webEngine->notifyObservers(QLatin1String("embedui:search"), QVariant(defaultSearchEngine));
     }
-}
-
-void SettingManager::doNotTrack()
-{
-    SailfishOS::WebEngineSettings *webEngineSettings = SailfishOS::WebEngineSettings::instance();
-    webEngineSettings->setPreference(QString("privacy.donottrackheader.enabled"),
-                                     m_doNotTrackConfItem->value(false));
 }
 
 void SettingManager::handleObserve(const QString &message, const QVariant &data)

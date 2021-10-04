@@ -23,7 +23,6 @@ class SettingManager : public QObject
     Q_PROPERTY(int toolbarLarge READ toolbarLarge NOTIFY toolbarLargeChanged FINAL)
 
 public:
-    bool clearHistoryRequested() const;
     bool initialize();
 
     int toolbarSmall();
@@ -31,28 +30,24 @@ public:
 
     static SettingManager *instance();
 
+    Q_INVOKABLE void clearHistory();
+    Q_INVOKABLE void clearCookies();
+    Q_INVOKABLE void clearPasswords();
+    Q_INVOKABLE void clearCache();
+    Q_INVOKABLE void removeAllTabs();
+
 signals:
     void toolbarSmallChanged();
     void toolbarLargeChanged();
 
 private slots:
-    bool clearHistory();
-    bool clearCookies();
-    bool clearPasswords();
-    bool clearCache();
     void setSearchEngine();
-    void doNotTrack();
     void handleObserve(const QString &message, const QVariant &data);
 
 private:
     explicit SettingManager(QObject *parent = 0);
 
-    MGConfItem *m_clearHistoryConfItem;
-    MGConfItem *m_clearCookiesConfItem;
-    MGConfItem *m_clearPasswordsConfItem;
-    MGConfItem *m_clearCacheConfItem;
     MGConfItem *m_searchEngineConfItem;
-    MGConfItem *m_doNotTrackConfItem;
 
     MGConfItem *m_toolbarSmall;
     MGConfItem *m_toolbarLarge;

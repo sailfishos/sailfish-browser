@@ -51,7 +51,6 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     , m_context(0)
     , m_model(0)
     , m_webPageComponent(0)
-    , m_settingManager(SettingManager::instance())
     , m_enabled(true)
     , m_foreground(true)
     , m_allowHiding(true)
@@ -932,23 +931,6 @@ void DeclarativeWebContainer::initialize()
     // This signal handler is responsible for activating
     // the first page.
     if (!canInitialize() || m_initialized) {
-        return;
-    }
-
-    bool clearTabs = m_settingManager->clearHistoryRequested();
-    int oldCount = m_model->count();
-
-    // Clear tabs immediately from the model.
-    if (clearTabs) {
-        m_model->clear();
-    }
-
-    // If data was cleared when initialized and we had tabs in previous
-    // session, reset tab model to unloaded state. DBManager emits
-    // tabsAvailable with empty list when tabs are cleared => tab model
-    // changes back to loaded and the initialize() slot gets called again.
-    if (m_settingManager->initialize() && (oldCount > 0) && clearTabs) {
-        m_model->setUnloaded();
         return;
     }
 
