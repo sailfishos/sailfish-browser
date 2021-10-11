@@ -10,8 +10,6 @@
   "baidu.com": "Sailfish 4.0#Android 8.1.0",
   // bug 827622, bing.com
   "bing.com": "Sailfish 4.0#Android",
-  // bug 827670, elpais.com.co
-  "elpais.com.co": "Sailfish 4.0#Android 8.1.0",
   // bug 878240, kuruc.info
   "kuruc.info": "Sailfish 4.0#Android",
   "youku.com": "Sailfish 4.0#Android 8.1.0",
