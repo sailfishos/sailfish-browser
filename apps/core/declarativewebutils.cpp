@@ -36,7 +36,7 @@
 #include "declarativewebutils.h"
 #include "browserpaths.h"
 
-static const auto defaultUserAgentUpdateUrl = QStringLiteral("https://browser.sailfishos.org/gecko/60.0/ua-update.json");
+static const auto defaultUserAgentUpdateUrl = QStringLiteral("https://browser.sailfishos.org/gecko/78.0/ua-update.json");
 
 static DeclarativeWebUtils *gSingleton = 0;
 
