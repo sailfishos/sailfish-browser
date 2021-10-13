@@ -239,7 +239,6 @@ private slots:
 
     // QMozWindow related slots:
     void createGLContext();
-    void drawUnderlay();
 
     void handleContentOrientationChanged(Qt::ScreenOrientation orientation);
     // Clears window surface on the compositor thread. Can be called even when there are

@@ -48,7 +48,6 @@ signals:
     void requestGLContext();
     void initialized();
     void drawOverlay(QRect);
-    void drawUnderlay();
     void compositorCreated();
     void compositingFinished();
 };
