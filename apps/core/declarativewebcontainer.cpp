@@ -915,8 +915,6 @@ void DeclarativeWebContainer::initialize()
         m_mozWindow = new QMozWindow(QWindow::size());
         connect(m_mozWindow.data(), &QMozWindow::requestGLContext,
                 this, &DeclarativeWebContainer::createGLContext, Qt::DirectConnection);
-        connect(m_mozWindow.data(), &QMozWindow::drawUnderlay,
-                this, &DeclarativeWebContainer::drawUnderlay, Qt::DirectConnection);
         connect(m_mozWindow.data(), &QMozWindow::orientationChangeFiltered,
                 this, &DeclarativeWebContainer::handleContentOrientationChanged);
         connect(m_mozWindow.data(), &QMozWindow::compositorCreated,
@@ -1140,19 +1138,6 @@ void DeclarativeWebContainer::createGLContext()
 
     if (!m_activeTabRendered) {
         clearWindowSurface();
-    }
-}
-
-void DeclarativeWebContainer::drawUnderlay()
-{
-    Q_ASSERT(m_context);
-
-    QColor bgColor = m_webPage ? m_webPage->backgroundColor() : QColor(Qt::white);
-    m_context->makeCurrent(this);
-    QOpenGLFunctions_ES2* funcs = m_context->versionFunctions<QOpenGLFunctions_ES2>();
-    if (funcs) {
-        funcs->glClearColor(bgColor.redF(), bgColor.greenF(), bgColor.blueF(), 0.0);
-        funcs->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 }
 
