@@ -4,9 +4,7 @@
  * License: Proprietary
  */
 
-Components.utils.import("resource://gre/modules/Services.jsm");
-
-Services.scriptloader.loadSubScript("chrome://embedlite/content/ClickEventBlocker.js");
+Services.scriptloader.loadSubScript("chrome://embedlite/content/ClickEventBlocker.js", this);
 
 let global = this;
 
