@@ -26,7 +26,7 @@ CloseEventFilter::CloseEventFilter(DownloadManager *dlMgr, QObject *parent)
     connect(&m_shutdownWatchdog, &QTimer::timeout,
             this, &CloseEventFilter::onWatchdogTimeout);
     connect(m_downloadManager, &DownloadManager::allTransfersCompleted,
-            this, &CloseEventFilter::closeApplication);
+            this, &CloseEventFilter::allTransfersCompleted);
 }
 
 void CloseEventFilter::applicationClosingStarted()
