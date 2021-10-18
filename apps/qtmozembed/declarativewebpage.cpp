@@ -351,8 +351,12 @@ void DeclarativeWebPage::thumbnailReady()
 
 void DeclarativeWebPage::updateViewMargins()
 {
+    qreal toolbarHeight = virtualKeyboardHeight() ? 0.0 : m_toolbarHeight;
+    qCDebug(lcCoreLog) << "WebPage: set dynamic toolbar height:" << toolbarHeight;
+    setDynamicToolbarHeight(toolbarHeight);
+
     QMargins margins;
-    margins.setBottom(qMax(virtualKeyboardHeight(), (int)toolbarHeight()));
+    margins.setBottom(virtualKeyboardHeight());
 
     qCDebug(lcCoreLog) << "WebPage: set margins:" << margins;
     setMargins(margins);
