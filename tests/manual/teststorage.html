@@ -1,0 +1,48 @@
+<html>
+    <body>
+        <h2>Storage test</h2>
+        <button onclick="addLocal()">Add local</button>
+        <button onclick="clearLocal()">Clear local</button>
+        <button onclick="addSession()">Add session</button>
+        <button onclick="clearSession()">Clear session</button>
+        <p id="p1"></p>
+
+        <script>
+            function log(txt) {
+                document.getElementById("p1").innerHTML += txt + "<br>";
+            }
+
+            function addLocal() {
+                var key = "key" + (window.localStorage.length + 1);
+                window.localStorage.setItem(key, key);
+                location.reload();
+            }
+
+            function clearLocal() {
+                window.localStorage.clear();
+                location.reload();
+            }
+
+            function addSession() {
+                var key = "key" + (window.sessionStorage.length + 1);
+                window.sessionStorage.setItem(key, key);
+                location.reload();
+            }
+
+            function clearSession() {
+                window.sessionStorage.clear();
+                location.reload();
+            }
+
+            log("<br>localStorage:");
+            for (var i = 0; i < window.localStorage.length; i++)
+            log("key: " + window.localStorage.key(i) + "=" +
+            window.localStorage.getItem(window.localStorage.key(i)));
+
+            log("<br>sessionStorage:");
+            for (var i = 0; i < window.sessionStorage.length; i++)
+            log("key: " + window.sessionStorage.key(i) + "=" +
+            window.sessionStorage.getItem(window.sessionStorage.key(i)));
+        </script>
+    </body>
+</html>
