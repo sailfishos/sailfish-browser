@@ -416,8 +416,6 @@ void DeclarativeTabModel::updateThumbnailPath(int tabId, const QString &path)
 #endif
             QModelIndex start = index(i, 0);
             QModelIndex end = index(i, 0);
-            m_tabs[i].setThumbnailPath("");
-            emit dataChanged(start, end, roles);
             m_tabs[i].setThumbnailPath(path);
             emit dataChanged(start, end, roles);
             updateThumbPath(tabId, path);
