@@ -164,6 +164,15 @@
                 top: 13px;
                 left: calc(100% - 32px);
             }
+            .fixed-bottom-bar {
+                padding: 4px;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                background: #ff0000;
+                color: #ffffff;
+            }
             #windowsize {
                 color: #aaaaff;
             }
@@ -210,6 +219,7 @@
             <iframe id="frame" src="testmarginbottom-text-input-subframe.html" align="middle"></iframe>
             <input id="bottominput" type="text" placeholder="Open keyboard #3"></input>
         </div>
+        <div class="fixed-bottom-bar">This is fixed bottom bar</div>
     </body>
 </html>
 
