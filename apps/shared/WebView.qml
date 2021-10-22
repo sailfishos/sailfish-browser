@@ -82,10 +82,13 @@ WebContainer {
     }
 
     function thumbnailCaptureSize() {
-        var ratio = browserPage.width / browserPage.thumbnailSize.width
+        var ratio = Math.min(
+                    browserPage.width / browserPage.thumbnailSize.width,
+                    browserPage.height / browserPage.thumbnailSize.height)
+        var width = browserPage.thumbnailSize.width * ratio
         var height = browserPage.thumbnailSize.height * ratio
 
-        return Qt.size(browserPage.width, height)
+        return Qt.size(width, height)
     }
 
     function grabActivePage() {
