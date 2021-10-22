@@ -144,6 +144,7 @@
                 width: 0px;
                 height: calc(100% - 24px);
                 position: fixed;
+                z-index: 100;
             }
             .arrowhead {
                 border: solid #aaaaff;
@@ -153,16 +154,28 @@
                 position: fixed;
                 width: 4px;
                 height: 4px;
+                z-index: 100;
             }
             .down {
                 transform: rotate(45deg);
                 top: calc(100% - 27px);
                 left: calc(100% - 32px);
+                z-index: 100;
             }
             .up {
                 transform: rotate(-135deg);
                 top: 13px;
                 left: calc(100% - 32px);
+                z-index: 100;
+            }
+            .fixed-bottom-bar {
+                padding: 4px;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                background: #ff0000;
+                color: #ffffff;
             }
             #windowsize {
                 color: #aaaaff;
@@ -189,7 +202,7 @@
         </style>
     </head>
     <body onresize="resize()" onload="init()" id="body">
-        <div id="background" class="box""></div>
+        <div id="background" class="box"></div>
         <div class="box arrowbar"></div>
         <i class="arrowhead up"></i>
         <i class="arrowhead down"></i>
@@ -210,6 +223,7 @@
             <iframe id="frame" src="testmarginbottom-text-input-subframe.html" align="middle"></iframe>
             <input id="bottominput" type="text" placeholder="Open keyboard #3"></input>
         </div>
+        <div class="fixed-bottom-bar">This is fixed bottom bar</div>
     </body>
 </html>
 
