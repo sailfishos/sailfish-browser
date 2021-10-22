@@ -1,7 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2013 Jolla Ltd.
-** Contact: Petri M. Gerdt <petri.gerdt@jollamobile.com>
+** Copyright (c) 2013 - 2021 Jolla Ltd.
 **
 ****************************************************************************/
 
@@ -54,7 +53,8 @@ DBManager::~DBManager()
     // Use timeout of 500ms to guaranty we won't block
     workerThread.wait(500);
     gDbManager = 0;
-    foreach (QString connectionName, QSqlDatabase::connectionNames()) {
+    const auto names = QSqlDatabase::connectionNames();
+    for (const QString &connectionName : names) {
         QSqlDatabase::removeDatabase(connectionName);
     }
 }
@@ -125,6 +125,18 @@ void DBManager::removeHistoryEntry(int linkId)
 {
     QMetaObject::invokeMethod(worker, "removeHistoryEntry", Qt::QueuedConnection,
                               Q_ARG(int, linkId));
+}
+
+void DBManager::removeHistoryEntry(const QString &url)
+{
+    QMetaObject::invokeMethod(worker, "removeHistoryEntry", Qt::QueuedConnection,
+                              Q_ARG(QString, url));
+}
+
+void DBManager::addHistoryEntry(const QString &url, const QString &title)
+{
+    QMetaObject::invokeMethod(worker, "addHistoryEntry", Qt::QueuedConnection,
+                              Q_ARG(QString, url), Q_ARG(QString, title));
 }
 
 void DBManager::clearHistory()

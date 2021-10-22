@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Jolla Ltd.
+** Copyright (c) 2017 Jolla Ltd.
 ** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **
 ****************************************************************************/
@@ -14,3 +14,4 @@
 Q_LOGGING_CATEGORY(lcCoreLog, "org.sailfishos.browser.core", QtWarningMsg)
 Q_LOGGING_CATEGORY(lcBackupLog, "org.sailfishos.browser.backup", QtWarningMsg)
 Q_LOGGING_CATEGORY(lcDownloadLog, "org.sailfishos.browser.download", QtWarningMsg)
+Q_LOGGING_CATEGORY(lcFavoritesLog, "org.sailfishos.browser.favorites", QtWarningMsg)

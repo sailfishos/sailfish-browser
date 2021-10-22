@@ -1,7 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2013 Jolla Ltd.
-** Contact: Dmitry Rozhkov <dmitry.rozhkov@jollamobile.com>
+** Copyright (c) 2013 - 2021 Jolla Ltd.
 **
 ****************************************************************************/
 
@@ -12,6 +11,7 @@
 #include "settingmanager.h"
 #include "dbmanager.h"
 #include "opensearchconfigs.h"
+#include "faviconmanager.h"
 
 #include <MGConfItem>
 #include <QVariant>
@@ -33,7 +33,6 @@ SettingManager::SettingManager(QObject *parent)
     m_clearCacheConfItem = new MGConfItem("/apps/sailfish-browser/actions/clear_cache", this);
     m_searchEngineConfItem = new MGConfItem("/apps/sailfish-browser/settings/search_engine", this);
     m_doNotTrackConfItem = new MGConfItem("/apps/sailfish-browser/settings/do_not_track", this);
-    m_autostartPrivateBrowsing = new MGConfItem("/apps/sailfish-browser/settings/autostart_private_browsing", this);
 
     // Look and feel related settings
     m_toolbarSmall = new MGConfItem("/apps/sailfish-browser/settings/toolbar_small", this);
@@ -123,6 +122,7 @@ bool SettingManager::clearPasswords()
     bool actionNeeded = m_clearPasswordsConfItem->value(false).toBool();
     if (actionNeeded) {
         SailfishOS::WebEngine::instance()->notifyObservers(QString("clear-private-data"), QString("passwords"));
+        FaviconManager::instance()->clear("logins");
         m_clearPasswordsConfItem->set(false);
     }
     return actionNeeded;
@@ -182,7 +182,7 @@ void SettingManager::handleObserve(const QString &message, const QVariant &data)
             SailfishOS::WebEngine *webEngine = SailfishOS::WebEngine::instance();
 
             // Add newly installed configs
-            foreach (QString searchName, configuredEngines) {
+            for (const QString &searchName : configuredEngines) {
                 if (registeredSearches.contains(searchName)) {
                     registeredSearches.removeAll(searchName);
                 } else {
@@ -196,7 +196,8 @@ void SettingManager::handleObserve(const QString &message, const QVariant &data)
             }
 
             // Remove uninstalled OpenSearch configs
-            foreach(QString searchName, registeredSearches) {
+            const QStringList removeUninstalled = registeredSearches;
+            for (const QString &searchName : removeUninstalled) {
                 QVariantMap removeMsg;
                 removeMsg.insert(QLatin1String("msg"), QVariant(QLatin1String("remove")));
                 removeMsg.insert(QLatin1String("name"), QVariant(searchName));
@@ -226,14 +227,4 @@ void SettingManager::handleObserve(const QString &message, const QVariant &data)
             }
         }
     }
-}
-
-void SettingManager::setAutostartPrivateBrowsing(bool privateMode)
-{
-    m_autostartPrivateBrowsing->set(privateMode);
-}
-
-bool SettingManager::autostartPrivateBrowsing() const
-{
-    return m_autostartPrivateBrowsing->value(false).toBool();
 }

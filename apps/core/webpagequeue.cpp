@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2014 Jolla Ltd.
+** Copyright (c) 2014 Jolla Ltd.
 ** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **
 ****************************************************************************/
@@ -123,7 +123,7 @@ void WebPageQueue::prepend(int tabId, DeclarativeWebPage *webPage)
         pageEntry->webPage = webPage;
         pageEntry->tabId = tabId;
         pageEntry->parentId = webPage->parentId();
-        pageEntry->uniqueId = webPage->uniqueID();
+        pageEntry->uniqueId = webPage->uniqueId();
         pageEntry->webPage->setResurrectedContentRect(*pageEntry->cssContentRect);
         if (pageEntry->cssContentRect) {
             delete pageEntry->cssContentRect;
@@ -195,7 +195,7 @@ bool WebPageQueue::virtualizeInactive()
     for (int i = 1; i < m_queue.count(); ++i) {
         DeclarativeWebPage* page = m_queue.at(i)->webPage;
         if (page &&
-                (livePage->parentId() != (int)page->uniqueID() || (int)livePage->uniqueID() != page->parentId())) {
+                (livePage->parentId() != (int)page->uniqueId() || (int)livePage->uniqueId() != page->parentId())) {
             release(m_queue.at(i)->tabId, true);
         }
     }
@@ -241,7 +241,7 @@ WebPageQueue::WebPageEntry *WebPageQueue::find(int tabId, int &index) const
 WebPageQueue::WebPageEntry::WebPageEntry(DeclarativeWebPage *webPage, QRectF *cssContentRect)
     : webPage(webPage)
     , tabId(webPage ? webPage->tabId() : 0)
-    , uniqueId(webPage ? webPage->uniqueID() : 0)
+    , uniqueId(webPage ? webPage->uniqueId() : 0)
     , parentId(webPage ? webPage->parentId() : 0)
     , cssContentRect(cssContentRect)
     , allowPageDelete(false)

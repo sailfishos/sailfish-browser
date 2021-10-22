@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2017 Jolla Ltd.
+** Copyright (c) 2017 Jolla Ltd.
 ** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **
 ****************************************************************************/
@@ -17,5 +17,6 @@
 Q_DECLARE_LOGGING_CATEGORY(lcCoreLog)
 Q_DECLARE_LOGGING_CATEGORY(lcBackupLog)
 Q_DECLARE_LOGGING_CATEGORY(lcDownloadLog)
+Q_DECLARE_LOGGING_CATEGORY(lcFavoritesLog)
 
 #endif

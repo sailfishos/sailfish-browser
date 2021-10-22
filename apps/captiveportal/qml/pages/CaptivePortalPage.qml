@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (c) 2020 Open Mobile Platform LLC.
+** Copyright (c) 2020 - 2021 Open Mobile Platform LLC.
 **
 ****************************************************************************/
 
@@ -83,7 +83,7 @@ Page {
         page: browserPage
         fadeTarget: overlay
         color: webView.contentItem ? (webView.resourceController.videoActive &&
-                                      webView.contentItem.fullscreen ? "black" : webView.contentItem.bgcolor)
+                                      webView.contentItem.fullscreen ? "black" : webView.contentItem.backgroundColor)
                                    : "white"
 
         onApplyContentOrientation: webView.applyContentOrientation(browserPage.orientation)
@@ -104,7 +104,7 @@ Page {
             when: virtualKeyboardObserver.opened && webView.enabled
             PropertyChanges {
                 target: webView.contentItem
-                virtualKeyboardMargin: virtualKeyboardObserver.panelSize
+                virtualKeyboardHeight: virtualKeyboardObserver.imSize
             }
         }
     }
@@ -116,7 +116,7 @@ Page {
         fullscreenHeight: portrait ? Screen.height : Screen.width
         portrait: browserPage.isPortrait
         maxLiveTabCount: 3
-        toolbarHeight: overlay.toolBar.height
+        toolbarHeight: overlay.animator.opened ? overlay.toolBar.rowHeight : 0
         rotationHandler: browserPage
         imOpened: virtualKeyboardObserver.opened
         canShowSelectionMarkers: false

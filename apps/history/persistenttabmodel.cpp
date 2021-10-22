@@ -1,7 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2013 Jolla Ltd.
-** Contact: Petri M. Gerdt <petri.gerdt@jolla.com>
+** Copyright (c) 2013 - 2021 Jolla Ltd.
 ** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 ** Contact: Siteshwar Vashisht <siteshwar@gmail.com>
 **
@@ -58,7 +57,7 @@ void PersistentTabModel::tabsAvailable(const QList<Tab> &tabs)
     }
 
     int maxTabId(0);
-    foreach (const Tab &tab, tabs) {
+    for (const Tab &tab : tabs) {
         if (maxTabId < tab.tabId()) {
             maxTabId = tab.tabId();
         }

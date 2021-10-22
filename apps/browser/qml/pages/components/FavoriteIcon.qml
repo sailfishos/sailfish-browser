@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2014 Jolla Ltd.
+** Copyright (c) 2014 Jolla Ltd.
 ** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jolla.com>
 ** Contact: Raine Makelelainen <raine.makelainen@jolla.com>
 **
@@ -22,7 +22,9 @@ Image {
     height: Theme.iconSizeLauncher
 
     source: {
-        if (icon.indexOf(':/') !== -1 || icon.indexOf("data:image/png;base64") === 0) {
+        if (!icon.length) {
+            return "image://theme/icon-launcher-bookmark"
+        } else if (icon.indexOf(':/') !== -1 || icon.indexOf("data:image/png;base64") === 0) {
             return icon
         } else if (icon.indexOf('/') === 0) {
             return 'file://' + icon

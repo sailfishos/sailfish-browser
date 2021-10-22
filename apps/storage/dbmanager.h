@@ -1,7 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2013 Jolla Ltd.
-** Contact: Petri M. Gerdt <petri.gerdt@jollamobile.com>
+** Copyright (c) 2013 - 2021 Jolla Ltd.
 **
 ****************************************************************************/
 
@@ -40,6 +39,8 @@ public:
     void updateTitle(int tabId, const QString &url, const QString &title);
 
     void removeHistoryEntry(int linkId);
+    void removeHistoryEntry(const QString &url);
+    void addHistoryEntry(const QString &url, const QString &title);
     void clearHistory();
     void getHistory(const QString &filter = "");
     void getTabHistory(int tabId);

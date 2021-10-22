@@ -1,0 +1,81 @@
+<html>
+<body>
+
+<audio id="audio"></audio><br>
+<video id="video" width="640" height="480"></video><br>
+
+<button id="microphone">Microphone</button><br>
+<button id="camera">Camera</button><br>
+<button id="camera+microphone">Camera + Microphone</button><br>
+<button id="stop" class="button stop" onclick="stopPlayback();">Stop</button><br>
+<style>
+video {
+  background-color: gray;
+  margin: 16px;
+}
+button {
+  background-color: white;
+  color: black;
+  padding: 16px 32px;
+  font-size: 32px;
+  margin: 16px;
+  width: 640px;
+}
+.success {
+  background-color: green;
+}
+.error {
+  background-color: red;
+}
+.stop {
+  background-color: gray;
+}
+</style>
+<script>
+const testPermissions = {
+  "microphone":        {audio: true},
+  "camera":            {video: true},
+  "camera+microphone": {audio: true, video: true},
+};
+
+function stopPlayer(player) {
+  player.pause();
+  player.srcObject = null;
+}
+
+function stopPlayback() {
+  stopPlayer(document.getElementById("audio"));
+  stopPlayer(document.getElementById("video"))
+}
+
+function playStream(stream) {
+  stopPlayback();
+  if (stream) {
+    var player = null
+    if (stream.getVideoTracks().length) {
+      player = document.getElementById("video");
+    } else if (stream.getAudioTracks().length) {
+      player = document.getElementById("audio");
+    }
+    if (player) {
+      player.srcObject = stream;
+      player.play();
+    }
+  }
+}
+
+for (const [perm, params] of Object.entries(testPermissions)) {
+  var button = document.getElementById(perm);
+  button.addEventListener('click', function(event) {
+    stopPlayback();
+    navigator.mediaDevices.getUserMedia(params)
+      .then(
+        (stream) => { event.target.className = "button success"; playStream(stream); },
+        (_)      => { event.target.className = "button error"; }
+      )
+      .catch(stopPlayback)
+    }
+  );
+}
+</script>
+</body>

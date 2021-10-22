@@ -1,7 +1,7 @@
 %global min_xulrunner_version 45.8.1.1
-%global min_qtmozembed_version 1.52.3
+%global min_qtmozembed_version 1.52.20
 %global min_embedlite_components_version 1.20.0
-%global min_sailfishwebengine_version 1.0.6
+%global min_sailfishwebengine_version 1.3.0
 %global min_systemsettings_version 0.5.25
 
 %global captiveportal sailfish-captiveportal
@@ -9,7 +9,7 @@
 Name:       sailfish-browser
 
 Summary:    Sailfish Browser
-Version:    1.17.11
+Version:    2.1.0
 Release:    1
 License:    MPLv2.0
 Url:        https://github.com/sailfishos/sailfish-browser
@@ -119,6 +119,7 @@ if [ "$1" -ge 2 ]; then
     %{_bindir}/add-oneshot --all-users --now browser-cleanup-startup-cache || :
     %{_bindir}/add-oneshot --new-users --all-users --late browser-update-default-data || :
     %{_bindir}/add-oneshot --all-users browser-move-data-to-new-location || :
+    %{_bindir}/add-oneshot --all-users browser-deprecate-dconf-keys || :
 fi
 
 %files
@@ -127,10 +128,10 @@ fi
 %{_bindir}/%{captiveportal}
 %{_datadir}/applications/%{name}.desktop
 %{_datadir}/applications/%{captiveportal}.desktop
-%{_datadir}/applications/open-url.desktop
 %{_datadir}/%{name}
 %{_datadir}/%{captiveportal}
 %{_datadir}/translations/%{name}*.qm
+%{_datadir}/translations/%{captiveportal}*.qm
 %{_datadir}/dbus-1/services/*.service
 %{_datadir}/mapplauncherd/privileges.d/*
 %{_oneshotdir}/*

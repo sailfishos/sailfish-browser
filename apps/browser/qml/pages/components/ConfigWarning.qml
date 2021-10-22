@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2014 Jolla Ltd.
+** Copyright (c) 2014 Jolla Ltd.
 ** Contact: Siteshwar Vashisht <siteshwar AT gmail.com>
 ** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **

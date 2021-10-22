@@ -1,7 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2013 Jolla Ltd.
-** Contact: Petri M. Gerdt <petri.gerdt@jollamobile.com>
+** Copyright (c) 2013 - 2021 Jolla Ltd.
 **
 ****************************************************************************/
 
@@ -15,6 +14,7 @@
 
 DeclarativeHistoryModel::DeclarativeHistoryModel(QObject *parent)
     : QAbstractListModel(parent)
+    , m_populated(false)
 {
     connect(DBManager::instance(), &DBManager::historyAvailable,
             this, &DeclarativeHistoryModel::historyAvailable);
@@ -34,6 +34,7 @@ QHash<int, QByteArray> DeclarativeHistoryModel::roleNames() const
 void DeclarativeHistoryModel::clear()
 {
     beginResetModel();
+    m_searchTerm.clear();
     m_links.clear();
     endResetModel();
     DBManager::instance()->clearHistory();
@@ -64,10 +65,20 @@ void DeclarativeHistoryModel::remove(const QString &url)
         }
         index++;
     }
+
+    // Not in model but remove from database anyway
+    DBManager::instance()->removeHistoryEntry(url);
+}
+
+void DeclarativeHistoryModel::add(const QString &url, const QString &title)
+{
+    DBManager::instance()->addHistoryEntry(url, title);
+    search(m_searchTerm);
 }
 
 void DeclarativeHistoryModel::search(const QString &filter)
 {
+    m_searchTerm = filter;
     DBManager::instance()->getHistory(filter);
 }
 
@@ -86,7 +97,7 @@ QVariant DeclarativeHistoryModel::data(const QModelIndex & index, int role) cons
     case UrlRole:
         return url.url();
     case TitleRole:
-        return url.title();
+        return url.title().isEmpty() ? url.url() : url.title();
     case DateRole:
         return url.date();
     default:
@@ -108,6 +119,10 @@ void DeclarativeHistoryModel::historyAvailable(QList<Link> linkList)
     // DBWorker suppresses history (distinct select). Thus, id and thumbnailPath of
     // every link is the same.
     updateModel(linkList);
+    if (!m_populated) {
+        m_populated = true;
+        emit populated();
+    }
 }
 
 void DeclarativeHistoryModel::updateModel(QList<Link> linkList)

@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (c) 2020 Open Mobile Platform LLC.
+** Copyright (c) 2020 - 2021 Open Mobile Platform LLC.
 **
 ****************************************************************************/
 
@@ -42,7 +42,8 @@ Page {
     property var permissions: {
         "geolocation": PermissionManager.Prompt,
         "popup": _getPopupCapability(),
-        "cookie": _getCookieCapability()
+        "cookie": _getCookieCapability(),
+        "microphone": PermissionManager.Prompt
     }
 
     function setPermissionTypesModel(permissions) {
@@ -63,6 +64,12 @@ Page {
                    title: qsTrId("sailfish_browser-ti-cookies"),
                    type: "cookie",
                    capability: permissions["cookie"]
+               })
+        permissionTypesModel.append({
+                   //% "Microphone"
+                   title: qsTrId("sailfish_browser-ti-microphone"),
+                   type: "microphone",
+                   capability: permissions["microphone"]
                })
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 - 2019 Jolla Ltd.
+ * Copyright (c) 2013 - 2021 Jolla Ltd.
  * Copyright (c) 2019 Open Mobile Platform LLC.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -19,6 +19,7 @@
 #include "browserpaths.h"
 #include "browserapp.h"
 #include "logging.h"
+#include "declarativehistorymodel.h"
 
 #include <webengine.h>
 #include <QTimerEvent>
@@ -63,7 +64,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     , m_loadProgress(0)
     , m_completed(false)
     , m_initialized(false)
-    , m_privateMode(m_settingManager->autostartPrivateBrowsing())
+    , m_privateMode(false)
     , m_activeTabRendered(false)
     , m_clearSurfaceTask(0)
     , m_closing(false)
@@ -193,6 +194,16 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage, bool trigg
             connect(m_webPage.data(), &DeclarativeWebPage::domContentLoadedChanged,
                     this, &DeclarativeWebContainer::updateActiveTabRendered, Qt::UniqueConnection);
 
+            connect(m_webPage.data(), &DeclarativeWebPage::neterror, [this]() {
+                if (m_historyModel)
+                    m_historyModel->remove(m_webPage->url().toString());
+            });
+
+            connect(m_webPage.data(), &DeclarativeWebPage::urlChanged, [this]() {
+                if (!BrowserApp::captivePortal() && !m_privateMode && m_historyModel)
+                    m_historyModel->add(m_webPage->url().toString(), QString());
+            });
+
             if (m_webPage->completed() && m_webPage->active() && m_webPage->domContentLoaded()) {
                 m_webPage->update();
             }
@@ -321,9 +332,6 @@ void DeclarativeWebContainer::setPrivateMode(bool privateMode)
 {
     if (m_privateMode != privateMode) {
         m_privateMode = privateMode;
-        if (browserEnabled()) {
-            m_settingManager->setAutostartPrivateBrowsing(privateMode);
-        }
         updateMode();
         emit privateModeChanged();
     }
@@ -679,6 +687,16 @@ bool DeclarativeWebContainer::event(QEvent *event)
         native->setWindowProperty(windowHandle, QStringLiteral("HAS_CHILD_WINDOWS"), true);
     }
     return QWindow::event(event);
+}
+
+DeclarativeTabModel *DeclarativeWebContainer::privateTabModel() const
+{
+    return m_privateTabModel;
+}
+
+DeclarativeTabModel *DeclarativeWebContainer::persistentTabModel() const
+{
+    return m_persistentTabModel;
 }
 
 void DeclarativeWebContainer::exposeEvent(QExposeEvent*)
@@ -1091,7 +1109,7 @@ void DeclarativeWebContainer::drawUnderlay()
 {
     Q_ASSERT(m_context);
 
-    QColor bgColor = m_webPage ? m_webPage->bgcolor() : QColor(Qt::white);
+    QColor bgColor = m_webPage ? m_webPage->backgroundColor() : QColor(Qt::white);
     m_context->makeCurrent(this);
     QOpenGLFunctions_ES2* funcs = m_context->versionFunctions<QOpenGLFunctions_ES2>();
     if (funcs) {
@@ -1104,5 +1122,18 @@ void DeclarativeWebContainer::handleContentOrientationChanged(Qt::ScreenOrientat
 {
     if (orientation == pendingWebContentOrientation()) {
         emit webContentOrientationChanged(orientation);
+    }
+}
+
+DeclarativeHistoryModel *DeclarativeWebContainer::historyModel() const
+{
+    return m_historyModel;
+}
+
+void DeclarativeWebContainer::setHistoryModel(DeclarativeHistoryModel *model)
+{
+    if (model != m_historyModel) {
+        m_historyModel = model;
+        emit historyModelChanged();
     }
 }

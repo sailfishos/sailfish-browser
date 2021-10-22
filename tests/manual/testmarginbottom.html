@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
+        <meta name="viewport" content="initial-scale=1.0" />
+        <meta name="viewport" content="width=device-width, user-scalable=no"/>
+        <script type="text/javascript" src="bottom-margin.js"></script>
+        <script type="text/javascript">
+        var height = 500;
+        function init() {
+            var content = document.getElementById("content");
+            height = window.innerHeight;
+            content.style.height = height + "px";
+            resize();
+        }
+
+        function resize() {
+            var content = document.getElementById("content");
+            var windowsize = document.getElementById("windowsize");
+            var contentsize = document.getElementById("contentsize");
+            windowsize.innerHTML = "Window height: " + window.innerHeight;
+            contentsize.innerHTML = "Content height: " + content.clientHeight;
+
+            // Add some delay
+            delay(10000);
+        }
+        function changeheight(delta) {
+            var content = document.getElementById("content");
+            height += delta;
+            content.style.height = height + "px";
+            resize();
+        }
+        
+        function delay(count) {
+            // Horrible, but seems to work
+            var check = 0;
+            for (let i = 0; i < count; i++) {
+                 check = (check + 10) - i;
+                 document.getElementById("hiddenvalue").innerHTML = check;
+            }
+        }
+        </script>
+        <style>
+            body {
+                background-color: #ff0000;
+                color: #ffffff;
+                font-family: "sans-serif";
+            }
+            button {
+                width: 100px;
+                height: 50px;
+                border: solid #00ff00 2px;
+                background: none;
+                color: #ffffff;
+                border-radius: 8px;
+                vertical-align: bottom;
+            }
+            input {
+                width: 200px;
+                height: 20px;
+                border: solid #00ff00 2px;
+                background: none;
+                color: #ffffff;
+                border-radius: 4px;
+                text-align: center;
+            }
+            .box {
+                width: 100%;
+                top: 0px;
+                left: 0px;
+                z-index: -1;
+            }
+            #background {
+                background-color: #555555;
+                width: 100%;
+                height: 100%;
+                position: fixed;
+            }
+            #content {
+                border: solid #00ff00 2px;
+                height: 400px;
+            }
+            .arrowbar {
+                background-color: transparent;
+                border: solid #aaaaff 1px;
+                top: 16px;
+                left: calc(100% - 26px);
+                width: 0px;
+                height: calc(100% - 28px);
+                position: fixed;
+            }
+            .arrowhead {
+                border: solid #aaaaff;
+                border-width: 0 2px 2px 0;
+                display: inline-block;
+                padding: 4px;
+                position: fixed;
+                width: 4px;
+                height: 4px;
+            }
+            .down {
+                transform: rotate(45deg);
+                top: calc(100% - 24px);
+                left: calc(100% - 32px);
+            }
+            .up {
+                transform: rotate(-135deg);
+                top: 16px;
+                left: calc(100% - 32px);
+            }
+            #windowsize {
+                color: #aaaaff;
+            }
+            #contentsize {
+                color: #00ff00;
+            }
+        </style>
+    </head>
+    <body onresize="resize()" onload="init()" id="body">
+        <div id="background" class="box""></div>
+        <div class="box arrowbar"></div>
+        <i class="arrowhead up"></i>
+        <i class="arrowhead down"></i>
+        <div id="content" class="box">
+            <p/><div style="width: 10px; height: 16%;"></div>
+            <center>
+                <p/><span id="windowsize"></span>
+                <p/><span id="contentsize"></span>
+                <p/><span id="hiddenvalue" style="opacity: 0.0"></span>
+                <p/><input type="text" placeholder="Open keyboard"></input>
+                <p/>
+                <button onclick="changeheight(+16)">More content</button>
+                <button onclick="changeheight(-16)">Less content</button>
+            </center>
+        </div>
+    </body>
+</html>
+

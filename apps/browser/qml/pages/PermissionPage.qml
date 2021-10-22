@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (c) 2020 Open Mobile Platform LLC.
+** Copyright (c) 2020 - 2021 Open Mobile Platform LLC.
 **
 ****************************************************************************/
 
@@ -60,7 +60,8 @@ Page {
                                         title: qsTrId("sailfish_browser-ti-geolocation"),
                                         type: "geolocation",
                                         capability: PermissionManager.Prompt,
-                                        iconSource: "image://theme/icon-m-browser-location"
+                                        iconSource: "image://theme/icon-m-browser-location",
+                                        sensitiveData: true
                                     })
 
         permissionTypesModel.append({
@@ -68,7 +69,8 @@ Page {
                                         title: qsTrId("sailfish_browser-ti-popup"),
                                         type: "popup",
                                         capability: _getPopupCapability(),
-                                        iconSource: "image://theme/icon-m-browser-popup"
+                                        iconSource: "image://theme/icon-m-browser-popup",
+                                        sensitiveData: false
                                     })
 
         permissionTypesModel.append({
@@ -76,8 +78,19 @@ Page {
                                         title: qsTrId("sailfish_browser-ti-cookies"),
                                         type: "cookie",
                                         capability: _getCookieCapability(),
-                                        iconSource: "image://theme/icon-m-browser-cookies"
+                                        iconSource: "image://theme/icon-m-browser-cookies",
+                                        sensitiveData: false
                                     })
+
+        permissionTypesModel.append({
+                                        //% "Microphone"
+                                        title: qsTrId("sailfish_browser-ti-microphone"),
+                                        type: "microphone",
+                                        capability: PermissionManager.Prompt,
+                                        iconSource: "image://theme/icon-m-browser-microphone",
+                                        sensitiveData: true
+                                    })
+
     }
 
     Component.onCompleted: initPermissionTypesModel()
@@ -90,7 +103,7 @@ Page {
         }
         model: permissionTypesModel
 
-        delegate: PermissionListItem {
+        delegate: BrowserListItem {
             label: model.title
             value: {
                 switch(model.capability) {
@@ -111,7 +124,7 @@ Page {
                 MenuItem {
                     //% "Allow"
                     text: qsTrId("sailfish_browser-me-allow")
-                    visible: model.type !== "geolocation"
+                    visible: !model.sensitiveData
                     onClicked: {
                         model.capability = PermissionManager.Allow
                         setGlobalPermission(PermissionManager.Allow, model.type)
@@ -120,7 +133,7 @@ Page {
                 MenuItem {
                     //% "Block"
                     text: qsTrId("sailfish_browser-me-block")
-                    visible: model.type !== "geolocation"
+                    visible: !model.sensitiveData
                     onClicked: {
                         model.capability = PermissionManager.Deny
                         setGlobalPermission(PermissionManager.Deny, model.type)
@@ -129,7 +142,7 @@ Page {
                 MenuItem {
                     //% "Ask"
                     text: qsTrId("sailfish_browser-me-ask")
-                    visible: model.type === "geolocation"
+                    visible: model.sensitiveData
                 }
                 MenuItem {
                     //% "Show exceptions"

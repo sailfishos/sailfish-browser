@@ -1,8 +1,7 @@
 /****************************************************************************
 **
-** Copyright (C) 2013 - 2019 Jolla Ltd.
-** Copyright (c) 2019 Open Mobile Platform LLC.
-** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jollamobile.com>
+** Copyright (c) 2013 - 2021 Jolla Ltd.
+** Copyright (c) 2019 - 2021 Open Mobile Platform LLC.
 **
 ****************************************************************************/
 
@@ -26,7 +25,7 @@ Page {
     readonly property rect inputMask: inputMaskForOrientation(orientation)
     readonly property bool active: status == PageStatus.Active
     property bool tabPageActive
-    readonly property size thumbnailSize: Qt.size((Screen.width - (largeScreen ? (2 * Theme.horizontalPageMargin) : 0)), (largeScreen ? Theme.itemSizeExtraLarge + (2 * Theme.paddingLarge) : Screen.height / 5))
+    readonly property size thumbnailSize: Qt.size(width - Theme.horizontalPageMargin * 2, Math.max(height / 2.5, width / 1.66) - (Theme.iconSizeSmall + Theme.paddingMedium * 2))
     property Item debug
     property Component tabPageComponent
 
@@ -114,7 +113,7 @@ Page {
         page: browserPage
         fadeTarget: overlay.animator.allowContentUse ? overlay : overlay.dragArea
         color: webView.contentItem ? (webView.resourceController.videoActive &&
-                                      webView.contentItem.fullscreen ? "black" : webView.contentItem.bgcolor)
+                                      webView.contentItem.fullscreen ? "black" : webView.contentItem.backgroundColor)
                                    : "white"
 
         onApplyContentOrientation: webView.applyContentOrientation(browserPage.orientation)
@@ -139,7 +138,7 @@ Page {
             when: virtualKeyboardObserver.opened && webView.enabled
             PropertyChanges {
                 target: webView.contentItem
-                virtualKeyboardMargin: virtualKeyboardObserver.panelSize
+                virtualKeyboardHeight: virtualKeyboardObserver.imSize
             }
         }
     }
@@ -152,10 +151,11 @@ Page {
         fullscreenHeight: portrait ? Screen.height : Screen.width
         portrait: browserPage.isPortrait
         maxLiveTabCount: 3
-        toolbarHeight: overlay.toolBar.rowHeight
+        toolbarHeight: overlay.animator.opened ? overlay.toolBar.rowHeight : 0
         rotationHandler: browserPage
         imOpened: virtualKeyboardObserver.opened
         canShowSelectionMarkers: !orientationFader.waitForWebContentOrientationChanged
+        historyModel: historyModel
 
         // Show overlay immediately at top if needed.
         onTabModelChanged: handleModelChanges(true)
@@ -209,7 +209,13 @@ Page {
         target: AccessPolicy.browserEnabled && webView && webView.tabModel || null
         ignoreUnknownSignals: true
         // Animate overlay to top if needed.
-        onCountChanged: webView.handleModelChanges(false)
+        onCountChanged: {
+            if (webView.tabModel.count === 0) {
+                webView.handleModelChanges(false)
+            } else if (!webView.tabModel.waitingForNewTab) {
+                overlay.animator.showChrome()
+            }
+        }
         onWaitingForNewTabChanged: window.opaqueBackground = webView.tabModel.waitingForNewTab
     }
 
@@ -278,7 +284,7 @@ Page {
     Browser.Overlay {
         id: overlay
 
-        active: browserPage.status == PageStatus.Active
+        active: browserPage.status == PageStatus.Active &&  webView.tabModel.loaded
         webView: webView
         historyModel: historyModel
         browserPage: browserPage
@@ -294,7 +300,11 @@ Page {
         onActiveChanged: {
             var isFullScreen = webView.contentItem && webView.contentItem.fullscreen
             if (!isFullScreen && active && !overlay.enteringNewTabUrl) {
-                overlay.animator.showChrome()
+                if (webView.tabModel.count !== 0 || (WebUtils.homePage !== "about:blank" && WebUtils.homePage.length > 0)) {
+                    overlay.animator.showChrome()
+                } else {
+                    overlay.startPage()
+                }
             }
 
             if (!active) {
@@ -304,6 +314,38 @@ Page {
                 }
             }
         }
+    }
+
+    Component {
+        id: desktopBookmarkWriter_
+        DesktopBookmarkWriter {
+            onSaved: destroy()
+        }
+    }
+
+    Browser.PopUpMenu {
+        id: secondaryBar
+
+        width: parent.width
+        height: parent.height
+
+        active: overlay.toolBar.secondaryToolsActive
+        menuItem: Component {
+            Browser.PopUpMenuItem {
+                desktopBookmarkWriter: desktopBookmarkWriter_
+                iconWidth: Theme.iconSizeMedium + Theme.paddingLarge
+            }
+        }
+
+        footer: Component {
+           Browser.PopUpMenuFooter {
+               height: (isPortrait
+                       ? overlay.toolBar.scaledPortraitHeight
+                       : overlay.toolBar.scaledLandscapeHeight) - secondaryBar.margin
+           }
+        }
+
+        onClosed: overlay.dismiss(true)
     }
 
     CoverActionList {

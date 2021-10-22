@@ -1,7 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2013 Jolla Ltd.
-** Contact: Petri M. Gerdt <petri.gerdt@jollamobile.com>
+** Copyright (c) 2013 - 2021 Jolla Ltd.
 **
 ****************************************************************************/
 
@@ -37,6 +36,7 @@ public:
     Q_INVOKABLE void remove(int index);
     Q_INVOKABLE void remove(const QString &url);
     Q_INVOKABLE void search(const QString &filter);
+    Q_INVOKABLE void add(const QString &url, const QString &title);
 
     // From QAbstractListModel
     int rowCount(const QModelIndex & parent = QModelIndex()) const;
@@ -49,6 +49,7 @@ public:
 
 signals:
     void countChanged();
+    void populated();
 
 private slots:
     void historyAvailable(QList<Link> linkList);
@@ -58,6 +59,8 @@ private:
     void updateModel(QList<Link> linkList);
 
     QList<Link> m_links;
+    QString m_searchTerm;
+    bool m_populated;
 
     friend class tst_declarativehistorymodel;
     friend class tst_webview;

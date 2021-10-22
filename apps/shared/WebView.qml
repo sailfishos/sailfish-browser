@@ -1,6 +1,7 @@
 /****************************************************************************
 **
-** Copyright (C) 2014 - 2021 Jolla Ltd.
+** Copyright (c) 2014 - 2021 Jolla Ltd.
+** Copyright (c) 2021 Open Mobile Platform LLC.
 **
 ****************************************************************************/
 
@@ -23,7 +24,6 @@ import "." as Browser
 WebContainer {
     id: webView
 
-    property color _decoratorColor: Theme.highlightDimmerColor
     readonly property bool moving: contentItem ? contentItem.moving : false
     property bool findInPageHasResult
     property bool canShowSelectionMarkers: true
@@ -82,10 +82,10 @@ WebContainer {
     }
 
     function thumbnailCaptureSize() {
-        var ratio = Screen.width / browserPage.thumbnailSize.width
+        var ratio = browserPage.width / browserPage.thumbnailSize.width
         var height = browserPage.thumbnailSize.height * ratio
 
-        return Qt.size(Screen.width, height)
+        return Qt.size(browserPage.width, height)
     }
 
     function grabActivePage() {
@@ -143,6 +143,12 @@ WebContainer {
                     // view before opening context menu.
                     webView.grabActivePage()
                     contextMenuRequested(data)
+                }
+
+                onLoginSaved: {
+                    FaviconManager.grabIcon("logins", webPage,
+                                            Qt.size(Theme.iconSizeMedium,
+                                                    Theme.iconSizeMedium));
                 }
             }
 
@@ -207,19 +213,9 @@ WebContainer {
                 }
             }
 
-            onBgcolorChanged: {
+            onBackgroundColorChanged: {
                 // Update only webPage
                 if (container.contentItem === webPage) {
-                    var bgLightness = WebUtils.getLightness(bgcolor)
-                    var dimmerLightness = WebUtils.getLightness(Theme.highlightDimmerColor)
-                    var highBgLightness = WebUtils.getLightness(Theme.highlightBackgroundColor)
-
-                    if (Math.abs(bgLightness - dimmerLightness) > Math.abs(bgLightness - highBgLightness)) {
-                        container._decoratorColor = Theme.highlightDimmerColor
-                    } else {
-                        container._decoratorColor =  Theme.highlightBackgroundColor
-                    }
-
                     sendAsyncMessage("Browser:SelectionColorUpdate",
                                      {
                                          "color": Theme.secondaryHighlightColor
@@ -319,6 +315,11 @@ WebContainer {
                 case "Link:AddSearch": {
                     // This adds this search as available if not already there
                     SearchEngineModel.add(data.engine.title, data.engine.href)
+                    break
+                }
+                case "embed:popupblocked": {
+                    pageStack.push("PopupBlockedDialog.qml", { host: data.host })
+                    break
                 }
                 }
             }
@@ -346,41 +347,10 @@ WebContainer {
                 addMessageListener("Content:SelectionRange")
                 addMessageListener("Content:SelectionCopied")
                 addMessageListener("Content:SelectionSwap")
+                addMessageListener("embed:popupblocked")
 
                 PermissionManager.instance()
             }
         }
     }
-//    Rectangle {
-//        id: verticalScrollDecorator
-
-//        width: 5
-//        height: contentItem ? contentItem.verticalScrollDecorator.size : 0
-//        y: contentItem ? contentItem.verticalScrollDecorator.position : 0
-//        z: 1
-//        anchors.right: contentItem ? contentItem.right: undefined
-//        color: _decoratorColor
-//        smooth: true
-//        radius: 2.5
-//        visible: contentItem && contentItem.contentHeight > contentItem.height && !contentItem.pinching && !popupActive
-//        opacity: contentItem && contentItem.verticalScrollDecorator.moving ? 1.0 : 0.0
-//        Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
-//    }
-
-//    Rectangle {
-//        id: horizontalScrollDecorator
-
-//        width: contentItem ? contentItem.horizontalScrollDecorator.size : 0
-//        height: 5
-//        x: contentItem ? contentItem.horizontalScrollDecorator.position : 0
-//        y: webView.height - height
-//        z: 1
-//        color: _decoratorColor
-//        smooth: true
-//        radius: 2.5
-//        visible: contentItem && contentItem.contentWidth > contentItem.width && !contentItem.pinching && !popupActive
-//        opacity: contentItem && contentItem.horizontalScrollDecorator.moving ? 1.0 : 0.0
-//        Behavior on opacity { NumberAnimation { properties: "opacity"; duration: 400 } }
-//    }
-
 }

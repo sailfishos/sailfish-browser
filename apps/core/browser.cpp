@@ -109,7 +109,7 @@ void Browser::load()
     if (!arguments.contains(QStringLiteral("-prestart"))) {
         if (arguments.count() > 1 && (arguments.last() != QStringLiteral("-debugMode"))) {
             DeclarativeWebUtils::instance()->openUrl(arguments.last());
-        } else if (!DeclarativeWebUtils::instance()->firstUseDone()) {
+        } else {
             DeclarativeWebUtils::instance()->openUrl("");
         }
     }

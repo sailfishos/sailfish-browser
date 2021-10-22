@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2015 Jolla Ltd.
+** Copyright (c) 2015 Jolla Ltd.
 ** Contact: Dmitry Rozhkov <dmitry.rozhkov@jolla.com>
 **
 ****************************************************************************/
@@ -39,7 +39,7 @@ DeclarativeWebPage* WebPageFactory::createWebPage(DeclarativeWebContainer *webCo
         object->setParent(webContainer);
         DeclarativeWebPage* webPage = qobject_cast<DeclarativeWebPage *>(object);
         if (webPage) {
-            webPage->setParentID(parentId);
+            webPage->setParentId(parentId);
             webPage->setPrivateMode(webContainer->privateMode());
             webPage->setInitialTab(initialTab);
             webPage->setContainer(webContainer);
@@ -47,7 +47,7 @@ DeclarativeWebPage* WebPageFactory::createWebPage(DeclarativeWebContainer *webCo
             webPage->initialize();
             m_qmlComponent->completeCreate();
 #if DEBUG_LOGS
-            qDebug() << "New view id:" << webPage->uniqueID() << "parentId:" << webPage->parentId() << "tab id:" << webPage->tabId();
+            qDebug() << "New view id:" << webPage->uniqueId() << "parentId:" << webPage->parentId() << "tab id:" << webPage->tabId();
 #endif
             QQmlEngine::setObjectOwnership(webPage, QQmlEngine::CppOwnership);
             return webPage;

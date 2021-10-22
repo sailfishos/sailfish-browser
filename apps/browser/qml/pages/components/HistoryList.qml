@@ -1,6 +1,7 @@
 /****************************************************************************
 **
-** Copyright (C) 2014 Jolla Ltd.
+** Copyright (c) 2014 Jolla Ltd.
+** Copyright (c) 2021 Open Mobile Platform LLC.
 ** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jolla.com>
 **
 ****************************************************************************/
@@ -11,11 +12,13 @@
 
 import QtQuick 2.1
 import Sailfish.Silica 1.0
+import Sailfish.WebView.Popups 1.0
 
 SilicaListView {
     id: view
     property string search
     property bool showDeleteButton
+    property bool menuClosed
 
     signal load(string url, string title)
 
@@ -27,6 +30,7 @@ SilicaListView {
         menu: contextMenuComponent
         search: view.search
         showDeleteButton: view.showDeleteButton
+        onMenuOpenChanged: view.menuClosed = !menuOpen
 
         Component {
             id: contextMenuComponent
@@ -36,8 +40,7 @@ SilicaListView {
                     //: Share link from browser history pulley menu
                     //% "Share"
                     text: qsTrId("sailfish_browser-me-share-link")
-                    onClicked: pageStack.animatorPush("Sailfish.WebView.Popups.ShareLinkPage",
-                                                      {"link" : model.url, "linkTitle": model.title})
+                    onClicked: webShareAction.shareLink(model.url, model.title)
                 }
                 MenuItem {
                     //% "Copy to clipboard"
@@ -53,6 +56,10 @@ SilicaListView {
                 }
             }
         }
+    }
+
+    WebShareAction {
+        id: webShareAction
     }
 
     VerticalScrollDecorator {}

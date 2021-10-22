@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2014 - 2019 Jolla Ltd.
- * Copyright (c) 2019 Open Mobile Platform LLC.
+ * Copyright (c) 2014 - 2021 Jolla Ltd.
+ * Copyright (c) 2019 - 2021 Open Mobile Platform LLC.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
@@ -62,8 +62,6 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
     , m_restoredCurrentLinkId(-1)
     , m_fullScreenHeight(0.f)
     , m_toolbarHeight(0.f)
-    , m_virtualKeyboardMargin(0.f)
-    , m_marginChangeThrottleTimer(0)
 {
 
     // subscribe to gecko messages
@@ -75,7 +73,6 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
                                           FIND_MESSAGE,
                                           CONTENT_ORIENTATION_CHANGED_MESSAGE };
 
-    loadFrameScript("chrome://embedlite/content/embedhelper.js");
     addMessageListeners(messages);
 
     if (BrowserApp::captivePortal()) {
@@ -87,11 +84,10 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
             this, &DeclarativeWebPage::onRecvAsyncMessage);
     connect(&m_grabWritter, &QFutureWatcher<QString>::finished, this, &DeclarativeWebPage::grabWritten);
     connect(this, &DeclarativeWebPage::urlChanged, this, &DeclarativeWebPage::onUrlChanged);
-    connect(this, &QOpenGLWebPage::contentHeightChanged, this, &DeclarativeWebPage::updateViewMargins);
+    connect(this, &QOpenGLWebPage::virtualKeyboardHeightChanged, this, &DeclarativeWebPage::updateViewMargins);
     connect(this, &QOpenGLWebPage::loadedChanged, [this]() {
         if (loaded()) {
             qCDebug(lcCoreLog) << "WebPage: loaded";
-            updateViewMargins();
             // E.g. when loading images directly we don't necessarily get domContentLoaded message from engine.
             // So mark content loaded when webpage is loaded.
             setContentLoaded();
@@ -104,12 +100,6 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
             forceChrome(false);
             setChrome(true);
         }
-    });
-
-    connect(this, &DeclarativeWebPage::fullscreenHeightChanged,
-            this, [this]() {
-        qCDebug(lcCoreLog) << "WebPage: fullscreenHeightChanged";
-        updateViewMargins();
     });
 }
 
@@ -130,10 +120,6 @@ void DeclarativeWebPage::setContainer(DeclarativeWebContainer *container)
 {
     if (m_container != container) {
         m_container = container;
-        if (m_container) {
-            connect(m_container.data(), &DeclarativeWebContainer::portraitChanged,
-                    this, &DeclarativeWebPage::sendVkbOpenCompositionMetrics);
-        }
         Q_ASSERT(container->mozWindow());
         setMozWindow(container->mozWindow());
         emit containerChanged();
@@ -185,7 +171,7 @@ void DeclarativeWebPage::restoreHistory() {
     QList<QString> urls;
     int index(-1);
     int i(0);
-    foreach (Link link, m_restoredTabHistory) {
+    for (const Link &link : m_restoredTabHistory) {
         urls << link.url();
         if (link.linkId() == m_restoredCurrentLinkId) {
             index = i;
@@ -260,32 +246,8 @@ void DeclarativeWebPage::setToolbarHeight(qreal toolbarHeight)
 {
     if (toolbarHeight != m_toolbarHeight) {
         m_toolbarHeight = toolbarHeight;
+        updateViewMargins();
         emit toolbarHeightChanged();
-    }
-}
-
-qreal DeclarativeWebPage::virtualKeyboardMargin() const
-{
-    return m_virtualKeyboardMargin;
-}
-
-void DeclarativeWebPage::setVirtualKeyboardMargin(qreal margin)
-{
-    qCDebug(lcCoreLog) << "WebPage: setting vkb margins:" << margin;
-    if (margin != m_virtualKeyboardMargin) {
-        m_virtualKeyboardMargin = margin;
-        if (m_virtualKeyboardMargin == 0.0) {
-            // Only place where we ignore view margins update guards.
-            // It must be allowed to close vkb while content is moving.
-            resetViewMargins();
-        } else {
-            QMargins margins;
-            margins.setBottom(m_virtualKeyboardMargin);
-            qCDebug(lcCoreLog) << "WebPage: set vkb margins:" << m_virtualKeyboardMargin;
-            setMargins(margins);
-        }
-        sendVkbOpenCompositionMetrics();
-        emit virtualKeyboardMarginChanged();
     }
 }
 
@@ -355,16 +317,6 @@ void DeclarativeWebPage::forceChrome(bool forcedChrome)
     }
 }
 
-void DeclarativeWebPage::timerEvent(QTimerEvent *te)
-{
-    if (te->timerId() == m_marginChangeThrottleTimer) {
-        killTimer(m_marginChangeThrottleTimer);
-        m_marginChangeThrottleTimer = 0;
-
-    }
-    QOpenGLWebPage::timerEvent(te);
-}
-
 void DeclarativeWebPage::grabResultReady()
 {
     if (active()) {
@@ -399,72 +351,11 @@ void DeclarativeWebPage::thumbnailReady()
 
 void DeclarativeWebPage::updateViewMargins()
 {
-    qCDebug(lcCoreLog) << "WebPage: update view margins, foreground:" << (m_container && !m_container->foreground()) << "throttling:" << (m_marginChangeThrottleTimer > 0) << "moving:" << moving();
-
-    // Don't update margins while panning, flicking, pinching, vkb is already open, or
-    // margin update is ongoing (throttling).
-    if ((m_container && !m_container->foreground()) || m_marginChangeThrottleTimer > 0 ||
-            moving() || m_virtualKeyboardMargin > 0) {
-        return;
-    }
-
-    resetViewMargins();
-}
-
-void DeclarativeWebPage::resetViewMargins()
-{
-    qCDebug(lcCoreLog) << "WebPage: reset view margins, fullscreen:" << m_fullscreen << "content height:" << contentHeight();
-
-    // Reset margins always when fullscreen mode is enabled.
     QMargins margins;
-    if (!m_fullscreen) {
-        qreal threshold = qMax(m_fullScreenHeight * 1.5f, (m_fullScreenHeight + (m_toolbarHeight*2)));
-        if (contentHeight() < threshold) {
-            margins.setBottom(m_toolbarHeight);
-        }
-    }
-
-    // Some content needed so that it makes sense to throttle content height changes.
-    if (contentHeight() > 0) {
-        m_marginChangeThrottleTimer = startTimer(200);
-    }
+    margins.setBottom(qMax(virtualKeyboardHeight(), (int)toolbarHeight()));
 
     qCDebug(lcCoreLog) << "WebPage: set margins:" << margins;
     setMargins(margins);
-}
-
-void DeclarativeWebPage::sendVkbOpenCompositionMetrics()
-{
-    // Send update only if the page is active.
-    if (!active()) {
-        return;
-    }
-
-    int winHeight(0);
-    int winWidth(0);
-
-    // Listen im state so that we don't send also updates when
-    // vkb state changes on the chrome side.
-
-    if (m_container) {
-      if (m_container->portrait()) {
-        winHeight = m_container->height();
-        winWidth = m_container->width();
-      } else {
-        winHeight = m_container->width();
-        winWidth = m_container->height();
-      }
-    }
-
-    QVariantMap map;
-    map.insert("imOpen", m_virtualKeyboardMargin > 0);
-    map.insert("pixelRatio", SailfishOS::WebEngineSettings::instance()->pixelRatio());
-    map.insert("bottomMargin", m_virtualKeyboardMargin);
-    map.insert("screenWidth", winWidth);
-    map.insert("screenHeight", winHeight);
-
-    QVariant data(map);
-    sendAsyncMessage("embedui:vkbOpenCompositionMetrics", data);
 }
 
 QString DeclarativeWebPage::saveToFile(QImage image)
@@ -484,6 +375,9 @@ void DeclarativeWebPage::onRecvAsyncMessage(const QString& message, const QVaria
         setFullscreen(data.toMap().value(QString("fullscreen")).toBool());
     } else if (message == QLatin1String(DOM_CONTENT_LOADED_MESSAGE)) {
         setContentLoaded();
+        QString docuri = data.toMap().value("docuri").toString();
+        if (docuri.startsWith("about:neterror") && !docuri.contains("e=netOffline"))
+            emit neterror();
     } else if (message == QLatin1String(CONTENT_ORIENTATION_CHANGED_MESSAGE)) {
         QString orientation = data.toMap().value(QStringLiteral("orientation")).toString();
         Qt::ScreenOrientation mappedOrientation = Qt::PortraitOrientation;
@@ -513,7 +407,7 @@ void DeclarativeWebPage::setFullscreen(const bool fullscreen)
     if (m_fullscreen != fullscreen) {
         m_fullscreen = fullscreen;
         qCDebug(lcCoreLog) << "WebPage: fullscreen:" << fullscreen;
-        resetViewMargins();
+        updateViewMargins();
         emit fullscreenChanged();
     }
 }

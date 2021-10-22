@@ -1,7 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2013 Jolla Ltd.
-** Contact: Dmitry Rozhkov <dmitry.rozhkov@jollamobile.com>
+** Copyright (c) 2013 - 2021 Jolla Ltd.
 **
 ****************************************************************************/
 
@@ -210,7 +209,7 @@ void DownloadManager::finishMyAppDownload(const QString &targetPath) const
 
 void DownloadManager::cancelActiveTransfers()
 {
-    foreach (qulonglong downloadId, m_statusCache.keys()) {
+    for (qulonglong downloadId : m_statusCache.keys()) {
         if (m_statusCache.value(downloadId) == DownloadStatus::Started) {
             cancelTransfer(m_download2transferMap.value(downloadId));
         }
@@ -255,16 +254,11 @@ void DownloadManager::restartTransfer(int transferId)
 void DownloadManager::setPreferences()
 {
     SailfishOS::WebEngineSettings *webEngineSettings = SailfishOS::WebEngineSettings::instance();
-    // Use autodownload, never ask
-    webEngineSettings->setPreference(QString("browser.download.useDownloadDir"), QVariant(true));
     webEngineSettings->setPreference(QString("browser.download.useJSTransfer"), QVariant(true));
     // see https://developer.mozilla.org/en-US/docs/Download_Manager_preferences
-    // Use custom downloads location defined in browser.download.dir
 
     // NS_PREF_DOWNLOAD_FOLDERLIST of nsExternalHelperAppService
     webEngineSettings->setPreference(QString("browser.download.folderList"), QVariant(2));
-    // NS_PREF_DOWNLOAD_DIR of nsExternalHelperAppService
-    webEngineSettings->setPreference(QString("browser.download.dir"), BrowserPaths::downloadLocation());
 
     // Partial downloads are removed in the embedlite-components (see JB#50127)
     DownloadMimetypeHandler::update();
@@ -289,7 +283,7 @@ bool DownloadManager::existActiveTransfers()
 {
     bool exists(false);
 
-    foreach (DownloadStatus::Status status, m_statusCache) {
+    for (DownloadStatus::Status status : m_statusCache) {
         if (status == DownloadStatus::Started) {
             exists = true;
             break;

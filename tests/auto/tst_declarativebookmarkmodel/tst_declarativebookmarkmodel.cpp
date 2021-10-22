@@ -1,7 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2014 Jolla Ltd.
-** Contact: Vesa-Matti Hartikainen <vesa-matti.hartikainen@jolla.com>
+** Copyright (c) 2014 - 2021 Jolla Ltd.
 **
 ****************************************************************************/
 
@@ -214,7 +213,7 @@ void tst_declarativebookmarkmodel::data()
 {
     QModelIndex index = m_model->index(0);
 
-    foreach (const int role, m_model->roleNames().keys()) {
+    for (int role : m_model->roleNames().keys()) {
         QVERIFY(m_model->data(index, role).isValid());
     }
 

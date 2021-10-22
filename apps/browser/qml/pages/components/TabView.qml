@@ -1,7 +1,7 @@
 /****************************************************************************
 **
 ** Copyright (c) 2014 - 2019 Jolla Ltd.
-** Copyright (c) 2019 - 2020 Open Mobile Platform LLC.
+** Copyright (c) 2019 - 2021 Open Mobile Platform LLC.
 **
 ****************************************************************************/
 
@@ -11,17 +11,20 @@
 
 import QtQuick 2.1
 import Sailfish.Silica 1.0
+import Sailfish.Silica.private 1.0 as Private
+import Sailfish.Browser 1.0
 import org.nemomobile.configuration 1.0
 import "." as Browser
+import "../../shared" as Shared
 
-SilicaListView {
-    id: tabView
+Item {
+    id: root
 
     property bool portrait
     property bool privateMode
-    property bool closingAllTabs
-
-    property var remorsePopup
+    property var tabModel
+    property alias scaledPortraitHeight: tabsToolBar.scaledPortraitHeight
+    property alias scaledLandscapeHeight: tabsToolBar.scaledLandscapeHeight
 
     signal hide
     signal enterNewTabUrl
@@ -31,131 +34,179 @@ SilicaListView {
     signal closeAllCanceled
     signal closeAllPending
 
-    onCountChanged: if (count > 0) closingAllTabs = false
-    onClosingAllTabsChanged: if (closingAllTabs) closeAllPending()
+    property var _remorsePopup
 
-    width: parent.width
-    height: parent.height
-    currentIndex: -1
-    header: PageHeader {
-        //: Tabs
-        //% "Tabs"
-        title: qsTrId("sailfish_browser-he-tabs")
-    }
-    footer: spacer
+    // TODO: Delete height calculation for Pulley Menu after adding popup menu
+    readonly property int _pulleyMenuHeight: 7 * Theme.pixelRatio
 
-    spacing: Theme.paddingMedium
+    anchors.fill: parent
 
-    delegate: TabItem {
-        id: tabItem
+    Private.TabView {
+        id: tabs
 
-        enabled: !closingAllTabs
-        opacity: enabled ? 1.0 : 0.0
-        Behavior on opacity { FadeAnimator {}}
-
-        anchors.horizontalCenter: parent.horizontalCenter
-        width: browserPage.thumbnailSize.width
-        height: browserPage.thumbnailSize.height
-
-        ListView.onAdd: AddAnimation {
-            target: tabItem
+        anchors {
+            fill: parent
+            bottomMargin: tabsToolBar.height
         }
-        ListView.onRemove: RemoveAnimation {
-            target: tabItem
-        }
-    }
 
-    // Behind tab delegates
-    children: [
-        PrivateModeTexture {
-            z: -1
-            visible: opacity > 0.0
-            opacity: privateMode ? 1.0 : 0.0
+        header: Private.TabBar {
+            id: headerTabs
+            model: modeModel
+            delegate: Private.TabButton {
+                icon.source: model.privateMode ? privateIcon.grabIcon : persistentIcon.grabIcon
+                icon.color: palette.primaryColor
+            }
 
-            Behavior on opacity { FadeAnimation {} }
-        },
-
-        MouseArea {
-            z: -1
-            width: tabView.width
-            height: tabView.height
-            onClicked: hide()
-        }
-    ]
-
-    ConfigurationValue {
-        id: showCloseAllAction
-        key: "/apps/sailfish-browser/settings/show_close_all"
-        defaultValue: true
-    }
-
-    PullDownMenu {
-        id: pullDownMenu
-
-        flickable: tabView
-
-        MenuItem {
-            text: tabView.privateMode ?
-                    //: Menu item switching back to normal browser
-                    //% "Normal browsing"
-                    qsTrId("sailfish_browser-me-normal_browsing") :
-                    //: Menu item switching to private browser
-                    //% "Private browsing"
-                    qsTrId("sailfish_browser-me-private_browsing")
-            onDelayedClick: {
-                if (remorsePopup) {
-                    remorsePopup.trigger()
+            Rectangle {
+                anchors {
+                    fill: parent
+                    topMargin: _pulleyMenuHeight
                 }
 
-                tabView.privateMode = !tabView.privateMode
-
+                z: -100
+                color: Theme.colorScheme == Theme.LightOnDark ? "black" : "white"
             }
         }
-        MenuItem {
-            visible: showCloseAllAction.value && webView.tabModel.count
-            //% "Close all tabs"
-            text: qsTrId("sailfish_browser-me-close_all")
-            onClicked: {
-                remorsePopup = Remorse.popupAction(
-                            tabView,
-                            //% "Closed all tabs"
-                            qsTrId("sailfish_browser-closed-all-tabs"),
-                            function() {
-                                tabView.closeAll()
-                                remorsePopup = null
-                            })
-                closingAllTabs = true
-                remorsePopup.canceled.connect(
-                            function() {
-                                closingAllTabs = false
-                                tabView.closeAllCanceled()
-                                remorsePopup = null
-                            })
+        _headerBackgroundVisible: false
+        model: modeModel
+        interactive: false
+        currentIndex: privateMode ? 1 : 0
+        delegate: Private.TabItem {
+            id: tabItem
+            property bool privateMode: model.privateMode
+            allowDeletion: false
+            flickable: _tabView
+
+            TabGridView {
+                id: _tabView
+                privateMode: false
+                portrait: root.portrait
+                model: tabItem.privateMode ? webView.privateTabModel : webView.persistentTabModel
+                header: Item {
+                    width: 1
+                    height: tabs.tabBarHeight + Theme.paddingLarge
+                }
+
+                onHide: root.hide()
+                onEnterNewTabUrl: root.enterNewTabUrl()
+                onActivateTab: root.activateTab(index)
+                onCloseTab: root.closeTab(index)
+                onCloseAll: root.closeAll()
+                onCloseAllCanceled: root.closeAllCanceled()
+                onCloseAllPending: root.closeAllPending()
+            }
+            onIsCurrentItemChanged: {
+                if (isCurrentItem) {
+                    _remorsePopup = Qt.binding(function() { return _tabView.remorsePopup })
+                }
+            }
+
+            Rectangle {
+                color: Theme.colorScheme == Theme.LightOnDark ? "black" : "white"
+                width: parent.width
+                height: Math.max(0, _pulleyMenuHeight - y)
+                y: Math.max(0, _pulleyMenuHeight - _tabView.contentY + _tabView.originY)
+            }
+
+            PrivateModeTexture {
+                visible: privateMode
+                z: -1
             }
         }
-        MenuItem {
-            //% "New tab"
-            text: qsTrId("sailfish_browser-me-new_tab")
-            onClicked: tabView.enterNewTabUrl()
+
+        onCurrentIndexChanged: {
+            if (_remorsePopup) {
+                _remorsePopup.trigger()
+            }
+            privateMode = currentIndex !== 0
         }
-    }
 
-    VerticalScrollDecorator {
-        flickable: tabView
-    }
+        ListModel {
+            id: modeModel
 
-    ViewPlaceholder {
-        enabled: !webView.tabModel.count || closingAllTabs
-        //: Hint to create a new tab from pull down menu.
-        //% "Pull down to create a new tab"
-        text: qsTrId("sailfish_browser-la-pull_down_to_create_tab_hint")
-    }
-
-    Component {
-        id: spacer
-        Item {
-            width: tabView.width
-            height: Theme.paddingMedium
+            ListElement {
+                privateMode: false
+            }
+            ListElement {
+                privateMode: true
+            }
         }
+
+        children: [
+            Image {
+                id: persistentIcon
+                property string grabIcon
+
+                function updateGrabImage() {
+                    persistentIcon.grabToImage(function(result) {
+                        grabIcon = result.url
+                    });
+                }
+
+                source: "image://theme/icon-m-tabs"
+                visible: false
+                Label {
+                    anchors.centerIn: parent
+                    text: webView.persistentTabModel.count
+                    font.pixelSize: Theme.fontSizeExtraSmall
+                    font.bold: true
+                    onTextChanged: parent.updateGrabImage()
+                }
+                Component.onCompleted: updateGrabImage()
+            },
+            Item {
+                id: privateIcon
+                property string grabIcon
+
+                function updateGrabImage() {
+                    privateIcon.grabToImage(function(result) {
+                        grabIcon = result.url
+                    });
+                }
+                y: -500 // NOTE: Hiding drawing out of sight
+                height: _privateIcon.implicitHeight
+                width: _privateIcon.implicitWidth
+
+                Image {
+                    id: _privateIcon
+
+                    source: webView.privateTabModel.count > 0 ? "image://theme/icon-m-incognito-selected" : "image://theme/icon-m-incognito"
+                    visible: false
+                }
+
+                Label {
+                    anchors.fill: _privateIcon
+                    text: webView.privateTabModel.count > 0 ? webView.privateTabModel.count : ""
+                    font.pixelSize: Theme.fontSizeExtraSmall
+                    font.bold: true
+                    horizontalAlignment: Qt.AlignHCenter
+                    verticalAlignment: Qt.AlignVCenter
+
+                    layer.enabled: true
+                    layer.samplerName: "maskSource"
+                    layer.effect: ShaderEffect {
+                        property variant source: _privateIcon
+                        fragmentShader: "
+                                    varying highp vec2 qt_TexCoord0;
+                                    uniform highp float qt_Opacity;
+                                    uniform lowp sampler2D source;
+                                    uniform lowp sampler2D maskSource;
+                                    void main(void) {
+                                        gl_FragColor = texture2D(source, qt_TexCoord0.st) * (1.0-texture2D(maskSource, qt_TexCoord0.st).a) * qt_Opacity;
+                                    }
+                                "
+                    }
+                    onTextChanged: parent.updateGrabImage()
+                }
+                Component.onCompleted: updateGrabImage()
+            }
+
+        ]
+    }
+    TabsToolBar {
+        id: tabsToolBar
+        anchors.bottom: parent.bottom
+        onBack: pageStack.pop()
+        onEnterNewTabUrl: root.enterNewTabUrl()
     }
 }

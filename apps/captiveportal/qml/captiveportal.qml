@@ -1,6 +1,7 @@
 /****************************************************************************
 **
 ** Copyright (c) 2020 Open Mobile Platform LLC.
+** Copyright (c) 2021 Jolla Ltd.
 **
 ****************************************************************************/
 
@@ -15,6 +16,8 @@ import "shared"
 BrowserWindow {
     id: window
 
+    //% "Captive portal"
+    activityDisabledByMdm: qsTrId("sailfish_captiveportal-la-captive_portal");
     coverMode: false
     initialPage: Component {
         CaptivePortalPage {

@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014 - 2019 Jolla Ltd.
- * Copyright (c) 2019 Open Mobile Platform LLC.
+ * Copyright (c) 2019 - 2021 Open Mobile Platform LLC.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
@@ -26,7 +26,7 @@ Column {
     property real certOverlayAnimPos
     property real certOverlayPreferedHeight: 4 * toolBarRow.height
     readonly property bool showFindButtons: webView.findInPageHasResult && findInPageActive
-    property alias bookmarked: secondaryBar.bookmarked
+    property var bookmarked
     readonly property alias rowHeight: toolsRow.height
     readonly property int maxRowCount: 6
 
@@ -59,9 +59,9 @@ Column {
     signal showChrome
     signal closeActiveTab
     signal showCertDetail
-    signal loadPage(string url)
 
-    // Used from SecondaryBar
+    // Used from the PopUpMenu
+    signal loadPage(string url)
     signal enterNewTabUrl
     signal findInPage
     signal shareActivePage
@@ -122,17 +122,6 @@ Column {
             }
             onLoaded: toolBarRow.showInfoOverlay()
         }
-    }
-
-    SecondaryBar {
-        id: secondaryBar
-        visible: opacity > 0.0 || height > 0.0
-        opacity: secondaryToolsActive ? 1.0 : 0.0
-        height: secondaryToolsHeight
-        horizontalOffset: toolBarRow.horizontalOffset
-        iconWidth: toolBarRow.iconWidth
-
-        Behavior on opacity { FadeAnimation {} }
     }
 
     Row {
@@ -205,7 +194,7 @@ Column {
             id: backIcon
             expandedWidth: toolBarRow.iconWidth
             icon.source: "image://theme/icon-m-back"
-            active: webView.canGoBack && !toolBarRow.secondaryToolsActive && !findInPageActive
+            active: webView.canGoBack && !findInPageActive
             onTapped: webView.goBack()
         }
 
@@ -215,7 +204,7 @@ Column {
             property real glow
             expandedWidth: toolBarRow.smallIconWidth
             icon.source: danger ? "image://theme/icon-s-filled-warning" : "image://theme/icon-s-outline-secure"
-            active: webView.security && webView.security.validState && (!toolBarRow.secondaryToolsActive && !findInPageActive)
+            active: webView.security && webView.security.validState && !findInPageActive
             icon.color: danger ? Qt.tint(Theme.primaryColor,
                                          Qt.rgba(Theme.errorColor.r, Theme.errorColor.g,
                                                  Theme.errorColor.b, glow))
@@ -263,7 +252,7 @@ Column {
             readonly property bool down: pressed && containsMouse
 
             height: parent.height
-            width: toolBarRow.width - (tabButton.width + reloadButton.width + padlockIcon.width + backIcon.width + menuButton.width)
+            width: toolBarRow.width - (tabButton.width + stopButton.width + padlockIcon.width + backIcon.width + menuButton.width)
             enabled: !showFindButtons
 
             onClicked: {
@@ -333,16 +322,16 @@ Column {
         }
 
         Shared.ExpandingButton {
-            id: reloadButton
+            id: stopButton
             expandedWidth: toolBarRow.iconWidth
-            icon.source: webView.loading ? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
-            active: webView.contentItem && !toolBarRow.secondaryToolsActive && !findInPageActive
+            icon.source: "image://theme/icon-m-reset"
+            active: webView.contentItem && !findInPageActive
+            opacity: webView.loading ? 1.0 : 0.0
+
+            Behavior on opacity { FadeAnimation {} }
+
             onTapped: {
-                if (webView.loading) {
-                    webView.stop()
-                } else {
-                    webView.reload()
-                }
+                webView.stop()
                 toolBarRow.showChrome()
             }
         }
@@ -357,24 +346,15 @@ Column {
                 icon.source: "image://theme/icon-m-menu"
                 icon.anchors.horizontalCenterOffset: - toolBarRow.horizontalOffset
                 width: parent.width
-                opacity: secondaryToolsActive || findInPageActive ? 0.0 : 1.0
+                opacity: findInPageActive ? 0.0 : 1.0
                 onTapped: showSecondaryTools()
-            }
-
-            Shared.IconButton {
-                icon.source: "image://theme/icon-m-menu"
-                icon.anchors.horizontalCenterOffset: toolBarRow.horizontalOffset
-                width: parent.width
-                rotation: 180
-                opacity: secondaryToolsActive && !findInPageActive ? 1.0 : 0.0
-                onTapped: showChrome()
             }
 
             Shared.IconButton {
                 icon.source: "image://theme/icon-m-reset"
                 icon.anchors.horizontalCenterOffset: - toolBarRow.horizontalOffset
                 width: parent.width
-                opacity: !secondaryToolsActive && findInPageActive ? 1.0 : 0.0
+                opacity: findInPageActive ? 1.0 : 0.0
                 onTapped: {
                     resetFind()
                     showChrome()

@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (C) 2014 Jolla Ltd.
+** Copyright (c) 2014 Jolla Ltd.
 ** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **
 ****************************************************************************/
@@ -14,21 +14,20 @@
 #include <QSignalSpy>
 #include <qqml.h>
 
-#include "persistenttabmodel.h"
 #include "declarativehistorymodel.h"
 #include "testobject.h"
 #include "dbmanager.h"
 #include "browserpaths.h"
 
-struct TabTuple {
-    TabTuple(QString url, QString title) : url(url), title(title) {}
-    TabTuple() {}
+struct HistoryEntry {
+    HistoryEntry(QString url, QString title) : url(url), title(title) {}
+    HistoryEntry() {}
 
     QString url;
     QString title;
 };
 
-Q_DECLARE_METATYPE(TabTuple)
+Q_DECLARE_METATYPE(HistoryEntry)
 
 class tst_declarativehistorymodel : public TestObject
 {
@@ -61,11 +60,10 @@ private slots:
     void cleanup();
 
 private:
-    void addTabs(const QList<TabTuple> &tabs);
+    void addEntries(const QList<HistoryEntry> &entries);
     void verifySearchResult(QString searchTerm, int expectedCount);
 
     DeclarativeHistoryModel *historyModel;
-    DeclarativeTabModel *tabModel;
     QString dbFileName;
 };
 
@@ -87,30 +85,28 @@ void tst_declarativehistorymodel::initTestCase()
 
 void tst_declarativehistorymodel::init()
 {
-    tabModel = new PersistentTabModel(DBManager::instance()->getMaxTabId() + 1);
     historyModel = new DeclarativeHistoryModel;
 
-    QVERIFY(tabModel);
     QVERIFY(historyModel);
 
-    if (!tabModel->loaded()) {
-        QSignalSpy loadedSpy(tabModel, SIGNAL(loadedChanged()));
-        // Tabs must be loaded with in 500ms
-        QVERIFY(loadedSpy.wait());
-        QCOMPARE(loadedSpy.count(), 1);
-    }
+    historyModel->componentComplete();
+    QSignalSpy populatedSpy(historyModel, SIGNAL(populated()));
+    // History must be loaded with in 500ms
+    QVERIFY(populatedSpy.wait());
+    QCOMPARE(populatedSpy.count(), 1);
+
 }
 
 void tst_declarativehistorymodel::addNonSameHistoryEntries_data()
 {
-    QTest::addColumn<QList<TabTuple> >("tabs");
+    QTest::addColumn<QList<HistoryEntry> >("entries");
     QTest::addColumn<QString>("searchTerm");
     QTest::addColumn<int>("expectedCount");
 
-    QList<TabTuple> list {
-        TabTuple(QStringLiteral("http://www.foobar.com/page1/"), QStringLiteral("FooBar Page1")),
-        TabTuple(QStringLiteral("http://www.foobar.com/page2/"), QStringLiteral("FooBar Page2")),
-        TabTuple(QStringLiteral("http://www.foobar.com/page3/"), QStringLiteral("FooBar Page3"))
+    QList<HistoryEntry> list {
+        HistoryEntry(QStringLiteral("http://www.foobar.com/page1/"), QStringLiteral("FooBar Page1")),
+        HistoryEntry(QStringLiteral("http://www.foobar.com/page2/"), QStringLiteral("FooBar Page2")),
+        HistoryEntry(QStringLiteral("http://www.foobar.com/page3/"), QStringLiteral("FooBar Page3"))
     };
 
     QTest::newRow("foo1") << list << "Page1" << 1;
@@ -120,28 +116,28 @@ void tst_declarativehistorymodel::addNonSameHistoryEntries_data()
 
 void tst_declarativehistorymodel::addNonSameHistoryEntries()
 {
-    QFETCH(QList<TabTuple>, tabs);
+    QFETCH(QList<HistoryEntry>, entries);
     QFETCH(QString, searchTerm);
     QFETCH(int, expectedCount);
 
-    addTabs(tabs);
-    verifySearchResult("", tabs.count());
+    addEntries(entries);
+    verifySearchResult("", entries.count());
     verifySearchResult(searchTerm, expectedCount);
 }
 
 void tst_declarativehistorymodel::addDuplicateHistoryEntries_data()
 {
-    QTest::addColumn<QList<TabTuple> >("tabs");
+    QTest::addColumn<QList<HistoryEntry> >("entries");
     QTest::addColumn<QString>("searchTerm");
     QTest::addColumn<int>("expectedCount");
 
-    QList<TabTuple> list {
-        TabTuple(QStringLiteral("http://www.foobar.com/page1/"), QStringLiteral("FooBar Page1")),
-        TabTuple(QStringLiteral("http://www.foobar.com/page1/"), QStringLiteral("FooBar Page1")),
-        TabTuple(QStringLiteral("http://www.foobar.com/page2/"), QStringLiteral("FooBar Page2")),
-        TabTuple(QStringLiteral("http://www.foobar.com/page2/"), QStringLiteral("FooBar Page2")),
-        TabTuple(QStringLiteral("http://www.foobar.com/page3/"), QStringLiteral("FooBar Page3")),
-        TabTuple(QStringLiteral("http://www.foobar.com/page3/"), QStringLiteral("FooBar Page3"))
+    QList<HistoryEntry> list {
+        HistoryEntry(QStringLiteral("http://www.foobar.com/page1/"), QStringLiteral("FooBar Page1")),
+        HistoryEntry(QStringLiteral("http://www.foobar.com/page1/"), QStringLiteral("FooBar Page1")),
+        HistoryEntry(QStringLiteral("http://www.foobar.com/page2/"), QStringLiteral("FooBar Page2")),
+        HistoryEntry(QStringLiteral("http://www.foobar.com/page2/"), QStringLiteral("FooBar Page2")),
+        HistoryEntry(QStringLiteral("http://www.foobar.com/page3/"), QStringLiteral("FooBar Page3")),
+        HistoryEntry(QStringLiteral("http://www.foobar.com/page3/"), QStringLiteral("FooBar Page3"))
     };
 
     QTest::newRow("foo1") << list << "Page1" << 1;
@@ -151,42 +147,42 @@ void tst_declarativehistorymodel::addDuplicateHistoryEntries_data()
 
 void tst_declarativehistorymodel::addDuplicateHistoryEntries()
 {
-    QFETCH(QList<TabTuple>, tabs);
+    QFETCH(QList<HistoryEntry>, entries);
     QFETCH(QString, searchTerm);
     QFETCH(int, expectedCount);
 
-    addTabs(tabs);
+    addEntries(entries);
     verifySearchResult("", 3);
     verifySearchResult(searchTerm, expectedCount);
 }
 
 void tst_declarativehistorymodel::sortedHistoryEntries_data()
 {
-    QTest::addColumn<QList<TabTuple> >("tabs");
+    QTest::addColumn<QList<HistoryEntry> >("entries");
     QTest::addColumn<QString>("searchTerm");
     QTest::addColumn<QStringList>("order");
     QTest::addColumn<int>("expectedCount");
 
 
-    QList<TabTuple> list {
-        TabTuple(QStringLiteral("http://www.testurl.blah/thelongesturl/"), QStringLiteral("The longest url")),
+    QList<HistoryEntry> list {
+        HistoryEntry(QStringLiteral("http://www.testurl.blah/thelongesturl/"), QStringLiteral("The longest url")),
     };
 
 
     // Insert in reversed order
-    QTest::newRow("longestUrl") << (QList<TabTuple>() <<
-                                   TabTuple(QStringLiteral("http://www.testurl.blah/thelongesturl/"), QStringLiteral("The longest url"))) << "test"
+    QTest::newRow("longestUrl") << (QList<HistoryEntry>() <<
+                                   HistoryEntry(QStringLiteral("http://www.testurl.blah/thelongesturl/"), QStringLiteral("The longest url"))) << "test"
                               << (QStringList() << "http://www.testurl.blah/thelongesturl/") << 1;
-    QTest::newRow("longerUrl") << (QList<TabTuple>() <<
-                                   TabTuple(QStringLiteral("http://www.testurl.blah/thelongesturl/"), QStringLiteral("The longest url")) <<
-                                   TabTuple(QStringLiteral("http://www.testurl.blah/alongerurl/"), QStringLiteral("A longer url")))
+    QTest::newRow("longerUrl") << (QList<HistoryEntry>() <<
+                                   HistoryEntry(QStringLiteral("http://www.testurl.blah/thelongesturl/"), QStringLiteral("The longest url")) <<
+                                   HistoryEntry(QStringLiteral("http://www.testurl.blah/alongerurl/"), QStringLiteral("A longer url")))
                                << "test" << (QStringList() << "http://www.testurl.blah/alongerurl/"
                                    << "http://www.testurl.blah/thelongesturl/") << 2;
 
-    QTest::newRow("rootPage") << (QList<TabTuple>() <<
-                                  TabTuple(QStringLiteral("http://www.testurl.blah/thelongesturl/"), QStringLiteral("The longest url")) <<
-                                  TabTuple(QStringLiteral("http://www.testurl.blah/alongerurl/"), QStringLiteral("A longer url")) <<
-                                  TabTuple(QStringLiteral("http://www.testurl.blah/"), QStringLiteral("A root page")))
+    QTest::newRow("rootPage") << (QList<HistoryEntry>() <<
+                                  HistoryEntry(QStringLiteral("http://www.testurl.blah/thelongesturl/"), QStringLiteral("The longest url")) <<
+                                  HistoryEntry(QStringLiteral("http://www.testurl.blah/alongerurl/"), QStringLiteral("A longer url")) <<
+                                  HistoryEntry(QStringLiteral("http://www.testurl.blah/"), QStringLiteral("A root page")))
                               << "test"
                               << (QStringList() << "http://www.testurl.blah/" << "http://www.testurl.blah/alongerurl/"
                                   << "http://www.testurl.blah/thelongesturl/") << 3;
@@ -194,12 +190,12 @@ void tst_declarativehistorymodel::sortedHistoryEntries_data()
 
 void tst_declarativehistorymodel::sortedHistoryEntries()
 {
-    QFETCH(QList<TabTuple>, tabs);
+    QFETCH(QList<HistoryEntry>, entries);
     QFETCH(QString, searchTerm);
     QFETCH(QStringList, order);
     QFETCH(int, expectedCount);
 
-    addTabs(tabs);
+    addEntries(entries);
     verifySearchResult(searchTerm, expectedCount);
 
     for (int i = 0; i < expectedCount; ++i) {
@@ -211,30 +207,35 @@ void tst_declarativehistorymodel::sortedHistoryEntries()
 
 void tst_declarativehistorymodel::emptyTitles_data()
 {
-    QTest::addColumn<QList<TabTuple> >("tabs");
+    QTest::addColumn<QList<HistoryEntry> >("entries");
     QTest::addColumn<QString>("searchTerm");
-    QTest::addColumn<int>("expectedCount");
+    QTest::addColumn<QString>("expectedTitle");
 
-    QTest::newRow("duplicate_longestUrl") << (QList<TabTuple>() <<
-                                              TabTuple(QStringLiteral("http://www.testurl.blah/thelongesturl/"), QStringLiteral("The longest url")) <<
-                                              TabTuple(QStringLiteral("http://www.testurl.blah/thelongesturl/"), QStringLiteral(""))) << "test" << 1;
-    QTest::newRow("random_url") << (QList<TabTuple>() << TabTuple(QStringLiteral("http://quick"), QStringLiteral(""))) << "quick" << 0;
+    auto longUrl = QStringLiteral("http://www.testurl.blah/thelongesturl/");
+    auto longTitle = QStringLiteral("The longest url");
+    auto quickUrl = QStringLiteral("http://quick");
+
+    QTest::newRow("duplicate_longestUrl") << (QList<HistoryEntry>()
+                                              << HistoryEntry(longUrl, QString())
+                                              << HistoryEntry(longUrl, longTitle))
+                                          << "test" << longTitle;
+    QTest::newRow("random_url") << (QList<HistoryEntry>() << HistoryEntry(quickUrl, QString()))
+                                << "quick" << quickUrl;
 }
 
 void tst_declarativehistorymodel::emptyTitles()
 {
-    QFETCH(QList<TabTuple>, tabs);
+    QFETCH(QList<HistoryEntry>, entries);
     QFETCH(QString, searchTerm);
-    QFETCH(int, expectedCount);
+    QFETCH(QString, expectedTitle);
 
-    addTabs(tabs);
-    verifySearchResult(searchTerm, expectedCount);
+    addEntries(entries);
+    verifySearchResult(searchTerm, 1);
 
-    for (int i = 0; i < expectedCount; ++i) {
-        QModelIndex modelIndex = historyModel->createIndex(i, 0);
-        QString title = historyModel->data(modelIndex, DeclarativeHistoryModel::TitleRole).toString();
-        QVERIFY(!title.isEmpty());
-    }
+    QModelIndex modelIndex = historyModel->createIndex(0, 0);
+    QString title = historyModel->data(modelIndex, DeclarativeHistoryModel::TitleRole).toString();
+
+    QCOMPARE(title, expectedTitle);
 }
 
 void tst_declarativehistorymodel::removeHistoryEntries_data()
@@ -245,13 +246,13 @@ void tst_declarativehistorymodel::removeHistoryEntries_data()
     titles << "test1" << "test2" << "test3";
 
 
-    QList<TabTuple> list {
-        TabTuple(QStringLiteral("http://removeTestUrl1"), QStringLiteral("test1")),
-        TabTuple(QStringLiteral("http://removeTestUrl2"), QStringLiteral("test2")),
-        TabTuple(QStringLiteral("http://removeTestUrl3"), QStringLiteral("test3")),
+    QList<HistoryEntry> list {
+        HistoryEntry(QStringLiteral("http://removeTestUrl1"), QStringLiteral("test1")),
+        HistoryEntry(QStringLiteral("http://removeTestUrl2"), QStringLiteral("test2")),
+        HistoryEntry(QStringLiteral("http://removeTestUrl3"), QStringLiteral("test3")),
     };
 
-    QTest::addColumn<QList<TabTuple> >("tabs");
+    QTest::addColumn<QList<HistoryEntry> >("entries");
     QTest::addColumn<int>("index");
     QTest::addColumn<int>("countWithSearchTermIndexRemoved");
     QTest::addColumn<int>("countWithEmptySearchIndexRemoved");
@@ -266,17 +267,17 @@ void tst_declarativehistorymodel::removeHistoryEntries_data()
 
 void tst_declarativehistorymodel::removeHistoryEntries()
 {
-    QFETCH(QList<TabTuple>, tabs);
+    QFETCH(QList<HistoryEntry>, entries);
     QFETCH(int, index);
     QFETCH(int, countWithSearchTermIndexRemoved);
     QFETCH(int, countWithEmptySearchIndexRemoved);
     QFETCH(int, countWithSearchTerm);
 
     QFETCH(QString, searchTerm);
-    addTabs(tabs);
+    addEntries(entries);
     verifySearchResult(searchTerm, countWithSearchTerm);
     // Reset search results.
-    verifySearchResult("", tabs.count());
+    verifySearchResult("", entries.count());
 
     historyModel->remove(index);
     verifySearchResult("", countWithEmptySearchIndexRemoved);
@@ -287,24 +288,24 @@ void tst_declarativehistorymodel::removeHistoryEntries()
 
 void tst_declarativehistorymodel::searchWithSpecialChars_data()
 {
-    QTest::addColumn<QList<TabTuple> >("tabs");
+    QTest::addColumn<QList<HistoryEntry> >("entries");
     QTest::addColumn<QString>("searchTerm");
     QTest::addColumn<int>("expectedCount");
-    QTest::newRow("special_site") << (QList<TabTuple>() << TabTuple(QStringLiteral("http://www.pöö.com/"), QStringLiteral("wierd site"))) << "pöö" << 1;
-    QTest::newRow("special_title") << (QList<TabTuple>() << TabTuple(QStringLiteral("http://www.pöö.com/"), QStringLiteral("wierd site"))
-                                      << TabTuple(QStringLiteral("http://www.foobar.com/"), QStringLiteral("pöö wierd title"))) << "pöö" << 2;
+    QTest::newRow("special_site") << (QList<HistoryEntry>() << HistoryEntry(QStringLiteral("http://www.pöö.com/"), QStringLiteral("wierd site"))) << "pöö" << 1;
+    QTest::newRow("special_title") << (QList<HistoryEntry>() << HistoryEntry(QStringLiteral("http://www.pöö.com/"), QStringLiteral("wierd site"))
+                                      << HistoryEntry(QStringLiteral("http://www.foobar.com/"), QStringLiteral("pöö wierd title"))) << "pöö" << 2;
 
-    QTest::newRow("special_escaped_chars") << (QList<TabTuple>() << TabTuple(QStringLiteral("http://www.foobar.com/"), QStringLiteral("special title: ';\";ö"))) << "';\";" << 1;
-    QTest::newRow("special_escaped_chars") << (QList<TabTuple>() << TabTuple(QStringLiteral("http://www.foobar.com/"), QStringLiteral("Ö is wierd char"))) << "Ö" << 1;
+    QTest::newRow("special_escaped_chars") << (QList<HistoryEntry>() << HistoryEntry(QStringLiteral("http://www.foobar.com/"), QStringLiteral("special title: ';\";ö"))) << "';\";" << 1;
+    QTest::newRow("special_escaped_chars") << (QList<HistoryEntry>() << HistoryEntry(QStringLiteral("http://www.foobar.com/"), QStringLiteral("Ö is wierd char"))) << "Ö" << 1;
 }
 
 void tst_declarativehistorymodel::searchWithSpecialChars()
 {
-    QFETCH(QList<TabTuple>, tabs);
+    QFETCH(QList<HistoryEntry>, entries);
     QFETCH(QString, searchTerm);
     QFETCH(int, expectedCount);
 
-    addTabs(tabs);
+    addEntries(entries);
 
     verifySearchResult(searchTerm, expectedCount);
 
@@ -314,8 +315,6 @@ void tst_declarativehistorymodel::searchWithSpecialChars()
 
 void tst_declarativehistorymodel::cleanup()
 {
-    delete tabModel;
-    tabModel = 0;
     delete historyModel;
     historyModel = 0;
     delete DBManager::instance();
@@ -323,22 +322,20 @@ void tst_declarativehistorymodel::cleanup()
     QVERIFY(dbFile.remove());
 }
 
-void tst_declarativehistorymodel::addTabs(const QList<TabTuple> &tabs)
+void tst_declarativehistorymodel::addEntries(const QList<HistoryEntry> &entiries)
 {
-    QSignalSpy tabCountChangeSpy(tabModel, SIGNAL(countChanged()));
-    for (int i = 0; i < tabs.count(); ++i) {
-        tabModel->addTab(tabs.at(i).url, tabs.at(i).title, tabModel->count());
+    QSignalSpy historyAvailable(DBManager::instance(), SIGNAL(historyAvailable(QList<Link>)));
+    for (int i = 0; i < entiries.count(); ++i) {
+        historyModel->add(entiries.at(i).url, entiries.at(i).title);
     }
 
-    waitSignals(tabCountChangeSpy, tabs.count());
+    waitSignals(historyAvailable, entiries.count());
 }
 
 void tst_declarativehistorymodel::verifySearchResult(QString searchTerm, int expectedCount)
 {
-    QSignalSpy countChangeSpy(historyModel, SIGNAL(countChanged()));
     QSignalSpy historyAvailable(DBManager::instance(), SIGNAL(historyAvailable(QList<Link>)));
     historyModel->search(searchTerm);
-    waitSignals(countChangeSpy, 1, 300);
     waitSignals(historyAvailable, 1, 500);
     QCOMPARE(historyModel->rowCount(), expectedCount);
 }

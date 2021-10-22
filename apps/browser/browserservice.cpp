@@ -24,7 +24,10 @@
 namespace {
 const auto ProcDir = QStringLiteral("/proc/%1");
 const auto ErrorPidIsNotPrivileged = QStringLiteral("PID %1 is not in privileged group");
+const auto ErrorPidIsNotOwnerServiceOrPrivileged = QStringLiteral("PID %1 is not the owner of '%2' or in privileged group");
 const auto SailfishBrowserUiService = QStringLiteral("org.sailfishos.browser.ui");
+const auto TransferEngine = QStringLiteral("org.nemo.transferengine");
+const auto Lipstick = QStringLiteral("com.jolla.lipstick");
 }
 
 #define GET_PID() connection().interface()->servicePid(message().service())
@@ -71,7 +74,7 @@ void BrowserService::openUrl(const QStringList &args)
 
 void BrowserService::activateNewTabView()
 {
-    if (!isPrivileged()) {
+    if (!callerMatchesService(Lipstick)) {
         return;
     }
 
@@ -80,7 +83,7 @@ void BrowserService::activateNewTabView()
 
 void BrowserService::cancelTransfer(int transferId)
 {
-    if (!isPrivileged()) {
+    if (!callerMatchesService(TransferEngine)) {
         return;
     }
 
@@ -89,7 +92,7 @@ void BrowserService::cancelTransfer(int transferId)
 
 void BrowserService::restartTransfer(int transferId)
 {
-    if (!isPrivileged()) {
+    if (!callerMatchesService(TransferEngine)) {
         return;
     }
 
@@ -116,6 +119,25 @@ bool BrowserService::isPrivileged() const
         return false;
     }
     return true;
+}
+
+bool BrowserService::callerMatchesService(const QString &serviceName) const
+{
+    auto isPrivileged = [=] {
+        IS_PRIVILEGED();
+    };
+
+    uint callerServicePid = GET_PID().value();
+
+    // Test this against pid of serviceName which works also inside
+    // sandbox. If that matches, then the caller is serviceName.
+    if (isPrivileged() || callerServicePid == connection().interface()->servicePid(serviceName).value()) {
+        return true;
+    }
+
+    sendErrorReply(QDBusError::AccessDenied,
+                   ErrorPidIsNotOwnerServiceOrPrivileged.arg(callerServicePid).arg(serviceName));
+    return false;
 }
 
 BrowserUIServicePrivate::BrowserUIServicePrivate()
@@ -166,9 +188,7 @@ void BrowserUIService::openSettings()
 
 void BrowserUIService::activateNewTabView()
 {
-    if (!isPrivileged()) {
-        sendErrorReply(QDBusError::AccessDenied,
-                ErrorPidIsNotPrivileged.arg(GET_PID()));
+    if (!callerMatchesService(Lipstick)) {
         return;
     }
 
@@ -207,6 +227,21 @@ void BrowserUIService::closeTab(int tabId)
 bool BrowserUIService::isPrivileged() const
 {
     IS_PRIVILEGED();
+}
+
+bool BrowserUIService::callerMatchesService(const QString &serviceName) const
+{
+    uint callerServicePid = GET_PID().value();
+
+    // Test this against pid of serviceName which works also inside
+    // sandbox. If that matches, then the caller is serviceName.
+    if (isPrivileged() || callerServicePid == connection().interface()->servicePid(serviceName).value()) {
+        return true;
+    }
+
+    sendErrorReply(QDBusError::AccessDenied,
+                   ErrorPidIsNotOwnerServiceOrPrivileged.arg(callerServicePid).arg(serviceName));
+    return false;
 }
 
 uint BrowserUIService::getCallerPid() const

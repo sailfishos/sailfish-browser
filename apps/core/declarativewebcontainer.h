@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013 - 2019 Jolla Ltd.
+ * Copyright (c) 2013 - 2021 Jolla Ltd.
  * Copyright (c) 2019 Open Mobile Platform LLC.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -31,6 +31,7 @@ class DeclarativeTabModel;
 class DeclarativeWebPage;
 class WebPages;
 class Tab;
+class DeclarativeHistoryModel;
 
 class DeclarativeWebContainer : public QWindow, public QQmlParserStatus, protected QOpenGLFunctions {
     Q_OBJECT
@@ -39,6 +40,8 @@ class DeclarativeWebContainer : public QWindow, public QQmlParserStatus, protect
     Q_PROPERTY(QQuickItem *rotationHandler MEMBER m_rotationHandler NOTIFY rotationHandlerChanged FINAL)
     Q_PROPERTY(DeclarativeWebPage *contentItem READ webPage NOTIFY contentItemChanged FINAL)
     Q_PROPERTY(DeclarativeTabModel *tabModel READ tabModel NOTIFY tabModelChanged FINAL)
+    Q_PROPERTY(DeclarativeTabModel *persistentTabModel READ persistentTabModel CONSTANT)
+    Q_PROPERTY(DeclarativeTabModel *privateTabModel READ privateTabModel CONSTANT)
     Q_PROPERTY(bool completed READ completed NOTIFY completedChanged FINAL)
     Q_PROPERTY(bool enabled MEMBER m_enabled NOTIFY enabledChanged FINAL)
     Q_PROPERTY(bool foreground READ foreground WRITE setForeground NOTIFY foregroundChanged FINAL)
@@ -75,6 +78,7 @@ class DeclarativeWebContainer : public QWindow, public QQmlParserStatus, protect
     Q_PROPERTY(Qt::ScreenOrientation pendingWebContentOrientation READ pendingWebContentOrientation NOTIFY pendingWebContentOrientationChanged FINAL)
 
     Q_PROPERTY(QMozSecurity *security READ security NOTIFY securityChanged)
+    Q_PROPERTY(DeclarativeHistoryModel* historyModel READ historyModel WRITE setHistoryModel NOTIFY historyModelChanged)
 
 public:
     DeclarativeWebContainer(QWindow *parent = 0);
@@ -86,6 +90,8 @@ public:
     QMozWindow *mozWindow() const;
 
     DeclarativeTabModel *tabModel() const;
+    DeclarativeTabModel *persistentTabModel() const;
+    DeclarativeTabModel *privateTabModel() const;
 
     bool completed() const;
 
@@ -154,6 +160,9 @@ public:
 
     bool event(QEvent *event);
 
+    DeclarativeHistoryModel *historyModel() const;
+    void setHistoryModel(DeclarativeHistoryModel *model);
+
 signals:
     void rotationHandlerChanged();
     void contentItemChanged();
@@ -192,6 +201,7 @@ signals:
     void pendingWebContentOrientationChanged();
     void webContentOrientationChanged(Qt::ScreenOrientation orientation);
     void securityChanged();
+    void historyModelChanged();
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event);
@@ -297,6 +307,7 @@ private:
     bool m_closing;
 
     QHash<int, uint> m_tabOwners;
+    DeclarativeHistoryModel *m_historyModel;
 
     friend class tst_webview;
     friend class tst_declarativewebcontainer;

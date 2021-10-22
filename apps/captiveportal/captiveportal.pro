@@ -19,8 +19,14 @@ packagesExist(qdeclarative5-boostable) {
     warning("qdeclarative5-boostable not available; startup times will be slower")
 }
 
-# Translations are handled by the browser app
-# See apps/browser/qml/captiveportaltranslations.qml
+# Translations
+TS_PATH = $$PWD
+# Shared translations in browser.pro should be skipped from other subprojects
+# to avoid duplicated ids
+#TS_PATH += $$PWD/../shared
+TS_FILE = $$OUT_PWD/sailfish-captiveportal.ts
+EE_QM = $$OUT_PWD/sailfish-captiveportal_eng_en.qm
+include(../../translations/translations.pri)
 
 include(../../defaults.pri)
 include(../../common/browserapp.pri)
@@ -29,15 +35,12 @@ include(../core/core.pri)
 include(../history/history.pri)
 include(../qtmozembed/qtmozembed.pri)
 include(../factories/factories.pri)
+include(../shared/shared.pri)
 
 # QML files and folders of captiveportal
 qml.path = $$DEPLOYMENT_PATH
 qml.files = qml/captiveportal.qml qml/pages
 INSTALLS += qml
-
-qmlshared.path = $$DEPLOYMENT_PATH/shared
-qmlshared.files = ../shared/*
-INSTALLS += qmlshared
 
 # Captive portal sources
 SOURCES += captiveportaladaptor.cpp \
