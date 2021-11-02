@@ -195,7 +195,7 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage, bool trigg
             // Wait for one frame to be rendered and schedule update if tab is ready to render.
             connect(m_mozWindow.data(), &QMozWindow::compositingFinished,
                     this, &DeclarativeWebContainer::updateActiveTabRendered, Qt::UniqueConnection);
-            connect(m_webPage.data(), &DeclarativeWebPage::domContentLoadedChanged,
+            connect(m_webPage.data(), &QOpenGLWebPage::domContentLoadedChanged,
                     this, &DeclarativeWebContainer::updateActiveTabRendered, Qt::UniqueConnection);
 
             connect(m_webPage.data(), &DeclarativeWebPage::neterror, [this]() {

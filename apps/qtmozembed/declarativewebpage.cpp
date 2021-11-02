@@ -55,7 +55,6 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
     , m_userHasDraggedWhileLoading(false)
     , m_fullscreen(false)
     , m_forcedChrome(false)
-    , m_domContentLoaded(false)
     , m_initialLoadHasHappened(false)
     , m_tabHistoryReady(false)
     , m_urlReady(false)
@@ -85,12 +84,10 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
     connect(&m_grabWritter, &QFutureWatcher<QString>::finished, this, &DeclarativeWebPage::grabWritten);
     connect(this, &DeclarativeWebPage::urlChanged, this, &DeclarativeWebPage::onUrlChanged);
     connect(this, &QOpenGLWebPage::virtualKeyboardHeightChanged, this, &DeclarativeWebPage::updateViewMargins);
-    connect(this, &QOpenGLWebPage::loadedChanged, [this]() {
-        if (loaded()) {
+    connect(this, &QOpenGLWebPage::domContentLoadedChanged, [this]() {
+        if (domContentLoaded()) {
             qCDebug(lcCoreLog) << "WebPage: loaded";
-            // E.g. when loading images directly we don't necessarily get domContentLoaded message from engine.
-            // So mark content loaded when webpage is loaded.
-            setContentLoaded();
+            updateViewMargins();
         }
     });
 
@@ -201,19 +198,6 @@ void DeclarativeWebPage::restoreHistory() {
     m_restoredTabHistory.clear();
 }
 
-void DeclarativeWebPage::setContentLoaded()
-{
-    if (!m_domContentLoaded) {
-        m_domContentLoaded = true;
-        emit domContentLoadedChanged();
-    }
-}
-
-bool DeclarativeWebPage::domContentLoaded() const
-{
-    return m_domContentLoaded;
-}
-
 bool DeclarativeWebPage::initialLoadHasHappened() const
 {
     return m_initialLoadHasHappened;
@@ -257,8 +241,6 @@ void DeclarativeWebPage::loadTab(const QString &newUrl, bool force)
     setChrome(true);
     QString oldUrl = url().toString();
     if ((!newUrl.isEmpty() && oldUrl != newUrl) || force) {
-        m_domContentLoaded = false;
-        emit domContentLoadedChanged();
         load(newUrl);
     }
 }
@@ -378,7 +360,6 @@ void DeclarativeWebPage::onRecvAsyncMessage(const QString& message, const QVaria
     if (message == QLatin1String(FULLSCREEN_MESSAGE)) {
         setFullscreen(data.toMap().value(QString("fullscreen")).toBool());
     } else if (message == QLatin1String(DOM_CONTENT_LOADED_MESSAGE)) {
-        setContentLoaded();
         QString docuri = data.toMap().value("docuri").toString();
         if (docuri.startsWith("about:neterror") && !docuri.contains("e=netOffline"))
             emit neterror();
