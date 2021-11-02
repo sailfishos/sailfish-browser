@@ -86,9 +86,10 @@ Page {
                  }
 
                 TextSwitch {
-                    id: clearCookies
-                    //% "Cookies"
-                    text: qsTrId("settings_browser-la-clear_cookies")
+                    id: clearCookiesAndSiteData
+
+                    //% "Cookies and site data"
+                    text: qsTrId("settings_browser-la-clear_cookies_and_site_data")
                     checked: true
                 }
 
@@ -133,7 +134,7 @@ Page {
                     text: qsTrId("settings_browser-bt-clear")
                     anchors.horizontalCenter: parent.horizontalCenter
                     enabled: clearHistory.checked
-                             || clearCookies.checked
+                             || clearCookiesAndSiteData.checked
                              || clearSavedPasswords.checked
                              || clearCache.checked
                              || clearBookmarks.checked
@@ -147,8 +148,8 @@ Page {
                                                      if (clearHistory.checked) {
                                                          Settings.clearHistory(historyErasingComboBox.currentItem.period)
                                                      }
-                                                     if (clearCookies.checked) {
-                                                         Settings.clearCookies()
+                                                     if (clearCookiesAndSiteData.checked) {
+                                                         Settings.clearCookiesAndSiteData()
                                                      }
                                                      if (clearSavedPasswords.checked) {
                                                          Settings.clearPasswords()

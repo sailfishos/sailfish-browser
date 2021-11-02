@@ -31,7 +31,7 @@ public:
     static SettingManager *instance();
 
     Q_INVOKABLE void clearHistory(int period);
-    Q_INVOKABLE void clearCookies();
+    Q_INVOKABLE void clearCookiesAndSiteData();
     Q_INVOKABLE void clearPasswords();
     Q_INVOKABLE void clearCache();
     Q_INVOKABLE void clearSitePermissions();
