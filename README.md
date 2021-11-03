@@ -11,9 +11,9 @@ Maintainers
 Engine and adaptation
 ---------------------
 - Sailfish WebView - https://github.com/sailfishos/sailfish-components-webview
-- QtMozEmbed - Qt bindings - https://git.sailfishos.org/mer-core/qtmozembed
-- Embedlite components - https://git.sailfishos.org/mer-core/embedlite-components
-- Gecko browser engine with embedlite API - https://git.sailfishos.org/mer-core/gecko-dev
+- QtMozEmbed - Qt bindings - https://github.com/sailfishos/qtmozembed
+- Embedlite components - https://github.com/sailfishos/embedlite-components
+- Gecko browser engine with embedlite API - https://github.com/sailfishos/gecko-dev
 
 Tools
 -----
