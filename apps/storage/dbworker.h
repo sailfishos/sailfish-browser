@@ -52,7 +52,7 @@ public slots:
     void removeHistoryEntry(int linkId);
     void removeHistoryEntry(const QString &url);
     void addHistoryEntry(const QString &url, const QString &title);
-    void clearHistory();
+    void clearHistory(int period);
 
     void saveSetting(const QString &name, const QString &value);
     SettingsMap getSettings();
@@ -70,6 +70,7 @@ private:
     int addToTabHistory(int tabId, int linkId);
     Link getCurrentLink(int tabId);
     void clearDeprecatedTabHistory(int tabId, int currentLinkId);
+    QList<Link> getHistoryQList();
     int createLink(const QString &url, const QString &title = QString(), const QString &thumbPath = QString());
     void updateTab(int tabId, int tabHistoryId);
     int tabCount();

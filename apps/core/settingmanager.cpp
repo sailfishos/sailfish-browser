@@ -71,9 +71,9 @@ SettingManager *SettingManager::instance()
     return gSingleton;
 }
 
-void SettingManager::clearHistory()
+void SettingManager::clearHistory(int period)
 {
-    DBManager::instance()->clearHistory();
+    DBManager::instance()->clearHistory(period);
 }
 
 void SettingManager::clearCookies()

@@ -50,6 +50,41 @@ Page {
                     description: qsTrId("settings_browser-la-clear_history_description")
                 }
 
+                ComboBox {
+                     id: historyErasingComboBox
+
+                     width: parent.width
+                     //% "Clear browser history for"
+                     label: qsTrId("settings_browser-la-clear_history_period")
+
+                     menu: ContextMenu {
+
+                         MenuItem {
+                             property int period: 1
+                             //% "Last 24 hours"
+                             text: qsTrId("settings_browser-la-clear_history_day")
+                         }
+
+                         MenuItem {
+                             property int period: 7
+                             //% "Last week"
+                             text: qsTrId("settings_browser-la-clear_history_week")
+                         }
+
+                         MenuItem {
+                             property int period: 28
+                             //% "Last 4 weeks"
+                             text: qsTrId("settings_browser-la-clear_history_four_weeks")
+                         }
+
+                         MenuItem {
+                             property int period: 0
+                             //% "All time"
+                             text: qsTrId("settings_browser-la-clear_history_everything")
+                         }
+                     }
+                 }
+
                 TextSwitch {
                     id: clearCookies
                     //% "Cookies"
@@ -110,8 +145,7 @@ Page {
                         remorse = Remorse.popupAction(page, qsTrId("settings_browser-la-cleared_private_data"),
                                                  function() {
                                                      if (clearHistory.checked) {
-                                                         Settings.clearHistory()
-                                                         Settings.removeAllTabs()
+                                                         Settings.clearHistory(historyErasingComboBox.currentItem.period)
                                                      }
                                                      if (clearCookies.checked) {
                                                          Settings.clearCookies()

@@ -30,7 +30,7 @@ public:
 
     static SettingManager *instance();
 
-    Q_INVOKABLE void clearHistory();
+    Q_INVOKABLE void clearHistory(int period);
     Q_INVOKABLE void clearCookies();
     Q_INVOKABLE void clearPasswords();
     Q_INVOKABLE void clearCache();
@@ -49,7 +49,6 @@ private:
     explicit SettingManager(QObject *parent = 0);
 
     MGConfItem *m_searchEngineConfItem;
-
     MGConfItem *m_toolbarSmall;
     MGConfItem *m_toolbarLarge;
 
