@@ -1,0 +1,31 @@
+<html>
+    <body>
+        <h2>ServiceWorker Test</h2>
+        <p id="p1"></p>
+        <script>
+            function log(txt) {
+                document.getElementById("p1").innerHTML += txt + "<br>";
+            }
+
+            if (navigator.serviceWorker) {
+                navigator.serviceWorker.onmessage = function(event) {
+                    log("navigator.serviceWorker.onmessage: " + event.data);
+                    if (event.data == "pong") log("ServiceWorker test passed");
+                };
+
+                navigator.serviceWorker.register('serviceworker.js').then(function(sw) {
+                    log("navigator.serviceWorker.register: " + sw);
+                    navigator.serviceWorker.ready.then(function(reg) {
+                        log("navigator.serviceWorker.ready");
+                        log("ping...");
+                        reg.active.postMessage({text: "ping"});
+                    });
+                });
+            } else {
+                log("navigator.serviceWorker null");
+                log("ServiceWorker test failed");
+            }
+
+    </script>
+  </body>
+</html>
