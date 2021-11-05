@@ -32,6 +32,7 @@
 #include "datafetcher.h"
 #include "inputregion.h"
 #include "searchenginemodel.h"
+#include "settingmanager.h"
 
 #include "declarativewebutils.h"
 #include "webpages.h"
