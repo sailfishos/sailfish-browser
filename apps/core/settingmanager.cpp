@@ -35,6 +35,9 @@ SettingManager::SettingManager(QObject *parent)
     m_toolbarLarge = new MGConfItem("/apps/sailfish-browser/settings/toolbar_large", this);
     connect(m_toolbarSmall, &MGConfItem::valueChanged, this, &SettingManager::toolbarSmallChanged);
     connect(m_toolbarLarge, &MGConfItem::valueChanged, this, &SettingManager::toolbarLargeChanged);
+
+    SailfishOS::WebEngine::instance()->addObserver(QStringLiteral("cache-size"));
+    SailfishOS::WebEngine::instance()->addObserver(QStringLiteral("site-data-size"));
     connect(SailfishOS::WebEngine::instance(), &SailfishOS::WebEngine::recvObserve,
             this, &SettingManager::handleObserve);
 }
@@ -88,6 +91,24 @@ void SettingManager::clearSitePermissions()
 void SettingManager::removeAllTabs()
 {
     DBManager::instance()->removeAllTabs();
+}
+
+void SettingManager::calculateCacheSize(QJSValue callback)
+{
+    if (!callback.isNull() && !callback.isUndefined() && callback.isCallable()) {
+        m_calculateCacheSizeCb.reset(new QJSValue(callback));
+
+        SailfishOS::WebEngine::instance()->notifyObservers(QString("get-cache-size"), QVariant());
+    }
+}
+
+void SettingManager::calculateSiteDataSize(QJSValue callback)
+{
+    if (!callback.isNull() && !callback.isUndefined() && callback.isCallable()) {
+        m_calculateSiteDataSizeCb.reset(new QJSValue(callback));
+
+        SailfishOS::WebEngine::instance()->notifyObservers(QString("get-site-data-size"), QVariant());
+    }
 }
 
 void SettingManager::setSearchEngine()
@@ -170,6 +191,15 @@ void SettingManager::handleObserve(const QString &message, const QVariant &data)
                     m_addedSearchEngines = 0;
                 }
             }
+        }
+    } else if (message == QStringLiteral("cache-size")) {
+        if (!m_calculateCacheSizeCb.isNull()) {
+            m_calculateCacheSizeCb->call(QJSValueList() << dataMap.value(QStringLiteral("usage")).toUInt());
+        }
+
+    } else if (message == QStringLiteral("site-data-size")) {
+        if (!m_calculateSiteDataSizeCb.isNull()) {
+            m_calculateSiteDataSizeCb->call(QJSValueList() << dataMap.value(QStringLiteral("usage")).toUInt());
         }
     }
 }
