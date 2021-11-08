@@ -17,7 +17,7 @@ BrowserWindow {
     id: window
 
     function setBrowserCover(model) {
-        if (!model || model.count === 0) {
+        if (!model || model.count === 0 || !WebUtils.firstUseDone) {
             cover = Qt.resolvedUrl("cover/NoTabsCover.qml")
         } else {
             if (cover != null && window.webView) {

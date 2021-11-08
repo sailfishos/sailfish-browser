@@ -200,8 +200,6 @@ Page {
                 overlay.startPage(openOverlayImmediately ? PageStackAction.Immediate
                                                          : PageStackAction.Animated)
             }
-
-            window.setBrowserCover(webView.tabModel)
         }
     }
 
@@ -214,6 +212,7 @@ Page {
             if (webView.tabModel.count === 0) {
                 webView.handleModelChanges(false)
             }
+            window.setBrowserCover(webView.tabModel)
         }
         onWaitingForNewTabChanged: window.opaqueBackground = webView.tabModel.waitingForNewTab
     }
@@ -417,13 +416,11 @@ Page {
             bringToForeground(webView.chromeWindow)
             window.activate()
         }
+        onFirstUseDoneChanged: window.setBrowserCover(webView.tabModel)
     }
 
     Component.onCompleted: {
-        if (!WebUtils.firstUseDone) {
-            window.setBrowserCover(webView.tabModel)
-        }
-
+        window.setBrowserCover(webView.tabModel)
         if (Qt.application.arguments.indexOf("-debugMode") > 0) {
             var component = Qt.createComponent(Qt.resolvedUrl("components/DebugOverlay.qml"))
             if (component.status === Component.Ready) {
