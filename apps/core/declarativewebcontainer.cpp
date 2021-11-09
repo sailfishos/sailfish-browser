@@ -21,6 +21,7 @@
 #include "logging.h"
 #include "declarativehistorymodel.h"
 #include "closeeventfilter.h"
+#include "settingmanager.h"
 
 #include <webengine.h>
 #include <QTimerEvent>

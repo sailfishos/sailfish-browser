@@ -10,8 +10,6 @@
 #ifndef DECLARATIVEWEBCONTAINER_H
 #define DECLARATIVEWEBCONTAINER_H
 
-#include "settingmanager.h"
-
 #include <qmozcontext.h>
 #include <qmozsecurity.h>
 #include <QtGui/QWindow>

@@ -52,7 +52,6 @@ private:
     MGConfItem *m_toolbarSmall;
     MGConfItem *m_toolbarLarge;
 
-    bool m_initialized;
     bool m_searchEnginesInitialized;
 
     QStringList *m_addedSearchEngines;

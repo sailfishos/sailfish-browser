@@ -23,11 +23,12 @@ static SettingManager *gSingleton = 0;
 
 SettingManager::SettingManager(QObject *parent)
     : QObject(parent)
-    , m_initialized(false)
     , m_searchEnginesInitialized(false)
     , m_addedSearchEngines(0)
 {
     m_searchEngineConfItem = new MGConfItem("/apps/sailfish-browser/settings/search_engine", this);
+    connect(m_searchEngineConfItem, &MGConfItem::valueChanged,
+            this, &SettingManager::setSearchEngine);
 
     // Look and feel related settings
     m_toolbarSmall = new MGConfItem("/apps/sailfish-browser/settings/toolbar_small", this);
@@ -36,21 +37,6 @@ SettingManager::SettingManager(QObject *parent)
     connect(m_toolbarLarge, &MGConfItem::valueChanged, this, &SettingManager::toolbarLargeChanged);
     connect(SailfishOS::WebEngine::instance(), &SailfishOS::WebEngine::recvObserve,
             this, &SettingManager::handleObserve);
-}
-
-bool SettingManager::initialize()
-{
-    if (m_initialized) {
-        return false;
-    }
-
-    setSearchEngine();
-
-    connect(m_searchEngineConfItem, &MGConfItem::valueChanged,
-            this, &SettingManager::setSearchEngine);
-
-    m_initialized = true;
-    return m_initialized;
 }
 
 int SettingManager::toolbarSmall()
