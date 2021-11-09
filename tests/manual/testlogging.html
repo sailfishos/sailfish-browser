@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=1">
+    <script type="text/javascript">
+      function init() {
+        console.log("This is a debug log");
+        console.warn("This is a warning log");
+        console.trace("This is a trace log");
+        frame(4);
+        console.error("This is an error log");
+        console.assert(true, "This is an assert log");
+        throw new Error("This is throwing an error");
+      }
+      function frame(frames, count = 0) {
+        if (frames > 0) {
+          frame(frames - 1, count + 1);
+        } else {
+          console.trace("This is a trace log with " + count + " frames");
+        }
+      }
+    </script>
+  </head>
+  <body onLoad="init()">
+    <p>This is a console logging test.</p>
+    <p>The following commands are called on load.</p>
+    <ol>
+      <li><tt>console.log("This is a debug log");</tt></li>
+      <li><tt>console.warn("This is a warning log");</tt></li>
+      <li><tt>console.error("This is an error log");</tt></li>
+      <li><tt>console.trace("This is a trace log");</tt></li>
+      <li><tt>console.trace(..);</tt> four frames deep</li>
+      <li><tt>console.assert(true, "This is an assert log");</tt></li>
+      <li><tt>throw new Error("This is throwing an error");</tt></li>
+    </ol>
+    <p>Check your javascript console for output.</p>
+  </body>
+</html>
+
