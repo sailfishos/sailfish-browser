@@ -668,12 +668,6 @@ Shared.Background {
                     webView.tabModel.clear()
                     overlay.startPage()
                 }
-
-                Component.onCompleted: {
-                    window.setBrowserCover(webView.tabModel)
-                }
-
-                Component.onDestruction: window.setBrowserCover(webView.tabModel)
             }
         }
     }
