@@ -32,10 +32,12 @@ Item {
     property string _lastMetaOwner
     property bool _isAudioStream
     property bool _isVideoStream
+    property bool _webrtcAudioActive
+    property bool _webrtcVideoActive
 
     function calculateStatus() {
-        var video = false
-        var audio = false
+        var video = _webrtcVideoActive
+        var audio = _webrtcAudioActive
 
         if (_mediaState === "play" && _lastStateOwner === _lastMetaOwner) {
             if (_isVideoStream) {
@@ -86,6 +88,7 @@ Item {
 
         onInitialized: {
           WebEngine.addObserver("network-enable")
+          WebEngine.addObserver("webrtc-media-info")
           connectionHelper.notifyOfflineStatus()
         }
         onRecvObserve: {
@@ -98,6 +101,10 @@ Item {
                     _mediaState = data.state
                     _lastStateOwner = data.owner
                 }
+                calculateStatus()
+            } else if (message === "webrtc-media-info") {
+                _webrtcAudioActive = data.audio
+                _webrtcVideoActive = data.video
                 calculateStatus()
             } else if (message === "network-enable") {
                 connectionHelper.attemptToConnectNetwork()
