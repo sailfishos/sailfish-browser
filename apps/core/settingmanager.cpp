@@ -62,9 +62,9 @@ void SettingManager::clearHistory(int period)
     DBManager::instance()->clearHistory(period);
 }
 
-void SettingManager::clearCookies()
+void SettingManager::clearCookiesAndSiteData()
 {
-    SailfishOS::WebEngine::instance()->notifyObservers(QString("clear-private-data"), QString("cookies"));
+    SailfishOS::WebEngine::instance()->notifyObservers(QString("clear-private-data"), QString("cookies-and-site-data"));
 }
 
 void SettingManager::clearPasswords()
