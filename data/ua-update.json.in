@@ -93,8 +93,6 @@
   "ruutu.fi": "Mozilla/5.0 (Android; Mobile; rv:78.0) Gecko/78.0 Firefox/78.0",
   "iltalehti.fi": "Mozilla/5.0 (Android; Mobile; rv:78.0) Gecko/78.0 Firefox/78.0",
   // JB#52587 alibi.fi, hymy.fi, ampparit.com, 1tv.ru
-  "alibi.fi": "Mozilla/5.0 (Linux; Mobile; rv:78.0) Gecko/78.0 Firefox/78.0",
-  "hymy.fi": "Mozilla/5.0 (Linux; Mobile; rv:78.0) Gecko/78.0 Firefox/78.0",
   "ampparit.com": "Mozilla/5.0 (Linux; Mobile; rv:78.0) Gecko/78.0 Firefox/78.0",
   "1tv.ru": "Mozilla/5.0 (Linux; Mobile; rv:78.0) Gecko/78.0 Firefox/78.0",
   "ask.com": "Mozilla/5.0 (Android; Mobile; rv:78.0) Gecko/78.0 Firefox/78.0",
