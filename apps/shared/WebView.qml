@@ -178,7 +178,7 @@ WebContainer {
             toolbarHeight: container.toolbarHeight
             throttlePainting: !foreground && !resourceController.videoActive && webView.visible || !webView.visible
             enabled: webView.enabled
-            chromeGestureThreshold: toolbarHeight / 2
+            chromeGestureThreshold: toolbarHeight / 3
             chromeGestureEnabled: !forcedChrome && enabled && !webView.imOpened
 
             onGrabResult: tabModel.updateThumbnailPath(tabId, fileName)
