@@ -95,7 +95,6 @@
   // JB#52587 alibi.fi, hymy.fi, ampparit.com, 1tv.ru
   "ampparit.com": "Mozilla/5.0 (Linux; Mobile; rv:78.0) Gecko/78.0 Firefox/78.0",
   "1tv.ru": "Mozilla/5.0 (Linux; Mobile; rv:78.0) Gecko/78.0 Firefox/78.0",
-  "ask.com": "Mozilla/5.0 (Android; Mobile; rv:78.0) Gecko/78.0 Firefox/78.0",
   "sogou.com": "Mozilla/5.0 (Android; Mobile; rv:78.0) Gecko/78.0 Firefox/78.0",
   "thomann.de": "Mozilla/5.0 (Android; Mobile; rv:78.0) Gecko/78.0 Firefox/78.0",
   "trueconf.rt.ru": "Mozilla/5.0 (Android; Mobile; rv:78.0) Gecko/78.0 Firefox/78.0",
