@@ -36,14 +36,9 @@
   // JB#39351, tmall.com
   "tmall.com": "Mozilla/5.0 (Android; Mobile; rv:78.0) Gecko/78.0 Firefox/78.0",
   "youtube.com": "Mozilla/5.0 (Android 8.1.0; U; Sailfish 4.0; rv:78.0) Gecko/78.0 Firefox/78.0 SailfishBrowser/1.0 like Safari/538.1",
-  "yahoo.com": "Mozilla/5.0 (Mobile; rv:78.0) Gecko/78.0 Firefox/78.0",
-  "yandex.com": "Mozilla/5.0 (Mobile; rv:78.0) Gecko/78.0 Firefox/78.0",
-  "yandex.net": "Mozilla/5.0 (Mobile; rv:78.0) Gecko/78.0 Firefox/78.0",
-  "yandex.ru": "Mozilla/5.0 (Mobile; rv:78.0) Gecko/78.0 Firefox/78.0",
   // JB#39970, slashdot.org
   "slashdot.org": "Mozilla/5.0 (Android 8.1.0; Mobile; rv:78.0) Gecko/78.0 Firefox/78.0",
   "verkkokauppa.com": "Mozilla/5.0 (Android 8.1.0; U; Sailfish 4.0; rv:78.0) Gecko/78.0 Firefox/78.0 SailfishBrowser/1.0 like Safari/538.1",
-  "digicert.com": "Mozilla/5.0 (Mobile; rv:78.0) Gecko/78.0 Firefox/78.0",
   // JB#48647, JB#45164 and JB#21093, google.com + some other country level domains
   "google.com": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:78.0) Gecko/78.0 SailfishBrowser/1.0",
   "google.de": "Mozilla/5.0 (Android 8.1.0; U; Mobile; rv:78.0) Gecko/78.0 SailfishBrowser/1.0",
