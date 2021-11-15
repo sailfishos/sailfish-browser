@@ -13,6 +13,8 @@
 #define SETTINGMANAGER_H
 
 #include <QObject>
+#include <QScopedPointer>
+#include <QJSValue>
 
 class MGConfItem;
 
@@ -37,6 +39,9 @@ public:
     Q_INVOKABLE void clearSitePermissions();
     Q_INVOKABLE void removeAllTabs();
 
+    Q_INVOKABLE void calculateCacheSize(QJSValue callback);
+    Q_INVOKABLE void calculateSiteDataSize(QJSValue callback);
+
 signals:
     void toolbarSmallChanged();
     void toolbarLargeChanged();
@@ -55,6 +60,9 @@ private:
     bool m_searchEnginesInitialized;
 
     QStringList *m_addedSearchEngines;
+
+    QScopedPointer<QJSValue> m_calculateCacheSizeCb;
+    QScopedPointer<QJSValue> m_calculateSiteDataSizeCb;
 };
 
 #endif
