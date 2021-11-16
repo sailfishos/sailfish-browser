@@ -183,6 +183,8 @@ SilicaFlickable {
                                         return "image://theme/icon-m-browser-camera" + (blocked ? "-template" : "")
                                     } else if (model.type === "microphone") {
                                         return "image://theme/icon-m-browser-microphone" + (blocked ? "-template" : "")
+                                    } else {
+                                        return ""
                                     }
                                 }
                                 highlighted: permissionArea.pressed
