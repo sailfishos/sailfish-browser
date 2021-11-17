@@ -865,7 +865,7 @@ void DeclarativeWebContainer::componentComplete()
 
 void DeclarativeWebContainer::updateContentOrientation(Qt::ScreenOrientation orientation)
 {
-    if (gForceLandscapeToPortrait) {
+    if (gForceLandscapeToPortrait || screen()->primaryOrientation() == Qt::LandscapeOrientation) {
         if (orientation == Qt::LandscapeOrientation) {
             orientation = Qt::PortraitOrientation;
         } else if (orientation == Qt::InvertedLandscapeOrientation) {
