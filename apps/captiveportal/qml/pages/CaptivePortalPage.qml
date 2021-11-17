@@ -41,23 +41,28 @@ Page {
 
     function inputMaskForOrientation(orientation) {
         // mask is in portrait window coordinates
-        var mask = Qt.rect(0, 0, Screen.width, Screen.height)
+        var portraitScreen = window.QuickWindow.Screen.primaryOrientation === Qt.PortraitOrientation
+        var mask = Qt.rect(0, 0,
+                           portraitScreen ? Screen.width : Screen.height,
+                           portraitScreen ? Screen.height : Screen.width)
         if (!window.opaqueBackground && webView.enabled && browserPage.active && !webView.touchBlocked) {
             var overlayVisibleHeight = browserPage.height - overlay.y
 
-            switch (orientation) {
-            case Orientation.None:
-            case Orientation.Portrait:
+            switch (window.QuickWindow.Screen.angleBetween(orientation, window.QuickWindow.Screen.primaryOrientation)) {
+            case 0:
+            case 360:
                 mask.y = overlay.y
                 // fallthrough
-            case Orientation.PortraitInverted:
+            case 180:
+            case -180:
                 mask.height = overlayVisibleHeight
                 break
-
-            case Orientation.LandscapeInverted:
+            case 270:
+            case -90:
                 mask.x = overlay.y
                 // fallthrough
-            case Orientation.Landscape:
+            case 90:
+            case -270:
                 mask.width = overlayVisibleHeight
             }
         }
