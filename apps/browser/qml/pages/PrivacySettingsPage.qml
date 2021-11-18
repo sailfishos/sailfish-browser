@@ -1,7 +1,7 @@
 /****************************************************************************
 **
 ** Copyright (c) 2014 - 2016 Jolla Ltd.
-** Copyright (c) 2020 Open Mobile Platform LLC.
+** Copyright (c) 2020 - 2021 Open Mobile Platform LLC.
 ** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **
 ****************************************************************************/
@@ -19,6 +19,7 @@ Page {
     id: page
 
     property var remorse
+    property var previousPage
 
     SilicaFlickable {
         anchors.fill: parent
@@ -141,30 +142,16 @@ Page {
                              || clearSitePermissions.checked
 
                     onClicked: {
-                        //: Remorse item for clearing private data
-                        //% "Cleared"
-                        remorse = Remorse.popupAction(page, qsTrId("settings_browser-la-cleared_private_data"),
-                                                 function() {
-                                                     if (clearHistory.checked) {
-                                                         Settings.clearHistory(historyErasingComboBox.currentItem.period)
-                                                     }
-                                                     if (clearCookiesAndSiteData.checked) {
-                                                         Settings.clearCookiesAndSiteData()
-                                                     }
-                                                     if (clearSavedPasswords.checked) {
-                                                         Settings.clearPasswords()
-                                                     }
-                                                     if (clearCache.checked) {
-                                                         Settings.clearCache()
-                                                     }
-                                                     if (clearBookmarks.checked) {
-                                                         BookmarkManager.clear()
-                                                     }
-                                                     if (clearSitePermissions.checked) {
-                                                         Settings.clearSitePermissions()
-                                                     }
-                                                 }
-                        );
+                        var page = pageStack.push(Qt.resolvedUrl("components/PrivacySettingsConfirmDialog.qml"), {
+                                                      historyEnabled: clearHistory.checked,
+                                                      cookieAndSiteDataEnabled: clearCookiesAndSiteData.checked,
+                                                      passwordsEnabled: clearSavedPasswords.checked,
+                                                      cacheEnabled: clearCache.checked,
+                                                      bookmarksEnabled: clearBookmarks.checked,
+                                                      sitePermissionsEnabled: clearSitePermissions.checked,
+                                                      historyPeriod: historyErasingComboBox.currentItem.period,
+                                                      acceptDestination: previousPage
+                                                  })
                     }
                 }
             }

@@ -253,7 +253,7 @@ Page {
                         anchors.verticalCenter: clearBrowsingDataIcon.verticalCenter
                     }
                 }
-                onClicked: pageStack.push("PrivacySettingsPage.qml")
+                onClicked: pageStack.push("PrivacySettingsPage.qml", { previousPage: page })
             }
 
             SectionHeader {
