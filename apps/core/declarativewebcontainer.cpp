@@ -865,7 +865,7 @@ void DeclarativeWebContainer::componentComplete()
 
 void DeclarativeWebContainer::updateContentOrientation(Qt::ScreenOrientation orientation)
 {
-    if (gForceLandscapeToPortrait || screen()->primaryOrientation() == Qt::LandscapeOrientation) {
+    if (gForceLandscapeToPortrait) {
         if (orientation == Qt::LandscapeOrientation) {
             orientation = Qt::PortraitOrientation;
         } else if (orientation == Qt::InvertedLandscapeOrientation) {
@@ -914,6 +914,8 @@ void DeclarativeWebContainer::initialize()
 
     if (SailfishOS::WebEngine::instance()->isInitialized() && !m_mozWindow) {
         m_mozWindow = new QMozWindow(QWindow::size());
+        m_mozWindow->setPrimaryOrientation(screen()->primaryOrientation());
+
         connect(m_mozWindow.data(), &QMozWindow::requestGLContext,
                 this, &DeclarativeWebContainer::createGLContext, Qt::DirectConnection);
         connect(m_mozWindow.data(), &QMozWindow::orientationChangeFiltered,
