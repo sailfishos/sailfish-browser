@@ -12,7 +12,7 @@
         </style>
         <script>
             function init() {
-                var inputs = document.getElementsByTagName('input');
+                var inputs = document.getElementById('inputs').getElementsByTagName('input');
                 for (var index = 0; index < inputs.length; ++index) {
                     inputs[index].addEventListener('input', function(e) { handle(e); });
                     inputs[index].addEventListener('paste', function(e) { handle(e); });
@@ -45,16 +45,26 @@
         </script>
     </head>
     <body onload="init()">
-    <table>
-        <tr><td>tel:</td><td><input type="tel"></td></tr>
-        <tr><td>number:</td><td><input type="number"></td></tr>
-        <tr><td>datetime:</td><td><input type="datetime"></td></tr>
-        <tr><td>email:</td><td><input type="email"></td></tr>
-        <tr><td>password:</td><td><input type="password"></td></tr>
-        <tr><td>text:</td><td><input type="text"></td></tr>
-    </table>
-    <textarea id="area" style="width: 100%; height: 150px;"></textarea>
-    <br/>
-    <input type="button" onclick="area.value = ''" value="clear log"/>
+        <table id="inputs">
+            <tr><td>tel:</td><td><input type="tel"></td></tr>
+            <tr><td>number:</td><td><input type="number"></td></tr>
+            <tr><td>datetime:</td><td><input type="datetime"></td></tr>
+            <tr><td>email:</td><td><input type="email"></td></tr>
+            <tr><td>password:</td><td><input type="password"></td></tr>
+            <tr><td>text:</td><td><input type="text"></td></tr>
+        </table>
+        <textarea id="area" style="width: 100%; height: 150px;"></textarea><br/>
+        <input type="button" onclick="area.value = ''" value="clear log"/><br/>
+        <br/>
+        text:<br/>
+        <input type="text"><br/>
+        text, autocomplete="off":<br/>
+        <input type="text" autocomplete="off"><br/>
+        text, autocapitalize="off":<br/>
+        <input type="text" autocapitalize="off">
+        text, autocapitalize="none":<br/>
+        <input type="text" autocapitalize="none">
+        text, autocapitalize="characters":<br/>
+        <input type="text" autocapitalize="characters">
     </body>
 </html>
