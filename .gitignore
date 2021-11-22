@@ -7,3 +7,4 @@ moc_*.cpp
 Makefile
 *.so
 RPMS/*
+sailfish-browser.pro.user
