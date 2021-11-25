@@ -55,8 +55,7 @@ public:
     bool fullscreen() const;
     bool forcedChrome() const;
 
-    bool initialLoadHasHappened() const;
-    void setInitialLoadHasHappened();
+    bool urlHasChanged() const;
 
     Q_INVOKABLE void loadTab(const QString &newUrl, bool force);
     Q_INVOKABLE void grabToFile(const QSize& size);
@@ -80,6 +79,8 @@ signals:
     void securityChanged();
     void neterror();
 
+    void updateUrl();
+
 private slots:
     void setFullscreen(const bool fullscreen);
     void onRecvAsyncMessage(const QString& message, const QVariant& data);
@@ -100,7 +101,6 @@ private:
     bool m_userHasDraggedWhileLoading;
     bool m_fullscreen;
     bool m_forcedChrome;
-    bool m_initialLoadHasHappened;
     bool m_tabHistoryReady;
     bool m_urlReady;
     QString m_favicon;

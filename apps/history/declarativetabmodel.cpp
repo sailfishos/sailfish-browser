@@ -200,6 +200,16 @@ int DeclarativeTabModel::newTab(const QString &url, int parentId)
     tab.setTabId(nextTabId());
     tab.setUrl(url);
 
+    int index = 0;
+
+    if (parentId > 0) {
+        int parentTabId = m_webContainer->findParentTabId(tab.tabId());
+        index = findTabIndex(parentTabId) + 1;
+    } else {
+        index = m_tabs.count();
+    }
+    addTab(url, "", index);
+
     emit newTabRequested(tab, parentId);
 
     return tab.tabId();
@@ -296,20 +306,14 @@ bool DeclarativeTabModel::contains(int tabId) const
     return findTabIndex(tabId) >= 0;
 }
 
-void DeclarativeTabModel::updateUrl(int tabId, const QString &url, bool initialLoad)
+void DeclarativeTabModel::updateUrl(int tabId, const QString &url, bool updateDb)
 {
     int tabIndex = findTabIndex(tabId);
     bool isActiveTab = m_activeTabId == tabId;
-    bool updateDb = false;
     if (tabIndex >= 0 && (m_tabs.at(tabIndex).url() != url || isActiveTab)) {
         QVector<int> roles;
         roles << UrlRole;
         m_tabs[tabIndex].setUrl(url);
-
-        if (!initialLoad) {
-            updateDb = true;
-        }
-
         emit dataChanged(index(tabIndex, 0), index(tabIndex, 0), roles);
     }
 
@@ -431,24 +435,10 @@ void DeclarativeTabModel::onUrlChanged()
         int tabId = webPage->tabId();
 
         // Initial url should not be considered as navigation request that increases navigation history.
-        // Cleanup this.
-        bool initialLoad = !webPage->initialLoadHasHappened();
-        // Virtualized pages need to be checked from the model.
-        if (!initialLoad || contains(tabId)) {
-            updateUrl(tabId, url, initialLoad);
-        } else {
-            // Adding tab to the model is delayed so that url resolved to download link do not get added
-            // to the model. We should have downloadStatus(status) and linkClicked(url) signals in QmlMozView.
-            // To distinguish linkClicked(url) from downloadStatus(status) the downloadStatus(status) signal
-            // should not be emitted when link clicking started downloading or opened (will open) a new window.
-            if (webPage->parentId() > 0) {
-                int parentTabId = m_webContainer->findParentTabId(tabId);
-                addTab(url, "", findTabIndex(parentTabId) + 1);
-            } else {
-                addTab(url, "", m_tabs.count());
-            }
+        bool updateDb = webPage->urlHasChanged();
+        if (contains(tabId)) {
+            updateUrl(tabId, url, updateDb);
         }
-        webPage->setInitialLoadHasHappened();
     }
 }
 

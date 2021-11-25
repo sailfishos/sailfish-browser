@@ -193,7 +193,7 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage, bool trigg
                     this, &DeclarativeWebContainer::securityChanged, Qt::UniqueConnection);
 
             // NB: these signals are not disconnected upon setting current m_webPage.
-            connect(m_webPage.data(), &DeclarativeWebPage::urlChanged,
+            connect(m_webPage.data(), &DeclarativeWebPage::updateUrl,
                     m_model.data(), &DeclarativeTabModel::onUrlChanged, Qt::UniqueConnection);
             connect(m_webPage.data(), &DeclarativeWebPage::desktopModeChanged,
                     m_model.data(), &DeclarativeTabModel::onDesktopModeChanged, Qt::UniqueConnection);

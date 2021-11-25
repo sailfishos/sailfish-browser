@@ -492,8 +492,7 @@ void tst_persistenttabmodel::onUrlChanged()
     QUrl url("http://newurl.com");
     EXPECT_CALL(mockPage, tabId()).WillOnce(Return(1));
     EXPECT_CALL(mockPage, url()).WillOnce(Return(url));
-    EXPECT_CALL(mockPage, initialLoadHasHappened()).WillOnce(Return(true));
-    EXPECT_CALL(mockPage, setInitialLoadHasHappened()); // TODO: this call can be optimized out
+    EXPECT_CALL(mockPage, urlHasChanged()).WillOnce(Return(true));
     emit mockPage.urlChanged();
     QCOMPARE(dataChangedSpy.count(), 1);
     QCOMPARE(tabAddedSpy.count(), 0);
@@ -502,8 +501,7 @@ void tst_persistenttabmodel::onUrlChanged()
     EXPECT_CALL(mockPage, tabId()).WillOnce(Return(2));
     EXPECT_CALL(mockPage, url()).WillOnce(Return(url));
     EXPECT_CALL(mockPage, parentId()).WillOnce(Return(0));
-    EXPECT_CALL(mockPage, initialLoadHasHappened()).WillOnce(Return(false));
-    EXPECT_CALL(mockPage, setInitialLoadHasHappened());
+    EXPECT_CALL(mockPage, urlHasChanged()).WillOnce(Return(false));
     emit mockPage.urlChanged();
     QCOMPARE(tabAddedSpy.count(), 1);
     QList<QVariant> arguments = tabAddedSpy.at(0);
@@ -513,8 +511,7 @@ void tst_persistenttabmodel::onUrlChanged()
     EXPECT_CALL(mockPage, tabId()).WillOnce(Return(3));
     EXPECT_CALL(mockPage, url()).WillOnce(Return(url));
     EXPECT_CALL(mockPage, parentId()).WillOnce(Return(1));
-    EXPECT_CALL(mockPage, initialLoadHasHappened()).WillOnce(Return(false));
-    EXPECT_CALL(mockPage, setInitialLoadHasHappened());
+    EXPECT_CALL(mockPage, urlHasChanged()).WillOnce(Return(false));
     emit mockPage.urlChanged();
     QCOMPARE(tabAddedSpy.count(), 2);
     arguments = tabAddedSpy.at(1);
