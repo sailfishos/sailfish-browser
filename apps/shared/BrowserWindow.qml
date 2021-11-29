@@ -26,7 +26,6 @@ ApplicationWindow {
                              browserVisibility === QuickWindow.Window.Minimized ||
                              browserVisibility === QuickWindow.Window.Windowed
 
-    property bool opaqueBackground
     property var rootPage
     property QtObject webView
     property alias activityDisabledByMdm: mdmView.activity

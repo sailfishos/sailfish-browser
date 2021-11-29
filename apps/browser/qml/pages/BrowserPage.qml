@@ -64,7 +64,7 @@ Page {
         var mask = Qt.rect(0, 0,
                            portraitScreen ? Screen.width : Screen.height,
                            portraitScreen ? Screen.height : Screen.width)
-        if (!window.opaqueBackground && webView.enabled && browserPage.active && !webView.touchBlocked && !downloadPopup.visible) {
+        if (webView.enabled && browserPage.active && !webView.touchBlocked && !downloadPopup.visible) {
             var overlayVisibleHeight = browserPage.height - overlay.y
 
             switch (window.QuickWindow.Screen.angleBetween(orientation, window.QuickWindow.Screen.primaryOrientation)) {
@@ -232,13 +232,9 @@ Page {
     Browser.DimmerEffect {
         id: contentDimmer
 
-        readonly property bool canOpenContentDimmer: webView.activeTabRendered && overlay.animator.atBottom
-
         width: browserPage.width
         height: Math.ceil(overlay.y)
 
-        baseColor: overlay.baseColor
-        baseOpacity: overlay.baseOpacity
         dimmerOpacity: overlay.animator.atBottom
                        ? 0.0
                        : 0.9 - (overlay.y / (webView.fullscreenHeight - overlay.toolBar.rowHeight)) * 0.9
@@ -262,12 +258,6 @@ Page {
             id: privateModeTexture
             anchors.fill: contentDimmer
             visible: webView.privateMode && !overlay.animator.allowContentUse
-        }
-
-        onCanOpenContentDimmerChanged: {
-            if (canOpenContentDimmer) {
-                window.opaqueBackground = false
-            }
         }
     }
 
@@ -298,8 +288,6 @@ Page {
         webView: webView
         historyModel: historyModel
         browserPage: browserPage
-
-        onEnteringNewTabUrlChanged: window.opaqueBackground = enteringNewTabUrl
 
         animator.onAtBottomChanged: {
             if (!animator.atBottom) {
