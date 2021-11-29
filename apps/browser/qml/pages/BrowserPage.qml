@@ -398,6 +398,8 @@ Page {
             webView.grabActivePage()
             if (webView.tabModel.activateTab(url)) {
                 webView.releaseActiveTabOwnership()
+            } else if (!webView.tabModel.loaded) {
+                webView.load(url)
             } else {
                 webView.clearSelection()
                 webView.tabModel.newTab(url)

@@ -41,6 +41,7 @@ public slots:
     void navigateTo(int tabId, const QString &url, const QString &title, const QString &path);
     int getMaxTabId();
 
+    void updateUrl(int tabId, const QString &requestedUrl, const QString &resolvedUrl);
     void updateTitle(int tabId, const QString &url, const QString &title);
     void updateThumbPath(int tabId, const QString &path);
 

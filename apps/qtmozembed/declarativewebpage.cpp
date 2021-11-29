@@ -136,7 +136,6 @@ void DeclarativeWebPage::setInitialTab(const Tab& tab)
     emit tabIdChanged();
     connect(DBManager::instance(), &DBManager::tabHistoryAvailable,
             this, &DeclarativeWebPage::onTabHistoryAvailable);
-    DBManager::instance()->getTabHistory(tabId());
 }
 
 void DeclarativeWebPage::onUrlChanged()
@@ -147,10 +146,13 @@ void DeclarativeWebPage::onUrlChanged()
         emit updateUrl();
     }
 
+    // Get tab history only after first url is resolved.
+    // Above urlResolved guarantees that we have url resolved
+    // by the engine.
     bool urlReadyChanged = !m_urlReady;
     if (urlReadyChanged && urlResolved) {
         m_urlReady = true;
-        restoreHistory();
+        DBManager::instance()->getTabHistory(tabId());
     }
 }
 
@@ -203,11 +205,6 @@ void DeclarativeWebPage::restoreHistory() {
 
     // History is restored once per webpage's life cycle.
     m_restoredTabHistory.clear();
-}
-
-bool DeclarativeWebPage::urlHasChanged() const
-{
-    return m_urlReady;
 }
 
 QVariant DeclarativeWebPage::resurrectedContentRect() const

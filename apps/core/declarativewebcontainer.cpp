@@ -211,7 +211,7 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage, bool trigg
                     m_historyModel->remove(m_webPage->url().toString());
             });
 
-            connect(m_webPage.data(), &DeclarativeWebPage::urlChanged, [this]() {
+            connect(m_webPage.data(), &DeclarativeWebPage::updateUrl, [this]() {
                 if (!BrowserApp::captivePortal() && !m_privateMode && m_historyModel)
                     m_historyModel->add(m_webPage->url().toString(), QString());
             });
@@ -462,13 +462,17 @@ void DeclarativeWebContainer::load(const QString &url, bool force)
         tmpUrl = ABOUT_BLANK;
     }
 
-    if (m_webPage && m_webPage->completed()) {
+    if (!canInitialize()) {
+        m_initialUrl = tmpUrl;
+    } else if (m_webPage && m_webPage->completed()) {
         if (m_loading) {
             m_webPage->stop();
         }
         m_webPage->loadTab(tmpUrl, force);
-    } else if (!canInitialize()) {
-        m_initialUrl = tmpUrl;
+        Tab *tab = m_model->getTab(m_webPage->tabId());
+        if (tab) {
+            tab->setRequestedUrl(tmpUrl);
+        }
     } else if (m_model && m_model->count() == 0) {
         // Browser running all tabs are closed.
         m_model->newTab(tmpUrl);
@@ -550,7 +554,7 @@ void DeclarativeWebContainer::releaseActiveTabOwnership()
 bool DeclarativeWebContainer::activatePage(const Tab& tab, bool force, int parentId)
 {
     if (!m_initialized) {
-        m_initialUrl = tab.url();
+        m_initialUrl = tab.requestedUrl();
         return false;
     }
 
@@ -985,10 +989,11 @@ void DeclarativeWebContainer::initialize()
     m_initialized = true;
 
     // Load test
-    // 1) no tabs and firstUseDone or we have incoming url, load initial url or home page to a new tab.
+    // 1) no tabs and firstUseDone or we have incoming url, try to active tab, only after that fails
+    //    load initial url or home page to a new tab.
     // 2) model has tabs, load initial url or active tab.
     bool firstUseDone = DeclarativeWebUtils::instance()->firstUseDone();
-    if (m_model->count() == 0 && (firstUseDone || !m_initialUrl.isEmpty())) {
+    if ((m_model->count() == 0 && firstUseDone) || !m_initialUrl.isEmpty()) {
         QString url = m_initialUrl;
         if (m_initialUrl.isEmpty()) {
             if (!browserEnabled()) {
@@ -998,11 +1003,13 @@ void DeclarativeWebContainer::initialize()
             }
         }
 
-        m_model->newTab(url);
+        if (!m_model->activateTab(url, true)) {
+            m_model->newTab(url);
+        }
     } else if (m_model->count() > 0 && !m_webPage) {
         Tab tab = m_model->activeTab();
         if (!m_initialUrl.isEmpty()) {
-            tab.setUrl(m_initialUrl);
+            tab.setRequestedUrl(m_initialUrl);
         }
         loadTab(tab, true);
     }
@@ -1028,7 +1035,7 @@ void DeclarativeWebContainer::onDownloadStarted()
 void DeclarativeWebContainer::onNewTabRequested(const Tab &tab, int parentId)
 {
     if (activatePage(tab, false, parentId)) {
-        m_webPage->loadTab(tab.url(), false);
+        m_webPage->loadTab(tab.requestedUrl(), false);
     }
 }
 

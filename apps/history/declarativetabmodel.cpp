@@ -49,10 +49,8 @@ QHash<int, QByteArray> DeclarativeTabModel::roleNames() const
     return roles;
 }
 
-void DeclarativeTabModel::addTab(const QString& url, const QString &title, int index) {
+void DeclarativeTabModel::addTab(const Tab& tab, int index) {
     Q_ASSERT(index >= 0 && index <= m_tabs.count());
-
-    const Tab tab(m_nextTabId, url, title, "");
     createTab(tab);
 
 #if DEBUG_LOGS
@@ -64,7 +62,7 @@ void DeclarativeTabModel::addTab(const QString& url, const QString &title, int i
     // We should trigger this only when
     // tab is added through new window request. In all other
     // case we should keep the new tab in background.
-    updateActiveTab(tab);
+    updateActiveTab(tab, false);
 
     emit countChanged();
     emit tabAdded(tab.tabId());
@@ -114,7 +112,7 @@ void DeclarativeTabModel::clear()
     }
 }
 
-bool DeclarativeTabModel::activateTab(const QString& url)
+bool DeclarativeTabModel::activateTab(const QString& url, bool reload)
 {
     // Skip empty url
     if (url.isEmpty()) {
@@ -129,23 +127,16 @@ bool DeclarativeTabModel::activateTab(const QString& url)
     }
 
     for (int i = 0; i < m_tabs.size(); i++) {
-        QString tabUrlStr = m_tabs.at(i).url();
-        QUrl tabUrl(tabUrlStr);
-        // Always chop trailing slash if no fragment or query exists as QUrl::StripTrailingSlash
-        // doesn't remove trailing slash if path is "/" e.i. http://www.sailfishos.org vs http://www.sailfishos.org/
-        if (!tabUrl.hasFragment() && !tabUrl.hasQuery() && tabUrl.path().endsWith(QLatin1Char('/'))) {
-            tabUrlStr.chop(1);
-            tabUrl.setUrl(tabUrlStr);
-        }
-        if (tabUrl.matches(inputUrl, QUrl::FullyDecoded)) {
-            activateTab(i);
+        const Tab &tab = m_tabs.at(i);
+        if (matches(inputUrl, tab.url()) || matches(inputUrl, tab.requestedUrl())) {
+            activateTab(i, reload);
             return true;
         }
     }
     return false;
 }
 
-void DeclarativeTabModel::activateTab(int index)
+void DeclarativeTabModel::activateTab(int index, bool reload)
 {
     if (m_tabs.isEmpty()) {
         return;
@@ -156,7 +147,7 @@ void DeclarativeTabModel::activateTab(int index)
 #if DEBUG_LOGS
     qDebug() << "activate tab: " << index << &newActiveTab;
 #endif
-    updateActiveTab(newActiveTab);
+    updateActiveTab(newActiveTab, reload);
 }
 
 bool DeclarativeTabModel::activateTabById(int tabId)
@@ -193,7 +184,7 @@ int DeclarativeTabModel::newTab(const QString &url, int parentId)
 
     Tab tab;
     tab.setTabId(nextTabId());
-    tab.setUrl(url);
+    tab.setRequestedUrl(url);
 
     int index = 0;
 
@@ -203,7 +194,7 @@ int DeclarativeTabModel::newTab(const QString &url, int parentId)
     } else {
         index = m_tabs.count();
     }
-    addTab(url, "", index);
+    addTab(tab, index);
 
     emit newTabRequested(tab, parentId);
 
@@ -283,23 +274,47 @@ const Tab &DeclarativeTabModel::activeTab() const
     return m_tabs.at(findTabIndex(m_activeTabId));
 }
 
+Tab *DeclarativeTabModel::getTab(int tabId)
+{
+    int index = findTabIndex(tabId);
+    if (index >= 0) {
+        return &m_tabs[index];
+    }
+
+    return nullptr;
+}
+
 bool DeclarativeTabModel::contains(int tabId) const
 {
     return findTabIndex(tabId) >= 0;
 }
 
-void DeclarativeTabModel::updateUrl(int tabId, const QString &url, bool updateDb)
+void DeclarativeTabModel::updateUrl(int tabId, const QString &url)
 {
     int tabIndex = findTabIndex(tabId);
     bool isActiveTab = m_activeTabId == tabId;
+    QString requestedUrl;
     if (tabIndex >= 0 && (m_tabs.at(tabIndex).url() != url || isActiveTab)) {
         QVector<int> roles;
         roles << UrlRole;
-        m_tabs[tabIndex].setUrl(url);
+
+        Tab &tab = m_tabs[tabIndex];
+
+        bool hadUrl = tab.hasResolvedUrl();
+        tab.setUrl(url);
         emit dataChanged(index(tabIndex, 0), index(tabIndex, 0), roles);
+
+        requestedUrl = tab.requestedUrl();
+
+        if (hadUrl || requestedUrl == url) {
+            // This is causing navigation i.e. not first urlChanged.
+            tab.setRequestedUrl(QString());
+        }
     }
 
-    if (updateDb) {
+    if (!requestedUrl.isEmpty()) {
+        updateRequestedUrl(tabId, requestedUrl, url);
+    } else {
         navigateTo(tabId, url, "", "");
     }
 }
@@ -338,7 +353,7 @@ int DeclarativeTabModel::findTabIndex(int tabId) const
     return -1;
 }
 
-void DeclarativeTabModel::updateActiveTab(const Tab &activeTab)
+void DeclarativeTabModel::updateActiveTab(const Tab &activeTab, bool reload)
 {
 #if DEBUG_LOGS
     qDebug() << "new active tab:" << &activeTab << "old active tab:" << m_activeTabId << "count:" << m_tabs.count();
@@ -347,7 +362,7 @@ void DeclarativeTabModel::updateActiveTab(const Tab &activeTab)
         return;
     }
 
-    if (m_activeTabId != activeTab.tabId()) {
+    if (m_activeTabId != activeTab.tabId() || reload) {
         int oldTabId = m_activeTabId;
         m_activeTabId = activeTab.tabId();
 
@@ -375,6 +390,36 @@ void DeclarativeTabModel::updateActiveTab(const Tab &activeTab)
 void DeclarativeTabModel::setWebContainer(DeclarativeWebContainer *webContainer)
 {
     m_webContainer = webContainer;
+}
+
+bool DeclarativeTabModel::matches(const QUrl &inputUrl, QString urlStr) const
+{
+    if (urlStr.isEmpty()) {
+        return false;
+    }
+
+    QUrl tabUrl(urlStr);
+    // Always chop trailing slash if no fragment or query exists as QUrl::StripTrailingSlash
+    // doesn't remove trailing slash if path is "/" e.i. http://www.sailfishos.org vs http://www.sailfishos.org/
+    if (!tabUrl.hasFragment() && !tabUrl.hasQuery() && tabUrl.path().endsWith(QLatin1Char('/'))) {
+        urlStr.chop(1);
+        tabUrl.setUrl(urlStr);
+    }
+
+    bool match = tabUrl.matches(inputUrl, QUrl::FullyDecoded | QUrl::RemoveScheme | QUrl::StripTrailingSlash);
+    // Matching http to https is fine but not other round.
+    bool okScheme = tabUrl.scheme() == inputUrl.scheme() ||
+            tabUrl.scheme() == QLatin1String("https") ||
+            inputUrl.scheme().isEmpty();
+    if (!okScheme) {
+        return false;
+    }
+
+    if (match) {
+        return match;
+    }
+
+    return inputUrl.matches(tabUrl, QUrl::FullyDecoded | QUrl::RemoveScheme | QUrl::StripTrailingSlash);
 }
 
 int DeclarativeTabModel::nextActiveTabIndex(int index)
@@ -417,9 +462,8 @@ void DeclarativeTabModel::onUrlChanged()
         int tabId = webPage->tabId();
 
         // Initial url should not be considered as navigation request that increases navigation history.
-        bool updateDb = webPage->urlHasChanged();
         if (contains(tabId)) {
-            updateUrl(tabId, url, updateDb);
+            updateUrl(tabId, url);
         }
     }
 }

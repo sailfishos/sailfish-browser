@@ -79,8 +79,6 @@ public:
 
     MOCK_CONST_METHOD0(tabId, int());
 
-    MOCK_CONST_METHOD0(urlHasChanged, bool());
-
     MOCK_CONST_METHOD0(url, QUrl());
 
     MOCK_CONST_METHOD0(desktopMode, bool());

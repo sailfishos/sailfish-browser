@@ -55,8 +55,6 @@ public:
     bool fullscreen() const;
     bool forcedChrome() const;
 
-    bool urlHasChanged() const;
-
     Q_INVOKABLE void loadTab(const QString &newUrl, bool force);
     Q_INVOKABLE void grabToFile(const QSize& size);
     Q_INVOKABLE void grabThumbnail(const QSize& size);
