@@ -28,7 +28,6 @@ DeclarativeTabModel::DeclarativeTabModel(int nextTabId, DeclarativeWebContainer 
     : QAbstractListModel(webContainer)
     , m_activeTabId(0)
     , m_loaded(false)
-    , m_waitingForNewTab(false)
     , m_nextTabId(nextTabId)
     , m_webContainer(webContainer)
 {
@@ -113,8 +112,6 @@ void DeclarativeTabModel::clear()
     for (int i = m_tabs.count() - 1; i >= 0; --i) {
         removeTab(m_tabs.at(i).tabId(), m_tabs.at(i).thumbnailPath(), i);
     }
-
-    setWaitingForNewTab(true);
 }
 
 bool DeclarativeTabModel::activateTab(const QString& url)
@@ -193,8 +190,6 @@ int DeclarativeTabModel::newTab(const QString &url, int parentId)
     // When browser opens without tabs
     if ((url.isEmpty() || url == QStringLiteral("about:blank")) && m_tabs.isEmpty())
         return 0;
-
-    setWaitingForNewTab(true);
 
     Tab tab;
     tab.setTabId(nextTabId());
@@ -275,19 +270,6 @@ QVariant DeclarativeTabModel::data(const QModelIndex & index, int role) const {
 bool DeclarativeTabModel::loaded() const
 {
     return m_loaded;
-}
-
-bool DeclarativeTabModel::waitingForNewTab() const
-{
-    return m_waitingForNewTab;
-}
-
-void DeclarativeTabModel::setWaitingForNewTab(bool waiting)
-{
-    if (m_waitingForNewTab != waiting) {
-        m_waitingForNewTab = waiting;
-        emit waitingForNewTabChanged();
-    }
 }
 
 const QList<Tab> &DeclarativeTabModel::tabs() const

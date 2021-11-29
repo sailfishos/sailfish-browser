@@ -247,7 +247,6 @@ void DeclarativeWebContainer::setTabModel(DeclarativeTabModel *model)
         if (m_model) {
             disconnect(m_model, 0, 0, 0);
             oldCount = m_model->count();
-            m_model->setWaitingForNewTab(false);
         }
 
         m_model = model;
@@ -268,13 +267,6 @@ void DeclarativeWebContainer::setTabModel(DeclarativeTabModel *model)
         emit tabModelChanged();
         if (m_model && oldCount != newCount) {
             emit m_model->countChanged();
-        }
-
-        // Set waiting for a tab. This can only happen when
-        // browser is already started. Initialization steps take
-        // care creating new tabs as per need.
-        if (m_model && m_initialized) {
-            m_model->setWaitingForNewTab(true);
         }
     }
 }
@@ -996,7 +988,7 @@ void DeclarativeWebContainer::initialize()
     // 1) no tabs and firstUseDone or we have incoming url, load initial url or home page to a new tab.
     // 2) model has tabs, load initial url or active tab.
     bool firstUseDone = DeclarativeWebUtils::instance()->firstUseDone();
-    if ((m_model->waitingForNewTab() || m_model->count() == 0) && (firstUseDone || !m_initialUrl.isEmpty())) {
+    if (m_model->count() == 0 && (firstUseDone || !m_initialUrl.isEmpty())) {
         QString url = m_initialUrl;
         if (m_initialUrl.isEmpty()) {
             if (!browserEnabled()) {
@@ -1023,18 +1015,7 @@ void DeclarativeWebContainer::initialize()
 
 void DeclarativeWebContainer::onDownloadStarted()
 {
-    // This is not 100% solid. A newTab is called on incoming
-    // url (during browser start) if no tabs exist (waitingForNewTab). In slow network
-    // connectivity one can create a new tab before downloadStarted is emitted
-    // from DownloadManager. To get this to the 100%, we should add downloadStatus
-    // to the QmlMozView containing status of downloading.
-    if (m_model->waitingForNewTab())  {
-        m_model->setWaitingForNewTab(false);
-    } else {
-        // In case browser is started with a dl url we have an "incorrect" initial url.
-        // Emit urlChange() in order to trigger restoreHistory()
-        emit m_webPage->urlChanged();
-    }
+    emit m_webPage->urlChanged();
 
     if (m_model->count() == 0) {
         // Download doesn't add tab to model. Mimic

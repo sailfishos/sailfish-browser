@@ -28,7 +28,6 @@ protected:
     Q_PROPERTY(int activeTabIndex READ activeTabIndex NOTIFY activeTabIndexChanged FINAL)
     Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
     Q_PROPERTY(bool loaded READ loaded NOTIFY loadedChanged FINAL)
-    Q_PROPERTY(bool waitingForNewTab READ waitingForNewTab WRITE setWaitingForNewTab NOTIFY waitingForNewTabChanged FINAL)
 
 public:
     DeclarativeTabModel(int nextTabId, DeclarativeWebContainer *webContainer = 0);
@@ -68,9 +67,6 @@ public:
 
     bool loaded() const;
 
-    bool waitingForNewTab() const;
-    void setWaitingForNewTab(bool waiting);
-
     const QList<Tab>& tabs() const;
     const Tab& activeTab() const;
 
@@ -89,7 +85,6 @@ signals:
     void tabAdded(int tabId);
     void tabClosed(int tabId);
     void loadedChanged();
-    void waitingForNewTabChanged();
     void newTabRequested(const Tab& tab, int parentId = 0);
 
 protected:
@@ -114,7 +109,6 @@ protected:
     QList<Tab> m_tabs;
 
     bool m_loaded;
-    bool m_waitingForNewTab;
     int m_nextTabId;
 
     QPointer<DeclarativeWebContainer> m_webContainer;

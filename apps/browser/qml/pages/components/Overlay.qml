@@ -63,7 +63,6 @@ Shared.Background {
             } else {
                 // Loading will start once overlay animator has animated chrome visible.
                 enteredUrl = pageUrl
-                webView.tabModel.waitingForNewTab = true
             }
         }
 

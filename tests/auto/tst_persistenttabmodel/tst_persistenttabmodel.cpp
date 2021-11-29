@@ -602,7 +602,6 @@ void tst_persistenttabmodel::newTab()
     QSignalSpy newTabRequestedSpy(tabModel, SIGNAL(newTabRequested(QString, QString, int)));
     tabModel->newTab(QString(), 0);
     QCOMPARE(newTabRequestedSpy.count(), 1);
-    QCOMPARE(tabModel->waitingForNewTab(), true);
 }
 
 void tst_persistenttabmodel::addThreeTabs()
