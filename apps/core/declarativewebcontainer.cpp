@@ -690,6 +690,11 @@ bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
         hasExposedChrome = true;
     }
 
+    if (event->type() == QEvent::KeyRelease && static_cast<QKeyEvent *>(event)->key() == Qt::Key_Back) {
+        lower();
+        return true;
+    }
+
     return QObject::eventFilter(obj, event);
 }
 
