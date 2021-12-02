@@ -227,6 +227,7 @@ void DBWorker::createTab(const Tab &tab)
     int linkId = createLink(tab.url(), tab.title(), tab.thumbnailPath());
 
     int historyId = addToTabHistory(tab.tabId(), linkId);
+    addHistoryEntry(tab.url(), tab.title());
     if (historyId > 0) {
         updateTab(tab.tabId(), historyId);
     } else {
@@ -362,6 +363,7 @@ void DBWorker::navigateTo(int tabId, const QString &url, const QString &title, c
     int linkId = createLink(url, title, path);
 
     int historyId = addToTabHistory(tabId, linkId);
+    addHistoryEntry(url, title);
     if (historyId > 0) {
         updateTab(tabId, historyId);
     } else {
