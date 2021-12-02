@@ -13,6 +13,7 @@
 
 #include <QFile>
 #include <QDebug>
+#include <QDesktopServices>
 #include <QStringList>
 #include <QUrl>
 
@@ -23,6 +24,16 @@
 #ifndef DEBUG_LOGS
 #define DEBUG_LOGS 0
 #endif
+
+namespace  {
+    bool isExternalUrl(const QUrl &url)
+    {
+        return url.scheme() == QLatin1String("tel") ||
+                url.scheme() == QLatin1String("sms") ||
+                url.scheme() == QLatin1String("mailto") ||
+                url.scheme() == QLatin1String("geo");
+    }
+}
 
 DeclarativeTabModel::DeclarativeTabModel(int nextTabId, DeclarativeWebContainer *webContainer)
     : QAbstractListModel(webContainer)
@@ -182,6 +193,13 @@ int DeclarativeTabModel::newTab(const QString &url, int parentId)
     if ((url.isEmpty() || url == QStringLiteral("about:blank")) && m_tabs.isEmpty())
         return 0;
 
+    QUrl requestedUrl(url, QUrl::TolerantMode);
+    if (isExternalUrl(requestedUrl)) {
+        QDesktopServices::openUrl(requestedUrl);
+
+        return 0;
+    }
+
     Tab tab;
     tab.setTabId(nextTabId());
     tab.setRequestedUrl(url);
@@ -291,6 +309,11 @@ bool DeclarativeTabModel::contains(int tabId) const
 
 void DeclarativeTabModel::updateUrl(int tabId, const QString &url)
 {
+    QUrl resolvedUrl(url, QUrl::TolerantMode);
+    if (isExternalUrl(resolvedUrl)) {
+        return;
+    }
+
     int tabIndex = findTabIndex(tabId);
     bool isActiveTab = m_activeTabId == tabId;
     QString requestedUrl;
