@@ -40,6 +40,7 @@ DeclarativeTabModel::DeclarativeTabModel(int nextTabId, DeclarativeWebContainer 
     , m_activeTabId(0)
     , m_loaded(false)
     , m_nextTabId(nextTabId)
+    , m_unittestMode(false)
     , m_webContainer(webContainer)
 {
 }
@@ -195,7 +196,9 @@ int DeclarativeTabModel::newTab(const QString &url, int parentId)
 
     QUrl requestedUrl(url, QUrl::TolerantMode);
     if (isExternalUrl(requestedUrl)) {
-        QDesktopServices::openUrl(requestedUrl);
+        if (!m_unittestMode) {
+            QDesktopServices::openUrl(requestedUrl);
+        }
 
         return 0;
     }

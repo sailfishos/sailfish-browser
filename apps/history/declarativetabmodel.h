@@ -115,6 +115,8 @@ protected:
     bool m_loaded;
     int m_nextTabId;
 
+    bool m_unittestMode;
+
     QPointer<DeclarativeWebContainer> m_webContainer;
 
     friend class tst_declarativehistorymodel;

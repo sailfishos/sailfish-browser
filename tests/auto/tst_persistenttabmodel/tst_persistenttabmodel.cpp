@@ -31,8 +31,8 @@ private slots:
 
     void addTab_data();
     void addTab();
-    void addTabInvalidInput_data();
-    void addTabInvalidInput();
+    void newTabInvalidInput_data();
+    void newTabInvalidInput();
     void remove();
     void removeTabById_data();
     void removeTabById();
@@ -53,7 +53,7 @@ private slots:
     void roleNames();
     void data_data();
     void data();
-    void newTab();
+    void newTabRequested();
 
 private:
     void addThreeTabs();
@@ -78,11 +78,12 @@ void tst_persistenttabmodel::init()
 {
     int nextTabId = DBManager::instance()->getMaxTabId() + 1;
     tabModel = new PersistentTabModel(nextTabId);
+    tabModel->m_unittestMode = true;
 
     if (!tabModel->loaded()) {
         QSignalSpy loadedSpy(tabModel, SIGNAL(loadedChanged()));
         // Tabs must be loaded with in 500ms
-        QVERIFY(loadedSpy.wait());
+        QVERIFY(loadedSpy.wait(500));
         QCOMPARE(loadedSpy.count(), 1);
     }
 }
@@ -109,9 +110,9 @@ void tst_persistenttabmodel::addTab_data()
         Tab(2, QString("file:///opt/tests/testpage.html"), QString("Test title2"), QString()),
         Tab(3, QString("https://example.com"), QString("Test title3"), QString())
     };
-    QTest::newRow("append_to_end") << list << Tab(1, QString("http://example2.com"), QString("Test title4"), QString()) << 3;
-    QTest::newRow("insert_to_start") << list << Tab(2, QString("http://example2.com"), QString("Test title4"), QString()) << 0;
-    QTest::newRow("insert_to_empty_model") << emptyList << Tab(3, QString("http://example2.com"), QString("Test title4"), QString()) << 0;
+    QTest::newRow("append_to_end") << list << Tab(4, QString("http://example2.com"), QString("Test title4"), QString()) << 3;
+    QTest::newRow("insert_to_start") << list << Tab(4, QString("http://example2.com"), QString("Test title4"), QString()) << 0;
+    QTest::newRow("insert_to_empty_model") << emptyList << Tab(1, QString("http://example2.com"), QString("Test title4"), QString()) << 0;
 }
 
 void tst_persistenttabmodel::addTab()
@@ -173,24 +174,22 @@ void tst_persistenttabmodel::addTab()
     }
 }
 
-void tst_persistenttabmodel::addTabInvalidInput_data()
+void tst_persistenttabmodel::newTabInvalidInput_data()
 {
     QTest::addColumn<QString>("url");
-    QTest::addColumn<QString>("title");
-    QTest::newRow("tel") << "tel:+123456798" << "tel";
-    QTest::newRow("sms") << "sms:+123456798" << "sms";
-    QTest::newRow("mailto") << "mailto:joe@example.com" << "mailto1";
-    QTest::newRow("mailto query does not count") << "mailto:joe@example.com?cc=bob@example.com&body=hello1" << "mailto2";
+    QTest::newRow("tel") << "tel:+123456798";
+    QTest::newRow("sms") << "sms:+123456798";
+    QTest::newRow("mailto") << "mailto:joe@example.com";
+    QTest::newRow("mailto query does not count") << "mailto:joe@example.com?cc=bob@example.com&body=hello1";
 }
 
-void tst_persistenttabmodel::addTabInvalidInput()
+void tst_persistenttabmodel::newTabInvalidInput()
 {
     QSignalSpy countChangeSpy(tabModel, SIGNAL(countChanged()));
     QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int)));
 
     QFETCH(QString, url);
-    QFETCH(QString, title);
-    tabModel->addTab(Tab(tabModel->nextTabId(), url, title, QString()), 0);
+    tabModel->newTab(url, 0);
 
     QCOMPARE(tabModel->count(), 0);
     QCOMPARE(countChangeSpy.count(), 0);
@@ -456,10 +455,10 @@ void tst_persistenttabmodel::updateUrl()
 void tst_persistenttabmodel::updateThumbnailPath()
 {
     // set up environment
+    QSignalSpy dataChangedSpy(tabModel, SIGNAL(dataChanged(QModelIndex, QModelIndex, QVector<int>)));
     tabModel->addTab(Tab(tabModel->nextTabId(),
                          QLatin1String("http://example.com"),
                          QLatin1String("initial title"), QString()), 0);
-    QSignalSpy dataChangedSpy(tabModel, SIGNAL(dataChanged(QModelIndex, QModelIndex, QVector<int>)));
 
     QString path("/path/to/thumbnail");
     tabModel->updateThumbnailPath(1, path);
@@ -487,24 +486,6 @@ void tst_persistenttabmodel::onUrlChanged()
     emit mockPage.urlChanged();
     QCOMPARE(dataChangedSpy.count(), 1);
     QCOMPARE(tabAddedSpy.count(), 0);
-
-    // 2. a web page hasn't been loaded yet into a new tab => add tab
-    EXPECT_CALL(mockPage, tabId()).WillOnce(Return(2));
-    EXPECT_CALL(mockPage, url()).WillOnce(Return(url));
-    EXPECT_CALL(mockPage, parentId()).WillOnce(Return(0));
-    emit mockPage.urlChanged();
-    QCOMPARE(tabAddedSpy.count(), 1);
-    QList<QVariant> arguments = tabAddedSpy.at(0);
-    QCOMPARE(arguments.at(0).toInt(), 2);
-
-    // 3. an existing page requested to open another one => add tab next to parent
-    EXPECT_CALL(mockPage, tabId()).WillOnce(Return(3));
-    EXPECT_CALL(mockPage, url()).WillOnce(Return(url));
-    EXPECT_CALL(mockPage, parentId()).WillOnce(Return(1));
-    emit mockPage.urlChanged();
-    QCOMPARE(tabAddedSpy.count(), 2);
-    arguments = tabAddedSpy.at(1);
-    QCOMPARE(arguments.at(0).toInt(), 3);
 }
 
 void tst_persistenttabmodel::onTitleChanged()
@@ -588,10 +569,10 @@ void tst_persistenttabmodel::data()
     }
 }
 
-void tst_persistenttabmodel::newTab()
+void tst_persistenttabmodel::newTabRequested()
 {
-    QSignalSpy newTabRequestedSpy(tabModel, SIGNAL(newTabRequested(QString, QString, int)));
-    tabModel->newTab(QString(), 0);
+    QSignalSpy newTabRequestedSpy(tabModel, SIGNAL(newTabRequested(Tab, int)));
+    tabModel->newTab(QLatin1String("http://example.com"), 0);
     QCOMPARE(newTabRequestedSpy.count(), 1);
 }
 
