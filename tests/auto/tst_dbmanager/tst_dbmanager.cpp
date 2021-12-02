@@ -32,6 +32,8 @@ private slots:
     void removeAllTabs();
     void clearHistory_data();
     void clearHistory();
+    void requestAndResolveUrl_data();
+    void requestAndResolveUrl();
     void navigateTo();
     void goBack();
     void goForward();
@@ -261,6 +263,49 @@ void tst_dbmanager::clearHistory()
     QVERIFY(historyAvailableSpy.wait(5000));
     QCOMPARE(historyAvailableSpy.count(), 1);
     QCOMPARE(tabsAvailableSpy.count(), expectedTabsAvailable);
+}
+
+void tst_dbmanager::requestAndResolveUrl_data()
+{
+    QTest::addColumn<QString>("requestedUrl");
+    QTest::addColumn<QString>("resolvedUrl");
+
+    QTest::newRow("www_requestedUrl") << "www.example.com" << "https://www.example.com/";
+    QTest::newRow("http_requestedUrl") << "http://www.example.com" << "https://www.example.com/";
+}
+
+void tst_dbmanager::requestAndResolveUrl()
+{
+    QFETCH(QString, requestedUrl);
+    QFETCH(QString, resolvedUrl);
+
+    DBManager::instance()->createTab(Tab(1, requestedUrl, QString(), QString()));
+
+    QSignalSpy historyAvailableSpy(DBManager::instance(),
+                                   SIGNAL(historyAvailable(QList<Link>)));
+
+    DBManager::instance()->getHistory();
+    QVERIFY(historyAvailableSpy.wait(5000));
+
+    QList<QVariant> arguments = historyAvailableSpy.at(0);
+    QList<Link> links = arguments.at(0).value<QList<Link> >();
+    QCOMPARE(links.count(), 1);
+    QCOMPARE(links.at(0).url(), requestedUrl);
+
+    // Update resolved url
+    historyAvailableSpy.clear();
+    DBManager::instance()->updateUrl(1, requestedUrl, resolvedUrl);
+
+    // Requested url should be gone and only resolved exist.
+    // Requested url matches
+    historyAvailableSpy.clear();
+    DBManager::instance()->getHistory();
+    QVERIFY(historyAvailableSpy.wait(5000));
+
+    arguments = historyAvailableSpy.at(0);
+    links = arguments.at(0).value<QList<Link> >();
+    QCOMPARE(links.count(), 1);
+    QCOMPARE(links.at(0).url(), resolvedUrl);
 }
 
 void tst_dbmanager::navigateTo()
