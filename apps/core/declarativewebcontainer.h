@@ -31,6 +31,7 @@ class WebPages;
 class Tab;
 class DeclarativeHistoryModel;
 class CloseEventFilter;
+class QTouchDevice;
 
 class DeclarativeWebContainer : public QWindow, public QQmlParserStatus, protected QOpenGLFunctions {
     Q_OBJECT
@@ -304,6 +305,8 @@ private:
     QMozContext::TaskHandle m_clearSurfaceTask;
 
     bool m_closing;
+
+    QTouchDevice *m_touchScreenDevice;
 
     QHash<int, uint> m_tabOwners;
     DeclarativeHistoryModel *m_historyModel;
