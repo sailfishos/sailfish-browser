@@ -91,7 +91,7 @@ private slots:
     void updateViewMargins();
 
 private:
-    QString saveToFile(QImage image);
+    static QString saveToFile(const QImage &image, const QString &path);
     void restoreHistory();
 
     QPointer<DeclarativeWebContainer> m_container;
