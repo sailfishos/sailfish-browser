@@ -565,6 +565,10 @@ bool DeclarativeWebContainer::activatePage(const Tab& tab, bool force, int paren
         // Reset always height so that orentation change is taken into account.
         m_webPage->forceChrome(false);
         m_webPage->setChrome(true);
+        if (m_webPage->loaded()) {
+            m_webPage->update();
+        }
+
         return activationData.activated;
     }
     return false;
