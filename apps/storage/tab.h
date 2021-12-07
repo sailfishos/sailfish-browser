@@ -18,14 +18,19 @@
 class Tab
 {
 public:
-    explicit Tab(int tabId, const QString &url, const QString &title, const QString &thumbPath);
     explicit Tab();
+    explicit Tab(int tabId, const QString &url, const QString &title, const QString &thumbPath);
 
     int tabId() const;
     void setTabId(int tabId);
 
+    void setRequestedUrl(const QString &url);
+    QString requestedUrl() const;
+
     QString url() const;
     void setUrl(const QString &url);
+
+    bool hasResolvedUrl() const;
 
     QString thumbnailPath() const;
     void setThumbnailPath(const QString &thumbnailPath);
@@ -43,11 +48,14 @@ public:
 
 private:
     int m_tabId;
+    QString m_requestedUrl;
     QString m_url;
     QString m_title;
     QString m_thumbPath;
     bool m_desktopMode;
 };
+
+Q_DECLARE_METATYPE(Tab)
 
 QDebug operator<<(QDebug, const Tab *);
 

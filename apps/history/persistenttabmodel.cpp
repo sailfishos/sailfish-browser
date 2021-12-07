@@ -91,6 +91,11 @@ void PersistentTabModel::removeTab(int tabId)
     DBManager::instance()->removeTab(tabId);
 }
 
+void PersistentTabModel::updateRequestedUrl(int tabId, const QString &requestedUrl, const QString &resolvedUrl)
+{
+    DBManager::instance()->updateUrl(tabId, requestedUrl, resolvedUrl);
+}
+
 void PersistentTabModel::navigateTo(int tabId, const QString &url, const QString &title, const QString &path) {
     Q_UNUSED(title)
     Q_UNUSED(path)

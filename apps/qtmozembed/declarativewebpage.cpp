@@ -55,7 +55,6 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
     , m_userHasDraggedWhileLoading(false)
     , m_fullscreen(false)
     , m_forcedChrome(false)
-    , m_initialLoadHasHappened(false)
     , m_tabHistoryReady(false)
     , m_urlReady(false)
     , m_restoredCurrentLinkId(-1)
@@ -137,14 +136,24 @@ void DeclarativeWebPage::setInitialTab(const Tab& tab)
     emit tabIdChanged();
     connect(DBManager::instance(), &DBManager::tabHistoryAvailable,
             this, &DeclarativeWebPage::onTabHistoryAvailable);
-    DBManager::instance()->getTabHistory(tabId());
 }
 
 void DeclarativeWebPage::onUrlChanged()
 {
-    disconnect(this, &DeclarativeWebPage::urlChanged, this, &DeclarativeWebPage::onUrlChanged);
-    m_urlReady = true;
-    restoreHistory();
+    // Only update resolved urls for navigation history.
+    bool urlResolved = isUrlResolved();
+    if (urlResolved) {
+        emit updateUrl();
+    }
+
+    // Get tab history only after first url is resolved.
+    // Above urlResolved guarantees that we have url resolved
+    // by the engine.
+    bool urlReadyChanged = !m_urlReady;
+    if (urlReadyChanged && urlResolved) {
+        m_urlReady = true;
+        DBManager::instance()->getTabHistory(tabId());
+    }
 }
 
 void DeclarativeWebPage::onTabHistoryAvailable(const int& historyTabId, const QList<Link>& links, int currentLinkId)
@@ -196,16 +205,6 @@ void DeclarativeWebPage::restoreHistory() {
 
     // History is restored once per webpage's life cycle.
     m_restoredTabHistory.clear();
-}
-
-bool DeclarativeWebPage::initialLoadHasHappened() const
-{
-    return m_initialLoadHasHappened;
-}
-
-void DeclarativeWebPage::setInitialLoadHasHappened()
-{
-    m_initialLoadHasHappened = true;
 }
 
 QVariant DeclarativeWebPage::resurrectedContentRect() const

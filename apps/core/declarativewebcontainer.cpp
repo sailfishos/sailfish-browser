@@ -193,7 +193,7 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage, bool trigg
                     this, &DeclarativeWebContainer::securityChanged, Qt::UniqueConnection);
 
             // NB: these signals are not disconnected upon setting current m_webPage.
-            connect(m_webPage.data(), &DeclarativeWebPage::urlChanged,
+            connect(m_webPage.data(), &DeclarativeWebPage::updateUrl,
                     m_model.data(), &DeclarativeTabModel::onUrlChanged, Qt::UniqueConnection);
             connect(m_webPage.data(), &DeclarativeWebPage::desktopModeChanged,
                     m_model.data(), &DeclarativeTabModel::onDesktopModeChanged, Qt::UniqueConnection);
@@ -211,7 +211,7 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage, bool trigg
                     m_historyModel->remove(m_webPage->url().toString());
             });
 
-            connect(m_webPage.data(), &DeclarativeWebPage::urlChanged, [this]() {
+            connect(m_webPage.data(), &DeclarativeWebPage::updateUrl, [this]() {
                 if (!BrowserApp::captivePortal() && !m_privateMode && m_historyModel)
                     m_historyModel->add(m_webPage->url().toString(), QString());
             });
@@ -247,7 +247,6 @@ void DeclarativeWebContainer::setTabModel(DeclarativeTabModel *model)
         if (m_model) {
             disconnect(m_model, 0, 0, 0);
             oldCount = m_model->count();
-            m_model->setWaitingForNewTab(false);
         }
 
         m_model = model;
@@ -268,13 +267,6 @@ void DeclarativeWebContainer::setTabModel(DeclarativeTabModel *model)
         emit tabModelChanged();
         if (m_model && oldCount != newCount) {
             emit m_model->countChanged();
-        }
-
-        // Set waiting for a tab. This can only happen when
-        // browser is already started. Initialization steps take
-        // care creating new tabs as per need.
-        if (m_model && m_initialized) {
-            m_model->setWaitingForNewTab(true);
         }
     }
 }
@@ -470,13 +462,17 @@ void DeclarativeWebContainer::load(const QString &url, bool force)
         tmpUrl = ABOUT_BLANK;
     }
 
-    if (m_webPage && m_webPage->completed()) {
+    if (!canInitialize()) {
+        m_initialUrl = tmpUrl;
+    } else if (m_webPage && m_webPage->completed()) {
         if (m_loading) {
             m_webPage->stop();
         }
         m_webPage->loadTab(tmpUrl, force);
-    } else if (!canInitialize()) {
-        m_initialUrl = tmpUrl;
+        Tab *tab = m_model->getTab(m_webPage->tabId());
+        if (tab) {
+            tab->setRequestedUrl(tmpUrl);
+        }
     } else if (m_model && m_model->count() == 0) {
         // Browser running all tabs are closed.
         m_model->newTab(tmpUrl);
@@ -558,7 +554,7 @@ void DeclarativeWebContainer::releaseActiveTabOwnership()
 bool DeclarativeWebContainer::activatePage(const Tab& tab, bool force, int parentId)
 {
     if (!m_initialized) {
-        m_initialUrl = tab.url();
+        m_initialUrl = tab.requestedUrl();
         return false;
     }
 
@@ -569,6 +565,10 @@ bool DeclarativeWebContainer::activatePage(const Tab& tab, bool force, int paren
         // Reset always height so that orentation change is taken into account.
         m_webPage->forceChrome(false);
         m_webPage->setChrome(true);
+        if (m_webPage->loaded()) {
+            m_webPage->update();
+        }
+
         return activationData.activated;
     }
     return false;
@@ -993,10 +993,11 @@ void DeclarativeWebContainer::initialize()
     m_initialized = true;
 
     // Load test
-    // 1) no tabs and firstUseDone or we have incoming url, load initial url or home page to a new tab.
+    // 1) no tabs and firstUseDone or we have incoming url, try to active tab, only after that fails
+    //    load initial url or home page to a new tab.
     // 2) model has tabs, load initial url or active tab.
     bool firstUseDone = DeclarativeWebUtils::instance()->firstUseDone();
-    if ((m_model->waitingForNewTab() || m_model->count() == 0) && (firstUseDone || !m_initialUrl.isEmpty())) {
+    if ((m_model->count() == 0 && firstUseDone) || !m_initialUrl.isEmpty()) {
         QString url = m_initialUrl;
         if (m_initialUrl.isEmpty()) {
             if (!browserEnabled()) {
@@ -1006,11 +1007,13 @@ void DeclarativeWebContainer::initialize()
             }
         }
 
-        m_model->newTab(url);
+        if (!m_model->activateTab(url, true)) {
+            m_model->newTab(url);
+        }
     } else if (m_model->count() > 0 && !m_webPage) {
         Tab tab = m_model->activeTab();
         if (!m_initialUrl.isEmpty()) {
-            tab.setUrl(m_initialUrl);
+            tab.setRequestedUrl(m_initialUrl);
         }
         loadTab(tab, true);
     }
@@ -1023,18 +1026,7 @@ void DeclarativeWebContainer::initialize()
 
 void DeclarativeWebContainer::onDownloadStarted()
 {
-    // This is not 100% solid. A newTab is called on incoming
-    // url (during browser start) if no tabs exist (waitingForNewTab). In slow network
-    // connectivity one can create a new tab before downloadStarted is emitted
-    // from DownloadManager. To get this to the 100%, we should add downloadStatus
-    // to the QmlMozView containing status of downloading.
-    if (m_model->waitingForNewTab())  {
-        m_model->setWaitingForNewTab(false);
-    } else {
-        // In case browser is started with a dl url we have an "incorrect" initial url.
-        // Emit urlChange() in order to trigger restoreHistory()
-        emit m_webPage->urlChanged();
-    }
+    emit m_webPage->urlChanged();
 
     if (m_model->count() == 0) {
         // Download doesn't add tab to model. Mimic
@@ -1047,7 +1039,7 @@ void DeclarativeWebContainer::onDownloadStarted()
 void DeclarativeWebContainer::onNewTabRequested(const Tab &tab, int parentId)
 {
     if (activatePage(tab, false, parentId)) {
-        m_webPage->loadTab(tab.url(), false);
+        m_webPage->loadTab(tab.requestedUrl(), false);
     }
 }
 

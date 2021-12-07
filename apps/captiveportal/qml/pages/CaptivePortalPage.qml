@@ -45,7 +45,7 @@ Page {
         var mask = Qt.rect(0, 0,
                            portraitScreen ? Screen.width : Screen.height,
                            portraitScreen ? Screen.height : Screen.width)
-        if (!window.opaqueBackground && webView.enabled && browserPage.active && !webView.touchBlocked) {
+        if (webView.enabled && browserPage.active && !webView.touchBlocked) {
             var overlayVisibleHeight = browserPage.height - overlay.y
 
             switch (window.QuickWindow.Screen.angleBetween(orientation, window.QuickWindow.Screen.primaryOrientation)) {

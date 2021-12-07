@@ -79,9 +79,6 @@ public:
 
     MOCK_CONST_METHOD0(tabId, int());
 
-    MOCK_CONST_METHOD0(initialLoadHasHappened, bool());
-    MOCK_METHOD0(setInitialLoadHasHappened, void());
-
     MOCK_CONST_METHOD0(url, QUrl());
 
     MOCK_CONST_METHOD0(desktopMode, bool());

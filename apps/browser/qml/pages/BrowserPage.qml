@@ -64,7 +64,7 @@ Page {
         var mask = Qt.rect(0, 0,
                            portraitScreen ? Screen.width : Screen.height,
                            portraitScreen ? Screen.height : Screen.width)
-        if (!window.opaqueBackground && webView.enabled && browserPage.active && !webView.touchBlocked && !downloadPopup.visible) {
+        if (webView.enabled && browserPage.active && !webView.touchBlocked && !downloadPopup.visible) {
             var overlayVisibleHeight = browserPage.height - overlay.y
 
             switch (window.QuickWindow.Screen.angleBetween(orientation, window.QuickWindow.Screen.primaryOrientation)) {
@@ -219,7 +219,6 @@ Page {
             }
             window.setBrowserCover(webView.tabModel)
         }
-        onWaitingForNewTabChanged: window.opaqueBackground = webView.tabModel.waitingForNewTab
     }
 
     InputRegion {
@@ -233,13 +232,9 @@ Page {
     Browser.DimmerEffect {
         id: contentDimmer
 
-        readonly property bool canOpenContentDimmer: webView.activeTabRendered && overlay.animator.atBottom
-
         width: browserPage.width
         height: Math.ceil(overlay.y)
 
-        baseColor: overlay.baseColor
-        baseOpacity: overlay.baseOpacity
         dimmerOpacity: overlay.animator.atBottom
                        ? 0.0
                        : 0.9 - (overlay.y / (webView.fullscreenHeight - overlay.toolBar.rowHeight)) * 0.9
@@ -263,13 +258,6 @@ Page {
             id: privateModeTexture
             anchors.fill: contentDimmer
             visible: webView.privateMode && !overlay.animator.allowContentUse
-        }
-
-        onCanOpenContentDimmerChanged: {
-            if (canOpenContentDimmer) {
-                webView.tabModel.waitingForNewTab = false
-                window.opaqueBackground = false
-            }
         }
     }
 
@@ -301,8 +289,6 @@ Page {
         historyModel: historyModel
         browserPage: browserPage
 
-        onEnteringNewTabUrlChanged: window.opaqueBackground = webView.tabModel.waitingForNewTab || enteringNewTabUrl
-
         animator.onAtBottomChanged: {
             if (!animator.atBottom) {
                 webView.clearSelection()
@@ -312,7 +298,7 @@ Page {
         onActiveChanged: {
             var isFullScreen = webView.contentItem && webView.contentItem.fullscreen
             if (!isFullScreen && active && !overlay.enteringNewTabUrl) {
-                if (webView.tabModel.count !== 0 || webView.tabModel.waitingForNewTab || (WebUtils.homePage !== "about:blank" && WebUtils.homePage.length > 0)) {
+                if (webView.tabModel.count !== 0 || (WebUtils.homePage !== "about:blank" && WebUtils.homePage.length > 0)) {
                     overlay.animator.showChrome()
                 } else {
                     overlay.startPage()
@@ -400,6 +386,8 @@ Page {
             webView.grabActivePage()
             if (webView.tabModel.activateTab(url)) {
                 webView.releaseActiveTabOwnership()
+            } else if (!webView.tabModel.loaded) {
+                webView.load(url)
             } else {
                 webView.clearSelection()
                 webView.tabModel.newTab(url)

@@ -13,25 +13,19 @@ import QtQuick 2.2
 import Sailfish.Silica 1.0
 
 /*
- Two-color opaque background dimmer. Consists of
-    - baseColor + baseOpacity as background color
-    - dimmerColor + dimmerOpacity blended on top of background color
+  Opaque background dimmer.
+    - dimmerColor + dimmerOpacity
  */
 
 ShaderEffect {
     property color dimmerColor: Theme.highlightDimmerColor
     property real dimmerOpacity
 
-    property color baseColor: "white"
-    property real baseOpacity
-
     blending: false
-    visible: dimmerOpacity > 0.0 || baseOpacity > 0.0
+    visible: dimmerOpacity > 0.0
 
     vertexShader: "
-         uniform lowp float baseOpacity;
          uniform lowp float dimmerOpacity;
-         uniform lowp vec4 baseColor;
          uniform lowp vec4 dimmerColor;
          uniform highp mat4 qt_Matrix;
          attribute highp vec4 qt_Vertex;
@@ -39,9 +33,7 @@ ShaderEffect {
          varying lowp vec4 color;
 
          void main() {
-          lowp vec4 base = baseColor * baseOpacity;
-          lowp vec4 dimmer = dimmerColor * dimmerOpacity;
-          color = base + dimmer*(1.0 - base.a);
+          color = dimmerColor * dimmerOpacity;
           gl_Position = qt_Matrix * qt_Vertex;
          }
     "

@@ -36,6 +36,7 @@ public:
     void goBack(int tabId);
 
     void updateThumbPath(int tabId, const QString &path);
+    void updateUrl(int tabId, const QString &requestedUrl, const QString &resolvedUrl);
     void updateTitle(int tabId, const QString &url, const QString &title);
 
     void removeHistoryEntry(int linkId);

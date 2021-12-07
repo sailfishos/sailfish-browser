@@ -227,6 +227,7 @@ void DBWorker::createTab(const Tab &tab)
     int linkId = createLink(tab.url(), tab.title(), tab.thumbnailPath());
 
     int historyId = addToTabHistory(tab.tabId(), linkId);
+    addHistoryEntry(tab.url(), tab.title());
     if (historyId > 0) {
         updateTab(tab.tabId(), historyId);
     } else {
@@ -362,6 +363,7 @@ void DBWorker::navigateTo(int tabId, const QString &url, const QString &title, c
     int linkId = createLink(url, title, path);
 
     int historyId = addToTabHistory(tabId, linkId);
+    addHistoryEntry(url, title);
     if (historyId > 0) {
         updateTab(tabId, historyId);
     } else {
@@ -695,6 +697,36 @@ void DBWorker::updateThumbPath(int tabId, const QString &path)
     if (execute(m_updateThumbPathQuery)) {
         emit thumbPathChanged(tabId, path);
     }
+}
+
+void DBWorker::updateUrl(int tabId, const QString &requestedUrl, const QString &resolvedUrl)
+{
+    QSqlQuery query = prepare("SELECT link.link_id, link.url FROM tab "
+                              "INNER JOIN tab_history ON tab.tab_history_id = tab_history.id "
+                              "INNER JOIN link ON tab_history.link_id = link.link_id "
+                              "WHERE tab_history.tab_id = ?;");
+    query.bindValue(0, tabId);
+    if (!execute(query)) {
+        qWarning() << "No link found for tabId" << tabId;
+        return;
+    }
+
+    if (query.first()) {
+        int linkId = query.value(0).toInt();
+        QString oldUrl = query.value(1).toString();
+
+        if (linkId > 0 && !oldUrl.isEmpty() && oldUrl != resolvedUrl) {
+            query = prepare("UPDATE link SET url = ? WHERE link_id = ?;");
+            query.bindValue(0, resolvedUrl);
+            query.bindValue(1, linkId);
+            execute(query);
+        }
+    }
+
+    if (!requestedUrl.isEmpty() && (requestedUrl != resolvedUrl)) {
+        removeHistoryEntry(requestedUrl);
+    }
+    addHistoryEntry(resolvedUrl, QString());
 }
 
 void DBWorker::updateTitle(int tabId, const QString &url, const QString &title)

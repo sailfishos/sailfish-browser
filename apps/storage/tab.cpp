@@ -13,6 +13,7 @@
 
 Tab::Tab(int tabId, const QString &url, const QString &title, const QString &thumbPath)
     : m_tabId(tabId)
+    , m_requestedUrl(url)
     , m_url(url)
     , m_title(title)
     , m_thumbPath(thumbPath)
@@ -36,14 +37,29 @@ void Tab::setTabId(int tabId)
     m_tabId = tabId;
 }
 
+void Tab::setRequestedUrl(const QString &url)
+{
+    m_requestedUrl = url;
+}
+
+QString Tab::requestedUrl() const
+{
+    return m_requestedUrl;
+}
+
 QString Tab::url() const
 {
-    return m_url;
+    return !m_requestedUrl.isEmpty() && !hasResolvedUrl() ? m_requestedUrl : m_url;
 }
 
 void Tab::setUrl(const QString &url)
 {
     m_url = url;
+}
+
+bool Tab::hasResolvedUrl() const
+{
+    return !m_url.isEmpty();
 }
 
 QString Tab::thumbnailPath() const
@@ -100,7 +116,9 @@ QDebug operator<<(QDebug dbg, const Tab *tab) {
     }
 
     dbg.nospace() << "Tab(tabId = " << tab->tabId() << ", isValid = " << tab->isValid()
-                  << ", url = " << tab->url() << ", title = " << tab->title() << ", thumbnailPath = " << tab->thumbnailPath()
+                  << ", url = " << tab->url() << ", requested url = " << tab->requestedUrl()
+                  << ", url resolved: " << tab->hasResolvedUrl() << ", title = " << tab->title()
+                  << ", thumbnailPath = " << tab->thumbnailPath()
                   << ", desktopMode = " << tab->desktopMode() << ")";
     return dbg.space();
 }
