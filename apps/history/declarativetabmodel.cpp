@@ -215,9 +215,10 @@ int DeclarativeTabModel::newTab(const QString &url, int parentId)
     } else {
         index = m_tabs.count();
     }
-    addTab(tab, index);
 
     emit newTabRequested(tab, parentId);
+
+    addTab(tab, index);
 
     return tab.tabId();
 }
