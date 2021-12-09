@@ -300,9 +300,12 @@ void DeclarativeWebPage::forceChrome(bool forcedChrome)
 
 void DeclarativeWebPage::grabResultReady()
 {
-    if (active()) {
-        QImage image = m_grabResult->image();
-        m_grabWritter.setFuture(QtConcurrent::run(this, &DeclarativeWebPage::saveToFile, image));
+    QImage image = m_grabResult->image();
+    if (!image.isNull() && active()) {
+        m_grabWritter.setFuture(QtConcurrent::run(
+                &DeclarativeWebPage::saveToFile,
+                image,
+                QStringLiteral("%1/tab-%2-thumb.jpg").arg(BrowserPaths::cacheLocation()).arg(tabId())));
     }
     m_grabResult.clear();
 }
@@ -343,15 +346,20 @@ void DeclarativeWebPage::updateViewMargins()
     setMargins(margins);
 }
 
-QString DeclarativeWebPage::saveToFile(QImage image)
+QString DeclarativeWebPage::saveToFile(const QImage &image, const QString &path)
 {
-    if (image.isNull() || !active()) {
-        return "";
+    if (allBlack(image)) {
+        return QString();
     }
 
-    // 75% quality jpg produces small and good enough capture.
-    QString path = QString("%1/tab-%2-thumb.jpg").arg(BrowserPaths::cacheLocation()).arg(tabId());
-    return !allBlack(image) && image.save(path, "jpg", 75) ? path : "";
+    QSaveFile saveFile(path);
+    if (image.save(&saveFile, "jpg", 75)) {
+        saveFile.commit();
+
+        return path;
+    } else {
+        return QString();
+    }
 }
 
 void DeclarativeWebPage::onRecvAsyncMessage(const QString& message, const QVariant& data)
