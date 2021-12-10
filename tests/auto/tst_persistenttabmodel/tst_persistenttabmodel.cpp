@@ -189,7 +189,7 @@ void tst_persistenttabmodel::newTabInvalidInput()
     QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int)));
 
     QFETCH(QString, url);
-    tabModel->newTab(url, 0);
+    tabModel->newTab(url);
 
     QCOMPARE(tabModel->count(), 0);
     QCOMPARE(countChangeSpy.count(), 0);
@@ -571,8 +571,8 @@ void tst_persistenttabmodel::data()
 
 void tst_persistenttabmodel::newTabRequested()
 {
-    QSignalSpy newTabRequestedSpy(tabModel, SIGNAL(newTabRequested(Tab, int)));
-    tabModel->newTab(QLatin1String("http://example.com"), 0);
+    QSignalSpy newTabRequestedSpy(tabModel, SIGNAL(newTabRequested(Tab)));
+    tabModel->newTab(QLatin1String("http://example.com"));
     QCOMPARE(newTabRequestedSpy.count(), 1);
 }
 

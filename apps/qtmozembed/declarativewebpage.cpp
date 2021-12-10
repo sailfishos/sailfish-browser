@@ -127,9 +127,13 @@ int DeclarativeWebPage::tabId() const
     return m_initialTab.tabId();
 }
 
-void DeclarativeWebPage::setInitialTab(const Tab& tab)
+void DeclarativeWebPage::setInitialState(const Tab& tab, bool privateMode)
 {
     Q_ASSERT(m_initialTab.tabId() == 0);
+
+    setParentId(tab.parentId());
+    setPrivateMode(privateMode);
+    setParentBrowsingContext(tab.browsingContext());
 
     m_initialTab = tab;
     setDesktopMode(m_initialTab.desktopMode());

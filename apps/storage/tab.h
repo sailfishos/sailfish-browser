@@ -41,6 +41,12 @@ public:
     bool desktopMode() const;
     void setDesktopMode(bool desktopMode);
 
+    void setBrowsingContext(uintptr_t browsingContext);
+    uintptr_t browsingContext() const;
+
+    void setParentId(uint32_t parentId);
+    uint32_t parentId() const;
+
     bool isValid() const;
 
     bool operator==(const Tab &other) const;
@@ -53,6 +59,8 @@ private:
     QString m_title;
     QString m_thumbPath;
     bool m_desktopMode;
+    uintptr_t m_browsingContext;
+    uint32_t m_parentId;
 };
 
 Q_DECLARE_METATYPE(Tab)

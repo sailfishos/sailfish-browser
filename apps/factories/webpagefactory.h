@@ -27,8 +27,7 @@ public:
     WebPageFactory(QObject *parent = 0) : QObject(parent) {};
 
     DeclarativeWebPage* createWebPage(DeclarativeWebContainer *webContainer,
-                                      const Tab &initialTab,
-                                      int parentId);
+                                      const Tab &initialTab);
 
 signals:
     void aboutToInitialize(DeclarativeWebPage *webPage);

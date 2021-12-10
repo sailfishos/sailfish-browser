@@ -18,12 +18,16 @@ Tab::Tab(int tabId, const QString &url, const QString &title, const QString &thu
     , m_title(title)
     , m_thumbPath(thumbPath)
     , m_desktopMode(false)
+    , m_browsingContext(0)
+    , m_parentId(0)
 {
 }
 
 Tab::Tab()
     : m_tabId(0)
     , m_desktopMode(false)
+    , m_browsingContext(0)
+    , m_parentId(0)
 {
 }
 
@@ -92,6 +96,28 @@ void Tab::setDesktopMode(bool desktopMode)
     m_desktopMode = desktopMode;
 }
 
+void Tab::setBrowsingContext(uintptr_t browsingContext)
+{
+    Q_ASSERT_X(m_browsingContext == 0, Q_FUNC_INFO, "Browsing context can be set only once.");
+    m_browsingContext = browsingContext;
+}
+
+uintptr_t Tab::browsingContext() const
+{
+    return m_browsingContext;
+}
+
+void Tab::setParentId(uint32_t parentId)
+{
+    Q_ASSERT_X(m_parentId == 0, Q_FUNC_INFO, "Parent id can be set only once.");
+    m_parentId = parentId;
+}
+
+uint32_t Tab::parentId() const
+{
+    return m_parentId;
+}
+
 bool Tab::isValid() const
 {
     return m_tabId > 0;
@@ -115,7 +141,8 @@ QDebug operator<<(QDebug dbg, const Tab *tab) {
         return dbg << "Tab (this = 0x0)";
     }
 
-    dbg.nospace() << "Tab(tabId = " << tab->tabId() << ", isValid = " << tab->isValid()
+    dbg.nospace() << "Tab(tabId = " << tab->tabId() << ", parentId = " << tab->parentId()
+                  << ", isValid = " << tab->isValid()
                   << ", url = " << tab->url() << ", requested url = " << tab->requestedUrl()
                   << ", url resolved: " << tab->hasResolvedUrl() << ", title = " << tab->title()
                   << ", thumbnailPath = " << tab->thumbnailPath()

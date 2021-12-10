@@ -51,7 +51,7 @@ public:
 
     bool alive(int tabId) const;
 
-    WebPageActivationData page(const Tab& tab, int parentId = 0);
+    WebPageActivationData page(const Tab& tab);
     void release(int tabId);
     void clear();
     int parentTabId(int tabId) const;

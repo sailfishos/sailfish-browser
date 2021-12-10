@@ -96,14 +96,14 @@ void tst_webpagefactory::createWebPage()
     if (isSuccessExpected) {
         EXPECT_CALL(webContainer, privateMode());
     }
-    page = m_pageFactory->createWebPage(&webContainer, Tab(1, "http://example.com", "Title", ""), 0);
+    page = m_pageFactory->createWebPage(&webContainer, Tab(1, "http://example.com", "Title", ""));
     QCOMPARE(!!page, isSuccessExpected);
 }
 
 void tst_webpagefactory::createWebPageUninitialized()
 {
     DeclarativeWebContainer webContainer;
-    QVERIFY(!m_pageFactory->createWebPage(&webContainer, Tab(1, "http://example.com", "Title", ""), 0));
+    QVERIFY(!m_pageFactory->createWebPage(&webContainer, Tab(1, "http://example.com", "Title", "")));
 }
 
 QTEST_MAIN(tst_webpagefactory)

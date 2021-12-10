@@ -66,13 +66,15 @@ public:
     MOCK_CONST_METHOD0(resolution, float());
     MOCK_METHOD2(sendAsyncMessage, void(const QString&, const QVariant&));
     MOCK_METHOD1(setParentId, void(unsigned));
+    MOCK_METHOD1(setParentBrowsingContext, void(uintptr_t));
+
     MOCK_CONST_METHOD0(active, bool());
     MOCK_METHOD1(setActive, void(bool));
 
     MOCK_METHOD1(setContainer, void(DeclarativeWebContainer *));
 
     MOCK_METHOD1(setResurrectedContentRect, void(QVariant));
-    MOCK_METHOD1(setInitialTab, void(const Tab&));
+    MOCK_METHOD2(setInitialState, void(const Tab&, bool privateMode));
 
     MOCK_METHOD1(forceChrome, void(bool));
     MOCK_CONST_METHOD0(domContentLoaded, bool());
