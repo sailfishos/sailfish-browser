@@ -551,7 +551,7 @@ void DeclarativeWebContainer::releaseActiveTabOwnership()
     }
 }
 
-bool DeclarativeWebContainer::activatePage(const Tab& tab, bool force, int parentId)
+bool DeclarativeWebContainer::activatePage(const Tab& tab, bool force)
 {
     if (!m_initialized) {
         m_initialUrl = tab.requestedUrl();
@@ -560,7 +560,7 @@ bool DeclarativeWebContainer::activatePage(const Tab& tab, bool force, int paren
 
     m_webPages->initialize(this);
     if ((m_model->loaded() || force) && tab.tabId() > 0 && m_webPages->isInitialized() && m_webPageComponent) {
-        WebPageActivationData activationData = m_webPages->page(tab, parentId);
+        WebPageActivationData activationData = m_webPages->page(tab);
         setWebPage(activationData.webPage);
         // Reset always height so that orentation change is taken into account.
         m_webPage->forceChrome(false);
@@ -1036,9 +1036,9 @@ void DeclarativeWebContainer::onDownloadStarted()
     }
 }
 
-void DeclarativeWebContainer::onNewTabRequested(const Tab &tab, int parentId)
+void DeclarativeWebContainer::onNewTabRequested(const Tab &tab)
 {
-    if (activatePage(tab, false, parentId)) {
+    if (activatePage(tab, false)) {
         m_webPage->loadTab(tab.requestedUrl(), false);
     }
 }

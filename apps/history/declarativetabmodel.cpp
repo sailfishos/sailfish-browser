@@ -188,7 +188,12 @@ void DeclarativeTabModel::closeActiveTab()
     }
 }
 
-int DeclarativeTabModel::newTab(const QString &url, int parentId)
+int DeclarativeTabModel::newTab(const QString &url)
+{
+    return newTab(url, 0, 0);
+}
+
+int DeclarativeTabModel::newTab(const QString &url, int parentId, uintptr_t browsingContext)
 {
     // When browser opens without tabs
     if ((url.isEmpty() || url == QStringLiteral("about:blank")) && m_tabs.isEmpty())
@@ -206,6 +211,8 @@ int DeclarativeTabModel::newTab(const QString &url, int parentId)
     Tab tab;
     tab.setTabId(nextTabId());
     tab.setRequestedUrl(url);
+    tab.setBrowsingContext(browsingContext);
+    tab.setParentId(parentId);
 
     int index = 0;
 
@@ -216,7 +223,7 @@ int DeclarativeTabModel::newTab(const QString &url, int parentId)
         index = m_tabs.count();
     }
 
-    emit newTabRequested(tab, parentId);
+    emit newTabRequested(tab);
 
     addTab(tab, index);
 

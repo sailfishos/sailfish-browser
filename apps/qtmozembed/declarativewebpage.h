@@ -44,7 +44,7 @@ public:
     void setContainer(DeclarativeWebContainer *container);
 
     int tabId() const;
-    void setInitialTab(const Tab& tab);
+    void setInitialState(const Tab& tab, bool privateMode);
 
     QVariant resurrectedContentRect() const;
     void setResurrectedContentRect(QVariant resurrectedContentRect);

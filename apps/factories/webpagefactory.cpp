@@ -23,8 +23,7 @@
 #define DEBUG_LOGS 0
 
 DeclarativeWebPage* WebPageFactory::createWebPage(DeclarativeWebContainer *webContainer,
-                                                  const Tab &initialTab,
-                                                  int parentId)
+                                                  const Tab &initialTab)
 {
     if (!m_qmlComponent) {
         qWarning() << "WebPageContainer not initialized!";
@@ -39,10 +38,8 @@ DeclarativeWebPage* WebPageFactory::createWebPage(DeclarativeWebContainer *webCo
         object->setParent(webContainer);
         DeclarativeWebPage* webPage = qobject_cast<DeclarativeWebPage *>(object);
         if (webPage) {
-            webPage->setParentId(parentId);
-            webPage->setPrivateMode(webContainer->privateMode());
-            webPage->setInitialTab(initialTab);
             webPage->setContainer(webContainer);
+            webPage->setInitialState(initialTab, webContainer->privateMode());
             emit aboutToInitialize(webPage);
             webPage->initialize();
             m_qmlComponent->completeCreate();

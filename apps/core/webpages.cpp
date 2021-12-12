@@ -137,7 +137,7 @@ bool WebPages::alive(int tabId) const
     return m_activePages.alive(tabId);
 }
 
-WebPageActivationData WebPages::page(const Tab& tab, int parentId)
+WebPageActivationData WebPages::page(const Tab& tab)
 {
     const int tabId = tab.tabId();
 
@@ -154,7 +154,7 @@ WebPageActivationData WebPages::page(const Tab& tab, int parentId)
     DeclarativeWebPage *webPage = 0;
     DeclarativeWebPage *oldActiveWebPage = m_activePages.activeWebPage();
     if (!m_activePages.alive(tabId)) {
-        webPage = m_pageFactory->createWebPage(m_webContainer, tab, parentId);
+        webPage = m_pageFactory->createWebPage(m_webContainer, tab);
         if (webPage) {
             m_activePages.prepend(tabId, webPage);
         } else {

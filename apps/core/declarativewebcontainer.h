@@ -138,7 +138,7 @@ public:
     QString thumbnailPath() const;
 
     bool isActiveTab(int tabId);
-    bool activatePage(const Tab& tab, bool force = false, int parentId = 0);
+    bool activatePage(const Tab& tab, bool force = false);
     int findParentTabId(int tabId) const;
     // For D-Bus interfaces
     uint tabOwner(int tabId) const;
@@ -225,7 +225,7 @@ private slots:
     void initialize();
     void onActiveTabChanged(int activeTabId);
     void onDownloadStarted();
-    void onNewTabRequested(const Tab &tab, int parentId);
+    void onNewTabRequested(const Tab &tab);
     void releasePage(int tabId);
     void closeWindow();
     void updateLoadProgress();
