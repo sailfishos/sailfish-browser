@@ -35,8 +35,6 @@
 #include <qpa/qplatformnativeinterface.h>
 #include <libsailfishpolicy/policyvalue.h>
 
-#include <qpa/qwindowsysteminterface.h>
-
 #ifndef DEBUG_LOGS
 #define DEBUG_LOGS 0
 #endif
@@ -71,7 +69,6 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     , m_activeTabRendered(false)
     , m_clearSurfaceTask(0)
     , m_closing(false)
-    , m_touchScreenDevice(nullptr)
     , m_closeEventFilter(nullptr)
 {
     Q_ASSERT(!s_instance);
@@ -137,10 +134,6 @@ DeclarativeWebContainer::~DeclarativeWebContainer()
     if (m_clearSurfaceTask) {
         SailfishOS::WebEngine *webEngine = SailfishOS::WebEngine::instance();
         webEngine->CancelTask(m_clearSurfaceTask);
-    }
-
-    if (m_touchScreenDevice) {
-        delete m_touchScreenDevice;
     }
 }
 
@@ -695,51 +688,6 @@ bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
     if (!hasExposedChrome && event->type() == QEvent::Show && m_chromeWindow && m_chromeWindow->isExposed() && isExposed()) {
         emit chromeExposed();
         hasExposedChrome = true;
-    }
-
-    switch (event->type()) {
-    case QEvent::MouseButtonPress:
-    case QEvent::MouseMove:
-    case QEvent::MouseButtonRelease: {
-        QMouseEvent *mouseEvent = static_cast<QMouseEvent *>(event);
-        QEvent::Type type = QEvent::TouchBegin;
-        Qt::TouchPointState state =  Qt::TouchPointPressed;
-        switch (event->type()) {
-        case QEvent::MouseMove:
-            type = QEvent::TouchUpdate;
-            state = Qt::TouchPointMoved;
-            break;
-        case QEvent::MouseButtonRelease:
-            type = QEvent::TouchEnd;
-            state = Qt::TouchPointReleased;
-            break;
-        case QEvent::MouseButtonPress:
-        default:
-            break;
-        }
-
-        // events should not be accepted since they are not enabled
-        QTouchEvent::TouchPoint touchPoint(0);
-        touchPoint.setState(state);
-        touchPoint.setPos(mouseEvent->pos());
-        touchPoint.setScreenPos(mouseEvent->screenPos());
-        touchPoint.setScenePos(mouseEvent->globalPos());
-
-        if (!m_touchScreenDevice) {
-            m_touchScreenDevice = new QTouchDevice();
-            QWindowSystemInterface::registerTouchDevice(m_touchScreenDevice);
-        }
-
-        QTouchEvent *touchEvent = new QTouchEvent(type,
-                                                  m_touchScreenDevice,
-                                                  Qt::NoModifier,
-                                                  state,
-                                                  (QList<QTouchEvent::TouchPoint>() << touchPoint));
-
-        QCoreApplication::sendEvent(this, touchEvent);
-    }
-    default:
-        break;
     }
 
     return QObject::eventFilter(obj, event);

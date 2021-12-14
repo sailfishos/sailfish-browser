@@ -82,6 +82,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     QScopedPointer<QQuickView> view(new QQuickView);
 #endif
     app->setQuitOnLastWindowClosed(false);
+    app->setAttribute(Qt::AA_SynthesizeTouchForUnhandledMouseEvents, true);
 
     BrowserService *service = new BrowserService(app.data());
     // Handle command line launch
