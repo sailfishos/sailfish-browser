@@ -25,7 +25,8 @@ Dialog {
     // If dialog is accepted, save all the changed configs
     onAccepted: {
         for (var key in changedConfigs) {
-            WebEngineSettings.setPreference(key, changedConfigs[key]);
+            var preference = changedConfigs[key]
+            WebEngineSettings.setPreference(key, preference.value, preference.type)
         }
         WebEngine.notifyObservers("embedui:saveprefs", {})
     }
@@ -98,26 +99,46 @@ Dialog {
             id: loader
             height: Theme.itemSizeMedium
             width: prefsList.width
-            sourceComponent: model.type === 128 ? textSwitch : textField
+            sourceComponent: model.type == WebEngineSettings.BoolPref ? textSwitch : textField
 
             Component {
                 id: textField
 
                 TextField {
-                    label: model.name
+                    readonly property bool digitsOnly: model.type == WebEngineSettings.IntPref
+
+                    label: {
+                        if (errorHighlight && digitsOnly) {
+                            //% "Please enter only integer values"
+                            return qsTrId("sailfish_browser-la-only_integer_values")
+                        }
+                        return model.name
+                    }
                     text: model.value
                     placeholderText: model.name
-                    inputMethodHints: (model.type == 64 ? Qt.ImhDigitsOnly : 0)
+                    inputMethodHints: (digitsOnly ? Qt.ImhDigitsOnly : 0)
                     width: parent.width
                     height: Theme.itemSizeMedium
+
+                    Component.onCompleted: {
+                        if (digitsOnly) {
+                            validator = intValidator
+                        }
+                    }
 
                     onTextChanged: {
                         if (text === model.value) return;
 
-                        if (model.type == 64) {
-                            changedConfigs[model.name] = parseInt(text);
+                        if (digitsOnly) {
+                            changedConfigs[model.name] = {
+                                value: parseInt(text, 10),
+                                type: model.type
+                            }
                         } else {
-                            changedConfigs[model.name] =  text;
+                            changedConfigs[model.name] =   {
+                                value: text,
+                                type: model.type
+                            }
                         }
 
                         if (prefsList.model === prefsListModel) {
@@ -126,6 +147,10 @@ Dialog {
                             filterListModel.setProperty(model.index, "value", text);
                             prefsListModel.setProperty(model.prefsListIndex, "value", text);
                         }
+                    }
+
+                    IntValidator {
+                        id: intValidator
                     }
                 }
             }
@@ -141,7 +166,10 @@ Dialog {
 
                     onCheckedChanged: {
                         if (checked.toString() !== model.value) {
-                            changedConfigs[model.name] = checked;
+                            changedConfigs[model.name] = {
+                                value: checked,
+                                type: model.type
+                            }
 
                             if (prefsList.model === prefsListModel) {
                                 prefsListModel.setProperty(model.index, "value", checked.toString());
