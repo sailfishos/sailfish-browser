@@ -11,6 +11,7 @@
 </head>
 
 <body>
+<h1>External url links</h1>
 <a href="mailto:joe@example.com?cc=bob@example.com&body=hello1">Joe@example.com + cc + body</a>
 <br/><br/>
 
@@ -41,6 +42,23 @@
 <a href="geo:61.49464,23.77513">Geo url of Tampere Jolla office</a>
 <br/><br/>
 
+<h1>External urls trying to open new tab</h1>
+
+<p>tel, sms, mailto, and geo should not open new tab even though anchor element has target defined as _blank</p>
+
+<a href="tel:+123456798" target="_blank">Open tel:+123456798 to a new window</a>
+<br/><br/>
+
+<a href="sms:+123456798" target="_blank">SMS to +123456798</a>
+<br/><br/>
+
+<a href="mailto:joe@example.com" target="_blank">Joe@example.com</a>
+<br/><br/>
+
+<a href="geo:61.49464,23.77513" target="_blank">Geo url of Tampere Jolla office</a>
+<br/><br/>
+
+<h1>Phone numbers to be parsed when selecting text</h1>
 
 <br><br><div>TEL to +123456798</div>
 <br><br>
