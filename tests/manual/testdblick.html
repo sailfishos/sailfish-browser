@@ -1,0 +1,128 @@
+<!DOCTYPE HTML PUBLIC "-//TFP//DTD HTML 4.0 Transitional Margins//EN" "http://www.flypig.co.uk/dtds/margins.dtd">
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta id="viewport" name="viewport" content="user-scalable=no">
+    <meta name="format-detection" content="telephone=no">
+    <style>
+        #container {
+            display: flex;
+            justify-content: space-between;
+            width: 700px;
+        }
+
+        #box1 {
+            background-color: lightblue;
+        }
+
+        #box2 {
+            background-color: lightgreen;
+        }
+
+        #box3 {
+            background-color: lightgray;
+        }
+
+        .box {
+            height: 100px;
+            width: 100px;
+        }
+
+        @keyframes popbackground {
+            from {background-color: green;}
+            to {background-color: transparent;}
+        }
+
+        @keyframes popborder {
+            from {border-color: red;}
+            to {border-color: black;}
+        }
+
+        .common {
+            top: 10px;
+            width: 200px;
+            height: 60px;
+            border: 2px solid black;
+            background-color: transparent;
+            animation-duration: 1s;
+            animation-fill-mode: forwards;
+            animation-timing-function: ease-out;
+            text-align: center;
+            line-height: 3em;
+            animation-name: popbackground;
+        }
+
+        .rectdouble {
+            position: relative;
+            top: -62px;
+            left: 2px;
+            width: 196px;
+            height: 56px;
+            border: 2px solid transparent;
+        }
+
+        .rectouter {
+            animation-name: popborder;
+        }
+
+        #toggle {
+            color: "blue";
+            height: 40px;
+            width: 80px;
+            font-weight: bold;
+        }
+    </style>
+    <script type="text/javascript">
+        function resetAnim(item) {
+            var elm = document.getElementById(item);
+            var newone = elm.cloneNode(true);
+            elm.parentNode.replaceChild(newone, elm);
+        }
+
+        function toggleScalable(button) {
+            if (button.value == "no") {
+                button.value = "yes";
+                document.getElementById("viewport").setAttribute("content", "user-scalable=yes");
+            } else {
+                button.value = "no";
+                document.getElementById("viewport").setAttribute("content", "user-scalable=no");
+            }
+        }
+
+        function doubleClick() {
+            resetAnim("double");
+        }
+        function singleClick() {
+            resetAnim("single");
+        }
+        function singleCheck() {
+            resetAnim("outer");
+        }
+    </script>
+    </head>
+
+    <body>
+        <p>Tap-to-zoom will only work if user-scalable is enabled.</p>
+        <form action="">
+            <b>
+                User-scalable =
+                <input id="toggle" type="button" value="no" onclick="toggleScalable(this);">
+            </b>
+        </form>
+        <br/>
+        <p> Double tap on the boxes to zoom in, then zoom out.</p>
+        <!-- See https://bugzilla.mozilla.org/show_bug.cgi?id=1489653#c7 -->
+        <div id="container">
+            <div class="box" id="box1">Double-Tap</div>
+            <div class="box" id="box2">Double-Tap</div>
+            <div class="box" id="box3">Double-Tap</div>
+        </div>
+        <br/>
+        <p> Double tap on the boxes to either zoom, or activate.</p>
+        <div id="single" onclick="singleClick()"  class="common">Single click</div>
+        <br/>
+        <div id="outer" class="common rectouter"></div>
+        <div id="double" ondblclick="doubleClick()" onclick="singleCheck()" class="common rectdouble"">Double click</div>
+    </body>
+</html>
+
