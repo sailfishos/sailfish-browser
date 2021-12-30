@@ -122,6 +122,7 @@ fi
 
 %files
 %defattr(-,root,root,-)
+%license LICENSE.txt
 %{_bindir}/%{name}
 %{_bindir}/%{captiveportal}
 %{_datadir}/applications/%{name}.desktop
