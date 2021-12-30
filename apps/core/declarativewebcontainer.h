@@ -220,6 +220,7 @@ protected:
 public slots:
     void updateContentOrientation(Qt::ScreenOrientation orientation);
     void clearSurface();
+    void dsmeStateChange(const QString &state);
 
 private slots:
     void initialize();
