@@ -11,14 +11,11 @@
 
 import QtQuick 2.1
 import Sailfish.Silica 1.0
-import org.nemomobile.configuration 1.0
-import "." as Browser
 
 SilicaGridView {
-    id: tabView
+    id: tabGridView
 
     property bool portrait
-    property bool privateMode
     property bool closingAllTabs
     property bool loaded
 
@@ -40,6 +37,25 @@ SilicaGridView {
     signal closeAll
     signal closeAllCanceled
     signal closeAllPending
+
+    function closeAllTabs() {
+        remorsePopup = Remorse.popupAction(
+                    tabGridView,
+                    //% "Closed all tabs"
+                    qsTrId("sailfish_browser-closed-all-tabs"),
+                    function() {
+                        tabGridView.closeAll()
+                        remorsePopup = null
+                        closingAllTabs = false
+                    })
+        closingAllTabs = true
+        remorsePopup.canceled.connect(
+                    function() {
+                        closingAllTabs = false
+                        tabGridView.closeAllCanceled()
+                        remorsePopup = null
+                    })
+    }
 
     onCountChanged: if (count > 0) closingAllTabs = false
     onClosingAllTabsChanged: if (closingAllTabs) closeAllPending()
@@ -69,8 +85,8 @@ SilicaGridView {
         }
 
         Component.onCompleted:  {
-            if ((index / columns * cellHeight) > tabView.height) {
-                tabView.loaded = true
+            if ((index / columns * cellHeight) > tabGridView.height) {
+                tabGridView.loaded = true
             }
         }
     }
@@ -79,64 +95,21 @@ SilicaGridView {
     children: [
         MouseArea {
             z: -1
-            width: tabView.width
-            height: tabView.height
+            width: tabGridView.width
+            height: tabGridView.height
             onClicked: hide()
         }
     ]
 
-    ConfigurationValue {
-        id: showCloseAllAction
-        key: "/apps/sailfish-browser/settings/show_close_all"
-        defaultValue: true
-    }
-
-    PullDownMenu {
-        id: pullDownMenu
-
-        flickable: tabView
-        x: flickable.contentX + (flickable.width - Theme.horizontalPageMargin - width)/2
-        width: Math.min(parent.width + Theme.horizontalPageMargin, screen.sizeCategory > Screen.Medium ? Screen.width*0.7 : Screen.width)
-        on_InactiveHeightChanged: console.log("POS ", _inactiveHeight)
-
-        MenuItem {
-            visible: showCloseAllAction.value && model.count
-            //% "Close all tabs"
-            text: qsTrId("sailfish_browser-me-close_all")
-            onClicked: {
-                remorsePopup = Remorse.popupAction(
-                            tabView,
-                            //% "Closed all tabs"
-                            qsTrId("sailfish_browser-closed-all-tabs"),
-                            function() {
-                                tabView.closeAll()
-                                remorsePopup = null
-                            })
-                closingAllTabs = true
-                remorsePopup.canceled.connect(
-                            function() {
-                                closingAllTabs = false
-                                tabView.closeAllCanceled()
-                                remorsePopup = null
-                            })
-            }
-        }
-        MenuItem {
-            //% "New tab"
-            text: qsTrId("sailfish_browser-me-new_tab")
-            onClicked: tabView.enterNewTabUrl()
-        }
-    }
 
     Item {
-        y: tabs.tabBarHeight
-        height: parent.height - y
+        height: parent.height
         anchors.right: parent.right
         width: Math.round(Theme.paddingSmall/2)
 
         VerticalScrollDecorator {
             _forcedParent: parent
-            flickable: tabView
+            flickable: tabGridView
         }
     }
 
@@ -144,10 +117,20 @@ SilicaGridView {
         x: -Theme.horizontalPageMargin
         width: parent.width + Theme.horizontalPageMargin
         enabled: !model.count || closingAllTabs
-        //: Hint to create a new tab from pull down menu.
-        //% "Pull down to create a new tab"
-        text: qsTrId("sailfish_browser-la-pull_down_to_create_tab_hint")
+        //: Hint to create a new tab via button new tab.
+        //% "Push button plus to create a new tab"
+        text: qsTrId("sailfish_browser-la-push_button_plus_to_create_tab_hint")
     }
 
     onLoadedChanged: positionViewAtIndex(model.activeTabIndex, GridView.Center)
+
+    Connections {
+        target: model
+        // Force update GridView when deleting a tab
+        onTabClosed: {
+            var oldModel = tabGridView.model
+            tabGridView.model = undefined
+            tabGridView.model = oldModel
+        }
+    }
 }

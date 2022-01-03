@@ -73,6 +73,9 @@ IconGridViewBase {
             // index, url, title
             pageStack.animatorPush(editDialog,
                                    {
+                                       // Defined in BookmarkItem.qml
+                                       // "Edit bookmark"
+                                       "description": qsTrId("sailfish_browser-he-edit-bookmark"),
                                        "url": url,
                                        "title": title,
                                        "index": index,

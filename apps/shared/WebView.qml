@@ -240,6 +240,13 @@ WebContainer {
                         resurrectedContentRect = null
                     }
                     grabItem()
+
+                    if (!webView.privateMode) {
+                        // Update the favicon for history items.
+                        FaviconManager.grabIcon("history", webPage,
+                                                Qt.size(Theme.iconSizeMedium,
+                                                        Theme.iconSizeMedium))
+                    }
                 }
 
                 // Refresh timers (if any) keep working even for suspended views. Hence
@@ -313,12 +320,10 @@ WebContainer {
                     break
                 }
                 case "Link:AddSearch": {
-                    // This adds this search as available if not already there
-                    SearchEngineModel.add(data.engine.title, data.engine.href)
-                    break
-                }
-                case "embed:popupblocked": {
-                    pageStack.push("PopupBlockedDialog.qml", { host: data.host })
+                    if (!webView.privateMode) {
+                        // This adds this search as available if not already there
+                        SearchEngineModel.add(data.engine.title, data.engine.href)
+                    }
                     break
                 }
                 }
@@ -347,7 +352,6 @@ WebContainer {
                 addMessageListener("Content:SelectionRange")
                 addMessageListener("Content:SelectionCopied")
                 addMessageListener("Content:SelectionSwap")
-                addMessageListener("embed:popupblocked")
 
                 PermissionManager.instance()
             }

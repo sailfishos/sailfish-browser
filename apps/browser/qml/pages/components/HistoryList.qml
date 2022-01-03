@@ -16,50 +16,37 @@ import Sailfish.WebView.Popups 1.0
 
 SilicaListView {
     id: view
+
+    property alias viewPlaceholder: viewPlaceholder
     property string search
     property bool showDeleteButton
     property bool menuClosed
 
-    signal load(string url, string title)
+    signal load(string url, string title, bool newTab)
+    signal saveBookmark(string url, string title)
+
+    onLoad: if (newTab) webView.privateMode = !webView.privateMode
 
     // To prevent model to steal focus
     currentIndex: -1
 
     delegate: HistoryItem {
         id: historyDelegate
-        menu: contextMenuComponent
+
         search: view.search
         showDeleteButton: view.showDeleteButton
         onMenuOpenChanged: view.menuClosed = !menuOpen
-
-        Component {
-            id: contextMenuComponent
-
-            ContextMenu {
-                MenuItem {
-                    //: Share link from browser history pulley menu
-                    //% "Share"
-                    text: qsTrId("sailfish_browser-me-share-link")
-                    onClicked: webShareAction.shareLink(model.url, model.title)
-                }
-                MenuItem {
-                    //% "Copy to clipboard"
-                    text: qsTrId("sailfish_browser-me-copy-to-clipboard")
-                    onClicked: Clipboard.text = model.url
-                }
-
-                MenuItem {
-                    //: Delete history entry
-                    //% "Delete"
-                    text: qsTrId("sailfish_browser-me-delete")
-                    onClicked: historyDelegate.remove(model.url)
-                }
-            }
-        }
     }
 
     WebShareAction {
         id: webShareAction
+    }
+
+    ViewPlaceholder {
+        id: viewPlaceholder
+
+        //% "Websites you visit show up here"
+        text: qsTrId("sailfish_browser-la-websites-show-up-here")
     }
 
     VerticalScrollDecorator {}

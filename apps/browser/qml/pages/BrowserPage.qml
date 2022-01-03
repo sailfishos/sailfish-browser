@@ -197,7 +197,8 @@ Page {
         // Both model change and model count change are connected to this.
         function handleModelChanges(openOverlayImmediately) {
             if (webView.completed && (!webView.tabModel || webView.tabModel.count === 0)) {
-                overlay.animator.showOverlay(openOverlayImmediately)
+                overlay.startPage(openOverlayImmediately ? PageStackAction.Immediate
+                                                         : PageStackAction.Animated)
             }
 
             window.setBrowserCover(webView.tabModel)
@@ -212,8 +213,6 @@ Page {
         onCountChanged: {
             if (webView.tabModel.count === 0) {
                 webView.handleModelChanges(false)
-            } else if (!webView.tabModel.waitingForNewTab) {
-                overlay.animator.showChrome()
             }
         }
         onWaitingForNewTabChanged: window.opaqueBackground = webView.tabModel.waitingForNewTab
@@ -242,9 +241,18 @@ Page {
                        : 0.9 - (overlay.y / (webView.fullscreenHeight - overlay.toolBar.rowHeight)) * 0.9
 
         MouseArea {
+            property bool inEmptyPrivateMode: webView.privateMode && webView.privateTabModel.count === 0 && webView.persistentTabModel.count > 0
+
             anchors.fill: parent
-            enabled: overlay.animator.atTop && webView.tabModel.count > 0
-            onClicked: overlay.dismiss(true)
+            enabled: overlay.animator.atTop && (webView.tabModel.count > 0 || inEmptyPrivateMode)
+            onClicked: {
+                if (inEmptyPrivateMode) {
+                    webView.privateMode = false
+                    //% "Leaving private mode"
+                    Notices.show(qsTrId("sailfish_browser-la-leaving_private_mode"), Notice.Short, Notice.Top)
+                }
+                overlay.dismiss(true)
+            }
         }
 
         Browser.PrivateModeTexture {
@@ -300,7 +308,7 @@ Page {
         onActiveChanged: {
             var isFullScreen = webView.contentItem && webView.contentItem.fullscreen
             if (!isFullScreen && active && !overlay.enteringNewTabUrl) {
-                if (webView.tabModel.count !== 0 || (WebUtils.homePage !== "about:blank" && WebUtils.homePage.length > 0)) {
+                if (webView.tabModel.count !== 0 || webView.tabModel.waitingForNewTab || (WebUtils.homePage !== "about:blank" && WebUtils.homePage.length > 0)) {
                     overlay.animator.showChrome()
                 } else {
                     overlay.startPage()

@@ -1,6 +1,6 @@
 /****************************************************************************
 **
-** Copyright (c) 2020 Open Mobile Platform LLC.
+** Copyright (c) 2020 - 2021 Open Mobile Platform LLC.
 **
 ****************************************************************************/
 
@@ -20,7 +20,8 @@ Page {
     property var remorse
     readonly property bool pendingRemorse: remorse ? remorse.pending : false
 
-    signal loadPage(string url)
+    signal loadPage(string url, bool newTab)
+    signal saveBookmark(string url, string title)
 
     HistoryList {
         id: view
@@ -32,8 +33,10 @@ Page {
         onLoad: {
             view.focus = true
             pageStack.pop()
-            root.loadPage(url)
+            root.loadPage(url, newTab)
         }
+
+        onSaveBookmark: root.saveBookmark(url, title)
 
         Component.onCompleted: model.search("")
 
@@ -48,7 +51,7 @@ Page {
                 width: parent.width
                 //% "Search"
                 placeholderText: qsTrId("sailfish_browser-ph-search")
-                enabled: !pendingRemorse && view.model && view.model.count > 0
+                enabled: !pendingRemorse && view.model
 
                 EnterKey.onClicked: focus = false
                 onTextChanged: {
@@ -67,6 +70,8 @@ Page {
             }
         }
 
+        viewPlaceholder.enabled: root.pendingRemorse || !model.count
+
         PullDownMenu {
             visible: view.model && view.model.count
             MenuItem {
@@ -82,12 +87,6 @@ Page {
                                 })
                 }
             }
-        }
-
-        ViewPlaceholder {
-            //% "Websites you visit show up here"
-            text: qsTrId("sailfish_browser-la-websites-show-up-here")
-            enabled: root.pendingRemorse || !model.count
         }
     }
 }

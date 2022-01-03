@@ -27,7 +27,6 @@ const auto ErrorPidIsNotPrivileged = QStringLiteral("PID %1 is not in privileged
 const auto ErrorPidIsNotOwnerServiceOrPrivileged = QStringLiteral("PID %1 is not the owner of '%2' or in privileged group");
 const auto SailfishBrowserUiService = QStringLiteral("org.sailfishos.browser.ui");
 const auto TransferEngine = QStringLiteral("org.nemo.transferengine");
-const auto Lipstick = QStringLiteral("com.jolla.lipstick");
 }
 
 #define GET_PID() connection().interface()->servicePid(message().service())
@@ -74,10 +73,6 @@ void BrowserService::openUrl(const QStringList &args)
 
 void BrowserService::activateNewTabView()
 {
-    if (!callerMatchesService(Lipstick)) {
-        return;
-    }
-
     emit activateNewTabViewRequested();
 }
 
@@ -188,10 +183,6 @@ void BrowserUIService::openSettings()
 
 void BrowserUIService::activateNewTabView()
 {
-    if (!callerMatchesService(Lipstick)) {
-        return;
-    }
-
     emit activateNewTabViewRequested();
 }
 
@@ -231,7 +222,7 @@ bool BrowserUIService::isPrivileged() const
 
 bool BrowserUIService::callerMatchesService(const QString &serviceName) const
 {
-    uint callerServicePid = GET_PID().value();
+    uint callerServicePid = getCallerPid();
 
     // Test this against pid of serviceName which works also inside
     // sandbox. If that matches, then the caller is serviceName.

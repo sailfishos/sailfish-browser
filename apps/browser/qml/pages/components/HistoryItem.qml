@@ -26,8 +26,53 @@ ListItem {
 
     width: parent.width
     contentHeight: Math.max(Theme.itemSizeMedium, column.height + 2*Theme.paddingMedium)
+    menu: Component {
+        ContextMenu {
+            MenuItem {
+                //% "Open in normal mode tab"
+                text: webView.privateMode ? qsTrId("sailfish_browser-me-open-in-normal-mode-tab")
+                                          : //% "Open in private tab"
+                                            qsTrId("sailfish_browser-me-open-in-private-tab")
+                onClicked: view.load(model.url, model.title, true)
+            }
+            MenuItem {
+                //: Share link from browser history pulley menu
+                //% "Share"
+                text: qsTrId("sailfish_browser-me-share-link")
+                onClicked: webShareAction.shareLink(model.url, model.title)
+            }
+            MenuItem {
+                //% "Copy to clipboard"
+                text: qsTrId("sailfish_browser-me-copy-to-clipboard")
+                onClicked: {
+                    Clipboard.text = model.url
+                    //% "Link address copied"
+                    notification.text = qsTrId("sailfish_browser-me-link_address_copied")
+                    notification.show()
+                }
+            }
+            MenuItem {
+                //% "Add to bookmarks"
+                text: qsTrId("sailfish_browser-me-add-to-bookmarks")
+                onClicked: view.saveBookmark(model.url, model.title)
+            }
+            MenuItem {
+                //: Delete history entry
+                //% "Delete"
+                text: qsTrId("sailfish_browser-me-delete")
+                onClicked: historyDelegate.remove(model.url)
+            }
+        }
+    }
 
     ListView.onAdd: AddAnimation { target: root }
+
+    Notice {
+        id: notification
+
+        duration: Notice.Short
+        verticalOffset: -Theme.itemSizeMedium
+    }
 
     Row {
         id: row
@@ -36,9 +81,18 @@ ListItem {
         anchors.verticalCenter: parent.verticalCenter
         spacing: Theme.paddingMedium
 
+        FavoriteIcon {
+            id: websiteIcon
+            icon: model.favicon
+            sourceSize.width: Theme.iconSizeMedium
+            sourceSize.height: Theme.iconSizeMedium
+            width: height
+            height: column.height
+        }
+
         Column {
             id: column
-            width: parent.width - (deleteButton.visible ? deleteButton.width : 0)
+            width: parent.width - websiteIcon.width - (deleteButton.visible ? deleteButton.width : 0)
             Label {
                 text: Theme.highlightText(model.title, search, Theme.highlightColor)
                 textFormat: Text.StyledText
@@ -67,5 +121,5 @@ ListItem {
     }
 
     ListView.onRemove: animateRemoval()
-    onClicked: view.load(model.url, model.title)
+    onClicked: view.load(model.url, model.title, false)
 }
