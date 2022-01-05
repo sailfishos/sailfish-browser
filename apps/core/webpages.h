@@ -55,6 +55,7 @@ public:
     void release(int tabId);
     void clear();
     int parentTabId(int tabId) const;
+    int tabId(uint32_t uniqueId) const;
     void dumpPages() const;
 
 private slots:

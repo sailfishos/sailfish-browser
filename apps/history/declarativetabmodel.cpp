@@ -217,8 +217,11 @@ int DeclarativeTabModel::newTab(const QString &url, int parentId, uintptr_t brow
     int index = 0;
 
     if (parentId > 0) {
-        int parentTabId = m_webContainer->findParentTabId(tab.tabId());
+        int parentTabId = m_webContainer->findTabId((uint32_t)parentId);
         index = findTabIndex(parentTabId) + 1;
+        if (index == 0) {
+            index = m_tabs.count();
+        }
     } else {
         index = m_tabs.count();
     }

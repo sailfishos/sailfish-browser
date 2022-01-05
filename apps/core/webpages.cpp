@@ -193,6 +193,11 @@ int WebPages::parentTabId(int tabId) const
     return m_activePages.parentTabId(tabId);
 }
 
+int WebPages::tabId(uint32_t uniqueId) const
+{
+    return m_activePages.tabId(uniqueId);
+}
+
 void WebPages::updateStates(DeclarativeWebPage *oldActivePage, DeclarativeWebPage *newActivePage)
 {
     if (oldActivePage) {
