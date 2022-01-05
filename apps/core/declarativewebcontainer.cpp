@@ -198,6 +198,8 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage, bool trigg
                     this, &DeclarativeWebContainer::updateActiveTabRendered, Qt::UniqueConnection);
             connect(m_webPage.data(), &QOpenGLWebPage::domContentLoadedChanged,
                     this, &DeclarativeWebContainer::updateActiveTabRendered, Qt::UniqueConnection);
+            connect(m_webPage.data(), &QOpenGLWebPage::firstPaint,
+                    this, &DeclarativeWebContainer::updateActiveTabRendered, Qt::UniqueConnection);
 
             connect(m_webPage.data(), &DeclarativeWebPage::neterror, [this]() {
                 if (m_historyModel)
@@ -209,7 +211,7 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage, bool trigg
                     m_historyModel->add(m_webPage->url().toString(), QString());
             });
 
-            if (m_webPage->completed() && m_webPage->active() && m_webPage->domContentLoaded()) {
+            if (m_webPage->completed() && m_webPage->active() && (m_webPage->isPainted() || m_webPage->domContentLoaded())) {
                 m_webPage->update();
             }
         }
@@ -1040,7 +1042,7 @@ void DeclarativeWebContainer::updateLoading()
 
 void DeclarativeWebContainer::updateActiveTabRendered()
 {
-    if (m_webPage && !m_webPage->completed() && !m_webPage->domContentLoaded()) {
+    if (!m_webPage || !m_webPage->completed() || (!m_webPage->domContentLoaded() && !m_webPage->isPainted())) {
         return;
     }
 
