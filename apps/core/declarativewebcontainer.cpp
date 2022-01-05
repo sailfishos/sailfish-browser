@@ -35,6 +35,9 @@
 #include <qpa/qplatformnativeinterface.h>
 #include <libsailfishpolicy/policyvalue.h>
 
+#include <QDBusConnection>
+#include <dsme/dsme_dbus_if.h>
+
 #ifndef DEBUG_LOGS
 #define DEBUG_LOGS 0
 #endif
@@ -121,6 +124,9 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
 
     m_closeEventFilter = new CloseEventFilter(DownloadManager::instance(), this);
     s_instance = this;
+
+    QDBusConnection::systemBus().connect(dsme_service, dsme_sig_path, dsme_sig_interface, dsme_state_change_ind,
+                                         this, SLOT(dsmeStateChange(QString)));
 }
 
 DeclarativeWebContainer::~DeclarativeWebContainer()
@@ -1164,4 +1170,10 @@ void DeclarativeWebContainer::setHistoryModel(DeclarativeHistoryModel *model)
         m_historyModel = model;
         emit historyModelChanged();
     }
+}
+
+void DeclarativeWebContainer::dsmeStateChange(const QString &state)
+{
+    if (state == "REBOOT" && m_closeEventFilter)
+        m_closeEventFilter->closeApplication();
 }

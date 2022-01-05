@@ -34,6 +34,7 @@ BuildRequires:  oneshot
 BuildRequires:  pkgconfig(gtest)
 BuildRequires:  pkgconfig(gmock)
 BuildRequires:  pkgconfig(vault) >= 1.0.1
+BuildRequires:  pkgconfig(dsme_dbus_if)
 
 Requires: sailfishsilica-qt5 >= 1.2.33
 Requires: sailfish-content-graphics
