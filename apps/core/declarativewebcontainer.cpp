@@ -577,6 +577,14 @@ int DeclarativeWebContainer::findParentTabId(int tabId) const
     return 0;
 }
 
+int DeclarativeWebContainer::findTabId(uint32_t uniqueId) const
+{
+    if (m_webPages) {
+        return m_webPages->tabId(uniqueId);
+    }
+    return 0;
+}
+
 void DeclarativeWebContainer::updateMode()
 {
     setTabModel((BrowserApp::captivePortal() || m_privateMode) ? m_privateTabModel.data() : m_persistentTabModel.data());

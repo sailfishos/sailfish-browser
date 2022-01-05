@@ -33,6 +33,7 @@ public :
     void prepend(int tabId, DeclarativeWebPage *webPage);
     void clear();
     int parentTabId(int tabId) const;
+    int tabId(uint32_t id) const;
 
     bool setMaxLivePages(int count);
     int maxLivePages() const;

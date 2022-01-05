@@ -168,6 +168,17 @@ int WebPageQueue::parentTabId(int tabId) const
     return 0;
 }
 
+int WebPageQueue::tabId(uint32_t uniqueId) const
+{
+    for (int i = 0; i < m_queue.count(); ++i) {
+        WebPageEntry *pageEntry = m_queue.at(i);
+        if (pageEntry && pageEntry->webPage && pageEntry->webPage->uniqueId() == uniqueId) {
+            return pageEntry->tabId;
+        }
+    }
+    return 0;
+}
+
 bool WebPageQueue::setMaxLivePages(int count)
 {
     if (m_maxLiveCount != count && count > 0) {
