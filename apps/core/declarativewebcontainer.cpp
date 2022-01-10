@@ -1174,6 +1174,6 @@ void DeclarativeWebContainer::setHistoryModel(DeclarativeHistoryModel *model)
 
 void DeclarativeWebContainer::dsmeStateChange(const QString &state)
 {
-    if (state == "REBOOT" && m_closeEventFilter)
+    if ((state == "REBOOT" || state == "SHUTDOWN") && m_closeEventFilter)
         m_closeEventFilter->closeApplication();
 }
