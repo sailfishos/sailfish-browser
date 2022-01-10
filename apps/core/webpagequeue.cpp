@@ -172,7 +172,7 @@ int WebPageQueue::tabId(uint32_t uniqueId) const
 {
     for (int i = 0; i < m_queue.count(); ++i) {
         WebPageEntry *pageEntry = m_queue.at(i);
-        if (pageEntry && pageEntry->webPage && pageEntry->webPage->uniqueId() == uniqueId) {
+        if (pageEntry && (quint32)pageEntry->uniqueId == uniqueId) {
             return pageEntry->tabId;
         }
     }
