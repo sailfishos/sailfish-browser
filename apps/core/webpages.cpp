@@ -188,11 +188,6 @@ void WebPages::clear()
     m_activePages.clear();
 }
 
-int WebPages::parentTabId(int tabId) const
-{
-    return m_activePages.parentTabId(tabId);
-}
-
 int WebPages::tabId(uint32_t uniqueId) const
 {
     return m_activePages.tabId(uniqueId);

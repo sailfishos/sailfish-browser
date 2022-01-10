@@ -575,14 +575,6 @@ bool DeclarativeWebContainer::activatePage(const Tab& tab, bool force)
     return false;
 }
 
-int DeclarativeWebContainer::findParentTabId(int tabId) const
-{
-    if (m_webPages) {
-        return m_webPages->parentTabId(tabId);
-    }
-    return 0;
-}
-
 int DeclarativeWebContainer::findTabId(uint32_t uniqueId) const
 {
     if (m_webPages) {
