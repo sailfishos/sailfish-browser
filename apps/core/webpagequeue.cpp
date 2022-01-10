@@ -160,7 +160,7 @@ int WebPageQueue::parentTabId(int tabId) const
         int parentId = childPageEntry->parentId;
         for (int i = 0; i < m_queue.count(); ++i) {
             WebPageEntry *parentPageEntry = m_queue.at(i);
-            if (parentPageEntry && (int)parentPageEntry->uniqueId == parentId) {
+            if (parentPageEntry && parentPageEntry->uniqueId == parentId) {
                 return parentPageEntry->tabId;
             }
         }
