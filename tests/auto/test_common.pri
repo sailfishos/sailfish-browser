@@ -2,7 +2,7 @@
 
 QT += testlib
 
-CONFIG += c++11
+CONFIG += c++1z
 
 include(../../defaults.pri)
 

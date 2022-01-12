@@ -148,31 +148,11 @@ void WebPageQueue::clear()
     m_queue.clear();
 }
 
-int WebPageQueue::parentTabId(int tabId) const
-{
-    // TODO: This should be stored to the declarativewebpage to avoid loops.
-    // This guarantees that child-parent relationship exists and it should
-    // be taken into account if/when moved to declarativewebpage.
-    // Ported from webpages.cpp.
-    int index = 0;
-    WebPageEntry *childPageEntry = find(tabId, index);
-    if (childPageEntry) {
-        int parentId = childPageEntry->parentId;
-        for (int i = 0; i < m_queue.count(); ++i) {
-            WebPageEntry *parentPageEntry = m_queue.at(i);
-            if (parentPageEntry && (int)parentPageEntry->uniqueId == parentId) {
-                return parentPageEntry->tabId;
-            }
-        }
-    }
-    return 0;
-}
-
 int WebPageQueue::tabId(uint32_t uniqueId) const
 {
     for (int i = 0; i < m_queue.count(); ++i) {
         WebPageEntry *pageEntry = m_queue.at(i);
-        if (pageEntry && pageEntry->webPage && pageEntry->webPage->uniqueId() == uniqueId) {
+        if (pageEntry && (quint32)pageEntry->uniqueId == uniqueId) {
             return pageEntry->tabId;
         }
     }

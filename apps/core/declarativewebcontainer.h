@@ -138,7 +138,6 @@ public:
 
     bool isActiveTab(int tabId);
     bool activatePage(const Tab& tab, bool force = false);
-    int findParentTabId(int tabId) const;
     int findTabId(uint32_t uniqueId) const;
     // For D-Bus interfaces
     uint tabOwner(int tabId) const;

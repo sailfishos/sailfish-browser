@@ -461,13 +461,19 @@ bool DeclarativeTabModel::matches(const QUrl &inputUrl, QString urlStr) const
 
 int DeclarativeTabModel::nextActiveTabIndex(int index)
 {
-    if (m_webContainer && m_webContainer->webPage() && m_webContainer->webPage()->parentId() > 0) {
-        int newActiveTabId = m_webContainer->findParentTabId(m_webContainer->webPage()->tabId());
-        index = findTabIndex(newActiveTabId);
+    if (!m_tabs.isEmpty() && index >= 0 && index < m_tabs.count()) {
+        uint32_t parentId = m_tabs.at(index).parentId();
+        if (parentId > 0) {
+            int parentTabId = m_webContainer->findTabId(parentId);
+            index = findTabIndex(parentTabId);
+        } else {
+            --index;
+        }
     } else {
         --index;
     }
-    return index;
+
+    return std::clamp(index, 0, std::max(0, m_tabs.count() - 1));
 }
 
 void DeclarativeTabModel::updateThumbnailPath(int tabId, const QString &path)

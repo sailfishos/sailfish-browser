@@ -20,8 +20,3 @@ int DeclarativeWebContainer::findTabId(uint32_t) const
 {
     return 0;
 }
-
-int DeclarativeWebContainer::findParentTabId(int) const
-{
-    return 0;
-}

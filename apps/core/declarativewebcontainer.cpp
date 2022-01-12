@@ -575,14 +575,6 @@ bool DeclarativeWebContainer::activatePage(const Tab& tab, bool force)
     return false;
 }
 
-int DeclarativeWebContainer::findParentTabId(int tabId) const
-{
-    if (m_webPages) {
-        return m_webPages->parentTabId(tabId);
-    }
-    return 0;
-}
-
 int DeclarativeWebContainer::findTabId(uint32_t uniqueId) const
 {
     if (m_webPages) {
@@ -1023,9 +1015,9 @@ void DeclarativeWebContainer::releasePage(int tabId)
 void DeclarativeWebContainer::closeWindow()
 {
     DeclarativeWebPage *webPage = qobject_cast<DeclarativeWebPage *>(sender());
-    if (webPage && m_model) {
-        int parentPageTabId = findParentTabId(webPage->tabId());
-        // Closing only allowed if window was created by script
+    // Closing only allowed if window was created by script i.e. has parent.
+    if (webPage && webPage->parentId() > 0 && m_model) {
+        int parentPageTabId = findTabId(webPage->parentId());
         if (parentPageTabId > 0) {
             m_model->activateTabById(parentPageTabId);
             m_model->removeTabById(webPage->tabId(), isActiveTab(webPage->tabId()));
