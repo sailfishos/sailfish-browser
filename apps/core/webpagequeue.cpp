@@ -202,6 +202,10 @@ void WebPageQueue::dumpPages() const
         WebPageEntry *pageEntry = m_queue.at(i);
         qDebug() << "tabId: " << pageEntry->tabId;
         qDebug() << "    page: " << pageEntry->webPage;
+        if (pageEntry->webPage) {
+            qDebug() << "    page title:" << pageEntry->webPage->title();
+            qDebug() << "    page title:" << pageEntry->webPage->url();
+        }
         qDebug() << "    cssContentRect:" << pageEntry->cssContentRect;
     }
     qDebug() << "---- end ------";
