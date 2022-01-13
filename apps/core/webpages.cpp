@@ -193,6 +193,11 @@ int WebPages::tabId(uint32_t uniqueId) const
     return m_activePages.tabId(uniqueId);
 }
 
+int WebPages::previouslyUsedTabId() const
+{
+    return m_activePages.previouslyUsedTabId();
+}
+
 void WebPages::updateStates(DeclarativeWebPage *oldActivePage, DeclarativeWebPage *newActivePage)
 {
     if (oldActivePage) {

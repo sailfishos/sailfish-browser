@@ -20,3 +20,8 @@ int DeclarativeWebContainer::findTabId(uint32_t) const
 {
     return 0;
 }
+
+int DeclarativeWebContainer::previouslyUsedTabId() const
+{
+    return 0;
+}

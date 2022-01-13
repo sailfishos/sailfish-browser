@@ -139,6 +139,7 @@ public:
     bool isActiveTab(int tabId);
     bool activatePage(const Tab& tab, bool force = false);
     int findTabId(uint32_t uniqueId) const;
+    int previouslyUsedTabId() const;
     // For D-Bus interfaces
     uint tabOwner(int tabId) const;
     int requestTabWithOwner(int tabId, const QString &url, uint ownerPid);
