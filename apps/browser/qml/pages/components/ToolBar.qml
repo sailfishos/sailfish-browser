@@ -202,8 +202,14 @@ Column {
             id: backIcon
             expandedWidth: toolBarRow.iconWidth
             icon.source: "image://theme/icon-m-back"
-            active: webView.canGoBack && !findInPageActive
-            onTapped: webView.goBack()
+            active: (webView.canGoBack || webView.contentItem.parentId > 0) && !findInPageActive
+            onTapped: {
+                if (webView.canGoBack) {
+                    webView.goBack()
+                } else {
+                    webView.tabModel.closeActiveTab()
+                }
+            }
         }
 
         Shared.ExpandingButton {
