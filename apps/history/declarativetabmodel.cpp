@@ -217,7 +217,7 @@ int DeclarativeTabModel::newTab(const QString &url, int parentId, uintptr_t brow
     int index = 0;
 
     if (parentId > 0) {
-        int parentTabId = m_webContainer->findTabId((uint32_t)parentId);
+        int parentTabId = m_webContainer->tabId((uint32_t)parentId);
         index = findTabIndex(parentTabId) + 1;
         if (index == 0) {
             index = m_tabs.count();
@@ -463,12 +463,17 @@ int DeclarativeTabModel::nextActiveTabIndex(int index)
 {
     if (!m_tabs.isEmpty() && index >= 0 && index < m_tabs.count()) {
         uint32_t parentId = m_tabs.at(index).parentId();
+        int tabId = 0;
         if (parentId > 0) {
-            int parentTabId = m_webContainer->findTabId(parentId);
-            index = findTabIndex(parentTabId);
+            tabId = m_webContainer->tabId(parentId);
+            // Parent tab has been closed, active previously used tab instead.
+            if (tabId == 0) {
+                tabId = m_webContainer->previouslyUsedTabId();
+            }
         } else {
-            --index;
+            tabId = m_webContainer->previouslyUsedTabId();
         }
+        index = findTabIndex(tabId);
     } else {
         --index;
     }

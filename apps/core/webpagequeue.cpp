@@ -159,6 +159,17 @@ int WebPageQueue::tabId(uint32_t uniqueId) const
     return 0;
 }
 
+int WebPageQueue::previouslyUsedTabId() const
+{
+    if (m_queue.count() > 1) {
+        WebPageEntry *pageEntry = m_queue.at(1);
+        if (pageEntry) {
+            return pageEntry->tabId;
+        }
+    }
+    return 0;
+}
+
 bool WebPageQueue::setMaxLivePages(int count)
 {
     if (m_maxLiveCount != count && count > 0) {
@@ -202,6 +213,10 @@ void WebPageQueue::dumpPages() const
         WebPageEntry *pageEntry = m_queue.at(i);
         qDebug() << "tabId: " << pageEntry->tabId;
         qDebug() << "    page: " << pageEntry->webPage;
+        if (pageEntry->webPage) {
+            qDebug() << "    page title:" << pageEntry->webPage->title();
+            qDebug() << "    page title:" << pageEntry->webPage->url();
+        }
         qDebug() << "    cssContentRect:" << pageEntry->cssContentRect;
     }
     qDebug() << "---- end ------";

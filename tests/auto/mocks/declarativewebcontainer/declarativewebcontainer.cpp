@@ -16,7 +16,12 @@ DeclarativeWebContainer::DeclarativeWebContainer(QObject *parent)
 {
 }
 
-int DeclarativeWebContainer::findTabId(uint32_t) const
+int DeclarativeWebContainer::tabId(uint32_t) const
+{
+    return 0;
+}
+
+int DeclarativeWebContainer::previouslyUsedTabId() const
 {
     return 0;
 }

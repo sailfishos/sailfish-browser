@@ -25,7 +25,8 @@ class DeclarativeWebContainer : public QObject
 public:
     explicit DeclarativeWebContainer(QObject *parent = 0);
 
-    int findTabId(uint32_t uniqueId) const;
+    int tabId(uint32_t uniqueId) const;
+    int previouslyUsedTabId() const;
     MOCK_CONST_METHOD0(webPage, DeclarativeWebPage*());
     MOCK_CONST_METHOD0(privateMode, bool());
 
