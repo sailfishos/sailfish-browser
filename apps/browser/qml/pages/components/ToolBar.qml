@@ -201,8 +201,26 @@ Column {
         Shared.ExpandingButton {
             id: backIcon
             expandedWidth: toolBarRow.iconWidth
-            icon.source: "image://theme/icon-m-back"
-            active: (webView.canGoBack || webView.contentItem.parentId > 0) && !findInPageActive
+            icon {
+                source: {
+                    if (webView.canGoBack) {
+                        return "image://theme/icon-m-back"
+                    } else if (webView.contentItem && webView.contentItem.parentId > 0) {
+                        return "image://theme/icon-m-back-tab"
+                    }
+                    return ""
+                }
+
+                onStatusChanged: {
+                    // Use icon-m-back as a fallback. The icon-m-back-tab
+                    // is a new icon and may not exist.
+                    if (icon.status == Image.Error && icon.source == "image://theme/icon-m-back-tab") {
+                        icon.source = "image://theme/icon-m-back"
+                    }
+                }
+            }
+
+            active: (webView.canGoBack || (webView.contentItem && webView.contentItem.parentId > 0)) && !findInPageActive
             onTapped: {
                 if (webView.canGoBack) {
                     webView.goBack()
