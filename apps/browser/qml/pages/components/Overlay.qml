@@ -504,14 +504,6 @@ Shared.Background {
                 }
                 onShowChrome: overlayAnimator.showChrome()
 
-                onCloseActiveTab: {
-                    // Activates (loads) the tab next to the currect active.
-                    webView.tabModel.closeActiveTab()
-                    if (webView.tabModel.count === 0) {
-                        overlay.startPage(PageStackAction.Animated)
-                    }
-                }
-
                 onLoadPage: overlay.loadPage(url)
                 onEnterNewTabUrl: overlay.enterNewTabUrl()
                 onFindInPage: {
