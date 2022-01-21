@@ -1,0 +1,34 @@
+.leak {
+  width: 300px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.videobox {
+  width: 100%;
+  height: 174px;
+}
+
+.imagebox {
+  width: 100%;
+  height: 212px;
+}
+
+.panels {
+  display: none;
+}
+
+.caption {
+  padding-top: 16px;
+  text-align: center;
+  width: 100%;
+  display: block;
+  font-family: "sans-serif";
+}
+
+.title {
+  padding-bottom: 32px;
+  font-weight: bold;
+}
+
