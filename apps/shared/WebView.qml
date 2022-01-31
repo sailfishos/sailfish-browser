@@ -55,6 +55,9 @@ WebContainer {
             }
 
             Behavior on opacity { FadeAnimator {} }
+
+            onStartHandleMaskChanged: browserPage.inputRegion.selectionStartHandleMask = startHandleMask
+            onEndHandleMaskChanged: browserPage.inputRegion.selectionEndHandleMask = endHandleMask
         }
     }
 
@@ -106,9 +109,18 @@ WebContainer {
     fullscreenMode: (contentItem && !contentItem.chrome) ||
                     (contentItem && contentItem.fullscreen)
 
+    selectionActive: webView.contentItem && webView.contentItem.textSelectionActive
     touchBlocked: contentItem && contentItem.popupOpener && contentItem.popupOpener.active ||
-                  webView.contentItem && webView.contentItem.textSelectionActive || !AccessPolicy.browserEnabled || false
+                   selectionActive || !AccessPolicy.browserEnabled || false
     favicon: contentItem ? contentItem.favicon : ""
+
+    onSelectionActiveChanged: {
+        if (!selectionActive && webView.contentItem && webView.contentItem.textSelectionController) {
+            webView.contentItem.textSelectionController.clearSelection()
+            browserPage.inputRegion.selectionStartHandleMask = Qt.rect(0, 0, 0, 0)
+            browserPage.inputRegion.selectionEndHandleMask = Qt.rect(0, 0, 0, 0)
+        }
+    }
 
     webPageComponent: Component {
         WebPage {
@@ -168,8 +180,10 @@ WebContainer {
             }
 
             function clearSelection() {
-                if (textSelectionActive) {
+                if (textSelectionController) {
                     textSelectionController.clearSelection()
+                    browserPage.inputRegion.selectionStartHandleMask = Qt.rect(0, 0, 0, 0)
+                    browserPage.inputRegion.selectionEndHandleMask = Qt.rect(0, 0, 0, 0)
                 }
             }
 
