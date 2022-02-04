@@ -8,6 +8,7 @@
  */
 
 import QtQuick 2.2
+import Sailfish.Silica 1.0
 
 Item {
     id: animator
@@ -18,7 +19,7 @@ Item {
     property bool portrait
     property bool atTop
     property bool atBottom: true
-    property int transitionDuration: !_immediate ? (state === _certOverlay ? proportionalDuration : 400) : 0
+    property int transitionDuration: !_immediate ? (state === _certOverlay ? proportionalDuration : 250) : 0
     readonly property bool allowContentUse: state === _chromeVisible || state === _fullscreenWebPage && state !== _doubleToolBar
     readonly property bool dragging: state === _draggingOverlay
     readonly property bool secondaryTools: state === _doubleToolBar
@@ -36,6 +37,7 @@ Item {
     readonly property string _draggingOverlay: "draggingOverlay"
     readonly property string _certOverlay: "certOverlay"
     readonly property string _noOverlay: "noOverlay"
+    property var _previousYs
     property int proportionalDuration: 400
 
     function showSecondaryTools() {
@@ -113,6 +115,44 @@ Item {
         _midPos = false
 
         direction = goingUp ? "upwards" : (goingDown ? "downwards" : "")
+    }
+
+    Connections {
+        target: overlay
+        onYChanged: {
+            if (!_previousYs)
+                _previousYs = []
+
+            if (_previousYs.length > 0) {
+                var lastPos = _previousYs[_previousYs.length-1]
+                // Filter out movement a bit, padding medium as a hysteresis
+                var hasMoved = Math.abs(lastPos - overlay.y) > Theme.paddingMedium
+                if (hasMoved) _previousYs.push(overlay.y)
+            } else {
+                _previousYs.push(overlay.y)
+            }
+
+            if (_previousYs.length > 5)
+                _previousYs.shift()
+
+            var tmpDirection = ""
+            var directionChanged = false
+            for (var i = 1; i < _previousYs.length && _previousYs.length > 2; ++i) {
+                var dir = _previousYs[i-1] > _previousYs[i] ? "upwards" : "downwards"
+                if (tmpDirection !== "" && dir !== tmpDirection) {
+                    directionChanged = true
+                    break
+                } else {
+                    tmpDirection = dir
+                }
+            }
+
+            if (directionChanged) {
+                _previousYs = []
+            } else {
+                direction = tmpDirection
+            }
+        }
     }
 
     Connections {
@@ -237,6 +277,7 @@ Item {
                         // Target reached, clear it.
                         if (atBottom || atTop) {
                             direction = ""
+                            _previousYs = []
                         }
                         if (isOpenedState()) {
                             opened = true

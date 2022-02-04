@@ -30,6 +30,11 @@ SilicaListView {
     // To prevent model to steal focus
     currentIndex: -1
 
+    footer: Item {
+        width: 1
+        height: Theme.itemSizeLarge
+    }
+
     delegate: HistoryItem {
         id: historyDelegate
 
