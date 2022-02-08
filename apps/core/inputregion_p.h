@@ -14,6 +14,7 @@
 
 #include <QObject>
 #include <QWindow>
+#include <QRect>
 #include "inputregion.h"
 
 class InputRegionPrivate {
@@ -27,6 +28,8 @@ public:
     qreal y;
     qreal width;
     qreal height;
+    QRect selectionStartHandleMask;
+    QRect selectionEndHandleMask;
     QWindow *window;
     InputRegion *q_ptr;
     int updateTimerId;

@@ -23,6 +23,8 @@ InputRegionPrivate::InputRegionPrivate(InputRegion *q)
     , y(0.0)
     , width(0.0)
     , height(0.0)
+    , selectionStartHandleMask(0.0, 0.0, 0.0, 0.0)
+    , selectionEndHandleMask(0.0, 0.0, 0.0, 0.0)
     , window(0)
     , q_ptr(q)
     , updateTimerId(0)
@@ -36,7 +38,12 @@ void InputRegionPrivate::update()
     updateTimerId = 0;
 
     if (window) {
-        QRegion mask(x, y, width, height);
+        QRect rects[3];
+        rects[0] = selectionStartHandleMask;
+        rects[1] = selectionEndHandleMask;
+        rects[2].setRect(x, y, width, height);
+        QRegion mask;
+        mask.setRects(rects, 3);
         window->setMask(mask);
         if (window->handle()) {
             QPlatformNativeInterface *native = QGuiApplication::platformNativeInterface();
@@ -124,6 +131,38 @@ void InputRegion::setHeight(qreal height)
         d->height = height;
         d->scheduleUpdate();
         emit heightChanged();
+    }
+}
+
+const QRect& InputRegion::selectionStartHandleMask() const
+{
+    Q_D(const InputRegion);
+    return d->selectionStartHandleMask;
+}
+
+void InputRegion::setSelectionStartHandleMask(const QRect& rect)
+{
+    Q_D(InputRegion);
+    if (d->selectionStartHandleMask != rect) {
+        d->selectionStartHandleMask = rect;
+        d->scheduleUpdate();
+        emit selectionStartHandleMaskChanged();
+    }
+}
+
+const QRect& InputRegion::selectionEndHandleMask() const
+{
+    Q_D(const InputRegion);
+    return d->selectionEndHandleMask;
+}
+
+void InputRegion::setSelectionEndHandleMask(const QRect& rect)
+{
+    Q_D(InputRegion);
+    if (d->selectionEndHandleMask != rect) {
+        d->selectionEndHandleMask = rect;
+        d->scheduleUpdate();
+        emit selectionEndHandleMaskChanged();
     }
 }
 
