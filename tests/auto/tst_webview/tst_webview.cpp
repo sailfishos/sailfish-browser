@@ -269,10 +269,10 @@ void tst_webview::testNewTab()
 void tst_webview::testActivateTab()
 {
     // Active tabs in order:
-    // "testpage.html", "TestPage" (0)
-    // "testselect.html", "TestSelect" (1)
-    // "testuseragent.html", "TestUserAgent" (2)
-    // "testnavigation.html", "TestNavigation" (3 - active)
+    // "testpage.html", "TestPage" (0), used(4)
+    // "testselect.html", "TestSelect" (1), used(3)
+    // "testuseragent.html", "TestUserAgent" (2), used(2)
+    // "testnavigation.html", "TestNavigation" (3 - active), used (1)
     QCOMPARE(tabModel->count(), 4);
     QCOMPARE(webContainer->m_webPages->count(), 4);
     QCOMPARE(webContainer->m_webPages->m_activePages.count(), 4);
@@ -315,10 +315,10 @@ void tst_webview::testActivateTab()
 void tst_webview::testCloseActiveTab()
 {
     // Active tabs in order:
-    // "testpage.html", "TestPage" (0 - active)
-    // "testselect.html", "TestSelect" (1)
-    // "testuseragent.html", "TestUserAgent" (2)
-    // "testnavigation.html", "TestNavigation" (3)
+    // "testpage.html", "TestPage" (0 - active), used (1)
+    // "testselect.html", "TestSelect" (1), used (4)
+    // "testuseragent.html", "TestUserAgent" (2), used (3)
+    // "testnavigation.html", "TestNavigation" (3), used (2)
 
     QSignalSpy activeTabChangedSpy(tabModel, SIGNAL(activeTabChanged(int)));
     QSignalSpy tabClosedSpy(tabModel, SIGNAL(tabClosed(int)));
