@@ -215,10 +215,12 @@ void tst_webview::testNewTab()
     QCOMPARE(contentItemSpy.count(), 1);
     QSignalSpy pageUrlChangedSpy(webContainer->webPage(), SIGNAL(urlChanged()));
     QSignalSpy pageTitleChangedSpy(webContainer->webPage(), SIGNAL(titleChanged()));
+    QSignalSpy pageLoadedChangedSpy(webContainer->webPage(), SIGNAL(loadedChanged()));
 
     waitSignals(loadingChanged, 2);
     waitSignals(pageUrlChangedSpy, 1);
     waitSignals(pageTitleChangedSpy, 1);
+    waitSignals(pageLoadedChangedSpy, 1);
 
     // These are difficult to spy at this point as url changes almost immediately
     // and contentItem is changed in newTab code path.
