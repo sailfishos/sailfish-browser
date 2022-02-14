@@ -105,6 +105,8 @@ protected:
     virtual void updateThumbPath(int tabId, const QString &path) = 0;
 
     int nextActiveTabIndex(int index);
+    // This should be only called after active tab is closed.
+    int shiftNewActiveIndex(int oldIndex, int newIndex);
 
     // Used from the tab model unit tests only.
     void setWebContainer(DeclarativeWebContainer *webContainer);
