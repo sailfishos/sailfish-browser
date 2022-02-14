@@ -347,23 +347,23 @@ void tst_webview::testCloseActiveTab()
     QVERIFY(!webContainer->webPage()->loading());
     QCOMPARE(webContainer->webPage()->loadProgress(), 100);
 
-    // "testselect.html", "TestSelect" is the new active tab as it was next to testpage.html.
-    QModelIndex modelIndex = tabModel->createIndex(0, 0);
+    // "testnavigation.html", "TestNavigation" is the new active tab as it was used before the testpage.html.
+    QModelIndex modelIndex = tabModel->createIndex(tabModel->count() - 1, tabModel->count() - 1);
     QString newActiveUrl = tabModel->data(modelIndex, DeclarativeTabModel::UrlRole).toString();
     QString newActiveTitle = tabModel->data(modelIndex, DeclarativeTabModel::TitleRole).toString();
     int newActiveTabId = tabModel->data(modelIndex, DeclarativeTabModel::TabIdRole).toInt();
 
     QCOMPARE(webContainer->webPage()->tabId(), newActiveTabId);
     QCOMPARE(webContainer->url(), newActiveUrl);
-    QVERIFY(webContainer->url().endsWith("testselect.html"));
+    QVERIFY(webContainer->url().endsWith("testnavigation.html"));
     QCOMPARE(webContainer->title(), newActiveTitle);
-    QCOMPARE(webContainer->title(), QString("TestSelect"));
+    QCOMPARE(webContainer->title(), QString("TestNavigation"));
     QCOMPARE(urlChangedSpy.count(), 1);
     QCOMPARE(titleChangedSpy.count(), 1);
     QCOMPARE(webContainer->webPage()->url().toString(), newActiveUrl);
-    QVERIFY(webContainer->webPage()->url().toString().endsWith("testselect.html"));
+    QVERIFY(webContainer->webPage()->url().toString().endsWith("testnavigation.html"));
     QCOMPARE(webContainer->webPage()->title(), newActiveTitle);
-    QCOMPARE(webContainer->webPage()->title(), QString("TestSelect"));
+    QCOMPARE(webContainer->webPage()->title(), QString("TestNavigation"));
 
     // Signaled always when tab is changed.
     arguments = activeTabChangedSpy.takeFirst();
