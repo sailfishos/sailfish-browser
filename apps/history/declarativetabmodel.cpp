@@ -97,6 +97,7 @@ void DeclarativeTabModel::remove(int index) {
 
         removeTab(m_tabs.at(index).tabId(), m_tabs.at(index).thumbnailPath(), index);
         if (removingActiveTab) {
+            newActiveIndex = shiftNewActiveIndex(index, newActiveIndex);
             activateTab(newActiveIndex);
         }
     }
@@ -184,7 +185,8 @@ void DeclarativeTabModel::closeActiveTab()
         int index = activeTabIndex();
         int newActiveIndex = nextActiveTabIndex(index);
         removeTab(m_activeTabId, m_tabs.at(index).thumbnailPath(), index);
-        activateTab(newActiveIndex);
+        newActiveIndex = shiftNewActiveIndex(index, newActiveIndex);
+        activateTab(newActiveIndex, false);
     }
 }
 
@@ -479,6 +481,15 @@ int DeclarativeTabModel::nextActiveTabIndex(int index)
     }
 
     return std::clamp(index, 0, std::max(0, m_tabs.count() - 1));
+}
+
+int DeclarativeTabModel::shiftNewActiveIndex(int oldIndex, int newIndex)
+{
+    if (oldIndex < newIndex) {
+        --newIndex;
+        newIndex = std::clamp(newIndex, 0, std::max(0, m_tabs.count() - 1));
+    }
+    return newIndex;
 }
 
 void DeclarativeTabModel::updateThumbnailPath(int tabId, const QString &path)
