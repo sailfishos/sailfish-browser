@@ -95,3 +95,8 @@ QObject *TestObject::rootObject() const
 {
     return mRootObject;
 }
+
+QQuickView *TestObject::quickView()
+{
+    return &mView;
+}
