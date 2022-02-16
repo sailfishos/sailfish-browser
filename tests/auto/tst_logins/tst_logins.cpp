@@ -3,58 +3,20 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * Copyright (c) 2021 Open Mobile Platform LLC.
+ * Copyright (c) 2022 Jolla Ltd.
  */
 
 #include <QtTest>
-#include <QQuickView>
+#include <QStandardPaths>
 #include <webengine.h>
 #include <webenginesettings.h>
 
-// Registered QML types
-#include "declarativehistorymodel.h"
-#include "persistenttabmodel.h"
-#include "declarativewebcontainer.h"
-#include "declarativewebpage.h"
-#include "declarativewebpagecreator.h"
-#include "privatetabmodel.h"
-#include "declarativebookmarkmodel.h"
-#include "bookmarkfiltermodel.h"
 #include "declarativeloginmodel.h"
 #include "loginfiltermodel.h"
-#include "faviconmanager.h"
-#include "downloadstatus.h"
-#include "desktopbookmarkwriter.h"
-#include "datafetcher.h"
-#include "inputregion.h"
-#include "searchenginemodel.h"
-#include "settingmanager.h"
-
-#include "declarativewebutils.h"
-#include "webpages.h"
-#include "browserpaths.h"
-#include "testobject.h"
-#include "declarativeloginmodel.h"
-
-#ifndef START_URL
-// This should be defined in the build scripts
-#define START_URL "file:///opt/tests/sailfish-browser/manual/testpage.html"
-#endif
 
 #define PROPAGATE_DELAY (50)
 
-static const QString startPage(START_URL);
-
-static QObject *search_model_factory(QQmlEngine *, QJSEngine *)
-{
-   return new SearchEngineModel;
-}
-
-static QObject *faviconmanager_factory(QQmlEngine *, QJSEngine *)
-{
-   return FaviconManager::instance();
-}
-
-class tst_logins : public TestObject
+class tst_logins : public QObject
 {
     Q_OBJECT
 
@@ -65,7 +27,6 @@ private slots:
     // Maintenance
     void initTestCase();
     void init();
-    void cleanup();
     void cleanupTestCase();
 
     // Test cases
@@ -85,63 +46,24 @@ private:
     void resetLoginModel();
     void populateLoginModel(int entries);
 
-private:
-    DeclarativeTabModel *tabModel;
-    DeclarativeWebContainer *webContainer;
     DeclarativeLoginModel *loginModel;
 };
 
 tst_logins::tst_logins()
-    : TestObject()
-    , tabModel(nullptr)
-    , webContainer(nullptr)
+    : QObject()
     , loginModel(nullptr)
 {
 }
 
 void tst_logins::initTestCase()
 {
-    TestObject::init(QUrl("qrc:///tst_logins.qml"));
-    webContainer = TestObject::qmlObject<DeclarativeWebContainer>("webView");
-    QVERIFY(webContainer);
-    QSignalSpy completedChanged(webContainer, SIGNAL(completedChanged()));
-    QSignalSpy loadingChanged(webContainer, SIGNAL(loadingChanged()));
-    QSignalSpy urlChanged(webContainer, SIGNAL(urlChanged()));
-    QSignalSpy titleChanged(webContainer, SIGNAL(titleChanged()));
-    QSignalSpy testSetupReadyChanged(rootObject(), SIGNAL(testSetupReadyChanged()));
+    SailfishOS::WebEngine *engine = SailfishOS::WebEngine::instance();
 
-    tabModel = TestObject::qmlObject<DeclarativeTabModel>("tabModel");
-    QVERIFY(tabModel);
-    tabModel->clear();
-    QSignalSpy tabAddedSpy(tabModel, SIGNAL(tabAdded(int)));
-
-    QTest::qWait(500);
-
-    qDebug() << "Initial page: " << startPage;
-    webContainer->load(startPage);
-
-    waitSignals(completedChanged, 1);
-    waitSignals(loadingChanged, 2);
-    waitSignals(tabAddedSpy, 1);
-    waitSignals(urlChanged, 1);
-    waitSignals(titleChanged, 1);
-    waitSignals(testSetupReadyChanged, 1);
-
-    QVERIFY(rootObject()->property("testSetupReady").toBool());
-    QTest::qWait(500);
-
-    DeclarativeWebPage *webPage = webContainer->webPage();
-    QVERIFY(webPage);
-    QCOMPARE(webPage->url().toString(), startPage);
-    QCOMPARE(webPage->title(), QString("TestPage"));
-    QCOMPARE(webContainer->url(), startPage);
-    QCOMPARE(webContainer->title(), QString("TestPage"));
-    QCOMPARE(tabModel->count(), 1);
-
-    QCOMPARE(tabAddedSpy.count(), 1);
-
-    SailfishOS::WebEngineSettings *webEngineSettings = SailfishOS::WebEngineSettings::instance();
-    webEngineSettings->setPreference(QString("media.resource_handler_disabled"), QVariant(true));
+    if (!engine->isInitialized()) {
+        QSignalSpy initializedSpy(engine, SIGNAL(initialized()));
+        initializedSpy.wait();
+        QCOMPARE(initializedSpy.count(), 1);
+    }
 }
 
 void tst_logins::init() {
@@ -152,27 +74,13 @@ void tst_logins::init() {
     }
 }
 
-void tst_logins::cleanup() {
-    removeAllLogins();
-    if (loginModel) {
-        delete loginModel;
-        loginModel = nullptr;
-    }
-}
-
 void tst_logins::cleanupTestCase()
 {
-    tabModel->clear();
-    QVERIFY(tabModel->count() == 0);
-    QVERIFY(webContainer->url().isEmpty());
-    QVERIFY(webContainer->title().isEmpty());
-
-    // Wait for event loop of db manager
-    tabModel->deleteLater();
-    QTest::waitForEvents();
-    QTest::qWait(500);
+    QTest::qWait(2000);
 
     SailfishOS::WebEngine::instance()->stopEmbedding();
+
+    QTest::qWait(2000);
 }
 
 void tst_logins::addLogin(const QString &hostname, const QString &username, const QString &password)
@@ -703,42 +611,12 @@ void tst_logins::testFiltering()
 int main(int argc, char *argv[])
 {
     QScopedPointer<QGuiApplication> app(new QGuiApplication(argc, argv));
-    app->setQuitOnLastWindowClosed(false);
-
-    tst_logins testcase;
-
-    const char *uri = "Sailfish.Browser";
-
-    // Use QtQuick 2.1 for Sailfish.Browser imports
-    qmlRegisterRevision<QQuickItem, 1>(uri, 1, 0);
-    qmlRegisterRevision<QWindow, 1>(uri, 1, 0);
-
-    qmlRegisterType<DeclarativeHistoryModel>(uri, 1, 0, "HistoryModel");
-    qmlRegisterUncreatableType<DeclarativeTabModel>(uri, 1, 0, "TabModel", "TabModel is abstract!");
-    qmlRegisterUncreatableType<PersistentTabModel>(uri, 1, 0, "PersistentTabModel", "");
-    qmlRegisterType<DeclarativeWebContainer>(uri, 1, 0, "WebContainer");
-    qmlRegisterType<DeclarativeWebPage>(uri, 1, 0, "WebPage");
-    qmlRegisterType<DeclarativeWebPageCreator>(uri, 1, 0, "WebPageCreator");
-
-    qmlRegisterUncreatableType<PrivateTabModel>(uri, 1, 0, "PrivateTabModel", "");
-    qmlRegisterType<DeclarativeBookmarkModel>(uri, 1, 0, "BookmarkModel");
-    qmlRegisterType<BookmarkFilterModel>(uri, 1, 0, "BookmarkFilterModel");
-    qmlRegisterType<DeclarativeLoginModel>(uri, 1, 0, "LoginModel");
-    qmlRegisterType<LoginFilterModel>(uri, 1, 0, "LoginFilterModel");
-    qmlRegisterSingletonType<FaviconManager>(uri, 1, 0, "FaviconManager", faviconmanager_factory);
-    qmlRegisterUncreatableType<DownloadStatus>(uri, 1, 0, "DownloadStatus", "");
-    qmlRegisterType<DesktopBookmarkWriter>(uri, 1, 0, "DesktopBookmarkWriter");
-    qmlRegisterType<DataFetcher>(uri, 1, 0, "DataFetcher");
-    qmlRegisterType<InputRegion>(uri, 1, 0, "InputRegion");
-    qmlRegisterSingletonType<SearchEngineModel>(uri, 1, 0, "SearchEngineModel", search_model_factory);
-
     QString path = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
     qDebug() << "Profile path: " << path;
     SailfishOS::WebEngine::initialize(path);
     SailfishOS::WebEngineSettings::initialize();
 
-    testcase.setContextProperty("WebUtils", DeclarativeWebUtils::instance());
-    testcase.setContextProperty("Settings", SettingManager::instance());
+    tst_logins testcase;
 
     QString mozillaDir = QString("%1/.mozilla/").arg(path);
     QDir dir(mozillaDir);
