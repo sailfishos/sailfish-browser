@@ -12,6 +12,7 @@
 
 #include <QtTest>
 #include <QQuickView>
+#include <QQmlEngine>
 #include <webengine.h>
 #include <webenginesettings.h>
 
@@ -106,6 +107,7 @@ void tst_webview::initTestCase()
 {
     init(QUrl("qrc:///tst_webview.qml"));
     webContainer = TestObject::qmlObject<DeclarativeWebContainer>("webView");
+    QQmlEngine::setObjectOwnership(webContainer, QQmlEngine::CppOwnership);
     QVERIFY(webContainer);
     QSignalSpy completedChanged(webContainer, SIGNAL(completedChanged()));
     QSignalSpy loadingChanged(webContainer, SIGNAL(loadingChanged()));
@@ -748,6 +750,8 @@ void tst_webview::restart()
     QTest::qWait(1000);
 
     webContainer = TestObject::qmlObject<DeclarativeWebContainer>("webView");
+    QQmlEngine::setObjectOwnership(webContainer, QQmlEngine::CppOwnership);
+
     historyModel = TestObject::qmlObject<DeclarativeHistoryModel>("historyModel");
     tabModel = TestObject::qmlObject<DeclarativeTabModel>("tabModel");
     tabModel->m_unittestMode = true;
