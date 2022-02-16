@@ -697,6 +697,7 @@ void tst_webview::clear()
 
 void tst_webview::restart()
 {
+    QSKIP("JB#57490 - Failing to restart, releasing of QMozWindow needs changes.");
     QSignalSpy historyAvailable(DBManager::instance(), SIGNAL(historyAvailable(QList<Link>)));
 
     // Title "TestPage"
