@@ -58,12 +58,13 @@ void TestObject::init(const QUrl &url)
 */
 void TestObject::waitSignals(QSignalSpy &spy, int expectedSignalCount, int timeout) const
 {
-    int i = 0;
-    int maxWaits = 10;
-    while (spy.count() < expectedSignalCount && i < maxWaits) {
-        spy.wait(timeout);
-        ++i;
-    }
+    QElapsedTimer timer;
+    timer.start();
+    do {
+        QCoreApplication::processEvents(QEventLoop::AllEvents);
+        QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+        QTest::qSleep(10);
+    } while (timer.elapsed() < timeout && spy.count() < expectedSignalCount);
 }
 
 void TestObject::setTestData(QByteArray qmlData)
