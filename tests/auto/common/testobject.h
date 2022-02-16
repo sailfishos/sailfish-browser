@@ -49,6 +49,8 @@ public:
         return qobject_cast<T *>(qvariant_cast<QObject*>(var));
     }
 
+    bool running;
+
 private:
     QObject *mRootObject;
     QQuickView mView;
