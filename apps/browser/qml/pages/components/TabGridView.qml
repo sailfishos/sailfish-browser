@@ -120,4 +120,12 @@ SilicaGridView {
         running: true
         onTriggered: positionViewAtIndex(model.activeTabIndex, GridView.Center)
     }
+
+    Connections {
+        target: webView
+
+        onApplicationClosing: {
+            if (tabGridView.closingAllTabs) tabGridView.closeAll()
+        }
+    }
 }

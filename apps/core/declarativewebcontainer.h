@@ -204,6 +204,7 @@ signals:
     void webContentOrientationChanged(Qt::ScreenOrientation orientation);
     void securityChanged();
     void historyModelChanged();
+    void applicationClosing();
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event);

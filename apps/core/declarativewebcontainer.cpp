@@ -690,6 +690,7 @@ bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
                     m_closeEventFilter->closeApplication();
                 }
             }
+            emit applicationClosing();
         } else if (event->type() == QEvent::Show) {
             if (!handle()) {
                 m_closeEventFilter->cancelCloseApplication();
