@@ -11,6 +11,6 @@ X-Maemo-Service=org.sailfishos.captiveportal
 X-Maemo-Method=org.sailfishos.captiveportal.openUrl
 
 [X-Sailjail]
-Permissions=CaptivePortal;Audio;Location;Internet;Downloads
+Permissions=CaptivePortal;Audio;Camera;Location;Internet;Downloads
 OrganizationName=org.sailfishos
 ApplicationName=captiveportal
