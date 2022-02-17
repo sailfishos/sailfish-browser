@@ -16,6 +16,7 @@ import Sailfish.Silica 1.0
 import Sailfish.Silica.private 1.0 as Private
 import Sailfish.Browser 1.0
 import Sailfish.Policy 1.0
+import Nemo.Configuration 1.0
 import "components" as Browser
 import "../shared" as Shared
 
@@ -149,6 +150,12 @@ Page {
         }
     }
 
+    ConfigurationValue {
+        id: maxliveTabs
+        key: "/apps/sailfish-browser/settings/max_live_tab_count"
+        defaultValue: 3
+    }
+
     Browser.DownloadRemorsePopup { id: downloadPopup }
     Shared.WebView {
         id: webView
@@ -156,7 +163,7 @@ Page {
         enabled: overlay.animator.allowContentUse
         fullscreenHeight: portrait ? Screen.height : Screen.width
         portrait: browserPage.isPortrait
-        maxLiveTabCount: 3
+        maxLiveTabCount: maxliveTabs.value
         toolbarHeight: overlay.animator.opened ? overlay.toolBar.rowHeight : 0
         rotationHandler: browserPage
         imOpened: virtualKeyboardObserver.opened
