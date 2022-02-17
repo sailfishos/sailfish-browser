@@ -32,7 +32,7 @@
                <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_webpagefactory</step>
            </case>
            <case manual="false" name="logins">
-               <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; LOW_MEMORY_DISABLED=1 ./tst_logins -platform wayland-egl</step>
+               <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_logins</step>
            </case>
            <post_steps>
                <step>/usr/sbin/mcetool -jdisabled -Doff</step>

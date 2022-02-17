@@ -1,7 +1,0 @@
-<!DOCTYPE RCC><RCC version="1.0">
-<qresource>
-    <file>tst_logins.qml</file>
-    <file alias="ResourceController.qml">ResourceControllerMock.qml</file>
-    <file alias="WebView.qml">../../../apps/shared/WebView.qml</file>
-</qresource>
-</RCC>

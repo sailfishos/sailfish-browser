@@ -20,11 +20,3 @@ include(../../../apps/history/history.pri)
 include(../../../common/browserapp.pri)
 
 SOURCES += tst_logins.cpp
-
-OTHER_FILES = *.qml
-
-RESOURCES = tst_logins.qrc
-
-START_FILE = $$clean_path($$join(target.path, "", "", "/../manual/testpage.html"))
-DEFINES += 'START_URL=\'\"file://$$START_FILE\"\''
-message("START_FILE: $$START_FILE")
