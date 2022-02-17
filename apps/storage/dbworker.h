@@ -59,6 +59,11 @@ public slots:
     SettingsMap getSettings();
     void deleteSetting(const QString &name);
 
+    void setUserAgentOverride(const QString &host, const bool isKey, const QString &userAgent);
+    void unsetUserAgentOverride(const QString &host);
+    void clearUserAgentOverrides();
+    QVariantMap getUserAgentOverrides();
+
 signals:
     void tabsAvailable(QList<Tab> tabs);
     void thumbPathChanged(int tabId, const QString &path);
