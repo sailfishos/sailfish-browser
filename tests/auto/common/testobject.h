@@ -43,11 +43,14 @@ public:
     void setContextProperty(const QString &name, QObject *value);
     int random(int min, int max);
     QObject *rootObject() const;
+    QQuickView *quickView();
 
     template <typename T> T *qmlObject(const char *propertyName) {
         QVariant var = mRootObject->property(propertyName);
         return qobject_cast<T *>(qvariant_cast<QObject*>(var));
     }
+
+    bool running;
 
 private:
     QObject *mRootObject;
