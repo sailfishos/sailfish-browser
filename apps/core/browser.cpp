@@ -14,6 +14,7 @@
 #include "browser_p.h"
 #include "declarativewebutils.h"
 #include "downloadmanager.h"
+#include "useragentmanager.h"
 #include "settingmanager.h"
 #include "browserapp.h"
 
@@ -83,10 +84,12 @@ Browser::Browser(QQuickView *view, QObject *parent)
 
     DeclarativeWebUtils *utils = DeclarativeWebUtils::instance();
     DownloadManager *downloadManager = DownloadManager::instance();
+    UserAgentManager *userAgentManager = UserAgentManager::instance();
 
     d->view->rootContext()->setContextProperty("WebUtils", utils);
     d->view->rootContext()->setContextProperty("Settings", SettingManager::instance());
     d->view->rootContext()->setContextProperty("DownloadManager", downloadManager);
+    d->view->rootContext()->setContextProperty("UserAgentManager", userAgentManager);
 
     QString mainQml = BrowserApp::captivePortal() ? "captiveportal.qml" : "browser.qml";
 

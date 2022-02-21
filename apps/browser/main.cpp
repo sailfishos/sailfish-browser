@@ -40,6 +40,8 @@
 #include "secureaction.h"
 #include "faviconmanager.h"
 #include "bookmarkmanager.h"
+#include "useragentmodel.h"
+#include "useragentfiltermodel.h"
 
 #ifdef HAS_BOOSTER
 #include <MDeclarativeCache>
@@ -153,6 +155,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
         qmlRegisterType<DeclarativeLoginModel>(uri, 1, 0, "LoginModel");
         qmlRegisterType<LoginFilterModel>(uri, 1, 0, "LoginFilterModel");
         qmlRegisterSingletonType<BookmarkManager>(uri, 1, 0, "BookmarkManager", bookmarkmanager_factory);
+        qmlRegisterType<UserAgentModel>(uri, 1, 0, "UserAgentModel");
+        qmlRegisterType<UserAgentFilterModel>(uri, 1, 0, "UserAgentFilterModel");
     }
     qmlRegisterSingletonType<FaviconManager>(uri, 1, 0, "FaviconManager", faviconmanager_factory);
     qmlRegisterUncreatableType<DownloadStatus>(uri, 1, 0, "DownloadStatus", "");
