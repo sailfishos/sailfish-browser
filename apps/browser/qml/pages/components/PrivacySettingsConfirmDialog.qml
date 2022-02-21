@@ -20,6 +20,7 @@ Dialog {
     property alias cacheEnabled: cacheItem.visible
     property alias bookmarksEnabled: bookmarksItem.visible
     property alias sitePermissionsEnabled: sitePermissionsItem.visible
+    property alias userAgentOverridesEnabled: userAgentOverridesItem.visible
 
     property int historyPeriod
 
@@ -118,6 +119,13 @@ Dialog {
                 //% "Site permissions"
                 text: qsTrId("sailfish_browser-la-site_permissions");
             }
+
+            BrowserDataItem {
+                id: userAgentOverridesItem
+
+                //% "User agent overrides"
+                text: qsTrId("sailfish_browser-la-user_agent_overrides");
+            }
         }
     }
 
@@ -139,6 +147,9 @@ Dialog {
         }
         if (sitePermissionsEnabled) {
             Settings.clearSitePermissions()
+        }
+        if (userAgentOverridesEnabled) {
+            UserAgentManager.clearUserAgentOverrides()
         }
     }
 
