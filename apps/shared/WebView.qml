@@ -111,7 +111,7 @@ WebContainer {
 
     selectionActive: webView.contentItem && webView.contentItem.textSelectionActive
     touchBlocked: contentItem && contentItem.popupOpener && contentItem.popupOpener.active ||
-                   selectionActive || !AccessPolicy.browserEnabled || false
+                   !AccessPolicy.browserEnabled || false
     favicon: contentItem ? contentItem.favicon : ""
 
     onSelectionActiveChanged: {
