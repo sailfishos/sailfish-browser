@@ -9,7 +9,7 @@
 Name:       sailfish-browser
 
 Summary:    Sailfish Browser
-Version:    2.1.0
+Version:    2.2.45
 Release:    1
 License:    MPLv2.0
 Url:        https://github.com/sailfishos/sailfish-browser
@@ -116,6 +116,7 @@ cp -f data/70-browser.conf %{buildroot}/%{_sharedstatedir}/environment/nemo/
 # Upgrade, count is 2 or higher (depending on the number of versions installed)
 if [ "$1" -ge 2 ]; then
     %{_bindir}/add-oneshot --all-users --now browser-cleanup-startup-cache || :
+    %{_bindir}/add-oneshot --all-users browser-cleanup-customua || :
     %{_bindir}/add-oneshot --new-users --all-users --late browser-update-default-data || :
     %{_bindir}/add-oneshot --all-users browser-move-data-to-new-location || :
     %{_bindir}/add-oneshot --all-users browser-deprecate-dconf-keys || :

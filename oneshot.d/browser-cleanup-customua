@@ -1,0 +1,6 @@
+#!/bin/sh
+CUSTOM_UA_CLEANED=~/.local/share/org.sailfishos/browser/.mozilla/CUSTOM_UA_CLEANED
+if [ ! -f "$CUSTOM_UA_CLEANED" ]; then
+    sed -i  '/general.useragent.override/d' ~/.local/share/org.sailfishos/browser/.mozilla/prefs.js
+    touch $CUSTOM_UA_CLEANED
+fi
