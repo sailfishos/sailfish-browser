@@ -89,6 +89,15 @@
             }
         }
 
+        function isBottomBarVisible() {
+            return document.getElementById("fixed-bottom-bar").style.visibility != "hidden";
+        }
+
+        function toggleBottomBar() {
+            document.getElementById("fixed-bottom-bar").style.visibility = isBottomBarVisible() ? "hidden" : "visible";
+            document.getElementById("bottombar").firstChild.data = isBottomBarVisible() ? "Hide bottom bar" : "Show bottom bar";
+        }
+
         function updateFullscreenStatus() {
             var fullscreen = document.getElementById("fullscreen");
             fullscreen.firstChild.data = (inFullscreen() ? "Exit fullscreen" : "Enter fullscreen");
@@ -168,14 +177,17 @@
                 left: calc(100% - 32px);
                 z-index: 100;
             }
-            .fixed-bottom-bar {
+            #fixed-bottom-bar {
                 padding: 4px;
                 position: fixed;
                 bottom: 0;
                 left: 0;
-                width: 100%;
-                background: #ff0000;
+                width: 70%;
+                background: #0000ff;
                 color: #ffffff;
+                text-align: center;
+                left: 50%;
+                transform: translateX(-50%);
             }
             #windowsize {
                 color: #aaaaff;
@@ -207,11 +219,10 @@
         <i class="arrowhead up"></i>
         <i class="arrowhead down"></i>
         <div id="content" class="box">
-            <p/><div style="width: 10px; height: 6%;"></div>
+            <p/><div style="width: 10px; height: 2%;"></div>
             <center>
                 <p/><span id="windowsize"></span>
                 <p/><span id="contentsize"></span>
-                <br/>
                 <p/><span id="hiddenvalue" style="opacity: 0.0"></span>
                 <p/><input type="text" placeholder="Open keyboard #1"></input>
                 <p/>
@@ -219,11 +230,12 @@
                 <button onclick="changeheight(-16)">Less content</button>
                 <p/>
                 <button id="fullscreen" onclick="toggleFullscreen()">Enter fullscreen</button>
+                <button id="bottombar" onclick="toggleBottomBar()">Hide bottom bar</button>
             </center>
             <iframe id="frame" src="testmarginbottom-text-input-subframe.html" align="middle"></iframe>
             <input id="bottominput" type="text" placeholder="Open keyboard #3"></input>
         </div>
-        <div class="fixed-bottom-bar">This is fixed bottom bar</div>
+        <center><div id="fixed-bottom-bar">This is fixed bottom bar</div></center>
     </body>
 </html>
 
