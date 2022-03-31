@@ -279,7 +279,13 @@ void tst_declarativehistorymodel::removeHistoryEntries()
     // Reset search results.
     verifySearchResult("", entries.count());
 
-    historyModel->remove(index);
+    if (index >= 0 && index < entries.count()) {
+        // Remove by url rather than index, since the ordering may change
+        historyModel->remove(entries[index].url);
+    } else {
+        // Out of bounds test
+        historyModel->remove(index);
+    }
     verifySearchResult("", countWithEmptySearchIndexRemoved);
 
     historyModel->search(searchTerm);
