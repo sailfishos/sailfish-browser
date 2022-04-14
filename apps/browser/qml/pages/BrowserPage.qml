@@ -308,7 +308,7 @@ Page {
         onActiveChanged: {
             var isFullScreen = webView.contentItem && webView.contentItem.fullscreen
             if (!isFullScreen && active && !overlay.enteringNewTabUrl) {
-                if (webView.tabModel.count !== 0 || (WebUtils.homePage !== "about:blank" && WebUtils.homePage.length > 0)) {
+                if (webView.hasInitialUrl || webView.tabModel.count !== 0 || (WebUtils.homePage !== "about:blank" && WebUtils.homePage.length > 0)) {
                     overlay.animator.showChrome()
                 } else {
                     overlay.startPage()
