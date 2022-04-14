@@ -890,7 +890,6 @@ int main(int argc, char *argv[])
     QString path = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
     qDebug() << "Profile path: " << path;
     SailfishOS::WebEngine::initialize(path);
-    SailfishOS::WebEngineSettings::initialize();
 
     tst_webview *testcase = new tst_webview;
 
@@ -938,11 +937,7 @@ int main(int argc, char *argv[])
         if (testcase->running) {
             return;
         }
-
         contextDestroyed = true;
-        delete testcase;
-        testcase = nullptr;
-        QTest::waitForEvents();
     });
 
     int ret = QTest::qExec(testcase, argc, argv);
@@ -961,6 +956,8 @@ int main(int argc, char *argv[])
         QEventLoop::ProcessEventsFlags flags = QEventLoop::AllEvents | QEventLoop::WaitForMoreEvents;
         QCoreApplication::processEvents(flags, 500);
     }
+    delete testcase;
+    testcase = nullptr;
 
     QString dbFileName = QString("%1/%2")
             .arg(BrowserPaths::dataLocation())
