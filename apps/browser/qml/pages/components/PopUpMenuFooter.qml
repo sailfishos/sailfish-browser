@@ -27,6 +27,20 @@ Rectangle {
         height: root.height
 
         Shared.IconButton {
+            id: closeTabButton
+            width: Theme.itemSizeLarge
+            icon.source: "image://theme/icon-m-tab-close"
+            icon.opacity: enabled ? 1.0 : Theme.opacityLow
+            enabled: webView.tabModel.count > 0
+            onTapped: {
+                webView.tabModel.closeActiveTab()
+                if (webView.tabModel.count === 0) {
+                    overlay.startPage(PageStackAction.Animated)
+                }
+            }
+        }
+
+        Shared.IconButton {
             id: forwardButton
             width: Theme.itemSizeLarge
             icon.source: "image://theme/icon-m-forward"
@@ -34,18 +48,6 @@ Rectangle {
             enabled: webView.canGoForward
             onTapped: {
                 webView.goForward()
-                overlay.animator.showChrome()
-            }
-        }
-
-        Shared.IconButton {
-            id: shareButton
-            width: Theme.itemSizeLarge
-            icon.source: "image://theme/icon-m-share"
-            icon.opacity: enabled ? 1.0 : Theme.opacityLow
-            enabled: webView.contentItem
-            onTapped: {
-                overlay.toolBar.shareActivePage()
                 overlay.animator.showChrome()
             }
         }

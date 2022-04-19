@@ -148,21 +148,23 @@ void WebPageQueue::clear()
     m_queue.clear();
 }
 
-int WebPageQueue::parentTabId(int tabId) const
+int WebPageQueue::tabId(uint32_t uniqueId) const
 {
-    // TODO: This should be stored to the declarativewebpage to avoid loops.
-    // This guarantees that child-parent relationship exists and it should
-    // be taken into account if/when moved to declarativewebpage.
-    // Ported from webpages.cpp.
-    int index = 0;
-    WebPageEntry *childPageEntry = find(tabId, index);
-    if (childPageEntry) {
-        int parentId = childPageEntry->parentId;
-        for (int i = 0; i < m_queue.count(); ++i) {
-            WebPageEntry *parentPageEntry = m_queue.at(i);
-            if (parentPageEntry && (int)parentPageEntry->uniqueId == parentId) {
-                return parentPageEntry->tabId;
-            }
+    for (int i = 0; i < m_queue.count(); ++i) {
+        WebPageEntry *pageEntry = m_queue.at(i);
+        if (pageEntry && (quint32)pageEntry->uniqueId == uniqueId) {
+            return pageEntry->tabId;
+        }
+    }
+    return 0;
+}
+
+int WebPageQueue::previouslyUsedTabId() const
+{
+    if (m_queue.count() > 1) {
+        WebPageEntry *pageEntry = m_queue.at(1);
+        if (pageEntry) {
+            return pageEntry->tabId;
         }
     }
     return 0;
@@ -211,6 +213,10 @@ void WebPageQueue::dumpPages() const
         WebPageEntry *pageEntry = m_queue.at(i);
         qDebug() << "tabId: " << pageEntry->tabId;
         qDebug() << "    page: " << pageEntry->webPage;
+        if (pageEntry->webPage) {
+            qDebug() << "    page title:" << pageEntry->webPage->title();
+            qDebug() << "    page title:" << pageEntry->webPage->url();
+        }
         qDebug() << "    cssContentRect:" << pageEntry->cssContentRect;
     }
     qDebug() << "---- end ------";

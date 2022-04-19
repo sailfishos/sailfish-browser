@@ -12,7 +12,6 @@
 
 #include "browser.h"
 #include "browser_p.h"
-#include "closeeventfilter.h"
 #include "declarativewebutils.h"
 #include "downloadmanager.h"
 #include "settingmanager.h"
@@ -36,7 +35,6 @@ const auto MOZILLA_DATA_PREFS_SOURCE = QStringLiteral("/usr/share/sailfish-brows
 
 BrowserPrivate::BrowserPrivate(QQuickView *view)
     : view(view)
-    , closeEventFilter(nullptr)
 {
     initUserData();
 }
@@ -90,9 +88,6 @@ Browser::Browser(QQuickView *view, QObject *parent)
     d->view->rootContext()->setContextProperty("Settings", SettingManager::instance());
     d->view->rootContext()->setContextProperty("DownloadManager", downloadManager);
 
-    d->closeEventFilter = new CloseEventFilter(downloadManager, this);
-    d->view->installEventFilter(d->closeEventFilter);
-
     QString mainQml = BrowserApp::captivePortal() ? "captiveportal.qml" : "browser.qml";
 
 #ifdef USE_RESOURCES
@@ -128,7 +123,6 @@ QString Browser::applicationFilePath()
 void Browser::openUrl(const QString &url)
 {
     Q_D(Browser);
-    d->closeEventFilter->cancelStopApplication();
     DeclarativeWebUtils::instance()->openUrl(url);
 }
 
@@ -140,14 +134,12 @@ void Browser::openSettings()
 void Browser::openNewTabView()
 {
     Q_D(Browser);
-    d->closeEventFilter->cancelStopApplication();
     emit DeclarativeWebUtils::instance()->activateNewTabViewRequested();
 }
 
 void Browser::showChrome()
 {
     Q_D(Browser);
-    d->closeEventFilter->cancelStopApplication();
     emit DeclarativeWebUtils::instance()->showChrome();
 }
 

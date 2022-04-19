@@ -1,0 +1,70 @@
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, user-scalable=no;">
+        <title>Simple input test</title>
+        <style type="text/css">
+            input {
+                width: 100%;
+            }
+            table {
+                width: 100%;
+            }
+        </style>
+        <script>
+            function init() {
+                var inputs = document.getElementById('inputs').getElementsByTagName('input');
+                for (var index = 0; index < inputs.length; ++index) {
+                    inputs[index].addEventListener('input', function(e) { handle(e); });
+                    inputs[index].addEventListener('paste', function(e) { handle(e); });
+                    inputs[index].addEventListener('keypress', function(e) { handle(e); });
+                    inputs[index].addEventListener('keyup', function(e) { handle(e); });
+                    inputs[index].addEventListener('keydown', function(e) { handle(e); });
+                }
+            }
+            let lastTime = Date.now();
+            function handle(e) {
+                let text = e.target.type + ': ' + e.type;
+                if (e.type == 'keydown' || e.type == 'keypress' || e.type == 'keyup') {
+                    text +=
+                    ' key="' + e.key + '"' +
+                    ' code="' + e.code +  '"' +
+                    (e.shiftKey ? ' shiftKey' : '') +
+                    (e.ctrlKey ? ' ctrlKey' : '') +
+                    (e.altKey ? ' altKey' : '') +
+                    (e.metaKey ? ' metaKey' : '') +
+                    (e.repeat ? ' (repeat)' : '')
+                }
+                text += "\n";
+                if (area.value && Date.now() - lastTime > 250) {
+                    area.value += new Array(30).join('-') + '\n';
+                }
+                lastTime = Date.now();
+                area.value += text;
+                area.scrollTop = area.scrollHeight;
+            }
+        </script>
+    </head>
+    <body onload="init()">
+        <table id="inputs">
+            <tr><td>tel:</td><td><input type="tel"></td></tr>
+            <tr><td>number:</td><td><input type="number"></td></tr>
+            <tr><td>datetime:</td><td><input type="datetime"></td></tr>
+            <tr><td>email:</td><td><input type="email"></td></tr>
+            <tr><td>password:</td><td><input type="password"></td></tr>
+            <tr><td>text:</td><td><input type="text"></td></tr>
+        </table>
+        <textarea id="area" style="width: 100%; height: 150px;"></textarea><br/>
+        <input type="button" onclick="area.value = ''" value="clear log"/><br/>
+        <br/>
+        text:<br/>
+        <input type="text"><br/>
+        text, autocomplete="off":<br/>
+        <input type="text" autocomplete="off"><br/>
+        text, autocapitalize="off":<br/>
+        <input type="text" autocapitalize="off">
+        text, autocapitalize="none":<br/>
+        <input type="text" autocapitalize="none">
+        text, autocapitalize="characters":<br/>
+        <input type="text" autocapitalize="characters">
+    </body>
+</html>

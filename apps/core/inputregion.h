@@ -13,6 +13,7 @@
 #define INPUTREGION_H
 
 #include <QObject>
+#include <QRect>
 #include <qqml.h>
 
 class QWindow;
@@ -26,6 +27,8 @@ class InputRegion : public QObject
     Q_PROPERTY(qreal y READ y WRITE setY NOTIFY yChanged FINAL)
     Q_PROPERTY(qreal width READ width WRITE setWidth NOTIFY widthChanged FINAL)
     Q_PROPERTY(qreal height READ height WRITE setHeight NOTIFY heightChanged FINAL)
+    Q_PROPERTY(QRect selectionStartHandleMask READ selectionStartHandleMask WRITE setSelectionStartHandleMask NOTIFY selectionStartHandleMaskChanged FINAL)
+    Q_PROPERTY(QRect selectionEndHandleMask READ selectionEndHandleMask WRITE setSelectionEndHandleMask NOTIFY selectionEndHandleMaskChanged FINAL)
     Q_PROPERTY(QWindow *window READ window WRITE setWindow NOTIFY windowChanged FINAL)
 public:
     InputRegion(QObject *parent = 0);
@@ -42,6 +45,11 @@ public:
     qreal height() const;
     void setHeight(qreal height);
 
+    const QRect& selectionStartHandleMask() const;
+    void setSelectionStartHandleMask(const QRect& rect);
+    const QRect& selectionEndHandleMask() const;
+    void setSelectionEndHandleMask(const QRect& rect);
+
     QWindow *window() const;
     void setWindow(QWindow *window);
 
@@ -50,6 +58,8 @@ signals:
     void yChanged();
     void widthChanged();
     void heightChanged();
+    void selectionStartHandleMaskChanged();
+    void selectionEndHandleMaskChanged();
     void windowChanged();
 
 protected:

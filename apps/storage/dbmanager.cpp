@@ -110,6 +110,12 @@ void DBManager::removeAllTabs()
                               Q_ARG(bool, true));
 }
 
+void DBManager::updateUrl(int tabId, const QString &requestedUrl, const QString &resolvedUrl)
+{
+    QMetaObject::invokeMethod(worker, "updateUrl", Qt::QueuedConnection,
+                              Q_ARG(int, tabId), Q_ARG(QString, requestedUrl), Q_ARG(QString, resolvedUrl));
+}
+
 void DBManager::updateTitle(int tabId, const QString &url, const QString &title)
 {
     QMetaObject::invokeMethod(worker, "updateTitle", Qt::QueuedConnection,
@@ -140,10 +146,9 @@ void DBManager::addHistoryEntry(const QString &url, const QString &title)
                               Q_ARG(QString, url), Q_ARG(QString, title));
 }
 
-void DBManager::clearHistory()
+void DBManager::clearHistory(int period)
 {
-    FaviconManager::instance()->clear(QStringLiteral("history"));
-    QMetaObject::invokeMethod(worker, "clearHistory", Qt::QueuedConnection);
+    QMetaObject::invokeMethod(worker, "clearHistory", Qt::QueuedConnection, Q_ARG(int, period));
 }
 
 void DBManager::getHistory(const QString &filter)

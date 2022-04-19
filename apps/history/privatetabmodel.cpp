@@ -43,6 +43,13 @@ void PrivateTabModel::removeTab(int tabId)
     Q_UNUSED(tabId)
 }
 
+void PrivateTabModel::updateRequestedUrl(int tabId, const QString &requestedUrl, const QString &resolvedUrl)
+{
+    Q_UNUSED(tabId)
+    Q_UNUSED(requestedUrl)
+    Q_UNUSED(resolvedUrl)
+}
+
 void PrivateTabModel::navigateTo(int tabId, const QString &url, const QString &title, const QString &path) {
     Q_UNUSED(tabId)
     Q_UNUSED(url)

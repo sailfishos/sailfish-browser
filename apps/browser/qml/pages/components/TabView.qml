@@ -35,6 +35,8 @@ SilicaControl {
     property var _remorsePopup
     property bool _closingAllTabs
 
+    property bool _emptyPrivateIcon: (privateMode && _closingAllTabs) || webView.privateTabModel.count === 0
+
     anchors.fill: parent
 
     Private.TabView {
@@ -49,15 +51,51 @@ SilicaControl {
             id: headerTabs
             model: modeModel
             delegate: Private.TabButton {
-                icon.source: model.privateMode ? privateIcon.grabIcon : persistentIcon.grabIcon
+                id: tabButton
+
+                icon.source: {
+                    if (!model.privateMode) {
+                        return "image://theme/icon-m-tabs"
+                    } else if (tabView._emptyPrivateIcon) {
+                        return "image://theme/icon-m-incognito"
+                    } else {
+                        "image://theme/icon-m-incognito-selected"
+                    }
+                }
                 icon.color: palette.primaryColor
+
+                icon.children: Label {
+                    anchors.centerIn: tabButton.icon
+
+                    font.pixelSize: Theme.fontSizeExtraSmall
+                    font.bold: true
+                    color: {
+                        if (model.privateMode) {
+                            return tabView.palette.colorScheme === Theme.LightOnDark
+                                    ? Theme.darkPrimaryColor
+                                    : Theme.lightPrimaryColor
+                        } else if (highlighted || tabButton.isCurrentTab) {
+                            return palette.highlightColor
+                        } else {
+                            return tabView.palette.colorScheme === Theme.LightOnDark
+                                    ? Theme.lightPrimaryColor
+                                    : Theme.darkPrimaryColor
+                        }
+                    }
+
+                    text: model.privateMode
+                            ? (!tabView._emptyPrivateIcon ? webView.privateTabModel.count : "")
+                            : (!tabView.privateMode && tabView._closingAllTabs ? 0 : webView.persistentTabModel.count)
+                }
             }
 
             Rectangle {
                 anchors.fill: parent
 
                 z: -100
-                color: Theme.colorScheme == Theme.LightOnDark ? "black" : "white"
+                color: tabView.palette.colorScheme === Theme.LightOnDark
+                        ? Theme.darkPrimaryColor
+                        : Theme.lightPrimaryColor
             }
         }
         _headerBackgroundVisible: false
@@ -127,78 +165,6 @@ SilicaControl {
                 privateMode: true
             }
         }
-
-        children: [
-            Image {
-                id: persistentIcon
-                property string grabIcon
-
-                function updateGrabImage() {
-                    persistentIcon.grabToImage(function(result) {
-                        grabIcon = result.url
-                    });
-                }
-
-                source: "image://theme/icon-m-tabs"
-                visible: false
-                Label {
-                    anchors.centerIn: parent
-                    text: !privateMode && _closingAllTabs ? 0 : webView.persistentTabModel.count
-                    font.pixelSize: Theme.fontSizeExtraSmall
-                    font.bold: true
-                    onTextChanged: parent.updateGrabImage()
-                }
-                Component.onCompleted: updateGrabImage()
-            },
-            Item {
-                id: privateIcon
-                property string grabIcon
-                property bool isEmptyIcon: (privateMode && _closingAllTabs) || webView.privateTabModel.count === 0
-
-                function updateGrabImage() {
-                    privateIcon.grabToImage(function(result) {
-                        grabIcon = result.url
-                    });
-                }
-                y: -500 // NOTE: Hiding drawing out of sight
-                height: _privateIcon.implicitHeight
-                width: _privateIcon.implicitWidth
-
-                Image {
-                    id: _privateIcon
-
-                    source: privateIcon.isEmptyIcon ? "image://theme/icon-m-incognito" : "image://theme/icon-m-incognito-selected"
-                    visible: false
-                }
-
-                Label {
-                    anchors.fill: _privateIcon
-                    text: !privateIcon.isEmptyIcon ? webView.privateTabModel.count : ""
-                    font.pixelSize: Theme.fontSizeExtraSmall
-                    font.bold: true
-                    horizontalAlignment: Qt.AlignHCenter
-                    verticalAlignment: Qt.AlignVCenter
-
-                    layer.enabled: true
-                    layer.samplerName: "maskSource"
-                    layer.effect: ShaderEffect {
-                        property variant source: _privateIcon
-                        fragmentShader: "
-                                    varying highp vec2 qt_TexCoord0;
-                                    uniform highp float qt_Opacity;
-                                    uniform lowp sampler2D source;
-                                    uniform lowp sampler2D maskSource;
-                                    void main(void) {
-                                        gl_FragColor = texture2D(source, qt_TexCoord0.st) * (1.0-texture2D(maskSource, qt_TexCoord0.st).a) * qt_Opacity;
-                                    }
-                                "
-                    }
-                    onTextChanged: parent.updateGrabImage()
-                }
-                Component.onCompleted: updateGrabImage()
-            }
-
-        ]
     }
 
     TabsToolBar {

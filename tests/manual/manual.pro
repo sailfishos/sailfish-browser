@@ -8,6 +8,7 @@ testdata.files = *.txt \
                  *.css \
                  mix-blend-mode/*.png \
                  mix-blend-mode/*.svg \
+                 leak-test/* \
                  icon-launcher-testbrowser.png
 testdata.path = /opt/tests/sailfish-browser/manual/
 

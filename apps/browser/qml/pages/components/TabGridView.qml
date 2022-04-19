@@ -17,7 +17,6 @@ SilicaGridView {
 
     property bool portrait
     property bool closingAllTabs
-    property bool loaded
 
     property var remorsePopup
     readonly property bool largeScreen: Screen.sizeCategory > Screen.Medium
@@ -63,7 +62,7 @@ SilicaGridView {
     width: parent.width - Theme.horizontalPageMargin
     height: parent.height
     x: Theme.horizontalPageMargin
-    currentIndex: -1
+    currentIndex: model.activeTabIndex
     cellWidth: thumbnailWidth + Theme.paddingLarge
     cellHeight: thumbnailHeight + Theme.paddingLarge
 
@@ -82,12 +81,6 @@ SilicaGridView {
         }
         GridView.onRemove: RemoveAnimation {
             target: tabItem
-        }
-
-        Component.onCompleted:  {
-            if ((index / columns * cellHeight) > tabGridView.height) {
-                tabGridView.loaded = true
-            }
         }
     }
 
@@ -122,15 +115,9 @@ SilicaGridView {
         text: qsTrId("sailfish_browser-la-push_button_plus_to_create_tab_hint")
     }
 
-    onLoadedChanged: positionViewAtIndex(model.activeTabIndex, GridView.Center)
-
-    Connections {
-        target: model
-        // Force update GridView when deleting a tab
-        onTabClosed: {
-            var oldModel = tabGridView.model
-            tabGridView.model = undefined
-            tabGridView.model = oldModel
-        }
+    Timer {
+        interval: 100
+        running: true
+        onTriggered: positionViewAtIndex(model.activeTabIndex, GridView.Center)
     }
 }

@@ -1,7 +1,7 @@
 /****************************************************************************
 **
 ** Copyright (c) 2014 - 2016 Jolla Ltd.
-** Copyright (c) 2020 Open Mobile Platform LLC.
+** Copyright (c) 2020 - 2021 Open Mobile Platform LLC.
 ** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **
 ****************************************************************************/
@@ -13,11 +13,13 @@
 import QtQuick 2.1
 import Sailfish.Silica 1.0
 import org.nemomobile.configuration 1.0
+import Sailfish.Browser 1.0
 
 Page {
     id: page
 
     property var remorse
+    property var previousPage
 
     SilicaFlickable {
         anchors.fill: parent
@@ -49,10 +51,46 @@ Page {
                     description: qsTrId("settings_browser-la-clear_history_description")
                 }
 
+                ComboBox {
+                     id: historyErasingComboBox
+
+                     width: parent.width
+                     //% "Clear browser history for"
+                     label: qsTrId("settings_browser-la-clear_history_period")
+
+                     menu: ContextMenu {
+
+                         MenuItem {
+                             property int period: 1
+                             //% "Last 24 hours"
+                             text: qsTrId("settings_browser-la-clear_history_day")
+                         }
+
+                         MenuItem {
+                             property int period: 7
+                             //% "Last week"
+                             text: qsTrId("settings_browser-la-clear_history_week")
+                         }
+
+                         MenuItem {
+                             property int period: 28
+                             //% "Last 4 weeks"
+                             text: qsTrId("settings_browser-la-clear_history_four_weeks")
+                         }
+
+                         MenuItem {
+                             property int period: 0
+                             //% "All time"
+                             text: qsTrId("settings_browser-la-clear_history_everything")
+                         }
+                     }
+                 }
+
                 TextSwitch {
-                    id: clearCookies
-                    //% "Cookies"
-                    text: qsTrId("settings_browser-la-clear_cookies")
+                    id: clearCookiesAndSiteData
+
+                    //% "Cookies and site data"
+                    text: qsTrId("settings_browser-la-clear_cookies_and_site_data")
                     checked: true
                 }
 
@@ -77,6 +115,14 @@ Page {
                     checked: true
                 }
 
+                TextSwitch {
+                    id: clearSitePermissions
+
+                    //% "Site permissions"
+                    text: qsTrId("settings_browser-la-clear_site_permissions")
+                    checked: true
+                }
+
                 // Spacer between Button and switches
                 Item {
                     width: parent.width
@@ -88,68 +134,27 @@ Page {
                     //% "Clear"
                     text: qsTrId("settings_browser-bt-clear")
                     anchors.horizontalCenter: parent.horizontalCenter
-                    enabled: clearHistory.checked || clearCookies.checked || clearSavedPasswords.checked || clearCache.checked || clearBookmarks.checked
+                    enabled: clearHistory.checked
+                             || clearCookiesAndSiteData.checked
+                             || clearSavedPasswords.checked
+                             || clearCache.checked
+                             || clearBookmarks.checked
+                             || clearSitePermissions.checked
 
                     onClicked: {
-                        //: Remorse item for clearing private data
-                        //% "Cleared"
-                        remorse = Remorse.popupAction(page, qsTrId("settings_browser-la-cleared_private_data"),
-                                                 function() {
-                                                     if (clearHistory.checked) {
-                                                         clearHistoryConfig.value = true
-                                                     }
-                                                     if (clearCookies.checked) {
-                                                         clearCookiesConfig.value = true
-                                                     }
-                                                     if (clearSavedPasswords.checked) {
-                                                         clearSavedPasswordsConfig.value = true
-                                                     }
-                                                     if (clearCache.checked) {
-                                                         clearCacheConfig.value = true
-                                                     }
-                                                     if (clearBookmarks.checked) {
-                                                         clearBookmarksConfig.value = true
-                                                     }
-                                                 }
-                        );
+                        var page = pageStack.push(Qt.resolvedUrl("components/PrivacySettingsConfirmDialog.qml"), {
+                                                      historyEnabled: clearHistory.checked,
+                                                      cookieAndSiteDataEnabled: clearCookiesAndSiteData.checked,
+                                                      passwordsEnabled: clearSavedPasswords.checked,
+                                                      cacheEnabled: clearCache.checked,
+                                                      bookmarksEnabled: clearBookmarks.checked,
+                                                      sitePermissionsEnabled: clearSitePermissions.checked,
+                                                      historyPeriod: historyErasingComboBox.currentItem.period,
+                                                      acceptDestination: previousPage
+                                                  })
                     }
                 }
             }
         }
-    }
-
-    ConfigurationValue {
-        id: clearHistoryConfig
-
-        key: "/apps/sailfish-browser/actions/clear_history"
-        defaultValue: false
-    }
-
-    ConfigurationValue {
-        id: clearCookiesConfig
-
-        key: "/apps/sailfish-browser/actions/clear_cookies"
-        defaultValue: false
-    }
-
-    ConfigurationValue {
-        id: clearSavedPasswordsConfig
-
-        key: "/apps/sailfish-browser/actions/clear_passwords"
-        defaultValue: false
-    }
-
-    ConfigurationValue {
-        id: clearCacheConfig
-
-        key: "/apps/sailfish-browser/actions/clear_cache"
-        defaultValue: false
-    }
-
-    ConfigurationValue {
-        id: clearBookmarksConfig
-
-        key: "/apps/sailfish-browser/actions/clear_bookmarks"
-        defaultValue: false
     }
 }

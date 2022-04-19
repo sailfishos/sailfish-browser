@@ -63,7 +63,6 @@ Shared.Background {
             } else {
                 // Loading will start once overlay animator has animated chrome visible.
                 enteredUrl = pageUrl
-                webView.tabModel.waitingForNewTab = true
             }
         }
 
@@ -426,8 +425,8 @@ Shared.Background {
                 onClicked: {
                     var historyPage = pageStack.push("../HistoryPage.qml", { model: historyModel })
                     historyPage.loadPage.connect(loadPage)
-                    historyPage.saveBookmark.connect(function(url, title) {
-                        bookmarkModel.add(url, title || url, "", true)
+                    historyPage.saveBookmark.connect(function(url, title, favicon) {
+                        bookmarkModel.add(url, title || url, favicon, true)
                     })
                 }
             }
@@ -504,14 +503,6 @@ Shared.Background {
                     overlayAnimator.showInfoOverlay(false)
                 }
                 onShowChrome: overlayAnimator.showChrome()
-
-                onCloseActiveTab: {
-                    // Activates (loads) the tab next to the currect active.
-                    webView.tabModel.closeActiveTab()
-                    if (webView.tabModel.count === 0) {
-                        overlay.startPage(PageStackAction.Animated)
-                    }
-                }
 
                 onLoadPage: overlay.loadPage(url)
                 onEnterNewTabUrl: overlay.enterNewTabUrl()
@@ -603,7 +594,7 @@ Shared.Background {
                 }
                 // necessary for correct display of context menu of FavoriteGrid
                 onContentHeightChanged: if (menuClosed) contentY = favoriteGrid.y
-                onSaveBookmark: bookmarkModel.add(url, title || url, "", true)
+                onSaveBookmark: bookmarkModel.add(url, title || url, favicon, true)
 
                 viewPlaceholder.enabled: historyList.model && !historyList.model.count
 
@@ -668,12 +659,6 @@ Shared.Background {
                     webView.tabModel.clear()
                     overlay.startPage()
                 }
-
-                Component.onCompleted: {
-                    window.setBrowserCover(webView.tabModel)
-                }
-
-                Component.onDestruction: window.setBrowserCover(webView.tabModel)
             }
         }
     }

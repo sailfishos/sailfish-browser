@@ -23,60 +23,23 @@ static SettingManager *gSingleton = 0;
 
 SettingManager::SettingManager(QObject *parent)
     : QObject(parent)
-    , m_initialized(false)
     , m_searchEnginesInitialized(false)
     , m_addedSearchEngines(0)
 {
-    m_clearHistoryConfItem = new MGConfItem("/apps/sailfish-browser/actions/clear_history", this);
-    m_clearCookiesConfItem = new MGConfItem("/apps/sailfish-browser/actions/clear_cookies", this);
-    m_clearPasswordsConfItem = new MGConfItem("/apps/sailfish-browser/actions/clear_passwords", this);
-    m_clearCacheConfItem = new MGConfItem("/apps/sailfish-browser/actions/clear_cache", this);
     m_searchEngineConfItem = new MGConfItem("/apps/sailfish-browser/settings/search_engine", this);
-    m_doNotTrackConfItem = new MGConfItem("/apps/sailfish-browser/settings/do_not_track", this);
+    connect(m_searchEngineConfItem, &MGConfItem::valueChanged,
+            this, &SettingManager::setSearchEngine);
 
     // Look and feel related settings
     m_toolbarSmall = new MGConfItem("/apps/sailfish-browser/settings/toolbar_small", this);
     m_toolbarLarge = new MGConfItem("/apps/sailfish-browser/settings/toolbar_large", this);
     connect(m_toolbarSmall, &MGConfItem::valueChanged, this, &SettingManager::toolbarSmallChanged);
     connect(m_toolbarLarge, &MGConfItem::valueChanged, this, &SettingManager::toolbarLargeChanged);
+
+    SailfishOS::WebEngine::instance()->addObserver(QStringLiteral("cache-size"));
+    SailfishOS::WebEngine::instance()->addObserver(QStringLiteral("site-data-size"));
     connect(SailfishOS::WebEngine::instance(), &SailfishOS::WebEngine::recvObserve,
             this, &SettingManager::handleObserve);
-}
-
-bool SettingManager::clearHistoryRequested() const
-{
-    return m_clearHistoryConfItem->value(QVariant(false)).toBool();
-}
-
-bool SettingManager::initialize()
-{
-    if (m_initialized) {
-        return false;
-    }
-
-    bool clearedData = clearCookies();
-    clearedData |= clearPasswords();
-    clearedData |= clearCache();
-    clearedData |= clearHistory();
-
-    setSearchEngine();
-    doNotTrack();
-
-    connect(m_clearHistoryConfItem, &MGConfItem::valueChanged,
-            this, &SettingManager::clearHistory);
-    connect(m_clearCookiesConfItem, &MGConfItem::valueChanged,
-            this, &SettingManager::clearCookies);
-    connect(m_clearPasswordsConfItem, &MGConfItem::valueChanged,
-            this, &SettingManager::clearPasswords);
-    connect(m_clearCacheConfItem, &MGConfItem::valueChanged,
-            this, &SettingManager::clearCache);
-    connect(m_searchEngineConfItem, &MGConfItem::valueChanged,
-            this, &SettingManager::setSearchEngine);
-    connect(m_doNotTrackConfItem, &MGConfItem::valueChanged,
-            this, &SettingManager::doNotTrack);
-
-    m_initialized = true;
-    return clearedData;
 }
 
 int SettingManager::toolbarSmall()
@@ -97,45 +60,55 @@ SettingManager *SettingManager::instance()
     return gSingleton;
 }
 
-bool SettingManager::clearHistory()
+void SettingManager::clearHistory(int period)
 {
-    bool actionNeeded = m_clearHistoryConfItem->value(false).toBool();
-    if (actionNeeded) {
-        DBManager::instance()->clearHistory();
-        m_clearHistoryConfItem->set(false);
-    }
-    return actionNeeded;
+    DBManager::instance()->clearHistory(period);
 }
 
-bool SettingManager::clearCookies()
+void SettingManager::clearCookiesAndSiteData()
 {
-    bool actionNeeded = m_clearCookiesConfItem->value(false).toBool();
-    if (actionNeeded) {
-        SailfishOS::WebEngine::instance()->notifyObservers(QString("clear-private-data"), QString("cookies"));
-        m_clearCookiesConfItem->set(false);
-    }
-    return actionNeeded;
+    SailfishOS::WebEngine::instance()->notifyObservers(QString("clear-private-data"), QString("cookies-and-site-data"));
 }
 
-bool SettingManager::clearPasswords()
+void SettingManager::clearPasswords()
 {
-    bool actionNeeded = m_clearPasswordsConfItem->value(false).toBool();
-    if (actionNeeded) {
-        SailfishOS::WebEngine::instance()->notifyObservers(QString("clear-private-data"), QString("passwords"));
-        FaviconManager::instance()->clear("logins");
-        m_clearPasswordsConfItem->set(false);
-    }
-    return actionNeeded;
+    SailfishOS::WebEngine::instance()->notifyObservers(QString("clear-private-data"), QString("passwords"));
+    FaviconManager::instance()->clear("logins");
 }
 
-bool SettingManager::clearCache()
+void SettingManager::clearCache()
 {
-    bool actionNeeded = m_clearCacheConfItem->value(false).toBool();
-    if (actionNeeded) {
-        SailfishOS::WebEngine::instance()->notifyObservers(QString("clear-private-data"), QString("cache"));
-        m_clearCacheConfItem->set(false);
+    SailfishOS::WebEngine::instance()->notifyObservers(QString("clear-private-data"), QString("cache"));
+}
+
+void SettingManager::clearSitePermissions()
+{
+    QVariantMap data;
+    data.insert(QStringLiteral("msg"), QStringLiteral("remove-all"));
+    SailfishOS::WebEngine::instance()->notifyObservers(QString("embedui:perms"), QVariant(data));
+}
+
+void SettingManager::removeAllTabs()
+{
+    DBManager::instance()->removeAllTabs();
+}
+
+void SettingManager::calculateCacheSize(QJSValue callback)
+{
+    if (!callback.isNull() && !callback.isUndefined() && callback.isCallable()) {
+        m_calculateCacheSizeCb.reset(new QJSValue(callback));
+
+        SailfishOS::WebEngine::instance()->notifyObservers(QString("get-cache-size"), QVariant());
     }
-    return actionNeeded;
+}
+
+void SettingManager::calculateSiteDataSize(QJSValue callback)
+{
+    if (!callback.isNull() && !callback.isUndefined() && callback.isCallable()) {
+        m_calculateSiteDataSizeCb.reset(new QJSValue(callback));
+
+        SailfishOS::WebEngine::instance()->notifyObservers(QString("get-site-data-size"), QVariant());
+    }
 }
 
 void SettingManager::setSearchEngine()
@@ -152,13 +125,6 @@ void SettingManager::setSearchEngine()
         SailfishOS::WebEngine *webEngine = SailfishOS::WebEngine::instance();
         webEngine->notifyObservers(QLatin1String("embedui:search"), QVariant(defaultSearchEngine));
     }
-}
-
-void SettingManager::doNotTrack()
-{
-    SailfishOS::WebEngineSettings *webEngineSettings = SailfishOS::WebEngineSettings::instance();
-    webEngineSettings->setPreference(QString("privacy.donottrackheader.enabled"),
-                                     m_doNotTrackConfItem->value(false));
 }
 
 void SettingManager::handleObserve(const QString &message, const QVariant &data)
@@ -225,6 +191,15 @@ void SettingManager::handleObserve(const QString &message, const QVariant &data)
                     m_addedSearchEngines = 0;
                 }
             }
+        }
+    } else if (message == QStringLiteral("cache-size")) {
+        if (!m_calculateCacheSizeCb.isNull()) {
+            m_calculateCacheSizeCb->call(QJSValueList() << dataMap.value(QStringLiteral("usage")).toUInt());
+        }
+
+    } else if (message == QStringLiteral("site-data-size")) {
+        if (!m_calculateSiteDataSizeCb.isNull()) {
+            m_calculateSiteDataSizeCb->call(QJSValueList() << dataMap.value(QStringLiteral("usage")).toUInt());
         }
     }
 }

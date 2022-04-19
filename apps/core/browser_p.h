@@ -12,7 +12,6 @@
 #ifndef BROWSER_PRIVATE_H
 #define BROWSER_PRIVATE_H
 
-class CloseEventFilter;
 class QQuickView;
 
 class BrowserPrivate {
@@ -26,7 +25,6 @@ private:
 
 protected:
     QQuickView *view;
-    CloseEventFilter *closeEventFilter;
 };
 
 #endif // BROWSER_PRIVATE_H

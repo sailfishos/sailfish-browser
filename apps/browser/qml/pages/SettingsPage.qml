@@ -45,32 +45,24 @@ Page {
                 title: qsTrId("sailfish_browser-he-settings")
             }
 
-            ComboBox {
+            BrowserComboBox {
                 id: homePage
 
                 readonly property bool _homePageBlank: homePageConfig.value === "about:blank"
 
-                width: parent.width
                 //: Label for home page text field
                 //% "Home Page"
                 label: qsTrId("settings_browser-la-home_page")
                 //% "Start view"
                 value: _homePageBlank ? qsTrId("sailfish_browser-la-start_view") : removeProtocolTypeFromUri(homePageConfig.value)
-                leftMargin: Theme.horizontalPageMargin + homePageIcon.width + Theme.paddingMedium
-                contentHeight: Theme.itemSizeMedium
 
                 currentIndex: _homePageBlank
                               ? 0 // For start view (blank)
                               : 1 // For web page
 
-                on_HomePageBlankChanged: currentIndex = _homePageBlank ? 0 : 1
+                iconSource: "image://theme/icon-m-home"
 
-                Icon {
-                    id: homePageIcon
-                    source: "image://theme/icon-m-home"
-                    anchors.verticalCenter: parent.verticalCenter
-                    x: Theme.horizontalPageMargin
-                }
+                on_HomePageBlankChanged: currentIndex = _homePageBlank ? 0 : 1
 
                 menu: ContextMenu {
                     MenuItem {
@@ -104,21 +96,13 @@ Page {
                 }
             }
 
-            ComboBox {
+            BrowserComboBox {
                 id: searchEngine
-                width: parent.width
+
                 //: Label for combobox that sets search engine used in browser
                 //% "Search with"
                 label: qsTrId("settings_browser-la-search_with")
-                leftMargin: Theme.horizontalPageMargin + searchIcon.width + Theme.paddingMedium
-                contentHeight: Theme.itemSizeMedium
-
-                Icon {
-                    id: searchIcon
-                    source: "image://theme/icon-m-search"
-                    anchors.verticalCenter: parent.verticalCenter
-                    x: Theme.horizontalPageMargin
-                }
+                iconSource: "image://theme/icon-m-search"
 
                 menu: ContextMenu {
                     Repeater {
@@ -169,9 +153,7 @@ Page {
             }
 
             TextSwitch {
-                id: doNotTrack
-
-                checked: doNotTrackConfig.value
+                checked: WebEngineSettings.doNotTrack
 
                 //: Tell sites that I do not want to be tracked.
                 //% "Do not track"
@@ -183,7 +165,7 @@ Page {
                 leftMargin: Theme.horizontalPageMargin + Theme.paddingLarge + _textSwitchIconCenter
                 _label.anchors.leftMargin: Theme.paddingMedium + _textSwitchIconCenter
 
-                onCheckedChanged: doNotTrackConfig.value = checked
+                onCheckedChanged: WebEngineSettings.doNotTrack = checked
             }
 
             TextSwitch {
@@ -271,7 +253,7 @@ Page {
                         anchors.verticalCenter: clearBrowsingDataIcon.verticalCenter
                     }
                 }
-                onClicked: pageStack.push("PrivacySettingsPage.qml")
+                onClicked: pageStack.push("PrivacySettingsPage.qml", { previousPage: page })
             }
 
             SectionHeader {
@@ -280,7 +262,7 @@ Page {
                 text: qsTrId("settings_browser-la-downloads")
             }
 
-            BrowserListItem {
+            BrowserComboBox {
                 //% "Save destination"
                 label: qsTrId("settings_browser-la-save_destination")
                 iconSource: "image://theme/icon-m-downloads"
@@ -293,6 +275,9 @@ Page {
                         return qsTrId("sailfish_browser-me-always_ask")
                     }
                 }
+                currentIndex: WebEngineSettings.useDownloadDir
+                              ? 0 // for selection a download folder
+                              : 1 // for always ask
 
                 description: {
                     if (WebEngineSettings.useDownloadDir) {
@@ -310,6 +295,8 @@ Page {
                         text: qsTrId("sailfish_browser-me-select_download_folder")
                         onClicked: {
                             WebEngineSettings.useDownloadDir = true
+                            // If the user will reject, choose download path as default
+                            WebEngineSettings.downloadDir = StandardPaths.download
                             pageStack.animatorPush(folderPickerPage)
                         }
                     }
@@ -321,13 +308,6 @@ Page {
                 }
             }
         }
-    }
-
-    ConfigurationValue {
-        id: doNotTrackConfig
-
-        key: "/apps/sailfish-browser/settings/do_not_track"
-        defaultValue: false
     }
 
     ConfigurationValue {

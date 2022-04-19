@@ -10,8 +10,6 @@
 #ifndef DECLARATIVEWEBCONTAINER_H
 #define DECLARATIVEWEBCONTAINER_H
 
-#include "settingmanager.h"
-
 #include <qmozcontext.h>
 #include <qmozsecurity.h>
 #include <QtGui/QWindow>
@@ -32,6 +30,7 @@ class DeclarativeWebPage;
 class WebPages;
 class Tab;
 class DeclarativeHistoryModel;
+class CloseEventFilter;
 
 class DeclarativeWebContainer : public QWindow, public QQmlParserStatus, protected QOpenGLFunctions {
     Q_OBJECT
@@ -48,6 +47,7 @@ class DeclarativeWebContainer : public QWindow, public QQmlParserStatus, protect
     Q_PROPERTY(int maxLiveTabCount READ maxLiveTabCount WRITE setMaxLiveTabCount NOTIFY maxLiveTabCountChanged FINAL)
     // This property should cover all possible popus
     Q_PROPERTY(bool touchBlocked MEMBER m_touchBlocked NOTIFY touchBlockedChanged FINAL)
+    Q_PROPERTY(bool selectionActive MEMBER m_selectionActive NOTIFY selectionActiveChanged FINAL)
     Q_PROPERTY(bool portrait READ portrait WRITE setPortrait NOTIFY portraitChanged FINAL)
     Q_PROPERTY(bool fullscreenMode MEMBER m_fullScreenMode NOTIFY fullscreenModeChanged FINAL)
     Q_PROPERTY(qreal fullscreenHeight MEMBER m_fullScreenHeight NOTIFY fullscreenHeightChanged FINAL)
@@ -138,8 +138,9 @@ public:
     QString thumbnailPath() const;
 
     bool isActiveTab(int tabId);
-    bool activatePage(const Tab& tab, bool force = false, int parentId = 0);
-    int findParentTabId(int tabId) const;
+    bool activatePage(const Tab& tab, bool force = false);
+    int tabId(uint32_t uniqueId) const;
+    int previouslyUsedTabId() const;
     // For D-Bus interfaces
     uint tabOwner(int tabId) const;
     int requestTabWithOwner(int tabId, const QString &url, uint ownerPid);
@@ -173,6 +174,7 @@ signals:
     void allowHidingChanged();
     void maxLiveTabCountChanged();
     void touchBlockedChanged();
+    void selectionActiveChanged();
     void portraitChanged();
     void fullscreenModeChanged();
     void fullscreenHeightChanged();
@@ -220,12 +222,13 @@ protected:
 public slots:
     void updateContentOrientation(Qt::ScreenOrientation orientation);
     void clearSurface();
+    void dsmeStateChange(const QString &state);
 
 private slots:
     void initialize();
     void onActiveTabChanged(int activeTabId);
     void onDownloadStarted();
-    void onNewTabRequested(const Tab &tab, int parentId);
+    void onNewTabRequested(const Tab &tab);
     void releasePage(int tabId);
     void closeWindow();
     void updateLoadProgress();
@@ -233,13 +236,17 @@ private slots:
     void updateActiveTabRendered();
     void onLastViewDestroyed();
 
+    void onLastWindowDestroyed();
     void updateWindowFlags();
 
     // QMozWindow related slots:
     void createGLContext();
-    void drawUnderlay();
 
     void handleContentOrientationChanged(Qt::ScreenOrientation orientation);
+    // Clears window surface on the compositor thread. Can be called even when there are
+    // no active views. In case this function is called too early during gecko initialization,
+    // before compositor thread has actually been started the function returns false.
+    bool postClearWindowSurfaceTask();
 
 private:
     void setWebPage(DeclarativeWebPage *webPage, bool triggerSignals = false);
@@ -251,14 +258,11 @@ private:
     void setActiveTabRendered(bool rendered);
     bool browserEnabled() const;
 
-    // Clears window surface on the compositor thread. Can be called even when there are
-    // no active views. In case this function is called too early during gecko initialization,
-    // before compositor thread has actually been started the function returns false.
-    bool postClearWindowSurfaceTask();
+    void destroyWindow();
     static void clearWindowSurfaceTask(void* data);
     void clearWindowSurface();
 
-    QScopedPointer<QMozWindow> m_mozWindow;
+    QPointer<QMozWindow> m_mozWindow;
     QPointer<QQuickItem> m_rotationHandler;
     QPointer<DeclarativeWebPage> m_webPage;
     QPointer<QQuickView> m_chromeWindow;
@@ -267,7 +271,6 @@ private:
 
     QPointer<DeclarativeTabModel> m_model;
     QPointer<QQmlComponent> m_webPageComponent;
-    QPointer<SettingManager> m_settingManager;
     QPointer<WebPages> m_webPages;
     QPointer<DeclarativeTabModel> m_persistentTabModel;
     QPointer<DeclarativeTabModel> m_privateTabModel;
@@ -276,6 +279,7 @@ private:
     bool m_foreground;
     bool m_allowHiding;
     bool m_touchBlocked;
+    bool m_selectionActive;
     bool m_portrait;
     bool m_fullScreenMode;
     qreal m_fullScreenHeight;
@@ -308,6 +312,8 @@ private:
 
     QHash<int, uint> m_tabOwners;
     DeclarativeHistoryModel *m_historyModel;
+
+    CloseEventFilter *m_closeEventFilter;
 
     friend class tst_webview;
     friend class tst_declarativewebcontainer;

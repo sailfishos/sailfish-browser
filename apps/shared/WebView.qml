@@ -39,8 +39,7 @@ WebContainer {
 
     property var _webPageCreator: WebPageCreator {
         activeWebPage: contentItem
-        // onNewWindowRequested is always handled as synchronous operation (not through newTab).
-        onNewWindowRequested: tabModel.newTab("", parentId)
+        model: tabModel
     }
 
     property Component textSelectionControllerComponent: Component {
@@ -56,6 +55,9 @@ WebContainer {
             }
 
             Behavior on opacity { FadeAnimator {} }
+
+            onStartHandleMaskChanged: browserPage.inputRegion.selectionStartHandleMask = startHandleMask
+            onEndHandleMaskChanged: browserPage.inputRegion.selectionEndHandleMask = endHandleMask
         }
     }
 
@@ -82,10 +84,13 @@ WebContainer {
     }
 
     function thumbnailCaptureSize() {
-        var ratio = browserPage.width / browserPage.thumbnailSize.width
+        var ratio = Math.min(
+                    browserPage.width / browserPage.thumbnailSize.width,
+                    browserPage.height / browserPage.thumbnailSize.height)
+        var width = browserPage.thumbnailSize.width * ratio
         var height = browserPage.thumbnailSize.height * ratio
 
-        return Qt.size(browserPage.width, height)
+        return Qt.size(width, height)
     }
 
     function grabActivePage() {
@@ -99,14 +104,23 @@ WebContainer {
     }
 
     foreground: visibility >= QuickWindow.Window.Maximized && Qt.application.state === Qt.ApplicationActive
-    readyToPaint: resourceController.videoActive ? webView.visible && !resourceController.displayOff : webView.visible && webView.contentItem && webView.contentItem.domContentLoaded
+    readyToPaint: resourceController.videoActive ? webView.visible && !resourceController.displayOff : webView.visible && webView.contentItem && (webView.contentItem.domContentLoaded || webView.contentItem.painted)
     allowHiding: !resourceController.videoActive && !resourceController.audioActive
     fullscreenMode: (contentItem && !contentItem.chrome) ||
                     (contentItem && contentItem.fullscreen)
 
+    selectionActive: webView.contentItem && webView.contentItem.textSelectionActive
     touchBlocked: contentItem && contentItem.popupOpener && contentItem.popupOpener.active ||
-                  webView.contentItem && webView.contentItem.textSelectionActive || !AccessPolicy.browserEnabled || false
+                   !AccessPolicy.browserEnabled || false
     favicon: contentItem ? contentItem.favicon : ""
+
+    onSelectionActiveChanged: {
+        if (!selectionActive && webView.contentItem && webView.contentItem.textSelectionController) {
+            webView.contentItem.textSelectionController.clearSelection()
+            browserPage.inputRegion.selectionStartHandleMask = Qt.rect(0, 0, 0, 0)
+            browserPage.inputRegion.selectionEndHandleMask = Qt.rect(0, 0, 0, 0)
+        }
+    }
 
     webPageComponent: Component {
         WebPage {
@@ -166,8 +180,10 @@ WebContainer {
             }
 
             function clearSelection() {
-                if (textSelectionActive) {
+                if (textSelectionController) {
                     textSelectionController.clearSelection()
+                    browserPage.inputRegion.selectionStartHandleMask = Qt.rect(0, 0, 0, 0)
+                    browserPage.inputRegion.selectionEndHandleMask = Qt.rect(0, 0, 0, 0)
                 }
             }
 
@@ -175,7 +191,7 @@ WebContainer {
             toolbarHeight: container.toolbarHeight
             throttlePainting: !foreground && !resourceController.videoActive && webView.visible || !webView.visible
             enabled: webView.enabled
-            chromeGestureThreshold: toolbarHeight / 2
+            chromeGestureThreshold: toolbarHeight / 3
             chromeGestureEnabled: !forcedChrome && enabled && !webView.imOpened
 
             onGrabResult: tabModel.updateThumbnailPath(tabId, fileName)

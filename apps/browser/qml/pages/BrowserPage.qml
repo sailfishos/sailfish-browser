@@ -16,6 +16,7 @@ import Sailfish.Silica 1.0
 import Sailfish.Silica.private 1.0 as Private
 import Sailfish.Browser 1.0
 import Sailfish.Policy 1.0
+import Nemo.Configuration 1.0
 import "components" as Browser
 import "../shared" as Shared
 
@@ -36,6 +37,7 @@ Page {
     property alias url: webView.url
     property alias title: webView.title
     property alias webView: webView
+    property alias inputRegion: inputRegion
 
     function load(url, title) {
         webView.load(url, title)
@@ -60,23 +62,28 @@ Page {
 
     function inputMaskForOrientation(orientation) {
         // mask is in portrait window coordinates
-        var mask = Qt.rect(0, 0, Screen.width, Screen.height)
-        if (!window.opaqueBackground && webView.enabled && browserPage.active && !webView.touchBlocked && !downloadPopup.visible) {
+        var portraitScreen = window.QuickWindow.Screen.primaryOrientation === Qt.PortraitOrientation
+        var mask = Qt.rect(0, 0,
+                           portraitScreen ? Screen.width : Screen.height,
+                           portraitScreen ? Screen.height : Screen.width)
+        if (webView.enabled && browserPage.active && !webView.touchBlocked && !downloadPopup.visible) {
             var overlayVisibleHeight = browserPage.height - overlay.y
 
-            switch (orientation) {
-            case Orientation.None:
-            case Orientation.Portrait:
+            switch (window.QuickWindow.Screen.angleBetween(orientation, window.QuickWindow.Screen.primaryOrientation)) {
+            case 0:
+            case 360:
                 mask.y = overlay.y
                 // fallthrough
-            case Orientation.PortraitInverted:
+            case 180:
+            case -180:
                 mask.height = overlayVisibleHeight
                 break
-
-            case Orientation.LandscapeInverted:
+            case 270:
+            case -90:
                 mask.x = overlay.y
                 // fallthrough
-            case Orientation.Landscape:
+            case 90:
+            case -270:
                 mask.width = overlayVisibleHeight
             }
         }
@@ -143,6 +150,12 @@ Page {
         }
     }
 
+    ConfigurationValue {
+        id: maxliveTabs
+        key: "/apps/sailfish-browser/settings/max_live_tab_count"
+        defaultValue: 3
+    }
+
     Browser.DownloadRemorsePopup { id: downloadPopup }
     Shared.WebView {
         id: webView
@@ -150,7 +163,7 @@ Page {
         enabled: overlay.animator.allowContentUse
         fullscreenHeight: portrait ? Screen.height : Screen.width
         portrait: browserPage.isPortrait
-        maxLiveTabCount: 3
+        maxLiveTabCount: maxliveTabs.value
         toolbarHeight: overlay.animator.opened ? overlay.toolBar.rowHeight : 0
         rotationHandler: browserPage
         imOpened: virtualKeyboardObserver.opened
@@ -200,8 +213,6 @@ Page {
                 overlay.startPage(openOverlayImmediately ? PageStackAction.Immediate
                                                          : PageStackAction.Animated)
             }
-
-            window.setBrowserCover(webView.tabModel)
         }
     }
 
@@ -214,11 +225,13 @@ Page {
             if (webView.tabModel.count === 0) {
                 webView.handleModelChanges(false)
             }
+            window.setBrowserCover(webView.tabModel)
         }
-        onWaitingForNewTabChanged: window.opaqueBackground = webView.tabModel.waitingForNewTab
     }
 
     InputRegion {
+        id: inputRegion
+
         window: webView.chromeWindow
         x: inputMask.x
         y: inputMask.y
@@ -229,13 +242,9 @@ Page {
     Browser.DimmerEffect {
         id: contentDimmer
 
-        readonly property bool canOpenContentDimmer: webView.activeTabRendered && overlay.animator.atBottom
-
         width: browserPage.width
         height: Math.ceil(overlay.y)
 
-        baseColor: overlay.baseColor
-        baseOpacity: overlay.baseOpacity
         dimmerOpacity: overlay.animator.atBottom
                        ? 0.0
                        : 0.9 - (overlay.y / (webView.fullscreenHeight - overlay.toolBar.rowHeight)) * 0.9
@@ -259,13 +268,6 @@ Page {
             id: privateModeTexture
             anchors.fill: contentDimmer
             visible: webView.privateMode && !overlay.animator.allowContentUse
-        }
-
-        onCanOpenContentDimmerChanged: {
-            if (canOpenContentDimmer) {
-                webView.tabModel.waitingForNewTab = false
-                window.opaqueBackground = false
-            }
         }
     }
 
@@ -297,8 +299,6 @@ Page {
         historyModel: historyModel
         browserPage: browserPage
 
-        onEnteringNewTabUrlChanged: window.opaqueBackground = webView.tabModel.waitingForNewTab || enteringNewTabUrl
-
         animator.onAtBottomChanged: {
             if (!animator.atBottom) {
                 webView.clearSelection()
@@ -308,7 +308,7 @@ Page {
         onActiveChanged: {
             var isFullScreen = webView.contentItem && webView.contentItem.fullscreen
             if (!isFullScreen && active && !overlay.enteringNewTabUrl) {
-                if (webView.tabModel.count !== 0 || webView.tabModel.waitingForNewTab || (WebUtils.homePage !== "about:blank" && WebUtils.homePage.length > 0)) {
+                if (webView.tabModel.count !== 0 || (WebUtils.homePage !== "about:blank" && WebUtils.homePage.length > 0)) {
                     overlay.animator.showChrome()
                 } else {
                     overlay.startPage()
@@ -385,6 +385,7 @@ Page {
                     overlay.enterNewTabUrl(PageStackAction.Immediate)
                 }
 
+                window.activate()
                 return
             }
 
@@ -395,6 +396,8 @@ Page {
             webView.grabActivePage()
             if (webView.tabModel.activateTab(url)) {
                 webView.releaseActiveTabOwnership()
+            } else if (!webView.tabModel.loaded) {
+                webView.load(url)
             } else {
                 webView.clearSelection()
                 webView.tabModel.newTab(url)
@@ -416,13 +419,11 @@ Page {
             bringToForeground(webView.chromeWindow)
             window.activate()
         }
+        onFirstUseDoneChanged: window.setBrowserCover(webView.tabModel)
     }
 
     Component.onCompleted: {
-        if (!WebUtils.firstUseDone) {
-            window.setBrowserCover(webView.tabModel)
-        }
-
+        window.setBrowserCover(webView.tabModel)
         if (Qt.application.arguments.indexOf("-debugMode") > 0) {
             var component = Qt.createComponent(Qt.resolvedUrl("components/DebugOverlay.qml"))
             if (component.status === Component.Ready) {

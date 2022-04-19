@@ -16,11 +16,13 @@
 #include <qmozviewcreator.h>
 
 class DeclarativeWebPage;
+class DeclarativeTabModel;
 
 class DeclarativeWebPageCreator : public QMozViewCreator {
     Q_OBJECT
 
     Q_PROPERTY(DeclarativeWebPage *activeWebPage READ activeWebPage WRITE setActiveWebPage NOTIFY activeWebPageChanged FINAL)
+    Q_PROPERTY(DeclarativeTabModel *model READ model WRITE setModel NOTIFY modelChanged FINAL)
 
 public:
     DeclarativeWebPageCreator(QObject *parent = 0);
@@ -29,14 +31,18 @@ public:
     DeclarativeWebPage *activeWebPage() const;
     void setActiveWebPage(DeclarativeWebPage *activeWebPage);
 
-    virtual quint32 createView(const quint32 &parentId);
+    DeclarativeTabModel *model() const;
+    void setModel(DeclarativeTabModel *model);
+
+    virtual quint32 createView(const quint32 &parentId, const uintptr_t &parentBrowsingContext) override;
 
 signals:
     void activeWebPageChanged();
-    void newWindowRequested(const quint32 &parentId);
+    void modelChanged();
 
 private:
     QPointer<DeclarativeWebPage> m_activeWebPage;
+    QPointer<DeclarativeTabModel> m_model;
 };
 
 #endif // DECLARATIVEWEBPAGECREATOR_H

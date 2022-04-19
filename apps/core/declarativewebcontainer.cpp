@@ -20,6 +20,8 @@
 #include "browserapp.h"
 #include "logging.h"
 #include "declarativehistorymodel.h"
+#include "closeeventfilter.h"
+#include "settingmanager.h"
 
 #include <webengine.h>
 #include <QTimerEvent>
@@ -32,6 +34,9 @@
 
 #include <qpa/qplatformnativeinterface.h>
 #include <libsailfishpolicy/policyvalue.h>
+
+#include <QDBusConnection>
+#include <dsme/dsme_dbus_if.h>
 
 #ifndef DEBUG_LOGS
 #define DEBUG_LOGS 0
@@ -50,11 +55,11 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     , m_context(0)
     , m_model(0)
     , m_webPageComponent(0)
-    , m_settingManager(SettingManager::instance())
     , m_enabled(true)
     , m_foreground(true)
     , m_allowHiding(true)
     , m_touchBlocked(false)
+    , m_selectionActive(false)
     , m_portrait(true)
     , m_fullScreenMode(false)
     , m_fullScreenHeight(0.0)
@@ -68,6 +73,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     , m_activeTabRendered(false)
     , m_clearSurfaceTask(0)
     , m_closing(false)
+    , m_closeEventFilter(nullptr)
 {
     Q_ASSERT(!s_instance);
 
@@ -104,6 +110,8 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
             this, &DeclarativeWebContainer::initialize);
     connect(webEngine, &SailfishOS::WebEngine::lastViewDestroyed,
             this, &DeclarativeWebContainer::onLastViewDestroyed);
+    connect(webEngine, &SailfishOS::WebEngine::lastWindowDestroyed,
+            this, &DeclarativeWebContainer::onLastWindowDestroyed);
 
     QString cacheLocation = BrowserPaths::cacheLocation();
     if (cacheLocation.isNull()) {
@@ -115,7 +123,11 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
 
     qApp->installEventFilter(this);
 
+    m_closeEventFilter = new CloseEventFilter(DownloadManager::instance(), this);
     s_instance = this;
+
+    QDBusConnection::systemBus().connect(dsme_service, dsme_sig_path, dsme_sig_interface, dsme_state_change_ind,
+                                         this, SLOT(dsmeStateChange(QString)));
 }
 
 DeclarativeWebContainer::~DeclarativeWebContainer()
@@ -181,7 +193,7 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage, bool trigg
                     this, &DeclarativeWebContainer::securityChanged, Qt::UniqueConnection);
 
             // NB: these signals are not disconnected upon setting current m_webPage.
-            connect(m_webPage.data(), &DeclarativeWebPage::urlChanged,
+            connect(m_webPage.data(), &DeclarativeWebPage::updateUrl,
                     m_model.data(), &DeclarativeTabModel::onUrlChanged, Qt::UniqueConnection);
             connect(m_webPage.data(), &DeclarativeWebPage::desktopModeChanged,
                     m_model.data(), &DeclarativeTabModel::onDesktopModeChanged, Qt::UniqueConnection);
@@ -191,7 +203,9 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage, bool trigg
             // Wait for one frame to be rendered and schedule update if tab is ready to render.
             connect(m_mozWindow.data(), &QMozWindow::compositingFinished,
                     this, &DeclarativeWebContainer::updateActiveTabRendered, Qt::UniqueConnection);
-            connect(m_webPage.data(), &DeclarativeWebPage::domContentLoadedChanged,
+            connect(m_webPage.data(), &QOpenGLWebPage::domContentLoadedChanged,
+                    this, &DeclarativeWebContainer::updateActiveTabRendered, Qt::UniqueConnection);
+            connect(m_webPage.data(), &QOpenGLWebPage::firstPaint,
                     this, &DeclarativeWebContainer::updateActiveTabRendered, Qt::UniqueConnection);
 
             connect(m_webPage.data(), &DeclarativeWebPage::neterror, [this]() {
@@ -199,12 +213,12 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage, bool trigg
                     m_historyModel->remove(m_webPage->url().toString());
             });
 
-            connect(m_webPage.data(), &DeclarativeWebPage::urlChanged, [this]() {
+            connect(m_webPage.data(), &DeclarativeWebPage::updateUrl, [this]() {
                 if (!BrowserApp::captivePortal() && !m_privateMode && m_historyModel)
                     m_historyModel->add(m_webPage->url().toString(), QString());
             });
 
-            if (m_webPage->completed() && m_webPage->active() && m_webPage->domContentLoaded()) {
+            if (m_webPage->completed() && m_webPage->active() && (m_webPage->isPainted() || m_webPage->domContentLoaded())) {
                 m_webPage->update();
             }
         }
@@ -235,7 +249,6 @@ void DeclarativeWebContainer::setTabModel(DeclarativeTabModel *model)
         if (m_model) {
             disconnect(m_model, 0, 0, 0);
             oldCount = m_model->count();
-            m_model->setWaitingForNewTab(false);
         }
 
         m_model = model;
@@ -256,13 +269,6 @@ void DeclarativeWebContainer::setTabModel(DeclarativeTabModel *model)
         emit tabModelChanged();
         if (m_model && oldCount != newCount) {
             emit m_model->countChanged();
-        }
-
-        // Set waiting for a tab. This can only happen when
-        // browser is already started. Initialization steps take
-        // care creating new tabs as per need.
-        if (m_model && m_initialized) {
-            m_model->setWaitingForNewTab(true);
         }
     }
 }
@@ -458,13 +464,17 @@ void DeclarativeWebContainer::load(const QString &url, bool force)
         tmpUrl = ABOUT_BLANK;
     }
 
-    if (m_webPage && m_webPage->completed()) {
+    if (!canInitialize()) {
+        m_initialUrl = tmpUrl;
+    } else if (m_webPage && m_webPage->completed()) {
         if (m_loading) {
             m_webPage->stop();
         }
         m_webPage->loadTab(tmpUrl, force);
-    } else if (!canInitialize()) {
-        m_initialUrl = tmpUrl;
+        Tab *tab = m_model->getTab(m_webPage->tabId());
+        if (tab) {
+            tab->setRequestedUrl(tmpUrl);
+        }
     } else if (m_model && m_model->count() == 0) {
         // Browser running all tabs are closed.
         m_model->newTab(tmpUrl);
@@ -543,29 +553,41 @@ void DeclarativeWebContainer::releaseActiveTabOwnership()
     }
 }
 
-bool DeclarativeWebContainer::activatePage(const Tab& tab, bool force, int parentId)
+bool DeclarativeWebContainer::activatePage(const Tab& tab, bool force)
 {
     if (!m_initialized) {
-        m_initialUrl = tab.url();
+        m_initialUrl = tab.requestedUrl();
         return false;
     }
 
     m_webPages->initialize(this);
     if ((m_model->loaded() || force) && tab.tabId() > 0 && m_webPages->isInitialized() && m_webPageComponent) {
-        WebPageActivationData activationData = m_webPages->page(tab, parentId);
+        WebPageActivationData activationData = m_webPages->page(tab);
         setWebPage(activationData.webPage);
         // Reset always height so that orentation change is taken into account.
         m_webPage->forceChrome(false);
         m_webPage->setChrome(true);
+        if (m_webPage->loaded()) {
+            m_webPage->update();
+        }
+
         return activationData.activated;
     }
     return false;
 }
 
-int DeclarativeWebContainer::findParentTabId(int tabId) const
+int DeclarativeWebContainer::tabId(uint32_t uniqueId) const
 {
     if (m_webPages) {
-        return m_webPages->parentTabId(tabId);
+        return m_webPages->tabId(uniqueId);
+    }
+    return 0;
+}
+
+int DeclarativeWebContainer::previouslyUsedTabId() const
+{
+    if (m_webPages) {
+        return m_webPages->previouslyUsedTabId();
     }
     return 0;
 }
@@ -654,15 +676,27 @@ QObject *DeclarativeWebContainer::focusObject() const
 
 bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
 {
-    if (event->type() == QEvent::Close && m_mozWindow) {
-        m_mozWindow->suspendRendering();
-        m_closing = true;
-
-        if (m_webPages->count() == 0) {
-            m_mozWindow.reset();
+    if (obj == m_chromeWindow) {
+        if (event->type() == QEvent::Close) {
+            m_closeEventFilter->applicationClosingStarted();
+            if (!m_closing) {
+                m_webPages->clear();
+                m_initialUrl = "";
+                m_initialized = false;
+                destroyWindow();
+                if (QMozContext::instance()->getNumberOfWindows() != 0) {
+                    m_closing = true;
+                } else {
+                    m_closeEventFilter->closeApplication();
+                }
+            }
+        } else if (event->type() == QEvent::Show) {
+            if (!handle()) {
+                m_closeEventFilter->cancelCloseApplication();
+                create();
+                show();
+            }
         }
-
-        m_webPages->clear();
     }
 
     // Emit chrome exposed when both chrome window and browser window has been exposed. This way chrome
@@ -674,6 +708,24 @@ bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
     }
 
     return QObject::eventFilter(obj, event);
+}
+
+void DeclarativeWebContainer::destroyWindow()
+{
+    if (QMozContext::instance()->getNumberOfViews() != 0) {
+        return;
+    }
+
+    if (m_mozWindow) {
+        if (m_mozWindow->isReserved()) {
+            connect(m_mozWindow.data(), &QMozWindow::released,
+                    m_mozWindow.data(), &QObject::deleteLater);
+            m_mozWindow->release();
+        } else {
+            delete m_mozWindow;
+        }
+        m_mozWindow = nullptr;
+    }
 }
 
 bool DeclarativeWebContainer::event(QEvent *event)
@@ -707,11 +759,13 @@ void DeclarativeWebContainer::exposeEvent(QExposeEvent*)
     static bool alreadyExposed = false;
 
     if (isExposed() && !alreadyExposed) {
+        initialize();
+
         if (m_chromeWindow) {
             m_chromeWindow->update();
         }
 
-        if (m_webPage) {
+        if (m_webPage && !m_closing) {
             m_webPage->update();
         } else {
             if (postClearWindowSurfaceTask()) {
@@ -746,7 +800,7 @@ void DeclarativeWebContainer::touchEvent(QTouchEvent *event)
         return;
     }
 
-    if (m_webPage && m_enabled && !m_touchBlocked) {
+    if (m_webPage && m_enabled && ((!m_touchBlocked || m_selectionActive) || event->type() != QEvent::TouchBegin)) {
         QList<QTouchEvent::TouchPoint> touchPoints = event->touchPoints();
         QTouchEvent mappedTouchEvent = *event;
 
@@ -757,6 +811,12 @@ void DeclarativeWebContainer::touchEvent(QTouchEvent *event)
 
         mappedTouchEvent.setTouchPoints(touchPoints);
         m_webPage->touchEvent(&mappedTouchEvent);
+        if (m_selectionActive && event->type() == QEvent::TouchBegin) {
+            // If touch event is received here after selection is active it's pressed outside selection area
+            // Inform that selection should close
+            m_selectionActive = false;
+            emit selectionActiveChanged();
+        }
     } else {
         QWindow::touchEvent(event);
     }
@@ -871,14 +931,21 @@ void DeclarativeWebContainer::onActiveTabChanged(int activeTabId)
 
 void DeclarativeWebContainer::initialize()
 {
+    if (!isExposed() || m_closing) {
+        return;
+    }
+
     if (SailfishOS::WebEngine::instance()->isInitialized() && !m_mozWindow) {
-        m_mozWindow.reset(new QMozWindow(QWindow::size()));
+        m_mozWindow = new QMozWindow(QWindow::size());
+        m_mozWindow->setPrimaryOrientation(screen()->primaryOrientation());
+
         connect(m_mozWindow.data(), &QMozWindow::requestGLContext,
                 this, &DeclarativeWebContainer::createGLContext, Qt::DirectConnection);
-        connect(m_mozWindow.data(), &QMozWindow::drawUnderlay,
-                this, &DeclarativeWebContainer::drawUnderlay, Qt::DirectConnection);
         connect(m_mozWindow.data(), &QMozWindow::orientationChangeFiltered,
                 this, &DeclarativeWebContainer::handleContentOrientationChanged);
+        connect(m_mozWindow.data(), &QMozWindow::compositorCreated,
+                this, &DeclarativeWebContainer::postClearWindowSurfaceTask);
+        m_mozWindow->reserve();
         m_mozWindow->setReadyToPaint(false);
         if (m_chromeWindow) {
             updateContentOrientation(m_chromeWindow->contentOrientation());
@@ -891,33 +958,17 @@ void DeclarativeWebContainer::initialize()
         return;
     }
 
-    bool clearTabs = m_settingManager->clearHistoryRequested();
-    int oldCount = m_model->count();
-
-    // Clear tabs immediately from the model.
-    if (clearTabs) {
-        m_model->clear();
-    }
-
-    // If data was cleared when initialized and we had tabs in previous
-    // session, reset tab model to unloaded state. DBManager emits
-    // tabsAvailable with empty list when tabs are cleared => tab model
-    // changes back to loaded and the initialize() slot gets called again.
-    if (m_settingManager->initialize() && (oldCount > 0) && clearTabs) {
-        m_model->setUnloaded();
-        return;
-    }
-
     // From this point onwards, we're ready to initialize.
     // We set m_initialized to true prior to the block below since we may need to
     // call loadTab() within it, and that function is guarded by the value of m_initialized.
     m_initialized = true;
 
     // Load test
-    // 1) no tabs and firstUseDone or we have incoming url, load initial url or home page to a new tab.
+    // 1) no tabs and firstUseDone or we have incoming url, try to active tab, only after that fails
+    //    load initial url or home page to a new tab.
     // 2) model has tabs, load initial url or active tab.
     bool firstUseDone = DeclarativeWebUtils::instance()->firstUseDone();
-    if ((m_model->waitingForNewTab() || m_model->count() == 0) && (firstUseDone || !m_initialUrl.isEmpty())) {
+    if ((m_model->count() == 0 && firstUseDone) || !m_initialUrl.isEmpty()) {
         QString url = m_initialUrl;
         if (m_initialUrl.isEmpty()) {
             if (!browserEnabled()) {
@@ -927,11 +978,13 @@ void DeclarativeWebContainer::initialize()
             }
         }
 
-        m_model->newTab(url);
+        if (!m_model->activateTab(url, true)) {
+            m_model->newTab(url);
+        }
     } else if (m_model->count() > 0 && !m_webPage) {
         Tab tab = m_model->activeTab();
         if (!m_initialUrl.isEmpty()) {
-            tab.setUrl(m_initialUrl);
+            tab.setRequestedUrl(m_initialUrl);
         }
         loadTab(tab, true);
     }
@@ -944,18 +997,7 @@ void DeclarativeWebContainer::initialize()
 
 void DeclarativeWebContainer::onDownloadStarted()
 {
-    // This is not 100% solid. A newTab is called on incoming
-    // url (during browser start) if no tabs exist (waitingForNewTab). In slow network
-    // connectivity one can create a new tab before downloadStarted is emitted
-    // from DownloadManager. To get this to the 100%, we should add downloadStatus
-    // to the QmlMozView containing status of downloading.
-    if (m_model->waitingForNewTab())  {
-        m_model->setWaitingForNewTab(false);
-    } else {
-        // In case browser is started with a dl url we have an "incorrect" initial url.
-        // Emit urlChange() in order to trigger restoreHistory()
-        emit m_webPage->urlChanged();
-    }
+    emit m_webPage->urlChanged();
 
     if (m_model->count() == 0) {
         // Download doesn't add tab to model. Mimic
@@ -965,10 +1007,10 @@ void DeclarativeWebContainer::onDownloadStarted()
     }
 }
 
-void DeclarativeWebContainer::onNewTabRequested(const Tab &tab, int parentId)
+void DeclarativeWebContainer::onNewTabRequested(const Tab &tab)
 {
-    if (activatePage(tab, false, parentId)) {
-        m_webPage->loadTab(tab.url(), false);
+    if (activatePage(tab, false)) {
+        m_webPage->loadTab(tab.requestedUrl(), false);
     }
 }
 
@@ -988,9 +1030,9 @@ void DeclarativeWebContainer::releasePage(int tabId)
 void DeclarativeWebContainer::closeWindow()
 {
     DeclarativeWebPage *webPage = qobject_cast<DeclarativeWebPage *>(sender());
-    if (webPage && m_model) {
-        int parentPageTabId = findParentTabId(webPage->tabId());
-        // Closing only allowed if window was created by script
+    // Closing only allowed if window was created by script i.e. has parent.
+    if (webPage && webPage->parentId() > 0 && m_model) {
+        int parentPageTabId = tabId(webPage->parentId());
         if (parentPageTabId > 0) {
             m_model->activateTabById(parentPageTabId);
             m_model->removeTabById(webPage->tabId(), isActiveTab(webPage->tabId()));
@@ -1021,7 +1063,7 @@ void DeclarativeWebContainer::updateLoading()
 
 void DeclarativeWebContainer::updateActiveTabRendered()
 {
-    if (m_webPage && !m_webPage->completed() && !m_webPage->domContentLoaded()) {
+    if (!m_webPage || !m_webPage->completed() || (!m_webPage->domContentLoaded() && !m_webPage->isPainted())) {
         return;
     }
 
@@ -1034,7 +1076,19 @@ void DeclarativeWebContainer::updateActiveTabRendered()
 void DeclarativeWebContainer::onLastViewDestroyed()
 {
     if (m_closing) {
-        m_mozWindow.reset();
+        destroyWindow();
+    }
+}
+
+void DeclarativeWebContainer::onLastWindowDestroyed()
+{
+    m_closing = false;
+
+    if (isExposed()) {
+        initialize();
+    }
+    if (!handle()) {
+        m_closeEventFilter->closeApplication();
     }
 }
 
@@ -1105,19 +1159,6 @@ void DeclarativeWebContainer::createGLContext()
     }
 }
 
-void DeclarativeWebContainer::drawUnderlay()
-{
-    Q_ASSERT(m_context);
-
-    QColor bgColor = m_webPage ? m_webPage->backgroundColor() : QColor(Qt::white);
-    m_context->makeCurrent(this);
-    QOpenGLFunctions_ES2* funcs = m_context->versionFunctions<QOpenGLFunctions_ES2>();
-    if (funcs) {
-        funcs->glClearColor(bgColor.redF(), bgColor.greenF(), bgColor.blueF(), 0.0);
-        funcs->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    }
-}
-
 void DeclarativeWebContainer::handleContentOrientationChanged(Qt::ScreenOrientation orientation)
 {
     if (orientation == pendingWebContentOrientation()) {
@@ -1136,4 +1177,10 @@ void DeclarativeWebContainer::setHistoryModel(DeclarativeHistoryModel *model)
         m_historyModel = model;
         emit historyModelChanged();
     }
+}
+
+void DeclarativeWebContainer::dsmeStateChange(const QString &state)
+{
+    if ((state == "REBOOT" || state == "SHUTDOWN") && m_closeEventFilter)
+        m_closeEventFilter->closeApplication();
 }

@@ -1,7 +1,7 @@
 %global min_xulrunner_version 45.8.1.1
-%global min_qtmozembed_version 1.52.20
+%global min_qtmozembed_version 1.53.8
 %global min_embedlite_components_version 1.20.0
-%global min_sailfishwebengine_version 1.3.0
+%global min_sailfishwebengine_version 1.5.9
 %global min_systemsettings_version 0.5.25
 
 %global captiveportal sailfish-captiveportal
@@ -34,6 +34,7 @@ BuildRequires:  oneshot
 BuildRequires:  pkgconfig(gtest)
 BuildRequires:  pkgconfig(gmock)
 BuildRequires:  pkgconfig(vault) >= 1.0.1
+BuildRequires:  pkgconfig(dsme_dbus_if)
 
 Requires: sailfishsilica-qt5 >= 1.2.33
 Requires: sailfish-content-graphics
@@ -115,6 +116,7 @@ cp -f data/70-browser.conf %{buildroot}/%{_sharedstatedir}/environment/nemo/
 # Upgrade, count is 2 or higher (depending on the number of versions installed)
 if [ "$1" -ge 2 ]; then
     %{_bindir}/add-oneshot --all-users --now browser-cleanup-startup-cache || :
+    %{_bindir}/add-oneshot --all-users browser-cleanup-customua || :
     %{_bindir}/add-oneshot --new-users --all-users --late browser-update-default-data || :
     %{_bindir}/add-oneshot --all-users browser-move-data-to-new-location || :
     %{_bindir}/add-oneshot --all-users browser-deprecate-dconf-keys || :
@@ -122,6 +124,7 @@ fi
 
 %files
 %defattr(-,root,root,-)
+%license LICENSE.txt
 %{_bindir}/%{name}
 %{_bindir}/%{captiveportal}
 %{_datadir}/applications/%{name}.desktop

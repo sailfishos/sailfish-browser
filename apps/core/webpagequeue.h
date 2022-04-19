@@ -32,7 +32,8 @@ public :
     void release(int tabId, bool virtualize = false);
     void prepend(int tabId, DeclarativeWebPage *webPage);
     void clear();
-    int parentTabId(int tabId) const;
+    int tabId(uint32_t id) const;
+    int previouslyUsedTabId() const;
 
     bool setMaxLivePages(int count);
     int maxLivePages() const;

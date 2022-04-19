@@ -17,19 +17,35 @@
 
 CloseEventFilter::CloseEventFilter(DownloadManager *dlMgr, QObject *parent)
     : QObject(parent),
-      m_downloadManager(dlMgr)
+      m_downloadManager(dlMgr),
+      m_closing(false)
 {
     SailfishOS::WebEngine *webEngine = SailfishOS::WebEngine::instance();
-    connect(webEngine, &SailfishOS::WebEngine::lastWindowDestroyed,
-            this, &CloseEventFilter::onLastWindowDestroyed);
     connect(webEngine, &SailfishOS::WebEngine::contextDestroyed,
             this, &CloseEventFilter::onContextDestroyed);
     connect(&m_shutdownWatchdog, &QTimer::timeout,
             this, &CloseEventFilter::onWatchdogTimeout);
+    connect(m_downloadManager, &DownloadManager::allTransfersCompleted,
+            this, &CloseEventFilter::allTransfersCompleted);
 }
 
-void CloseEventFilter::stopApplication()
+void CloseEventFilter::applicationClosingStarted()
 {
+    if (!m_downloadManager->existActiveTransfers()) {
+        // Give the engine 60 seconds to send lastWindowDestroyed signal.
+        m_shutdownWatchdog.start(60000);
+    } else {
+        m_closing = true;
+    }
+}
+
+void CloseEventFilter::closeApplication()
+{
+    if (m_downloadManager->existActiveTransfers()) {
+        m_closing = true;
+        return;
+    }
+
     MGConfItem closeAllTabsConf("/apps/sailfish-browser/settings/close_all_tabs");
     if (closeAllTabsConf.value(false).toBool()) {
         DBManager::instance()->removeAllTabs();
@@ -39,16 +55,6 @@ void CloseEventFilter::stopApplication()
     // Give the engine 5 seconds to shut down. If it fails terminate
     // with a fatal error.
     m_shutdownWatchdog.start(5000);
-}
-
-void CloseEventFilter::onLastWindowDestroyed()
-{
-    if (m_downloadManager->existActiveTransfers()) {
-        connect(m_downloadManager, &DownloadManager::allTransfersCompleted,
-                this, &CloseEventFilter::stopApplication);
-    } else {
-        stopApplication();
-    }
 }
 
 void CloseEventFilter::onContextDestroyed()
@@ -61,9 +67,15 @@ void CloseEventFilter::onWatchdogTimeout()
     qFatal("Browser failed to terminate in acceptable time!");
 }
 
-void CloseEventFilter::cancelStopApplication()
+void CloseEventFilter::cancelCloseApplication()
 {
-    disconnect(m_downloadManager, &DownloadManager::allTransfersCompleted,
-               this, &CloseEventFilter::stopApplication);
+    m_closing = false;
     m_shutdownWatchdog.stop();
+}
+
+void CloseEventFilter::allTransfersCompleted()
+{
+    if (m_closing) {
+        closeApplication();
+    }
 }

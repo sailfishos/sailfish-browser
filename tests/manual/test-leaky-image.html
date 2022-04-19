@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<!-- 
+  This attempts to trigger a memory leak by repeatedly cloning and replacing
+  a multimedia file displayed on the page.
+
+  The issue is triggered by cloning videos, but not images or other elements.
+  
+  This is the image version, so shouldn't trigger the leak.
+
+  On an Xperia 10 II with 2.5Gb free RAM, gecko ESR78, it takes about 10 mins 
+  to exhaust the memory of the device.
+  
+  See JB#56707.
+ -->
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Memory Leak Test</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+  <script src="leak-test/cycle.js"></script>
+  <link rel="stylesheet" href="leak-test/styles.css" type="text/css" />
+</head>
+<body>
+  <div class="title caption">Image Memory Leak Test</div>
+  <div id="first">
+    <div class="panels">
+      <div class="panel 0">
+        <div class="imagebox">
+          <img class="leak" src="https://web.archive.org/web/20200913085418if_/https://images.pexels.com/photos/3560168/pexels-photo-3560168.jpeg?cs=srgb&dl=pexels-matt-hardy-3560168.jpg&fm=jpg" alt="Test image" />
+        </div>
+        <div class="caption">1</div>
+      </div>
+    </div>
+    <div class="placeholder">
+      <div class="panel -1">
+        <div class="imagebox">
+          <img class="leak" src="https://web.archive.org/web/20200913085418if_/https://images.pexels.com/photos/3560168/pexels-photo-3560168.jpeg?cs=srgb&dl=pexels-matt-hardy-3560168.jpg&fm=jpg" alt="Test image" />
+        </div>
+        <div class="caption">Initialising</div>
+      </div>
+    </div>
+    </div>
+  </div>
+</body>
+</html>
+

@@ -21,6 +21,7 @@
 
 #include "dbworker.h"
 #include "browserpaths.h"
+#include "faviconmanager.h"
 
 #ifndef DEBUG_LOGS
 #define DEBUG_LOGS 0
@@ -226,6 +227,7 @@ void DBWorker::createTab(const Tab &tab)
     int linkId = createLink(tab.url(), tab.title(), tab.thumbnailPath());
 
     int historyId = addToTabHistory(tab.tabId(), linkId);
+    addHistoryEntry(tab.url(), tab.title());
     if (historyId > 0) {
         updateTab(tab.tabId(), historyId);
     } else {
@@ -361,6 +363,7 @@ void DBWorker::navigateTo(int tabId, const QString &url, const QString &title, c
     int linkId = createLink(url, title, path);
 
     int historyId = addToTabHistory(tabId, linkId);
+    addHistoryEntry(url, title);
     if (historyId > 0) {
         updateTab(tabId, historyId);
     } else {
@@ -477,9 +480,47 @@ void DBWorker::addHistoryEntry(const QString &url, const QString &title)
     }
 }
 
-void DBWorker::clearHistory()
+void DBWorker::clearHistory(int period)
 {
-    QSqlQuery query = prepare("DELETE FROM browser_history;");
+    QSqlQuery query;
+
+    if (period == 0) { // Delete everything
+        FaviconManager::instance()->clear(QStringLiteral("history"));
+        query = prepare("DELETE FROM browser_history;");
+    } else {
+        QList<Link> historyList = getHistoryQList();
+        QSet<QString> historyIconsToRemove;
+
+        int historySize = historyList.size();
+        int boundaryIndex = 0;
+
+        for (int i = 0; i < historySize; i++) {
+            const QString sanitizedUrl = FaviconManager::sanitizedHostname(historyList[i].url());
+            if (historyList[i].date().daysTo(QDate::currentDate()) < period) {
+                historyIconsToRemove.insert(sanitizedUrl);
+            } else if (historyList[i].date().daysTo(QDate::currentDate()) >= period) {
+                boundaryIndex = i;
+                break;
+            }
+            boundaryIndex = i + 1;
+        }
+
+        for (int i = boundaryIndex; i < historySize; i++) {
+            const QString sanitizedUrl = FaviconManager::sanitizedHostname(historyList[i].url());
+            historyIconsToRemove.remove(sanitizedUrl);
+        }
+
+        QSet<QString>::iterator iconIterator;
+        for (const QString iconToRemove : historyIconsToRemove) {
+            FaviconManager::instance()->remove(QStringLiteral("history"), iconToRemove);
+        }
+
+        uint boundaryTimeT = QDateTime::currentDateTimeUtc().addDays(-period).toTime_t();
+
+        query = prepare("DELETE FROM browser_history WHERE date > ?");
+        query.bindValue(0, boundaryTimeT);
+    }
+
     execute(query);
     removeAllTabs();
     query = prepare("DELETE FROM link;");
@@ -575,6 +616,36 @@ void DBWorker::getHistory(const QString &filter)
     emit historyAvailable(linkList);
 }
 
+QList<Link> DBWorker::getHistoryQList()
+{
+    QString filterQuery("WHERE url NOT LIKE 'about:%'");
+    QString order;
+
+    order = QString("date DESC");
+
+    QString queryString = QString("SELECT id, url, title, date, visited_count "
+                                  "FROM browser_history "
+                                  "%1"
+                                  "ORDER BY %2;").arg(filterQuery).arg(order);
+    QSqlQuery query = prepare(queryString);
+
+    execute(query);
+
+    QList<Link> linkList;
+    while (query.next()) {
+        qint64 timestamp = query.value(3).toLongLong();
+        Link link(query.value(0).toInt(),
+                  query.value(1).toString(),
+                  "",
+                  query.value(2).toString(),
+                  QDateTime::fromMSecsSinceEpoch(timestamp*1000).date());
+
+        linkList.append(link);
+    }
+
+    return linkList;
+}
+
 void DBWorker::getTabHistory(int tabId)
 {
     QSqlQuery query = prepare("SELECT link.link_id, link.url, link.thumb_path, link.title, (tab_history.id == tab.tab_history_id) AS current "
@@ -626,6 +697,36 @@ void DBWorker::updateThumbPath(int tabId, const QString &path)
     if (execute(m_updateThumbPathQuery)) {
         emit thumbPathChanged(tabId, path);
     }
+}
+
+void DBWorker::updateUrl(int tabId, const QString &requestedUrl, const QString &resolvedUrl)
+{
+    QSqlQuery query = prepare("SELECT link.link_id, link.url FROM tab "
+                              "INNER JOIN tab_history ON tab.tab_history_id = tab_history.id "
+                              "INNER JOIN link ON tab_history.link_id = link.link_id "
+                              "WHERE tab_history.tab_id = ?;");
+    query.bindValue(0, tabId);
+    if (!execute(query)) {
+        qWarning() << "No link found for tabId" << tabId;
+        return;
+    }
+
+    if (query.first()) {
+        int linkId = query.value(0).toInt();
+        QString oldUrl = query.value(1).toString();
+
+        if (linkId > 0 && !oldUrl.isEmpty() && oldUrl != resolvedUrl) {
+            query = prepare("UPDATE link SET url = ? WHERE link_id = ?;");
+            query.bindValue(0, resolvedUrl);
+            query.bindValue(1, linkId);
+            execute(query);
+        }
+    }
+
+    if (!requestedUrl.isEmpty() && (requestedUrl != resolvedUrl)) {
+        removeHistoryEntry(requestedUrl);
+    }
+    addHistoryEntry(resolvedUrl, QString());
 }
 
 void DBWorker::updateTitle(int tabId, const QString &url, const QString &title)

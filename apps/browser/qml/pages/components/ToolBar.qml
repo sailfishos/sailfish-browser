@@ -57,7 +57,6 @@ Column {
     signal showSecondaryTools
     signal showInfoOverlay
     signal showChrome
-    signal closeActiveTab
     signal showCertDetail
 
     // Used from the PopUpMenu
@@ -201,9 +200,33 @@ Column {
         Shared.ExpandingButton {
             id: backIcon
             expandedWidth: toolBarRow.iconWidth
-            icon.source: "image://theme/icon-m-back"
-            active: webView.canGoBack && !findInPageActive
-            onTapped: webView.goBack()
+            icon {
+                source: {
+                    if (webView.canGoBack) {
+                        return "image://theme/icon-m-back"
+                    } else if (webView.contentItem && webView.contentItem.parentId > 0) {
+                        return "image://theme/icon-m-back-tab"
+                    }
+                    return ""
+                }
+
+                onStatusChanged: {
+                    // Use icon-m-back as a fallback. The icon-m-back-tab
+                    // is a new icon and may not exist.
+                    if (icon.status == Image.Error && icon.source == "image://theme/icon-m-back-tab") {
+                        icon.source = "image://theme/icon-m-back"
+                    }
+                }
+            }
+
+            active: (webView.canGoBack || (webView.contentItem && webView.contentItem.parentId > 0)) && !findInPageActive
+            onTapped: {
+                if (webView.canGoBack) {
+                    webView.goBack()
+                } else {
+                    webView.tabModel.closeActiveTab()
+                }
+            }
         }
 
         Shared.ExpandingButton {
@@ -281,7 +304,7 @@ Column {
                         //: No text search results were found from the page.
                         //% "No results"
                         return qsTrId("sailfish_browser-la-no_results")
-                    } else if (url == "about:blank" || (webView.completed && webView.tabModel.count === 0 && !webView.tabModel.waitingForNewTab)) {
+                    } else if (url == "about:blank" || (webView.completed && webView.tabModel.count === 0)) {
                         //: Placeholder text for url typing and searching
                         //% "Type URL or search"
                         return qsTrId("sailfish_browser-ph-type_url_or_search")

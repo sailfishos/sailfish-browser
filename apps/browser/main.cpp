@@ -37,7 +37,9 @@
 #include "datafetcher.h"
 #include "inputregion.h"
 #include "searchenginemodel.h"
+#include "secureaction.h"
 #include "faviconmanager.h"
+#include "bookmarkmanager.h"
 
 #ifdef HAS_BOOSTER
 #include <MDeclarativeCache>
@@ -52,6 +54,11 @@ static QObject *search_model_factory(QQmlEngine *, QJSEngine *)
 static QObject *faviconmanager_factory(QQmlEngine *, QJSEngine *)
 {
     return FaviconManager::instance();
+}
+
+static QObject *bookmarkmanager_factory(QQmlEngine *, QJSEngine *)
+{
+    return BookmarkManager::instance();
 }
 }
 
@@ -75,6 +82,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     QScopedPointer<QQuickView> view(new QQuickView);
 #endif
     app->setQuitOnLastWindowClosed(false);
+    app->setAttribute(Qt::AA_SynthesizeTouchForUnhandledMouseEvents, true);
 
     BrowserService *service = new BrowserService(app.data());
     // Handle command line launch
@@ -144,6 +152,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
         qmlRegisterType<BookmarkFilterModel>(uri, 1, 0, "BookmarkFilterModel");
         qmlRegisterType<DeclarativeLoginModel>(uri, 1, 0, "LoginModel");
         qmlRegisterType<LoginFilterModel>(uri, 1, 0, "LoginFilterModel");
+        qmlRegisterSingletonType<BookmarkManager>(uri, 1, 0, "BookmarkManager", bookmarkmanager_factory);
     }
     qmlRegisterSingletonType<FaviconManager>(uri, 1, 0, "FaviconManager", faviconmanager_factory);
     qmlRegisterUncreatableType<DownloadStatus>(uri, 1, 0, "DownloadStatus", "");
@@ -153,6 +162,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     qmlRegisterType<DesktopBookmarkWriter>(uri, 1, 0, "DesktopBookmarkWriter");
     qmlRegisterType<DataFetcher>(uri, 1, 0, "DataFetcher");
     qmlRegisterType<InputRegion>(uri, 1, 0, "InputRegion");
+    qmlRegisterType<SecureAction>(uri, 1, 0, "SecureAction");
     qmlRegisterSingletonType<SearchEngineModel>(uri, 1, 0, "SearchEngineModel", search_model_factory);
 
     Browser *browser = new Browser(view.data(), app.data());

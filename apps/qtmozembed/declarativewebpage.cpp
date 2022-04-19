@@ -55,8 +55,6 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
     , m_userHasDraggedWhileLoading(false)
     , m_fullscreen(false)
     , m_forcedChrome(false)
-    , m_domContentLoaded(false)
-    , m_initialLoadHasHappened(false)
     , m_tabHistoryReady(false)
     , m_urlReady(false)
     , m_restoredCurrentLinkId(-1)
@@ -85,12 +83,10 @@ DeclarativeWebPage::DeclarativeWebPage(QObject *parent)
     connect(&m_grabWritter, &QFutureWatcher<QString>::finished, this, &DeclarativeWebPage::grabWritten);
     connect(this, &DeclarativeWebPage::urlChanged, this, &DeclarativeWebPage::onUrlChanged);
     connect(this, &QOpenGLWebPage::virtualKeyboardHeightChanged, this, &DeclarativeWebPage::updateViewMargins);
-    connect(this, &QOpenGLWebPage::loadedChanged, [this]() {
-        if (loaded()) {
+    connect(this, &QOpenGLWebPage::domContentLoadedChanged, [this]() {
+        if (domContentLoaded()) {
             qCDebug(lcCoreLog) << "WebPage: loaded";
-            // E.g. when loading images directly we don't necessarily get domContentLoaded message from engine.
-            // So mark content loaded when webpage is loaded.
-            setContentLoaded();
+            updateViewMargins();
         }
     });
 
@@ -131,23 +127,37 @@ int DeclarativeWebPage::tabId() const
     return m_initialTab.tabId();
 }
 
-void DeclarativeWebPage::setInitialTab(const Tab& tab)
+void DeclarativeWebPage::setInitialState(const Tab& tab, bool privateMode)
 {
     Q_ASSERT(m_initialTab.tabId() == 0);
+
+    setParentId(tab.parentId());
+    setPrivateMode(privateMode);
+    setParentBrowsingContext(tab.browsingContext());
 
     m_initialTab = tab;
     setDesktopMode(m_initialTab.desktopMode());
     emit tabIdChanged();
     connect(DBManager::instance(), &DBManager::tabHistoryAvailable,
             this, &DeclarativeWebPage::onTabHistoryAvailable);
-    DBManager::instance()->getTabHistory(tabId());
 }
 
 void DeclarativeWebPage::onUrlChanged()
 {
-    disconnect(this, &DeclarativeWebPage::urlChanged, this, &DeclarativeWebPage::onUrlChanged);
-    m_urlReady = true;
-    restoreHistory();
+    // Only update resolved urls for navigation history.
+    bool urlResolved = isUrlResolved();
+    if (urlResolved) {
+        emit updateUrl();
+    }
+
+    // Get tab history only after first url is resolved.
+    // Above urlResolved guarantees that we have url resolved
+    // by the engine.
+    bool urlReadyChanged = !m_urlReady;
+    if (urlReadyChanged && urlResolved) {
+        m_urlReady = true;
+        DBManager::instance()->getTabHistory(tabId());
+    }
 }
 
 void DeclarativeWebPage::onTabHistoryAvailable(const int& historyTabId, const QList<Link>& links, int currentLinkId)
@@ -201,29 +211,6 @@ void DeclarativeWebPage::restoreHistory() {
     m_restoredTabHistory.clear();
 }
 
-void DeclarativeWebPage::setContentLoaded()
-{
-    if (!m_domContentLoaded) {
-        m_domContentLoaded = true;
-        emit domContentLoadedChanged();
-    }
-}
-
-bool DeclarativeWebPage::domContentLoaded() const
-{
-    return m_domContentLoaded;
-}
-
-bool DeclarativeWebPage::initialLoadHasHappened() const
-{
-    return m_initialLoadHasHappened;
-}
-
-void DeclarativeWebPage::setInitialLoadHasHappened()
-{
-    m_initialLoadHasHappened = true;
-}
-
 QVariant DeclarativeWebPage::resurrectedContentRect() const
 {
     return m_resurrectedContentRect;
@@ -257,8 +244,6 @@ void DeclarativeWebPage::loadTab(const QString &newUrl, bool force)
     setChrome(true);
     QString oldUrl = url().toString();
     if ((!newUrl.isEmpty() && oldUrl != newUrl) || force) {
-        m_domContentLoaded = false;
-        emit domContentLoadedChanged();
         load(newUrl);
     }
 }
@@ -319,9 +304,12 @@ void DeclarativeWebPage::forceChrome(bool forcedChrome)
 
 void DeclarativeWebPage::grabResultReady()
 {
-    if (active()) {
-        QImage image = m_grabResult->image();
-        m_grabWritter.setFuture(QtConcurrent::run(this, &DeclarativeWebPage::saveToFile, image));
+    QImage image = m_grabResult->image();
+    if (!image.isNull() && active()) {
+        m_grabWritter.setFuture(QtConcurrent::run(
+                &DeclarativeWebPage::saveToFile,
+                image,
+                QStringLiteral("%1/tab-%2-thumb.jpg").arg(BrowserPaths::cacheLocation()).arg(tabId())));
     }
     m_grabResult.clear();
 }
@@ -351,22 +339,31 @@ void DeclarativeWebPage::thumbnailReady()
 
 void DeclarativeWebPage::updateViewMargins()
 {
+    qreal toolbarHeight = virtualKeyboardHeight() ? 0.0 : m_toolbarHeight;
+    qCDebug(lcCoreLog) << "WebPage: set dynamic toolbar height:" << toolbarHeight;
+    setDynamicToolbarHeight(toolbarHeight);
+
     QMargins margins;
-    margins.setBottom(qMax(virtualKeyboardHeight(), (int)toolbarHeight()));
+    margins.setBottom(virtualKeyboardHeight());
 
     qCDebug(lcCoreLog) << "WebPage: set margins:" << margins;
     setMargins(margins);
 }
 
-QString DeclarativeWebPage::saveToFile(QImage image)
+QString DeclarativeWebPage::saveToFile(const QImage &image, const QString &path)
 {
-    if (image.isNull() || !active()) {
-        return "";
+    if (allBlack(image)) {
+        return QString();
     }
 
-    // 75% quality jpg produces small and good enough capture.
-    QString path = QString("%1/tab-%2-thumb.jpg").arg(BrowserPaths::cacheLocation()).arg(tabId());
-    return !allBlack(image) && image.save(path, "jpg", 75) ? path : "";
+    QSaveFile saveFile(path);
+    if (image.save(&saveFile, "jpg", 75)) {
+        saveFile.commit();
+
+        return path;
+    } else {
+        return QString();
+    }
 }
 
 void DeclarativeWebPage::onRecvAsyncMessage(const QString& message, const QVariant& data)
@@ -374,7 +371,6 @@ void DeclarativeWebPage::onRecvAsyncMessage(const QString& message, const QVaria
     if (message == QLatin1String(FULLSCREEN_MESSAGE)) {
         setFullscreen(data.toMap().value(QString("fullscreen")).toBool());
     } else if (message == QLatin1String(DOM_CONTENT_LOADED_MESSAGE)) {
-        setContentLoaded();
         QString docuri = data.toMap().value("docuri").toString();
         if (docuri.startsWith("about:neterror") && !docuri.contains("e=netOffline"))
             emit neterror();

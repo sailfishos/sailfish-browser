@@ -30,7 +30,6 @@ class DeclarativeWebPage : public QOpenGLWebPage {
     Q_PROPERTY(bool userHasDraggedWhileLoading MEMBER m_userHasDraggedWhileLoading NOTIFY userHasDraggedWhileLoadingChanged FINAL)
     Q_PROPERTY(bool fullscreen READ fullscreen NOTIFY fullscreenChanged FINAL)
     Q_PROPERTY(bool forcedChrome READ forcedChrome NOTIFY forcedChromeChanged FINAL)
-    Q_PROPERTY(bool domContentLoaded READ domContentLoaded NOTIFY domContentLoadedChanged FINAL)
     Q_PROPERTY(QString favicon MEMBER m_favicon NOTIFY faviconChanged FINAL)
     Q_PROPERTY(QVariant resurrectedContentRect READ resurrectedContentRect WRITE setResurrectedContentRect NOTIFY resurrectedContentRectChanged)
 
@@ -45,7 +44,7 @@ public:
     void setContainer(DeclarativeWebContainer *container);
 
     int tabId() const;
-    void setInitialTab(const Tab& tab);
+    void setInitialState(const Tab& tab, bool privateMode);
 
     QVariant resurrectedContentRect() const;
     void setResurrectedContentRect(QVariant resurrectedContentRect);
@@ -55,10 +54,6 @@ public:
 
     bool fullscreen() const;
     bool forcedChrome() const;
-    bool domContentLoaded() const;
-
-    bool initialLoadHasHappened() const;
-    void setInitialLoadHasHappened();
 
     Q_INVOKABLE void loadTab(const QString &newUrl, bool force);
     Q_INVOKABLE void grabToFile(const QSize& size);
@@ -72,7 +67,6 @@ signals:
     void userHasDraggedWhileLoadingChanged();
     void fullscreenChanged();
     void forcedChromeChanged();
-    void domContentLoadedChanged();
     void faviconChanged();
     void resurrectedContentRectChanged();
     void grabResult(const QString &fileName);
@@ -82,6 +76,8 @@ signals:
     void toolbarHeightChanged();
     void securityChanged();
     void neterror();
+
+    void updateUrl();
 
 private slots:
     void setFullscreen(const bool fullscreen);
@@ -94,9 +90,8 @@ private slots:
     void updateViewMargins();
 
 private:
-    QString saveToFile(QImage image);
+    static QString saveToFile(const QImage &image, const QString &path);
     void restoreHistory();
-    void setContentLoaded();
 
     QPointer<DeclarativeWebContainer> m_container;
     // Tab data fetched upon web page initialization. It never changes afterwards.
@@ -104,8 +99,6 @@ private:
     bool m_userHasDraggedWhileLoading;
     bool m_fullscreen;
     bool m_forcedChrome;
-    bool m_domContentLoaded;
-    bool m_initialLoadHasHappened;
     bool m_tabHistoryReady;
     bool m_urlReady;
     QString m_favicon;
