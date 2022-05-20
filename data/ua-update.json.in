@@ -90,6 +90,8 @@
   "gosuslugi.ru": "Mozilla/5.0 (Android; Mobile; rv:78.0) Gecko/78.0 Firefox/78.0",
   "bbc.com": "Mozilla/5.0 (Android; Mobile; rv:78.0) Gecko/78.0 Firefox/78.0",
   "bbc.co.uk": "Mozilla/5.0 (Android; Mobile; rv:78.0) Gecko/78.0 Firefox/78.0",
+  // JB#58153 facebook.com
+  "facebook.com": "Mozilla/5.0 (Linux; Mobile; rv:78.0) Gecko/78.0 Firefox/78.0",
   // JB#51909 is.fi
   "is.fi": "Mozilla/5.0 (Android; Mobile; rv:78.0) Gecko/78.0 Firefox/78.0",
   "ruutu.fi": "Mozilla/5.0 (Android; Mobile; rv:78.0) Gecko/78.0 Firefox/78.0",
