@@ -80,6 +80,8 @@ class DeclarativeWebContainer : public QWindow, public QQmlParserStatus, protect
     Q_PROPERTY(QMozSecurity *security READ security NOTIFY securityChanged)
     Q_PROPERTY(DeclarativeHistoryModel* historyModel READ historyModel WRITE setHistoryModel NOTIFY historyModelChanged)
 
+    Q_PROPERTY(bool hasInitialUrl READ hasInitialUrl NOTIFY hasInitialUrlChanged)
+
 public:
     DeclarativeWebContainer(QWindow *parent = 0);
     ~DeclarativeWebContainer();
@@ -164,6 +166,8 @@ public:
     DeclarativeHistoryModel *historyModel() const;
     void setHistoryModel(DeclarativeHistoryModel *model);
 
+    bool hasInitialUrl() const;
+
 signals:
     void rotationHandlerChanged();
     void contentItemChanged();
@@ -204,6 +208,9 @@ signals:
     void webContentOrientationChanged(Qt::ScreenOrientation orientation);
     void securityChanged();
     void historyModelChanged();
+    void applicationClosing();
+
+    void hasInitialUrlChanged();
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event);

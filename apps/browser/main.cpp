@@ -45,6 +45,8 @@
 #include <MDeclarativeCache>
 #endif
 
+#include <signal.h>
+
 namespace {
 static QObject *search_model_factory(QQmlEngine *, QJSEngine *)
 {
@@ -64,6 +66,12 @@ static QObject *bookmarkmanager_factory(QQmlEngine *, QJSEngine *)
 
 Q_DECL_EXPORT int main(int argc, char *argv[])
 {
+    // Ignore SIGPIPE
+    // JB#58602 and mozilla bugs:
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=767815#c3
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=886166
+    signal(SIGPIPE, SIG_IGN);
+
     // Disable crash guard and prefer egl for webgl.
     setenv("MOZ_DISABLE_CRASH_GUARD", "1", 1);
     setenv("MOZ_WEBGL_PREFER_EGL", "1", 1);

@@ -681,7 +681,12 @@ bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
             m_closeEventFilter->applicationClosingStarted();
             if (!m_closing) {
                 m_webPages->clear();
+                bool initialUrl = hasInitialUrl();
                 m_initialUrl = "";
+                if (initialUrl) {
+                    emit hasInitialUrlChanged();
+                }
+
                 m_initialized = false;
                 destroyWindow();
                 if (QMozContext::instance()->getNumberOfWindows() != 0) {
@@ -690,6 +695,7 @@ bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
                     m_closeEventFilter->closeApplication();
                 }
             }
+            emit applicationClosing();
         } else if (event->type() == QEvent::Show) {
             if (!handle()) {
                 m_closeEventFilter->cancelCloseApplication();
@@ -993,6 +999,12 @@ void DeclarativeWebContainer::initialize()
         m_completed = true;
         emit completedChanged();
     }
+
+    bool initialUrl = hasInitialUrl();
+    m_initialUrl = "";
+    if (initialUrl) {
+        emit hasInitialUrlChanged();
+    }
 }
 
 void DeclarativeWebContainer::onDownloadStarted()
@@ -1177,6 +1189,11 @@ void DeclarativeWebContainer::setHistoryModel(DeclarativeHistoryModel *model)
         m_historyModel = model;
         emit historyModelChanged();
     }
+}
+
+bool DeclarativeWebContainer::hasInitialUrl() const
+{
+    return !m_initialUrl.isEmpty();
 }
 
 void DeclarativeWebContainer::dsmeStateChange(const QString &state)

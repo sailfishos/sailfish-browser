@@ -68,6 +68,8 @@ public:
     MOCK_METHOD1(setParentId, void(unsigned));
     MOCK_METHOD1(setParentBrowsingContext, void(uintptr_t));
 
+    MOCK_METHOD1(grabThumbnail, void(const QSize&));
+
     MOCK_CONST_METHOD0(active, bool());
     MOCK_METHOD1(setActive, void(bool));
 
