@@ -1,7 +1,7 @@
 sailfish-browser
 ================
 Sailfish Browser is web browser for Sailfish OS and is shipping with Sailfish OS devices. Sailfish Browser uses Sailfish Silica Qt components for the browser chrome and gecko engine with embedlite Qt5 binding.
-More information about the architecture can be found from https://web.archive.org/web/20180830103541/http://blog.idempotent.info/posts/whats-behind-sailfish-browser.html
+More information about the architecture can be found from https://web.archive.org/web/20180830103541/http://blog.idempotent.info/posts/whats-behind-sailfish-browser.html . Feel free to ask questions on Forum from Maintainers.
 
 Maintainers
 -----------
