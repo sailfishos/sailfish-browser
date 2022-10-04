@@ -12,6 +12,7 @@ import QtQuick 2.0
 import Sailfish.Silica 1.0
 import Sailfish.WebView.Controls 1.0
 import Sailfish.WebEngine 1.0
+import org.nemomobile.configuration 1.0
 import "components"
 
 Page {
@@ -32,6 +33,32 @@ Page {
             } else if (permission === PermissionManager.Deny) {
                 WebEngineSettings.cookieBehavior = WebEngineSettings.BlockAll
             }
+        } else if (type === "geolocation") {
+            if (permission === PermissionManager.Deny) {
+                locationRequestsBlocked.value = true
+            } else if (permission === PermissionManager.Prompt) {
+                locationRequestsBlocked.value = false
+            }
+        } else if (type === "camera") {
+            if (permission === PermissionManager.Deny) {
+                cameraRequestsBlocked.value = true
+            } else if (permission === PermissionManager.Prompt) {
+                cameraRequestsBlocked.value = false
+            }
+        } else if (type === "microphone") {
+            if (permission === PermissionManager.Deny) {
+                microphoneRequestsBlocked.value = true
+            } else if (permission === PermissionManager.Prompt) {
+                microphoneRequestsBlocked.value = false
+            }
+        }
+    }
+
+    function _getSensitiveDataCapability(capabilityBlocked) {
+        if (capabilityBlocked.value) {
+            return PermissionManager.Deny
+        } else {
+            return PermissionManager.Prompt
         }
     }
 
@@ -59,7 +86,7 @@ Page {
                                         //% "Location"
                                         title: qsTrId("sailfish_browser-ti-geolocation"),
                                         type: "geolocation",
-                                        capability: PermissionManager.Prompt,
+                                        capability: _getSensitiveDataCapability(locationRequestsBlocked),
                                         iconSource: "image://theme/icon-m-browser-location",
                                         sensitiveData: true
                                     })
@@ -86,7 +113,7 @@ Page {
                                         //% "Camera"
                                         title: qsTrId("sailfish_browser-ti-camera"),
                                         type: "camera",
-                                        capability: PermissionManager.Prompt,
+                                        capability: _getSensitiveDataCapability(cameraRequestsBlocked),
                                         iconSource: "image://theme/icon-m-browser-camera",
                                         sensitiveData: true
                                     })
@@ -95,7 +122,7 @@ Page {
                                         //% "Microphone"
                                         title: qsTrId("sailfish_browser-ti-microphone"),
                                         type: "microphone",
-                                        capability: PermissionManager.Prompt,
+                                        capability: _getSensitiveDataCapability(microphoneRequestsBlocked),
                                         iconSource: "image://theme/icon-m-browser-microphone",
                                         sensitiveData: true
                                     })
@@ -142,7 +169,6 @@ Page {
                 MenuItem {
                     //% "Block"
                     text: qsTrId("sailfish_browser-me-block")
-                    visible: !model.sensitiveData
                     onClicked: {
                         model.capability = PermissionManager.Deny
                         setGlobalPermission(PermissionManager.Deny, model.type)
@@ -152,6 +178,10 @@ Page {
                     //% "Ask"
                     text: qsTrId("sailfish_browser-me-ask")
                     visible: model.sensitiveData
+                    onClicked: {
+                        model.capability = PermissionManager.Prompt
+                        setGlobalPermission(PermissionManager.Prompt, model.type)
+                    }
                 }
                 MenuItem {
                     //% "Show exceptions"
@@ -168,5 +198,23 @@ Page {
                 }
             }
         }
+    }
+
+    ConfigurationValue {
+        id: locationRequestsBlocked
+
+        key: "/apps/sailfish-browser/settings/location_req_blocked"
+    }
+
+    ConfigurationValue {
+        id: cameraRequestsBlocked
+
+        key: "/apps/sailfish-browser/settings/camera_req_blocked"
+    }
+
+    ConfigurationValue {
+        id: microphoneRequestsBlocked
+
+        key: "/apps/sailfish-browser/settings/microphone_req_blocked"
     }
 }
