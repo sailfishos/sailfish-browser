@@ -298,7 +298,9 @@ Column {
             onPressAndHold: {
                 var url = webView.url
                 if (url) {
-                    Clipboard.text = url
+                    // encode the string if it looks like it has query or fragment parts
+                    // FIXME: could be improved with *proper* matching.
+                    Clipboard.text = ( (url.indexOf('?') > -1) || (url.indexOf('#') > -1) ) ? encodeURI(url) : url
                     urlCopyNotice.show()
                 }
             }
