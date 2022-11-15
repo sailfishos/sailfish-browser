@@ -75,8 +75,6 @@ signals:
     void showChrome();
 
 private:
-    bool isPrivileged() const;
-    bool callerMatchesService(const QString &serviceName) const;
     uint getCallerPid() const;
     bool matchesOwner(uint pid) const;
 

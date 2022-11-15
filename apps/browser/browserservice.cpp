@@ -25,7 +25,8 @@
 namespace {
 const auto ProcDir = QStringLiteral("/proc/%1");
 const auto ErrorPidIsNotPrivileged = QStringLiteral("PID %1 is not in privileged group");
-const auto ErrorPidIsNotOwnerServiceOrPrivileged = QStringLiteral("PID %1 is not the owner of '%2' or in privileged group");
+const auto ErrorPidIsNotOwnerService = QStringLiteral("PID %1 is not the owner of '%2'");
+const auto ErrorPidIsNotTabOwner = QStringLiteral("PID %1 is not the owner of the tab");
 const auto SailfishBrowserUiService = QStringLiteral("org.sailfishos.browser.ui");
 const auto TransferEngine = QStringLiteral("org.nemo.transferengine");
 }
@@ -91,6 +92,8 @@ void BrowserService::restartTransfer(int transferId)
 
 void BrowserService::dumpMemoryInfo(const QString &fileName)
 {
+    // The privileged check will always fail when the browser is sandboxed
+    // It can still be useful for debugging purposes running outside the sandbox
     if (!isPrivileged()) {
         return;
     }
@@ -115,20 +118,16 @@ bool BrowserService::isPrivileged() const
 
 bool BrowserService::callerMatchesService(const QString &serviceName) const
 {
-    auto isPrivileged = [=] {
-        IS_PRIVILEGED();
-    };
-
     uint callerServicePid = GET_PID().value();
 
     // Test this against pid of serviceName which works also inside
     // sandbox. If that matches, then the caller is serviceName.
-    if (isPrivileged() || callerServicePid == connection().interface()->servicePid(serviceName).value()) {
+    if (callerServicePid == connection().interface()->servicePid(serviceName).value()) {
         return true;
     }
 
     sendErrorReply(QDBusError::AccessDenied,
-                   ErrorPidIsNotOwnerServiceOrPrivileged.arg(callerServicePid).arg(serviceName));
+                   ErrorPidIsNotOwnerService.arg(callerServicePid).arg(serviceName));
     return false;
 }
 
@@ -209,39 +208,17 @@ void BrowserUIService::requestTabReturned(int tabId, void* context)
 
 void BrowserUIService::closeTab(int tabId)
 {
-    // Let privileged and the process that created the tab to also destroy it
-    if (!isPrivileged() && !matchesOwner(DeclarativeWebContainer::instance()->tabOwner(tabId))) {
+    // Let the process that created the tab also destroy it
+    if (!matchesOwner(DeclarativeWebContainer::instance()->tabOwner(tabId))) {
         sendErrorReply(QDBusError::AccessDenied,
-                QStringLiteral("PID %1 is not the owner or in privileged group").arg(GET_PID()));
+                ErrorPidIsNotTabOwner.arg(GET_PID()));
         return;
     }
-
-    Q_D(BrowserUIService);
 
     DeclarativeWebContainer::instance()->closeTab(tabId);
     const QDBusMessage &msg = message();
     QDBusMessage reply = msg.createReply();
     connection().send(reply);
-}
-
-bool BrowserUIService::isPrivileged() const
-{
-    IS_PRIVILEGED();
-}
-
-bool BrowserUIService::callerMatchesService(const QString &serviceName) const
-{
-    uint callerServicePid = getCallerPid();
-
-    // Test this against pid of serviceName which works also inside
-    // sandbox. If that matches, then the caller is serviceName.
-    if (isPrivileged() || callerServicePid == connection().interface()->servicePid(serviceName).value()) {
-        return true;
-    }
-
-    sendErrorReply(QDBusError::AccessDenied,
-                   ErrorPidIsNotOwnerServiceOrPrivileged.arg(callerServicePid).arg(serviceName));
-    return false;
 }
 
 uint BrowserUIService::getCallerPid() const
