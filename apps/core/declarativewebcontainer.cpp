@@ -540,6 +540,29 @@ int DeclarativeWebContainer::requestTabWithOwner(int tabId, const QString &url, 
     return tabId;
 }
 
+void DeclarativeWebContainer::requestTabWithOwnerAsync(int tabId, const QString &url, uint ownerPid, void *context)
+{
+    // We should only create or activate tabs once the model has loaded
+    if (m_model->loaded()) {
+        // The tab model has already loaded, so we can go ahead and create the tab
+        int activatedTab = requestTabWithOwner(tabId, url, ownerPid);
+        emit requestTabWithOwnerAsyncResult(activatedTab, context);
+    } else {
+        // The model has yet to load, so queue creation of the tab
+        QMetaObject::Connection * const connection = new QMetaObject::Connection;
+        *connection = connect(m_model.data(), &DeclarativeTabModel::loadedChanged, [this, tabId, url, ownerPid, context, connection]() {
+            // We assume that m_model->loaded() is now set to true
+            int activatedTab = requestTabWithOwner(tabId, url, ownerPid);
+            qCDebug(lcCoreLog) << "Delaying tab request created tabId:" << activatedTab;
+            emit requestTabWithOwnerAsyncResult(activatedTab, context);
+            // Single-shot connection
+            QObject::disconnect(*connection);
+            delete connection;
+        });
+        qCDebug(lcCoreLog) << "Tab requested while loading, delaying request on tabId:" << tabId;
+    }
+}
+
 uint DeclarativeWebContainer::tabOwner(int tabId) const
 {
     return m_tabOwners.value(tabId);

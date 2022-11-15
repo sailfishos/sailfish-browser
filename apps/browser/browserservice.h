@@ -66,6 +66,7 @@ public slots:
     void activateNewTabView();
     void requestTab(int id, const QString &url);
     void closeTab(int id);
+    void requestTabReturned(int tabId, void* context);
 
 signals:
     void openUrlRequested(const QString &url);

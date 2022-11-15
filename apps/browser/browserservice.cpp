@@ -14,6 +14,7 @@
 #include "browserservice_p.h"
 #include "declarativewebcontainer.h"
 #include "browserapp.h"
+#include "logging.h"
 
 #include "dbusadaptor.h"
 #include <QDBusConnection>
@@ -31,13 +32,7 @@ const auto TransferEngine = QStringLiteral("org.nemo.transferengine");
 
 #define GET_PID() connection().interface()->servicePid(message().service())
 
-#define IS_PRIVILEGED() \
-    if (!calledFromDBus()) { \
-        return true; \
-    } \
-    uint pid = GET_PID(); \
-    QFileInfo info(ProcDir.arg(pid)); \
-    return info.group() == "privileged" || info.owner() == "root";
+using DBusContext = std::pair<QDBusMessage, QDBusConnection>;
 
 BrowserService::BrowserService(QObject * parent)
     : QObject(parent)
@@ -105,15 +100,17 @@ void BrowserService::dumpMemoryInfo(const QString &fileName)
 
 bool BrowserService::isPrivileged() const
 {
-    auto isPrivileged = [=] {
-        IS_PRIVILEGED();
-    };
-    if (!isPrivileged()) {
+    bool isPrivileged = !calledFromDBus();
+    if (!isPrivileged) {
+        uint pid = GET_PID();
+        QFileInfo info(ProcDir.arg(pid));
+        isPrivileged = info.group() == "privileged" || info.owner() == "root";
+    }
+    if (!isPrivileged) {
         sendErrorReply(QDBusError::AccessDenied,
                 ErrorPidIsNotPrivileged.arg(GET_PID()));
-        return false;
     }
-    return true;
+    return isPrivileged;
 }
 
 bool BrowserService::callerMatchesService(const QString &serviceName) const
@@ -188,13 +185,25 @@ void BrowserUIService::activateNewTabView()
 
 void BrowserUIService::requestTab(int tabId, const QString &url)
 {
-    Q_D(BrowserUIService);
+    DBusContext *context = new DBusContext(message(), connection());
+    setDelayedReply(true);
+    connect(DeclarativeWebContainer::instance(),
+            &DeclarativeWebContainer::requestTabWithOwnerAsyncResult,
+            this, &BrowserUIService::requestTabReturned, Qt::UniqueConnection);
 
-    int activatedTabId = DeclarativeWebContainer::instance()->requestTabWithOwner(tabId, url, getCallerPid());
-    const QDBusMessage &msg = message();
-    QDBusMessage reply = msg.createReply(activatedTabId);
-    connection().send(reply);
+    qCDebug(lcCoreLog) << "Received open tab request";
+    DeclarativeWebContainer::instance()->requestTabWithOwnerAsync(tabId, url, getCallerPid(), static_cast<void*>(context));
+}
 
+void BrowserUIService::requestTabReturned(int tabId, void* context)
+{
+    DBusContext *dbusContext = static_cast<DBusContext*>(context);
+    if (context != nullptr) {
+        qCDebug(lcCoreLog) << "Replying to open tab request";
+        QDBusMessage reply = dbusContext->first.createReply(tabId);
+        dbusContext->second.send(reply);
+        delete dbusContext;
+    }
     emit showChrome();
 }
 
