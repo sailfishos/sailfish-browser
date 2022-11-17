@@ -66,6 +66,7 @@ public slots:
     void activateNewTabView();
     void requestTab(int id, const QString &url);
     void closeTab(int id);
+    void requestTabReturned(int tabId, void* context);
 
 signals:
     void openUrlRequested(const QString &url);
@@ -74,8 +75,6 @@ signals:
     void showChrome();
 
 private:
-    bool isPrivileged() const;
-    bool callerMatchesService(const QString &serviceName) const;
     uint getCallerPid() const;
     bool matchesOwner(uint pid) const;
 

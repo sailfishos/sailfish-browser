@@ -146,6 +146,7 @@ public:
     // For D-Bus interfaces
     uint tabOwner(int tabId) const;
     int requestTabWithOwner(int tabId, const QString &url, uint ownerPid);
+    void requestTabWithOwnerAsync(int tabId, const QString &url, uint ownerPid, void *context);
     Q_INVOKABLE void releaseActiveTabOwnership();
 
     Q_INVOKABLE void load(const QString &url = QString(), bool force = false);
@@ -211,6 +212,7 @@ signals:
     void applicationClosing();
 
     void hasInitialUrlChanged();
+    void requestTabWithOwnerAsyncResult(int tabId, void *context);
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event);

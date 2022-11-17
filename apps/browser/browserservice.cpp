@@ -14,6 +14,7 @@
 #include "browserservice_p.h"
 #include "declarativewebcontainer.h"
 #include "browserapp.h"
+#include "logging.h"
 
 #include "dbusadaptor.h"
 #include <QDBusConnection>
@@ -24,20 +25,15 @@
 namespace {
 const auto ProcDir = QStringLiteral("/proc/%1");
 const auto ErrorPidIsNotPrivileged = QStringLiteral("PID %1 is not in privileged group");
-const auto ErrorPidIsNotOwnerServiceOrPrivileged = QStringLiteral("PID %1 is not the owner of '%2' or in privileged group");
+const auto ErrorPidIsNotOwnerService = QStringLiteral("PID %1 is not the owner of '%2'");
+const auto ErrorPidIsNotTabOwner = QStringLiteral("PID %1 is not the owner of the tab");
 const auto SailfishBrowserUiService = QStringLiteral("org.sailfishos.browser.ui");
 const auto TransferEngine = QStringLiteral("org.nemo.transferengine");
 }
 
 #define GET_PID() connection().interface()->servicePid(message().service())
 
-#define IS_PRIVILEGED() \
-    if (!calledFromDBus()) { \
-        return true; \
-    } \
-    uint pid = GET_PID(); \
-    QFileInfo info(ProcDir.arg(pid)); \
-    return info.group() == "privileged" || info.owner() == "root";
+using DBusContext = std::pair<QDBusMessage, QDBusConnection>;
 
 BrowserService::BrowserService(QObject * parent)
     : QObject(parent)
@@ -96,6 +92,8 @@ void BrowserService::restartTransfer(int transferId)
 
 void BrowserService::dumpMemoryInfo(const QString &fileName)
 {
+    // The privileged check will always fail when the browser is sandboxed
+    // It can still be useful for debugging purposes running outside the sandbox
     if (!isPrivileged()) {
         return;
     }
@@ -105,33 +103,31 @@ void BrowserService::dumpMemoryInfo(const QString &fileName)
 
 bool BrowserService::isPrivileged() const
 {
-    auto isPrivileged = [=] {
-        IS_PRIVILEGED();
-    };
-    if (!isPrivileged()) {
+    bool isPrivileged = !calledFromDBus();
+    if (!isPrivileged) {
+        uint pid = GET_PID();
+        QFileInfo info(ProcDir.arg(pid));
+        isPrivileged = info.group() == "privileged" || info.owner() == "root";
+    }
+    if (!isPrivileged) {
         sendErrorReply(QDBusError::AccessDenied,
                 ErrorPidIsNotPrivileged.arg(GET_PID()));
-        return false;
     }
-    return true;
+    return isPrivileged;
 }
 
 bool BrowserService::callerMatchesService(const QString &serviceName) const
 {
-    auto isPrivileged = [=] {
-        IS_PRIVILEGED();
-    };
-
     uint callerServicePid = GET_PID().value();
 
     // Test this against pid of serviceName which works also inside
     // sandbox. If that matches, then the caller is serviceName.
-    if (isPrivileged() || callerServicePid == connection().interface()->servicePid(serviceName).value()) {
+    if (callerServicePid == connection().interface()->servicePid(serviceName).value()) {
         return true;
     }
 
     sendErrorReply(QDBusError::AccessDenied,
-                   ErrorPidIsNotOwnerServiceOrPrivileged.arg(callerServicePid).arg(serviceName));
+                   ErrorPidIsNotOwnerService.arg(callerServicePid).arg(serviceName));
     return false;
 }
 
@@ -188,51 +184,41 @@ void BrowserUIService::activateNewTabView()
 
 void BrowserUIService::requestTab(int tabId, const QString &url)
 {
-    Q_D(BrowserUIService);
+    DBusContext *context = new DBusContext(message(), connection());
+    setDelayedReply(true);
+    connect(DeclarativeWebContainer::instance(),
+            &DeclarativeWebContainer::requestTabWithOwnerAsyncResult,
+            this, &BrowserUIService::requestTabReturned, Qt::UniqueConnection);
 
-    int activatedTabId = DeclarativeWebContainer::instance()->requestTabWithOwner(tabId, url, getCallerPid());
-    const QDBusMessage &msg = message();
-    QDBusMessage reply = msg.createReply(activatedTabId);
-    connection().send(reply);
+    qCDebug(lcCoreLog) << "Received open tab request";
+    DeclarativeWebContainer::instance()->requestTabWithOwnerAsync(tabId, url, getCallerPid(), static_cast<void*>(context));
+}
 
+void BrowserUIService::requestTabReturned(int tabId, void* context)
+{
+    DBusContext *dbusContext = static_cast<DBusContext*>(context);
+    if (context != nullptr) {
+        qCDebug(lcCoreLog) << "Replying to open tab request";
+        QDBusMessage reply = dbusContext->first.createReply(tabId);
+        dbusContext->second.send(reply);
+        delete dbusContext;
+    }
     emit showChrome();
 }
 
 void BrowserUIService::closeTab(int tabId)
 {
-    // Let privileged and the process that created the tab to also destroy it
-    if (!isPrivileged() && !matchesOwner(DeclarativeWebContainer::instance()->tabOwner(tabId))) {
+    // Let the process that created the tab also destroy it
+    if (!matchesOwner(DeclarativeWebContainer::instance()->tabOwner(tabId))) {
         sendErrorReply(QDBusError::AccessDenied,
-                QStringLiteral("PID %1 is not the owner or in privileged group").arg(GET_PID()));
+                ErrorPidIsNotTabOwner.arg(GET_PID()));
         return;
     }
-
-    Q_D(BrowserUIService);
 
     DeclarativeWebContainer::instance()->closeTab(tabId);
     const QDBusMessage &msg = message();
     QDBusMessage reply = msg.createReply();
     connection().send(reply);
-}
-
-bool BrowserUIService::isPrivileged() const
-{
-    IS_PRIVILEGED();
-}
-
-bool BrowserUIService::callerMatchesService(const QString &serviceName) const
-{
-    uint callerServicePid = getCallerPid();
-
-    // Test this against pid of serviceName which works also inside
-    // sandbox. If that matches, then the caller is serviceName.
-    if (isPrivileged() || callerServicePid == connection().interface()->servicePid(serviceName).value()) {
-        return true;
-    }
-
-    sendErrorReply(QDBusError::AccessDenied,
-                   ErrorPidIsNotOwnerServiceOrPrivileged.arg(callerServicePid).arg(serviceName));
-    return false;
 }
 
 uint BrowserUIService::getCallerPid() const
