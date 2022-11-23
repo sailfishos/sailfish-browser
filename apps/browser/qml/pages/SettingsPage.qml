@@ -307,6 +307,43 @@ Page {
                     }
                 }
             }
+
+            SectionHeader {
+                //: Section Header for Appearance settings
+                //% "Appearance"
+                text: qsTrId("settings_browser-la-appearance")
+            }
+
+            BrowserComboBox {
+                //% "Preferred color scheme"
+                label: qsTrId("settings_browser-la-color_scheme")
+                iconSource: "image://theme/icon-m-night"
+                currentIndex: WebEngineSettings.colorScheme
+
+                //% "The website style to use when available"
+                description: qsTrId("sailfish_browser-me-website_color_scheme")
+
+                menu: ContextMenu {
+                    MenuItem {
+                        //: Option to prefer a website's light color scheme
+                        //% "Light"
+                        text: qsTrId("sailfish_browser-me-prefers_light_mode")
+                        onClicked: WebEngineSettings.colorScheme = WebEngineSettings.PrefersLightMode
+                    }
+                    MenuItem {
+                        //: Option to prefer a website's dark color scheme
+                        //% "Dark"
+                        text: qsTrId("sailfish_browser-me-prefers_dark_mode")
+                        onClicked: WebEngineSettings.colorScheme = WebEngineSettings.PrefersDarkMode
+                    }
+                    MenuItem {
+                        //: Option for the website's color scheme to match the ambience
+                        //% "Match ambience"
+                        text: qsTrId("sailfish_browser-me-follow_ambience")
+                        onClicked: WebEngineSettings.colorScheme = WebEngineSettings.FollowsAmbience
+                    }
+                }
+            }
         }
     }
 
