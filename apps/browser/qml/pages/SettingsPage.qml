@@ -12,7 +12,7 @@
 import QtQuick 2.6
 import Sailfish.Silica 1.0
 import Sailfish.Browser 1.0
-import org.nemomobile.configuration 1.0
+import Nemo.Configuration 1.0
 import com.jolla.settings.system 1.0
 import Sailfish.WebEngine 1.0
 import Sailfish.Pickers 1.0
