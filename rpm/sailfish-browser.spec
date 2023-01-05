@@ -60,6 +60,7 @@ Requires: nemo-qml-plugin-notifications-qt5 >= 1.0.12
 Requires: nemo-qml-plugin-systemsettings >= %{min_systemsettings_version}
 Requires: mapplauncherd-booster-browser
 Requires: nemo-qml-plugin-connectivity
+Requires: connman-qt5-declarative >= 1.3.0
 
 %{_oneshot_requires_post}
 
