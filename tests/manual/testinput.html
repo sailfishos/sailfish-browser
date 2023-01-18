@@ -45,6 +45,7 @@
         </script>
     </head>
     <body onload="init()">
+        <h2>Text input</h2>
         <table id="inputs">
             <tr><td>tel:</td><td><input type="tel"></td></tr>
             <tr><td>number:</td><td><input type="number"></td></tr>
@@ -65,6 +66,38 @@
         text, autocapitalize="none":<br/>
         <input type="text" autocapitalize="none">
         text, autocapitalize="characters":<br/>
-        <input type="text" autocapitalize="characters">
+        <input type="text" autocapitalize="characters"><br/>
+
+        <h2>Input radio</h2>
+        <!-- Test case adapted & copied from https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/radio -->
+        <fieldset>
+        <legend>Radio button test cases</legend>
+        <div>
+            <input type="radio" id="huey" name="drone" value="huey" checked>
+            <label for="huey">Huey</label>
+        </div>
+        <div>
+            <input type="radio" id="dewey" name="drone" value="dewey">
+            <label for="dewey">Dewey</label>
+        </div>
+        <div>
+            <input type="radio" id="louie" name="drone" value="louie">
+            <label for="louie">Louie</label>
+        </div>
+        </fieldset>
+
+        <h2>Input checkbox</h2>
+        <!-- Test case adapted & copied from https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/checkbox -->
+        <fieldset>
+        <legend>Choose your monster's features:</legend>
+        <div>
+            <input type="checkbox" id="scales" name="scales" checked>
+            <label for="scales">Scales</label>
+        </div>
+        <div>
+            <input type="checkbox" id="horns" name="horns">
+            <label for="horns">Horns</label>
+        </div>
+        </fieldset>
     </body>
 </html>
