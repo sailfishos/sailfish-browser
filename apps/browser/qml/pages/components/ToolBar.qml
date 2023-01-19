@@ -241,6 +241,7 @@ Column {
                                                  Theme.errorColor.b, glow))
                                : Theme.primaryColor
             enabled: webView.security
+            visible: !(webView.url.indexOf("about:") === 0)
             onTapped: {
                 if (certOverlayActive) {
                     showChrome()
