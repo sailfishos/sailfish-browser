@@ -235,5 +235,6 @@ void DeclarativeWebUtils::setRenderingPreferences()
     // Use external Qt window for rendering content
     webEngineSettings->setPreference(QString("gfx.compositor.external-window"), QVariant(true));
     webEngineSettings->setPreference(QString("gfx.compositor.clear-context"), QVariant(false));
+    webEngineSettings->setPreference(QString("gfx.webrender.force-disabled"), QVariant(true));
     webEngineSettings->setPreference(QString("embedlite.compositor.external_gl_context"), QVariant(true));
 }
