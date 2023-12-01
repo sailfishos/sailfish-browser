@@ -156,7 +156,6 @@ void SettingManager::handleObserve(const QString &message, const QVariant &data)
                     // load opensearch descriptions
                     loadsearch.insert(QLatin1String("msg"), QVariant(QLatin1String("loadxml")));
                     loadsearch.insert(QLatin1String("uri"), QVariant(QString("file://%1").arg(configs[searchName])));
-                    loadsearch.insert(QLatin1String("confirm"), QVariant(false));
                     webEngine->notifyObservers(QLatin1String("embedui:search"), QVariant(loadsearch));
                 }
             }
