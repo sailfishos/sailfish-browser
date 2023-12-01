@@ -165,7 +165,6 @@ void DataFetcher::saveAsSearchEngine()
                 QVariantMap loadsearch;
                 loadsearch.insert(QLatin1String("msg"), QVariant(QLatin1String("loadxml")));
                 loadsearch.insert(QLatin1String("uri"), QVariant(url.toString()));
-                loadsearch.insert(QLatin1String("confirm"), QVariant(false));
                 SailfishOS::WebEngine::instance()->notifyObservers(QLatin1String("embedui:search"), QVariant(loadsearch));
 
                 updateStatus(Ready);
