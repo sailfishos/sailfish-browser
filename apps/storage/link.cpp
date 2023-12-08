@@ -22,15 +22,6 @@ Link::Link() :
 {
 }
 
-Link::Link(const Link& l) :
-    m_linkId(l.m_linkId),
-    m_url(l.m_url),
-    m_thumbPath(l.m_thumbPath),
-    m_title(l.m_title),
-    m_date(l.m_date)
-{
-}
-
 int Link::linkId() const
 {
     return m_linkId;

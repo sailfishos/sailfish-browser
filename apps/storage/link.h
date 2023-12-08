@@ -21,7 +21,6 @@ class Link
 public:
     explicit Link(int linkId, const QString &url, const QString &thumbPath, const QString &title, const QDate &date = QDate());
     explicit Link();
-    Link(const Link& l);
 
     int linkId() const;
     void setLinkId(int linkId);
