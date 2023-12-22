@@ -21,14 +21,14 @@ BrowserWindow {
             cover = Qt.resolvedUrl("cover/NoTabsCover.qml")
         } else {
             if (cover != null && window.webView) {
-              window.webView.clearSurface();
+                window.webView.clearSurface()
             }
             cover = null
         }
     }
 
     //% "Web browsing"
-    activityDisabledByMdm: qsTrId("sailfish_browser-la-web_browsing");
+    activityDisabledByMdm: qsTrId("sailfish_browser-la-web_browsing")
     initialPage: Component {
         BrowserPage {
             id: browserPage

@@ -24,7 +24,7 @@ CaptivePortalService::CaptivePortalService(QObject *parent)
 {
     new CaptivePortalAdaptor(this);
     QDBusConnection connection = QDBusConnection::sessionBus();
-    if(!connection.registerObject("/", this)
+    if (!connection.registerObject("/", this)
             || !connection.registerService(serviceName())) {
         m_registered = false;
     }

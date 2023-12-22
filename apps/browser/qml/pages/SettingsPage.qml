@@ -182,7 +182,7 @@ Page {
                 leftMargin: Theme.horizontalPageMargin + Theme.paddingLarge + _textSwitchIconCenter
                 _label.anchors.leftMargin: Theme.paddingMedium + _textSwitchIconCenter
 
-                onCheckedChanged: WebEngineSettings.javascriptEnabled = checked;
+                onCheckedChanged: WebEngineSettings.javascriptEnabled = checked
             }
 
             BackgroundItem {

@@ -43,9 +43,9 @@ Dialog {
                 id: header
 
                 //% "Are you sure you want to clear the browser data?"
-                title: qsTrId("sailfish_browser-ti-confirm_clearing_browser_data");
+                title: qsTrId("sailfish_browser-ti-confirm_clearing_browser_data")
                 //% "Clear"
-                acceptText: qsTrId("sailfish_browser-he-clear");
+                acceptText: qsTrId("sailfish_browser-he-clear")
             }
 
             Label {
@@ -53,7 +53,7 @@ Dialog {
                 width: parent.width - 2*Theme.horizontalPageMargin
 
                 //% "The following browser data will be cleared:"
-                text: qsTrId("sailfish_browser-la-following_browser_data_will_be_cleared:");
+                text: qsTrId("sailfish_browser-la-following_browser_data_will_be_cleared:")
                 highlighted: true
                 wrapMode: Text.Wrap
             }
@@ -92,7 +92,7 @@ Dialog {
                 id: passwordsItem
 
                 //% "Saved passwords"
-                text: qsTrId("sailfish_browser-la-saved_passwords");
+                text: qsTrId("sailfish_browser-la-saved_passwords")
             }
 
             BrowserDataItem {
@@ -109,14 +109,14 @@ Dialog {
                 id: bookmarksItem
 
                 //% "Bookmarks"
-                text: qsTrId("sailfish_browser-la-bookmarks");
+                text: qsTrId("sailfish_browser-la-bookmarks")
             }
 
             BrowserDataItem {
                 id: sitePermissionsItem
 
                 //% "Site permissions"
-                text: qsTrId("sailfish_browser-la-site_permissions");
+                text: qsTrId("sailfish_browser-la-site_permissions")
             }
         }
     }

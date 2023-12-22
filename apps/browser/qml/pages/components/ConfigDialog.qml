@@ -35,15 +35,15 @@ Dialog {
         if (value === "") {
             prefsList.model = prefsListModel
         } else {
-            filterListModel.clear();
+            filterListModel.clear()
             for (var i=0; i<prefsListModel.count; i++) {
                 if (prefsListModel.get(i).name.toLowerCase().search(value.toLowerCase()) != -1) {
-                    var obj = prefsListModel.get(i);
-                    obj.prefsListIndex = i;
-                    filterListModel.append(obj);
+                    var obj = prefsListModel.get(i)
+                    obj.prefsListIndex = i
+                    filterListModel.append(obj)
                 }
             }
-            prefsList.model = filterListModel;
+            prefsList.model = filterListModel
         }
     }
 
@@ -51,10 +51,10 @@ Dialog {
         target: WebEngine
         onRecvObserve: {
             if (message === "embed:allprefs") {
-                var allprefs = data;
-                prefsListModel.clear();
+                var allprefs = data
+                prefsListModel.clear()
                 for (var i=0; i < allprefs.length; i++) {
-                    prefsListModel.append(allprefs[i]);
+                    prefsListModel.append(allprefs[i])
                 }
             }
         }
@@ -127,7 +127,8 @@ Dialog {
                     }
 
                     onTextChanged: {
-                        if (text === model.value) return;
+                        if (text === model.value)
+                            return
 
                         if (digitsOnly) {
                             changedConfigs[model.name] = {
@@ -135,17 +136,17 @@ Dialog {
                                 type: model.type
                             }
                         } else {
-                            changedConfigs[model.name] =   {
+                            changedConfigs[model.name] = {
                                 value: text,
                                 type: model.type
                             }
                         }
 
                         if (prefsList.model === prefsListModel) {
-                            prefsListModel.setProperty(model.index, "value", text);
+                            prefsListModel.setProperty(model.index, "value", text)
                         } else {
-                            filterListModel.setProperty(model.index, "value", text);
-                            prefsListModel.setProperty(model.prefsListIndex, "value", text);
+                            filterListModel.setProperty(model.index, "value", text)
+                            prefsListModel.setProperty(model.prefsListIndex, "value", text)
                         }
                     }
 
@@ -172,10 +173,10 @@ Dialog {
                             }
 
                             if (prefsList.model === prefsListModel) {
-                                prefsListModel.setProperty(model.index, "value", checked.toString());
+                                prefsListModel.setProperty(model.index, "value", checked.toString())
                             } else {
-                                filterListModel.setProperty(model.index, "value", checked.toString());
-                                prefsListModel.setProperty(model.prefsListIndex, "value", checked.toString());
+                                filterListModel.setProperty(model.index, "value", checked.toString())
+                                prefsListModel.setProperty(model.prefsListIndex, "value", checked.toString())
                             }
                         }
                     }

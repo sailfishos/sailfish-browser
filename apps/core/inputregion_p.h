@@ -17,7 +17,8 @@
 #include <QRect>
 #include "inputregion.h"
 
-class InputRegionPrivate {
+class InputRegionPrivate
+{
 public:
     InputRegionPrivate(InputRegion *q);
 

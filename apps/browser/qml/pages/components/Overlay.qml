@@ -49,7 +49,7 @@ Shared.Background {
             pageStack.animatorPush(Qt.resolvedUrl("../SettingsPage.qml"))
         } else {
             if (webView && webView.tabModel.count === 0) {
-                webView.clearSurface();
+                webView.clearSurface()
             }
             // let gecko figure out how to handle malformed URLs
             var pageUrl = url

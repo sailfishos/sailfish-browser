@@ -32,7 +32,8 @@ class Tab;
 class DeclarativeHistoryModel;
 class CloseEventFilter;
 
-class DeclarativeWebContainer : public QWindow, public QQmlParserStatus, protected QOpenGLFunctions {
+class DeclarativeWebContainer : public QWindow, public QQmlParserStatus, protected QOpenGLFunctions
+{
     Q_OBJECT
     Q_INTERFACES(QQmlParserStatus)
 

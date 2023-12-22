@@ -162,7 +162,7 @@ WebContainer {
                 onLoginSaved: {
                     FaviconManager.grabIcon("logins", webPage,
                                             Qt.size(Theme.iconSizeMedium,
-                                                    Theme.iconSizeMedium));
+                                                    Theme.iconSizeMedium))
                 }
             }
 
@@ -268,7 +268,7 @@ WebContainer {
                 // Refresh timers (if any) keep working even for suspended views. Hence
                 // suspend the view again explicitly if browser content window is in not visible (background).
                 if (loaded && !webView.visible) {
-                    suspendView();
+                    suspendView()
                 }
             }
 
@@ -323,7 +323,7 @@ WebContainer {
                 }
                 case "embed:find": {
                     // Found, or found wrapped
-                    if( data.r == 0 || data.r == 2) {
+                    if (data.r == 0 || data.r == 2) {
                         webView.findInPageHasResult = true
                     } else {
                         webView.findInPageHasResult = false

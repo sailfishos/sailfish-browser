@@ -14,7 +14,8 @@
 
 class QQuickView;
 
-class BrowserPrivate {
+class BrowserPrivate
+{
     friend class Browser;
 
 public:

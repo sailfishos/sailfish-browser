@@ -74,10 +74,10 @@ DeclarativeWebPage *WebPageQueue::activate(int tabId)
 
 DeclarativeWebPage *WebPageQueue::activeWebPage() const
 {
-    return !m_queue.isEmpty() ? m_queue.at(0)->webPage : 0;;
+    return !m_queue.isEmpty() ? m_queue.at(0)->webPage : 0;
 }
 
-void WebPageQueue::release(int tabId,  bool virtualize)
+void WebPageQueue::release(int tabId, bool virtualize)
 {
     int index = -1;
     WebPageEntry *pageEntry = find(tabId, index);

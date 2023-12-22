@@ -18,9 +18,9 @@
 class DeclarativeWebPage;
 class DeclarativeTabModel;
 
-class DeclarativeWebPageCreator : public QMozViewCreator {
+class DeclarativeWebPageCreator : public QMozViewCreator
+{
     Q_OBJECT
-
     Q_PROPERTY(DeclarativeWebPage *activeWebPage READ activeWebPage WRITE setActiveWebPage NOTIFY activeWebPageChanged FINAL)
     Q_PROPERTY(DeclarativeTabModel *model READ model WRITE setModel NOTIFY modelChanged FINAL)
 

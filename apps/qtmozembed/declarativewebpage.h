@@ -23,7 +23,8 @@
 class DeclarativeWebContainer;
 class Link;
 
-class DeclarativeWebPage : public QOpenGLWebPage {
+class DeclarativeWebPage : public QOpenGLWebPage
+{
     Q_OBJECT
     Q_PROPERTY(DeclarativeWebContainer* container READ container NOTIFY containerChanged FINAL)
     Q_PROPERTY(int tabId READ tabId NOTIFY tabIdChanged FINAL)
