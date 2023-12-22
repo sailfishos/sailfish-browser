@@ -24,7 +24,7 @@ Dialog {
 
     canAccept: loginModel.canModify(uid, username, password)
     onAcceptBlocked: usernameField.errorHighlight = true
-    onAccepted: loginModel.modify(uid, username, password);
+    onAccepted: loginModel.modify(uid, username, password)
 
     SilicaFlickable {
         anchors.fill: parent
@@ -71,7 +71,7 @@ Dialog {
 
                 on_EchoModeToggleClicked: {
                     if (_usePasswordEchoMode) {
-                        secureAction.perform(function () { _usePasswordEchoMode = false });
+                        secureAction.perform(function () { _usePasswordEchoMode = false })
                     } else {
                         _usePasswordEchoMode = true
                     }

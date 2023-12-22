@@ -29,7 +29,7 @@ Page {
     }
 
     function _getCookieCapability() {
-        switch(WebEngineSettings.cookieBehavior) {
+        switch (WebEngineSettings.cookieBehavior) {
         case WebEngineSettings.AcceptAll:
             return PermissionManager.Allow
         case WebEngineSettings.BlockAll:

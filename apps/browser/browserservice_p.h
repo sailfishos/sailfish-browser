@@ -14,7 +14,8 @@
 
 class Browser;
 
-class BrowserUIServicePrivate {
+class BrowserUIServicePrivate
+{
 public:
     BrowserUIServicePrivate();
 

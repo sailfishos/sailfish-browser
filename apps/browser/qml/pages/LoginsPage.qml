@@ -131,7 +131,7 @@ Page {
                         visible: !secureAction.available
                         //% "Copy username"
                         text: qsTrId("sailfish_browser-me-login_copy_username")
-                        onClicked: copyUsername(model.username);
+                        onClicked: copyUsername(model.username)
                     }
                     MenuItem {
                         visible: secureAction.available
@@ -173,7 +173,7 @@ Page {
                         //% "Delete"
                         text: qsTrId("sailfish_browser-me-login_delete")
                         onClicked: {
-                            remove(model.uid);
+                            remove(model.uid)
                         }
                     }
                 }
@@ -225,7 +225,7 @@ Page {
                 text: qsTrId("sailfish_browser-me-login_copy_password")
                 parent: menu._contentColumn // context menu touch requires menu items are children of content area
                 onClicked: {
-                    secureAction.perform(copyPassword.bind(null, _copyOptions.password));
+                    secureAction.perform(copyPassword.bind(null, _copyOptions.password))
                     menu.close()
                 }
             }

@@ -100,7 +100,7 @@ SilicaFlickable {
             x: Theme.horizontalPageMargin
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
-            color:  Theme.secondaryHighlightColor
+            color: Theme.secondaryHighlightColor
             visible: !_secure
             //% "Do not enter personal data, passwords, card details on this site"
             text: qsTrId("sailfish_browser-sh-do_not-enter_personal_data")
@@ -157,7 +157,7 @@ SilicaFlickable {
                         x: Theme.horizontalPageMargin
                         horizontalAlignment: Text.AlignHCenter
                         wrapMode: Text.Wrap
-                        color:  Theme.highlightColor
+                        color: Theme.highlightColor
                         //% "Current permissions"
                         text: qsTrId("sailfish_browser-sh-current-permissions")
                     }

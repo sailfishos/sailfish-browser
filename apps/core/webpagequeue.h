@@ -18,9 +18,9 @@
 class QRectF;
 class DeclarativeWebPage;
 
-class WebPageQueue {
-
-public :
+class WebPageQueue
+{
+public:
     explicit WebPageQueue();
     ~WebPageQueue();
 

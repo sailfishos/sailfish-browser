@@ -42,7 +42,7 @@ BrowserService::BrowserService(QObject * parent)
 {
     new DBusAdaptor(this);
     QDBusConnection connection = QDBusConnection::sessionBus();
-    if(!connection.registerObject("/", this)
+    if (!connection.registerObject("/", this)
             || !connection.registerService(serviceName())) {
         m_registered = false;
     }
@@ -60,7 +60,7 @@ QString BrowserService::serviceName() const
 
 void BrowserService::openUrl(const QStringList &args)
 {
-    if(args.count() > 0) {
+    if (args.count() > 0) {
         emit openUrlRequested(args.first());
     } else {
         emit openUrlRequested(QString());
@@ -145,7 +145,7 @@ BrowserUIService::BrowserUIService(QObject *parent)
 
     new UIServiceDBusAdaptor(this);
     QDBusConnection connection = QDBusConnection::sessionBus();
-    if(!connection.registerObject("/ui", this) ||
+    if (!connection.registerObject("/ui", this) ||
             !connection.registerService(SailfishBrowserUiService)) {
         d->registered = false;
     }
@@ -165,7 +165,7 @@ QString BrowserUIService::serviceName() const
 
 void BrowserUIService::openUrl(const QStringList &args)
 {
-    if(args.count() > 0) {
+    if (args.count() > 0) {
         emit openUrlRequested(args.first());
     } else {
         emit openUrlRequested(QString());

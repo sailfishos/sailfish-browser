@@ -11,8 +11,8 @@
 #include "declarativebookmarkmodel.h"
 #include "bookmarkmanager.h"
 
-DeclarativeBookmarkModel::DeclarativeBookmarkModel(QObject *parent) :
-    QAbstractListModel(parent)
+DeclarativeBookmarkModel::DeclarativeBookmarkModel(QObject *parent)
+    : QAbstractListModel(parent)
 {
     connect(BookmarkManager::instance(), &BookmarkManager::cleared,
             this, &DeclarativeBookmarkModel::clearBookmarks);

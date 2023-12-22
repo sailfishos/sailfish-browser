@@ -78,7 +78,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     Q_ASSERT(!s_instance);
 
     QSize screenSize = QGuiApplication::primaryScreen()->size();
-    resize(screenSize.width(), screenSize.height());;
+    resize(screenSize.width(), screenSize.height());
     setSurfaceType(QWindow::OpenGLSurface);
 
     QSurfaceFormat format(requestedFormat());

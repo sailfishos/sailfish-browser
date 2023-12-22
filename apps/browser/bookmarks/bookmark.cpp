@@ -24,23 +24,27 @@ Bookmark::Bookmark(const QString &title, const QString &url, const QString &favi
     }
 }
 
-QString Bookmark::title() const {
+QString Bookmark::title() const
+{
     return m_title;
 }
 
-void Bookmark::setTitle(const QString &title) {
-    if(title != m_title) {
+void Bookmark::setTitle(const QString &title)
+{
+    if (title != m_title) {
         m_title = title;
         emit titleChanged();
     }
 }
 
-QString Bookmark::url() const {
+QString Bookmark::url() const
+{
     return m_url;
 }
 
-void Bookmark::setUrl(const QString &url) {
-    if(url != m_url) {
+void Bookmark::setUrl(const QString &url)
+{
+    if (url != m_url) {
         m_url = url;
         emit urlChanged();
     }
@@ -50,8 +54,9 @@ QString Bookmark::favicon() const {
     return m_favicon;
 }
 
-void Bookmark::setFavicon(const QString &favicon) {
-    if(favicon != m_favicon) {
+void Bookmark::setFavicon(const QString &favicon)
+{
+    if (favicon != m_favicon) {
         m_favicon = favicon;
         emit faviconChanged();
     }

@@ -118,7 +118,7 @@ signals:
     void availableChanged(bool available);
 
 private:
-    bool m_available = false;;
+    bool m_available = false;
 };
 
 SecureActionAuthenticatorAdaptor::SecureActionAuthenticatorAdaptor(SecureAction *action)

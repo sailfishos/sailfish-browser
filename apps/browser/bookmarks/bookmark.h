@@ -14,7 +14,8 @@
 
 #include <QObject>
 
-class Bookmark : public QObject {
+class Bookmark : public QObject
+{
     Q_OBJECT
 
     Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY titleChanged)
@@ -35,6 +36,7 @@ public:
 
     bool hasTouchIcon() const;
     void setHasTouchIcon(bool hasTouchIcon);
+
 signals:
     void titleChanged();
     void urlChanged();

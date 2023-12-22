@@ -30,7 +30,7 @@ Shared.Background {
 
     function loadPage(url)  {
         if (webView && webView.tabModel.count === 0) {
-            webView.clearSurface();
+            webView.clearSurface()
         }
         // let gecko figure out how to handle malformed URLs
         var pageUrl = url

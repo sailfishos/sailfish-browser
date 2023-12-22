@@ -14,7 +14,8 @@
 
 #include <QString>
 
-class DownloadMimetypeHandler {
+class DownloadMimetypeHandler
+{
 public:
     static void update();
 

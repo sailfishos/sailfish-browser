@@ -19,7 +19,7 @@ ConfirmDialog {
 
     //: Warning of changing browser configurations.
     //% "Changing these advanced settings can cause issues with stability, security and performance of Sailfish Browser. Continue ?"
-    text: qsTrId("sailfish_browser-la-config-warning");
+    text: qsTrId("sailfish_browser-la-config-warning")
     acceptDestination: Component {
         ConfigDialog {
             // On accept pop back to browserPage

@@ -14,7 +14,6 @@
 BookmarkFilterModel::BookmarkFilterModel(QObject *parent)
     : QSortFilterProxyModel(parent)
 {
-
 }
 
 int BookmarkFilterModel::getIndex(int currentIndex)

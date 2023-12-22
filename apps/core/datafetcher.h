@@ -15,7 +15,8 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 
-class DataFetcher : public QObject {
+class DataFetcher : public QObject
+{
     Q_OBJECT
     Q_ENUMS(Status)
     Q_ENUMS(Type)
