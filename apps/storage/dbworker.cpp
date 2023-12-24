@@ -67,6 +67,13 @@ static const char * const create_table_settings =
         "value TEXT\n"
         ");\n";
 
+static const char * const create_table_user_agent_overrides =
+        "CREATE TABLE user_agent_overrides (\n"
+        "   host TEXT NOT NULL UNIQUE PRIMARY KEY,\n"
+        "   is_key INTEGER NOT NULL CHECK(is_key IN (0,1)),\n"
+        "   user_agent TEXT\n"
+        ") WITHOUT ROWID\n";
+
 static const char * const set_user_version =
         "PRAGMA user_version=" STR(DB_USER_VERSION) ";\n";
 
@@ -76,6 +83,7 @@ static const char *db_schema[] = {
     create_table_link,
     create_table_browser_history,
     create_table_settings,
+    create_table_user_agent_overrides,
     set_user_version
 };
 static int db_schema_count = sizeof(db_schema) / sizeof(*db_schema);
@@ -812,4 +820,46 @@ void DBWorker::deleteSetting(const QString &name)
     QSqlQuery query = prepare("DELETE FROM settings WHERE name = ?");
     query.bindValue(0, name);
     execute(query);
+}
+
+void DBWorker::setUserAgentOverride(const QString &host, const bool isKey, const QString &userAgent)
+{
+    QSqlQuery query = prepare("INSERT INTO user_agent_overrides "
+                              "(host, is_key, user_agent) "
+                              "VALUES (?, ?, ?) "
+                              "ON CONFLICT(host) DO UPDATE SET "
+                              "is_key=excluded.is_key, "
+                              "user_agent=excluded.user_agent;");
+
+    query.bindValue(0, host);
+    query.bindValue(1, isKey);
+    query.bindValue(2, userAgent);
+    execute(query);
+}
+
+void DBWorker::unsetUserAgentOverride(const QString &host)
+{
+    QSqlQuery query = prepare("DELETE FROM user_agent_overrides WHERE host = ?");
+    query.bindValue(0, host);
+    execute(query);
+}
+
+void DBWorker::clearUserAgentOverrides()
+{
+    QSqlQuery query = prepare("DELETE FROM user_agent_overrides");
+    execute(query);
+}
+
+QVariantMap DBWorker::getUserAgentOverrides()
+{
+    QSqlQuery query = prepare("SELECT host, is_key, user_agent FROM user_agent_overrides;");
+    QVariantMap userAgentOverrides;
+    if (execute(query)) {
+        while (query.next()) {
+            userAgentOverrides.insert(query.value(0).toString(),
+                                      QVariantList({query.value(1).toBool(),
+                                                    query.value(2).toString()}));
+        }
+    }
+    return userAgentOverrides;
 }

@@ -202,6 +202,11 @@ QString DeclarativeWebUtils::displayableUrl(const QString &fullUrl) const
     return !returnUrl.isEmpty() ? returnUrl : fullUrl;
 }
 
+QString DeclarativeWebUtils::host(const QString &fullUrl) const
+{
+    return QUrl(fullUrl).host();
+}
+
 QString DeclarativeWebUtils::pageName(const QString &fullUrl) const
 {
     QUrl url(fullUrl);

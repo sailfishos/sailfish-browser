@@ -242,6 +242,32 @@ Page {
                     anchors.verticalCenter: parent.verticalCenter
 
                     Icon {
+                        id: userAgentsIcon
+                        source: "image://theme/icon-m-browser-user-agents"
+                        width: Theme.iconSizeMedium
+                        height: Theme.iconSizeMedium
+                    }
+                    Label {
+                        width: parent.width - parent.spacing - userAgentsIcon.width
+                        //: The label for the button for accessing user agent overrides management
+                        //% "User agent overrides"
+                        text: qsTrId("settings_browser-la-user_agent_overrides")
+                        anchors.verticalCenter: userAgentsIcon.verticalCenter
+                    }
+                }
+                onClicked: pageStack.push("UserAgentPage.qml")
+            }
+
+            BackgroundItem {
+                width: parent.width
+                contentHeight: Theme.itemSizeMedium
+                Row {
+                    width: parent.width - 2*Theme.horizontalPageMargin
+                    x: Theme.horizontalPageMargin
+                    spacing: Theme.paddingMedium
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    Icon {
                         id: clearBrowsingDataIcon
                         source: "image://theme/icon-m-delete"
                     }

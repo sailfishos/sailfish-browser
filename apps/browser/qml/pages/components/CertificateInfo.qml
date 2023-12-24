@@ -13,6 +13,7 @@ import Sailfish.Browser 1.0
 import Qt5Mozilla 1.0
 import "." as Browser
 import Sailfish.WebView.Controls 1.0
+import "../useragenthelper.js" as UserAgentHelper
 
 SilicaFlickable {
     id: root
@@ -33,6 +34,10 @@ SilicaFlickable {
                        })
     }
 
+    function openSiteUseragentSettings() {
+        pageStack.push("../SiteUserAgentPage.qml")
+    }
+
     onSecurityChanged: {
         // Jump back to the top
         contentY = originY
@@ -41,6 +46,11 @@ SilicaFlickable {
     PermissionModel {
         id: permissionIndicationModel
         host: toolBarRow.url
+    }
+
+    UserAgentModel {
+        id: userAgentModel
+        currentHost: WebUtils.host(webView.url)
     }
 
     VerticalScrollDecorator {}
@@ -116,12 +126,49 @@ SilicaFlickable {
             onClicked: showCertDetail()
         }
 
-
         Loader {
             height: Theme.fontSizeMedium + Theme.iconSizeMedium + Theme.paddingMedium
             width: permissionIndicationModel.count === 0 ? implicitWidth : parent.width
             anchors.horizontalCenter: parent.horizontalCenter
             sourceComponent: permissionIndicationModel.count === 0 ? permissionButtonComponent : permissionComponent
+        }
+
+        MouseArea {
+            id: userAgentArea
+
+            width: parent.width
+            height: userAgentColumn.height
+            onClicked: openSiteUseragentSettings()
+
+            Column {
+                id: userAgentColumn
+
+                width: parent.width
+                spacing: Theme.paddingMedium
+                anchors.horizontalCenter: parent.horizontalCenter
+
+                Label {
+                    width: parent.width - 2 * Theme.horizontalPageMargin
+                    x: Theme.horizontalPageMargin
+                    horizontalAlignment: Text.AlignHCenter
+                    wrapMode: Text.Wrap
+                    color:  Theme.highlightColor
+                    //% "Current user agent"
+                    text: qsTrId("sailfish_browser-sh-current_user_agent")
+                }
+
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: parent.width - 2 * Theme.horizontalPageMargin
+                    horizontalAlignment: Text.AlignHCenter
+                    color: Theme.primaryColor
+                    font.pixelSize: Theme.fontSizeSmall
+                    textFormat: Text.PlainText
+                    wrapMode: Text.Wrap
+                    text: UserAgentHelper.getUserAgentString(userAgentModel.currentHostUserAgent.userAgent,
+                                                             userAgentModel.currentHostUserAgent.isKey)
+                }
+            }
         }
 
         Component {

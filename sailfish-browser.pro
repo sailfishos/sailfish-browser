@@ -21,7 +21,9 @@ oneshots.files = oneshot.d/browser-cleanup-startup-cache \
 oneshots.path  = /usr/lib/oneshot.d
 
 data.files = data/prefs.js \
-             data/ua-update.json.in
+             data/ua-update.json.in \
+             data/useragents.json
+
 data.path = /usr/share/sailfish-browser/data
 
 INSTALLS += desktop dbus_service chrome_scripts oneshots data

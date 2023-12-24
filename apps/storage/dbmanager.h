@@ -50,6 +50,11 @@ public:
     QString getSetting(const QString &name);
     void deleteSetting(const QString &name);
 
+    void setUserAgentOverride(const QString &host, const bool isKey, const QString &userAgent);
+    void unsetUserAgentOverride(const QString &host);
+    void clearUserAgentOverrides();
+    QVariantMap getUserAgentOverrides() const;
+
     int getMaxTabId();
 
 signals:

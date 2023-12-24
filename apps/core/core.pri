@@ -20,6 +20,9 @@ SOURCES += \
     $$PWD/logging.cpp \
     $$PWD/secureaction.cpp \
     $$PWD/settingmanager.cpp \
+    $$PWD/useragentmanager.cpp \
+    $$PWD/useragentmodel.cpp \
+    $$PWD/useragentfiltermodel.cpp \
     $$PWD/webpagequeue.cpp \
     $$PWD/webpages.cpp
 
@@ -40,5 +43,8 @@ HEADERS += \
     $$PWD/logging.h \
     $$PWD/secureaction.h \
     $$PWD/settingmanager.h \
+    $$PWD/useragentmanager.h \
+    $$PWD/useragentmodel.h \
+    $$PWD/useragentfiltermodel.h \
     $$PWD/webpagequeue.h \
     $$PWD/webpages.h
