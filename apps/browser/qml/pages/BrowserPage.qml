@@ -225,7 +225,7 @@ Page {
             if (webView.tabModel.count === 0) {
                 webView.handleModelChanges(false)
             }
-            window.setBrowserCover(webView.tabModel)
+            //window.setBrowserCover(webView.tabModel)
         }
     }
 
