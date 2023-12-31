@@ -112,7 +112,10 @@ SilicaControl {
                 id: _tabView
 
                 portrait: tabView.portrait
-                model: tabItem.privateMode ? webView.privateTabModel : webView.persistentTabModel
+                model: TabFilterModel {
+                    sourceModel: tabItem.privateMode ? webView.privateTabModel : webView.persistentTabModel
+                    showHidden: false
+                }
                 header: Item {
                     width: 1
                     height: Theme.paddingLarge

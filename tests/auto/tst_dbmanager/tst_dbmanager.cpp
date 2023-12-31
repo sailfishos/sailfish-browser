@@ -67,7 +67,7 @@ void tst_dbmanager::cleanup()
 
 void tst_dbmanager::createTab()
 {
-    const Tab tab(1, "http://example.com", "Test title", "");
+    const Tab tab(1, "http://example.com", "Test title", "", false);
     DBManager::instance()->createTab(tab);
 
     // Check that we have really inserted the tab.
@@ -84,7 +84,7 @@ void tst_dbmanager::createTab()
     QCOMPARE(newTab.tabId(), 1);
 
     // create one more identical tab
-    DBManager::instance()->createTab(Tab(2, "http://example.com", "Test title", ""));
+    DBManager::instance()->createTab(Tab(2, "http://example.com", "Test title", "", false));
     DBManager::instance()->getAllTabs();
     QVERIFY(tabsAvailableSpy.wait(5000));
     QCOMPARE(tabsAvailableSpy.count(), 2);
@@ -92,7 +92,7 @@ void tst_dbmanager::createTab()
     QCOMPARE(arguments.at(0).value<QList<Tab> >().count(), 2);
 
     // and one more identical tab, but with empty title
-    DBManager::instance()->createTab(Tab(3, "http://example.com", "", ""));
+    DBManager::instance()->createTab(Tab(3, "http://example.com", "", "", false));
     DBManager::instance()->getAllTabs();
     QVERIFY(tabsAvailableSpy.wait(5000));
     QCOMPARE(tabsAvailableSpy.count(), 3);
@@ -107,9 +107,9 @@ void tst_dbmanager::getAllTabs_data()
     QList<Tab> emptyList;
 
     QList<Tab> list {
-        Tab(1, "http://example1.com", "Test title 1", ""),
-        Tab(2, "http://example2.com", "Test title 2", ""),
-        Tab(3, "http://example3.com", "Test title 3", ""),
+        Tab(1, "http://example1.com", "Test title 1", "", false),
+        Tab(2, "http://example2.com", "Test title 2", "", false),
+        Tab(3, "http://example3.com", "Test title 3", "", false),
     };
 
     QTest::newRow("no_inital_tabs") << emptyList;
@@ -145,13 +145,13 @@ void tst_dbmanager::removeTab_data()
     QList<Tab> emptyList;
 
     QList<Tab> oneTab {
-        Tab(1, "http://example1.com", "Test title 1", "")
+        Tab(1, "http://example1.com", "Test title 1", "", false)
     };
 
     QList<Tab> threeTabs {
-        Tab(1, "http://example1.com", "Test title 1", ""),
-        Tab(2, "http://example2.com", "Test title 2", ""),
-        Tab(3, "http://example3.com", "Test title 3", "")
+        Tab(1, "http://example1.com", "Test title 1", "", false),
+        Tab(2, "http://example2.com", "Test title 2", "", false),
+        Tab(3, "http://example3.com", "Test title 3", "", false)
     };
 
     QTest::newRow("no_inital_tabs") << emptyList << 1 << 1;
@@ -188,13 +188,13 @@ void tst_dbmanager::removeAllTabs_data()
     QList<Tab> emptyList;
 
     QList<Tab> oneTab {
-        Tab(1, "http://example1.com", "Test title 1", "")
+        Tab(1, "http://example1.com", "Test title 1", "", false)
     };
 
     QList<Tab> threeTabs {
-        Tab(1, "http://example1.com", "Test title 1", ""),
-        Tab(2, "http://example2.com", "Test title 2", ""),
-        Tab(3, "http://example3.com", "Test title 3", "")
+        Tab(1, "http://example1.com", "Test title 1", "", false),
+        Tab(2, "http://example2.com", "Test title 2", "", false),
+        Tab(3, "http://example3.com", "Test title 3", "", false)
     };
 
     QTest::newRow("no_inital_tabs") << emptyList;
@@ -229,13 +229,13 @@ void tst_dbmanager::clearHistory_data()
     QList<Tab> emptyList;
 
     QList<Tab> oneTab {
-        Tab(1, "http://example1.com", "Test title 1", "")
+        Tab(1, "http://example1.com", "Test title 1", "", false)
     };
 
     QList<Tab> threeTabs {
-        Tab(1, "http://example1.com", "Test title 1", ""),
-        Tab(2, "http://example2.com", "Test title 2", ""),
-        Tab(3, "http://example3.com", "Test title 3", "")
+        Tab(1, "http://example1.com", "Test title 1", "", false),
+        Tab(2, "http://example2.com", "Test title 2", "", false),
+        Tab(3, "http://example3.com", "Test title 3", "", false)
     };
 
     QTest::newRow("no_inital_tabs") << emptyList << 0;
@@ -279,7 +279,7 @@ void tst_dbmanager::requestAndResolveUrl()
     QFETCH(QString, requestedUrl);
     QFETCH(QString, resolvedUrl);
 
-    DBManager::instance()->createTab(Tab(1, requestedUrl, QString(), QString()));
+    DBManager::instance()->createTab(Tab(1, requestedUrl, QString(), QString(), false));
 
     QSignalSpy historyAvailableSpy(DBManager::instance(),
                                    SIGNAL(historyAvailable(QList<Link>)));
@@ -310,7 +310,7 @@ void tst_dbmanager::requestAndResolveUrl()
 
 void tst_dbmanager::navigateTo()
 {
-    Tab tab(1, "http://example1.com", "Test title 1", "");
+    Tab tab(1, "http://example1.com", "Test title 1", "", false);
     DBManager::instance()->createTab(tab);
 
     // 1. Navigate to new URLs
@@ -356,7 +356,7 @@ void tst_dbmanager::navigateTo()
 void tst_dbmanager::goBack()
 {
     // initialize test case
-    Tab tab(1, "http://example1.com", "Test title 1", "");
+    Tab tab(1, "http://example1.com", "Test title 1", "", false);
     DBManager::instance()->createTab(tab);
     DBManager::instance()->navigateTo(1, "http://example2.com", "Test title 2", "");
     DBManager::instance()->navigateTo(1, "http://example3.com", "Test title 3", "");
@@ -379,7 +379,7 @@ void tst_dbmanager::goBack()
 void tst_dbmanager::goForward()
 {
     // initialize test case
-    Tab tab(1, "http://example1.com", "Test title 1", "");
+    Tab tab(1, "http://example1.com", "Test title 1", "", false);
     DBManager::instance()->createTab(tab);
     DBManager::instance()->navigateTo(1, "http://example2.com", "Test title 2", "");
     DBManager::instance()->navigateTo(1, "http://example3.com", "Test title 3", "");
@@ -403,7 +403,7 @@ void tst_dbmanager::goForward()
 void tst_dbmanager::updateThumbPath()
 {
     // initialize test case
-    Tab tab(1, "http://example1.com", "Test title 1", "");
+    Tab tab(1, "http://example1.com", "Test title 1", "", false);
     DBManager::instance()->createTab(tab);
 
     QSignalSpy thumbPathChangedSpy(DBManager::instance(),
@@ -431,7 +431,7 @@ void tst_dbmanager::updateTitle()
 {
     // initialize test case
     QString url("http://example1.com");
-    Tab tab(1, url, "Test title 1", "");
+    Tab tab(1, url, "Test title 1", "", false);
     DBManager::instance()->createTab(tab);
 
     QSignalSpy titleChangedSpy(DBManager::instance(),
@@ -458,13 +458,13 @@ void tst_dbmanager::updateTitle()
 void tst_dbmanager::getHistory()
 {
     // initialize test case
-    Tab tab1(1, "http://example1.com", "Test title 1", "");
+    Tab tab1(1, "http://example1.com", "Test title 1", "", false);
     DBManager::instance()->createTab(tab1);
     DBManager::instance()->navigateTo(1, "http://example3-long.com", "Test title 2", "");
     DBManager::instance()->navigateTo(1, "http://unneeded1.net", "Test title 3", "");
-    Tab tab2(2, "http://example2.com", "Test title 4", "");
+    Tab tab2(2, "http://example2.com", "Test title 4", "", false);
     DBManager::instance()->createTab(tab2);
-    Tab tab3(3, "http://unneeded2.net", "Test title 5", "");
+    Tab tab3(3, "http://unneeded2.net", "Test title 5", "", false);
     DBManager::instance()->createTab(tab3);
 
     QSignalSpy historyAvailableSpy(DBManager::instance(),
@@ -507,7 +507,7 @@ void tst_dbmanager::getHistory()
 void tst_dbmanager::getTabHistory()
 {
     // initialize test case
-    Tab tab(1, "http://example1.com", "Test title 1", "");
+    Tab tab(1, "http://example1.com", "Test title 1", "", false);
     DBManager::instance()->createTab(tab);
     DBManager::instance()->navigateTo(1, "http://example2.com", "Test title 2", "");
     DBManager::instance()->navigateTo(1, "http://example3.com", "Test title 3", "");
@@ -569,7 +569,7 @@ void tst_dbmanager::getMaxTabId()
 {
     QCOMPARE(DBManager::instance()->getMaxTabId(), 0);
 
-    const Tab tab(1, "http://example.com", "Test title", "");
+    const Tab tab(1, "http://example.com", "Test title", "", false);
     DBManager::instance()->createTab(tab);
 
     QCOMPARE(DBManager::instance()->getMaxTabId(), 1);

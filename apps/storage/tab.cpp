@@ -11,13 +11,14 @@
 
 #include "tab.h"
 
-Tab::Tab(int tabId, const QString &url, const QString &title, const QString &thumbPath)
+Tab::Tab(int tabId, const QString &url, const QString &title, const QString &thumbPath, const bool hidden)
     : m_tabId(tabId)
     , m_requestedUrl(url)
     , m_url(url)
     , m_title(title)
     , m_thumbPath(thumbPath)
     , m_desktopMode(false)
+    , m_hidden(hidden)
     , m_browsingContext(0)
     , m_parentId(0)
 {
@@ -26,6 +27,7 @@ Tab::Tab(int tabId, const QString &url, const QString &title, const QString &thu
 Tab::Tab()
     : m_tabId(0)
     , m_desktopMode(false)
+    , m_hidden(false)
     , m_browsingContext(0)
     , m_parentId(0)
 {
@@ -116,6 +118,11 @@ void Tab::setParentId(uint32_t parentId)
 uint32_t Tab::parentId() const
 {
     return m_parentId;
+}
+
+bool Tab::hidden() const
+{
+    return m_hidden;
 }
 
 bool Tab::isValid() const

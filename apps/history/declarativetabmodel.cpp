@@ -58,6 +58,7 @@ QHash<int, QByteArray> DeclarativeTabModel::roleNames() const
     roles[ActiveRole] = "activeTab";
     roles[TabIdRole] = "tabId";
     roles[DesktopModeRole] = "desktopMode";
+    roles[HiddenRole] = "hidden";
     return roles;
 }
 
@@ -192,10 +193,10 @@ void DeclarativeTabModel::closeActiveTab()
 
 int DeclarativeTabModel::newTab(const QString &url)
 {
-    return newTab(url, 0, 0);
+    return newTab(url, 0, 0, false);
 }
 
-int DeclarativeTabModel::newTab(const QString &url, int parentId, uintptr_t browsingContext)
+int DeclarativeTabModel::newTab(const QString &url, int parentId, uintptr_t browsingContext, bool hidden)
 {
     // When browser opens without tabs
     if ((url.isEmpty() || url == QStringLiteral("about:blank")) && m_tabs.isEmpty())
@@ -210,9 +211,7 @@ int DeclarativeTabModel::newTab(const QString &url, int parentId, uintptr_t brow
         return 0;
     }
 
-    Tab tab;
-    tab.setTabId(nextTabId());
-    tab.setRequestedUrl(url);
+    Tab tab(nextTabId(), url, QString(), QString(), hidden);
     tab.setBrowsingContext(browsingContext);
     tab.setParentId(parentId);
 
@@ -288,6 +287,8 @@ QVariant DeclarativeTabModel::data(const QModelIndex & index, int role) const {
         return tab.tabId();
     } else if (role == DesktopModeRole) {
         return tab.desktopMode();
+    } else if (role == HiddenRole) {
+        return tab.hidden();
     }
     return QVariant();
 }
