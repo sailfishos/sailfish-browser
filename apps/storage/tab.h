@@ -19,7 +19,7 @@ class Tab
 {
 public:
     explicit Tab();
-    explicit Tab(int tabId, const QString &url, const QString &title, const QString &thumbPath);
+    explicit Tab(int tabId, const QString &url, const QString &title, const QString &thumbPath, bool hidden);
 
     int tabId() const;
     void setTabId(int tabId);
@@ -48,6 +48,7 @@ public:
     uint32_t parentId() const;
 
     bool isValid() const;
+    bool hidden() const;
 
     bool operator==(const Tab &other) const;
     bool operator!=(const Tab &other) const;
@@ -59,6 +60,7 @@ private:
     QString m_title;
     QString m_thumbPath;
     bool m_desktopMode;
+    bool m_hidden;
     uintptr_t m_browsingContext;
     uint32_t m_parentId;
 };

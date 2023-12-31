@@ -34,7 +34,7 @@ public:
     DeclarativeTabModel *model() const;
     void setModel(DeclarativeTabModel *model);
 
-    virtual quint32 createView(const quint32 &parentId, const uintptr_t &parentBrowsingContext) override;
+    virtual quint32 createView(const quint32 &parentId, const uintptr_t &parentBrowsingContext, bool hidden) override;
 
 signals:
     void activeWebPageChanged();

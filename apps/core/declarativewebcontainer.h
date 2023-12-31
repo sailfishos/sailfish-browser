@@ -21,6 +21,7 @@
 #include <QQuickItem>
 #include <QMutex>
 #include <QWaitCondition>
+#include <QTimer>
 
 class QInputMethodEvent;
 class QMozWindow;
@@ -257,6 +258,10 @@ private slots:
     // before compositor thread has actually been started the function returns false.
     bool postClearWindowSurfaceTask();
 
+    // Restore the previous tab when a hidden tab is opened
+    void restorePreviousTab();
+    void restorePreviousTabDelayed();
+
 private:
     void setWebPage(DeclarativeWebPage *webPage, bool triggerSignals = false);
     void setTabModel(DeclarativeTabModel *model);
@@ -323,6 +328,9 @@ private:
     DeclarativeHistoryModel *m_historyModel;
 
     CloseEventFilter *m_closeEventFilter;
+
+    int m_PreviousTabWhenHidden;
+    QTimer m_hiddenTabTimer;
 
     friend class tst_webview;
     friend class tst_declarativewebcontainer;

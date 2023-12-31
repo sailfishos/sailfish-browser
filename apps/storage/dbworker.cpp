@@ -220,7 +220,7 @@ void DBWorker::createTab(const Tab &tab)
     query.bindValue(1, 0);
     execute(query);
 
-    if (tab.url().isEmpty()) {
+    if (tab.url().isEmpty() || tab.hidden()) {
         return;
     }
 
@@ -320,7 +320,8 @@ void DBWorker::getAllTabs()
         tabList.append(Tab(query.value(0).toInt(),
                            query.value(1).toString(),
                            query.value(2).toString(),
-                           query.value(3).toString()));
+                           query.value(3).toString(),
+                           false));
     }
     emit tabsAvailable(tabList);
 }

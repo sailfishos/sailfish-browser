@@ -25,6 +25,7 @@
 #include "declarativewebpagecreator.h"
 #include "privatetabmodel.h"
 #include "declarativebookmarkmodel.h"
+#include "declarativetabfiltermodel.h"
 #include "bookmarkfiltermodel.h"
 #include "declarativeloginmodel.h"
 #include "loginfiltermodel.h"
@@ -880,6 +881,7 @@ int main(int argc, char *argv[])
     qmlRegisterType<BookmarkFilterModel>(uri, 1, 0, "BookmarkFilterModel");
     qmlRegisterType<DeclarativeLoginModel>(uri, 1, 0, "LoginModel");
     qmlRegisterType<LoginFilterModel>(uri, 1, 0, "LoginFilterModel");
+    qmlRegisterType<DeclarativeTabFilterModel>(uri, 1, 0, "TabFilterModel");
     qmlRegisterSingletonType<FaviconManager>(uri, 1, 0, "FaviconManager", faviconmanager_factory);
     qmlRegisterUncreatableType<DownloadStatus>(uri, 1, 0, "DownloadStatus", "");
     qmlRegisterType<DesktopBookmarkWriter>(uri, 1, 0, "DesktopBookmarkWriter");

@@ -74,6 +74,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     , m_clearSurfaceTask(0)
     , m_closing(false)
     , m_closeEventFilter(nullptr)
+    , m_PreviousTabWhenHidden(-1)
 {
     Q_ASSERT(!s_instance);
 
@@ -126,6 +127,12 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     m_closeEventFilter = new CloseEventFilter(DownloadManager::instance(), this);
     s_instance = this;
 
+    // Configure the "hidden tab" callback
+    m_hiddenTabTimer.setSingleShot(true);
+    m_hiddenTabTimer.setInterval(0);
+    connect(&m_hiddenTabTimer, &QTimer::timeout,
+            this, &DeclarativeWebContainer::restorePreviousTabDelayed);
+
     QDBusConnection::systemBus().connect(dsme_service, dsme_sig_path, dsme_sig_interface, dsme_state_change_ind,
                                          this, SLOT(dsmeStateChange(QString)));
 }
@@ -136,6 +143,9 @@ DeclarativeWebContainer::~DeclarativeWebContainer()
     if (m_webPage) {
         disconnect(m_webPage, 0, 0, 0);
     }
+
+    disconnect(&m_hiddenTabTimer, &QTimer::timeout,
+               this, &DeclarativeWebContainer::restorePreviousTabDelayed);
 
     QMutexLocker lock(&m_clearSurfaceTaskMutex);
     if (m_clearSurfaceTask) {
@@ -587,7 +597,7 @@ bool DeclarativeWebContainer::activatePage(const Tab& tab, bool force)
     if ((m_model->loaded() || force) && tab.tabId() > 0 && m_webPages->isInitialized() && m_webPageComponent) {
         WebPageActivationData activationData = m_webPages->page(tab);
         setWebPage(activationData.webPage);
-        // Reset always height so that orentation change is taken into account.
+        // Reset always height so that orientation change is taken into account.
         m_webPage->forceChrome(false);
         m_webPage->setChrome(true);
         if (m_webPage->loaded()) {
@@ -956,6 +966,28 @@ void DeclarativeWebContainer::onActiveTabChanged(int activeTabId)
     }
 
     reload(false);
+
+    if (m_model->activeTab().hidden()) {
+        restorePreviousTab();
+    }
+}
+
+void DeclarativeWebContainer::restorePreviousTab()
+{
+    // Switch back to the old tab
+    if (m_PreviousTabWhenHidden >= 0) {
+        m_hiddenTabTimer.start();
+    }
+}
+
+void DeclarativeWebContainer::restorePreviousTabDelayed()
+{
+    // Called when a hidden tab has been opened
+    if (m_PreviousTabWhenHidden >= 0 && m_model) {
+        // Restore the previous tab to hide the hidden tab
+        m_model->activateTabById(m_PreviousTabWhenHidden);
+        m_PreviousTabWhenHidden = -1;
+    }
 }
 
 void DeclarativeWebContainer::initialize()
@@ -1044,6 +1076,10 @@ void DeclarativeWebContainer::onDownloadStarted()
 
 void DeclarativeWebContainer::onNewTabRequested(const Tab &tab)
 {
+    if (tab.hidden()) {
+        m_PreviousTabWhenHidden = m_webPage->tabId();
+    }
+
     if (activatePage(tab, false)) {
         m_webPage->loadTab(tab.requestedUrl(), false);
     }

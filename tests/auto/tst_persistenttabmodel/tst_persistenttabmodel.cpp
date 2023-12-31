@@ -106,13 +106,13 @@ void tst_persistenttabmodel::addTab_data()
     QList<Tab> emptyList;
 
     QList<Tab> list {
-        Tab(1, QString("http://example.com"), QString("Test title1"), QString()),
-        Tab(2, QString("file:///opt/tests/testpage.html"), QString("Test title2"), QString()),
-        Tab(3, QString("https://example.com"), QString("Test title3"), QString())
+        Tab(1, QString("http://example.com"), QString("Test title1"), QString(), false),
+        Tab(2, QString("file:///opt/tests/testpage.html"), QString("Test title2"), QString(), false),
+        Tab(3, QString("https://example.com"), QString("Test title3"), QString(), false)
     };
-    QTest::newRow("append_to_end") << list << Tab(4, QString("http://example2.com"), QString("Test title4"), QString()) << 3;
-    QTest::newRow("insert_to_start") << list << Tab(4, QString("http://example2.com"), QString("Test title4"), QString()) << 0;
-    QTest::newRow("insert_to_empty_model") << emptyList << Tab(1, QString("http://example2.com"), QString("Test title4"), QString()) << 0;
+    QTest::newRow("append_to_end") << list << Tab(4, QString("http://example2.com"), QString("Test title4"), QString(), false) << 3;
+    QTest::newRow("insert_to_start") << list << Tab(4, QString("http://example2.com"), QString("Test title4"), QString(), false) << 0;
+    QTest::newRow("insert_to_empty_model") << emptyList << Tab(1, QString("http://example2.com"), QString("Test title4"), QString(), false) << 0;
 }
 
 void tst_persistenttabmodel::addTab()
@@ -458,7 +458,7 @@ void tst_persistenttabmodel::updateThumbnailPath()
     QSignalSpy dataChangedSpy(tabModel, SIGNAL(dataChanged(QModelIndex, QModelIndex, QVector<int>)));
     tabModel->addTab(Tab(tabModel->nextTabId(),
                          QLatin1String("http://example.com"),
-                         QLatin1String("initial title"), QString()), 0);
+                         QLatin1String("initial title"), QString(), false), 0);
 
     QString path("/path/to/thumbnail");
     tabModel->updateThumbnailPath(1, path);
@@ -471,7 +471,7 @@ void tst_persistenttabmodel::onUrlChanged()
     // set up environment
     tabModel->addTab(Tab(tabModel->nextTabId(),
                          QLatin1String("http://example.com"),
-                         QLatin1String("initial title"), QString()), 0);
+                         QLatin1String("initial title"), QString(), false), 0);
 
     DeclarativeWebPage mockPage;
     connect(&mockPage, &DeclarativeWebPage::urlChanged, tabModel, &PersistentTabModel::onUrlChanged);
@@ -493,7 +493,7 @@ void tst_persistenttabmodel::onTitleChanged()
     // set up environment
     tabModel->addTab(Tab(tabModel->nextTabId(),
                          QLatin1String("http://example.com"),
-                         QLatin1String("initial title"), QString()), 0);
+                         QLatin1String("initial title"), QString(), false), 0);
 
     DeclarativeWebPage mockPage;
     connect(&mockPage, &DeclarativeWebPage::titleChanged, tabModel, &PersistentTabModel::onTitleChanged);
@@ -583,7 +583,7 @@ void tst_persistenttabmodel::addThreeTabs()
     titles << "Test title1" << "Test title2" << "Test title3";
 
     for (int i = 0; i < urls.count(); i++) {
-        tabModel->addTab(Tab(tabModel->nextTabId(), urls.at(i), titles.at(i), QString()), tabModel->count());
+        tabModel->addTab(Tab(tabModel->nextTabId(), urls.at(i), titles.at(i), QString(), false), tabModel->count());
     }
 }
 

@@ -39,7 +39,8 @@ public:
         UrlRole,
         ActiveRole,
         TabIdRole,
-        DesktopModeRole
+        DesktopModeRole,
+        HiddenRole,
     };
 
     Q_INVOKABLE void remove(int index);
@@ -58,7 +59,7 @@ public:
     bool activateTabById(int tabId);
     void removeTabById(int tabId, bool activeTab);
     // C++ only: parentId and browsingContext better not to leak to QML side.
-    int newTab(const QString &url, int parentId, uintptr_t browsingContext);
+    int newTab(const QString &url, int parentId, uintptr_t browsingContext, bool hidden);
 
     // From QAbstractListModel
     int rowCount(const QModelIndex & parent = QModelIndex()) const;
