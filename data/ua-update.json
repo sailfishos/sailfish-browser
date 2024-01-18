@@ -85,5 +85,6 @@
   "corp.express": "Mozilla/5.0 (Android; Mobile; rv:91.0) Gecko/91.0 Firefox/91.0",
   "mail.ru": "Mozilla/5.0 (Android 8.1.0; Mobile; rv:91.0) Gecko/91.0 Firefox/91.0",
   "omp.ru": "Mozilla/5.0 (Android; Mobile; rv:91.0) Gecko/91.0 Firefox/91.0",
-  "mosreg.ru": "Mozilla/5.0 (Android; Mobile; rv:91.0) Gecko/91.0 Firefox/91.0"
+  "mosreg.ru": "Mozilla/5.0 (Android; Mobile; rv:91.0) Gecko/91.0 Firefox/91.0",
+  "duckduckgo.com": "Mozilla/5.0 (Mobile; rv:91.0) Gecko/91.0 Firefox/91.0"
 }
