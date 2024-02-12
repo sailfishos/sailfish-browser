@@ -238,13 +238,13 @@ void DeclarativeWebPage::setToolbarHeight(qreal toolbarHeight)
     }
 }
 
-void DeclarativeWebPage::loadTab(const QString &newUrl, bool force)
+void DeclarativeWebPage::loadTab(const QString &newUrl, bool force, bool fromExternal)
 {
     // Always enable chrome when load is called.
     setChrome(true);
     QString oldUrl = url().toString();
     if ((!newUrl.isEmpty() && oldUrl != newUrl) || force) {
-        load(newUrl);
+        load(newUrl, fromExternal);
     }
 }
 

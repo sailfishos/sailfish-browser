@@ -48,7 +48,7 @@ public:
     Q_INVOKABLE bool activateTab(const QString &url, bool reload = false);
     Q_INVOKABLE void activateTab(int index, bool reload = false);
     Q_INVOKABLE void closeActiveTab();
-    Q_INVOKABLE int newTab(const QString &url);
+    Q_INVOKABLE int newTab(const QString &url, bool fromExternal);
     Q_INVOKABLE QString url(int tabId) const;
 
     Q_INVOKABLE void dumpTabs() const;
@@ -59,7 +59,7 @@ public:
     bool activateTabById(int tabId);
     void removeTabById(int tabId, bool activeTab);
     // C++ only: parentId and browsingContext better not to leak to QML side.
-    int newTab(const QString &url, int parentId, uintptr_t browsingContext, bool hidden);
+    int newTab(const QString &url, int parentId, uintptr_t browsingContext, bool hidden, bool fromExternal);
 
     // From QAbstractListModel
     int rowCount(const QModelIndex & parent = QModelIndex()) const;
@@ -89,7 +89,7 @@ signals:
     void tabAdded(int tabId);
     void tabClosed(int tabId);
     void loadedChanged();
-    void newTabRequested(const Tab& tab);
+    void newTabRequested(const Tab& tab, bool fromExternal);
 
 protected:
     void addTab(const Tab &tab, int index);

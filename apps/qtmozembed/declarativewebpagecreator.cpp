@@ -54,7 +54,7 @@ void DeclarativeWebPageCreator::setModel(DeclarativeTabModel *model)
 quint32 DeclarativeWebPageCreator::createView(const quint32 &parentId, const uintptr_t &parentBrowsingContext, bool hidden)
 {
     QPointer<DeclarativeWebPage> oldPage = m_activeWebPage;
-    m_model->newTab(QString(), parentId, parentBrowsingContext, hidden);
+    m_model->newTab(QString(), parentId, parentBrowsingContext, hidden, false);
 
     if (m_activeWebPage && oldPage != m_activeWebPage) {
         return m_activeWebPage->uniqueId();
