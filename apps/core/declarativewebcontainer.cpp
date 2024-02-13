@@ -74,6 +74,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     , m_clearSurfaceTask(0)
     , m_closing(false)
     , m_closeEventFilter(nullptr)
+    , m_PreviousTabWhenHidden(-1)
 {
     Q_ASSERT(!s_instance);
 
@@ -126,6 +127,12 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     m_closeEventFilter = new CloseEventFilter(DownloadManager::instance(), this);
     s_instance = this;
 
+    // Configure the "hidden tab" callback
+    m_hiddenTabTimer.setSingleShot(true);
+    m_hiddenTabTimer.setInterval(0);
+    connect(&m_hiddenTabTimer, &QTimer::timeout,
+            this, &DeclarativeWebContainer::restorePreviousTabDelayed);
+
     QDBusConnection::systemBus().connect(dsme_service, dsme_sig_path, dsme_sig_interface, dsme_state_change_ind,
                                          this, SLOT(dsmeStateChange(QString)));
 }
@@ -136,6 +143,9 @@ DeclarativeWebContainer::~DeclarativeWebContainer()
     if (m_webPage) {
         disconnect(m_webPage, 0, 0, 0);
     }
+
+    disconnect(&m_hiddenTabTimer, &QTimer::timeout,
+               this, &DeclarativeWebContainer::restorePreviousTabDelayed);
 
     QMutexLocker lock(&m_clearSurfaceTaskMutex);
     if (m_clearSurfaceTask) {
@@ -457,7 +467,7 @@ bool DeclarativeWebContainer::isActiveTab(int tabId)
     return m_webPage && m_webPage->tabId() == tabId;
 }
 
-void DeclarativeWebContainer::load(const QString &url, bool force)
+void DeclarativeWebContainer::load(const QString &url, bool force, bool fromExternal)
 {
     QString tmpUrl = url;
     if (tmpUrl.isEmpty() || !browserEnabled()) {
@@ -466,18 +476,19 @@ void DeclarativeWebContainer::load(const QString &url, bool force)
 
     if (!canInitialize()) {
         m_initialUrl = tmpUrl;
+        m_fromExternal = fromExternal;
     } else if (m_webPage && m_webPage->completed()) {
         if (m_loading) {
             m_webPage->stop();
         }
-        m_webPage->loadTab(tmpUrl, force);
+        m_webPage->loadTab(tmpUrl, force, fromExternal);
         Tab *tab = m_model->getTab(m_webPage->tabId());
         if (tab) {
             tab->setRequestedUrl(tmpUrl);
         }
     } else if (m_model && m_model->count() == 0) {
         // Browser running all tabs are closed.
-        m_model->newTab(tmpUrl);
+        m_model->newTab(tmpUrl, fromExternal);
     }
 }
 
@@ -494,7 +505,7 @@ void DeclarativeWebContainer::reload(bool force)
             // Reload live active tab directly.
             m_webPage->reload();
         } else {
-            loadTab(m_model->activeTab(), force);
+            loadTab(m_model->activeTab(), force, false);
         }
     }
 }
@@ -529,12 +540,12 @@ int DeclarativeWebContainer::requestTabWithOwner(int tabId, const QString &url, 
 {
     bool activated = m_model->activateTabById(tabId);
     if (!activated) {
-        tabId = m_model->newTab(url);
+        tabId = m_model->newTab(url, false);
         if (ownerPid) {
             m_tabOwners.insert(tabId, ownerPid);
         }
     } else {
-        load(url, true);
+        load(url, true, false);
     }
 
     return tabId;
@@ -576,10 +587,11 @@ void DeclarativeWebContainer::releaseActiveTabOwnership()
     }
 }
 
-bool DeclarativeWebContainer::activatePage(const Tab& tab, bool force)
+bool DeclarativeWebContainer::activatePage(const Tab& tab, bool force, bool fromExternal)
 {
     if (!m_initialized) {
         m_initialUrl = tab.requestedUrl();
+        m_fromExternal = fromExternal;
         return false;
     }
 
@@ -587,7 +599,7 @@ bool DeclarativeWebContainer::activatePage(const Tab& tab, bool force)
     if ((m_model->loaded() || force) && tab.tabId() > 0 && m_webPages->isInitialized() && m_webPageComponent) {
         WebPageActivationData activationData = m_webPages->page(tab);
         setWebPage(activationData.webPage);
-        // Reset always height so that orentation change is taken into account.
+        // Reset always height so that orientation change is taken into account.
         m_webPage->forceChrome(false);
         m_webPage->setChrome(true);
         if (m_webPage->loaded()) {
@@ -706,6 +718,7 @@ bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
                 m_webPages->clear();
                 bool initialUrl = hasInitialUrl();
                 m_initialUrl = "";
+                m_fromExternal = false;
                 if (initialUrl) {
                     emit hasInitialUrlChanged();
                 }
@@ -956,6 +969,28 @@ void DeclarativeWebContainer::onActiveTabChanged(int activeTabId)
     }
 
     reload(false);
+
+    if (m_model->activeTab().hidden()) {
+        restorePreviousTab();
+    }
+}
+
+void DeclarativeWebContainer::restorePreviousTab()
+{
+    // Switch back to the old tab
+    if (m_PreviousTabWhenHidden >= 0) {
+        m_hiddenTabTimer.start();
+    }
+}
+
+void DeclarativeWebContainer::restorePreviousTabDelayed()
+{
+    // Called when a hidden tab has been opened
+    if (m_PreviousTabWhenHidden >= 0 && m_model) {
+        // Restore the previous tab to hide the hidden tab
+        m_model->activateTabById(m_PreviousTabWhenHidden);
+        m_PreviousTabWhenHidden = -1;
+    }
 }
 
 void DeclarativeWebContainer::initialize()
@@ -1008,14 +1043,14 @@ void DeclarativeWebContainer::initialize()
         }
 
         if (!m_model->activateTab(url, true)) {
-            m_model->newTab(url);
+            m_model->newTab(url, true);
         }
     } else if (m_model->count() > 0 && !m_webPage) {
         Tab tab = m_model->activeTab();
         if (!m_initialUrl.isEmpty()) {
             tab.setRequestedUrl(m_initialUrl);
         }
-        loadTab(tab, true);
+        loadTab(tab, true, m_fromExternal);
     }
 
     if (!m_completed) {
@@ -1025,6 +1060,7 @@ void DeclarativeWebContainer::initialize()
 
     bool initialUrl = hasInitialUrl();
     m_initialUrl = "";
+    m_fromExternal = false;
     if (initialUrl) {
         emit hasInitialUrlChanged();
     }
@@ -1042,10 +1078,14 @@ void DeclarativeWebContainer::onDownloadStarted()
     }
 }
 
-void DeclarativeWebContainer::onNewTabRequested(const Tab &tab)
+void DeclarativeWebContainer::onNewTabRequested(const Tab &tab, bool fromExternal)
 {
-    if (activatePage(tab, false)) {
-        m_webPage->loadTab(tab.requestedUrl(), false);
+    if (tab.hidden()) {
+        m_PreviousTabWhenHidden = m_webPage->tabId();
+    }
+
+    if (activatePage(tab, false, fromExternal)) {
+        m_webPage->loadTab(tab.requestedUrl(), false, fromExternal);
     }
 }
 
@@ -1166,13 +1206,13 @@ bool DeclarativeWebContainer::browserEnabled() const
     return Sailfish::PolicyValue::keyValue(Sailfish::PolicyValue::BrowserEnabled).toBool();
 }
 
-void DeclarativeWebContainer::loadTab(const Tab& tab, bool force)
+void DeclarativeWebContainer::loadTab(const Tab& tab, bool force, bool fromExternal)
 {
-    if (activatePage(tab, true) || force) {
+    if (activatePage(tab, true, fromExternal) || force) {
         // Note: active pages containing a "link" between each other (parent-child relationship)
         // are not destroyed automatically e.g. in low memory notification.
         // Hence, parentId is not necessary over here.
-        m_webPage->loadTab(tab.url(), force);
+        m_webPage->loadTab(tab.url(), force, fromExternal);
     }
 }
 

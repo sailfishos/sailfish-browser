@@ -21,6 +21,7 @@
 #include <QQuickItem>
 #include <QMutex>
 #include <QWaitCondition>
+#include <QTimer>
 
 class QInputMethodEvent;
 class QMozWindow;
@@ -141,7 +142,7 @@ public:
     QString thumbnailPath() const;
 
     bool isActiveTab(int tabId);
-    bool activatePage(const Tab& tab, bool force = false);
+    bool activatePage(const Tab& tab, bool force = false, bool fromExternal = false);
     int tabId(uint32_t uniqueId) const;
     int previouslyUsedTabId() const;
     // For D-Bus interfaces
@@ -150,7 +151,7 @@ public:
     void requestTabWithOwnerAsync(int tabId, const QString &url, uint ownerPid, void *context);
     Q_INVOKABLE void releaseActiveTabOwnership();
 
-    Q_INVOKABLE void load(const QString &url = QString(), bool force = false);
+    Q_INVOKABLE void load(const QString &url = QString(), bool force = false, bool fromExternal = false);
     Q_INVOKABLE void reload(bool force = true);
     Q_INVOKABLE void goForward();
     Q_INVOKABLE void goBack();
@@ -238,7 +239,7 @@ private slots:
     void initialize();
     void onActiveTabChanged(int activeTabId);
     void onDownloadStarted();
-    void onNewTabRequested(const Tab &tab);
+    void onNewTabRequested(const Tab &tab, bool fromExternal);
     void releasePage(int tabId);
     void closeWindow();
     void updateLoadProgress();
@@ -258,12 +259,16 @@ private slots:
     // before compositor thread has actually been started the function returns false.
     bool postClearWindowSurfaceTask();
 
+    // Restore the previous tab when a hidden tab is opened
+    void restorePreviousTab();
+    void restorePreviousTabDelayed();
+
 private:
     void setWebPage(DeclarativeWebPage *webPage, bool triggerSignals = false);
     void setTabModel(DeclarativeTabModel *model);
     qreal contentHeight() const;
     bool canInitialize() const;
-    void loadTab(const Tab& tab, bool force);
+    void loadTab(const Tab& tab, bool force, bool fromExternal);
     void updateMode();
     void setActiveTabRendered(bool rendered);
     bool browserEnabled() const;
@@ -305,6 +310,7 @@ private:
     // back to the active tab and load it. In case we did not have tabs open when downloading was
     // triggered we just clear these.
     QString m_initialUrl;
+    bool m_fromExternal;
 
     bool m_loading;
     int m_loadProgress;
@@ -324,6 +330,9 @@ private:
     DeclarativeHistoryModel *m_historyModel;
 
     CloseEventFilter *m_closeEventFilter;
+
+    int m_PreviousTabWhenHidden;
+    QTimer m_hiddenTabTimer;
 
     friend class tst_webview;
     friend class tst_declarativewebcontainer;

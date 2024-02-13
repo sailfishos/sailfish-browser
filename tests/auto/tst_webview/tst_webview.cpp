@@ -25,6 +25,7 @@
 #include "declarativewebpagecreator.h"
 #include "privatetabmodel.h"
 #include "declarativebookmarkmodel.h"
+#include "declarativetabfiltermodel.h"
 #include "bookmarkfiltermodel.h"
 #include "declarativeloginmodel.h"
 #include "loginfiltermodel.h"
@@ -207,7 +208,7 @@ void tst_webview::testNewTab()
 
     // Mimic favorite opening to a new tab. Favorites can have both url and title and when entering
     // url through virtual keyboard only url is provided.
-    tabModel->newTab(newUrl);
+    tabModel->newTab(newUrl, false);
 
     // Wait for MozView instance change.
     waitSignals(contentItemSpy, 1);
@@ -482,7 +483,7 @@ void tst_webview::testLiveTabCount()
     QSignalSpy urlChangedSpy(webContainer, SIGNAL(urlChanged()));
     QSignalSpy titleChangedSpy(webContainer, SIGNAL(titleChanged()));
 
-    tabModel->newTab(newUrl);
+    tabModel->newTab(newUrl, false);
     waitSignals(loadingChanged, 2);
     waitSignals(urlChangedSpy, 1);
 
@@ -512,7 +513,7 @@ void tst_webview::load(QString url, bool expectTitleChange, int waitUrlChanges)
     QSignalSpy painted(webContainer->webPage(), SIGNAL(firstPaint(int,int)));
     QSignalSpy urlChangedSpy(webContainer, SIGNAL(urlChanged()));
     QSignalSpy titleChangedSpy(webContainer, SIGNAL(titleChanged()));
-    webContainer->webPage()->loadTab(url, false);
+    webContainer->webPage()->loadTab(url, false, false);
     waitSignals(urlChangedSpy, waitUrlChanges);
 
     if (expectTitleChange) {
@@ -703,7 +704,7 @@ void tst_webview::restart()
 
     // Title "TestPage"
     QString testPageUrl = formatUrl("testpage.html");
-    tabModel->newTab(testPageUrl);
+    tabModel->newTab(testPageUrl, false);
     load(testPageUrl, false /* expectTitleChange */, 1);
     waitSignals(historyAvailable, 1);
     historyAvailable.clear();
@@ -794,7 +795,7 @@ void tst_webview::changeTabAndLoad()
     QSKIP("JB#56602 - Fix skipped changeTabAndLoad from tst_webview, currently this crashes");
 
     int previousTab = tabModel->activeTab().tabId();
-    tabModel->newTab(formatUrl("testwindowopen.html"));
+    tabModel->newTab(formatUrl("testwindowopen.html"), false);
     QTest::qWait(500);
 
     QList<TestTab> historyOrder;
@@ -880,6 +881,7 @@ int main(int argc, char *argv[])
     qmlRegisterType<BookmarkFilterModel>(uri, 1, 0, "BookmarkFilterModel");
     qmlRegisterType<DeclarativeLoginModel>(uri, 1, 0, "LoginModel");
     qmlRegisterType<LoginFilterModel>(uri, 1, 0, "LoginFilterModel");
+    qmlRegisterType<DeclarativeTabFilterModel>(uri, 1, 0, "TabFilterModel");
     qmlRegisterSingletonType<FaviconManager>(uri, 1, 0, "FaviconManager", faviconmanager_factory);
     qmlRegisterUncreatableType<DownloadStatus>(uri, 1, 0, "DownloadStatus", "");
     qmlRegisterType<DesktopBookmarkWriter>(uri, 1, 0, "DesktopBookmarkWriter");
