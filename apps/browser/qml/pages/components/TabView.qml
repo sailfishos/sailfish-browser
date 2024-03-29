@@ -21,8 +21,6 @@ SilicaControl {
     property bool portrait
     property bool privateMode
     property var tabModel
-    property alias scaledPortraitHeight: tabsToolBar.scaledPortraitHeight
-    property alias scaledLandscapeHeight: tabsToolBar.scaledLandscapeHeight
 
     signal hide
     signal enterNewTabUrl
@@ -42,12 +40,9 @@ SilicaControl {
     Private.TabView {
         id: tabs
 
-        anchors {
-            fill: parent
-            bottomMargin: tabsToolBar.height
-        }
+        anchors.fill: parent
 
-        header: Private.TabBar {
+        footer: Private.TabBar {
             id: headerTabs
             model: modeModel
             delegate: Private.TabButton {
@@ -113,32 +108,49 @@ SilicaControl {
 
                 portrait: tabView.portrait
                 model: tabItem.privateMode ? webView.privateTabModel : webView.persistentTabModel
-                header: Item {
-                    width: 1
-                    height: Theme.paddingLarge
-                }
 
                 onHide: tabView.hide()
-                onEnterNewTabUrl: tabView.enterNewTabUrl()
                 onActivateTab: tabView.activateTab(index)
                 onCloseTab: tabView.closeTab(index)
                 onCloseAll: tabView.closeAll()
                 onCloseAllCanceled: tabView.closeAllCanceled()
                 onCloseAllPending: tabView.closeAllPending()
+
+                PullDownMenu {
+                    MenuItem {
+                        visible: tabView.showCloseAllAction.value && model.count
+                        //% "Close all tabs"
+                        text: qsTrId("sailfish_browser-me-close_all")
+                        onClicked: _tabView.closeAllTabs()
+                    }
+                    MenuItem {
+                        text: tabItem.privateMode
+                            //% "New tab"
+                            ? qsTrId("sailfish_browser-la-new_tab")
+                            //% "New private tab"
+                            : qsTrId("sailfish_browser-la-new_private_tab")
+                        onClicked: {
+                            // remove binding to block animation
+                            tabs.currentIndex = tabs.currentIndex
+                            tabView.privateMode = !tabItem.privateMode
+                            tabView.enterNewTabUrl()
+                        }
+                    }
+                    MenuItem {
+                        text: tabItem.privateMode
+                            //% "New private tab"
+                            ? qsTrId("sailfish_browser-la-new_private_tab")
+                            //% "New tab"
+                            : qsTrId("sailfish_browser-la-new_tab")
+                        onClicked: tabView.enterNewTabUrl()
+                    }
+                }
             }
 
             onIsCurrentItemChanged: {
                 if (isCurrentItem) {
                     _remorsePopup = Qt.binding(function() { return _tabView.remorsePopup })
                     _closingAllTabs = Qt.binding(function() { return _tabView.closingAllTabs })
-                }
-            }
-
-            Connections {
-                target: popupMenu
-                onCloseAllTabs: {
-                    if (isCurrentItem)
-                        _tabView.closeAllTabs()
                 }
             }
 
@@ -165,91 +177,6 @@ SilicaControl {
                 privateMode: true
             }
         }
-    }
-
-    TabsToolBar {
-        id: tabsToolBar
-        anchors.bottom: parent.bottom
-        onBack: pageStack.pop()
-        onEnterNewTabUrl: tabView.enterNewTabUrl()
-        onOpenMenu: popupMenu.active = true
-    }
-
-    PopUpMenu {
-        id: popupMenu
-
-        signal closeAllTabs
-
-        anchors.fill: parent
-        active: false
-
-        menuItem: Component {
-            Item {
-                id: menuItem_
-                readonly property int iconWidth: Theme.iconSizeMedium + Theme.paddingLarge
-                readonly property int verticalPadding: 3 * Theme.paddingSmall
-
-                height: content.height + verticalPadding * 2
-
-                Column {
-                    id: content
-
-                    y: verticalPadding
-                    width: parent.width
-                    spacing: Theme.paddingLarge
-
-                    Column {
-                        width: parent.width
-
-                        OverlayListItem {
-                            height: Theme.itemSizeSmall
-                            iconWidth: menuItem_.iconWidth
-                            iconSource: "image://theme/icon-m-tab-new"
-                            enabled: !_closingAllTabs
-                            //% "New tab"
-                            text: qsTrId("sailfish_browser-la-new_tab")
-                            onClicked: {
-                                popupMenu.visible = false
-                                // override to block animation
-                                tabs.currentIndex = privateMode ? 1 : 0
-                                tabView.privateMode = false
-                                tabView.enterNewTabUrl()
-                            }
-                        }
-
-                        OverlayListItem {
-                            height: Theme.itemSizeSmall
-                            iconWidth: menuItem_.iconWidth
-                            iconSource: "image://theme/icon-m-incognito-new"
-                            enabled: !_closingAllTabs
-                            //% "New private tab"
-                            text: qsTrId("sailfish_browser-la-new_private_tab")
-                            onClicked: {
-                                popupMenu.visible = false
-                                // override to block animation
-                                tabs.currentIndex = privateMode ? 1 : 0
-                                tabView.privateMode = true
-                                tabView.enterNewTabUrl()
-                            }
-                        }
-
-                        OverlayListItem {
-                            height: Theme.itemSizeSmall
-                            iconWidth: menuItem_.iconWidth
-                            iconSource: "image://theme/icon-m-tab-close"
-                            enabled: showCloseAllAction.value && webView.tabModel.count && !_closingAllTabs
-                            //% "Close all tabs"
-                            text: qsTrId("sailfish_browser-me-close_all")
-                            onClicked: {
-                                popupMenu.active = false
-                                popupMenu.closeAllTabs()
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        onClosed: active = false
     }
 
     ConfigurationValue {

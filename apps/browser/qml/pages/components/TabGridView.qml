@@ -19,6 +19,7 @@ SilicaGridView {
     property bool closingAllTabs
 
     property var remorsePopup
+    readonly property int _spacing: Theme.paddingLarge
     readonly property bool largeScreen: Screen.sizeCategory > Screen.Medium
     readonly property real thumbnailHeight: largeScreen
                                             ? Screen.width / 3
@@ -27,10 +28,9 @@ SilicaGridView {
                                         ? portrait ? 2 : 3
                                         : parent.width < 2 * parent.height
                                           ? parent.width <= height ? 1 : 2 : 3
-    readonly property real thumbnailWidth: (parent.width - Theme.horizontalPageMargin * 2 - (Theme.paddingLarge * (columns - 1))) / columns
+    readonly property real thumbnailWidth: (parent.width - Theme.horizontalPageMargin * 2 - (_spacing * (columns - 1))) / columns
 
     signal hide
-    signal enterNewTabUrl
     signal activateTab(int index)
     signal closeTab(int index)
     signal closeAll
@@ -59,12 +59,17 @@ SilicaGridView {
     onCountChanged: if (count > 0) closingAllTabs = false
     onClosingAllTabsChanged: if (closingAllTabs) closeAllPending()
 
-    width: parent.width - Theme.horizontalPageMargin
-    height: parent.height
-    x: Theme.horizontalPageMargin
+    anchors.fill: parent
     currentIndex: model.activeTabIndex
-    cellWidth: thumbnailWidth + Theme.paddingLarge
-    cellHeight: thumbnailHeight + Theme.paddingLarge
+    cellWidth: thumbnailWidth + _spacing
+    cellHeight: thumbnailHeight + _spacing
+    contentItem.anchors.left: tabGridView.left
+    contentItem.anchors.leftMargin: Theme.horizontalPageMargin
+
+    header: Item {
+        width: 1
+        height: _spacing
+    }
 
     delegate: TabItem {
         id: tabItem
@@ -94,25 +99,15 @@ SilicaGridView {
         }
     ]
 
-
-    Item {
-        height: parent.height
-        anchors.right: parent.right
-        width: Math.round(Theme.paddingSmall/2)
-
-        VerticalScrollDecorator {
-            _forcedParent: parent
-            flickable: tabGridView
-        }
-    }
+    VerticalScrollDecorator {}
 
     ViewPlaceholder {
         x: -Theme.horizontalPageMargin
         width: parent.width + Theme.horizontalPageMargin
         enabled: !model.count || closingAllTabs
         //: Hint to create a new tab via button new tab.
-        //% "Push button plus to create a new tab"
-        text: qsTrId("sailfish_browser-la-push_button_plus_to_create_tab_hint")
+        //% "Pull down menu to create a new tab"
+        text: qsTrId("sailfish_browser-la-pull_menu_to_create_tab_hint")
     }
 
     Timer {
