@@ -17,7 +17,7 @@ ListItem {
     id: root
 
     function openLink() {
-        webView.tabModel.newTab(model.url)
+        webView.tabModel.newTab(model.url, true)
         pageStack.pop()
     }
 

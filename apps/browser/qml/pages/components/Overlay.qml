@@ -127,7 +127,7 @@ Shared.Background {
                 searchField.enteringNewTabUrl = false
 
                 if (enteredUrl) {
-                    webView.tabModel.newTab(enteredUrl)
+                    webView.tabModel.newTab(enteredUrl, true)
                     enteredUrl = ""
                 } else if (!toolBar.findInPageActive) {
                     searchField.resetUrl(webView.url)
@@ -290,7 +290,7 @@ Shared.Background {
                         }
                         onSearch: {
                             // Open new tab with the search uri.
-                            webView.tabModel.newTab(controller.searchUri)
+                            webView.tabModel.newTab(controller.searchUri, true)
                             overlay.animator.showChrome(true)
                         }
                     }

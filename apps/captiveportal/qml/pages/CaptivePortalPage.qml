@@ -207,7 +207,7 @@ Page {
 
             if (!webView.tabModel.activateTab(url)) {
                 webView.clearSelection()
-                webView.tabModel.newTab(url)
+                webView.tabModel.newTab(url, false)
                 overlay.dismiss(!Qt.application.active /* immadiate */)
             }
             bringToForeground(webView.chromeWindow)
