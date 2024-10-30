@@ -28,6 +28,8 @@ SilicaGridView {
                                         : parent.width < 2 * parent.height
                                           ? parent.width <= height ? 1 : 2 : 3
     readonly property real thumbnailWidth: (parent.width - Theme.horizontalPageMargin * 2 - (Theme.paddingLarge * (columns - 1))) / columns
+    readonly property real _tabScale: housekeeping ? 0.9 : 1.0
+    property bool housekeeping
 
     signal hide
     signal enterNewTabUrl
@@ -66,21 +68,69 @@ SilicaGridView {
     cellWidth: thumbnailWidth + Theme.paddingLarge
     cellHeight: thumbnailHeight + Theme.paddingLarge
 
-    delegate: TabItem {
-        id: tabItem
+    delegate: Item {
+        id: item
 
-        enabled: !closingAllTabs
-        opacity: enabled ? 1.0 : 0.0
+        opacity: !closingAllTabs ? 1.0 : 0.0
         Behavior on opacity { FadeAnimator {}}
 
         width: thumbnailWidth
         height: thumbnailHeight
 
+        scale: tabGridView._tabScale
+        Behavior on scale { SmoothedAnimation {duration: 200; velocity: -1} }
+
         GridView.onAdd: AddAnimation {
-            target: tabItem
+            target: item
         }
         GridView.onRemove: RemoveAnimation {
-            target: tabItem
+            target: item
+        }
+
+        TabItem {
+            id: tabItem
+            anchors.fill: parent
+            enabled: !closingAllTabs
+            showClose: !tabGridView.housekeeping
+
+            onClicked: {
+                if (tabGridView.housekeeping) {
+                    tabGridView.housekeeping = false
+                } else {
+                    activateTab(index)
+                }
+            }
+            onPressAndHold: tabGridView.housekeeping = true
+            onCloseClicked: closeTab(index)
+        }
+        Rectangle {
+            color: Theme.colorScheme === Theme.LightOnDark
+                ? closeButton.down ? Theme.highlightColor : Theme.primaryColor
+                : closeButton.down ? Theme.highlightDimmerColor : Theme.highlightBackgroundColor
+            width: Theme.iconSizeMedium
+            height: width
+            radius: width / 2.
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.verticalCenter: parent.bottom
+            opacity: tabGridView.housekeeping ? 1.0 : 0.0
+            visible: opacity > 0.
+            Behavior on opacity { FadeAnimation { } }
+
+            IconButton {
+                id: closeButton
+                anchors.centerIn: parent
+                icon.color: Theme.colorScheme === Theme.LightOnDark
+                    ? Theme.highlightBackgroundColor : Theme.lightPrimaryColor
+                icon.highlightColor: Theme.colorScheme === Theme.LightOnDark
+                    ? Theme.highlightDimmerColor : Theme.darkSecondaryColor
+                icon.highlighted: down
+                icon.source: "image://theme/icon-close-app"
+                enabled: !closingAllTabs && tabGridView.housekeeping
+                onClicked: {
+                    tabItem.markClosed()
+                    closeTab(index)
+                }
+            }
         }
     }
 
@@ -90,7 +140,7 @@ SilicaGridView {
             z: -1
             width: tabGridView.width
             height: tabGridView.height
-            onClicked: hide()
+            onClicked: tabGridView.housekeeping = false
         }
     ]
 

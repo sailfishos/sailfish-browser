@@ -17,9 +17,7 @@ import Sailfish.Silica 1.0
 BackgroundItem {
     id: root
 
-    // Expose GridView for all items
-    property Item view: GridView.view
-    property bool destroying
+    property bool showClose: true
     property color highlightColor: Theme.colorScheme == Theme.LightOnDark
                                    ? Theme.highlightColor
                                    : Theme.highlightFromColor(Theme.highlightColor, Theme.LightOnDark)
@@ -27,7 +25,15 @@ BackgroundItem {
     implicitWidth: width
     implicitHeight: height
 
-    enabled: !destroying
+    signal closeClicked()
+
+    function markClosed() {
+        // Break binding, so that texture size would not change when
+        // closing tab (animating height).
+        implicitHeight = height
+        implicitWidth = width
+        enabled = false
+    }
 
     layer.enabled: true
     layer.effect: OpacityMask {
@@ -43,8 +49,6 @@ BackgroundItem {
     // thumbnail image.
     contentItem.width: root.implicitWidth
     contentItem.height: root.implicitHeight
-
-    onClicked: view.activateTab(index)
 
     // contentItem is hidden so this cannot be children of the contentItem.
     // So, making them as siblings of the contentItem.
@@ -100,7 +104,7 @@ BackgroundItem {
                     anchors {
                         left: iconHeader.right
                         leftMargin: Theme.paddingMedium
-                        right: close.left
+                        right: root.showClose ? close.left : root.right
                         rightMargin: Theme.paddingMedium
                         verticalCenter: iconHeader.verticalCenter
                     }
@@ -119,6 +123,7 @@ BackgroundItem {
                         top: parent.top
                         verticalCenter: iconHeader.verticalCenter
                     }
+                    visible: root.showClose
                     icon.color: Theme.primaryColor
                     icon.highlightColor: root.highlightColor
                     icon.highlighted: down
@@ -126,13 +131,8 @@ BackgroundItem {
 
                     icon.source: "image://theme/icon-s-clear-opaque-cross"
                     onClicked: {
-                        // Break binding, so that texture size would not change when
-                        // closing tab (animating height).
-                        root.implicitHeight = root.height
-                        root.implicitWidth = root.width
-
-                        destroying = true
-                        removeTimer.running = true
+                        markClosed()
+                        closeClicked()
                     }
                 }
             }
@@ -152,11 +152,6 @@ BackgroundItem {
                 Behavior on opacity { FadeAnimation {} }
 
             }
-        },
-        Timer {
-            id: removeTimer
-            interval: 16
-            onTriggered: view.closeTab(index)
         }
     ]
 }
