@@ -112,7 +112,7 @@ UserPromptDialog {
                 EnterKey.onClicked: accept()
 
                 validator: RegExpValidator {
-                    regExp: /^([^:]+):\/\/.+/
+                    regExp: /^([^:]+):.+/
                 }
             }
         }
