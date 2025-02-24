@@ -95,9 +95,9 @@ UserPromptDialog {
                     if (!errorHighlight) {
                         return ""
                     } else if (text.length > 0) {
-                        var scheme = root.url.match(/^([^:]+):\/\/.+/)
+                        var scheme = root.url.match(/^([^:]{3,}):/)
 
-                        //% "URL scheme (%1) missing"
+                        //% "URL scheme (%1) missing or not supported"
                         return qsTrId("sailfish_browser-la-missing_url_scheme").arg(scheme && scheme.length > 1
                                                                                     ? scheme[1] : "https")
                     } else {
@@ -112,7 +112,7 @@ UserPromptDialog {
                 EnterKey.onClicked: accept()
 
                 validator: RegExpValidator {
-                    regExp: /^([^:]+):.+/
+                    regExp: /^(file|https?):\/\/.+/
                 }
             }
         }
