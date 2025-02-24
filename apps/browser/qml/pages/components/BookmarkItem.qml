@@ -97,7 +97,9 @@ ListItem {
             }
             MenuItem {
                 text: qsTrId("sailfish_browser-me-add_to_launcher")
-                enabled: /^(file|https?):\/\/.+/.test(url) // See also BookmarkEditDialog.qml
+                // Should match up with .desktop mime-types. See also BookmarkEditDialog.qml
+                enabled: /^https?:\/\/.+/.test(url)
+                      || /^file:\/\/.+\.(xml|html?)$/.test(url)
                 onClicked: pageStack.animatorPush("AddToAppGridDialog.qml",
                                                   {
                                                       "url": url,
