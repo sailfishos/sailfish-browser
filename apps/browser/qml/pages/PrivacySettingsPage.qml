@@ -127,6 +127,14 @@ Page {
                     checked: true
                 }
 
+                TextSwitch {
+                    id: clearUserAgentOverrides
+
+                    //% "User аgent overrides"
+                    text: qsTrId("settings_browser-la-user_аgent_overrides")
+                    checked: true
+                }
+
                 // Spacer between Button and switches
                 Item {
                     width: parent.width
@@ -144,6 +152,7 @@ Page {
                              || clearCache.checked
                              || clearBookmarks.checked
                              || clearSitePermissions.checked
+                             || clearUserAgentOverrides.checked
 
                     onClicked: {
                         var page = pageStack.push(Qt.resolvedUrl("components/PrivacySettingsConfirmDialog.qml"), {
@@ -153,6 +162,7 @@ Page {
                                                       cacheEnabled: clearCache.checked,
                                                       bookmarksEnabled: clearBookmarks.checked,
                                                       sitePermissionsEnabled: clearSitePermissions.checked,
+                                                      userAgentOverridesEnabled: clearUserAgentOverrides.checked,
                                                       historyPeriod: historyErasingComboBox.currentItem.period,
                                                       acceptDestination: previousPage
                                                   })

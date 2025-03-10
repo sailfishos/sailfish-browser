@@ -1,0 +1,68 @@
+[
+    {
+        "key": "chlast",
+        "name": "Google Chrome 96",
+        "mobileUA": "Mozilla/5.0 (Linux; Android 8.1.0; Nexus 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Mobile Safari/537.36",
+        "desktopUA": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.45 Safari/537.36"
+    },
+    {
+        "key": "ch",
+        "name": "Google Chrome 91",
+        "mobileUA": "Mozilla/5.0 (Linux; Android 8.1.0; Nexus 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Mobile Safari/537.36",
+        "desktopUA": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Safari/537.36"
+    },
+    {
+        "key": "fflast",
+        "name": "Mozilla Firefox 96",
+        "mobileUA": "Mozilla/5.0 (Android 8.1.0; Mobile; rv:96.0) Gecko/96.0 Firefox/96.0",
+        "desktopUA": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:96.0) Gecko/20100101 Firefox/96.0"
+    },
+    {
+        "key": "ff",
+        "name": "Mozilla Firefox 78",
+        "mobileUA": "Mozilla/5.0 (Android 8.1.0; Mobile; rv:78.0) Gecko/78.0 Firefox/78.0",
+        "desktopUA": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0"
+    },
+    {
+        "key": "sflast",
+        "name": "Apple Safari 15",
+        "mobileUA": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1",
+        "desktopUA": "Mozilla/5.0 (Macintosh; Intel Mac OS X 12_0_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Safari/605.1.15"
+    },
+    {
+        "key": "sf",
+        "name": "Apple Safari 14",
+        "mobileUA": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_8 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Mobile/15E148 Safari/604.1",
+        "desktopUA": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.2 Safari/605.1.15"
+    },
+    {
+        "key": "edgelast",
+        "name": "Microsoft Edge 97",
+        "mobileUA": "Mozilla/5.0 (Linux; Android 10; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Mobile Safari/537.36 Edg/97.0.1072.69",
+        "desktopUA": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36 Edg/97.0.1072.69"
+    },
+    {
+        "key": "edge",
+        "name": "Microsoft Edge 91",
+        "mobileUA": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Mobile Safari/537.36 Edg/91.0.864.71",
+        "desktopUA": "Mozilla/5.0 (X11; Linux x86_32) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Safari/537.36 Edg/91.0.864.37"
+    },
+    {
+        "key": "ie11",
+        "name": "Microsoft Internet Explorer 11",
+        "mobileUA": "Mozilla/5.0 (Windows NT 10.0; Trident/7.0; rv:11.0) like Gecko",
+        "desktopUA": "Mozilla/5.0 (Windows NT 10.0; Trident/7.0; rv:11.0) like Gecko"
+    },
+    {
+        "key": "ie8",
+        "name": "Microsoft Internet Explorer 8",
+        "mobileUA": "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; Trident/4.0)",
+        "desktopUA": "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; Trident/4.0)"
+    },
+    {
+        "key": "ie6",
+        "name": "Microsoft Internet Explorer 6",
+        "mobileUA": "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1)",
+        "desktopUA": "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1)"
+    }
+]

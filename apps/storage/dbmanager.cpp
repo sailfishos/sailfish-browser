@@ -187,3 +187,28 @@ void DBManager::deleteSetting(const QString &name)
                                   Q_ARG(QString, name));
     }
 }
+
+void DBManager::setUserAgentOverride(const QString &host, const bool isKey, const QString &userAgent)
+{
+    QMetaObject::invokeMethod(worker, "setUserAgentOverride", Qt::QueuedConnection,
+                              Q_ARG(QString, host), Q_ARG(bool, isKey), Q_ARG(QString, userAgent));
+}
+
+void DBManager::unsetUserAgentOverride(const QString &host)
+{
+    QMetaObject::invokeMethod(worker, "unsetUserAgentOverride", Qt::QueuedConnection,
+                              Q_ARG(QString, host));
+}
+
+void DBManager::clearUserAgentOverrides()
+{
+    QMetaObject::invokeMethod(worker, "clearUserAgentOverrides", Qt::QueuedConnection);
+}
+
+QVariantMap DBManager::getUserAgentOverrides() const
+{
+    QVariantMap userAgentOverrides;
+    QMetaObject::invokeMethod(worker, "getUserAgentOverrides", Qt::BlockingQueuedConnection,
+                              Q_RETURN_ARG(QVariantMap, userAgentOverrides));
+    return userAgentOverrides;
+}

@@ -34,6 +34,7 @@ public:
     qreal cssPixelRatio() const;
 
     Q_INVOKABLE QString displayableUrl(const QString &fullUrl) const;
+    Q_INVOKABLE QString host(const QString &fullUrl) const;
     Q_INVOKABLE QString pageName(const QString &fullUrl) const;
 
 public slots:
