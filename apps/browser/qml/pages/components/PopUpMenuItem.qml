@@ -212,6 +212,21 @@ Item {
                 height: Theme.itemSizeSmall
                 iconWidth: root.iconWidth
                 horizontalOffset: root.horizontalOffset
+                //: The label for the button for accessing clear browsing data page
+                //% "Clear browsing data"
+                text: qsTrId("settings_browser-la-clear-browsing-data")
+                iconSource: "image://theme/icon-m-delete"
+
+                onClicked: {
+                    overlay.animator.showChrome()
+                    pageStack.push("../PrivacySettingsPage.qml", {previousPage: pageStack.currentPage})
+                }
+            }
+
+            OverlayListItem {
+                height: Theme.itemSizeSmall
+                iconWidth: root.iconWidth
+                horizontalOffset: root.horizontalOffset
                 //% "Downloads"
                 text: qsTrId("sailfish_browser-la-downloads")
                 iconSource: "image://theme/icon-m-downloads"
