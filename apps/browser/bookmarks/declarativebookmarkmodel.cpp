@@ -24,8 +24,7 @@ DeclarativeBookmarkModel::DeclarativeBookmarkModel(QObject *parent)
     // Generate mapping URL -> bookmark's index in the loaded list.
     int index(0);
     for (const Bookmark* const bookmark : bookmarks) {
-        // Use multi insert as there might be multiple bookmark instances with the same url.
-        bookmarkIndexes.insertMulti(bookmark->url(), index);
+        bookmarkIndexes.insert(bookmark->url(), index);
         index++;
     }
 }
@@ -76,7 +75,7 @@ void DeclarativeBookmarkModel::remove(int index)
         delete bookmark;
 
         // Remove index mapping and update remaining indices
-        QMap<QString, int>::iterator i = bookmarkIndexes.begin();
+        auto i = bookmarkIndexes.begin();
         while (i != bookmarkIndexes.end()) {
             if (i.value() == index) {
                 i = bookmarkIndexes.erase(i);
@@ -134,7 +133,7 @@ void DeclarativeBookmarkModel::edit(int index, const QString& url, const QString
         roles << UrlRole;
 
         // Update key indexes
-        QMap<QString, int>::iterator i = bookmarkIndexes.begin();
+        auto i = bookmarkIndexes.begin();
         while (i != bookmarkIndexes.end()) {
             if (i.value() == index) {
                 i = bookmarkIndexes.erase(i);
@@ -142,8 +141,8 @@ void DeclarativeBookmarkModel::edit(int index, const QString& url, const QString
             }
             ++i;
         }
-        // Use multi insert here as the url might be already bookmarked.
-        bookmarkIndexes.insertMulti(url, index);
+
+        bookmarkIndexes.insert(url, index);
 
         // Getter will check if active page is still bookmarked.
         emit activeUrlBookmarkedChanged();

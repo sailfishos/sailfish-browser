@@ -15,7 +15,7 @@
 
 #include <QAbstractListModel>
 #include <QStringList>
-#include <QMap>
+#include <QMultiMap>
 
 #include "bookmark.h"
 
@@ -69,6 +69,7 @@ private:
     QList<Bookmark*> bookmarks;
     // This map accelerates access to the `bookmarks` list's elements by their URL.
     // Consider this as an analog of a DB index for `bookmarks` table indexed by URLs.
-    QMap<QString, int> bookmarkIndexes;
+    // multimap as there might be many bookmarks for the same url
+    QMultiMap<QString, int> bookmarkIndexes;
 };
 #endif // DECLARATIVEBOOKMARKMODEL_H
