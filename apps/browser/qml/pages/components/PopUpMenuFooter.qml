@@ -22,10 +22,17 @@ Rectangle {
                Theme.colorScheme === Theme.LightOnDark ? "black" : "white",
                Theme.rgba(Theme.primaryColor, root.overlayOpacity))
 
-    Row {
+    Grid {
         id: content
 
+        columns: 4 // Buttons
+        rows: 1
+
         height: root.height
+        width: (Theme.itemSizeLarge + spacing) * columns - spacing
+        anchors.right: parent.right
+
+        spacing: Theme.paddingMedium
 
         Shared.IconButton {
             height: parent.height
