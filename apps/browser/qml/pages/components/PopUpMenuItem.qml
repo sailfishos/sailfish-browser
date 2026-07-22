@@ -158,6 +158,24 @@ Item {
                     }
                 }
             }
+
+            OverlayListItem {
+                enabled: webView.contentItem && (/^view-source:/.test(webView.contentItem.url) == false)
+                height: Theme.itemSizeSmall
+                iconWidth: root.iconWidth
+                horizontalOffset: root.horizontalOffset
+                checkable: false
+                iconSource: "image://theme/icon-m-file-document"
+                //: Label for control that shows web page source code
+                //% "View page source"
+                text: qsTrId("settings_browser-la-view_source")
+
+                onClicked: {
+                    overlay.animator.showChrome()
+                    var page = webView.contentItem
+                    overlay.toolBar.loadPage("view-source:" + page.url)
+                }
+            }
         }
 
         OverlayListItem {
