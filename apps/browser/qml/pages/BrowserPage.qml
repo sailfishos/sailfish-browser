@@ -395,6 +395,10 @@ Page {
             iconSource: "image://theme/icon-cover-new"
             onTriggered: activateNewTabView()
         }
+        CoverAction {
+            iconSource: "image://theme/icon-cover-refresh"
+            onTriggered: webView.reload()
+        }
     }
 
     Connections {
