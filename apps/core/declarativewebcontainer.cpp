@@ -69,6 +69,12 @@ static void setGLClearColor(QOpenGLFunctions_ES2 *functions, const QColor &color
                             normalized.blueF(), 1.0f);
 }
 
+static GLenum glTextureTarget(QMozTextureTarget textureTarget)
+{
+    return textureTarget == QMozTextureTarget::ExternalOES
+            ? GL_TEXTURE_EXTERNAL_OES : GL_TEXTURE_2D;
+}
+
 static void updateTextureCoordinates(Qt::ScreenOrientation orientation, GLfloat *coordinates)
 {
     // WebRender renders into a GL framebuffer, whose EGLImage has a
@@ -252,8 +258,10 @@ DeclarativeWebContainer::~DeclarativeWebContainer()
                 glDeleteTextures(1, &m_frameTexture);
                 m_frameTexture = 0;
             }
-            delete m_textureProgram;
-            m_textureProgram = nullptr;
+            delete m_texture2DProgram;
+            m_texture2DProgram = nullptr;
+            delete m_externalTextureProgram;
+            m_externalTextureProgram = nullptr;
             m_context->doneCurrent();
         }
         delete m_context;
@@ -774,12 +782,14 @@ QImage DeclarativeWebContainer::grabContentImage(const QSize &size)
         return QImage();
     }
 
-    if (!ensureRenderContext() || !ensureTextureProgram()) {
+    if (!ensureRenderContext()) {
         return QImage();
     }
 
     QSize textureSize;
-    if (!bindWebRenderFrameTexture(&textureSize)) {
+    QMozTextureTarget textureTarget;
+    if (!bindWebRenderFrameTexture(&textureSize, &textureTarget)
+            || !ensureTextureProgram(textureTarget)) {
         qWarning() << "No WebRender EGLImage available for browser frame grab";
         return QImage();
     }
@@ -836,7 +846,7 @@ QImage DeclarativeWebContainer::grabContentImage(const QSize &size)
 
     const QRectF targetRect(0.0, 0.0, drawSize.width(), drawSize.height());
     QImage image;
-    if (drawWebRenderFrame(targetRect, QSizeF(targetSize), grabOrientation,
+    if (drawWebRenderFrame(targetRect, QSizeF(targetSize), grabOrientation, textureTarget,
                            textureRect)) {
         image = readCurrentFramebuffer(targetSize);
     } else {
@@ -936,9 +946,11 @@ bool DeclarativeWebContainer::ensureRenderContext()
     return true;
 }
 
-bool DeclarativeWebContainer::ensureTextureProgram()
+bool DeclarativeWebContainer::ensureTextureProgram(QMozTextureTarget textureTarget)
 {
-    if (m_textureProgram) {
+    QOpenGLShaderProgram *&textureProgram = textureTarget == QMozTextureTarget::ExternalOES
+            ? m_externalTextureProgram : m_texture2DProgram;
+    if (textureProgram) {
         return true;
     }
 
@@ -951,13 +963,21 @@ bool DeclarativeWebContainer::ensureTextureProgram()
             "    gl_Position = vec4(aVertex, 0.0, 1.0);\n"
             "    vTexCoord = aTexCoord;\n"
             "}\n";
-    static const char *fragmentShader =
+    static const char *texture2DFragmentShader =
+            "uniform lowp sampler2D texture;\n"
+            "varying highp vec2 vTexCoord;\n"
+            "void main() {\n"
+            "    gl_FragColor = texture2D(texture, vTexCoord);\n"
+            "}\n";
+    static const char *externalTextureFragmentShader =
             "#extension GL_OES_EGL_image_external : require\n"
             "uniform lowp samplerExternalOES texture;\n"
             "varying highp vec2 vTexCoord;\n"
             "void main() {\n"
             "    gl_FragColor = texture2D(texture, vTexCoord);\n"
             "}\n";
+    const char *fragmentShader = textureTarget == QMozTextureTarget::ExternalOES
+            ? externalTextureFragmentShader : texture2DFragmentShader;
 
     if (!program->addShaderFromSourceCode(QOpenGLShader::Vertex, vertexShader)
             || !program->addShaderFromSourceCode(QOpenGLShader::Fragment, fragmentShader)
@@ -968,11 +988,12 @@ bool DeclarativeWebContainer::ensureTextureProgram()
         return false;
     }
 
-    m_textureProgram = program;
+    textureProgram = program;
     return true;
 }
 
-bool DeclarativeWebContainer::bindWebRenderFrameTexture(QSize *textureSize)
+bool DeclarativeWebContainer::bindWebRenderFrameTexture(QSize *textureSize,
+                                                         QMozTextureTarget *textureTarget)
 {
     static const PFNGLEGLIMAGETARGETTEXTURE2DOESPROC glEGLImageTargetTexture2DOES =
             reinterpret_cast<PFNGLEGLIMAGETARGETTEXTURE2DOESPROC>(
@@ -984,44 +1005,54 @@ bool DeclarativeWebContainer::bindWebRenderFrameTexture(QSize *textureSize)
 
     bool hasImage = false;
 
-    m_mozWindow->getPlatformImage([&](void *platformImage, int width, int height) {
-        if (!platformImage || width <= 0 || height <= 0) {
+    const bool delivered = m_mozWindow->withPlatformImage([&](const QMozEGLImage &image) {
+        if (!image.image || image.size.isEmpty()) {
             return;
         }
+
+        if (m_frameTexture != 0 && m_frameTextureTarget != image.textureTarget) {
+            glDeleteTextures(1, &m_frameTexture);
+            m_frameTexture = 0;
+        }
+        m_frameTextureTarget = image.textureTarget;
 
         if (m_frameTexture == 0) {
             glGenTextures(1, &m_frameTexture);
         }
 
+        const GLenum target = glTextureTarget(m_frameTextureTarget);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_EXTERNAL_OES, m_frameTexture);
-        glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glEGLImageTargetTexture2DOES(GL_TEXTURE_EXTERNAL_OES,
-                                     static_cast<GLeglImageOES>(platformImage));
+        glBindTexture(target, m_frameTexture);
+        glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glEGLImageTargetTexture2DOES(target, static_cast<GLeglImageOES>(image.image));
 
         const GLenum error = glGetError();
         if (error != GL_NO_ERROR) {
             qWarning() << "Failed to bind browser WebRender EGLImage"
                        << QString::number(error, 16)
-                       << "image" << platformImage << "size" << width << height;
+                       << "image" << image.image << "size" << image.size;
             return;
         }
 
         hasImage = true;
         if (textureSize) {
-            *textureSize = QSize(width, height);
+            *textureSize = image.size;
+        }
+        if (textureTarget) {
+            *textureTarget = m_frameTextureTarget;
         }
     });
 
-    return hasImage && m_frameTexture != 0;
+    return delivered && hasImage && m_frameTexture != 0;
 }
 
 bool DeclarativeWebContainer::drawWebRenderFrame(const QRectF &targetRect,
                                                  const QSizeF &surfaceSize,
                                                  Qt::ScreenOrientation orientation,
+                                                 QMozTextureTarget textureTarget,
                                                  const QRectF &textureRect)
 {
     if (surfaceSize.width() <= 0.0 || surfaceSize.height() <= 0.0) {
@@ -1042,22 +1073,28 @@ bool DeclarativeWebContainer::drawWebRenderFrame(const QRectF &targetRect,
     updateTextureCoordinates(orientation, texCoords);
     applyTextureRect(textureRect, texCoords);
 
-    m_textureProgram->bind();
-    m_textureProgram->setUniformValue("texture", 0);
-    const int vertexAttribute = m_textureProgram->attributeLocation("aVertex");
-    const int texCoordAttribute = m_textureProgram->attributeLocation("aTexCoord");
-    m_textureProgram->enableAttributeArray(vertexAttribute);
-    m_textureProgram->enableAttributeArray(texCoordAttribute);
-    m_textureProgram->setAttributeArray(vertexAttribute, GL_FLOAT, vertices, 2);
-    m_textureProgram->setAttributeArray(texCoordAttribute, GL_FLOAT, texCoords, 2);
+    QOpenGLShaderProgram *textureProgram = textureTarget == QMozTextureTarget::ExternalOES
+            ? m_externalTextureProgram : m_texture2DProgram;
+    if (!textureProgram || m_frameTexture == 0 || m_frameTextureTarget != textureTarget) {
+        return false;
+    }
+
+    textureProgram->bind();
+    textureProgram->setUniformValue("texture", 0);
+    const int vertexAttribute = textureProgram->attributeLocation("aVertex");
+    const int texCoordAttribute = textureProgram->attributeLocation("aTexCoord");
+    textureProgram->enableAttributeArray(vertexAttribute);
+    textureProgram->enableAttributeArray(texCoordAttribute);
+    textureProgram->setAttributeArray(vertexAttribute, GL_FLOAT, vertices, 2);
+    textureProgram->setAttributeArray(texCoordAttribute, GL_FLOAT, texCoords, 2);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_EXTERNAL_OES, m_frameTexture);
+    glBindTexture(glTextureTarget(textureTarget), m_frameTexture);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-    m_textureProgram->disableAttributeArray(vertexAttribute);
-    m_textureProgram->disableAttributeArray(texCoordAttribute);
-    m_textureProgram->release();
+    textureProgram->disableAttributeArray(vertexAttribute);
+    textureProgram->disableAttributeArray(texCoordAttribute);
+    textureProgram->release();
 
     return glGetError() == GL_NO_ERROR;
 }
@@ -1699,12 +1736,14 @@ void DeclarativeWebContainer::renderCompositedFrame()
 
     const bool completingActiveTabFrame = m_waitingForActiveTabFrame;
 
-    if (!ensureRenderContext() || !ensureTextureProgram()) {
+    if (!ensureRenderContext()) {
         return;
     }
 
     QSize textureSize;
-    if (!bindWebRenderFrameTexture(&textureSize)) {
+    QMozTextureTarget textureTarget;
+    if (!bindWebRenderFrameTexture(&textureSize, &textureTarget)
+            || !ensureTextureProgram(textureTarget)) {
         static int noImageWarnings = 0;
         if (++noImageWarnings <= 5) {
             qWarning() << "No WebRender EGLImage available for browser frame";
@@ -1723,7 +1762,7 @@ void DeclarativeWebContainer::renderCompositedFrame()
     glClear(GL_COLOR_BUFFER_BIT);
 
     if (!drawWebRenderFrame(effectiveWebContentRect(), QSizeF(width(), height()),
-                            m_mozWindow->contentOrientation())) {
+                            m_mozWindow->contentOrientation(), textureTarget)) {
         qWarning() << "Browser WebRender frame draw failed"
                    << "textureSize" << textureSize << "windowSize" << size();
         return;

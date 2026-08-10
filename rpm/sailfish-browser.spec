@@ -1,5 +1,5 @@
-%global min_xulrunner_version 115.35.1
-%global min_qtmozembed_version 1.56.0
+%global min_xulrunner_version 140.12.0
+%global min_qtmozembed_version 2.0.0
 %global min_embedlite_components_version 2.0.0
 %global min_sailfishwebengine_version 1.7.0
 

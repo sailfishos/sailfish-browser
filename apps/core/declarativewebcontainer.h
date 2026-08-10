@@ -11,6 +11,7 @@
 #define DECLARATIVEWEBCONTAINER_H
 
 #include <qmozsecurity.h>
+#include <qmozwindow.h>
 
 #include <QtGui/QWindow>
 #include <QtGui/QOpenGLFunctions>
@@ -25,7 +26,6 @@
 #include <QRectF>
 #include <QTimer>
 
-class QMozWindow;
 class QOpenGLShaderProgram;
 class QTimerEvent;
 class DeclarativeTabModel;
@@ -273,10 +273,12 @@ private:
     void destroyWindow();
     void clearWindowSurface();
     bool ensureRenderContext();
-    bool ensureTextureProgram();
-    bool bindWebRenderFrameTexture(QSize *textureSize);
+    bool ensureTextureProgram(QMozTextureTarget textureTarget);
+    bool bindWebRenderFrameTexture(QSize *textureSize,
+                                   QMozTextureTarget *textureTarget);
     bool drawWebRenderFrame(const QRectF &targetRect, const QSizeF &surfaceSize,
                             Qt::ScreenOrientation orientation,
+                            QMozTextureTarget textureTarget,
                             const QRectF &textureRect = QRectF(0.0, 0.0, 1.0, 1.0));
 
     QPointer<QMozWindow> m_mozWindow;
@@ -285,8 +287,10 @@ private:
     QPointer<QQuickView> m_chromeWindow;
     QOpenGLContext *m_context = nullptr;
     QMutex m_contextMutex;
-    QOpenGLShaderProgram *m_textureProgram = nullptr;
+    QOpenGLShaderProgram *m_texture2DProgram = nullptr;
+    QOpenGLShaderProgram *m_externalTextureProgram = nullptr;
     GLuint m_frameTexture = 0;
+    QMozTextureTarget m_frameTextureTarget = QMozTextureTarget::Texture2D;
 
     QPointer<DeclarativeTabModel> m_model;
     QPointer<QQmlComponent> m_webPageComponent;
