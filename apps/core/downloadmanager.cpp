@@ -58,6 +58,7 @@ void DownloadManager::recvObserve(const QString message, const QVariant data)
     QString msg = dataMap.value(QStringLiteral("msg")).toString();
     QString targetPath = dataMap.value(QStringLiteral("targetPath")).toString();
     bool isSaveAsPdf = dataMap.value(QStringLiteral("saveAsPdf")).toBool();
+    bool isPrivateMode = dataMap.value(QStringLiteral("privateMode")).toBool();
     qulonglong downloadId(dataMap.value(QStringLiteral("id")).toULongLong());
 
     qCInfo(lcDownloadLog) << "Browser received embed:download message:" << msg
@@ -116,17 +117,26 @@ void DownloadManager::recvObserve(const QString message, const QVariant data)
                                          TransferEngineData::TransferFinished,
                                          QString("success"));
         emit downloadStatusChanged(downloadId, DownloadStatus::Done, data);
+        if (isPrivateMode) {
+            m_transferClient->clearTransfer(m_download2transferMap.value(downloadId));
+        }
         checkAllTransfers();
     } else if (msg == QLatin1Literal("dl-fail")) {
         m_transferClient->finishTransfer(m_download2transferMap.value(downloadId),
                                          TransferEngineData::TransferInterrupted,
                                          QString("browser failure"));
         emit downloadStatusChanged(downloadId, DownloadStatus::Failed, data);
+        if (isPrivateMode) {
+            m_transferClient->clearTransfer(m_download2transferMap.value(downloadId));
+        }
         checkAllTransfers();
     } else if (msg == QLatin1Literal("dl-cancel")) {
         m_transferClient->finishTransfer(m_download2transferMap.value(downloadId),
                                          TransferEngineData::TransferCanceled,
                                          QString("download canceled"));
+        if (isPrivateMode) {
+            m_transferClient->clearTransfer(m_download2transferMap.value(downloadId));
+        }
         emit downloadStatusChanged(downloadId, DownloadStatus::Canceled, data);
         checkAllTransfers();
     }
