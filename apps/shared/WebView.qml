@@ -353,6 +353,7 @@ WebContainer {
             property bool userHasDraggedWhileLoading
             property string favicon
             property string metadataTitle
+            property string feedUrl
             property var pendingClipboardPasteData
             property QtObject _textZoomController: SailfishWebView.TextZoomController {
                 webPage: webPage
@@ -589,6 +590,7 @@ WebContainer {
                     webPage.chrome = true
                     favicon = ""
                     metadataTitle = ""
+                    feedUrl = ""
                     acceptedTouchIcon = false
                 }
             }
@@ -674,6 +676,12 @@ WebContainer {
                 // embed:OpenLink listener is registered only in the captive portal mode
                 case "embed:OpenLink": {
                     linkHandler.handleLink(data.uri)
+                    break
+                }
+                case "Link:AddFeed": {
+                    if (!feedUrl && data.href) {
+                        feedUrl = data.href
+                    }
                     break
                 }
                 case "Link:AddSearch": {

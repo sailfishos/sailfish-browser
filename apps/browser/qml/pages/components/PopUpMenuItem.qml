@@ -124,6 +124,24 @@ Item {
             }
 
             OverlayListItem {
+                visible: webView.contentItem && webView.contentItem.feedUrl
+                height: visible ? Theme.itemSizeSmall : 0
+                iconWidth: root.iconWidth
+                horizontalOffset: root.horizontalOffset
+                iconSource: "image://theme/icon-m-add"
+                //% "Add feed"
+                text: qsTrId("sailfish_browser-la-add_feed")
+
+                onClicked: {
+                    overlay.animator.showChrome()
+                    var page = webView.contentItem
+                    if (page && page.feedUrl) {
+                        settingsApp.call("importRss", [page.feedUrl])
+                    }
+                }
+            }
+
+            OverlayListItem {
                 height: Theme.itemSizeSmall
                 enabled: webView.contentItem
                 opacity: enabled ? 1.0 : 0.5
