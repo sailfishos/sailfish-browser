@@ -143,6 +143,95 @@ bool Tab::operator!=(const Tab &other) const
     return !(*this == other);
 }
 
+PersistentTabHistoryEntry::PersistentTabHistoryEntry()
+{
+}
+
+PersistentTabHistoryEntry::PersistentTabHistoryEntry(const QString &url, const QString &title)
+    : m_url(url)
+    , m_title(title)
+{
+}
+
+QString PersistentTabHistoryEntry::url() const
+{
+    return m_url;
+}
+
+QString PersistentTabHistoryEntry::title() const
+{
+    return m_title;
+}
+
+PersistentTabRestoreData::PersistentTabRestoreData()
+    : m_persistentId(0)
+    , m_selectedHistoryIndex(-1)
+{
+}
+
+PersistentTabRestoreData::PersistentTabRestoreData(int persistentId)
+    : m_persistentId(persistentId)
+    , m_selectedHistoryIndex(-1)
+{
+}
+
+int PersistentTabRestoreData::persistentId() const
+{
+    return m_persistentId;
+}
+
+const Tab &PersistentTabRestoreData::tab() const
+{
+    return m_tab;
+}
+
+void PersistentTabRestoreData::setTab(const Tab &tab)
+{
+    m_tab = tab;
+}
+
+const QList<PersistentTabHistoryEntry> &PersistentTabRestoreData::history() const
+{
+    return m_history;
+}
+
+void PersistentTabRestoreData::addHistoryEntry(const PersistentTabHistoryEntry &entry)
+{
+    m_history.append(entry);
+}
+
+int PersistentTabRestoreData::selectedHistoryIndex() const
+{
+    return m_selectedHistoryIndex;
+}
+
+void PersistentTabRestoreData::setSelectedHistoryIndex(int index)
+{
+    m_selectedHistoryIndex = index;
+}
+
+PersistentTabRestoreBatch::PersistentTabRestoreBatch()
+    : m_activePersistentId(0)
+{
+}
+
+PersistentTabRestoreBatch::PersistentTabRestoreBatch(
+        const QList<PersistentTabRestoreData> &tabs, int activePersistentId)
+    : m_tabs(tabs)
+    , m_activePersistentId(activePersistentId)
+{
+}
+
+const QList<PersistentTabRestoreData> &PersistentTabRestoreBatch::tabs() const
+{
+    return m_tabs;
+}
+
+int PersistentTabRestoreBatch::activePersistentId() const
+{
+    return m_activePersistentId;
+}
+
 QDebug operator<<(QDebug dbg, const Tab *tab)
 {
     if (!tab) {

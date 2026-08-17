@@ -14,6 +14,8 @@
 
 #include <QString>
 #include <QDebug>
+#include <QList>
+#include <QMetaType>
 
 class Tab
 {
@@ -66,6 +68,60 @@ private:
 };
 
 Q_DECLARE_METATYPE(Tab)
+
+class PersistentTabHistoryEntry
+{
+public:
+    PersistentTabHistoryEntry();
+    PersistentTabHistoryEntry(const QString &url, const QString &title);
+
+    QString url() const;
+    QString title() const;
+
+private:
+    QString m_url;
+    QString m_title;
+};
+
+class PersistentTabRestoreData
+{
+public:
+    PersistentTabRestoreData();
+    explicit PersistentTabRestoreData(int persistentId);
+
+    int persistentId() const;
+    const Tab &tab() const;
+    void setTab(const Tab &tab);
+    const QList<PersistentTabHistoryEntry> &history() const;
+    void addHistoryEntry(const PersistentTabHistoryEntry &entry);
+    int selectedHistoryIndex() const;
+    void setSelectedHistoryIndex(int index);
+
+private:
+    int m_persistentId;
+    Tab m_tab;
+    QList<PersistentTabHistoryEntry> m_history;
+    int m_selectedHistoryIndex;
+};
+
+class PersistentTabRestoreBatch
+{
+public:
+    PersistentTabRestoreBatch();
+    PersistentTabRestoreBatch(const QList<PersistentTabRestoreData> &tabs,
+                              int activePersistentId);
+
+    const QList<PersistentTabRestoreData> &tabs() const;
+    int activePersistentId() const;
+
+private:
+    QList<PersistentTabRestoreData> m_tabs;
+    int m_activePersistentId;
+};
+
+Q_DECLARE_METATYPE(PersistentTabHistoryEntry)
+Q_DECLARE_METATYPE(PersistentTabRestoreData)
+Q_DECLARE_METATYPE(PersistentTabRestoreBatch)
 
 QDebug operator<<(QDebug, const Tab *);
 

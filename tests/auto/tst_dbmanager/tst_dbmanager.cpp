@@ -39,8 +39,10 @@ private slots:
     void goForward();
     void updateThumbPath();
     void updateTitle();
+    void updateHistoryTitle();
     void getHistory();
     void getTabHistory();
+    void getPersistentTabRestoreBatch();
     void saveSetting();
     void deleteSetting();
     void getMaxTabId();
@@ -328,7 +330,7 @@ void tst_dbmanager::navigateTo()
     QCOMPARE(links.at(0).url(), QString("http://example3.com"));
 
     // 2. Go back and navigate to another URL. Check the obsolete URL got overriden.
-    DBManager::instance()->goBack(1);
+    QCOMPARE(DBManager::instance()->goBackTarget(1), QString("http://example2.com"));
     DBManager::instance()->navigateTo(1, "http://example4.com", "Test title 4", "");
 
     DBManager::instance()->getTabHistory(1);
@@ -359,11 +361,18 @@ void tst_dbmanager::goBack()
     DBManager::instance()->navigateTo(1, "http://example2.com", "Test title 2", "");
     DBManager::instance()->navigateTo(1, "http://example3.com", "Test title 3", "");
 
-    // actual test
-    DBManager::instance()->goBack(1);
-
+    // Peeking must not move the persistent cursor.
+    QCOMPARE(DBManager::instance()->peekBackTarget(1), QString("http://example2.com"));
     QSignalSpy tabHistoryAvailableSpy(DBManager::instance(),
                                       SIGNAL(tabHistoryAvailable(int,QList<Link>,int)));
+    DBManager::instance()->getTabHistory(1);
+    QVERIFY(tabHistoryAvailableSpy.wait(5000));
+    QCOMPARE(tabHistoryAvailableSpy.at(0).at(2).toInt(), 3);
+
+    // Moving remains explicit.
+    QCOMPARE(DBManager::instance()->goBackTarget(1), QString("http://example2.com"));
+
+    tabHistoryAvailableSpy.clear();
     DBManager::instance()->getTabHistory(1);
     QVERIFY(tabHistoryAvailableSpy.wait(5000));
 
@@ -383,11 +392,18 @@ void tst_dbmanager::goForward()
     DBManager::instance()->navigateTo(1, "http://example3.com", "Test title 3", "");
 
     // actual test
-    DBManager::instance()->goBack(1);
-    DBManager::instance()->goForward(1);
+    QCOMPARE(DBManager::instance()->goBackTarget(1), QString("http://example2.com"));
+    QCOMPARE(DBManager::instance()->peekForwardTarget(1), QString("http://example3.com"));
 
     QSignalSpy tabHistoryAvailableSpy(DBManager::instance(),
                                       SIGNAL(tabHistoryAvailable(int,QList<Link>,int)));
+    DBManager::instance()->getTabHistory(1);
+    QVERIFY(tabHistoryAvailableSpy.wait(5000));
+    QCOMPARE(tabHistoryAvailableSpy.at(0).at(2).toInt(), 2);
+
+    QCOMPARE(DBManager::instance()->goForwardTarget(1), QString("http://example3.com"));
+
+    tabHistoryAvailableSpy.clear();
     DBManager::instance()->getTabHistory(1);
     QVERIFY(tabHistoryAvailableSpy.wait(5000));
 
@@ -451,6 +467,43 @@ void tst_dbmanager::updateTitle()
     QCOMPARE(tabsAvailableSpy.count(), 1);
     arguments = tabsAvailableSpy.at(0);
     QCOMPARE(arguments.at(0).value<QList<Tab> >().at(0).title(), newTitle);
+}
+
+void tst_dbmanager::updateHistoryTitle()
+{
+    const QString url(QStringLiteral("http://example.com/post"));
+    const QString title(QStringLiteral("Updated post title"));
+    const QString missingUrl(QStringLiteral("http://example.com/missing"));
+
+    DBManager::instance()->addHistoryEntry(url, QString());
+
+    QSignalSpy titleChangedSpy(DBManager::instance(),
+                               SIGNAL(titleChanged(QString,QString)));
+    DBManager::instance()->updateHistoryTitle(url, title);
+    DBManager::instance()->updateHistoryTitle(missingUrl, QStringLiteral("Missing title"));
+
+    QVERIFY(titleChangedSpy.wait(5000));
+    QCOMPARE(titleChangedSpy.count(), 1);
+    QList<QVariant> arguments = titleChangedSpy.at(0);
+    QCOMPARE(arguments.at(0).toString(), url);
+    QCOMPARE(arguments.at(1).toString(), title);
+
+    QSignalSpy historyAvailableSpy(DBManager::instance(),
+                                   SIGNAL(historyAvailable(QList<Link>)));
+    DBManager::instance()->getHistory(title);
+    QVERIFY(historyAvailableSpy.wait(5000));
+
+    arguments = historyAvailableSpy.at(0);
+    QList<Link> links = arguments.at(0).value<QList<Link> >();
+    QCOMPARE(links.count(), 1);
+    QCOMPARE(links.at(0).url(), url);
+    QCOMPARE(links.at(0).title(), title);
+
+    DBManager::instance()->getHistory(QStringLiteral("Missing title"));
+    QVERIFY(historyAvailableSpy.wait(5000));
+    arguments = historyAvailableSpy.at(1);
+    links = arguments.at(0).value<QList<Link> >();
+    QVERIFY(links.isEmpty());
 }
 
 void tst_dbmanager::getHistory()
@@ -522,6 +575,61 @@ void tst_dbmanager::getTabHistory()
     int currentLinkId = arguments.at(2).toInt();
     QCOMPARE(links.count(), 3);
     QCOMPARE(currentLinkId, 3);
+}
+
+void tst_dbmanager::getPersistentTabRestoreBatch()
+{
+    DBManager::instance()->createTab(
+                Tab(1, QStringLiteral("https://example.com/one"),
+                    QStringLiteral("One"), QStringLiteral("one.png"), false));
+    DBManager::instance()->navigateTo(1, QStringLiteral("https://example.com/two"),
+                                      QStringLiteral("Two"), QString());
+    DBManager::instance()->navigateTo(1, QStringLiteral("https://example.com/three"),
+                                      QStringLiteral("Three"), QString());
+    DBManager::instance()->goBack(1);
+    DBManager::instance()->updateThumbPath(1, QStringLiteral("one.png"));
+    DBManager::instance()->createTab(
+                Tab(3, QStringLiteral("https://other.example/"),
+                    QStringLiteral("Other"), QStringLiteral("other.png"), false));
+    DBManager::instance()->createTab(
+                Tab(2, QString(), QString(), QStringLiteral("blank.png"), false));
+    DBManager::instance()->saveSetting(QStringLiteral("tabOrder"),
+                                       QStringLiteral("3,2,99,1,3"));
+    DBManager::instance()->saveSetting(QStringLiteral("activeTabId"),
+                                       QStringLiteral("1"));
+
+    QSignalSpy restoreSpy(DBManager::instance(),
+                          SIGNAL(persistentTabRestoreBatchAvailable(PersistentTabRestoreBatch)));
+    DBManager::instance()->getPersistentTabRestoreBatch();
+    QVERIFY(restoreSpy.wait(5000));
+    QCOMPARE(restoreSpy.count(), 1);
+
+    const PersistentTabRestoreBatch batch = restoreSpy.at(0).at(0)
+            .value<PersistentTabRestoreBatch>();
+    QCOMPARE(batch.tabs().count(), 3);
+    QCOMPARE(batch.activePersistentId(), 1);
+    QCOMPARE(batch.tabs().at(0).persistentId(), 3);
+    QCOMPARE(batch.tabs().at(1).persistentId(), 2);
+    QCOMPARE(batch.tabs().at(2).persistentId(), 1);
+
+    const PersistentTabRestoreData blank = batch.tabs().at(1);
+    QCOMPARE(blank.tab().url(), QString());
+    QCOMPARE(blank.tab().thumbnailPath(), QString());
+    QVERIFY(blank.history().isEmpty());
+    QCOMPARE(blank.selectedHistoryIndex(), -1);
+
+    const PersistentTabRestoreData restored = batch.tabs().at(2);
+    QCOMPARE(restored.tab().url(), QStringLiteral("https://example.com/two"));
+    QCOMPARE(restored.tab().title(), QStringLiteral("Two"));
+    QCOMPARE(restored.tab().thumbnailPath(), QStringLiteral("one.png"));
+    QCOMPARE(restored.history().count(), 3);
+    QCOMPARE(restored.history().at(0).url(), QStringLiteral("https://example.com/one"));
+    QCOMPARE(restored.history().at(0).title(), QStringLiteral("One"));
+    QCOMPARE(restored.history().at(1).url(), QStringLiteral("https://example.com/two"));
+    QCOMPARE(restored.history().at(1).title(), QStringLiteral("Two"));
+    QCOMPARE(restored.history().at(2).url(), QStringLiteral("https://example.com/three"));
+    QCOMPARE(restored.history().at(2).title(), QStringLiteral("Three"));
+    QCOMPARE(restored.selectedHistoryIndex(), 1);
 }
 
 void tst_dbmanager::saveSetting()
