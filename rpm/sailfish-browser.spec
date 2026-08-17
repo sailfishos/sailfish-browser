@@ -1,5 +1,5 @@
 %global min_xulrunner_version 140.12.0-4
-%global min_qtmozembed_version 2.0.0
+%global min_qtmozembed_version 2.1.0
 %global min_embedlite_components_version 2.0.0
 %global min_sailfishwebengine_version 1.7.0
 
@@ -18,7 +18,6 @@ BuildRequires:  pkgconfig(Qt5Qml)
 BuildRequires:  pkgconfig(Qt5Gui)
 BuildRequires:  pkgconfig(Qt5Quick)
 BuildRequires:  pkgconfig(qt5embedwidget) >= %{min_qtmozembed_version}
-BuildRequires:  qtmozembed-chrome-tabs-devel >= 1
 BuildRequires:  pkgconfig(Qt5DBus)
 BuildRequires:  pkgconfig(Qt5Concurrent)
 BuildRequires:  pkgconfig(Qt5Sql)
@@ -40,7 +39,6 @@ Requires: sailfish-content-graphics
 Requires: xulrunner-qt5 >= %{min_xulrunner_version}
 Requires: embedlite-components-qt5 >= %{min_embedlite_components_version}
 Requires: qtmozembed-qt5 >= %{min_qtmozembed_version}
-Requires: qtmozembed-chrome-tabs >= 1
 Requires: sailfish-components-webview-qt5 >= %{min_sailfishwebengine_version}
 Requires: sailfish-components-webview-qt5-popups >= %{min_sailfishwebengine_version}
 Requires: sailfish-components-webview-qt5-pickers >= %{min_sailfishwebengine_version}
