@@ -17,6 +17,7 @@ import Sailfish.Silica 1.0
 import Sailfish.Silica.private 1.0 as Private
 import Sailfish.Browser 1.0
 import Sailfish.Policy 1.0
+import Sailfish.WebView.Popups 1.0 as Popups
 import Nemo.Configuration 1.0
 import "components" as Browser
 import "../shared" as Shared
@@ -609,12 +610,24 @@ Page {
 
                 property bool _qmozChromeHosted: true
                 property string _qmozChromeInitialUrl: ""
+                property QtObject popupOpener: Popups.PopupOpener {
+                    pageStack: window.pageStack
+                    parentItem: browserPage
+                    contentItem: chromeView
+                    tabModel: webView.tabModel
+                }
 
                 anchors.fill: parent
                 active: browserPage.active && !webView.privateMode
                 clip: true
                 focus: true
                 visible: !webView.privateMode
+
+                onRecvAsyncMessage: {
+                    if (popupOpener.message(message, data)) {
+                        return
+                    }
+                }
 
                 Connections {
                     target: chromeView.tabModel
