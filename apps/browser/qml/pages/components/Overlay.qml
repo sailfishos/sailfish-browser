@@ -60,16 +60,21 @@ Shared.Background {
         } else if (url == "about:settings") {
             pageStack.animatorPush(Qt.resolvedUrl("../SettingsPage.qml"))
         } else {
-            if (webView && webView.tabModel.count === 0) {
-                webView.clearSurface()
-            }
             // let gecko figure out how to handle malformed URLs
             var pageUrl = url
             if (!isNaN(pageUrl) && pageUrl.trim()) {
                 pageUrl = "\"" + pageUrl.trim() + "\""
             }
 
-            if (!searchField.enteringNewTabUrl && !newTab) {
+            if (browserPage.chromeHostView && !searchField.enteringNewTabUrl && !newTab) {
+                searchField.edited = false
+                webView.releaseActiveTabOwnership()
+                browserPage.load(pageUrl)
+            } else if (!browserPage.chromeHostView
+                       && !searchField.enteringNewTabUrl && !newTab) {
+                if (webView.tabModel.count === 0) {
+                    webView.clearSurface()
+                }
                 webView.releaseActiveTabOwnership()
                 webView.load(pageUrl)
             } else {
@@ -140,10 +145,15 @@ Shared.Background {
                 searchField.enteringNewTabUrl = false
 
                 if (enteredUrl) {
-                    webView.tabModel.newTab(enteredUrl, true)
+                    if (browserPage.chromeHostView) {
+                        searchField.edited = false
+                        browserPage.newTab(enteredUrl, true)
+                    } else {
+                        webView.tabModel.newTab(enteredUrl, true)
+                    }
                     enteredUrl = ""
                 } else if (!toolBar.findInPageActive) {
-                    searchField.resetUrl(webView.url)
+                    searchField.resetUrl(browserPage.url)
                 }
 
                 favoriteGrid.positionViewAtBeginning()
@@ -172,17 +182,17 @@ Shared.Background {
     }
 
     Connections {
-        target: webView
+        target: browserPage
 
-        onLoadingChanged: {
-            if (webView.loading) {
+        onViewLoadingChanged: {
+            if (browserPage.viewLoading) {
                 toolBar.resetFind()
             }
         }
 
         onUrlChanged: {
             if (!toolBar.findInPageActive && !searchField.enteringNewTabUrl && !searchField.edited) {
-                searchField.resetUrl(webView.url)
+                searchField.resetUrl(browserPage.url)
             }
         }
     }
@@ -205,7 +215,9 @@ Shared.Background {
 
         width: parent.width
         height: historyContainer.height
-        enabled: !overlayAnimator.atBottom && webView.tabModel.count > 0 && !favoriteGrid.contextMenuActive
+        enabled: !overlayAnimator.atBottom
+                 && (browserPage.chromeHostMode || webView.tabModel.count > 0)
+                 && !favoriteGrid.contextMenuActive
 
         drag.target: overlay
         drag.filterChildren: true
@@ -241,8 +253,8 @@ Shared.Background {
             width: parent.width
             height: toolBar.rowHeight
             visible: !searchField.enteringNewTabUrl
-            opacity: webView.loading ? 1.0 : 0.0
-            progress: webView.loadProgress / 100.0
+            opacity: browserPage.viewLoading ? 1.0 : 0.0
+            progress: browserPage.loadProgress / 100.0
         }
 
         Item {
@@ -253,10 +265,10 @@ Shared.Background {
                                                   && _showUrlEntry
             readonly property bool showHistoryList: showFavorites
                                                     && searchField.edited
-                                                    && searchField.text !== webView.url
+                                                    && searchField.text !== browserPage.url
                                                     && searchField.text
             readonly property bool showHistoryButton: !toolBar.findInPageActive
-                                                      && (!searchField.edited && searchField.text === webView.url
+                                                      && (!searchField.edited && searchField.text === browserPage.url
                                                           || !searchField.text)
 
             width: parent.width
@@ -439,7 +451,7 @@ Shared.Background {
                 }
 
                 onTextChanged: {
-                    if (!_resetting && !edited && text !== webView.url) {
+                    if (!_resetting && !edited && text !== browserPage.url) {
                         edited = true
                     }
                 }
@@ -510,12 +522,13 @@ Shared.Background {
             Browser.ToolBar {
                 id: toolBar
 
+                hostedView: browserPage.chromeHostView
                 property real crossfadeRatio: (_showFindInPage || _showUrlEntry)
                                               ? (overlay.y - webView.fullscreenHeight/2)
                                                 / (webView.fullscreenHeight/2 - toolBar.height)
                                               : 1.0
 
-                url: webView.contentItem && webView.contentItem.url || ""
+                url: browserPage.url
                 findText: searchField.text
                 bookmarked: bookmarkModel.activeUrlBookmarked
 
@@ -539,7 +552,7 @@ Shared.Background {
                 onShowOverlay: {
                     _showUrlEntry = true
                     _overlayGap = Qt.binding(function() { return overlayAnimator.fullscreenGap })
-                    searchField.resetUrl(webView.url)
+                    searchField.resetUrl(browserPage.url)
                     overlayAnimator.showOverlay()
                 }
                 onShowTabs: {
@@ -568,9 +581,26 @@ Shared.Background {
                     _overlayGap = Qt.binding(function () { return overlayAnimator.fullscreenGap })
                     overlayAnimator.showOverlay()
                 }
-                onShareActivePage: webShareAction.shareLink(webView.url, webView.title)
-                onBookmarkActivePage: favoriteGrid.fetchAndSaveBookmark()
-                onRemoveActivePageFromBookmarks: bookmarkModel.remove(webView.url)
+                onShareActivePage: {
+                    if (browserPage.chromeHostView) {
+                        webShareAction.shareLink(browserPage.url, browserPage.title)
+                    } else {
+                        webShareAction.shareLink(webView.url, webView.title)
+                    }
+                }
+                onBookmarkActivePage: {
+                    if (browserPage.chromeHostView) {
+                        bookmarkModel.add(browserPage.url,
+                                          browserPage.title || browserPage.url,
+                                          "", false)
+                    } else {
+                        favoriteGrid.fetchAndSaveBookmark()
+                    }
+                }
+                onRemoveActivePageFromBookmarks: {
+                    bookmarkModel.remove(browserPage.chromeHostView
+                                         ? browserPage.url : webView.url)
+                }
 
                 onShowCertDetail: {
                     if (webView.security && !webView.security.certIsNull) {
@@ -642,12 +672,12 @@ Shared.Background {
                     Behavior on opacity { FadeAnimator {} }
                 }
 
-                search: searchField.text
+                search: searchField.text === browserPage.url ? "" : searchField.text
                 opacity: visible && toolBar.opacity < 0.9 ? 1.0 : 0.0
                 enabled: overlayAnimator.atTop
                 visible: !overlayAnimator.atBottom && _showUrlEntry
                 onMovingChanged: if (moving) historyList.focus = true
-                onSearchChanged: if (search !== webView.url) historyModel.search(search)
+                onSearchChanged: historyModel.search(search)
                 model: historyContainer.showHistoryList ? historyModel : 0
                 contentY: favoriteGrid.y
                 showDeleteButton: true

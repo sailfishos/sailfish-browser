@@ -198,12 +198,11 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
 
     if (!browserEnabled() || privatebrowsingAutostart.value(QVariant(false)).toBool()) m_privateMode = true;
 
-    WebPageFactory* pageFactory = new WebPageFactory(this);
-    connect(this, &DeclarativeWebContainer::webPageComponentChanged,
-            pageFactory, &WebPageFactory::updateQmlComponent);
-    m_webPages = new WebPages(pageFactory, this);
     int maxTabid = DBManager::instance()->getMaxTabId();
     m_persistentTabModel = new PersistentTabModel(maxTabid + 1, this);
+    if (!BrowserAppInfo::captivePortal()) {
+        m_persistentTabModel->setRuntimeAuthoritative(true);
+    }
     m_privateTabModel = new PrivateTabModel(maxTabid + 1001, this);
 
     setTabModel((BrowserAppInfo::captivePortal() || m_privateMode) ? m_privateTabModel.data()
@@ -432,14 +431,20 @@ void DeclarativeWebContainer::setForeground(bool active)
 
 int DeclarativeWebContainer::maxLiveTabCount() const
 {
-    return m_webPages->maxLivePages();
+    return m_maxLiveTabCount;
 }
 
 void DeclarativeWebContainer::setMaxLiveTabCount(int count)
 {
-    if (m_webPages->setMaxLivePages(count)) {
-        emit maxLiveTabCountChanged();
+    if (count <= 0 || m_maxLiveTabCount == count) {
+        return;
     }
+
+    m_maxLiveTabCount = count;
+    if (m_webPages) {
+        m_webPages->setMaxLivePages(count);
+    }
+    emit maxLiveTabCountChanged();
 }
 
 QQmlComponent* DeclarativeWebContainer::webPageComponent() const
@@ -477,6 +482,10 @@ bool DeclarativeWebContainer::activeTabRendered() const
 
 bool DeclarativeWebContainer::loading() const
 {
+    if (usesHostedTabs()) {
+        return false;
+    }
+
     if (m_webPage) {
         return m_webPage->loading();
     } else {
@@ -632,7 +641,17 @@ void DeclarativeWebContainer::load(const QString &url, bool force, bool fromExte
         tmpUrl = ABOUT_BLANK;
     }
 
-    if (!canInitialize()) {
+    if (usesHostedTabs()) {
+        if (!canInitialize() || !m_initialized) {
+            m_initialUrl = tmpUrl;
+            m_fromExternal = fromExternal;
+        } else {
+            // Runtime-authoritative models forward this request to the hosted
+            // Gecko tab session. They intentionally do not create a legacy
+            // DeclarativeWebPage.
+            m_model->newTab(tmpUrl, fromExternal);
+        }
+    } else if (!canInitialize()) {
         m_initialUrl = tmpUrl;
         m_fromExternal = fromExternal;
     } else if (m_webPage && m_webPage->completed()) {
@@ -657,6 +676,10 @@ void DeclarativeWebContainer::load(const QString &url, bool force, bool fromExte
  */
 void DeclarativeWebContainer::reload(bool force)
 {
+    if (usesHostedTabs()) {
+        return;
+    }
+
     int activeTabId = tabId();
     if (activeTabId > 0) {
         if (force && m_webPage && m_webPage->completed() && m_webPage->tabId() == activeTabId) {
@@ -696,6 +719,22 @@ int DeclarativeWebContainer::activateTab(int tabId, const QString &url)
 
 int DeclarativeWebContainer::requestTabWithOwner(int tabId, const QString &url, uint ownerPid)
 {
+    if (usesHostedTabs()) {
+        if (m_model->contains(tabId)) {
+            if (url.isEmpty()) {
+                m_model->activateTabById(tabId);
+            } else if (!m_model->requestRuntimeTabNavigation(tabId, url, false)) {
+                qCWarning(lcCoreLog) << "Cannot navigate hosted tab" << tabId;
+            }
+        } else {
+            tabId = m_model->newTab(url, false);
+            if (ownerPid && tabId > 0) {
+                m_tabOwners.insert(tabId, ownerPid);
+            }
+        }
+        return tabId;
+    }
+
     bool activated = m_model->activateTabById(tabId);
     if (!activated) {
         tabId = m_model->newTab(url, false);
@@ -748,9 +787,17 @@ void DeclarativeWebContainer::releaseActiveTabOwnership()
 
 bool DeclarativeWebContainer::activatePage(const Tab& tab, bool force, bool fromExternal)
 {
+    if (usesHostedTabs()) {
+        return false;
+    }
+
     if (!m_initialized) {
         m_initialUrl = tab.requestedUrl();
         m_fromExternal = fromExternal;
+        return false;
+    }
+
+    if (!m_webPages) {
         return false;
     }
 
@@ -758,6 +805,9 @@ bool DeclarativeWebContainer::activatePage(const Tab& tab, bool force, bool from
     if ((m_model->loaded() || force) && tab.tabId() > 0 && m_webPages->isInitialized() && m_webPageComponent) {
         WebPageActivationData activationData = m_webPages->page(tab);
         setWebPage(activationData.webPage);
+        if (!m_webPage) {
+            return false;
+        }
         // Reset always height so that orientation change is taken into account.
         m_webPage->forceChrome(false);
         m_webPage->setChrome(true);
@@ -878,17 +928,21 @@ int DeclarativeWebContainer::previouslyUsedTabId() const
 
 void DeclarativeWebContainer::updateMode()
 {
+    m_initialized = false;
+    m_modeChangePending = true;
+
     setTabModel((BrowserAppInfo::captivePortal() || m_privateMode) ? m_privateTabModel.data()
                                                                    : m_persistentTabModel.data());
     emit tabIdChanged();
 
-    // Reload active tab from new mode
-    if (m_model->count() > 0) {
-        reload(false);
-    } else {
-        setWebPage(nullptr);
-        emit contentItemChanged();
+    setWebPage(nullptr);
+    if (m_webPages) {
+        m_webPages->clear();
     }
+
+    // A normal browser may first create its legacy path after hosted startup.
+    // Both initializers defer safely if their required state is not ready yet.
+    initialize();
 }
 
 /**
@@ -1101,7 +1155,9 @@ bool DeclarativeWebContainer::drawWebRenderFrame(const QRectF &targetRect,
 
 void DeclarativeWebContainer::dumpPages() const
 {
-    m_webPages->dumpPages();
+    if (m_webPages) {
+        m_webPages->dumpPages();
+    }
 }
 
 QObject *DeclarativeWebContainer::focusObject() const
@@ -1115,7 +1171,9 @@ bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
         if (event->type() == QEvent::Close) {
             m_closeEventFilter->applicationClosingStarted();
             if (!m_closing) {
-                m_webPages->clear();
+                if (m_webPages) {
+                    m_webPages->clear();
+                }
                 bool initialUrl = hasInitialUrl();
                 m_initialUrl.clear();
                 m_fromExternal = false;
@@ -1438,7 +1496,7 @@ void DeclarativeWebContainer::updateMozWindowSize()
 
 void DeclarativeWebContainer::onActiveTabChanged(int activeTabId)
 {
-    if (activeTabId <= 0) {
+    if (usesHostedTabs() || activeTabId <= 0) {
         return;
     }
 
@@ -1473,20 +1531,32 @@ void DeclarativeWebContainer::initialize()
         return;
     }
 
-    if (SailfishOS::WebEngine::instance()->isInitialized() && !m_mozWindow) {
-        m_mozWindow = new QMozWindow(webContentSize());
-        m_mozWindow->setPrimaryOrientation(screen()->primaryOrientation());
-
-        connect(m_mozWindow.data(), &QMozWindow::orientationChangeFiltered,
-                this, &DeclarativeWebContainer::handleContentOrientationChanged);
-        connect(m_mozWindow.data(), &QMozWindow::compositingFinished,
-                this, &DeclarativeWebContainer::handleCompositingFinished, Qt::QueuedConnection);
-        m_mozWindow->reserve();
-        m_mozWindow->setReadyToPaint(false);
-        if (m_chromeWindow) {
-            updateContentOrientation(m_chromeWindow->contentOrientation());
+    if (usesHostedTabs()) {
+        if (!canInitialize()) {
+            return;
         }
+
+        m_initialized = true;
+        m_modeChangePending = false;
+        if (!m_initialUrl.isEmpty() && !m_model->activateTab(m_initialUrl, true)) {
+            m_model->newTab(m_initialUrl, m_fromExternal);
+        }
+
+        if (!m_completed) {
+            m_completed = true;
+            emit completedChanged();
+        }
+
+        bool initialUrl = hasInitialUrl();
+        m_initialUrl.clear();
+        m_fromExternal = false;
+        if (initialUrl) {
+            emit hasInitialUrlChanged();
+        }
+        return;
     }
+
+    ensureLegacyWindow();
 
     // This signal handler is responsible for activating
     // the first page.
@@ -1503,14 +1573,20 @@ void DeclarativeWebContainer::initialize()
     // From this point onwards, we're ready to initialize.
     // We set m_initialized to true prior to the block below since we may need to
     // call loadTab() within it, and that function is guarded by the value of m_initialized.
+    const bool modeChange = m_modeChangePending;
     m_initialized = true;
+    m_modeChangePending = false;
 
     // Load test
     // 1) no tabs and firstUseDone or we have incoming url, try to active tab, only after that fails
     //    load initial url or home page to a new tab.
     // 2) model has tabs, load initial url or active tab.
     bool firstUseDone = DeclarativeWebUtils::instance()->firstUseDone();
-    if ((m_model->count() == 0 && firstUseDone) || !m_initialUrl.isEmpty()) {
+    if (modeChange && m_initialUrl.isEmpty()) {
+        if (m_model->count() > 0) {
+            loadTab(m_model->activeTab(), true, false);
+        }
+    } else if ((m_model->count() == 0 && firstUseDone) || !m_initialUrl.isEmpty()) {
         QString url = m_initialUrl;
         if (m_initialUrl.isEmpty()) {
             if (!browserEnabled()) {
@@ -1547,7 +1623,13 @@ void DeclarativeWebContainer::initialize()
 
 void DeclarativeWebContainer::onDownloadStarted()
 {
-    emit m_webPage->urlChanged();
+    if (usesHostedTabs()) {
+        return;
+    }
+
+    if (m_webPage) {
+        emit m_webPage->urlChanged();
+    }
 
     if (m_model->count() == 0) {
         // Download doesn't add tab to model. Mimic
@@ -1559,8 +1641,12 @@ void DeclarativeWebContainer::onDownloadStarted()
 
 void DeclarativeWebContainer::onNewTabRequested(const Tab &tab, bool fromExternal)
 {
+    if (usesHostedTabs()) {
+        return;
+    }
+
     if (tab.hidden()) {
-        m_PreviousTabWhenHidden = m_webPage->tabId();
+        m_PreviousTabWhenHidden = m_webPage ? m_webPage->tabId() : -1;
     }
 
     if (activatePage(tab, false, fromExternal)) {
@@ -1684,6 +1770,48 @@ bool DeclarativeWebContainer::canInitialize() const
     return SailfishOS::WebEngine::instance()->isInitialized() && m_model && m_model->loaded();
 }
 
+bool DeclarativeWebContainer::usesHostedTabs() const
+{
+    return !BrowserAppInfo::captivePortal()
+            && !m_privateMode
+            && m_model
+            && m_model.data() == m_persistentTabModel.data()
+            && m_model->runtimeAuthoritative();
+}
+
+void DeclarativeWebContainer::ensureLegacyWindow()
+{
+    if (usesHostedTabs() || !SailfishOS::WebEngine::instance()->isInitialized()) {
+        return;
+    }
+
+    if (!m_webPages) {
+        WebPageFactory *pageFactory = new WebPageFactory(this);
+        connect(this, &DeclarativeWebContainer::webPageComponentChanged,
+                pageFactory, &WebPageFactory::updateQmlComponent);
+        pageFactory->updateQmlComponent(m_webPageComponent.data());
+        m_webPages = new WebPages(pageFactory, this);
+        m_webPages->setMaxLivePages(m_maxLiveTabCount);
+    }
+
+    if (m_mozWindow) {
+        return;
+    }
+
+    m_mozWindow = new QMozWindow(webContentSize());
+    m_mozWindow->setPrimaryOrientation(screen()->primaryOrientation());
+
+    connect(m_mozWindow.data(), &QMozWindow::orientationChangeFiltered,
+            this, &DeclarativeWebContainer::handleContentOrientationChanged);
+    connect(m_mozWindow.data(), &QMozWindow::compositingFinished,
+            this, &DeclarativeWebContainer::handleCompositingFinished, Qt::QueuedConnection);
+    m_mozWindow->reserve();
+    m_mozWindow->setReadyToPaint(false);
+    if (m_chromeWindow) {
+        updateContentOrientation(m_chromeWindow->contentOrientation());
+    }
+}
+
 bool DeclarativeWebContainer::browserEnabled() const
 {
     return Sailfish::PolicyValue::keyValue(Sailfish::PolicyValue::BrowserEnabled).toBool();
@@ -1691,7 +1819,11 @@ bool DeclarativeWebContainer::browserEnabled() const
 
 void DeclarativeWebContainer::loadTab(const Tab& tab, bool force, bool fromExternal)
 {
-    if (activatePage(tab, true, fromExternal) || force) {
+    if (usesHostedTabs()) {
+        return;
+    }
+
+    if ((activatePage(tab, true, fromExternal) || force) && m_webPage) {
         // Note: active pages containing a "link" between each other (parent-child relationship)
         // are not destroyed automatically e.g. in low memory notification.
         // Hence, parentId is not necessary over here.

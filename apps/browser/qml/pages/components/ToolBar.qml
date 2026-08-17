@@ -24,6 +24,8 @@ Column {
     property real certOverlayHeight
     property bool certOverlayActive
     property real certOverlayAnimPos
+    property var hostedView
+    readonly property bool hosted: !!hostedView
     property real certOverlayPreferedHeight: 4 * toolBarRow.height
     readonly property bool showFindButtons: webView.findInPageHasResult && findInPageActive
     property var bookmarked
@@ -222,9 +224,12 @@ Column {
             expandedWidth: toolBarRow.iconWidth
             icon {
                 source: {
-                    if (webView.canGoBack) {
+                    if (toolBarRow.hosted && hostedView.canGoBack) {
                         return "image://theme/icon-m-back"
-                    } else if (webView.contentItem && webView.contentItem.parentId > 0) {
+                    } else if (!toolBarRow.hosted && webView.canGoBack) {
+                        return "image://theme/icon-m-back"
+                    } else if (!toolBarRow.hosted
+                               && webView.contentItem && webView.contentItem.parentId > 0) {
                         return "image://theme/icon-m-back-tab"
                     }
                     return ""
@@ -239,9 +244,15 @@ Column {
                 }
             }
 
-            active: (webView.canGoBack || (webView.contentItem && webView.contentItem.parentId > 0)) && !findInPageActive
+            active: (toolBarRow.hosted
+                     ? hostedView.canGoBack
+                     : (webView.canGoBack
+                        || (webView.contentItem && webView.contentItem.parentId > 0)))
+                    && !findInPageActive
             onTapped: {
-                if (webView.canGoBack) {
+                if (toolBarRow.hosted) {
+                    browserPage.goBack()
+                } else if (webView.canGoBack) {
                     webView.goBack()
                 } else {
                     webView.tabModel.closeActiveTab()
@@ -321,7 +332,7 @@ Column {
             }
 
             onPressAndHold: {
-                var url = webView.url
+                var url = toolBarRow.url
                 if (url) {
                     // encode the string if it looks like it has query or fragment parts
                     // FIXME: could be improved with *proper* matching.
@@ -350,7 +361,10 @@ Column {
                         //: No text search results were found from the page.
                         //% "No results"
                         return qsTrId("sailfish_browser-la-no_results")
-                    } else if (url == "about:blank" || (webView.completed && webView.tabModel.count === 0)) {
+                    } else if (url == "about:blank"
+                               || (toolBarRow.hosted
+                                   ? hostedView.tabModel.count === 0
+                                   : webView.completed && webView.tabModel.count === 0)) {
                         //: Placeholder text for url typing and searching
                         //% "Type URL or search"
                         return qsTrId("sailfish_browser-ph-type_url_or_search")
@@ -407,13 +421,17 @@ Column {
             height: parent.height
             expandedWidth: toolBarRow.iconWidth
             icon.source: "image://theme/icon-m-reset"
-            active: webView.contentItem && !findInPageActive
-            opacity: webView.loading ? 1.0 : 0.0
+            active: (toolBarRow.hosted || webView.contentItem) && !findInPageActive
+            opacity: (toolBarRow.hosted ? hostedView.loading : webView.loading) ? 1.0 : 0.0
 
             Behavior on opacity { FadeAnimation {} }
 
             onTapped: {
-                webView.stop()
+                if (toolBarRow.hosted) {
+                    hostedView.stop()
+                } else {
+                    webView.stop()
+                }
                 toolBarRow.showChrome()
             }
         }

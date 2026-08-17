@@ -32,6 +32,8 @@ Item {
 
             OverlayListItem {
                 height: Theme.itemSizeSmall
+                enabled: browserPage.chromeHostView ? true : webView.contentItem
+                opacity: enabled ? 1.0 : 0.5
                 iconWidth: root.iconWidth
                 horizontalOffset: root.horizontalOffset
                 iconSource: "image://theme/icon-m-tab-new"
@@ -84,6 +86,17 @@ Item {
                 text: qsTrId("sailfish_browser-la-add_to_apps_grid")
                 onClicked: {
                     overlay.animator.showChrome()
+                    if (browserPage.chromeHostView) {
+                        pageStack.animatorPush("AddToAppGridDialog.qml", {
+                            "url": browserPage.url,
+                            "title": browserPage.title || browserPage.url,
+                            "icon": "",
+                            "desktopBookmarkWriter": desktopBookmarkWriter,
+                            "bookmarkWriterParent": pageStack
+                        })
+                        return
+                    }
+
                     var page = webView.contentItem
                     if (!page) {
                         return
@@ -125,7 +138,8 @@ Item {
 
             OverlayListItem {
                 height: Theme.itemSizeSmall
-                enabled: webView.contentItem
+                enabled: browserPage.chromeHostView
+                         ? overlay.toolBar.url.length > 0 : webView.contentItem
                 opacity: enabled ? 1.0 : 0.5
                 iconWidth: root.iconWidth
                 horizontalOffset: root.horizontalOffset
@@ -141,7 +155,7 @@ Item {
 
             OverlayListItem {
                 height: Theme.itemSizeSmall
-                enabled: !DownloadManager.pdfPrinting
+                enabled: !browserPage.chromeHostView && !DownloadManager.pdfPrinting
                 opacity: enabled ? 1.0 : 0.5
                 iconWidth: root.iconWidth
                 horizontalOffset: root.horizontalOffset

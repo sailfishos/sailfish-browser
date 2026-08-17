@@ -265,6 +265,8 @@ private:
     QSize webContentSize() const;
     void updateMozWindowSize();
     bool canInitialize() const;
+    bool usesHostedTabs() const;
+    void ensureLegacyWindow();
     void loadTab(const Tab& tab, bool force, bool fromExternal);
     void updateMode();
     void setActiveTabRendered(bool rendered);
@@ -298,6 +300,8 @@ private:
     QPointer<DeclarativeTabModel> m_persistentTabModel;
     QPointer<DeclarativeTabModel> m_privateTabModel;
 
+    int m_maxLiveTabCount = 5;
+
     bool m_enabled = true;
     bool m_foreground = true;
     bool m_touchBlocked = false;
@@ -317,6 +321,7 @@ private:
 
     bool m_completed = false;
     bool m_initialized = false;
+    bool m_modeChangePending = false;
 
     bool m_privateMode = false;
     bool m_activeTabRendered = false;
