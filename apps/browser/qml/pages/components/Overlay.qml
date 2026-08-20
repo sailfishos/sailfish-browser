@@ -104,7 +104,7 @@ Shared.Background {
 
     function dismiss(canShowChrome, immediate) {
         toolBar.resetFind()
-        if (webView.contentItem && webView.contentItem.fullscreen) {
+        if (browserPage.contentFullscreen) {
             // Web content is in fullscreen mode thus we don't show chrome
             overlay.animator.showFullscreen()
         } else if (canShowChrome) {
@@ -290,7 +290,10 @@ Shared.Background {
 
                 width: parent.width
                 height: isPortrait ? toolBar.scaledPortraitHeight : toolBar.scaledLandscapeHeight
-                active: webView.contentItem && webView.contentItem.textSelectionActive
+                active: browserPage.chromeHostView
+                        ? browserPage._hostedTextSelectionController
+                          && browserPage._hostedTextSelectionController.active
+                        : webView.contentItem && webView.contentItem.textSelectionActive
 
                 opacity: active ? 1.0 : 0.0
                 Behavior on opacity {
@@ -300,11 +303,11 @@ Shared.Background {
                 onActiveChanged: {
                     if (active) {
                         overlayAnimator.showChrome(false)
-                        if (webView.contentItem) {
+                        if (!browserPage.chromeHostView && webView.contentItem) {
                             webView.contentItem.forceChrome(true)
                         }
                     } else {
-                        if (webView.contentItem) {
+                        if (!browserPage.chromeHostView && webView.contentItem) {
                             webView.contentItem.forceChrome(false)
                         }
                     }
@@ -313,7 +316,10 @@ Shared.Background {
                 sourceComponent: Component {
                     TextSelectionToolbar {
                         portrait: browserPage.isPortrait
-                        controller: webView && webView.contentItem && webView.contentItem.textSelectionController
+                        controller: browserPage.chromeHostView
+                                    ? browserPage._hostedTextSelectionController
+                                    : webView && webView.contentItem
+                                      && webView.contentItem.textSelectionController
                         width: textSelectionToolbar.width
                         height: textSelectionToolbar.height
                         leftPadding: toolBar.horizontalOffset
@@ -326,7 +332,7 @@ Shared.Background {
                         }
                         onSearch: {
                             // Open new tab with the search uri.
-                            webView.tabModel.newTab(controller.searchUri, true)
+                            browserPage.newTab(controller.searchUri, true)
                             overlay.animator.showChrome(true)
                         }
                     }
@@ -410,7 +416,7 @@ Shared.Background {
 
                     if (toolBar.findInPageActive) {
                         lastFindText = text
-                        webView.sendAsyncMessage("embedui:find", { text: text, backwards: false, again: false })
+                        browserPage.findInPage(text, false, false)
                         overlayAnimator.showChrome()
                     } else {
                         overlay.loadPage(text)
@@ -558,7 +564,11 @@ Shared.Background {
                 onShowTabs: {
                     // Push the currently active tab index.
                     // Changing of active tab cannot cause blinking.
-                    webView.grabActivePage()
+                    if (browserPage.chromeHostMode) {
+                        browserPage.captureHostedThumbnail()
+                    } else {
+                        webView.grabActivePage()
+                    }
                     pageStack.animatorPush(tabView)
                 }
                 onShowSecondaryTools: overlayAnimator.showSecondaryTools()
@@ -590,9 +600,7 @@ Shared.Background {
                 }
                 onBookmarkActivePage: {
                     if (browserPage.chromeHostView) {
-                        bookmarkModel.add(browserPage.url,
-                                          browserPage.title || browserPage.url,
-                                          "", false)
+                        favoriteGrid.fetchAndSaveHostedBookmark()
                     } else {
                         favoriteGrid.fetchAndSaveBookmark()
                     }
@@ -603,21 +611,28 @@ Shared.Background {
                 }
 
                 onShowCertDetail: {
-                    if (webView.security && !webView.security.certIsNull) {
+                    if (browserPage.security && !browserPage.security.certIsNull) {
                         pageStack.animatorPush("com.jolla.settings.system.CertificateDetailsPage",
-                                               {"website": webView.security.subjectDisplayName,
-                                                   "details": webView.security.serverCertDetails})
+                                               {"website": browserPage.security.subjectDisplayName,
+                                                   "details": browserPage.security.serverCertDetails})
                     }
                 }
                 onSavePageAsPDF: {
-                    var filename = ((webView.title && webView.title.length !== 0)
-                                    ? webView.title : (WebUtils.pageName(webView.url) || "unnamed_file")) + ".pdf"
+                    var pageTitle = browserPage.title
+                    var pageUrl = browserPage.url
+                    var filename = ((pageTitle && pageTitle.length !== 0)
+                                    ? pageTitle
+                                    : (WebUtils.pageName(pageUrl) || "unnamed_file")) + ".pdf"
                     var targetUrl = DownloadHelper.createUniqueFileUrl(filename, StandardPaths.download)
-                    WebEngine.notifyObservers("embedui:download",
-                                              {
-                                                  "msg": "saveAsPdf",
-                                                  "to": targetUrl
-                                              })
+                    var request = {
+                        "msg": "saveAsPdf",
+                        "to": targetUrl
+                    }
+                    if (browserPage.chromeHostView) {
+                        request.windowId = browserPage.chromeHostView.uniqueId
+                        request.tabId = browserPage.chromeHostView.selectedTabId
+                    }
+                    WebEngine.notifyObservers("embedui:download", request)
                 }
             }
 

@@ -67,7 +67,7 @@ Item {
                 iconWidth: root.iconWidth
                 horizontalOffset: root.horizontalOffset
                 iconSource: "image://theme/icon-m-search-on-page"
-                enabled: webView.contentItem
+                enabled: browserPage.chromeHostView ? true : webView.contentItem
                 //% "Search on page"
                 text: qsTrId("sailfish_browser-la-search_on_page")
 
@@ -90,7 +90,7 @@ Item {
                         pageStack.animatorPush("AddToAppGridDialog.qml", {
                             "url": browserPage.url,
                             "title": browserPage.title || browserPage.url,
-                            "icon": "",
+                            "icon": browserPage._hostedFavicon,
                             "desktopBookmarkWriter": desktopBookmarkWriter,
                             "bookmarkWriterParent": pageStack
                         })
@@ -155,7 +155,10 @@ Item {
 
             OverlayListItem {
                 height: Theme.itemSizeSmall
-                enabled: !browserPage.chromeHostView && !DownloadManager.pdfPrinting
+                enabled: !DownloadManager.pdfPrinting
+                         && (browserPage.chromeHostView
+                             ? browserPage.chromeHostView.selectedTabId.length
+                             : webView.contentItem)
                 opacity: enabled ? 1.0 : 0.5
                 iconWidth: root.iconWidth
                 horizontalOffset: root.horizontalOffset
@@ -175,12 +178,14 @@ Item {
         }
 
         OverlayListItem {
-            enabled: webView.contentItem
+            enabled: browserPage.chromeHostView ? true : webView.contentItem
             height: Theme.itemSizeSmall
             iconWidth: root.iconWidth
             horizontalOffset: root.horizontalOffset
             checkable: true
-            checked: webView.contentItem && webView.contentItem.desktopMode
+            checked: browserPage.chromeHostView
+                     ? browserPage.chromeHostView.desktopMode
+                     : webView.contentItem && webView.contentItem.desktopMode
             iconSource: "image://theme/icon-m-computer"
             //: Label for text switch that reloads page in desktop mode
             //% "Desktop version"
@@ -188,7 +193,10 @@ Item {
 
             onClicked: {
                 overlay.animator.showChrome()
-                webView.contentItem.desktopMode = !webView.contentItem.desktopMode
+                var desktopMode = browserPage.chromeHostView
+                                  ? browserPage.chromeHostView.desktopMode
+                                  : webView.contentItem.desktopMode
+                browserPage.setDesktopMode(!desktopMode)
             }
         }
 

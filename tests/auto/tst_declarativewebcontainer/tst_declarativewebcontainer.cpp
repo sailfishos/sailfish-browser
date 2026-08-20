@@ -40,6 +40,8 @@ private slots:
     void setMaxLiveTabCount();
     void setPrivateMode();
     void loading();
+    void hostedState();
+    void hostedNavigationRequests();
     void setChromeWindow();
     void load();
     void reload();
@@ -238,6 +240,90 @@ void tst_declarativewebcontainer::loading()
     m_webContainer->setWebPage(0);
     m_webContainer->setTabModel(&model);
     QCOMPARE(m_webContainer->loading(), true);
+}
+
+void tst_declarativewebcontainer::hostedState()
+{
+    QVERIFY(m_webContainer->usesHostedTabs());
+
+    QMozSecurity security;
+    QSignalSpy urlChangedSpy(m_webContainer, &DeclarativeWebContainer::urlChanged);
+    QSignalSpy titleChangedSpy(m_webContainer, &DeclarativeWebContainer::titleChanged);
+    QSignalSpy loadingChangedSpy(m_webContainer, &DeclarativeWebContainer::loadingChanged);
+    QSignalSpy loadProgressChangedSpy(m_webContainer,
+                                      &DeclarativeWebContainer::loadProgressChanged);
+    QSignalSpy canGoBackChangedSpy(m_webContainer, &DeclarativeWebContainer::canGoBackChanged);
+    QSignalSpy canGoForwardChangedSpy(m_webContainer,
+                                      &DeclarativeWebContainer::canGoForwardChanged);
+    QSignalSpy securityChangedSpy(m_webContainer, &DeclarativeWebContainer::securityChanged);
+
+    m_webContainer->updateHostedState(QStringLiteral("https://hosted.example/"),
+                                      QStringLiteral("Hosted"), true, 42,
+                                      true, false, &security, false);
+
+    QCOMPARE(m_webContainer->url(), QStringLiteral("https://hosted.example/"));
+    QCOMPARE(m_webContainer->title(), QStringLiteral("Hosted"));
+    QCOMPARE(m_webContainer->loading(), true);
+    QCOMPARE(m_webContainer->loadProgress(), 42);
+    QCOMPARE(m_webContainer->canGoBack(), true);
+    QCOMPARE(m_webContainer->canGoForward(), false);
+    QCOMPARE(m_webContainer->security(), &security);
+    QCOMPARE(urlChangedSpy.count(), 1);
+    QCOMPARE(titleChangedSpy.count(), 1);
+    QCOMPARE(loadingChangedSpy.count(), 1);
+    QCOMPARE(loadProgressChangedSpy.count(), 1);
+    QCOMPARE(canGoBackChangedSpy.count(), 1);
+    QCOMPARE(canGoForwardChangedSpy.count(), 0);
+    QCOMPARE(securityChangedSpy.count(), 1);
+
+    m_webContainer->updateHostedState(QStringLiteral("https://hosted.example/"),
+                                      QStringLiteral("Hosted"), true, 42,
+                                      true, false, &security, false);
+    QCOMPARE(urlChangedSpy.count(), 1);
+    QCOMPARE(titleChangedSpy.count(), 1);
+    QCOMPARE(loadingChangedSpy.count(), 1);
+    QCOMPARE(loadProgressChangedSpy.count(), 1);
+    QCOMPARE(canGoBackChangedSpy.count(), 1);
+    QCOMPARE(canGoForwardChangedSpy.count(), 0);
+    QCOMPARE(securityChangedSpy.count(), 1);
+
+    m_webContainer->updateHostedState(QStringLiteral("https://hosted.example/"),
+                                      QStringLiteral("Hosted"), true, 42,
+                                      true, false, &security, true);
+    QCOMPARE(securityChangedSpy.count(), 2);
+
+    m_webContainer->clearHostedState();
+    QCOMPARE(m_webContainer->url(), QString());
+    QCOMPARE(m_webContainer->title(), QString());
+    QCOMPARE(m_webContainer->loading(), false);
+    QCOMPARE(m_webContainer->loadProgress(), 0);
+    QCOMPARE(m_webContainer->canGoBack(), false);
+    QCOMPARE(m_webContainer->canGoForward(), false);
+    QCOMPARE(m_webContainer->security(), nullptr);
+    QCOMPARE(urlChangedSpy.count(), 2);
+    QCOMPARE(titleChangedSpy.count(), 2);
+    QCOMPARE(loadingChangedSpy.count(), 2);
+    QCOMPARE(loadProgressChangedSpy.count(), 2);
+    QCOMPARE(canGoBackChangedSpy.count(), 2);
+    QCOMPARE(canGoForwardChangedSpy.count(), 0);
+    QCOMPARE(securityChangedSpy.count(), 3);
+}
+
+void tst_declarativewebcontainer::hostedNavigationRequests()
+{
+    QVERIFY(m_webContainer->usesHostedTabs());
+
+    QSignalSpy reloadSpy(m_webContainer, &DeclarativeWebContainer::hostedReloadRequested);
+    QSignalSpy goBackSpy(m_webContainer, &DeclarativeWebContainer::hostedGoBackRequested);
+    QSignalSpy goForwardSpy(m_webContainer, &DeclarativeWebContainer::hostedGoForwardRequested);
+
+    m_webContainer->reload();
+    m_webContainer->goBack();
+    m_webContainer->goForward();
+
+    QCOMPARE(reloadSpy.count(), 1);
+    QCOMPARE(goBackSpy.count(), 1);
+    QCOMPARE(goForwardSpy.count(), 1);
 }
 
 void tst_declarativewebcontainer::setChromeWindow()

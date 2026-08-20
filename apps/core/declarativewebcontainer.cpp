@@ -482,8 +482,8 @@ bool DeclarativeWebContainer::activeTabRendered() const
 
 bool DeclarativeWebContainer::loading() const
 {
-    if (usesHostedTabs()) {
-        return false;
+    if (usesHostedTabs() && m_hostedStateActive) {
+        return m_hostedLoading;
     }
 
     if (m_webPage) {
@@ -495,7 +495,8 @@ bool DeclarativeWebContainer::loading() const
 
 int DeclarativeWebContainer::loadProgress() const
 {
-    return m_loadProgress;
+    return usesHostedTabs() && m_hostedStateActive
+            ? m_hostedLoadProgress : m_loadProgress;
 }
 
 void DeclarativeWebContainer::setLoadProgress(int loadProgress)
@@ -508,12 +509,14 @@ void DeclarativeWebContainer::setLoadProgress(int loadProgress)
 
 bool DeclarativeWebContainer::canGoForward() const
 {
-    return m_webPage && m_webPage->canGoForward();
+    return usesHostedTabs() && m_hostedStateActive
+            ? m_hostedCanGoForward : m_webPage && m_webPage->canGoForward();
 }
 
 bool DeclarativeWebContainer::canGoBack() const
 {
-    return m_webPage && m_webPage->canGoBack();
+    return usesHostedTabs() && m_hostedStateActive
+            ? m_hostedCanGoBack : m_webPage && m_webPage->canGoBack();
 }
 
 QObject *DeclarativeWebContainer::chromeWindow() const
@@ -610,7 +613,8 @@ Qt::ScreenOrientation DeclarativeWebContainer::pendingWebContentOrientation() co
 
 QMozSecurity *DeclarativeWebContainer::security() const
 {
-    return m_webPage ? m_webPage->security() : nullptr;
+    return usesHostedTabs() && m_hostedStateActive
+            ? m_hostedSecurity.data() : m_webPage ? m_webPage->security() : nullptr;
 }
 
 int DeclarativeWebContainer::tabId() const
@@ -621,12 +625,14 @@ int DeclarativeWebContainer::tabId() const
 
 QString DeclarativeWebContainer::title() const
 {
-    return m_webPage ? m_webPage->title() : QString();
+    return usesHostedTabs() && m_hostedStateActive
+            ? m_hostedTitle : m_webPage ? m_webPage->title() : QString();
 }
 
 QString DeclarativeWebContainer::url() const
 {
-    return m_webPage ? m_webPage->url().toString() : QString();
+    return usesHostedTabs() && m_hostedStateActive
+            ? m_hostedUrl : m_webPage ? m_webPage->url().toString() : QString();
 }
 
 bool DeclarativeWebContainer::isActiveTab(int tabId)
@@ -646,10 +652,11 @@ void DeclarativeWebContainer::load(const QString &url, bool force, bool fromExte
             m_initialUrl = tmpUrl;
             m_fromExternal = fromExternal;
         } else {
-            // Runtime-authoritative models forward this request to the hosted
-            // Gecko tab session. They intentionally do not create a legacy
-            // DeclarativeWebPage.
-            m_model->newTab(tmpUrl, fromExternal);
+            // The selected hosted tab has the same replacement-navigation
+            // semantics as the legacy DeclarativeWebPage path. BrowserPage
+            // owns the QmlMozView call and persistence receives the committed
+            // runtime snapshot afterwards.
+            emit hostedLoadRequested(tmpUrl, fromExternal);
         }
     } else if (!canInitialize()) {
         m_initialUrl = tmpUrl;
@@ -677,6 +684,7 @@ void DeclarativeWebContainer::load(const QString &url, bool force, bool fromExte
 void DeclarativeWebContainer::reload(bool force)
 {
     if (usesHostedTabs()) {
+        emit hostedReloadRequested();
         return;
     }
 
@@ -693,6 +701,11 @@ void DeclarativeWebContainer::reload(bool force)
 
 void DeclarativeWebContainer::goForward()
 {
+    if (usesHostedTabs()) {
+        emit hostedGoForwardRequested();
+        return;
+    }
+
     if (m_webPage && m_webPage->canGoForward()) {
         DBManager::instance()->goForward(m_webPage->tabId());
         m_webPage->goForward();
@@ -701,6 +714,11 @@ void DeclarativeWebContainer::goForward()
 
 void DeclarativeWebContainer::goBack()
 {
+    if (usesHostedTabs()) {
+        emit hostedGoBackRequested();
+        return;
+    }
+
     if (m_webPage && m_webPage->canGoBack()) {
         DBManager::instance()->goBack(m_webPage->tabId());
         m_webPage->goBack();
@@ -710,6 +728,105 @@ void DeclarativeWebContainer::goBack()
 void DeclarativeWebContainer::closeTab(int tabId)
 {
     m_model->removeTabById(tabId, false);
+}
+
+void DeclarativeWebContainer::updateHostedState(const QString &url, const QString &title,
+                                                 bool loading, int loadProgress,
+                                                 bool canGoBack, bool canGoForward,
+                                                 QMozSecurity *security,
+                                                 bool notifySecurity)
+{
+    if (!usesHostedTabs()) {
+        return;
+    }
+
+    const bool stateWasActive = m_hostedStateActive;
+    const bool urlDidChange = stateWasActive ? m_hostedUrl != url : this->url() != url;
+    const bool titleDidChange = stateWasActive ? m_hostedTitle != title : this->title() != title;
+    const bool loadingDidChange = stateWasActive ? m_hostedLoading != loading
+                                                  : this->loading() != loading;
+    const bool progressDidChange = stateWasActive ? m_hostedLoadProgress != loadProgress
+                                                   : this->loadProgress() != loadProgress;
+    const bool canGoBackDidChange = stateWasActive ? m_hostedCanGoBack != canGoBack
+                                                    : this->canGoBack() != canGoBack;
+    const bool canGoForwardDidChange = stateWasActive ? m_hostedCanGoForward != canGoForward
+                                                       : this->canGoForward() != canGoForward;
+    const bool securityDidChange = notifySecurity
+            || (stateWasActive ? m_hostedSecurity.data() != security
+                               : this->security() != security);
+
+    m_hostedUrl = url;
+    m_hostedTitle = title;
+    m_hostedLoading = loading;
+    m_hostedLoadProgress = loadProgress;
+    m_hostedCanGoBack = canGoBack;
+    m_hostedCanGoForward = canGoForward;
+    m_hostedStateActive = true;
+    m_hostedSecurity = security;
+
+    if (urlDidChange) {
+        emit urlChanged();
+    }
+    if (titleDidChange) {
+        emit titleChanged();
+    }
+    if (loadingDidChange) {
+        emit loadingChanged();
+    }
+    if (progressDidChange) {
+        emit loadProgressChanged();
+    }
+    if (canGoBackDidChange) {
+        emit canGoBackChanged();
+    }
+    if (canGoForwardDidChange) {
+        emit canGoForwardChanged();
+    }
+    if (securityDidChange) {
+        emit securityChanged();
+    }
+}
+
+void DeclarativeWebContainer::clearHostedState()
+{
+    const bool urlDidChange = !m_hostedUrl.isEmpty();
+    const bool titleDidChange = !m_hostedTitle.isEmpty();
+    const bool loadingDidChange = m_hostedLoading;
+    const bool progressDidChange = m_hostedLoadProgress != 0;
+    const bool canGoBackDidChange = m_hostedCanGoBack;
+    const bool canGoForwardDidChange = m_hostedCanGoForward;
+    const bool securityDidChange = !m_hostedSecurity.isNull();
+
+    m_hostedUrl.clear();
+    m_hostedTitle.clear();
+    m_hostedLoading = false;
+    m_hostedLoadProgress = 0;
+    m_hostedCanGoBack = false;
+    m_hostedCanGoForward = false;
+    m_hostedStateActive = false;
+    m_hostedSecurity.clear();
+
+    if (urlDidChange) {
+        emit urlChanged();
+    }
+    if (titleDidChange) {
+        emit titleChanged();
+    }
+    if (loadingDidChange) {
+        emit loadingChanged();
+    }
+    if (progressDidChange) {
+        emit loadProgressChanged();
+    }
+    if (canGoBackDidChange) {
+        emit canGoBackChanged();
+    }
+    if (canGoForwardDidChange) {
+        emit canGoForwardChanged();
+    }
+    if (securityDidChange) {
+        emit securityChanged();
+    }
 }
 
 int DeclarativeWebContainer::activateTab(int tabId, const QString &url)
@@ -930,6 +1047,7 @@ void DeclarativeWebContainer::updateMode()
 {
     m_initialized = false;
     m_modeChangePending = true;
+    clearHostedState();
 
     setTabModel((BrowserAppInfo::captivePortal() || m_privateMode) ? m_privateTabModel.data()
                                                                    : m_persistentTabModel.data());

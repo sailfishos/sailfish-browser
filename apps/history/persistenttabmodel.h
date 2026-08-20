@@ -83,6 +83,9 @@ public:
     Q_INVOKABLE bool cancelRuntimeTabReservation(const QString &persistentId);
     Q_INVOKABLE QString runtimeIdForPersistentId(const QString &persistentId) const;
     Q_INVOKABLE QString persistentIdAt(int index) const;
+    Q_INVOKABLE bool runtimeDesktopMode(const QString &persistentId) const;
+    Q_INVOKABLE bool setRuntimeDesktopMode(const QString &persistentId,
+                                           bool desktopMode);
     Q_INVOKABLE bool runtimeGoBack(const QString &persistentId);
     Q_INVOKABLE bool runtimeGoForward(const QString &persistentId);
     Q_INVOKABLE QVariantList takePendingRuntimeNewTabs();
@@ -106,6 +109,8 @@ private:
     void scheduleRuntimeTabReservationExpiry();
     void scheduleRuntimeTraversalExpiry();
     void removePendingRuntimeNewTab(int persistentId);
+    void restoreDesktopModes();
+    void saveDesktopModes() const;
 
     struct PendingRuntimeTraversal {
         int direction;

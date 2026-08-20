@@ -26,6 +26,7 @@ Column {
     property real certOverlayAnimPos
     property var hostedView
     readonly property bool hosted: !!hostedView
+    readonly property var effectiveSecurity: hosted ? hostedView.security : webView.security
     property real certOverlayPreferedHeight: 4 * toolBarRow.height
     readonly property bool showFindButtons: webView.findInPageHasResult && findInPageActive
     property var bookmarked
@@ -76,8 +77,8 @@ Column {
     signal savePageAsPDF
 
     function resetFind() {
-        webView.sendAsyncMessage("embedui:find", { text: "", backwards: false, again: false })
-        if (webView.contentItem) {
+        browserPage.resetFindInPage()
+        if (!hosted && webView.contentItem) {
             webView.contentItem.forceChrome(false)
         }
 
@@ -88,7 +89,7 @@ Column {
 
     onFindInPageActiveChanged: {
         // Down allow hiding of toolbar when finding text from the page.
-        if (findInPageActive && webView.contentItem) {
+        if (findInPageActive && !hosted && webView.contentItem) {
             webView.contentItem.forceChrome(true)
         }
     }
@@ -113,7 +114,7 @@ Column {
 
             active: false
             sourceComponent: CertificateInfo {
-                security: webView.security
+                security: toolBarRow.effectiveSecurity
                 width: certOverlay.width
                 height: certOverlayHeight
                 opacity: Math.max((certOverlayAnimPos * 2.0) - 1.0, 0)
@@ -263,19 +264,21 @@ Column {
         Shared.ExpandingButton {
             id: padlockIcon
 
-            property bool danger: webView.security && webView.security.validState && !webView.security.allGood
+            property bool danger: toolBarRow.effectiveSecurity
+                                  && toolBarRow.effectiveSecurity.validState
+                                  && !toolBarRow.effectiveSecurity.allGood
             property real glow
 
             height: parent.height
             expandedWidth: toolBarRow.smallIconWidth
             icon.source: danger ? "image://theme/icon-s-filled-warning" : "image://theme/icon-s-outline-secure"
-            active: webView.security && webView.security.validState && !findInPageActive
-                    && !(webView.url.indexOf("about:") === 0)
+            active: toolBarRow.effectiveSecurity && toolBarRow.effectiveSecurity.validState
+                    && !findInPageActive && !(toolBarRow.url.indexOf("about:") === 0)
             icon.color: danger ? Qt.tint(Theme.primaryColor,
                                          Qt.rgba(Theme.errorColor.r, Theme.errorColor.g,
                                                  Theme.errorColor.b, glow))
                                : Theme.primaryColor
-            enabled: webView.security
+            enabled: toolBarRow.effectiveSecurity
             onTapped: {
                 if (certOverlayActive) {
                     showChrome()
@@ -304,9 +307,10 @@ Column {
             }
 
             Connections {
-                target: webView
+                target: toolBarRow.hosted ? toolBarRow.hostedView : webView
                 onLoadingChanged: {
-                    if (!webView.loading && padlockIcon.danger) {
+                    if (!(toolBarRow.hosted ? toolBarRow.hostedView.loading
+                                             : webView.loading) && padlockIcon.danger) {
                         padlockIcon.warn()
                     }
                 }
@@ -395,7 +399,7 @@ Column {
                 }
 
                 onTapped: {
-                    webView.sendAsyncMessage("embedui:find", { text: findText, backwards: true, again: true })
+                    browserPage.findInPage(findText, true, true)
                 }
             }
 
@@ -410,7 +414,7 @@ Column {
                 }
 
                 onTapped: {
-                    webView.sendAsyncMessage("embedui:find", { text: findText, backwards: false, again: true })
+                    browserPage.findInPage(findText, false, true)
                 }
             }
         }

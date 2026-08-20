@@ -96,6 +96,8 @@ PersistentTabModel::PersistentTabModel(int nextTabId, DeclarativeWebContainer *w
             this, &PersistentTabModel::saveTabOrder);
     connect(this, &PersistentTabModel::tabClosed,
             this, &PersistentTabModel::saveTabOrder);
+    connect(this, &PersistentTabModel::tabClosed,
+            this, &PersistentTabModel::saveDesktopModes);
     connect(this, &PersistentTabModel::runtimeNewTabRequested,
             this, &PersistentTabModel::rememberReservedRuntimeTab);
     m_runtimeTabReservationTimer.setSingleShot(true);
@@ -149,6 +151,7 @@ void PersistentTabModel::setRestoredTabs(const QList<Tab> &tabs,
     const int oldActiveTabId = m_activeTabId;
 
     m_tabs = tabs;
+    restoreDesktopModes();
     m_activeTabId = findTabIndex(activePersistentId) >= 0
             ? activePersistentId : (m_tabs.isEmpty() ? 0 : m_tabs.first().tabId());
 
@@ -214,6 +217,34 @@ QString PersistentTabModel::persistentIdAt(int index) const
 {
     return index >= 0 && index < m_tabs.count()
             ? QString::number(m_tabs.at(index).tabId()) : QString();
+}
+
+bool PersistentTabModel::runtimeDesktopMode(const QString &persistentId) const
+{
+    bool ok = false;
+    const int id = persistentId.toInt(&ok);
+    const int tabIndex = ok ? findTabIndex(id) : -1;
+    return tabIndex >= 0 && m_tabs.at(tabIndex).desktopMode();
+}
+
+bool PersistentTabModel::setRuntimeDesktopMode(const QString &persistentId,
+                                                bool desktopMode)
+{
+    bool ok = false;
+    const int id = persistentId.toInt(&ok);
+    const int tabIndex = ok ? findTabIndex(id) : -1;
+    if (tabIndex < 0) {
+        return false;
+    }
+
+    if (m_tabs.at(tabIndex).desktopMode() != desktopMode) {
+        m_tabs[tabIndex].setDesktopMode(desktopMode);
+        QVector<int> roles;
+        roles << DesktopModeRole;
+        emit dataChanged(index(tabIndex, 0), index(tabIndex, 0), roles);
+        saveDesktopModes();
+    }
+    return true;
 }
 
 QString PersistentTabModel::reserveRuntimeTab(const QString &url, const QString &title)
@@ -540,9 +571,22 @@ void PersistentTabModel::applyRuntimeSnapshot(
         const Tab oldTab = oldTabs.contains(persistentId)
                 ? oldTabs.value(persistentId)
                 : m_reservedRuntimeTabs.value(persistentId);
-        const QString thumbnail = existed ? oldTab.thumbnailPath() : QString();
+        const bool locationChanged = existed && oldTab.url() != runtimeTab.url();
+        const bool locationRevisionChanged = existed
+                && m_runtimeLocationRevisions.contains(persistentId)
+                && m_runtimeLocationRevisions.value(persistentId)
+                    != runtimeTab.locationRevision();
+        const bool invalidateThumbnail = locationChanged || locationRevisionChanged;
+        const QString thumbnail = existed && !invalidateThumbnail
+                ? oldTab.thumbnailPath() : QString();
+        if (invalidateThumbnail && !oldTab.thumbnailPath().isEmpty()) {
+            QFile::remove(oldTab.thumbnailPath());
+        }
         Tab tab(persistentId, runtimeTab.url(), runtimeTab.title(), thumbnail, false);
         tab.setRequestedUrl(QString());
+        if (existed) {
+            tab.setDesktopMode(oldTab.desktopMode());
+        }
         newTabs.append(tab);
 
         // Confirmation is consumable only until the next complete snapshot.
@@ -671,6 +715,7 @@ void PersistentTabModel::applyRuntimeSnapshot(
     }
 
     saveTabOrder();
+    saveDesktopModes();
     for (const QPair<quint64, int> &adoptedTab : adoptedTabs) {
         emit runtimeTabAdopted(QString::number(adoptedTab.first),
                                QString::number(adoptedTab.second));
@@ -735,4 +780,35 @@ void PersistentTabModel::saveTabOrder() const
         persistentIds.append(QString::number(tab.tabId()));
     }
     DBManager::instance()->saveSetting("tabOrder", persistentIds.join(QLatin1Char(',')));
+}
+
+void PersistentTabModel::restoreDesktopModes()
+{
+    const QStringList desktopModeIds = DBManager::instance()->getSetting(
+                "desktopModeTabs").split(QLatin1Char(','), QString::SkipEmptyParts);
+    QSet<int> enabledIds;
+    for (const QString &desktopModeId : desktopModeIds) {
+        bool ok = false;
+        const int id = desktopModeId.toInt(&ok);
+        if (ok) {
+            enabledIds.insert(id);
+        }
+    }
+    for (Tab &tab : m_tabs) {
+        tab.setDesktopMode(enabledIds.contains(tab.tabId()));
+    }
+}
+
+void PersistentTabModel::saveDesktopModes() const
+{
+    QStringList desktopModeIds;
+    for (const Tab &tab : m_tabs) {
+        if (tab.desktopMode()) {
+            desktopModeIds.append(QString::number(tab.tabId()));
+        }
+    }
+    const QString serializedModes = desktopModeIds.join(QLatin1Char(','));
+    if (DBManager::instance()->getSetting("desktopModeTabs") != serializedModes) {
+        DBManager::instance()->saveSetting("desktopModeTabs", serializedModes);
+    }
 }

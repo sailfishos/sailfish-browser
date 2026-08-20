@@ -17,6 +17,8 @@ import Sailfish.Silica 1.0
 import Sailfish.Silica.private 1.0 as Private
 import Sailfish.Browser 1.0
 import Sailfish.Policy 1.0
+import Sailfish.WebEngine 1.0
+import Sailfish.WebView.Pickers 1.0 as Pickers
 import Sailfish.WebView.Popups 1.0 as Popups
 import Nemo.Configuration 1.0
 import "components" as Browser
@@ -24,6 +26,9 @@ import "../shared" as Shared
 
 Page {
     id: browserPage
+
+    signal hostedThumbnailUpdated(string persistentId, string location,
+                                  string locationRevision, string fileName)
 
     readonly property bool active: status == PageStatus.Active
     property bool tabPageActive
@@ -42,15 +47,223 @@ Page {
     readonly property bool viewLoading: chromeHostView ? chromeHostView.loading : webView.loading
     readonly property int loadProgress: chromeHostView ? chromeHostView.loadProgress : webView.loadProgress
     readonly property string url: chromeHostView ? String(chromeHostView.url) : webView.url
-    readonly property string title: chromeHostView ? chromeHostView.title : webView.title
+    readonly property string title: chromeHostView ? (_hostedMetadataTitle || chromeHostView.title) : webView.title
+    readonly property var security: chromeHostView ? chromeHostView.security : webView.security
+    readonly property bool contentFullscreen: chromeHostView ? chromeHostView.fullscreen
+                                                        : webView.contentFullscreen
+    readonly property bool hostedDisplayCutoutAllowed: contentFullscreen
+            || (_hostedViewportFit === "cover"
+                && (webView.cutoutGuardConfig.value === "strict"
+                    || (webView.cutoutGuardConfig.value === "top_guard"
+                        && (_hostedSafeAreaInsetUsage & webView._contentCutoutInsetUsage)
+                            === webView._contentCutoutInsetUsage)))
+    property string _hostedMetadataTitle
+    property string _hostedFavicon
+    property bool _hostedAcceptedTouchIcon
+    property string _hostedViewportFit
+    property int _hostedSafeAreaInsetUsage
+    property Item _hostedTextSelectionController
+    property string _hostedSelectionTabId
+    property var _pendingHostedClipboardPaste
+    property var _pendingHostedModalRequests: []
+    property var _activeHostedModalTarget
+    property var _hostedMessageTargets: []
+    // recvAsyncMessageFromTab() and recvAsyncMessage() both report selected
+    // tab messages.  Buffer generic delivery for one event turn, so either
+    // Qt signal ordering reaches the feature handler exactly once.
+    property var _pendingHostedGenericMessages: []
+    property var _hostedTabAsyncMessages: []
     property bool _runtimeRestoreSent
     property bool _runtimeSnapshotInitialized
     property var _runtimeAppliedState: ({})
     property var _pendingRuntimeTitles: ({})
     property var _pendingRuntimeCommands: []
+    property var _pendingRuntimeCloseCommands: []
+    property var _runtimeCloseInFlight: null
     property var _pendingRuntimeNavigation: null
     property alias webView: webView
     property alias inputRegion: inputRegion
+
+    function sendPageMessage(name, data) {
+        if (chromeHostView) {
+            chromeHostView.sendAsyncMessage(name, data)
+            return true
+        }
+
+        webView.sendAsyncMessage(name, data)
+        return !!webView.contentItem
+    }
+
+    function syncHostedContainerState(hostView, notifySecurity) {
+        var view = hostView || _runtimeChromeView
+        if (!view || webView.privateMode) {
+            webView.clearHostedState()
+            return
+        }
+
+        webView.updateHostedState(String(view.url),
+                                  _hostedMetadataTitle || view.title,
+                                  !!view.loading, view.loadProgress,
+                                  !!view.canGoBack, !!view.canGoForward,
+                                  view.security, !!notifySecurity)
+    }
+
+    function sendHostedMessageToTab(hostView, tabId, persistentId, name, data,
+                                    resolveBeforeUnload) {
+        if (!hostView || !tabId || !String(tabId).length) {
+            return false
+        }
+
+        var messageData = {}
+        if (data) {
+            for (var key in data) {
+                messageData[key] = data[key]
+            }
+        }
+        messageData.tabId = String(tabId)
+        if (persistentId && String(persistentId).length) {
+            messageData.persistentId = String(persistentId)
+        }
+
+        if (resolveBeforeUnload) {
+            // Qt resolves chrome-hosted beforeunload prompts through the
+            // selected-view confirmresponse entry point, which uses the
+            // requestId/tabId pair rather than frame-message routing.
+            hostView.sendAsyncMessage(name, messageData)
+            return true
+        }
+        return hostView.sendAsyncMessageToTab(String(tabId), name, messageData)
+    }
+
+    function findInPage(text, backwards, again) {
+        sendPageMessage("embedui:find", {
+                            "text": text,
+                            "backwards": !!backwards,
+                            "again": !!again
+                        })
+    }
+
+    function resetFindInPage() {
+        findInPage("", false, false)
+        webView.findInPageHasResult = false
+    }
+
+    function exitFullscreen() {
+        sendPageMessage("embedui:exitFullscreen", {})
+    }
+
+    function desktopModeForPersistentId(persistentId) {
+        if (!persistentId || !String(persistentId).length) {
+            return false
+        }
+        return webView.persistentTabModel.runtimeDesktopMode(String(persistentId))
+    }
+
+    function syncHostedDesktopMode(hostView) {
+        var view = hostView || chromeHostView
+        if (!view) {
+            return
+        }
+
+        view.desktopMode = desktopModeForPersistentId(selectedPersistentId(view))
+    }
+
+    function setDesktopMode(desktopMode) {
+        if (chromeHostView) {
+            var persistentId = selectedPersistentId(chromeHostView)
+            if (!persistentId.length) {
+                return
+            }
+            if (webView.persistentTabModel.setRuntimeDesktopMode(
+                        persistentId, !!desktopMode)) {
+                chromeHostView.desktopMode = !!desktopMode
+            }
+            return
+        }
+
+        if (webView.contentItem) {
+            webView.contentItem.desktopMode = !!desktopMode
+        }
+    }
+
+    function clearHostedSelection() {
+        var controller = _hostedTextSelectionController
+        _hostedTextSelectionController = null
+        _hostedSelectionTabId = ""
+        inputRegion.selectionStartHandleMask = Qt.rect(0, 0, 0, 0)
+        inputRegion.selectionEndHandleMask = Qt.rect(0, 0, 0, 0)
+        if (controller) {
+            var target = controller.contentItem
+            controller.clearSelection()
+            releaseHostedMessageTarget(target)
+        } else if (chromeHostView) {
+            chromeHostView.sendAsyncMessage("Browser:SelectionClose", {
+                                                "clearSelection": true
+                                            })
+        }
+    }
+
+    function clearSelection() {
+        if (chromeHostView) {
+            clearHostedSelection()
+        } else {
+            webView.clearSelection()
+        }
+    }
+
+    function updateHostedViewSuspension(hostView) {
+        var view = hostView || chromeHostView
+        if (!view) {
+            return
+        }
+
+        if (browserPage.active && view.active && view.visible && webView.foreground) {
+            view.resumeView()
+        } else {
+            view.suspendView()
+        }
+    }
+
+    function hostedAsyncMessageMatches(first, second) {
+        return first && second && first.message === second.message
+                && String(first.tabId) === String(second.tabId)
+    }
+
+    function noteHostedAsyncMessage(tabId, persistentId, message) {
+        var received = {
+            "tabId": String(tabId),
+            "persistentId": String(persistentId || ""),
+            "message": message
+        }
+        var pending = []
+        for (var index = 0; index < _pendingHostedGenericMessages.length; ++index) {
+            if (!hostedAsyncMessageMatches(received, _pendingHostedGenericMessages[index])) {
+                pending.push(_pendingHostedGenericMessages[index])
+            }
+        }
+        _pendingHostedGenericMessages = pending
+        _hostedTabAsyncMessages.push(received)
+        hostedGenericDuplicateTimer.restart()
+    }
+
+    function queueHostedGenericAsyncMessage(hostView, message, data) {
+        var generic = {
+            "hostView": hostView,
+            "tabId": data && data.tabId !== undefined
+                     ? String(data.tabId) : String(hostView.selectedTabId),
+            "persistentId": data && data.persistentId !== undefined
+                            ? String(data.persistentId) : "",
+            "message": message,
+            "data": data
+        }
+        for (var index = 0; index < _hostedTabAsyncMessages.length; ++index) {
+            if (hostedAsyncMessageMatches(generic, _hostedTabAsyncMessages[index])) {
+                return
+            }
+        }
+        _pendingHostedGenericMessages.push(generic)
+        hostedGenericDuplicateTimer.restart()
+    }
 
     function loadInternalPage(url) {
         if (url == "about:config" || url == "about:settings") {
@@ -67,13 +280,21 @@ Page {
         }
 
         if (chromeHostView) {
-            if (chromeHostView.selectedTabId.length) {
-                chromeHostView.load(url, false)
-            } else {
-                webView.persistentTabModel.newTab(url, false)
-            }
+            loadHostedContainerRequest(url, false)
         } else {
             webView.load(url, title)
+        }
+    }
+
+    function loadHostedContainerRequest(url, fromExternal) {
+        if (!chromeHostView) {
+            return
+        }
+
+        if (chromeHostView.selectedTabId.length) {
+            chromeHostView.load(url, !!fromExternal)
+        } else {
+            webView.persistentTabModel.newTab(url, !!fromExternal)
         }
     }
 
@@ -136,6 +357,706 @@ Page {
             }
         }
         return ""
+    }
+
+    function hostedRuntimeTabByRuntimeId(runtimeHostView, runtimeId) {
+        var hostView = runtimeHostView || _runtimeChromeView
+        if (!hostView || !runtimeId || !String(runtimeId).length) {
+            return null
+        }
+        var snapshot = hostView.tabModel.snapshot()
+        for (var index = 0; index < snapshot.length; ++index) {
+            if (String(snapshot[index].tabId) === String(runtimeId)) {
+                return snapshot[index]
+            }
+        }
+        return null
+    }
+
+    function hostedMessageTabIsLive(hostView, tabId, persistentId) {
+        var tab = hostedRuntimeTabByRuntimeId(hostView, tabId)
+        return tab && (!persistentId || String(tab.persistentId) === String(persistentId))
+    }
+
+    function hostedMessageTabIsSelected(hostView, tabId, persistentId) {
+        return hostView && String(hostView.selectedTabId) === String(tabId)
+                && hostedMessageTabIsLive(hostView, tabId, persistentId)
+    }
+
+    function hostedModalRequestIsLive(request) {
+        if (!request) {
+            return false
+        }
+        var tab = hostedRuntimeTabByRuntimeId(request.hostView, request.tabId)
+        return tab
+                && (!request.persistentId
+                    || String(tab.persistentId) === request.persistentId)
+                && (!request.locationRevision
+                    || String(tab.locationRevision) === request.locationRevision)
+    }
+
+    function rejectHostedModalRequest(request) {
+        if (!request || !request.hostView || !request.data) {
+            return
+        }
+
+        var data = request.data
+        var response
+        var responseMessage
+        switch (request.message) {
+        case "embed:alert":
+            responseMessage = "alertresponse"
+            response = { "winId": data.winId, "checkvalue": false }
+            break
+        case "embed:confirm":
+            responseMessage = "confirmresponse"
+            response = {
+                "winId": data.winId,
+                "accepted": false,
+                "checkvalue": false
+            }
+            if (data.requestId !== undefined) {
+                response.requestId = data.requestId
+            }
+            break
+        case "embed:prompt":
+            responseMessage = "promptresponse"
+            response = { "winId": data.winId, "accepted": false,
+                         "checkvalue": false }
+            break
+        case "embed:login":
+            responseMessage = "embedui:login"
+            response = { "buttonidx": 1, "id": data.id }
+            break
+        case "embed:auth":
+            responseMessage = "authresponse"
+            response = { "winId": data.winId, "accepted": false }
+            break
+        case "embed:permissions":
+            responseMessage = "embedui:permissions"
+            response = { "allow": false, "checkedDontAsk": false,
+                         "id": data.id }
+            break
+        case "embed:webrtcrequest":
+            responseMessage = "embedui:webrtcresponse"
+            response = { "allow": false, "checkedDontAsk": false,
+                         "choices": {}, "id": data.id }
+            break
+        case "embed:popupblocked":
+            if (data.popupId === undefined || data.winId === undefined) {
+                return
+            }
+            responseMessage = "embedui:popupblocked"
+            response = { "allow": false, "popupId": data.popupId,
+                         "winId": data.winId }
+            break
+        case "embed:select":
+            responseMessage = "selectresponse"
+            response = { "winId": data.winId, "button": 1 }
+            break
+        case "embed:colorpicker":
+            responseMessage = "embedui:colorpickerresponse"
+            response = { "winId": data.winId, "accepted": false,
+                         "color": "" }
+            break
+        case "embed:filepicker":
+            responseMessage = "filepickerresponse"
+            response = { "winId": data.winId, "accepted": false,
+                         "items": [] }
+            break
+        case "embed:selectasync":
+            responseMessage = "embedui:selectresponse"
+            response = { "result": -1 }
+            break
+        case "embedui:downloadpicker":
+        case "embed:downloadpicker":
+            if (data.requestId !== undefined) {
+                WebEngine.notifyObservers("embedui:downloadpicker", {
+                                              "cancelled": true,
+                                              "requestId": data.requestId,
+                                              "winId": data.winId,
+                                              "tabId": request.tabId,
+                                              "persistentId": request.persistentId
+                                          })
+            }
+            return
+        default:
+            return
+        }
+
+        sendHostedMessageToTab(request.hostView, request.tabId,
+                               request.persistentId, responseMessage, response,
+                               request.message === "embed:confirm"
+                               && !!data.inPermitUnload)
+    }
+
+    function presentHostedModalRequest(request) {
+        if (!request || _activeHostedModalTarget
+                || !hostedModalRequestIsLive(request)
+                || !hostedMessageTabIsSelected(request.hostView,
+                                                request.tabId,
+                                                request.persistentId)) {
+            return false
+        }
+        return request.kind === "picker"
+                ? presentHostedPicker(request.hostView, request.tabId,
+                                      request.persistentId, request.message,
+                                      request.data, request)
+                : presentHostedPopup(request.hostView, request.tabId,
+                                     request.persistentId, request.message,
+                                     request.data, request)
+    }
+
+    function queueHostedModalRequest(kind, hostView, tabId, persistentId, message, data) {
+        var request = {
+            "kind": kind,
+            "hostView": hostView,
+            "tabId": String(tabId),
+            "persistentId": String(persistentId || ""),
+            "locationRevision": data && data.locationRevision !== undefined
+                                ? String(data.locationRevision) : "",
+            "message": message,
+            "data": data || {}
+        }
+        if (!hostedModalRequestIsLive(request)) {
+            rejectHostedModalRequest(request)
+            return true
+        }
+        if (_activeHostedModalTarget || _pendingHostedModalRequests.length) {
+            _pendingHostedModalRequests.push(request)
+            return true
+        }
+        if (hostedMessageTabIsSelected(hostView, request.tabId, request.persistentId)) {
+            if (!presentHostedModalRequest(request)) {
+                rejectHostedModalRequest(request)
+            }
+            return true
+        }
+
+        _pendingHostedModalRequests.push(request)
+        if (!hostView.selectTab(request.tabId)) {
+            var pending = []
+            for (var index = 0; index < _pendingHostedModalRequests.length; ++index) {
+                if (_pendingHostedModalRequests[index] !== request) {
+                    pending.push(_pendingHostedModalRequests[index])
+                }
+            }
+            _pendingHostedModalRequests = pending
+            rejectHostedModalRequest(request)
+            return true
+        }
+        hostedModalRequestTimer.restart()
+        return true
+    }
+
+    function processPendingHostedModalRequests(hostView) {
+        if (_activeHostedModalTarget) {
+            return
+        }
+        var pending = _pendingHostedModalRequests
+        _pendingHostedModalRequests = []
+        var remaining = []
+        for (var index = 0; index < pending.length; ++index) {
+            var request = pending[index]
+            if (request.hostView !== hostView) {
+                remaining.push(request)
+            } else if (!hostedModalRequestIsLive(request)) {
+                rejectHostedModalRequest(request)
+            } else if (hostedMessageTabIsSelected(hostView, request.tabId,
+                                                   request.persistentId)) {
+                if (!presentHostedModalRequest(request)) {
+                    rejectHostedModalRequest(request)
+                }
+                for (++index; index < pending.length; ++index) {
+                    remaining.push(pending[index])
+                }
+                break
+            } else {
+                remaining.push(request)
+                for (++index; index < pending.length; ++index) {
+                    remaining.push(pending[index])
+                }
+                if (!hostView.selectTab(request.tabId)) {
+                    var kept = []
+                    for (var remainingIndex = 0;
+                         remainingIndex < remaining.length; ++remainingIndex) {
+                        if (remaining[remainingIndex] !== request) {
+                            kept.push(remaining[remainingIndex])
+                        }
+                    }
+                    remaining = kept
+                    rejectHostedModalRequest(request)
+                }
+                break
+            }
+        }
+        _pendingHostedModalRequests = remaining
+        if (remaining.length && !_activeHostedModalTarget) {
+            hostedModalRequestTimer.restart()
+        } else {
+            hostedModalRequestTimer.stop()
+        }
+    }
+
+    function expirePendingHostedModalRequests() {
+        if (_activeHostedModalTarget) {
+            return
+        }
+        var pending = _pendingHostedModalRequests
+        _pendingHostedModalRequests = []
+        var remaining = []
+        for (var index = 0; index < pending.length; ++index) {
+            var request = pending[index]
+            if (!_activeHostedModalTarget
+                    && hostedModalRequestIsLive(request)
+                    && hostedMessageTabIsSelected(request.hostView,
+                                                  request.tabId,
+                                                  request.persistentId)
+                    && presentHostedModalRequest(request)) {
+                for (++index; index < pending.length; ++index) {
+                    remaining.push(pending[index])
+                }
+                break
+            } else {
+                rejectHostedModalRequest(request)
+            }
+        }
+        _pendingHostedModalRequests = remaining
+    }
+
+    function createHostedMessageTarget(hostView, tabId, persistentId) {
+        if (!hostView || !tabId || !String(tabId).length) {
+            return null
+        }
+        return hostedMessageTargetComponent.createObject(browserPage, {
+                                                            "hostView": hostView,
+                                                            "tabId": String(tabId),
+                                                            "persistentId": String(persistentId || ""),
+                                                            "owner": browserPage
+                                                        })
+    }
+
+    function releaseHostedMessageTarget(target) {
+        if (!target || target.releaseScheduled) {
+            return
+        }
+        if (_activeHostedModalTarget === target) {
+            _activeHostedModalTarget = null
+        }
+        target.releaseScheduled = true
+        _hostedMessageTargets.push(target)
+        hostedMessageTargetCleanupTimer.restart()
+    }
+
+    function destroyHostedMessageTarget(target) {
+        if (!target) {
+            return
+        }
+        if (target.opener) {
+            target.opener.destroy()
+        }
+        target.destroy()
+    }
+
+    function openHostedPicker(hostView, tabId, persistentId, message, data) {
+        var pickerTopics = [ "embed:colorpicker", "embed:filepicker",
+                             "embed:selectasync", "embedui:downloadpicker",
+                             "embed:downloadpicker" ]
+        if (pickerTopics.indexOf(message) === -1) {
+            return false
+        }
+
+        return queueHostedModalRequest("picker", hostView, tabId, persistentId,
+                                       message, data)
+    }
+
+    function presentHostedPicker(hostView, tabId, persistentId, message, data, request) {
+        if (!hostedMessageTabIsSelected(hostView, tabId, persistentId)) {
+            return false
+        }
+
+        var target = createHostedMessageTarget(hostView, tabId, persistentId)
+        if (!target) {
+            return false
+        }
+        target.modalRequest = request
+        _activeHostedModalTarget = target
+        target.responseMessages = [ "embedui:colorpickerresponse",
+                                    "filepickerresponse",
+                                    "embedui:selectresponse" ]
+        var pickerMessage = message === "embedui:downloadpicker"
+                            ? "embed:downloadpicker" : message
+        var opener = hostedPickerOpenerComponent.createObject(browserPage, {
+                                                                    "pageStack": window.pageStack,
+                                                                    "contentItem": target
+                                                                })
+        if (opener && pickerMessage === "embed:downloadpicker") {
+            opener.downloadPickerClosed.connect(function() {
+                browserPage.releaseHostedMessageTarget(target)
+            })
+        }
+        if (!opener || !opener.message(pickerMessage, data)) {
+            if (_activeHostedModalTarget === target) {
+                _activeHostedModalTarget = null
+            }
+            if (opener) {
+                opener.destroy()
+            }
+            target.destroy()
+            return false
+        }
+        target.opener = opener
+        // DownloadPicker replies through Gecko's observer service rather than
+        // this content target. Its close signal releases the modal token.
+        return true
+    }
+
+    function openHostedPopup(hostView, tabId, persistentId, message, data) {
+        var popupTopics = [ "Content:ContextMenu", "embed:alert",
+                            "embed:confirm", "embed:prompt", "embed:login",
+                            "embed:auth", "embed:permissions",
+                            "embed:webrtcrequest", "embed:popupblocked",
+                            "embed:select" ]
+        if (popupTopics.indexOf(message) === -1) {
+            return false
+        }
+
+        return queueHostedModalRequest("popup", hostView, tabId, persistentId,
+                                       message, data)
+    }
+
+    function presentHostedPopup(hostView, tabId, persistentId, message, data, request) {
+        if (!hostedMessageTabIsSelected(hostView, tabId, persistentId)) {
+            return false
+        }
+
+        var target = createHostedMessageTarget(hostView, tabId, persistentId)
+        if (!target) {
+            return false
+        }
+        target.modalRequest = request
+        _activeHostedModalTarget = target
+        target.beforeUnload = message === "embed:confirm" && !!data.inPermitUnload
+        target.responseMessages = [ "alertresponse", "confirmresponse",
+                                    "promptresponse", "embedui:login",
+                                    "authresponse", "embedui:permissions",
+                                    "embedui:webrtcresponse",
+                                    "embedui:popupblocked", "selectresponse" ]
+        var opener = hostedPopupOpenerComponent.createObject(browserPage, {
+                                                                  "pageStack": window.pageStack,
+                                                                  "parentItem": browserPage,
+                                                                  "contentItem": target,
+                                                                  "tabModel": webView.tabModel
+                                                              })
+        if (!opener || !opener.message(message, data)) {
+            if (_activeHostedModalTarget === target) {
+                _activeHostedModalTarget = null
+            }
+            if (opener) {
+                opener.destroy()
+            }
+            target.destroy()
+            return false
+        }
+        target.opener = opener
+        return true
+    }
+
+    function sendHostedClipboardPasteResponse(request, accepted) {
+        if (!request || !request.target) {
+            return
+        }
+        var data = request.data || {}
+        var response = {
+            "id": data.id,
+            "accepted": !!accepted
+        }
+        if (data.winId) {
+            response.winId = data.winId
+        }
+        request.target.sendAsyncMessage("embedui:clipboardreadpasteresponse", response)
+    }
+
+    function rejectHostedClipboardPaste(hostView, tabId, persistentId, data) {
+        var response = {
+            "id": data && data.id,
+            "accepted": false
+        }
+        if (data && data.winId) {
+            response.winId = data.winId
+        }
+        sendHostedMessageToTab(hostView, tabId, persistentId,
+                               "embedui:clipboardreadpasteresponse", response)
+    }
+
+    function requestHostedClipboardPaste(hostView, tabId, persistentId, data) {
+        // Clipboard permission is foreground-only. Do not bring a background
+        // page forward for it; reject rather than showing a misleading dialog.
+        if (!hostedMessageTabIsSelected(hostView, tabId, persistentId)) {
+            rejectHostedClipboardPaste(hostView, tabId, persistentId, data)
+            return
+        }
+        openHostedClipboardPasteDialog(hostView, tabId, persistentId, data)
+    }
+
+    function openPendingHostedClipboardPasteDialog() {
+        if (window.pageStack.busy || !_pendingHostedClipboardPaste) {
+            return
+        }
+        var request = _pendingHostedClipboardPaste
+        _pendingHostedClipboardPaste = null
+        if (!hostedMessageTabIsSelected(request.hostView, request.tabId,
+                                        request.persistentId)) {
+            sendHostedClipboardPasteResponse(request, false)
+            return
+        }
+        openHostedClipboardPasteDialog(request.hostView, request.tabId,
+                                       request.persistentId, request.data,
+                                       request.target)
+    }
+
+    function openHostedClipboardPasteDialog(hostView, tabId, persistentId, data, existingTarget) {
+        if (!hostedMessageTabIsSelected(hostView, tabId, persistentId)) {
+            if (existingTarget) {
+                sendHostedClipboardPasteResponse({
+                                                      "data": data || {},
+                                                      "target": existingTarget
+                                                  }, false)
+            } else {
+                rejectHostedClipboardPaste(hostView, tabId, persistentId, data)
+            }
+            return
+        }
+
+        var target = existingTarget || createHostedMessageTarget(hostView, tabId,
+                                                                  persistentId)
+        if (!target) {
+            return
+        }
+        target.responseMessages = [ "embedui:clipboardreadpasteresponse" ]
+        var request = {
+            "hostView": hostView,
+            "tabId": String(tabId),
+            "persistentId": String(persistentId || ""),
+            "data": data || {},
+            "target": target
+        }
+
+        if (window.pageStack.busy) {
+            if (_pendingHostedClipboardPaste) {
+                sendHostedClipboardPasteResponse(_pendingHostedClipboardPaste, false)
+            }
+            _pendingHostedClipboardPaste = request
+            return
+        }
+
+        var page = window.pageStack.animatorPush(webView.clipboardPasteDialogComponent, {
+                                                     "origin": request.data.origin || "",
+                                                     "delay": Math.max(0,
+                                                                       request.data.delay || 0)
+                                                 })
+        page.pageCompleted.connect(function(dialog) {
+            dialog.accepted.connect(function() {
+                sendHostedClipboardPasteResponse(request, true)
+            })
+            dialog.rejected.connect(function() {
+                sendHostedClipboardPasteResponse(request, false)
+            })
+        })
+    }
+
+    function updateHostedSelection(hostView, tabId, persistentId, data) {
+        if (!hostView || String(hostView.selectedTabId) !== String(tabId)) {
+            return
+        }
+
+        if (_hostedTextSelectionController
+                && _hostedSelectionTabId !== String(tabId)) {
+            clearHostedSelection()
+        }
+        if (!_hostedTextSelectionController) {
+            var target = createHostedMessageTarget(hostView, tabId, persistentId)
+            if (!target) {
+                return
+            }
+            _hostedTextSelectionController = webView.textSelectionControllerComponent.createObject(
+                        browserPage, { "contentItem": target })
+            _hostedSelectionTabId = String(tabId)
+        }
+        if (!_hostedTextSelectionController) {
+            releaseHostedMessageTarget(target)
+            return
+        }
+        _hostedTextSelectionController.selectionRangeUpdated(data)
+    }
+
+    function refreshHostedHistoryIcon(hostView, tabId, persistentId, iconUrl) {
+        if (webView.privateMode || !iconUrl
+                || !hostedMessageTabIsSelected(hostView, tabId, persistentId)) {
+            return
+        }
+        var tab = hostedRuntimeTabByRuntimeId(hostView, tabId)
+        if (!tab || !String(tab.location).length) {
+            return
+        }
+
+        var fetcher = hostedHistoryIconFetcherComponent.createObject(browserPage, {
+                                                                          "hostView": hostView,
+                                                                          "tabId": String(tabId),
+                                                                          "persistentId": String(persistentId),
+                                                                          "location": String(tab.location),
+                                                                          "locationRevision": String(tab.locationRevision)
+                                                                      })
+        if (fetcher) {
+            fetcher.fetch(iconUrl)
+        }
+    }
+
+    function handleHostedAsyncMessage(hostView, tabId, persistentId, message, data) {
+        var targetTabId = String(tabId || (data && data.tabId) || "")
+        var targetPersistentId = String(persistentId
+                                        || (data && data.persistentId) || "")
+        if (!targetTabId.length) {
+            return
+        }
+
+        var tab = hostedRuntimeTabByRuntimeId(hostView, targetTabId)
+        var selected = hostView && String(hostView.selectedTabId) === targetTabId
+        var targetLocationRevision = data && data.locationRevision !== undefined
+                ? String(data.locationRevision) : ""
+        if (targetLocationRevision.length
+                && (!tab || String(tab.locationRevision) !== targetLocationRevision)) {
+            return
+        }
+
+        // PickerOpener registers its listeners session-wide, but its delayed
+        // replies must retain the tab that made this request.
+        if (openHostedPicker(hostView, targetTabId, targetPersistentId,
+                             message, data)) {
+            return
+        }
+        if (openHostedPopup(hostView, targetTabId, targetPersistentId,
+                            message, data)) {
+            return
+        }
+
+        switch (message) {
+        case "embed:clipboardreadpaste":
+            requestHostedClipboardPaste(hostView, targetTabId, targetPersistentId, data)
+            break
+        case "Link:SetIcon":
+            // data.url names the icon itself, not the page location. The
+            // tab/persistent ids are the authoritative association.
+            if (selected && hostedMessageTabIsLive(hostView, targetTabId,
+                                                   targetPersistentId)) {
+                if (_hostedAcceptedTouchIcon) {
+                    break
+                }
+                var previousFavicon = _hostedFavicon
+                _hostedAcceptedTouchIcon = !!data.isRichIcon
+                _hostedFavicon = data.url || ""
+                if (_hostedFavicon && _hostedFavicon !== previousFavicon) {
+                    refreshHostedHistoryIcon(hostView, targetTabId,
+                                             targetPersistentId, _hostedFavicon)
+                }
+            }
+            break
+        case "embed:pageMetadata":
+            if (selected && (!data.url || (tab && data.url === String(tab.location)))) {
+                if (data.title) {
+                    _hostedMetadataTitle = data.title
+                }
+                var richIcon = !!data.isRichIcon
+                if (data.favicon && (richIcon || !_hostedAcceptedTouchIcon)) {
+                    var oldFavicon = _hostedFavicon
+                    _hostedAcceptedTouchIcon = richIcon
+                    _hostedFavicon = data.favicon
+                    if (_hostedFavicon !== oldFavicon) {
+                        refreshHostedHistoryIcon(hostView, targetTabId,
+                                                 targetPersistentId, _hostedFavicon)
+                    }
+                }
+                syncHostedContainerState(hostView)
+            }
+            break
+        case "Content:SelectionRange":
+            updateHostedSelection(hostView, targetTabId, targetPersistentId, data)
+            break
+        case "Content:SelectionSwap":
+            if (_hostedTextSelectionController
+                    && _hostedSelectionTabId === targetTabId) {
+                _hostedTextSelectionController.swap()
+            }
+            break
+        case "Content:SelectionCopied":
+            if (data.succeeded && _hostedTextSelectionController
+                    && _hostedSelectionTabId === targetTabId) {
+                _hostedTextSelectionController.showNotification()
+            }
+            break
+        case "embed:find":
+            if (selected) {
+                webView.findInPageHasResult = data.r === 0 || data.r === 2
+            }
+            break
+        case "Link:AddSearch":
+            if (!webView.privateMode && data.engine) {
+                SearchEngineModel.add(data.engine.title, data.engine.href)
+            }
+            break
+        case "embed:viewportfit":
+            if (selected) {
+                _hostedViewportFit = data.viewportFit || data.value || ""
+                _hostedSafeAreaInsetUsage = Number(data.safeAreaInsetUsage || 0)
+            }
+            break
+        case "embed:fullscreenchanged":
+            if (selected && hostView.fullscreen) {
+                overlay.dismiss(true)
+            }
+            break
+        case "embed:contentOrientationChanged":
+            if (selected) {
+                orientationFader.waitForWebContentOrientationChanged = false
+                hostView.update()
+            }
+            break
+        case "chrome:contentloaded":
+            if (selected) {
+                captureHostedThumbnail()
+            }
+            break
+        }
+    }
+
+    function initializeHostedContentBridge(hostView) {
+        if (!hostView) {
+            return
+        }
+
+        // Raw hosted QmlMozView does not receive DeclarativeWebPage's legacy
+        // ViewInitialized setup, so install embedhelper before listeners that
+        // receive its selection, form, input and context-menu traffic.
+        hostView.loadFrameScript("chrome://embedlite/content/embedhelper.js")
+        hostView.loadFrameScript("file:///usr/share/sailfish-browser/shared/ViewportFit.js")
+        hostView.loadFrameScript("file:///usr/share/sailfish-browser/shared/PageMetadata.js")
+
+        var listeners = [ "Content:SelectionRange", "Content:SelectionCopied",
+                          "Content:SelectionSwap", "embed:clipboardreadpaste",
+                          "embed:fullscreenchanged", "chrome:contentloaded",
+                          "embed:pageMetadata", "Link:SetIcon", "Link:AddFeed",
+                          "Link:AddSearch", "embed:find",
+                          "embed:contentOrientationChanged", "embed:viewportfit",
+                          "Content:ContextMenu", "embed:alert", "embed:confirm",
+                          "embed:prompt", "embed:login", "embed:auth",
+                          "embed:permissions", "embed:webrtcrequest",
+                          "embed:popupblocked", "embed:select",
+                          "embed:colorpicker", "embed:filepicker",
+                          "embed:selectasync", "embedui:downloadpicker",
+                          "embed:downloadpicker" ]
+        for (var index = 0; index < listeners.length; ++index) {
+            hostView.addMessageListener(listeners[index])
+        }
     }
 
     function restoreRuntimeTabs(hostView) {
@@ -201,6 +1122,81 @@ Page {
         runtimeNavigationTimer.stop()
     }
 
+    function queueRuntimeClose(persistentId) {
+        var id = String(persistentId)
+        if (!id.length || (_runtimeCloseInFlight
+                           && _runtimeCloseInFlight.persistentId === id)) {
+            return
+        }
+        for (var index = 0; index < _pendingRuntimeCloseCommands.length; ++index) {
+            if (_pendingRuntimeCloseCommands[index] === id) {
+                return
+            }
+        }
+        _pendingRuntimeCloseCommands.push(id)
+    }
+
+    function startNextRuntimeClose(runtimeHostView) {
+        var hostView = runtimeHostView || _runtimeChromeView
+        if (!hostView || _runtimeCloseInFlight || !_pendingRuntimeCloseCommands.length) {
+            return
+        }
+
+        var persistentId = _pendingRuntimeCloseCommands.shift()
+        var runtimeId = webView.persistentTabModel.runtimeIdForPersistentId(persistentId)
+        if (!runtimeId.length) {
+            startNextRuntimeClose(hostView)
+            return
+        }
+
+        cancelPendingRuntimeNavigation()
+        _runtimeCloseInFlight = {
+            "persistentId": persistentId,
+            "runtimeId": runtimeId,
+            "revision": String(hostView.tabModel.revision)
+        }
+        if (!hostView.closeTab(runtimeId)) {
+            _runtimeCloseInFlight = null
+            _pendingRuntimeCloseCommands = []
+        }
+    }
+
+    function resolveRuntimeCloseAfterSnapshot(runtimeHostView) {
+        var hostView = runtimeHostView || _runtimeChromeView
+        if (!hostView || !_runtimeCloseInFlight
+                || _runtimeCloseInFlight.revision === String(hostView.tabModel.revision)) {
+            return
+        }
+
+        var close = _runtimeCloseInFlight
+        _runtimeCloseInFlight = null
+        if (webView.persistentTabModel.runtimeIdForPersistentId(
+                    close.persistentId).length) {
+            // A completed snapshot that still owns this tab means a close
+            // confirmation was declined. Do not make another close request
+            // while Gecko is returning to the page.
+            _pendingRuntimeCloseCommands = []
+            return
+        }
+        startNextRuntimeClose(hostView)
+    }
+
+    function runtimeTabCloseResult(runtimeId, closed) {
+        if (!_runtimeCloseInFlight
+                || String(_runtimeCloseInFlight.runtimeId) !== String(runtimeId)) {
+            return
+        }
+
+        if (!closed) {
+            // A beforeunload prompt was declined. Do not issue the next
+            // close-all request until a later user action starts a new batch.
+            _runtimeCloseInFlight = null
+            _pendingRuntimeCloseCommands = []
+        }
+        // A successful close is still committed only by the next complete
+        // runtime snapshot, which retains persistence as the authority.
+    }
+
     function dispatchRuntimeCommand(command, runtimeHostView) {
         var hostView = runtimeHostView || _runtimeChromeView
         if (!hostView || !_runtimeRestoreSent || !_runtimeSnapshotInitialized) {
@@ -223,12 +1219,8 @@ Page {
                 hostView.reload()
             }
         } else if (command.type === "close") {
-            cancelPendingRuntimeNavigation()
-            var closeRuntimeId = webView.persistentTabModel.runtimeIdForPersistentId(
-                        command.persistentId)
-            if (closeRuntimeId.length) {
-                hostView.closeTab(closeRuntimeId)
-            }
+            queueRuntimeClose(command.persistentId)
+            startNextRuntimeClose(hostView)
         } else if (command.type === "navigate") {
             cancelPendingRuntimeNavigation()
             var navigateRuntimeId = webView.persistentTabModel.runtimeIdForPersistentId(
@@ -244,11 +1236,11 @@ Page {
                 }
             }
         } else if (command.type === "clear") {
-            cancelPendingRuntimeNavigation()
             var tabs = hostView.tabModel.snapshot()
             for (var index = tabs.length - 1; index >= 0; --index) {
-                hostView.closeTab(String(tabs[index].tabId))
+                queueRuntimeClose(String(tabs[index].persistentId))
             }
+            startNextRuntimeClose(hostView)
         }
     }
 
@@ -307,6 +1299,13 @@ Page {
                     && (previous.revision !== revision
                         || previous.location !== location)
             var pairedTitle = runtimeTitle
+
+            if (locationChanged) {
+                // A grab can complete after Gecko has committed a new
+                // location. Its persistent-id/revision guard will reject the
+                // result too; invalidate it here so it is not written at all.
+                hostedThumbnailGrabber.invalidate(String(tab.persistentId))
+            }
 
             if (_runtimeSnapshotInitialized) {
                 var pendingMatches = pending
@@ -401,6 +1400,7 @@ Page {
             refreshRuntimeHistory()
         }
         _runtimeSnapshotInitialized = true
+        resolveRuntimeCloseAfterSnapshot(hostView)
         flushRuntimeCommands(hostView)
         flushSelectedRuntimeNavigation(hostView)
 
@@ -414,6 +1414,59 @@ Page {
 
         interval: 120
         onTriggered: browserPage.applyRuntimeSnapshot(true)
+    }
+
+    function hostedRuntimeTab(persistentId, location, locationRevision) {
+        if (!chromeHostView) {
+            return null
+        }
+        var tabs = chromeHostView.tabModel.snapshot()
+        for (var index = 0; index < tabs.length; ++index) {
+            var tab = tabs[index]
+            if (String(tab.persistentId) === String(persistentId)
+                    && String(tab.location) === String(location)
+                    && String(tab.locationRevision) === String(locationRevision)) {
+                return tab
+            }
+        }
+        return null
+    }
+
+    function captureHostedThumbnail() {
+        var hostView = chromeHostView
+        if (!hostView || webView.privateMode || !browserPage.active
+                || !hostView.active || !hostView.visible) {
+            return
+        }
+        var persistentId = selectedPersistentId(hostView)
+        if (!persistentId.length) {
+            return
+        }
+        var tabs = hostView.tabModel.snapshot()
+        for (var index = 0; index < tabs.length; ++index) {
+            var tab = tabs[index]
+            if (String(tab.tabId) === hostView.selectedTabId
+                    && String(tab.location).length
+                    && String(tab.location) !== "about:blank") {
+                hostedThumbnailGrabber.grab(hostView, persistentId,
+                                            String(tab.location),
+                                            String(tab.locationRevision),
+                                            thumbnailSize)
+                return
+            }
+        }
+    }
+
+    function updateHostedThumbnail(persistentId, location, locationRevision, fileName) {
+        var tab = hostedRuntimeTab(persistentId, location, locationRevision)
+        if (tab && webView.persistentTabModel.runtimeIdForPersistentId(
+                    persistentId) === String(tab.tabId)) {
+            webView.persistentTabModel.updateThumbnailPath(Number(persistentId), fileName)
+            hostedThumbnailUpdated(persistentId, location, locationRevision,
+                                   fileName)
+        } else {
+            hostedThumbnailGrabber.discard(fileName)
+        }
     }
 
     Timer {
@@ -449,6 +1502,15 @@ Page {
 
     cutoutMode: CutoutMode.FullScreen
     background: null
+    onUrlChanged: {
+        if (chromeHostView) {
+            _hostedMetadataTitle = ""
+            _hostedFavicon = ""
+            _hostedAcceptedTouchIcon = false
+            webView.findInPageHasResult = false
+            syncHostedContainerState(chromeHostView)
+        }
+    }
     onStatusChanged: {
         if (overlay.enteringNewTabUrl
                 || webView.tabModel.count === 0) {
@@ -478,13 +1540,15 @@ Page {
     Shared.OrientationFader {
         id: orientationFader
 
-        visible: webView.contentItem
+        visible: browserPage.chromeHostView || webView.contentItem
         page: browserPage
         fadeTarget: overlay.animator.allowContentUse ? overlay : overlay.dragArea
-        color: webView.contentItem ? (webView.resourceController.videoActive
-                                      && webView.contentItem.fullscreen
-                                      ? "black" : webView.contentItem.backgroundColor)
-                                   : "white"
+        color: browserPage.chromeHostView
+               ? (browserPage.contentFullscreen ? "black" : browserPage.chromeHostView.backgroundColor)
+               : (webView.contentItem ? (webView.resourceController.videoActive
+                                         && webView.contentItem.fullscreen
+                                         ? "black" : webView.contentItem.backgroundColor)
+                                      : "white")
 
         onApplyContentOrientation: webView.applyContentOrientation(browserPage.orientation)
     }
@@ -591,6 +1655,169 @@ Page {
         }
     }
 
+    HostedThumbnailGrabber {
+        id: hostedThumbnailGrabber
+
+        onCaptureReady: browserPage.updateHostedThumbnail(persistentId, location,
+                                                           locationRevision, fileName)
+    }
+
+    Component {
+        id: hostedHistoryIconFetcherComponent
+
+        DataFetcher {
+            property var hostView
+            property string tabId
+            property string persistentId
+            property string location
+            property string locationRevision
+
+            onDataChanged: {
+                var tab = browserPage.hostedRuntimeTabByRuntimeId(hostView, tabId)
+                if (!webView.privateMode && tab
+                        && String(tab.persistentId) === persistentId
+                        && String(tab.location) === location
+                        && String(tab.locationRevision) === locationRevision) {
+                    FaviconManager.add("history", location, data,
+                                       hasAcceptedTouchIcon)
+                }
+                destroy()
+            }
+        }
+    }
+
+    Timer {
+        id: hostedMessageTargetCleanupTimer
+
+        interval: 0
+        onTriggered: {
+            var targets = browserPage._hostedMessageTargets
+            browserPage._hostedMessageTargets = []
+            for (var index = 0; index < targets.length; ++index) {
+                browserPage.destroyHostedMessageTarget(targets[index])
+            }
+            browserPage.processPendingHostedModalRequests(browserPage.chromeHostView)
+        }
+    }
+
+    Timer {
+        id: hostedModalRequestTimer
+
+        interval: 1000
+        onTriggered: browserPage.expirePendingHostedModalRequests()
+    }
+
+    Timer {
+        id: hostedGenericDuplicateTimer
+
+        interval: 0
+        onTriggered: {
+            var pending = browserPage._pendingHostedGenericMessages
+            browserPage._pendingHostedGenericMessages = []
+            browserPage._hostedTabAsyncMessages = []
+            for (var index = 0; index < pending.length; ++index) {
+                var generic = pending[index]
+                browserPage.handleHostedAsyncMessage(generic.hostView,
+                                                     generic.tabId,
+                                                     generic.persistentId,
+                                                     generic.message,
+                                                     generic.data)
+            }
+        }
+    }
+
+    Component {
+        id: hostedMessageTargetComponent
+
+        QtObject {
+            property var hostView
+            property var owner
+            property string tabId
+            property string persistentId
+            property var opener
+            property var responseMessages
+            property var modalRequest
+            property bool beforeUnload
+            property bool releaseScheduled
+            readonly property int uniqueId: hostView ? hostView.uniqueId : 0
+            readonly property real resolution: hostView ? hostView.resolution : 1.0
+            readonly property point scrollableOffset: hostView ? hostView.scrollableOffset
+                                                               : Qt.point(0, 0)
+
+            function addMessageListener(name) {
+                if (hostView) {
+                    hostView.addMessageListener(name)
+                }
+            }
+
+            function cancelPendingNavigation() {
+                // QmlMozView currently has a selected-tab-only cancel API.
+                // Never cancel the wrong tab while a delayed prompt is open.
+                if (hostView && String(hostView.selectedTabId) === tabId) {
+                    hostView.cancelPendingNavigation()
+                }
+            }
+
+            function sendAsyncMessage(name, data) {
+                var sent = owner && owner.sendHostedMessageToTab(
+                            hostView, tabId, persistentId, name, data,
+                            beforeUnload && name === "confirmresponse")
+                if (owner && responseMessages && responseMessages.indexOf(name) !== -1) {
+                    owner.releaseHostedMessageTarget(this)
+                }
+                return sent
+            }
+        }
+    }
+
+    Component {
+        id: hostedPickerOpenerComponent
+
+        Pickers.PickerOpener {
+        }
+    }
+
+    Component {
+        id: hostedPopupOpenerComponent
+
+        Popups.PopupOpener {
+            property bool _hostedContextMenuOpened
+
+            onAboutToOpenContextMenu: {
+                _hostedContextMenuOpened = true
+                if (Qt.inputMethod.visible) {
+                    browserPage.focus = true
+                    Qt.inputMethod.hide()
+                }
+
+                if (contentItem && contentItem.hostView
+                        && String(contentItem.hostView.selectedTabId) === contentItem.tabId) {
+                    browserPage.captureHostedThumbnail()
+                }
+                if (data.types.indexOf("content-text") !== -1) {
+                    contentItem.sendAsyncMessage("Browser:SelectionStart", {
+                                                     "xPos": data.xPos,
+                                                     "yPos": data.yPos
+                                                 })
+                }
+                if (data.types.indexOf("image") === -1
+                        && data.types.indexOf("link") === -1) {
+                    // Text-only long presses start selection but do not open
+                    // PopupOpener's context menu, so no activeChanged edge
+                    // will release this request target.
+                    browserPage.releaseHostedMessageTarget(contentItem)
+                }
+            }
+
+            onActiveChanged: {
+                if (_hostedContextMenuOpened && !active) {
+                    _hostedContextMenuOpened = false
+                    browserPage.releaseHostedMessageTarget(contentItem)
+                }
+            }
+        }
+    }
+
     Loader {
         id: chromeHostLoader
 
@@ -610,31 +1837,152 @@ Page {
 
                 property bool _qmozChromeHosted: true
                 property string _qmozChromeInitialUrl: ""
-                property QtObject popupOpener: Popups.PopupOpener {
-                    pageStack: window.pageStack
-                    parentItem: browserPage
-                    contentItem: chromeView
-                    tabModel: webView.tabModel
-                }
+                property QtObject pickerOpener
+                property QtObject popupOpener
 
                 anchors.fill: parent
                 active: browserPage.active && !webView.privateMode
                 clip: true
                 focus: true
                 visible: !webView.privateMode
+                dynamicToolbarHeight: virtualKeyboardObserver.opened
+                                      || webView.fixedToolbarConfig.value
+                                      || overlay.toolBar.findInPageActive
+                                      ? 0 : webView.toolbarHeight
+                margins: Qt.margins(0, 0, 0,
+                                    virtualKeyboardObserver.opened
+                                    ? virtualKeyboardObserver.imSize
+                                    : (webView.fixedToolbarConfig.value
+                                       || overlay.toolBar.findInPageActive
+                                       ? webView.toolbarHeight : 0))
+                safeAreaInsets: Qt.margins(
+                                    browserPage.hostedDisplayCutoutAllowed
+                                    ? webView._contentCutoutLeft : 0,
+                                    browserPage.hostedDisplayCutoutAllowed
+                                    ? webView._contentCutoutTop : 0,
+                                    browserPage.hostedDisplayCutoutAllowed
+                                    ? webView._contentCutoutRight : 0,
+                                    browserPage.hostedDisplayCutoutAllowed
+                                    ? webView._contentCutoutBottom : 0)
+                throttlePainting: !webView.foreground && !webView.resourceController.videoActive
+                                  && webView.visible || !webView.visible
+
+                Component.onCompleted: {
+                    browserPage.initializeHostedContentBridge(chromeView)
+                    pickerOpener = hostedPickerOpenerComponent.createObject(chromeView, {
+                                                                                 "pageStack": window.pageStack,
+                                                                                 "contentItem": chromeView
+                                                                             })
+                    popupOpener = hostedPopupOpenerComponent.createObject(chromeView, {
+                                                                              "pageStack": window.pageStack,
+                                                                              "parentItem": browserPage,
+                                                                              "contentItem": chromeView,
+                                                                              "tabModel": webView.tabModel
+                    })
+                    browserPage.syncHostedDesktopMode(chromeView)
+                    browserPage.syncHostedContainerState(chromeView)
+                    browserPage.updateHostedViewSuspension(chromeView)
+                }
+
+                Component.onDestruction: webView.clearHostedState()
+
+                onSelectedTabChanged: {
+                    browserPage.clearHostedSelection()
+                    browserPage._hostedMetadataTitle = ""
+                    browserPage._hostedFavicon = ""
+                    browserPage._hostedAcceptedTouchIcon = false
+                    browserPage._hostedViewportFit = ""
+                    browserPage._hostedSafeAreaInsetUsage = 0
+                    browserPage.applyRuntimeSnapshot(false, chromeView)
+                    browserPage.syncHostedDesktopMode(chromeView)
+                    browserPage.syncHostedContainerState(chromeView)
+                    browserPage.processPendingHostedModalRequests(chromeView)
+                }
+
+                onLoadingChanged: {
+                    if (loading) {
+                        browserPage._hostedMetadataTitle = ""
+                        browserPage._hostedFavicon = ""
+                        browserPage._hostedAcceptedTouchIcon = false
+                        webView.findInPageHasResult = false
+                    } else {
+                        browserPage.captureHostedThumbnail()
+                    }
+                    browserPage.syncHostedContainerState(chromeView)
+                }
+
+                onFirstPaint: browserPage.captureHostedThumbnail()
+                onTouched: {
+                    if (browserPage.contentFullscreen) {
+                        fullscreenCloseVisibleTimer.restart()
+                    }
+                    if (browserPage._hostedTextSelectionController) {
+                        browserPage.clearHostedSelection()
+                    }
+                }
+                onTitleChanged: browserPage.syncHostedContainerState(chromeView)
+                onLoadProgressChanged: browserPage.syncHostedContainerState(chromeView)
+                onCanGoBackChanged: browserPage.syncHostedContainerState(chromeView)
+                onCanGoForwardChanged: browserPage.syncHostedContainerState(chromeView)
+                onSecurityChanged: browserPage.syncHostedContainerState(chromeView, true)
+                onActiveChanged: browserPage.updateHostedViewSuspension(chromeView)
+                onVisibleChanged: browserPage.updateHostedViewSuspension(chromeView)
+                onFullscreenChanged: {
+                    if (fullscreen) {
+                        overlay.dismiss(true)
+                    }
+                }
+
+                onRecvAsyncMessageFromTab: {
+                    browserPage.noteHostedAsyncMessage(tabId, persistentId, message)
+                    browserPage.handleHostedAsyncMessage(chromeView, tabId, persistentId,
+                                                         message, data)
+                }
 
                 onRecvAsyncMessage: {
-                    if (popupOpener.message(message, data)) {
-                        return
+                    browserPage.queueHostedGenericAsyncMessage(chromeView,
+                                                                message, data)
+                }
+
+                onTabCloseResult: browserPage.runtimeTabCloseResult(tabId, closed)
+
+                onWindowCloseRequestedFromTab: {
+                    // Gecko removes this tab itself. Keep only tab-scoped UI
+                    // state from surviving until the authoritative snapshot.
+                    if (browserPage._hostedSelectionTabId === String(tabId)) {
+                        browserPage.clearHostedSelection()
                     }
                 }
 
                 Connections {
                     target: chromeView.tabModel
                     ignoreUnknownSignals: true
-                    onRevisionChanged: browserPage.applyRuntimeSnapshot(false,
-                                                                         chromeView)
+                    onRevisionChanged: {
+                        browserPage.applyRuntimeSnapshot(false, chromeView)
+                        browserPage.syncHostedDesktopMode(chromeView)
+                    }
                 }
+
+                Connections {
+                    target: webView
+                    ignoreUnknownSignals: true
+                    onForegroundChanged: browserPage.updateHostedViewSuspension(chromeView)
+                    onPrivateModeChanged: browserPage.syncHostedContainerState(chromeView)
+                    onHostedLoadRequested: browserPage.loadHostedContainerRequest(url, fromExternal)
+                    onHostedReloadRequested: browserPage.reload()
+                    onHostedGoBackRequested: browserPage.goBack()
+                    onHostedGoForwardRequested: browserPage.goForward()
+                }
+            }
+        }
+    }
+
+    Connections {
+        target: window.pageStack
+        ignoreUnknownSignals: true
+        onBusyChanged: {
+            if (!window.pageStack.busy) {
+                browserPage.openPendingHostedClipboardPasteDialog()
             }
         }
     }
@@ -687,15 +2035,13 @@ Page {
         x: Theme.paddingLarge
         y: Theme.paddingLarge
         icon.source: "image://theme/icon-m-close"
-        onClicked: {
-            webView.sendAsyncMessage("embedui:exitFullscreen", {})
-        }
+        onClicked: browserPage.exitFullscreen()
 
         Timer {
             id: fullscreenCloseVisibleTimer
 
             interval: 2000
-            running: webView.contentFullscreen
+            running: browserPage.contentFullscreen
         }
     }
 
@@ -791,12 +2137,12 @@ Page {
 
         animator.onAtBottomChanged: {
             if (!animator.atBottom) {
-                webView.clearSelection()
+                browserPage.clearSelection()
             }
         }
 
         onActiveChanged: {
-            var isFullScreen = webView.contentItem && webView.contentItem.fullscreen
+            var isFullScreen = browserPage.contentFullscreen
             if (!isFullScreen && active && !overlay.enteringNewTabUrl) {
                 if (webView.hasInitialUrl
                         || webView.tabModel.count !== 0
@@ -810,7 +2156,7 @@ Page {
             }
 
             if (!active) {
-                webView.clearSelection()
+                browserPage.clearSelection()
                 if (webView.chromeWindow && webView.foreground) {
                     webView.chromeWindow.raise()
                 }
@@ -913,7 +2259,7 @@ Page {
                     webView.load(url)
                 }
             } else {
-                webView.clearSelection()
+                browserPage.clearSelection()
                 webView.tabModel.newTab(url, true)
                 overlay.dismiss(true, !Qt.application.active /* immediate */)
             }

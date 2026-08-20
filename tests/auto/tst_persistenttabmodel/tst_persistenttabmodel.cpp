@@ -11,6 +11,8 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include <QtTest/QtTest>
+#include <QFile>
+#include <QTemporaryDir>
 
 #include "persistenttabmodel.h"
 #include "dbmanager.h"
@@ -55,6 +57,8 @@ private slots:
     void data();
     void newTabRequested();
     void applyRuntimeSnapshot();
+    void runtimeSnapshotInvalidatesChangedThumbnail();
+    void runtimeDesktopModeIsPerPersistentTab();
     void runtimeAuthoritativeCommands();
     void runtimeRestorePayload();
     void runtimeHistoryTraversal();
@@ -651,6 +655,80 @@ void tst_persistenttabmodel::applyRuntimeSnapshot()
     QCOMPARE(batch.tabs().at(0).persistentId(), 2);
     QCOMPARE(batch.tabs().at(1).persistentId(), 1);
     QCOMPARE(batch.activePersistentId(), 2);
+}
+
+void tst_persistenttabmodel::runtimeSnapshotInvalidatesChangedThumbnail()
+{
+    QVariantMap runtimeTab;
+    runtimeTab.insert(QStringLiteral("tabId"), QStringLiteral("100"));
+    runtimeTab.insert(QStringLiteral("persistentId"), QStringLiteral("1"));
+    runtimeTab.insert(QStringLiteral("location"), QStringLiteral("https://example.com/one"));
+    runtimeTab.insert(QStringLiteral("title"), QStringLiteral("One"));
+    runtimeTab.insert(QStringLiteral("locationRevision"), QStringLiteral("1"));
+    tabModel->applyRuntimeSnapshot(QVariantList() << runtimeTab, QStringLiteral("100"));
+
+    QTemporaryDir temporaryDir;
+    QVERIFY(temporaryDir.isValid());
+    const QString thumbnail = temporaryDir.path() + QStringLiteral("/thumbnail.jpg");
+    QFile thumbnailFile(thumbnail);
+    QVERIFY(thumbnailFile.open(QIODevice::WriteOnly));
+    thumbnailFile.close();
+    tabModel->updateThumbnailPath(1, thumbnail);
+
+    runtimeTab.insert(QStringLiteral("location"), QStringLiteral("https://example.com/two"));
+    runtimeTab.insert(QStringLiteral("title"), QStringLiteral("Two"));
+    runtimeTab.insert(QStringLiteral("locationRevision"), QStringLiteral("2"));
+    tabModel->applyRuntimeSnapshot(QVariantList() << runtimeTab, QStringLiteral("100"));
+
+    QCOMPARE(tabModel->tabs().first().thumbnailPath(), QString());
+    QVERIFY(!QFile::exists(thumbnail));
+
+    const QString sameLocationThumbnail = temporaryDir.path()
+            + QStringLiteral("/same-location-thumbnail.jpg");
+    QFile sameLocationThumbnailFile(sameLocationThumbnail);
+    QVERIFY(sameLocationThumbnailFile.open(QIODevice::WriteOnly));
+    sameLocationThumbnailFile.close();
+    tabModel->updateThumbnailPath(1, sameLocationThumbnail);
+
+    runtimeTab.insert(QStringLiteral("locationRevision"), QStringLiteral("3"));
+    tabModel->applyRuntimeSnapshot(QVariantList() << runtimeTab,
+                                   QStringLiteral("100"));
+
+    QCOMPARE(tabModel->tabs().first().thumbnailPath(), QString());
+    QVERIFY(!QFile::exists(sameLocationThumbnail));
+}
+
+void tst_persistenttabmodel::runtimeDesktopModeIsPerPersistentTab()
+{
+    QVariantMap first;
+    first.insert(QStringLiteral("tabId"), QStringLiteral("100"));
+    first.insert(QStringLiteral("persistentId"), QStringLiteral("1"));
+    first.insert(QStringLiteral("location"), QStringLiteral("https://first.example/"));
+    first.insert(QStringLiteral("title"), QStringLiteral("First"));
+    first.insert(QStringLiteral("locationRevision"), QStringLiteral("1"));
+    QVariantMap second;
+    second.insert(QStringLiteral("tabId"), QStringLiteral("200"));
+    second.insert(QStringLiteral("persistentId"), QStringLiteral("2"));
+    second.insert(QStringLiteral("location"), QStringLiteral("https://second.example/"));
+    second.insert(QStringLiteral("title"), QStringLiteral("Second"));
+    second.insert(QStringLiteral("locationRevision"), QStringLiteral("1"));
+    tabModel->applyRuntimeSnapshot(QVariantList() << first << second,
+                                   QStringLiteral("100"));
+
+    QSignalSpy dataChangedSpy(tabModel, &QAbstractItemModel::dataChanged);
+    QVERIFY(tabModel->setRuntimeDesktopMode(QStringLiteral("2"), true));
+    QVERIFY(!tabModel->runtimeDesktopMode(QStringLiteral("1")));
+    QVERIFY(tabModel->runtimeDesktopMode(QStringLiteral("2")));
+    QCOMPARE(dataChangedSpy.count(), 1);
+    QCOMPARE(DBManager::instance()->getSetting(QStringLiteral("desktopModeTabs")),
+             QStringLiteral("2"));
+
+    first.insert(QStringLiteral("locationRevision"), QStringLiteral("2"));
+    second.insert(QStringLiteral("locationRevision"), QStringLiteral("2"));
+    tabModel->applyRuntimeSnapshot(QVariantList() << first << second,
+                                   QStringLiteral("200"));
+    QVERIFY(!tabModel->runtimeDesktopMode(QStringLiteral("1")));
+    QVERIFY(tabModel->runtimeDesktopMode(QStringLiteral("2")));
 }
 
 void tst_persistenttabmodel::runtimeAuthoritativeCommands()

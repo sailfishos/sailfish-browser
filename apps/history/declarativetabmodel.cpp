@@ -567,6 +567,10 @@ void DeclarativeTabModel::updateThumbnailPath(int tabId, const QString &path)
 #endif
             QModelIndex start = index(i, 0);
             QModelIndex end = index(i, 0);
+            if (m_tabs.at(i).thumbnailPath() != path
+                    && !m_tabs.at(i).thumbnailPath().isEmpty()) {
+                QFile::remove(m_tabs.at(i).thumbnailPath());
+            }
             m_tabs[i].setThumbnailPath(path);
             emit dataChanged(start, end, roles);
             updateThumbPath(tabId, path);

@@ -42,6 +42,32 @@ IconGridViewBase {
         }
     }
 
+    function fetchAndSaveHostedBookmark() {
+        var hostView = browserPage.chromeHostView
+        if (!hostView || !hostView.selectedTabId.length) {
+            return
+        }
+        var tab = browserPage.hostedRuntimeTabByRuntimeId(
+                    hostView, hostView.selectedTabId)
+        if (!tab || !String(tab.persistentId).length) {
+            return
+        }
+
+        var url = String(tab.location)
+        var title = browserPage.title || url
+        var fetcher = hostedIconFetcher.createObject(favoriteGrid, {
+                                                         "hostView": hostView,
+                                                         "tabId": String(tab.tabId),
+                                                         "persistentId": String(tab.persistentId),
+                                                         "location": url,
+                                                         "locationRevision": String(tab.locationRevision),
+                                                         "title": title
+                                                     })
+        if (fetcher) {
+            fetcher.fetch(browserPage._hostedFavicon)
+        }
+    }
+
     currentIndex: -1
 
     displaced: Transition { NumberAnimation { properties: "x,y"; easing.type: Easing.InOutQuad; duration: 200 } }
@@ -166,6 +192,95 @@ IconGridViewBase {
                 // Add bookmark immediately with the defaultIcon. Update the favorite
                 // asynchronously.
                 bookmarkModel.add(url, title || url, defaultIcon, true)
+            }
+        }
+    }
+
+    Component {
+        id: hostedIconFetcher
+
+        DataFetcher {
+            id: hostedFetcher
+
+            property var hostView
+            property string tabId
+            property string persistentId
+            property string location
+            property string locationRevision
+            property string title
+            property bool fetchingThumbnail
+            property bool waitingForThumbnail
+
+            function currentTab() {
+                var tab = browserPage.hostedRuntimeTabByRuntimeId(hostView, tabId)
+                return tab && String(tab.persistentId) === persistentId
+                        && String(tab.location) === location
+                        && String(tab.locationRevision) === locationRevision
+            }
+
+            function stopWaitingForThumbnail() {
+                if (waitingForThumbnail) {
+                    browserPage.hostedThumbnailUpdated.disconnect(
+                                handleHostedThumbnail)
+                    waitingForThumbnail = false
+                }
+                thumbnailWaitTimer.stop()
+            }
+
+            function finish(iconData, touchIcon) {
+                stopWaitingForThumbnail()
+                if (currentTab()) {
+                    bookmarkModel.updateFavoriteIcon(location, iconData,
+                                                     touchIcon)
+                }
+                destroy()
+            }
+
+            function handleHostedThumbnail(capturedPersistentId,
+                                           capturedLocation,
+                                           capturedLocationRevision,
+                                           fileName) {
+                if (capturedPersistentId !== persistentId
+                        || capturedLocation !== location
+                        || capturedLocationRevision !== locationRevision) {
+                    return
+                }
+                stopWaitingForThumbnail()
+                fetchingThumbnail = true
+                fetch("file://" + fileName)
+            }
+
+            minimumIconSize: Theme.iconSizeSmallPlus
+
+            onDataChanged: {
+                if (fetchingThumbnail) {
+                    finish(data, false)
+                } else if (hasAcceptedTouchIcon) {
+                    finish(data, true)
+                } else if (!waitingForThumbnail && currentTab()) {
+                    waitingForThumbnail = true
+                    browserPage.hostedThumbnailUpdated.connect(
+                                handleHostedThumbnail)
+                    thumbnailWaitTimer.restart()
+                    browserPage.captureHostedThumbnail()
+                } else if (!currentTab()) {
+                    finish(data, false)
+                }
+            }
+
+            Component.onCompleted: {
+                // Match the legacy path: add immediately, then replace the
+                // placeholder with a durable fetched data URI asynchronously.
+                bookmarkModel.add(location, title || location, defaultIcon, true)
+            }
+
+            Component.onDestruction: stopWaitingForThumbnail()
+
+            Timer {
+                id: thumbnailWaitTimer
+
+                interval: 2000
+                onTriggered: hostedFetcher.finish(hostedFetcher.data, false)
             }
         }
     }

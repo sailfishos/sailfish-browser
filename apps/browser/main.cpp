@@ -36,6 +36,7 @@
 #include "loginfiltermodel.h"
 #include "datafetcher.h"
 #include "inputregion.h"
+#include "hostedthumbnailgrabber.h"
 #include "searchenginemodel.h"
 #include "secureaction.h"
 #include "faviconmanager.h"
@@ -168,6 +169,7 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     qmlRegisterType<DesktopBookmarkWriter>(uri, 1, 0, "DesktopBookmarkWriter");
     qmlRegisterType<DataFetcher>(uri, 1, 0, "DataFetcher");
     qmlRegisterType<InputRegion>(uri, 1, 0, "InputRegion");
+    qmlRegisterType<HostedThumbnailGrabber>(uri, 1, 0, "HostedThumbnailGrabber");
     qmlRegisterType<SecureAction>(uri, 1, 0, "SecureAction");
     qmlRegisterSingletonType<SearchEngineModel>(uri, 1, 0, "SearchEngineModel", search_model_factory);
 

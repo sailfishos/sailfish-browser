@@ -14,6 +14,7 @@ SOURCES += \
     $$PWD/declarativewebcontainer.cpp \
     $$PWD/declarativewebutils.cpp \
     $$PWD/faviconmanager.cpp \
+    $$PWD/hostedthumbnailgrabber.cpp \
     $$PWD/inputregion.cpp \
     $$PWD/logging.cpp \
     $$PWD/secureaction.cpp \
@@ -32,6 +33,7 @@ HEADERS += \
     $$PWD/downloadmanager.h \
     $$PWD/downloadstatus.h \
     $$PWD/faviconmanager.h \
+    $$PWD/hostedthumbnailgrabber.h \
     $$PWD/inputregion.h \
     $$PWD/logging.h \
     $$PWD/secureaction.h \

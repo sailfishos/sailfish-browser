@@ -156,6 +156,16 @@ public:
     Q_INVOKABLE int activateTab(int tabId, const QString &url);
     Q_INVOKABLE void closeTab(int tabId);
 
+    // Chrome-hosted tabs do not create a DeclarativeWebPage. Keep the
+    // container-facing state used by the D-Bus API in sync with QmlMozView
+    // without changing the legacy page path.
+    Q_INVOKABLE void updateHostedState(const QString &url, const QString &title,
+                                       bool loading, int loadProgress,
+                                       bool canGoBack, bool canGoForward,
+                                       QMozSecurity *security,
+                                       bool notifySecurity);
+    Q_INVOKABLE void clearHostedState();
+
     Q_INVOKABLE void dumpPages() const;
 
     QObject *focusObject() const override;
@@ -205,6 +215,14 @@ signals:
 
     void hasInitialUrlChanged();
     void requestTabWithOwnerAsyncResult(int tabId, void *context);
+
+    // Runtime-authoritative tabs are owned by the chrome-hosted QmlMozView.
+    // Keep external container callers on that path without touching the
+    // legacy DeclarativeWebPage or database history cursor directly.
+    void hostedLoadRequested(const QString &url, bool fromExternal);
+    void hostedReloadRequested();
+    void hostedGoBackRequested();
+    void hostedGoForwardRequested();
 
     void keyPressed(int key);
     void backButtonPressed();
@@ -318,6 +336,15 @@ private:
     bool m_fromExternal = false;
 
     int m_loadProgress = 0;
+
+    QString m_hostedUrl;
+    QString m_hostedTitle;
+    int m_hostedLoadProgress = 0;
+    bool m_hostedLoading = false;
+    bool m_hostedCanGoBack = false;
+    bool m_hostedCanGoForward = false;
+    bool m_hostedStateActive = false;
+    QPointer<QMozSecurity> m_hostedSecurity;
 
     bool m_completed = false;
     bool m_initialized = false;
