@@ -71,7 +71,7 @@ SilicaGridView {
     delegate: TabItem {
         id: tabItem
 
-        enabled: !closingAllTabs
+        enabled: !closingAllTabs && !destroying
         opacity: enabled ? 1.0 : 0.0
         Behavior on opacity { FadeAnimator {}}
 
