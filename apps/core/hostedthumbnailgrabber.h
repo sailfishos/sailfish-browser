@@ -10,12 +10,12 @@
 #include <QObject>
 #include <QHash>
 #include <QSharedPointer>
+#include <QSize>
 
 template<typename T> class QFutureWatcher;
 class QImage;
 class QQuickItem;
 class QQuickItemGrabResult;
-class QSize;
 
 class HostedThumbnailGrabber : public QObject
 {
@@ -25,14 +25,18 @@ public:
     explicit HostedThumbnailGrabber(QObject *parent = nullptr);
     ~HostedThumbnailGrabber();
 
-    Q_INVOKABLE bool grab(QQuickItem *item, const QString &persistentId,
-                          const QString &location,
-                          const QString &locationRevision,
-                          const QSize &size);
+    Q_INVOKABLE quint64 grab(QQuickItem *item, const QString &persistentId,
+                             const QString &location,
+                             const QString &locationRevision,
+                             const QSize &size);
     Q_INVOKABLE void invalidate(const QString &persistentId);
+    Q_INVOKABLE void invalidateAll();
+    Q_INVOKABLE void cancel(const QString &persistentId, quint64 generation);
     Q_INVOKABLE void discard(const QString &fileName) const;
 
 signals:
+    void grabReady(const QString &persistentId, const QString &location,
+                   const QString &locationRevision, quint64 generation);
     void captureReady(const QString &persistentId, const QString &location,
                       const QString &locationRevision, const QString &fileName);
 
@@ -46,6 +50,7 @@ private:
         QString location;
         QString locationRevision;
         quint64 generation;
+        QSize targetSize;
         QSharedPointer<QQuickItemGrabResult> result;
     };
 

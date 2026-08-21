@@ -40,6 +40,9 @@ Shared.Background {
     property real _overlayGap: browserPage.isPortrait ? toolBar.rowHeight : 0
     property bool _showFindInPage
     property bool _showUrlEntry
+    property bool _hostedTabViewPending
+    property string _hostedTabViewPersistentId
+    property real _hostedTabViewGeneration
     readonly property bool _topGap: _showUrlEntry || _showFindInPage
     property int _biggestCorner: Math.max(Screen.topLeftCorner.radius,
                                           Screen.topRightCorner.radius,
@@ -100,6 +103,44 @@ Shared.Background {
         _overlayGap = Qt.binding(function () { return overlayAnimator.fullscreenGap })
         searchField.resetUrl("")
         overlayAnimator.showStartPage(action !== PageStackAction.Animated)
+    }
+
+    function showTabView() {
+        if (_hostedTabViewPending) {
+            return
+        }
+        if (browserPage.chromeHostMode) {
+            // grabToImage() completes asynchronously. Keep the hosted view
+            // active until its texture has been captured, otherwise pushing
+            // the tab page replaces the thumbnail with the white fallback.
+            var capture = browserPage.beginHostedTabViewThumbnailCapture()
+            if (capture) {
+                _hostedTabViewPending = true
+                _hostedTabViewPersistentId = capture.persistentId
+                _hostedTabViewGeneration = capture.generation
+                hostedTabViewCaptureTimeout.restart()
+                return
+            }
+        } else {
+            webView.grabActivePage()
+        }
+        pageStack.animatorPush(tabView)
+    }
+
+    function finishHostedTabViewCapture(persistentId, generation, timedOut) {
+        if (!_hostedTabViewPending
+                || persistentId !== _hostedTabViewPersistentId
+                || generation !== _hostedTabViewGeneration) {
+            return
+        }
+        _hostedTabViewPending = false
+        hostedTabViewCaptureTimeout.stop()
+        if (timedOut) {
+            browserPage.cancelHostedThumbnailCapture(persistentId, generation)
+        }
+        _hostedTabViewPersistentId = ""
+        _hostedTabViewGeneration = 0
+        pageStack.animatorPush(tabView)
     }
 
     function dismiss(canShowChrome, immediate) {
@@ -564,12 +605,7 @@ Shared.Background {
                 onShowTabs: {
                     // Push the currently active tab index.
                     // Changing of active tab cannot cause blinking.
-                    if (browserPage.chromeHostMode) {
-                        browserPage.captureHostedThumbnail()
-                    } else {
-                        webView.grabActivePage()
-                    }
-                    pageStack.animatorPush(tabView)
+                    overlay.showTabView()
                 }
                 onShowSecondaryTools: overlayAnimator.showSecondaryTools()
                 onShowInfoOverlay: {
@@ -709,6 +745,21 @@ Shared.Background {
                 Behavior on opacity { FadeAnimator {} }
             }
         }
+    }
+
+    Timer {
+        id: hostedTabViewCaptureTimeout
+
+        interval: 500
+        onTriggered: overlay.finishHostedTabViewCapture(
+                         overlay._hostedTabViewPersistentId,
+                         overlay._hostedTabViewGeneration, true)
+    }
+
+    Connections {
+        target: browserPage
+        onHostedThumbnailGrabbed: overlay.finishHostedTabViewCapture(
+                                      persistentId, generation, false)
     }
 
     Component {

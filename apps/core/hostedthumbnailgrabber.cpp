@@ -37,19 +37,29 @@ HostedThumbnailGrabber::~HostedThumbnailGrabber()
     m_writes.clear();
 }
 
-bool HostedThumbnailGrabber::grab(QQuickItem *item, const QString &persistentId,
-                                  const QString &location,
-                                  const QString &locationRevision,
-                                  const QSize &size)
+quint64 HostedThumbnailGrabber::grab(QQuickItem *item,
+                                     const QString &persistentId,
+                                     const QString &location,
+                                     const QString &locationRevision,
+                                     const QSize &size)
 {
     if (!item || persistentId.isEmpty() || location.isEmpty() || !size.isValid()) {
-        return false;
+        return 0;
     }
 
+    // Match the legacy WebRender thumbnail policy: preserve the source
+    // aspect ratio while filling the portrait-canonical capture size, then
+    // crop the overflow from the right and bottom.
+    QSize grabSize = item->boundingRect().size().toSize();
+    if (!grabSize.isValid()) {
+        return 0;
+    }
+    grabSize.scale(size, Qt::KeepAspectRatioByExpanding);
+
     const quint64 generation = ++m_generations[persistentId];
-    QSharedPointer<QQuickItemGrabResult> result = item->grabToImage(size);
+    QSharedPointer<QQuickItemGrabResult> result = item->grabToImage(grabSize);
     if (!result) {
-        return false;
+        return 0;
     }
 
     Capture capture;
@@ -57,17 +67,34 @@ bool HostedThumbnailGrabber::grab(QQuickItem *item, const QString &persistentId,
     capture.location = location;
     capture.locationRevision = locationRevision;
     capture.generation = generation;
+    capture.targetSize = size;
     capture.result = result;
     m_grabs.insert(result.data(), capture);
 
     connect(result.data(), &QQuickItemGrabResult::ready,
             this, &HostedThumbnailGrabber::handleGrabReady);
-    return true;
+    return generation;
 }
 
 void HostedThumbnailGrabber::invalidate(const QString &persistentId)
 {
     if (!persistentId.isEmpty()) {
+        ++m_generations[persistentId];
+    }
+}
+
+void HostedThumbnailGrabber::invalidateAll()
+{
+    for (auto it = m_generations.begin(); it != m_generations.end(); ++it) {
+        ++it.value();
+    }
+}
+
+void HostedThumbnailGrabber::cancel(const QString &persistentId,
+                                    quint64 generation)
+{
+    if (!persistentId.isEmpty()
+            && m_generations.value(persistentId) == generation) {
         ++m_generations[persistentId];
     }
 }
@@ -87,8 +114,20 @@ void HostedThumbnailGrabber::handleGrabReady()
     }
 
     const Capture capture = m_grabs.take(result);
-    const QImage image = capture.result->image();
+    QImage image = capture.result->image();
     if (image.isNull() || !current(capture)) {
+        return;
+    }
+
+    const QSize scaledSize = image.size().scaled(
+                capture.targetSize, Qt::KeepAspectRatioByExpanding);
+    if (image.size() != scaledSize) {
+        image = image.scaled(scaledSize, Qt::IgnoreAspectRatio,
+                             Qt::SmoothTransformation);
+    }
+    image = image.copy(0, 0, capture.targetSize.width(),
+                       capture.targetSize.height());
+    if (image.isNull()) {
         return;
     }
 
@@ -100,6 +139,8 @@ void HostedThumbnailGrabber::handleGrabReady()
                                          image, capture.persistentId,
                                          capture.locationRevision,
                                          capture.generation));
+    emit grabReady(capture.persistentId, capture.location,
+                   capture.locationRevision, capture.generation);
 }
 
 void HostedThumbnailGrabber::handleWriteFinished()

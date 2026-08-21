@@ -29,6 +29,8 @@ Page {
 
     signal hostedThumbnailUpdated(string persistentId, string location,
                                   string locationRevision, string fileName)
+    signal hostedThumbnailGrabbed(string persistentId, string location,
+                                  string locationRevision, real generation)
 
     readonly property bool active: status == PageStatus.Active
     property bool tabPageActive
@@ -1434,6 +1436,7 @@ Page {
 
     property bool _hostedThumbnailCapturePending
     property bool _hostedThumbnailCaptureScheduled
+    property bool _hostedThumbnailCaptureSuspended
     property int _hostedThumbnailRequiredGeneration: 1
 
     function resetHostedThumbnailCapture(hostView) {
@@ -1445,7 +1448,8 @@ Page {
     }
 
     function scheduleHostedThumbnailCapture(hostView) {
-        if (!_hostedThumbnailCaptureScheduled) {
+        if (!_hostedThumbnailCaptureSuspended
+                && !_hostedThumbnailCaptureScheduled) {
             _hostedThumbnailCaptureScheduled = true
             hostedThumbnailCaptureTimer.restart()
         }
@@ -1461,7 +1465,10 @@ Page {
         }
     }
 
-    function captureHostedThumbnail() {
+    function captureHostedThumbnail(tabViewCapture) {
+        if (_hostedThumbnailCaptureSuspended && !tabViewCapture) {
+            return null
+        }
         var hostView = chromeHostView
         if (!hostView || webView.privateMode || !browserPage.active
                 || !hostView.active || !hostView.visible) {
@@ -1477,13 +1484,62 @@ Page {
             if (String(tab.tabId) === hostView.selectedTabId
                     && String(tab.location).length
                     && String(tab.location) !== "about:blank") {
-                return hostedThumbnailGrabber.grab(hostView, persistentId,
-                                                    String(tab.location),
-                                                    String(tab.locationRevision),
-                                                    thumbnailSize)
+                var generation = hostedThumbnailGrabber.grab(
+                            hostView, persistentId, String(tab.location),
+                            String(tab.locationRevision),
+                            webView.thumbnailCaptureSize())
+                if (generation) {
+                    return {
+                        "persistentId": persistentId,
+                        "location": String(tab.location),
+                        "locationRevision": String(tab.locationRevision),
+                        "generation": generation
+                    }
+                }
             }
         }
-        return false
+        return null
+    }
+
+    function beginHostedTabViewThumbnailCapture() {
+        // No other capture may supersede this one before the tab page has
+        // deactivated the hosted view. Resume automatic captures when the
+        // browser page becomes active again.
+        hostedThumbnailCaptureTimer.stop()
+        _hostedThumbnailCapturePending = false
+        _hostedThumbnailCaptureScheduled = false
+        _hostedThumbnailCaptureSuspended = true
+        hostedThumbnailGrabber.invalidateAll()
+        var capture = captureHostedThumbnail(true)
+        if (!capture) {
+            requestHostedThumbnailRetry()
+        }
+        return capture
+    }
+
+    function resumeHostedThumbnailCapture() {
+        if (!_hostedThumbnailCaptureSuspended) {
+            return
+        }
+        _hostedThumbnailCaptureSuspended = false
+        var hostView = chromeHostView
+        if (_hostedThumbnailCapturePending && hostView
+                && hostView.platformFrameGeneration
+                   >= _hostedThumbnailRequiredGeneration) {
+            scheduleHostedThumbnailCapture(hostView)
+        }
+    }
+
+    function requestHostedThumbnailRetry() {
+        var hostView = chromeHostView
+        _hostedThumbnailCapturePending = true
+        _hostedThumbnailRequiredGeneration = hostView
+                ? hostView.platformFrameGeneration : 1
+    }
+
+    function cancelHostedThumbnailCapture(persistentId, generation) {
+        hostedThumbnailGrabber.cancel(persistentId, generation)
+        requestHostedThumbnailRetry()
     }
 
     Timer {
@@ -1556,6 +1612,9 @@ Page {
         }
     }
     onStatusChanged: {
+        if (status == PageStatus.Active) {
+            resumeHostedThumbnailCapture()
+        }
         if (overlay.enteringNewTabUrl
                 || webView.tabModel.count === 0) {
             return
@@ -1702,6 +1761,8 @@ Page {
     HostedThumbnailGrabber {
         id: hostedThumbnailGrabber
 
+        onGrabReady: browserPage.hostedThumbnailGrabbed(
+                         persistentId, location, locationRevision, generation)
         onCaptureReady: browserPage.updateHostedThumbnail(persistentId, location,
                                                            locationRevision, fileName)
     }
