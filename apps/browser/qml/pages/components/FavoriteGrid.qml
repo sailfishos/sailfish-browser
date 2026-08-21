@@ -276,9 +276,7 @@ IconGridViewBase {
 
             Component.onDestruction: stopWaitingForThumbnail()
 
-            Timer {
-                id: thumbnailWaitTimer
-
+            property Timer thumbnailWaitTimer: Timer {
                 interval: 2000
                 onTriggered: hostedFetcher.finish(hostedFetcher.data, false)
             }
