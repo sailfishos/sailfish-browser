@@ -1023,7 +1023,7 @@ Page {
             break
         case "chrome:contentloaded":
             if (selected) {
-                captureHostedThumbnail()
+                requestHostedThumbnail()
             }
             break
         }
@@ -1432,15 +1432,44 @@ Page {
         return null
     }
 
+    property bool _hostedThumbnailCapturePending
+    property bool _hostedThumbnailCaptureScheduled
+    property int _hostedThumbnailRequiredGeneration: 1
+
+    function resetHostedThumbnailCapture(hostView) {
+        hostedThumbnailCaptureTimer.stop()
+        _hostedThumbnailCapturePending = false
+        _hostedThumbnailCaptureScheduled = false
+        _hostedThumbnailRequiredGeneration = hostView
+                ? hostView.platformFrameGeneration + 1 : 1
+    }
+
+    function scheduleHostedThumbnailCapture(hostView) {
+        if (!_hostedThumbnailCaptureScheduled) {
+            _hostedThumbnailCaptureScheduled = true
+            hostedThumbnailCaptureTimer.restart()
+        }
+    }
+
+    function requestHostedThumbnail() {
+        _hostedThumbnailCapturePending = true
+        var hostView = chromeHostView
+        if (hostView && hostView.platformFrameGeneration
+                >= _hostedThumbnailRequiredGeneration
+                && !_hostedThumbnailCaptureScheduled) {
+            scheduleHostedThumbnailCapture(hostView)
+        }
+    }
+
     function captureHostedThumbnail() {
         var hostView = chromeHostView
         if (!hostView || webView.privateMode || !browserPage.active
                 || !hostView.active || !hostView.visible) {
-            return
+            return false
         }
         var persistentId = selectedPersistentId(hostView)
         if (!persistentId.length) {
-            return
+            return false
         }
         var tabs = hostView.tabModel.snapshot()
         for (var index = 0; index < tabs.length; ++index) {
@@ -1448,12 +1477,27 @@ Page {
             if (String(tab.tabId) === hostView.selectedTabId
                     && String(tab.location).length
                     && String(tab.location) !== "about:blank") {
-                hostedThumbnailGrabber.grab(hostView, persistentId,
-                                            String(tab.location),
-                                            String(tab.locationRevision),
-                                            thumbnailSize)
-                return
+                return hostedThumbnailGrabber.grab(hostView, persistentId,
+                                                    String(tab.location),
+                                                    String(tab.locationRevision),
+                                                    thumbnailSize)
             }
+        }
+        return false
+    }
+
+    Timer {
+        id: hostedThumbnailCaptureTimer
+
+        interval: 100
+        onTriggered: {
+            browserPage._hostedThumbnailCaptureScheduled = false
+            var hostView = chromeHostView
+            if (browserPage.captureHostedThumbnail()) {
+                browserPage._hostedThumbnailCapturePending = false
+            }
+            browserPage._hostedThumbnailRequiredGeneration = hostView
+                    ? hostView.platformFrameGeneration + 1 : 1
         }
     }
 
@@ -1849,21 +1893,22 @@ Page {
                                       || webView.fixedToolbarConfig.value
                                       || overlay.toolBar.findInPageActive
                                       ? 0 : webView.toolbarHeight
-                margins: Qt.margins(0, 0, 0,
-                                    virtualKeyboardObserver.opened
-                                    ? virtualKeyboardObserver.imSize
-                                    : (webView.fixedToolbarConfig.value
-                                       || overlay.toolBar.findInPageActive
-                                       ? webView.toolbarHeight : 0))
-                safeAreaInsets: Qt.margins(
-                                    browserPage.hostedDisplayCutoutAllowed
-                                    ? webView._contentCutoutLeft : 0,
-                                    browserPage.hostedDisplayCutoutAllowed
-                                    ? webView._contentCutoutTop : 0,
-                                    browserPage.hostedDisplayCutoutAllowed
-                                    ? webView._contentCutoutRight : 0,
-                                    browserPage.hostedDisplayCutoutAllowed
-                                    ? webView._contentCutoutBottom : 0)
+                marginTop: 0
+                marginRight: 0
+                marginBottom: virtualKeyboardObserver.opened
+                              ? virtualKeyboardObserver.imSize
+                              : (webView.fixedToolbarConfig.value
+                                 || overlay.toolBar.findInPageActive
+                                 ? webView.toolbarHeight : 0)
+                marginLeft: 0
+                safeAreaInsetTop: browserPage.hostedDisplayCutoutAllowed
+                                  ? webView._contentCutoutTop : 0
+                safeAreaInsetRight: browserPage.hostedDisplayCutoutAllowed
+                                    ? webView._contentCutoutRight : 0
+                safeAreaInsetBottom: browserPage.hostedDisplayCutoutAllowed
+                                     ? webView._contentCutoutBottom : 0
+                safeAreaInsetLeft: browserPage.hostedDisplayCutoutAllowed
+                                   ? webView._contentCutoutLeft : 0
                 throttlePainting: !webView.foreground && !webView.resourceController.videoActive
                                   && webView.visible || !webView.visible
 
@@ -1887,6 +1932,8 @@ Page {
                 Component.onDestruction: webView.clearHostedState()
 
                 onSelectedTabChanged: {
+                    browserPage.resetHostedThumbnailCapture(chromeView)
+                    browserPage.requestHostedThumbnail()
                     browserPage.clearHostedSelection()
                     browserPage._hostedMetadataTitle = ""
                     browserPage._hostedFavicon = ""
@@ -1901,17 +1948,25 @@ Page {
 
                 onLoadingChanged: {
                     if (loading) {
+                        browserPage.resetHostedThumbnailCapture(chromeView)
                         browserPage._hostedMetadataTitle = ""
                         browserPage._hostedFavicon = ""
                         browserPage._hostedAcceptedTouchIcon = false
                         webView.findInPageHasResult = false
                     } else {
-                        browserPage.captureHostedThumbnail()
+                        browserPage.requestHostedThumbnail()
                     }
                     browserPage.syncHostedContainerState(chromeView)
                 }
 
-                onFirstPaint: browserPage.captureHostedThumbnail()
+                onFirstPaint: browserPage.requestHostedThumbnail()
+                onPlatformFrameGenerationChanged: {
+                    if (browserPage._hostedThumbnailCapturePending
+                            && platformFrameGeneration
+                               >= browserPage._hostedThumbnailRequiredGeneration) {
+                        browserPage.scheduleHostedThumbnailCapture(chromeView)
+                    }
+                }
                 onTouched: {
                     if (browserPage.contentFullscreen) {
                         fullscreenCloseVisibleTimer.restart()
