@@ -515,8 +515,11 @@ Page {
             "hostView": hostView,
             "tabId": String(tabId),
             "persistentId": String(persistentId || ""),
-            "locationRevision": data && data.locationRevision !== undefined
-                                ? String(data.locationRevision) : "",
+            // The content bridge can deliver a modal request before the
+            // runtime tab snapshot observes the same navigation revision.
+            // Tab and persistent ids still bind the request to its source;
+            // requiring the snapshot revision here drops valid dialogs.
+            "locationRevision": "",
             "message": message,
             "data": data || {}
         }
@@ -924,13 +927,6 @@ Page {
 
         var tab = hostedRuntimeTabByRuntimeId(hostView, targetTabId)
         var selected = hostView && String(hostView.selectedTabId) === targetTabId
-        var targetLocationRevision = data && data.locationRevision !== undefined
-                ? String(data.locationRevision) : ""
-        if (targetLocationRevision.length
-                && (!tab || String(tab.locationRevision) !== targetLocationRevision)) {
-            return
-        }
-
         // PickerOpener registers its listeners session-wide, but its delayed
         // replies must retain the tab that made this request.
         if (openHostedPicker(hostView, targetTabId, targetPersistentId,
@@ -1036,10 +1032,8 @@ Page {
             return
         }
 
-        // Raw hosted QmlMozView does not receive DeclarativeWebPage's legacy
-        // ViewInitialized setup, so install embedhelper before listeners that
-        // receive its selection, form, input and context-menu traffic.
-        hostView.loadFrameScript("chrome://embedlite/content/embedhelper.js")
+        // QmlMozView registers EmbedLite's core helper for every hosted tab.
+        // Install only the Browser-specific frame scripts here.
         hostView.loadFrameScript("file:///usr/share/sailfish-browser/shared/ViewportFit.js")
         hostView.loadFrameScript("file:///usr/share/sailfish-browser/shared/PageMetadata.js")
 
