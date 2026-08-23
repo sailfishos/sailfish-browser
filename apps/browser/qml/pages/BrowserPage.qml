@@ -53,17 +53,24 @@ Page {
     readonly property var security: chromeHostView ? chromeHostView.security : webView.security
     readonly property bool contentFullscreen: chromeHostView ? chromeHostView.fullscreen
                                                         : webView.contentFullscreen
+    readonly property int _hostedCutoutTop: webView._hostBaseCutoutTop
+    readonly property int _hostedCutoutRight: webView._hostBaseCutoutRight
+    readonly property int _hostedCutoutBottom: webView._hostBaseCutoutBottom
+    readonly property int _hostedCutoutLeft: webView._hostBaseCutoutLeft
+    readonly property int _hostedCutoutInsetUsage: webView._safeAreaInsetUsage(
+            _hostedCutoutTop, _hostedCutoutRight, _hostedCutoutBottom, _hostedCutoutLeft)
     readonly property bool hostedDisplayCutoutAllowed: contentFullscreen
             || (_hostedViewportFit === "cover"
                 && (webView.cutoutGuardConfig.value === "strict"
                     || (webView.cutoutGuardConfig.value === "top_guard"
-                        && (_hostedSafeAreaInsetUsage & webView._contentCutoutInsetUsage)
-                            === webView._contentCutoutInsetUsage)))
+                        && (_hostedSafeAreaInsetUsage & _hostedCutoutInsetUsage)
+                            === _hostedCutoutInsetUsage)))
     property string _hostedMetadataTitle
     property string _hostedFavicon
     property bool _hostedAcceptedTouchIcon
     property string _hostedViewportFit
     property int _hostedSafeAreaInsetUsage
+    property var _hostedViewportFitStates: ({})
     property string _hostedOrientationName
     property real _hostedOrientationFrameBaseline
     property bool _hostedOrientationAcknowledged
@@ -438,6 +445,54 @@ Page {
             }
         }
         return null
+    }
+
+    function applyHostedViewportFitState(hostView) {
+        _hostedViewportFit = ""
+        _hostedSafeAreaInsetUsage = 0
+        if (!hostView || !String(hostView.selectedTabId).length) {
+            return
+        }
+
+        var runtimeId = String(hostView.selectedTabId)
+        var tab = hostedRuntimeTabByRuntimeId(hostView, runtimeId)
+        var state = _hostedViewportFitStates[runtimeId]
+        if (!tab || !state
+                || state.persistentId !== String(tab.persistentId)
+                || state.locationRevision !== String(tab.locationRevision)) {
+            return
+        }
+
+        _hostedViewportFit = state.viewportFit
+        _hostedSafeAreaInsetUsage = state.safeAreaInsetUsage
+    }
+
+    function updateHostedViewportFitState(hostView, tabId, persistentId, data) {
+        var runtimeId = String(tabId)
+        var tab = hostedRuntimeTabByRuntimeId(hostView, runtimeId)
+        var eventRevision = data && data.locationRevision !== undefined
+                ? String(data.locationRevision) : ""
+        if (!tab || (persistentId
+                     && String(tab.persistentId) !== String(persistentId))
+                || (eventRevision.length
+                    && eventRevision !== String(tab.locationRevision))) {
+            return
+        }
+
+        var states = {}
+        for (var key in _hostedViewportFitStates) {
+            states[key] = _hostedViewportFitStates[key]
+        }
+        states[runtimeId] = {
+            "persistentId": String(tab.persistentId),
+            "locationRevision": String(tab.locationRevision),
+            "viewportFit": data.viewportFit || data.value || "",
+            "safeAreaInsetUsage": Number(data.safeAreaInsetUsage || 0)
+        }
+        _hostedViewportFitStates = states
+        if (hostView && String(hostView.selectedTabId) === runtimeId) {
+            applyHostedViewportFitState(hostView)
+        }
     }
 
     function hostedMessageTabIsLive(hostView, tabId, persistentId) {
@@ -1068,10 +1123,8 @@ Page {
             }
             break
         case "embed:viewportfit":
-            if (selected) {
-                _hostedViewportFit = data.viewportFit || data.value || ""
-                _hostedSafeAreaInsetUsage = Number(data.safeAreaInsetUsage || 0)
-            }
+            updateHostedViewportFitState(hostView, targetTabId,
+                                         targetPersistentId, data)
             break
         case "embed:fullscreenchanged":
             if (selected && hostView.fullscreen) {
@@ -2016,8 +2069,19 @@ Page {
                 property QtObject pickerOpener
                 property QtObject popupOpener
 
-                anchors.fill: parent
+                anchors {
+                    fill: parent
+                    topMargin: browserPage.hostedDisplayCutoutAllowed
+                               ? 0 : browserPage._hostedCutoutTop
+                    rightMargin: browserPage.hostedDisplayCutoutAllowed
+                                 ? 0 : browserPage._hostedCutoutRight
+                    bottomMargin: browserPage.hostedDisplayCutoutAllowed
+                                  ? 0 : browserPage._hostedCutoutBottom
+                    leftMargin: browserPage.hostedDisplayCutoutAllowed
+                                ? 0 : browserPage._hostedCutoutLeft
+                }
                 active: browserPage.active && !webView.privateMode
+                orientation: webView._screenOrientation
                 clip: true
                 focus: true
                 visible: !webView.privateMode
@@ -2034,13 +2098,13 @@ Page {
                                  ? webView.toolbarHeight : 0)
                 marginLeft: 0
                 safeAreaInsetTop: browserPage.hostedDisplayCutoutAllowed
-                                  ? webView._contentCutoutTop : 0
+                                  ? browserPage._hostedCutoutTop : 0
                 safeAreaInsetRight: browserPage.hostedDisplayCutoutAllowed
-                                    ? webView._contentCutoutRight : 0
+                                    ? browserPage._hostedCutoutRight : 0
                 safeAreaInsetBottom: browserPage.hostedDisplayCutoutAllowed
-                                     ? webView._contentCutoutBottom : 0
+                                     ? browserPage._hostedCutoutBottom : 0
                 safeAreaInsetLeft: browserPage.hostedDisplayCutoutAllowed
-                                   ? webView._contentCutoutLeft : 0
+                                   ? browserPage._hostedCutoutLeft : 0
                 throttlePainting: !webView.foreground && !webView.resourceController.videoActive
                                   && webView.visible || !webView.visible
 
@@ -2070,8 +2134,7 @@ Page {
                     browserPage._hostedMetadataTitle = ""
                     browserPage._hostedFavicon = ""
                     browserPage._hostedAcceptedTouchIcon = false
-                    browserPage._hostedViewportFit = ""
-                    browserPage._hostedSafeAreaInsetUsage = 0
+                    browserPage.applyHostedViewportFitState(chromeView)
                     browserPage.applyRuntimeSnapshot(false, chromeView)
                     browserPage.syncHostedDesktopMode(chromeView)
                     browserPage.syncHostedContainerState(chromeView)
@@ -2146,6 +2209,7 @@ Page {
                     target: chromeView.tabModel
                     ignoreUnknownSignals: true
                     onRevisionChanged: {
+                        browserPage.applyHostedViewportFitState(chromeView)
                         browserPage.applyRuntimeSnapshot(false, chromeView)
                         browserPage.syncHostedDesktopMode(chromeView)
                     }
