@@ -24,7 +24,9 @@ Rectangle {
     signal applyContentOrientation
 
     anchors.fill: parent
-    opacity: (running || waitForWebContentOrientationChanged) && orientationChangeTimeout.running ? 1.0 : 0.0
+    opacity: running
+             || (waitForWebContentOrientationChanged && orientationChangeTimeout.running)
+             ? 1.0 : 0.0
 
     Timer {
         id: orientationChangeTimeout

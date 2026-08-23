@@ -64,6 +64,9 @@ Page {
     property bool _hostedAcceptedTouchIcon
     property string _hostedViewportFit
     property int _hostedSafeAreaInsetUsage
+    property string _hostedOrientationName
+    property real _hostedOrientationFrameBaseline
+    property bool _hostedOrientationAcknowledged
     property Item _hostedTextSelectionController
     property string _hostedSelectionTabId
     property var _pendingHostedClipboardPaste
@@ -108,6 +111,68 @@ Page {
                                   !!view.loading, view.loadProgress,
                                   !!view.canGoBack, !!view.canGoForward,
                                   view.security, !!notifySecurity)
+    }
+
+    function hostedOrientationName(orientation) {
+        switch (orientation) {
+        case Orientation.Portrait:
+            return "portrait-primary"
+        case Orientation.Landscape:
+            return "landscape-primary"
+        case Orientation.PortraitInverted:
+            return "portrait-secondary"
+        case Orientation.LandscapeInverted:
+            return "landscape-secondary"
+        default:
+            return ""
+        }
+    }
+
+    function beginHostedOrientationWait(hostView, orientation) {
+        if (!hostView || !hostView.active) {
+            hostedOrientationMaskTimeout.stop()
+            _hostedOrientationName = ""
+            _hostedOrientationAcknowledged = false
+            return false
+        }
+
+        _hostedOrientationName = hostedOrientationName(orientation)
+        _hostedOrientationFrameBaseline = hostView.platformFrameGeneration
+        _hostedOrientationAcknowledged = false
+        orientationFader.waitForWebContentOrientationChanged = true
+        hostedOrientationMaskTimeout.restart()
+        return true
+    }
+
+    function acknowledgeHostedOrientation(hostView, orientation) {
+        if (!orientationFader.waitForWebContentOrientationChanged
+                || !hostView || hostView !== chromeHostView
+                || (_hostedOrientationName
+                    && String(orientation) !== _hostedOrientationName)) {
+            return
+        }
+
+        _hostedOrientationFrameBaseline = hostView.platformFrameGeneration
+        _hostedOrientationAcknowledged = true
+    }
+
+    function noteHostedOrientationFrame(hostView) {
+        if (!orientationFader.waitForWebContentOrientationChanged
+                || !_hostedOrientationAcknowledged
+                || !hostView || hostView !== chromeHostView
+                || hostView.platformFrameGeneration
+                   < _hostedOrientationFrameBaseline + 2) {
+            return
+        }
+
+        finishHostedOrientationWait()
+    }
+
+    function finishHostedOrientationWait() {
+        hostedOrientationMaskTimeout.stop()
+        _hostedOrientationName = ""
+        _hostedOrientationAcknowledged = false
+        orientationFader.waitForWebContentOrientationChanged = false
     }
 
     function sendHostedMessageToTab(hostView, tabId, persistentId, name, data,
@@ -1015,7 +1080,7 @@ Page {
             break
         case "embed:contentOrientationChanged":
             if (selected) {
-                orientationFader.waitForWebContentOrientationChanged = false
+                acknowledgeHostedOrientation(hostView, data.orientation)
                 hostView.update()
             }
             break
@@ -1637,6 +1702,7 @@ Page {
     Shared.OrientationFader {
         id: orientationFader
 
+        z: browserPage.chromeHostMode ? 100 : 0
         visible: browserPage.chromeHostView || webView.contentItem
         page: browserPage
         fadeTarget: overlay.animator.allowContentUse ? overlay : overlay.dragArea
@@ -1648,6 +1714,13 @@ Page {
                                       : "white")
 
         onApplyContentOrientation: webView.applyContentOrientation(browserPage.orientation)
+    }
+
+    Timer {
+        id: hostedOrientationMaskTimeout
+
+        interval: 800
+        onTriggered: browserPage.finishHostedOrientationWait()
     }
 
     HistoryModel {
@@ -1723,7 +1796,11 @@ Page {
         onWebContentOrientationChanged: orientationFader.waitForWebContentOrientationChanged = false
 
         function applyContentOrientation(orientation) {
-            orientationFader.waitForWebContentOrientationChanged = (contentItem && contentItem.active)
+            if (!browserPage.beginHostedOrientationWait(browserPage.chromeHostView,
+                                                        orientation)) {
+                orientationFader.waitForWebContentOrientationChanged
+                        = (contentItem && contentItem.active)
+            }
 
             switch (orientation) {
             case Orientation.None:
@@ -2016,6 +2093,7 @@ Page {
 
                 onFirstPaint: browserPage.requestHostedThumbnail()
                 onPlatformFrameGenerationChanged: {
+                    browserPage.noteHostedOrientationFrame(chromeView)
                     if (browserPage._hostedThumbnailCapturePending
                             && platformFrameGeneration
                                >= browserPage._hostedThumbnailRequiredGeneration) {
