@@ -1127,8 +1127,12 @@ Page {
                                          targetPersistentId, data)
             break
         case "embed:fullscreenchanged":
-            if (selected && hostView.fullscreen) {
-                overlay.dismiss(true)
+            if (selected) {
+                if (hostView.fullscreen) {
+                    overlay.animator.showFullscreen()
+                } else {
+                    overlay.animator.showChrome()
+                }
             }
             break
         case "embed:contentOrientationChanged":
@@ -2180,7 +2184,9 @@ Page {
                 onVisibleChanged: browserPage.updateHostedViewSuspension(chromeView)
                 onFullscreenChanged: {
                     if (fullscreen) {
-                        overlay.dismiss(true)
+                        overlay.animator.showFullscreen()
+                    } else {
+                        overlay.animator.showChrome()
                     }
                 }
 
