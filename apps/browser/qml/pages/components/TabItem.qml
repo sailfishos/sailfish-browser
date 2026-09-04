@@ -13,8 +13,9 @@
 import QtQuick 2.1
 import QtGraphicalEffects 1.0
 import Sailfish.Silica 1.0
+import Sailfish.Silica.private 1.0 as Private
 
-BackgroundItem {
+Private.SwipeItem {
     id: root
 
     // Expose GridView for all items
@@ -28,6 +29,23 @@ BackgroundItem {
     implicitHeight: height
 
     enabled: !destroying
+
+    drag {
+        minimumX: -swipeDistance
+        maximumX: 0
+    }
+
+    onSwipedAway: removeTab()
+
+    function removeTab() {
+        // Break binding, so that texture size would not change when
+        // closing tab (animating height).
+        root.implicitHeight = root.height
+        root.implicitWidth = root.width
+
+        destroying = true
+        removeTimer.running = true
+    }
 
     layer.enabled: true
     layer.effect: OpacityMask {
@@ -46,121 +64,110 @@ BackgroundItem {
 
     onClicked: view.activateTab(index)
 
-    // contentItem is hidden so this cannot be children of the contentItem.
-    // So, making them as siblings of the contentItem.
-    data: [
-        Item {
-            width: root.implicitWidth
-            height: root.implicitHeight
-            layer.effect: PressEffect {}
-            layer.enabled: _showPress
+    Item {
+        width: root.implicitWidth
+        height: root.implicitHeight
+        layer.effect: PressEffect {}
+        layer.enabled: _showPress
 
-            Rectangle {
+        Rectangle {
+            anchors.fill: parent
+            color: Theme.colorScheme === Theme.LightOnDark ? "black" : "white"
+
+            ColorOverlay {
                 anchors.fill: parent
-                color: Theme.colorScheme === Theme.LightOnDark ? "black" : "white"
-
-                ColorOverlay {
-                    anchors.fill: parent
-                    source: parent
-                    color: Theme.primaryColor
-                    opacity: Theme.colorScheme === Theme.LightOnDark ? Theme.opacityFaint : 0.01
-                }
-                ColorOverlay {
-                    anchors.fill: parent
-                    source: parent
-                    color: root.highlightColor
-                    opacity: activeTab ? 0.1 : 0.0
-                }
+                source: parent
+                color: Theme.primaryColor
+                opacity: Theme.colorScheme === Theme.LightOnDark ? Theme.opacityFaint : 0.01
             }
-
-            Item {
-                id: header
-
-                width: root.implicitWidth
-                height: iconHeader.height + Theme.paddingMedium * 2
-
-                Image {
-                    id: iconHeader
-
-                    anchors {
-                        left: parent.left
-                        leftMargin: Theme.paddingMedium
-                        verticalCenter: parent.verticalCenter
-                    }
-
-                    height: Theme.iconSizeSmall
-                    width: height
-                    // TODO: Add favicon
-                    // source: favicon
-                    cache: false
-                    asynchronous: true
-                }
-
-                Label {
-                    id: titleLabel
-
-                    anchors {
-                        left: iconHeader.right
-                        leftMargin: Theme.paddingMedium
-                        right: close.left
-                        rightMargin: Theme.paddingMedium
-                        verticalCenter: iconHeader.verticalCenter
-                    }
-
-                    text: title || WebUtils.displayableUrl(url)
-                    verticalAlignment: Qt.AlignVCenter
-                    truncationMode: TruncationMode.Fade
-                    color: down || activeTab ? root.highlightColor : Theme.primaryColor
-                }
-
-                IconButton {
-                    id: close
-
-                    anchors {
-                        right: parent.right
-                        top: parent.top
-                        verticalCenter: iconHeader.verticalCenter
-                    }
-                    icon.color: Theme.primaryColor
-                    icon.highlightColor: root.highlightColor
-                    icon.highlighted: down
-                    icon.anchors.horizontalCenterOffset: Theme.paddingMedium
-
-                    icon.source: "image://theme/icon-s-clear-opaque-cross"
-                    onClicked: {
-                        // Break binding, so that texture size would not change when
-                        // closing tab (animating height).
-                        root.implicitHeight = root.height
-                        root.implicitWidth = root.width
-
-                        destroying = true
-                        removeTimer.running = true
-                    }
-                }
+            ColorOverlay {
+                anchors.fill: parent
+                source: parent
+                color: root.highlightColor
+                opacity: activeTab ? 0.1 : 0.0
             }
+        }
+
+        Item {
+            id: header
+
+            width: root.implicitWidth
+            height: iconHeader.height + Theme.paddingMedium * 2
+
             Image {
-                id: image
+                id: iconHeader
 
-                source: thumbnailPath
-                y: header.height
-                width: root.implicitWidth
-                height: root.implicitHeight
+                anchors {
+                    left: parent.left
+                    leftMargin: Theme.paddingMedium
+                    verticalCenter: parent.verticalCenter
+                }
 
+                height: Theme.iconSizeSmall
+                width: height
+                // TODO: Add favicon
+                // source: favicon
                 cache: false
                 asynchronous: true
-                opacity: status !== Image.Ready && source !== "" ? 0.0 : 1.0
-                fillMode: Image.PreserveAspectCrop
-                horizontalAlignment: Image.AlignLeft
-                verticalAlignment: Image.AlignTop
-                Behavior on opacity { FadeAnimation {} }
-
             }
-        },
-        Timer {
-            id: removeTimer
 
-            interval: 16
-            onTriggered: view.closeTab(index)
+            Label {
+                id: titleLabel
+
+                anchors {
+                    left: iconHeader.right
+                    leftMargin: Theme.paddingMedium
+                    right: close.left
+                    rightMargin: Theme.paddingMedium
+                    verticalCenter: iconHeader.verticalCenter
+                }
+
+                text: title || WebUtils.displayableUrl(url)
+                verticalAlignment: Qt.AlignVCenter
+                truncationMode: TruncationMode.Fade
+                color: down || activeTab ? root.highlightColor : Theme.primaryColor
+            }
+
+            IconButton {
+                id: close
+
+                anchors {
+                    right: parent.right
+                    top: parent.top
+                    verticalCenter: iconHeader.verticalCenter
+                }
+                icon.color: Theme.primaryColor
+                icon.highlightColor: root.highlightColor
+                icon.highlighted: down
+                icon.anchors.horizontalCenterOffset: Theme.paddingMedium
+
+                icon.source: "image://theme/icon-s-clear-opaque-cross"
+                onClicked: root.removeTab()
+            }
         }
-    ]
+        Image {
+            id: image
+
+            source: thumbnailPath
+            y: header.height
+            width: root.implicitWidth
+            height: root.implicitHeight
+
+            cache: false
+            asynchronous: true
+            opacity: status !== Image.Ready && source !== "" ? 0.0 : 1.0
+            fillMode: Image.PreserveAspectCrop
+            horizontalAlignment: Image.AlignLeft
+            verticalAlignment: Image.AlignTop
+            Behavior on opacity { FadeAnimation {} }
+
+        }
+    }
+
+    Timer {
+        id: removeTimer
+
+        interval: 16
+        onTriggered: view.closeTabAtIndex(index)
+    }
 }

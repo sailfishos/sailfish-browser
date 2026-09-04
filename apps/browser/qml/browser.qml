@@ -10,20 +10,48 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import QtQuick 2.2
+import Sailfish.Silica 1.0
 import "pages"
 import "shared"
 
 BrowserWindow {
     id: window
 
+    hostedContent: rootPage && rootPage.chromeHostMode
+
     function setBrowserCover(model) {
         if (!model || model.count === 0 || !WebUtils.firstUseDone) {
             cover = Qt.resolvedUrl("cover/NoTabsCover.qml")
+        } else if (hostedContent) {
+            cover = hostedPageCover
         } else {
             if (cover != null && window.webView) {
                 window.webView.clearSurface()
             }
             cover = null
+        }
+    }
+
+    onHostedContentChanged: setBrowserCover(webView ? webView.tabModel : null)
+
+    Component {
+        id: hostedPageCover
+
+        CoverBackground {
+            Repeater {
+                model: window.webView
+                        ? window.webView.persistentTabModel : null
+
+                delegate: Image {
+                    anchors.fill: parent
+                    source: activeTab ? thumbnailPath : ""
+                    cache: false
+                    asynchronous: true
+                    fillMode: Image.PreserveAspectCrop
+                    horizontalAlignment: Image.AlignLeft
+                    verticalAlignment: Image.AlignTop
+                }
+            }
         }
     }
 
