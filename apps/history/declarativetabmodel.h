@@ -28,6 +28,8 @@ protected:
     Q_PROPERTY(int activeTabIndex READ activeTabIndex NOTIFY activeTabIndexChanged FINAL)
     Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
     Q_PROPERTY(bool loaded READ loaded NOTIFY loadedChanged FINAL)
+    Q_PROPERTY(bool runtimeAuthoritative READ runtimeAuthoritative
+               WRITE setRuntimeAuthoritative NOTIFY runtimeAuthoritativeChanged FINAL)
 
 public:
     DeclarativeTabModel(int nextTabId, DeclarativeWebContainer *webContainer = 0);
@@ -58,6 +60,11 @@ public:
     int count() const;
     bool activateTabById(int tabId);
     void removeTabById(int tabId, bool activeTab);
+    bool requestRuntimeTabNavigation(int tabId, const QString &url,
+                                     bool fromExternal = false);
+    Q_INVOKABLE bool runtimeNavigateTab(const QString &persistentId,
+                                        const QString &url,
+                                        bool fromExternal = false);
     // C++ only: parentId and browsingContext better not to leak to QML side.
     int newTab(const QString &url, int parentId, uintptr_t browsingContext, bool hidden, bool fromExternal);
 
@@ -69,6 +76,8 @@ public:
     int nextTabId() const;
 
     bool loaded() const;
+    bool runtimeAuthoritative() const;
+    void setRuntimeAuthoritative(bool authoritative);
 
     const QList<Tab>& tabs() const;
     const Tab& activeTab() const;
@@ -90,6 +99,14 @@ signals:
     void tabClosed(int tabId);
     void loadedChanged();
     void newTabRequested(const Tab& tab, bool fromExternal);
+    void runtimeAuthoritativeChanged();
+    void runtimeNewTabRequested(const QString &url, const QString &persistentId,
+                                bool fromExternal);
+    void runtimeTabActivationRequested(const QString &persistentId, bool reload);
+    void runtimeTabNavigationRequested(const QString &persistentId,
+                                       const QString &url, bool fromExternal);
+    void runtimeTabCloseRequested(const QString &persistentId);
+    void runtimeTabsClearRequested();
 
 protected:
     void addTab(const Tab &tab, int index);
@@ -118,6 +135,7 @@ protected:
     QList<Tab> m_tabs;
 
     bool m_loaded;
+    bool m_runtimeAuthoritative;
     int m_nextTabId;
 
     bool m_unittestMode;

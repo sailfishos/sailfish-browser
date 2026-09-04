@@ -29,11 +29,16 @@ public:
 
     void createTab(const Tab &tab);
     void getAllTabs();
+    void getPersistentTabRestoreBatch();
     void removeTab(int tabId);
     void removeAllTabs();
     void navigateTo(int tabId, const QString &url, const QString &title = QString(), const QString &path = QString());
     void goForward(int tabId);
     void goBack(int tabId);
+    QString peekForwardTarget(int tabId);
+    QString peekBackTarget(int tabId);
+    QString goForwardTarget(int tabId);
+    QString goBackTarget(int tabId);
 
     void updateThumbPath(int tabId, const QString &path);
     void updateUrl(int tabId, const QString &requestedUrl, const QString &resolvedUrl);
@@ -42,6 +47,7 @@ public:
     void removeHistoryEntry(int linkId);
     void removeHistoryEntry(const QString &url);
     void addHistoryEntry(const QString &url, const QString &title);
+    void updateHistoryTitle(const QString &url, const QString &title);
     void clearHistory(int period = 0);
     void getHistory(const QString &filter = "");
     void getTabHistory(int tabId);
@@ -54,6 +60,7 @@ public:
 
 signals:
     void tabsAvailable(QList<Tab> tab);
+    void persistentTabRestoreBatchAvailable(PersistentTabRestoreBatch batch);
     void historyAvailable(QList<Link> links);
     void tabHistoryAvailable(int tabId, QList<Link> links, int currentLinkId);
     void thumbPathChanged(int tabId, const QString &path);

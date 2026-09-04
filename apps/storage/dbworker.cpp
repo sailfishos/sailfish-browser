@@ -18,6 +18,8 @@
 #include <QDir>
 #include <QFile>
 #include <QDateTime>
+#include <QSet>
+#include <QStringList>
 
 #include "dbworker.h"
 #include "browserpaths.h"
@@ -325,6 +327,104 @@ void DBWorker::getAllTabs()
     emit tabsAvailable(tabList);
 }
 
+void DBWorker::getPersistentTabRestoreBatch()
+{
+    QList<PersistentTabRestoreData> restoreTabs;
+    QSqlQuery query = prepare(
+                "SELECT tab.tab_id, current_link.url, current_link.title, "
+                "current_link.thumb_path, tab.tab_history_id, tab_history.id, "
+                "history_link.url, history_link.title "
+                "FROM tab "
+                "LEFT JOIN tab_history AS current_history "
+                "ON current_history.id = tab.tab_history_id "
+                "LEFT JOIN link AS current_link "
+                "ON current_link.link_id = current_history.link_id "
+                "LEFT JOIN tab_history ON tab_history.tab_id = tab.tab_id "
+                "LEFT JOIN link AS history_link "
+                "ON history_link.link_id = tab_history.link_id "
+                "ORDER BY tab.tab_id ASC, tab_history.id ASC;");
+    if (!execute(query)) {
+        return;
+    }
+
+    int lastTabId = 0;
+    while (query.next()) {
+        const int tabId = query.value(0).toInt();
+        if (tabId != lastTabId) {
+            PersistentTabRestoreData restoreData(tabId);
+            restoreData.setTab(Tab(tabId,
+                                   query.value(1).toString(),
+                                   query.value(2).toString(),
+                                   query.value(3).toString(),
+                                   false));
+            restoreTabs.append(restoreData);
+            lastTabId = tabId;
+        }
+
+        if (!query.value(5).isNull()) {
+            PersistentTabRestoreData &restoreData = restoreTabs.last();
+            restoreData.addHistoryEntry(PersistentTabHistoryEntry(
+                                            query.value(6).toString(),
+                                            query.value(7).toString()));
+            if (query.value(5).toInt() == query.value(4).toInt()) {
+                restoreData.setSelectedHistoryIndex(restoreData.history().count() - 1);
+            }
+        }
+    }
+
+    const auto settingValue = [this](const QString &name) {
+        QSqlQuery settingQuery = prepare("SELECT value FROM settings WHERE name = ?;");
+        settingQuery.bindValue(0, name);
+        if (execute(settingQuery) && settingQuery.first()) {
+            return settingQuery.value(0).toString();
+        }
+        return QString();
+    };
+
+    const QStringList savedOrder = settingValue(QStringLiteral("tabOrder"))
+            .split(QLatin1Char(','), QString::SkipEmptyParts);
+    if (!savedOrder.isEmpty()) {
+        QList<PersistentTabRestoreData> orderedTabs;
+        QSet<int> orderedIds;
+        for (const QString &savedId : savedOrder) {
+            bool ok = false;
+            const int tabId = savedId.toInt(&ok);
+            if (!ok || orderedIds.contains(tabId)) {
+                continue;
+            }
+            for (const PersistentTabRestoreData &restoreData : restoreTabs) {
+                if (restoreData.persistentId() == tabId) {
+                    orderedTabs.append(restoreData);
+                    orderedIds.insert(tabId);
+                    break;
+                }
+            }
+        }
+        for (const PersistentTabRestoreData &restoreData : restoreTabs) {
+            if (!orderedIds.contains(restoreData.persistentId())) {
+                orderedTabs.append(restoreData);
+            }
+        }
+        restoreTabs = orderedTabs;
+    }
+
+    bool activeIdOk = false;
+    int activePersistentId = settingValue(QStringLiteral("activeTabId")).toInt(&activeIdOk);
+    bool activeIdFound = false;
+    for (const PersistentTabRestoreData &restoreData : restoreTabs) {
+        if (restoreData.persistentId() == activePersistentId) {
+            activeIdFound = true;
+            break;
+        }
+    }
+    if (!activeIdOk || !activeIdFound) {
+        activePersistentId = restoreTabs.isEmpty() ? 0 : restoreTabs.first().persistentId();
+    }
+
+    emit persistentTabRestoreBatchAvailable(
+                PersistentTabRestoreBatch(restoreTabs, activePersistentId));
+}
+
 int DBWorker::getMaxTabId()
 {
     return integerQuery("SELECT MAX(tab_id) FROM tab;");
@@ -378,12 +478,22 @@ void DBWorker::navigateTo(int tabId, const QString &url, const QString &title, c
 
 void DBWorker::goForward(int tabId)
 {
+    goForwardTarget(tabId);
+}
+
+void DBWorker::goBack(int tabId)
+{
+    goBackTarget(tabId);
+}
+
+QString DBWorker::goForwardTarget(int tabId)
+{
     QSqlQuery query = prepare("SELECT id FROM tab_history WHERE tab_id = ? "
                               "AND id > (SELECT tab_history_id FROM tab WHERE tab_id = ?) ORDER BY id ASC LIMIT 1;");
     query.bindValue(0, tabId);
     query.bindValue(1, tabId);
     if (!execute(query)) {
-        return;
+        return QString();
     }
 
     int historyId = 0;
@@ -393,17 +503,31 @@ void DBWorker::goForward(int tabId)
 
     if (historyId > 0) {
         updateTab(tabId, historyId);
+        return getCurrentLink(tabId).url();
     }
+    return QString();
 }
 
-void DBWorker::goBack(int tabId)
+QString DBWorker::peekForwardTarget(int tabId)
+{
+    QSqlQuery query = prepare("SELECT link.url FROM tab_history "
+                              "INNER JOIN link ON tab_history.link_id = link.link_id "
+                              "WHERE tab_history.tab_id = ? "
+                              "AND tab_history.id > (SELECT tab_history_id FROM tab WHERE tab_id = ?) "
+                              "ORDER BY tab_history.id ASC LIMIT 1;");
+    query.bindValue(0, tabId);
+    query.bindValue(1, tabId);
+    return execute(query) && query.first() ? query.value(0).toString() : QString();
+}
+
+QString DBWorker::goBackTarget(int tabId)
 {
     QSqlQuery query = prepare("SELECT id FROM tab_history WHERE tab_id = ? "
                               "AND id < (SELECT tab_history_id FROM tab WHERE tab_id = ?) ORDER BY id DESC LIMIT 1;");
     query.bindValue(0, tabId);
     query.bindValue(1, tabId);
     if (!execute(query)) {
-        return;
+        return QString();
     }
 
     int historyId = 0;
@@ -413,7 +537,21 @@ void DBWorker::goBack(int tabId)
 
     if (historyId > 0) {
         updateTab(tabId, historyId);
+        return getCurrentLink(tabId).url();
     }
+    return QString();
+}
+
+QString DBWorker::peekBackTarget(int tabId)
+{
+    QSqlQuery query = prepare("SELECT link.url FROM tab_history "
+                              "INNER JOIN link ON tab_history.link_id = link.link_id "
+                              "WHERE tab_history.tab_id = ? "
+                              "AND tab_history.id < (SELECT tab_history_id FROM tab WHERE tab_id = ?) "
+                              "ORDER BY tab_history.id DESC LIMIT 1;");
+    query.bindValue(0, tabId);
+    query.bindValue(1, tabId);
+    return execute(query) && query.first() ? query.value(0).toString() : QString();
 }
 
 Link DBWorker::getCurrentLink(int tabId)
@@ -483,6 +621,16 @@ void DBWorker::addHistoryEntry(const QString &url, const QString &title)
         query.bindValue(1, title);
         query.bindValue(2, QDateTime::currentDateTimeUtc().toTime_t());
         execute(query);
+    }
+}
+
+void DBWorker::updateHistoryTitle(const QString &url, const QString &title)
+{
+    QSqlQuery query = prepare("UPDATE browser_history SET title = ? WHERE url = ?;");
+    query.bindValue(0, title);
+    query.bindValue(1, url);
+    if (execute(query) && query.numRowsAffected() > 0) {
+        emit titleChanged(url, title);
     }
 }
 

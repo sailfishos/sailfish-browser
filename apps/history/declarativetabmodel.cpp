@@ -39,6 +39,7 @@ DeclarativeTabModel::DeclarativeTabModel(int nextTabId, DeclarativeWebContainer 
     : QAbstractListModel(webContainer)
     , m_activeTabId(0)
     , m_loaded(false)
+    , m_runtimeAuthoritative(false)
     , m_nextTabId(nextTabId)
     , m_unittestMode(false)
     , m_webContainer(webContainer)
@@ -92,6 +93,10 @@ int DeclarativeTabModel::nextTabId() const
 void DeclarativeTabModel::remove(int index)
 {
     if (!m_tabs.isEmpty() && index >= 0 && index < m_tabs.count()) {
+        if (m_runtimeAuthoritative) {
+            emit runtimeTabCloseRequested(QString::number(m_tabs.at(index).tabId()));
+            return;
+        }
         bool removingActiveTab = activeTabIndex() == index;
         int newActiveIndex = 0;
         if (removingActiveTab) {
@@ -122,6 +127,11 @@ void DeclarativeTabModel::clear()
 {
     if (count() == 0)
         return;
+
+    if (m_runtimeAuthoritative) {
+        emit runtimeTabsClearRequested();
+        return;
+    }
 
     for (int i = m_tabs.count() - 1; i >= 0; --i) {
         removeTab(m_tabs.at(i).tabId(), m_tabs.at(i).thumbnailPath(), i);
@@ -160,6 +170,10 @@ void DeclarativeTabModel::activateTab(int index, bool reload)
 
     index = qBound<int>(0, index, m_tabs.count() - 1);
     const Tab &newActiveTab = m_tabs.at(index);
+    if (m_runtimeAuthoritative) {
+        emit runtimeTabActivationRequested(QString::number(newActiveTab.tabId()), reload);
+        return;
+    }
 #if DEBUG_LOGS
     qDebug() << "activate tab: " << index << &newActiveTab;
 #endif
@@ -176,6 +190,24 @@ bool DeclarativeTabModel::activateTabById(int tabId)
     return false;
 }
 
+bool DeclarativeTabModel::requestRuntimeTabNavigation(
+        int tabId, const QString &url, bool fromExternal)
+{
+    if (!m_runtimeAuthoritative || url.isEmpty() || !contains(tabId)) {
+        return false;
+    }
+    emit runtimeTabNavigationRequested(QString::number(tabId), url, fromExternal);
+    return true;
+}
+
+bool DeclarativeTabModel::runtimeNavigateTab(
+        const QString &persistentId, const QString &url, bool fromExternal)
+{
+    bool ok = false;
+    const int tabId = persistentId.toInt(&ok);
+    return ok && requestRuntimeTabNavigation(tabId, url, fromExternal);
+}
+
 /**
  * @brief DeclarativeTabModel::closeActiveTab
  * Closes the active tab and activates a tab next to the current tab. If possible
@@ -185,6 +217,10 @@ bool DeclarativeTabModel::activateTabById(int tabId)
 void DeclarativeTabModel::closeActiveTab()
 {
     if (!m_tabs.isEmpty()) {
+        if (m_runtimeAuthoritative) {
+            emit runtimeTabCloseRequested(QString::number(m_activeTabId));
+            return;
+        }
         int index = activeTabIndex();
         int newActiveIndex = nextActiveTabIndex(index);
         removeTab(m_activeTabId, m_tabs.at(index).thumbnailPath(), index);
@@ -216,6 +252,13 @@ int DeclarativeTabModel::newTab(const QString &url, int parentId, uintptr_t brow
     Tab tab(nextTabId(), url, QString(), QString(), hidden);
     tab.setBrowsingContext(browsingContext);
     tab.setParentId(parentId);
+
+    if (m_runtimeAuthoritative) {
+        createTab(tab);
+        ++m_nextTabId;
+        emit runtimeNewTabRequested(url, QString::number(tab.tabId()), fromExternal);
+        return tab.tabId();
+    }
 
     int index = 0;
 
@@ -300,6 +343,19 @@ QVariant DeclarativeTabModel::data(const QModelIndex & index, int role) const
 bool DeclarativeTabModel::loaded() const
 {
     return m_loaded;
+}
+
+bool DeclarativeTabModel::runtimeAuthoritative() const
+{
+    return m_runtimeAuthoritative;
+}
+
+void DeclarativeTabModel::setRuntimeAuthoritative(bool authoritative)
+{
+    if (m_runtimeAuthoritative != authoritative) {
+        m_runtimeAuthoritative = authoritative;
+        emit runtimeAuthoritativeChanged();
+    }
 }
 
 const QList<Tab> &DeclarativeTabModel::tabs() const
@@ -511,6 +567,10 @@ void DeclarativeTabModel::updateThumbnailPath(int tabId, const QString &path)
 #endif
             QModelIndex start = index(i, 0);
             QModelIndex end = index(i, 0);
+            if (m_tabs.at(i).thumbnailPath() != path
+                    && !m_tabs.at(i).thumbnailPath().isEmpty()) {
+                QFile::remove(m_tabs.at(i).thumbnailPath());
+            }
             m_tabs[i].setThumbnailPath(path);
             emit dataChanged(start, end, roles);
             updateThumbPath(tabId, path);
