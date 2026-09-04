@@ -1,6 +1,7 @@
 /****************************************************************************
 **
 ** Copyright (c) 2020 - 2021 Open Mobile Platform LLC.
+** Copyright (c) 2026 Jolla Mobile Ltd
 **
 ****************************************************************************/
 
@@ -46,6 +47,7 @@ Page {
             webView.applyContentOrientation(pageOrientation)
         }
     }
+    onOrientationChanged: webView.applyContentOrientation(orientation)
 
     orientationTransitions: orientationFader.orientationTransition
 
@@ -65,8 +67,6 @@ Page {
         color: webView.contentItem ? (webView.resourceController.videoActive &&
                                       webView.contentItem.fullscreen ? "black" : webView.contentItem.backgroundColor)
                                    : "white"
-
-        onApplyContentOrientation: webView.applyContentOrientation(browserPage.orientation)
     }
 
     Private.VirtualKeyboardObserver {
@@ -227,4 +227,6 @@ Page {
             window.activate()
         }
     }
+
+    Component.onCompleted: webView.applyContentOrientation(browserPage.orientation)
 }

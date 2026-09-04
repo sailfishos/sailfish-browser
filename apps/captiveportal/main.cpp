@@ -2,6 +2,7 @@
 **
 ** Copyright (c) 2020 Open Mobile Platform LLC.
 ** Copyright (c) 2021 Jolla Ltd.
+** Copyright (c) 2026 Jolla Mobile Ltd
 **
 ****************************************************************************/
 
@@ -27,7 +28,6 @@
 #include "declarativehistorymodel.h"
 #include "declarativewebcontainer.h"
 #include "declarativewebpage.h"
-#include "declarativewebpagecreator.h"
 #include "inputregion.h"
 
 #ifdef HAS_BOOSTER
@@ -57,6 +57,8 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     app->setAttribute(Qt::AA_SynthesizeTouchForUnhandledMouseEvents, true);
 
     CaptivePortalService *service = new CaptivePortalService(app.data());
+    QObject::connect(service, &CaptivePortalService::closeBrowserRequested,
+                     view.data(), &QWindow::close);
     // Handle command line launch
     if (!service->registered()) {
         QDBusMessage message = QDBusMessage::createMethodCall(service->serviceName(), "/",
@@ -103,7 +105,6 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     qmlRegisterUncreatableType<DownloadStatus>(uri, 1, 0, "DownloadStatus", "");
     qmlRegisterType<DeclarativeWebContainer>(uri, 1, 0, "WebContainer");
     qmlRegisterType<DeclarativeWebPage>(uri, 1, 0, "WebPage");
-    qmlRegisterType<DeclarativeWebPageCreator>(uri, 1, 0, "WebPageCreator");
     qmlRegisterType<InputRegion>(uri, 1, 0, "InputRegion");
 
     Browser *browser = new Browser(view.data(), DEPLOYMENT_PATH, app.data());

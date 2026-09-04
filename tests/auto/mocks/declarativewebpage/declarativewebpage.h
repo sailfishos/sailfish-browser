@@ -105,7 +105,6 @@ signals:
     void windowCloseRequested();
     void loadingChanged();
     void loadProgressChanged();
-    void requestGLContext();
     void completedChanged();
 
     void contentOrientationChanged(Qt::ScreenOrientation orientation);

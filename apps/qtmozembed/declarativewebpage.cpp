@@ -20,6 +20,7 @@
 
 #include <QBuffer>
 #include <QGuiApplication>
+#include <QScreen>
 #include <QtConcurrent>
 
 #define FULLSCREEN_MESSAGE "embed:fullscreenchanged"
@@ -129,8 +130,15 @@ void DeclarativeWebPage::setContainer(DeclarativeWebContainer *container)
 {
     if (m_container != container) {
         m_container = container;
-        Q_ASSERT(container->mozWindow());
-        setMozWindow(container->mozWindow());
+        QMozWindow * const window = new QMozWindow(container->webContentSize());
+        if (container->screen()) {
+            window->setPrimaryOrientation(
+                    container->screen()->primaryOrientation());
+        }
+        setMozWindow(window);
+        if (!mozWindow()) {
+            qCWarning(lcCoreLog) << "Failed to create hosted page window";
+        }
         emit containerChanged();
     }
 }
@@ -147,6 +155,11 @@ void DeclarativeWebPage::setInitialState(const Tab& tab, bool privateMode)
     setParentId(tab.parentId());
     setPrivateMode(privateMode);
     setParentBrowsingContext(tab.browsingContext());
+
+    const QString initialUrl = !tab.url().isEmpty()
+            ? tab.url() : !tab.requestedUrl().isEmpty()
+              ? tab.requestedUrl() : QStringLiteral("about:blank");
+    load(initialUrl, false);
 
     m_initialTab = tab;
     setDesktopMode(m_initialTab.desktopMode());

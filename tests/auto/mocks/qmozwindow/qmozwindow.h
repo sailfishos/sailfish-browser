@@ -1,6 +1,7 @@
 /****************************************************************************
 **
 ** Copyright (C) 2015 Jolla Ltd.
+** Copyright (c) 2026 Jolla Mobile Ltd
 ** Contact: Piotr Tworek <piotr.tworek@jolla.com>
 **
 ****************************************************************************/
@@ -16,10 +17,29 @@
 #include <QSize>
 #include <QRect>
 
+#include <functional>
+
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
+
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
 class QMozWindowListener;
+
+enum class QMozTextureTarget {
+    Texture2D,
+    ExternalOES
+};
+
+struct QMozEGLImage final
+{
+    EGLImageKHR image;
+    QSize size;
+    QMozTextureTarget textureTarget;
+};
+
+using QMozEGLImageCallback = std::function<void(const QMozEGLImage &)>;
 
 class QMozWindow : public QObject
 {
@@ -35,10 +55,14 @@ public:
     MOCK_METHOD(void, setSize, (QSize));
     MOCK_METHOD(QSize, size, (void));
     MOCK_METHOD(void, setContentOrientation, (Qt::ScreenOrientation));
+    MOCK_METHOD(void, setPrimaryOrientation, (Qt::ScreenOrientation));
     MOCK_METHOD(Qt::ScreenOrientation, contentOrientation, ());
     MOCK_METHOD(Qt::ScreenOrientation, pendingOrientation, ());
-    MOCK_METHOD(void, getPlatformImage, (int*, int*));
+    MOCK_METHOD(bool, withPlatformImage, (const QMozEGLImageCallback &));
     MOCK_METHOD(void, clearPlatformImage, (void));
+    MOCK_METHOD(void, reserve, (void));
+    MOCK_METHOD(void, release, (void));
+    MOCK_METHOD(bool, isReserved, (void));
     MOCK_METHOD(void, suspendRendering, (void));
     MOCK_METHOD(void, resumeRendering, (void));
     MOCK_METHOD(void, scheduleUpdate, (void));
@@ -48,8 +72,8 @@ public:
 signals:
     void pendingOrientationChanged(Qt::ScreenOrientation orientation);
     void orientationChangeFiltered(Qt::ScreenOrientation orientation);
-    void requestGLContext();
     void initialized();
+    void released();
     void drawOverlay(QRect);
     void compositorCreated();
     void compositingFinished();

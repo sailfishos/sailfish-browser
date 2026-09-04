@@ -2,6 +2,7 @@
 **
 ** Copyright (c) 2013 - 2019 Jolla Ltd.
 ** Copyright (c) 2020 Open Mobile Platform LLC.
+** Copyright (c) 2026 Jolla Mobile Ltd
 **
 ****************************************************************************/
 
@@ -24,6 +25,7 @@ ApplicationWindow {
 
     property var rootPage
     property QtObject webView
+    property bool hostedContent
     property alias activityDisabledByMdm: mdmView.activity
 
     allowedOrientations: defaultAllowedOrientations

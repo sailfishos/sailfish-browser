@@ -2,6 +2,7 @@
 **
 ** Copyright (c) 2013 - 2019 Jolla Ltd.
 ** Copyright (c) 2019 - 2021 Open Mobile Platform LLC.
+** Copyright (c) 2026 Jolla Mobile Ltd
 ** Contact: Dmitry Rozhkov <dmitry.rozhkov@jolla.com>
 ** Contact: Raine Makelainen <raine.makelainen@jollamobile.com>
 **
@@ -33,6 +34,12 @@ Item {
     property bool _isVideoStream
     property bool _webrtcAudioActive
     property bool _webrtcVideoActive
+
+    Component.onCompleted: {
+        WebEngine.addObserver("network-enable")
+        WebEngine.addObserver("webrtc-media-info")
+        connectionHelper.notifyOfflineStatus()
+    }
 
     function calculateStatus() {
         var video = _webrtcVideoActive
@@ -85,11 +92,7 @@ Item {
     Connections {
         target: WebEngine
 
-        onInitialized: {
-          WebEngine.addObserver("network-enable")
-          WebEngine.addObserver("webrtc-media-info")
-          connectionHelper.notifyOfflineStatus()
-        }
+        onInitialized: connectionHelper.notifyOfflineStatus()
         onRecvObserve: {
             if (message === "media-decoder-info") {
                 if (data.state === "meta") {

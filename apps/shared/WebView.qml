@@ -2,6 +2,7 @@
 **
 ** Copyright (c) 2014 - 2021 Jolla Ltd.
 ** Copyright (c) 2021 Open Mobile Platform LLC.
+** Copyright (c) 2026 Jolla Mobile Ltd
 **
 ****************************************************************************/
 
@@ -30,7 +31,9 @@ WebContainer {
     readonly property bool moving: contentItem && contentItem.moving
     property bool portrait: true
     property bool contentFullscreen: contentItem && contentItem.fullscreen
-    property bool needChrome: !contentItem || (contentItem.chrome && !contentItem.fullscreen)
+    property QtObject chromeContentItem: contentItem
+    property bool needChrome: !chromeContentItem
+                              || (chromeContentItem.chrome && !chromeContentItem.fullscreen)
     property real fullscreenHeight
     property bool imOpened
     property real toolbarHeight
@@ -160,11 +163,6 @@ WebContainer {
     property var resourceController: ResourceController {
         webPage: contentItem
         background: !webView.visible
-    }
-
-    property var _webPageCreator: WebPageCreator {
-        activeWebPage: contentItem
-        model: tabModel
     }
 
     property Component textSelectionControllerComponent: Component {
