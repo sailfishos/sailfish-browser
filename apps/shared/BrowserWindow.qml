@@ -24,6 +24,7 @@ ApplicationWindow {
 
     property var rootPage
     property QtObject webView
+    property bool hostedContent
     property alias activityDisabledByMdm: mdmView.activity
 
     allowedOrientations: defaultAllowedOrientations

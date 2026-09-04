@@ -7,10 +7,8 @@ PKGCONFIG += qt5embedwidget
 
 # C++ sources
 SOURCES += \
-    $$PWD/declarativewebpage.cpp \
-    $$PWD/declarativewebpagecreator.cpp
+    $$PWD/declarativewebpage.cpp
 
 # C++ headers
 HEADERS += \
-    $$PWD/declarativewebpage.h \
-    $$PWD/declarativewebpagecreator.h
+    $$PWD/declarativewebpage.h

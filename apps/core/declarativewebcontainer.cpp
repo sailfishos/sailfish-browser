@@ -69,6 +69,12 @@ static void setGLClearColor(QOpenGLFunctions_ES2 *functions, const QColor &color
                             normalized.blueF(), 1.0f);
 }
 
+static GLenum glTextureTarget(QMozTextureTarget textureTarget)
+{
+    return textureTarget == QMozTextureTarget::ExternalOES
+            ? GL_TEXTURE_EXTERNAL_OES : GL_TEXTURE_2D;
+}
+
 static void updateTextureCoordinates(Qt::ScreenOrientation orientation, GLfloat *coordinates)
 {
     // WebRender renders into a GL framebuffer, whose EGLImage has a
@@ -115,6 +121,20 @@ static bool isLandscapeOrientation(Qt::ScreenOrientation orientation)
 {
     return orientation == Qt::LandscapeOrientation
             || orientation == Qt::InvertedLandscapeOrientation;
+}
+
+static Qt::ScreenOrientation adjustedContentOrientation(
+        Qt::ScreenOrientation orientation)
+{
+    if (gForceLandscapeToPortrait) {
+        if (orientation == Qt::LandscapeOrientation) {
+            return Qt::PortraitOrientation;
+        } else if (orientation == Qt::InvertedLandscapeOrientation) {
+            return Qt::InvertedPortraitOrientation;
+        }
+    }
+
+    return orientation;
 }
 
 static QSizeF sizeForOrientation(const QSizeF &size, Qt::ScreenOrientation orientation)
@@ -192,12 +212,11 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
 
     if (!browserEnabled() || privatebrowsingAutostart.value(QVariant(false)).toBool()) m_privateMode = true;
 
-    WebPageFactory* pageFactory = new WebPageFactory(this);
-    connect(this, &DeclarativeWebContainer::webPageComponentChanged,
-            pageFactory, &WebPageFactory::updateQmlComponent);
-    m_webPages = new WebPages(pageFactory, this);
     int maxTabid = DBManager::instance()->getMaxTabId();
     m_persistentTabModel = new PersistentTabModel(maxTabid + 1, this);
+    if (!BrowserAppInfo::captivePortal()) {
+        m_persistentTabModel->setRuntimeAuthoritative(true);
+    }
     m_privateTabModel = new PrivateTabModel(maxTabid + 1001, this);
 
     setTabModel((BrowserAppInfo::captivePortal() || m_privateMode) ? m_privateTabModel.data()
@@ -208,8 +227,6 @@ DeclarativeWebContainer::DeclarativeWebContainer(QWindow *parent)
     SailfishOS::WebEngine *webEngine = SailfishOS::WebEngine::instance();
     connect(webEngine, &SailfishOS::WebEngine::initialized,
             this, &DeclarativeWebContainer::initialize);
-    connect(webEngine, &SailfishOS::WebEngine::lastViewDestroyed,
-            this, &DeclarativeWebContainer::onLastViewDestroyed);
     connect(webEngine, &SailfishOS::WebEngine::lastWindowDestroyed,
             this, &DeclarativeWebContainer::onLastWindowDestroyed);
 
@@ -252,8 +269,10 @@ DeclarativeWebContainer::~DeclarativeWebContainer()
                 glDeleteTextures(1, &m_frameTexture);
                 m_frameTexture = 0;
             }
-            delete m_textureProgram;
-            m_textureProgram = nullptr;
+            delete m_texture2DProgram;
+            m_texture2DProgram = nullptr;
+            delete m_externalTextureProgram;
+            m_externalTextureProgram = nullptr;
             m_context->doneCurrent();
         }
         delete m_context;
@@ -286,8 +305,44 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage, bool trigg
         if (m_webPage) {
             m_webPage->disconnect(this);
         }
+        if (activePageChanged && m_mozWindow) {
+            m_mozWindow->disconnect(this);
+            m_mozWindow->clearPlatformImage();
+            m_mozWindow = nullptr;
+        }
 
         m_webPage = webPage;
+        if (activePageChanged && m_webPage) {
+            m_mozWindow = m_webPage->mozWindow();
+            if (m_mozWindow) {
+                if (screen()) {
+                    m_mozWindow->setPrimaryOrientation(
+                            screen()->primaryOrientation());
+                }
+                m_mozWindow->setSize(webContentSize());
+                m_mozWindow->setReadyToPaint(m_readyToPaint);
+                if (m_readyToPaint) {
+                    m_mozWindow->resumeRendering();
+                } else {
+                    m_mozWindow->suspendRendering();
+                }
+                connect(m_mozWindow.data(),
+                        &QMozWindow::orientationChangeFiltered,
+                        this,
+                        &DeclarativeWebContainer::handleContentOrientationChanged,
+                        Qt::UniqueConnection);
+                connect(m_mozWindow.data(),
+                        &QMozWindow::compositingFinished,
+                        this,
+                        &DeclarativeWebContainer::handleCompositingFinished,
+                        static_cast<Qt::ConnectionType>(
+                                Qt::QueuedConnection | Qt::UniqueConnection));
+                if (m_chromeWindow) {
+                    updateContentOrientation(
+                            m_chromeWindow->contentOrientation());
+                }
+            }
+        }
         // Mark as not rendered when ever tab is changed.
         setActiveTabRendered(false);
         if (activePageChanged) {
@@ -299,9 +354,6 @@ void DeclarativeWebContainer::setWebPage(DeclarativeWebPage *webPage, bool trigg
                     && !webPage->isPainted();
             m_activeTabCompositesToSkip = webPage
                     && !m_waitingForActiveTabFirstPaint ? 1 : 0;
-            if (m_mozWindow) {
-                m_mozWindow->clearPlatformImage();
-            }
             clearSurface();
         }
 
@@ -424,14 +476,20 @@ void DeclarativeWebContainer::setForeground(bool active)
 
 int DeclarativeWebContainer::maxLiveTabCount() const
 {
-    return m_webPages->maxLivePages();
+    return m_maxLiveTabCount;
 }
 
 void DeclarativeWebContainer::setMaxLiveTabCount(int count)
 {
-    if (m_webPages->setMaxLivePages(count)) {
-        emit maxLiveTabCountChanged();
+    if (count <= 0 || m_maxLiveTabCount == count) {
+        return;
     }
+
+    m_maxLiveTabCount = count;
+    if (m_webPages) {
+        m_webPages->setMaxLivePages(count);
+    }
+    emit maxLiveTabCountChanged();
 }
 
 QQmlComponent* DeclarativeWebContainer::webPageComponent() const
@@ -469,6 +527,10 @@ bool DeclarativeWebContainer::activeTabRendered() const
 
 bool DeclarativeWebContainer::loading() const
 {
+    if (usesSharedHostedTabs() && m_hostedStateActive) {
+        return m_hostedLoading;
+    }
+
     if (m_webPage) {
         return m_webPage->loading();
     } else {
@@ -478,7 +540,8 @@ bool DeclarativeWebContainer::loading() const
 
 int DeclarativeWebContainer::loadProgress() const
 {
-    return m_loadProgress;
+    return usesSharedHostedTabs() && m_hostedStateActive
+            ? m_hostedLoadProgress : m_loadProgress;
 }
 
 void DeclarativeWebContainer::setLoadProgress(int loadProgress)
@@ -491,12 +554,14 @@ void DeclarativeWebContainer::setLoadProgress(int loadProgress)
 
 bool DeclarativeWebContainer::canGoForward() const
 {
-    return m_webPage && m_webPage->canGoForward();
+    return usesSharedHostedTabs() && m_hostedStateActive
+            ? m_hostedCanGoForward : m_webPage && m_webPage->canGoForward();
 }
 
 bool DeclarativeWebContainer::canGoBack() const
 {
-    return m_webPage && m_webPage->canGoBack();
+    return usesSharedHostedTabs() && m_hostedStateActive
+            ? m_hostedCanGoBack : m_webPage && m_webPage->canGoBack();
 }
 
 QObject *DeclarativeWebContainer::chromeWindow() const
@@ -512,7 +577,6 @@ void DeclarativeWebContainer::setChromeWindow(QObject *chromeWindow)
         if (m_chromeWindow) {
             m_chromeWindow->setTransientParent(this);
             m_chromeWindow->showFullScreen();
-            updateContentOrientation(m_chromeWindow->contentOrientation());
         }
         emit chromeWindowChanged();
     }
@@ -520,24 +584,25 @@ void DeclarativeWebContainer::setChromeWindow(QObject *chromeWindow)
 
 bool DeclarativeWebContainer::readyToPaint() const
 {
-     return m_mozWindow ? m_mozWindow->readyToPaint() : true;
+    return m_readyToPaint;
 }
 
 void DeclarativeWebContainer::setReadyToPaint(bool ready)
 {
-    if (m_mozWindow) {
-        bool changed = m_mozWindow->setReadyToPaint(ready);
+    if (m_readyToPaint == ready) {
+        return;
+    }
 
+    m_readyToPaint = ready;
+    if (m_mozWindow) {
+        m_mozWindow->setReadyToPaint(ready);
         if (ready) {
             m_mozWindow->resumeRendering();
         } else {
             m_mozWindow->suspendRendering();
         }
-
-        if (changed) {
-            emit readyToPaintChanged();
-        }
     }
+    emit readyToPaintChanged();
 }
 
 QRectF DeclarativeWebContainer::webContentRect() const
@@ -593,7 +658,8 @@ Qt::ScreenOrientation DeclarativeWebContainer::pendingWebContentOrientation() co
 
 QMozSecurity *DeclarativeWebContainer::security() const
 {
-    return m_webPage ? m_webPage->security() : nullptr;
+    return usesSharedHostedTabs() && m_hostedStateActive
+            ? m_hostedSecurity.data() : m_webPage ? m_webPage->security() : nullptr;
 }
 
 int DeclarativeWebContainer::tabId() const
@@ -604,12 +670,14 @@ int DeclarativeWebContainer::tabId() const
 
 QString DeclarativeWebContainer::title() const
 {
-    return m_webPage ? m_webPage->title() : QString();
+    return usesSharedHostedTabs() && m_hostedStateActive
+            ? m_hostedTitle : m_webPage ? m_webPage->title() : QString();
 }
 
 QString DeclarativeWebContainer::url() const
 {
-    return m_webPage ? m_webPage->url().toString() : QString();
+    return usesSharedHostedTabs() && m_hostedStateActive
+            ? m_hostedUrl : m_webPage ? m_webPage->url().toString() : QString();
 }
 
 bool DeclarativeWebContainer::isActiveTab(int tabId)
@@ -624,7 +692,18 @@ void DeclarativeWebContainer::load(const QString &url, bool force, bool fromExte
         tmpUrl = ABOUT_BLANK;
     }
 
-    if (!canInitialize()) {
+    if (usesSharedHostedTabs()) {
+        if (!canInitialize() || !m_initialized) {
+            m_initialUrl = tmpUrl;
+            m_fromExternal = fromExternal;
+        } else {
+            // The selected hosted tab has the same replacement-navigation
+            // semantics as the per-page hosted presentation path. BrowserPage
+            // owns the QmlMozView call and persistence receives the committed
+            // runtime snapshot afterwards.
+            emit hostedLoadRequested(tmpUrl, fromExternal);
+        }
+    } else if (!canInitialize()) {
         m_initialUrl = tmpUrl;
         m_fromExternal = fromExternal;
     } else if (m_webPage && m_webPage->completed()) {
@@ -649,6 +728,11 @@ void DeclarativeWebContainer::load(const QString &url, bool force, bool fromExte
  */
 void DeclarativeWebContainer::reload(bool force)
 {
+    if (usesSharedHostedTabs()) {
+        emit hostedReloadRequested();
+        return;
+    }
+
     int activeTabId = tabId();
     if (activeTabId > 0) {
         if (force && m_webPage && m_webPage->completed() && m_webPage->tabId() == activeTabId) {
@@ -662,6 +746,11 @@ void DeclarativeWebContainer::reload(bool force)
 
 void DeclarativeWebContainer::goForward()
 {
+    if (usesSharedHostedTabs()) {
+        emit hostedGoForwardRequested();
+        return;
+    }
+
     if (m_webPage && m_webPage->canGoForward()) {
         DBManager::instance()->goForward(m_webPage->tabId());
         m_webPage->goForward();
@@ -670,6 +759,11 @@ void DeclarativeWebContainer::goForward()
 
 void DeclarativeWebContainer::goBack()
 {
+    if (usesSharedHostedTabs()) {
+        emit hostedGoBackRequested();
+        return;
+    }
+
     if (m_webPage && m_webPage->canGoBack()) {
         DBManager::instance()->goBack(m_webPage->tabId());
         m_webPage->goBack();
@@ -681,6 +775,105 @@ void DeclarativeWebContainer::closeTab(int tabId)
     m_model->removeTabById(tabId, false);
 }
 
+void DeclarativeWebContainer::updateHostedState(const QString &url, const QString &title,
+                                                 bool loading, int loadProgress,
+                                                 bool canGoBack, bool canGoForward,
+                                                 QMozSecurity *security,
+                                                 bool notifySecurity)
+{
+    if (!usesSharedHostedTabs()) {
+        return;
+    }
+
+    const bool stateWasActive = m_hostedStateActive;
+    const bool urlDidChange = stateWasActive ? m_hostedUrl != url : this->url() != url;
+    const bool titleDidChange = stateWasActive ? m_hostedTitle != title : this->title() != title;
+    const bool loadingDidChange = stateWasActive ? m_hostedLoading != loading
+                                                  : this->loading() != loading;
+    const bool progressDidChange = stateWasActive ? m_hostedLoadProgress != loadProgress
+                                                   : this->loadProgress() != loadProgress;
+    const bool canGoBackDidChange = stateWasActive ? m_hostedCanGoBack != canGoBack
+                                                    : this->canGoBack() != canGoBack;
+    const bool canGoForwardDidChange = stateWasActive ? m_hostedCanGoForward != canGoForward
+                                                       : this->canGoForward() != canGoForward;
+    const bool securityDidChange = notifySecurity
+            || (stateWasActive ? m_hostedSecurity.data() != security
+                               : this->security() != security);
+
+    m_hostedUrl = url;
+    m_hostedTitle = title;
+    m_hostedLoading = loading;
+    m_hostedLoadProgress = loadProgress;
+    m_hostedCanGoBack = canGoBack;
+    m_hostedCanGoForward = canGoForward;
+    m_hostedStateActive = true;
+    m_hostedSecurity = security;
+
+    if (urlDidChange) {
+        emit urlChanged();
+    }
+    if (titleDidChange) {
+        emit titleChanged();
+    }
+    if (loadingDidChange) {
+        emit loadingChanged();
+    }
+    if (progressDidChange) {
+        emit loadProgressChanged();
+    }
+    if (canGoBackDidChange) {
+        emit canGoBackChanged();
+    }
+    if (canGoForwardDidChange) {
+        emit canGoForwardChanged();
+    }
+    if (securityDidChange) {
+        emit securityChanged();
+    }
+}
+
+void DeclarativeWebContainer::clearHostedState()
+{
+    const bool urlDidChange = !m_hostedUrl.isEmpty();
+    const bool titleDidChange = !m_hostedTitle.isEmpty();
+    const bool loadingDidChange = m_hostedLoading;
+    const bool progressDidChange = m_hostedLoadProgress != 0;
+    const bool canGoBackDidChange = m_hostedCanGoBack;
+    const bool canGoForwardDidChange = m_hostedCanGoForward;
+    const bool securityDidChange = !m_hostedSecurity.isNull();
+
+    m_hostedUrl.clear();
+    m_hostedTitle.clear();
+    m_hostedLoading = false;
+    m_hostedLoadProgress = 0;
+    m_hostedCanGoBack = false;
+    m_hostedCanGoForward = false;
+    m_hostedStateActive = false;
+    m_hostedSecurity.clear();
+
+    if (urlDidChange) {
+        emit urlChanged();
+    }
+    if (titleDidChange) {
+        emit titleChanged();
+    }
+    if (loadingDidChange) {
+        emit loadingChanged();
+    }
+    if (progressDidChange) {
+        emit loadProgressChanged();
+    }
+    if (canGoBackDidChange) {
+        emit canGoBackChanged();
+    }
+    if (canGoForwardDidChange) {
+        emit canGoForwardChanged();
+    }
+    if (securityDidChange) {
+        emit securityChanged();
+    }
+}
+
 int DeclarativeWebContainer::activateTab(int tabId, const QString &url)
 {
     return requestTabWithOwner(tabId, url, 0);
@@ -688,6 +881,22 @@ int DeclarativeWebContainer::activateTab(int tabId, const QString &url)
 
 int DeclarativeWebContainer::requestTabWithOwner(int tabId, const QString &url, uint ownerPid)
 {
+    if (usesSharedHostedTabs()) {
+        if (m_model->contains(tabId)) {
+            if (url.isEmpty()) {
+                m_model->activateTabById(tabId);
+            } else if (!m_model->requestRuntimeTabNavigation(tabId, url, false)) {
+                qCWarning(lcCoreLog) << "Cannot navigate hosted tab" << tabId;
+            }
+        } else {
+            tabId = m_model->newTab(url, false);
+            if (ownerPid && tabId > 0) {
+                m_tabOwners.insert(tabId, ownerPid);
+            }
+        }
+        return tabId;
+    }
+
     bool activated = m_model->activateTabById(tabId);
     if (!activated) {
         tabId = m_model->newTab(url, false);
@@ -740,9 +949,17 @@ void DeclarativeWebContainer::releaseActiveTabOwnership()
 
 bool DeclarativeWebContainer::activatePage(const Tab& tab, bool force, bool fromExternal)
 {
+    if (usesSharedHostedTabs()) {
+        return false;
+    }
+
     if (!m_initialized) {
         m_initialUrl = tab.requestedUrl();
         m_fromExternal = fromExternal;
+        return false;
+    }
+
+    if (!m_webPages) {
         return false;
     }
 
@@ -750,6 +967,9 @@ bool DeclarativeWebContainer::activatePage(const Tab& tab, bool force, bool from
     if ((m_model->loaded() || force) && tab.tabId() > 0 && m_webPages->isInitialized() && m_webPageComponent) {
         WebPageActivationData activationData = m_webPages->page(tab);
         setWebPage(activationData.webPage);
+        if (!m_webPage) {
+            return false;
+        }
         // Reset always height so that orientation change is taken into account.
         m_webPage->forceChrome(false);
         m_webPage->setChrome(true);
@@ -774,12 +994,14 @@ QImage DeclarativeWebContainer::grabContentImage(const QSize &size)
         return QImage();
     }
 
-    if (!ensureRenderContext() || !ensureTextureProgram()) {
+    if (!ensureRenderContext()) {
         return QImage();
     }
 
     QSize textureSize;
-    if (!bindWebRenderFrameTexture(&textureSize)) {
+    QMozTextureTarget textureTarget;
+    if (!bindWebRenderFrameTexture(&textureSize, &textureTarget)
+            || !ensureTextureProgram(textureTarget)) {
         qWarning() << "No WebRender EGLImage available for browser frame grab";
         return QImage();
     }
@@ -836,7 +1058,7 @@ QImage DeclarativeWebContainer::grabContentImage(const QSize &size)
 
     const QRectF targetRect(0.0, 0.0, drawSize.width(), drawSize.height());
     QImage image;
-    if (drawWebRenderFrame(targetRect, QSizeF(targetSize), grabOrientation,
+    if (drawWebRenderFrame(targetRect, QSizeF(targetSize), grabOrientation, textureTarget,
                            textureRect)) {
         image = readCurrentFramebuffer(targetSize);
     } else {
@@ -868,17 +1090,23 @@ int DeclarativeWebContainer::previouslyUsedTabId() const
 
 void DeclarativeWebContainer::updateMode()
 {
+    m_initialized = false;
+    m_modeChangePending = true;
+    clearHostedState();
+
     setTabModel((BrowserAppInfo::captivePortal() || m_privateMode) ? m_privateTabModel.data()
                                                                    : m_persistentTabModel.data());
     emit tabIdChanged();
 
-    // Reload active tab from new mode
-    if (m_model->count() > 0) {
-        reload(false);
-    } else {
-        setWebPage(nullptr);
-        emit contentItemChanged();
+    setWebPage(nullptr);
+    if (m_webPages) {
+        m_webPages->clear();
     }
+
+    // Private or captive content may first create per-page hosted windows
+    // after the shared normal session starts. Both initializers defer safely
+    // until their required state is ready.
+    initialize();
 }
 
 /**
@@ -936,9 +1164,11 @@ bool DeclarativeWebContainer::ensureRenderContext()
     return true;
 }
 
-bool DeclarativeWebContainer::ensureTextureProgram()
+bool DeclarativeWebContainer::ensureTextureProgram(QMozTextureTarget textureTarget)
 {
-    if (m_textureProgram) {
+    QOpenGLShaderProgram *&textureProgram = textureTarget == QMozTextureTarget::ExternalOES
+            ? m_externalTextureProgram : m_texture2DProgram;
+    if (textureProgram) {
         return true;
     }
 
@@ -951,13 +1181,21 @@ bool DeclarativeWebContainer::ensureTextureProgram()
             "    gl_Position = vec4(aVertex, 0.0, 1.0);\n"
             "    vTexCoord = aTexCoord;\n"
             "}\n";
-    static const char *fragmentShader =
+    static const char *texture2DFragmentShader =
+            "uniform lowp sampler2D texture;\n"
+            "varying highp vec2 vTexCoord;\n"
+            "void main() {\n"
+            "    gl_FragColor = texture2D(texture, vTexCoord);\n"
+            "}\n";
+    static const char *externalTextureFragmentShader =
             "#extension GL_OES_EGL_image_external : require\n"
             "uniform lowp samplerExternalOES texture;\n"
             "varying highp vec2 vTexCoord;\n"
             "void main() {\n"
             "    gl_FragColor = texture2D(texture, vTexCoord);\n"
             "}\n";
+    const char *fragmentShader = textureTarget == QMozTextureTarget::ExternalOES
+            ? externalTextureFragmentShader : texture2DFragmentShader;
 
     if (!program->addShaderFromSourceCode(QOpenGLShader::Vertex, vertexShader)
             || !program->addShaderFromSourceCode(QOpenGLShader::Fragment, fragmentShader)
@@ -968,11 +1206,12 @@ bool DeclarativeWebContainer::ensureTextureProgram()
         return false;
     }
 
-    m_textureProgram = program;
+    textureProgram = program;
     return true;
 }
 
-bool DeclarativeWebContainer::bindWebRenderFrameTexture(QSize *textureSize)
+bool DeclarativeWebContainer::bindWebRenderFrameTexture(QSize *textureSize,
+                                                         QMozTextureTarget *textureTarget)
 {
     static const PFNGLEGLIMAGETARGETTEXTURE2DOESPROC glEGLImageTargetTexture2DOES =
             reinterpret_cast<PFNGLEGLIMAGETARGETTEXTURE2DOESPROC>(
@@ -984,44 +1223,54 @@ bool DeclarativeWebContainer::bindWebRenderFrameTexture(QSize *textureSize)
 
     bool hasImage = false;
 
-    m_mozWindow->getPlatformImage([&](void *platformImage, int width, int height) {
-        if (!platformImage || width <= 0 || height <= 0) {
+    const bool delivered = m_mozWindow->withPlatformImage([&](const QMozEGLImage &image) {
+        if (!image.image || image.size.isEmpty()) {
             return;
         }
+
+        if (m_frameTexture != 0 && m_frameTextureTarget != image.textureTarget) {
+            glDeleteTextures(1, &m_frameTexture);
+            m_frameTexture = 0;
+        }
+        m_frameTextureTarget = image.textureTarget;
 
         if (m_frameTexture == 0) {
             glGenTextures(1, &m_frameTexture);
         }
 
+        const GLenum target = glTextureTarget(m_frameTextureTarget);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_EXTERNAL_OES, m_frameTexture);
-        glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_EXTERNAL_OES, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glEGLImageTargetTexture2DOES(GL_TEXTURE_EXTERNAL_OES,
-                                     static_cast<GLeglImageOES>(platformImage));
+        glBindTexture(target, m_frameTexture);
+        glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glEGLImageTargetTexture2DOES(target, static_cast<GLeglImageOES>(image.image));
 
         const GLenum error = glGetError();
         if (error != GL_NO_ERROR) {
             qWarning() << "Failed to bind browser WebRender EGLImage"
                        << QString::number(error, 16)
-                       << "image" << platformImage << "size" << width << height;
+                       << "image" << image.image << "size" << image.size;
             return;
         }
 
         hasImage = true;
         if (textureSize) {
-            *textureSize = QSize(width, height);
+            *textureSize = image.size;
+        }
+        if (textureTarget) {
+            *textureTarget = m_frameTextureTarget;
         }
     });
 
-    return hasImage && m_frameTexture != 0;
+    return delivered && hasImage && m_frameTexture != 0;
 }
 
 bool DeclarativeWebContainer::drawWebRenderFrame(const QRectF &targetRect,
                                                  const QSizeF &surfaceSize,
                                                  Qt::ScreenOrientation orientation,
+                                                 QMozTextureTarget textureTarget,
                                                  const QRectF &textureRect)
 {
     if (surfaceSize.width() <= 0.0 || surfaceSize.height() <= 0.0) {
@@ -1042,29 +1291,37 @@ bool DeclarativeWebContainer::drawWebRenderFrame(const QRectF &targetRect,
     updateTextureCoordinates(orientation, texCoords);
     applyTextureRect(textureRect, texCoords);
 
-    m_textureProgram->bind();
-    m_textureProgram->setUniformValue("texture", 0);
-    const int vertexAttribute = m_textureProgram->attributeLocation("aVertex");
-    const int texCoordAttribute = m_textureProgram->attributeLocation("aTexCoord");
-    m_textureProgram->enableAttributeArray(vertexAttribute);
-    m_textureProgram->enableAttributeArray(texCoordAttribute);
-    m_textureProgram->setAttributeArray(vertexAttribute, GL_FLOAT, vertices, 2);
-    m_textureProgram->setAttributeArray(texCoordAttribute, GL_FLOAT, texCoords, 2);
+    QOpenGLShaderProgram *textureProgram = textureTarget == QMozTextureTarget::ExternalOES
+            ? m_externalTextureProgram : m_texture2DProgram;
+    if (!textureProgram || m_frameTexture == 0 || m_frameTextureTarget != textureTarget) {
+        return false;
+    }
+
+    textureProgram->bind();
+    textureProgram->setUniformValue("texture", 0);
+    const int vertexAttribute = textureProgram->attributeLocation("aVertex");
+    const int texCoordAttribute = textureProgram->attributeLocation("aTexCoord");
+    textureProgram->enableAttributeArray(vertexAttribute);
+    textureProgram->enableAttributeArray(texCoordAttribute);
+    textureProgram->setAttributeArray(vertexAttribute, GL_FLOAT, vertices, 2);
+    textureProgram->setAttributeArray(texCoordAttribute, GL_FLOAT, texCoords, 2);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_EXTERNAL_OES, m_frameTexture);
+    glBindTexture(glTextureTarget(textureTarget), m_frameTexture);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-    m_textureProgram->disableAttributeArray(vertexAttribute);
-    m_textureProgram->disableAttributeArray(texCoordAttribute);
-    m_textureProgram->release();
+    textureProgram->disableAttributeArray(vertexAttribute);
+    textureProgram->disableAttributeArray(texCoordAttribute);
+    textureProgram->release();
 
     return glGetError() == GL_NO_ERROR;
 }
 
 void DeclarativeWebContainer::dumpPages() const
 {
-    m_webPages->dumpPages();
+    if (m_webPages) {
+        m_webPages->dumpPages();
+    }
 }
 
 QObject *DeclarativeWebContainer::focusObject() const
@@ -1078,7 +1335,9 @@ bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
         if (event->type() == QEvent::Close) {
             m_closeEventFilter->applicationClosingStarted();
             if (!m_closing) {
-                m_webPages->clear();
+                if (m_webPages) {
+                    m_webPages->clear();
+                }
                 bool initialUrl = hasInitialUrl();
                 m_initialUrl.clear();
                 m_fromExternal = false;
@@ -1087,12 +1346,13 @@ bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
                 }
 
                 m_initialized = false;
-                destroyWindow();
-                if (QMozContext::instance()->getNumberOfWindows() != 0) {
-                    m_closing = true;
-                } else {
-                    m_closeEventFilter->closeApplication();
-                }
+                detachActivePageWindow();
+                // stopEmbedding() owns releasing the hosted chrome windows.
+                // Waiting for lastWindowDestroyed before calling it leaves
+                // those windows alive and eventually trips the close
+                // watchdog.
+                m_closing = true;
+                m_closeEventFilter->closeApplication();
             }
             emit applicationClosing();
         } else if (event->type() == QEvent::Show) {
@@ -1115,20 +1375,11 @@ bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
     return QObject::eventFilter(obj, event);
 }
 
-void DeclarativeWebContainer::destroyWindow()
+void DeclarativeWebContainer::detachActivePageWindow()
 {
-    if (QMozContext::instance()->getNumberOfViews() != 0) {
-        return;
-    }
-
     if (m_mozWindow) {
-        if (m_mozWindow->isReserved()) {
-            connect(m_mozWindow.data(), &QMozWindow::released,
-                    m_mozWindow.data(), &QObject::deleteLater);
-            m_mozWindow->release();
-        } else {
-            delete m_mozWindow;
-        }
+        m_mozWindow->disconnect(this);
+        m_mozWindow->clearPlatformImage();
         m_mozWindow = nullptr;
     }
 }
@@ -1319,13 +1570,7 @@ void DeclarativeWebContainer::componentComplete()
 
 void DeclarativeWebContainer::updateContentOrientation(Qt::ScreenOrientation orientation)
 {
-    if (gForceLandscapeToPortrait) {
-        if (orientation == Qt::LandscapeOrientation) {
-            orientation = Qt::PortraitOrientation;
-        } else if (orientation == Qt::InvertedLandscapeOrientation) {
-            orientation = Qt::InvertedPortraitOrientation;
-        }
-    }
+    orientation = adjustedContentOrientation(orientation);
 
     if (m_mozWindow) {
         bool orientationShouldChange = (orientation != m_mozWindow->pendingOrientation());
@@ -1335,6 +1580,11 @@ void DeclarativeWebContainer::updateContentOrientation(Qt::ScreenOrientation ori
         }
     }
     reportContentOrientationChange(orientation);
+}
+
+void DeclarativeWebContainer::reportWindowOrientation(Qt::ScreenOrientation orientation)
+{
+    reportContentOrientationChange(adjustedContentOrientation(orientation));
 }
 
 void DeclarativeWebContainer::clearSurface()
@@ -1401,7 +1651,7 @@ void DeclarativeWebContainer::updateMozWindowSize()
 
 void DeclarativeWebContainer::onActiveTabChanged(int activeTabId)
 {
-    if (activeTabId <= 0) {
+    if (usesSharedHostedTabs() || activeTabId <= 0) {
         return;
     }
 
@@ -1436,20 +1686,32 @@ void DeclarativeWebContainer::initialize()
         return;
     }
 
-    if (SailfishOS::WebEngine::instance()->isInitialized() && !m_mozWindow) {
-        m_mozWindow = new QMozWindow(webContentSize());
-        m_mozWindow->setPrimaryOrientation(screen()->primaryOrientation());
-
-        connect(m_mozWindow.data(), &QMozWindow::orientationChangeFiltered,
-                this, &DeclarativeWebContainer::handleContentOrientationChanged);
-        connect(m_mozWindow.data(), &QMozWindow::compositingFinished,
-                this, &DeclarativeWebContainer::handleCompositingFinished, Qt::QueuedConnection);
-        m_mozWindow->reserve();
-        m_mozWindow->setReadyToPaint(false);
-        if (m_chromeWindow) {
-            updateContentOrientation(m_chromeWindow->contentOrientation());
+    if (usesSharedHostedTabs()) {
+        if (!canInitialize()) {
+            return;
         }
+
+        m_initialized = true;
+        m_modeChangePending = false;
+        if (!m_initialUrl.isEmpty() && !m_model->activateTab(m_initialUrl, true)) {
+            m_model->newTab(m_initialUrl, m_fromExternal);
+        }
+
+        if (!m_completed) {
+            m_completed = true;
+            emit completedChanged();
+        }
+
+        bool initialUrl = hasInitialUrl();
+        m_initialUrl.clear();
+        m_fromExternal = false;
+        if (initialUrl) {
+            emit hasInitialUrlChanged();
+        }
+        return;
     }
+
+    ensurePageHosts();
 
     // This signal handler is responsible for activating
     // the first page.
@@ -1466,14 +1728,20 @@ void DeclarativeWebContainer::initialize()
     // From this point onwards, we're ready to initialize.
     // We set m_initialized to true prior to the block below since we may need to
     // call loadTab() within it, and that function is guarded by the value of m_initialized.
+    const bool modeChange = m_modeChangePending;
     m_initialized = true;
+    m_modeChangePending = false;
 
     // Load test
     // 1) no tabs and firstUseDone or we have incoming url, try to active tab, only after that fails
     //    load initial url or home page to a new tab.
     // 2) model has tabs, load initial url or active tab.
     bool firstUseDone = DeclarativeWebUtils::instance()->firstUseDone();
-    if ((m_model->count() == 0 && firstUseDone) || !m_initialUrl.isEmpty()) {
+    if (modeChange && m_initialUrl.isEmpty()) {
+        if (m_model->count() > 0) {
+            loadTab(m_model->activeTab(), true, false);
+        }
+    } else if ((m_model->count() == 0 && firstUseDone) || !m_initialUrl.isEmpty()) {
         QString url = m_initialUrl;
         if (m_initialUrl.isEmpty()) {
             if (!browserEnabled()) {
@@ -1510,7 +1778,13 @@ void DeclarativeWebContainer::initialize()
 
 void DeclarativeWebContainer::onDownloadStarted()
 {
-    emit m_webPage->urlChanged();
+    if (usesSharedHostedTabs()) {
+        return;
+    }
+
+    if (m_webPage) {
+        emit m_webPage->urlChanged();
+    }
 
     if (m_model->count() == 0) {
         // Download doesn't add tab to model. Mimic
@@ -1522,8 +1796,12 @@ void DeclarativeWebContainer::onDownloadStarted()
 
 void DeclarativeWebContainer::onNewTabRequested(const Tab &tab, bool fromExternal)
 {
+    if (usesSharedHostedTabs()) {
+        return;
+    }
+
     if (tab.hidden()) {
-        m_PreviousTabWhenHidden = m_webPage->tabId();
+        m_PreviousTabWhenHidden = m_webPage ? m_webPage->tabId() : -1;
     }
 
     if (activatePage(tab, false, fromExternal)) {
@@ -1607,16 +1885,11 @@ void DeclarativeWebContainer::updateActiveTabRendered()
     setActiveTabRendered(true);
 }
 
-void DeclarativeWebContainer::onLastViewDestroyed()
-{
-    if (m_closing) {
-        destroyWindow();
-    }
-}
-
 void DeclarativeWebContainer::onLastWindowDestroyed()
 {
-    m_closing = false;
+    if (m_closing) {
+        return;
+    }
 
     if (isExposed()) {
         initialize();
@@ -1647,6 +1920,32 @@ bool DeclarativeWebContainer::canInitialize() const
     return SailfishOS::WebEngine::instance()->isInitialized() && m_model && m_model->loaded();
 }
 
+bool DeclarativeWebContainer::usesSharedHostedTabs() const
+{
+    return !BrowserAppInfo::captivePortal()
+            && !m_privateMode
+            && m_model
+            && m_model.data() == m_persistentTabModel.data()
+            && m_model->runtimeAuthoritative();
+}
+
+void DeclarativeWebContainer::ensurePageHosts()
+{
+    if (usesSharedHostedTabs()
+            || !SailfishOS::WebEngine::instance()->isInitialized()) {
+        return;
+    }
+
+    if (!m_webPages) {
+        WebPageFactory *pageFactory = new WebPageFactory(this);
+        connect(this, &DeclarativeWebContainer::webPageComponentChanged,
+                pageFactory, &WebPageFactory::updateQmlComponent);
+        pageFactory->updateQmlComponent(m_webPageComponent.data());
+        m_webPages = new WebPages(pageFactory, this);
+        m_webPages->setMaxLivePages(m_maxLiveTabCount);
+    }
+}
+
 bool DeclarativeWebContainer::browserEnabled() const
 {
     return Sailfish::PolicyValue::keyValue(Sailfish::PolicyValue::BrowserEnabled).toBool();
@@ -1654,7 +1953,11 @@ bool DeclarativeWebContainer::browserEnabled() const
 
 void DeclarativeWebContainer::loadTab(const Tab& tab, bool force, bool fromExternal)
 {
-    if (activatePage(tab, true, fromExternal) || force) {
+    if (usesSharedHostedTabs()) {
+        return;
+    }
+
+    if ((activatePage(tab, true, fromExternal) || force) && m_webPage) {
         // Note: active pages containing a "link" between each other (parent-child relationship)
         // are not destroyed automatically e.g. in low memory notification.
         // Hence, parentId is not necessary over here.
@@ -1699,12 +2002,14 @@ void DeclarativeWebContainer::renderCompositedFrame()
 
     const bool completingActiveTabFrame = m_waitingForActiveTabFrame;
 
-    if (!ensureRenderContext() || !ensureTextureProgram()) {
+    if (!ensureRenderContext()) {
         return;
     }
 
     QSize textureSize;
-    if (!bindWebRenderFrameTexture(&textureSize)) {
+    QMozTextureTarget textureTarget;
+    if (!bindWebRenderFrameTexture(&textureSize, &textureTarget)
+            || !ensureTextureProgram(textureTarget)) {
         static int noImageWarnings = 0;
         if (++noImageWarnings <= 5) {
             qWarning() << "No WebRender EGLImage available for browser frame";
@@ -1723,7 +2028,7 @@ void DeclarativeWebContainer::renderCompositedFrame()
     glClear(GL_COLOR_BUFFER_BIT);
 
     if (!drawWebRenderFrame(effectiveWebContentRect(), QSizeF(width(), height()),
-                            m_mozWindow->contentOrientation())) {
+                            m_mozWindow->contentOrientation(), textureTarget)) {
         qWarning() << "Browser WebRender frame draw failed"
                    << "textureSize" << textureSize << "windowSize" << size();
         return;

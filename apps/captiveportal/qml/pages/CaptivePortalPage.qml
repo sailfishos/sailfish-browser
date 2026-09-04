@@ -46,6 +46,7 @@ Page {
             webView.applyContentOrientation(pageOrientation)
         }
     }
+    onOrientationChanged: webView.applyContentOrientation(orientation)
 
     orientationTransitions: orientationFader.orientationTransition
 
@@ -65,8 +66,6 @@ Page {
         color: webView.contentItem ? (webView.resourceController.videoActive &&
                                       webView.contentItem.fullscreen ? "black" : webView.contentItem.backgroundColor)
                                    : "white"
-
-        onApplyContentOrientation: webView.applyContentOrientation(browserPage.orientation)
     }
 
     Private.VirtualKeyboardObserver {
@@ -227,4 +226,6 @@ Page {
             window.activate()
         }
     }
+
+    Component.onCompleted: webView.applyContentOrientation(browserPage.orientation)
 }

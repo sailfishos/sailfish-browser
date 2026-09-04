@@ -11,6 +11,7 @@
 #define DECLARATIVEWEBCONTAINER_H
 
 #include <qmozsecurity.h>
+#include <qmozwindow.h>
 
 #include <QtGui/QWindow>
 #include <QtGui/QOpenGLFunctions>
@@ -25,7 +26,6 @@
 #include <QRectF>
 #include <QTimer>
 
-class QMozWindow;
 class QOpenGLShaderProgram;
 class QTimerEvent;
 class DeclarativeTabModel;
@@ -87,6 +87,7 @@ public:
 
     DeclarativeWebPage *webPage() const;
     QMozWindow *mozWindow() const;
+    QSize webContentSize() const;
 
     DeclarativeTabModel *tabModel() const;
     DeclarativeTabModel *persistentTabModel() const;
@@ -156,6 +157,16 @@ public:
     Q_INVOKABLE int activateTab(int tabId, const QString &url);
     Q_INVOKABLE void closeTab(int tabId);
 
+    // Chrome-hosted tabs do not create a DeclarativeWebPage. Keep the
+    // container-facing state used by the D-Bus API in sync with QmlMozView
+    // without changing the per-page hosted presentation path.
+    Q_INVOKABLE void updateHostedState(const QString &url, const QString &title,
+                                       bool loading, int loadProgress,
+                                       bool canGoBack, bool canGoForward,
+                                       QMozSecurity *security,
+                                       bool notifySecurity);
+    Q_INVOKABLE void clearHostedState();
+
     Q_INVOKABLE void dumpPages() const;
 
     QObject *focusObject() const override;
@@ -206,6 +217,14 @@ signals:
     void hasInitialUrlChanged();
     void requestTabWithOwnerAsyncResult(int tabId, void *context);
 
+    // Runtime-authoritative tabs are owned by the chrome-hosted QmlMozView.
+    // Keep external container callers on that path without touching the
+    // per-page DeclarativeWebPage or database history cursor directly.
+    void hostedLoadRequested(const QString &url, bool fromExternal);
+    void hostedReloadRequested();
+    void hostedGoBackRequested();
+    void hostedGoForwardRequested();
+
     void keyPressed(int key);
     void backButtonPressed();
     void forwardButtonPressed();
@@ -228,6 +247,7 @@ protected:
 
 public slots:
     void updateContentOrientation(Qt::ScreenOrientation orientation);
+    void reportWindowOrientation(Qt::ScreenOrientation orientation);
     void clearSurface();
     void dsmeStateChange(const QString &state);
 
@@ -242,8 +262,6 @@ private slots:
     void updateLoading();
     void handleActiveTabFirstPaint(int offx, int offy);
     void updateActiveTabRendered();
-    void onLastViewDestroyed();
-
     void onLastWindowDestroyed();
     void updateWindowFlags();
 
@@ -262,21 +280,24 @@ private:
     void setTabModel(DeclarativeTabModel *model);
     qreal contentHeight() const;
     QRectF effectiveWebContentRect() const;
-    QSize webContentSize() const;
     void updateMozWindowSize();
     bool canInitialize() const;
+    bool usesSharedHostedTabs() const;
+    void ensurePageHosts();
     void loadTab(const Tab& tab, bool force, bool fromExternal);
     void updateMode();
     void setActiveTabRendered(bool rendered);
     bool browserEnabled() const;
 
-    void destroyWindow();
+    void detachActivePageWindow();
     void clearWindowSurface();
     bool ensureRenderContext();
-    bool ensureTextureProgram();
-    bool bindWebRenderFrameTexture(QSize *textureSize);
+    bool ensureTextureProgram(QMozTextureTarget textureTarget);
+    bool bindWebRenderFrameTexture(QSize *textureSize,
+                                   QMozTextureTarget *textureTarget);
     bool drawWebRenderFrame(const QRectF &targetRect, const QSizeF &surfaceSize,
                             Qt::ScreenOrientation orientation,
+                            QMozTextureTarget textureTarget,
                             const QRectF &textureRect = QRectF(0.0, 0.0, 1.0, 1.0));
 
     QPointer<QMozWindow> m_mozWindow;
@@ -285,8 +306,10 @@ private:
     QPointer<QQuickView> m_chromeWindow;
     QOpenGLContext *m_context = nullptr;
     QMutex m_contextMutex;
-    QOpenGLShaderProgram *m_textureProgram = nullptr;
+    QOpenGLShaderProgram *m_texture2DProgram = nullptr;
+    QOpenGLShaderProgram *m_externalTextureProgram = nullptr;
     GLuint m_frameTexture = 0;
+    QMozTextureTarget m_frameTextureTarget = QMozTextureTarget::Texture2D;
 
     QPointer<DeclarativeTabModel> m_model;
     QPointer<QQmlComponent> m_webPageComponent;
@@ -294,9 +317,12 @@ private:
     QPointer<DeclarativeTabModel> m_persistentTabModel;
     QPointer<DeclarativeTabModel> m_privateTabModel;
 
+    int m_maxLiveTabCount = 5;
+
     bool m_enabled = true;
     bool m_foreground = true;
     bool m_touchBlocked = false;
+    bool m_readyToPaint = true;
     QRectF m_webContentRect;
     QColor m_webContentBackgroundColor = QColor(Qt::black);
 
@@ -311,8 +337,18 @@ private:
 
     int m_loadProgress = 0;
 
+    QString m_hostedUrl;
+    QString m_hostedTitle;
+    int m_hostedLoadProgress = 0;
+    bool m_hostedLoading = false;
+    bool m_hostedCanGoBack = false;
+    bool m_hostedCanGoForward = false;
+    bool m_hostedStateActive = false;
+    QPointer<QMozSecurity> m_hostedSecurity;
+
     bool m_completed = false;
     bool m_initialized = false;
+    bool m_modeChangePending = false;
 
     bool m_privateMode = false;
     bool m_activeTabRendered = false;

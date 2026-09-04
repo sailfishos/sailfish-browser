@@ -31,11 +31,11 @@
 #include "declarativetabfiltermodel.h"
 #include "declarativewebcontainer.h"
 #include "declarativewebpage.h"
-#include "declarativewebpagecreator.h"
 #include "declarativeloginmodel.h"
 #include "loginfiltermodel.h"
 #include "datafetcher.h"
 #include "inputregion.h"
+#include "hostedthumbnailgrabber.h"
 #include "searchenginemodel.h"
 #include "secureaction.h"
 #include "faviconmanager.h"
@@ -164,10 +164,10 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     qmlRegisterUncreatableType<DownloadStatus>(uri, 1, 0, "DownloadStatus", "");
     qmlRegisterType<DeclarativeWebContainer>(uri, 1, 0, "WebContainer");
     qmlRegisterType<DeclarativeWebPage>(uri, 1, 0, "WebPage");
-    qmlRegisterType<DeclarativeWebPageCreator>(uri, 1, 0, "WebPageCreator");
     qmlRegisterType<DesktopBookmarkWriter>(uri, 1, 0, "DesktopBookmarkWriter");
     qmlRegisterType<DataFetcher>(uri, 1, 0, "DataFetcher");
     qmlRegisterType<InputRegion>(uri, 1, 0, "InputRegion");
+    qmlRegisterType<HostedThumbnailGrabber>(uri, 1, 0, "HostedThumbnailGrabber");
     qmlRegisterType<SecureAction>(uri, 1, 0, "SecureAction");
     qmlRegisterSingletonType<SearchEngineModel>(uri, 1, 0, "SearchEngineModel", search_model_factory);
 

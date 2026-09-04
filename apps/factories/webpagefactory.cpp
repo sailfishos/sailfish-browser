@@ -38,8 +38,8 @@ DeclarativeWebPage* WebPageFactory::createWebPage(DeclarativeWebContainer *webCo
         object->setParent(webContainer);
         DeclarativeWebPage* webPage = qobject_cast<DeclarativeWebPage *>(object);
         if (webPage) {
-            webPage->setContainer(webContainer);
             webPage->setInitialState(initialTab, webContainer->privateMode());
+            webPage->setContainer(webContainer);
             emit aboutToInitialize(webPage);
             webPage->initialize();
             m_qmlComponent->completeCreate();

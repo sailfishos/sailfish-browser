@@ -22,7 +22,6 @@
 #include "persistenttabmodel.h"
 #include "declarativewebcontainer.h"
 #include "declarativewebpage.h"
-#include "declarativewebpagecreator.h"
 #include "privatetabmodel.h"
 #include "declarativebookmarkmodel.h"
 #include "declarativetabfiltermodel.h"
@@ -874,7 +873,6 @@ int main(int argc, char *argv[])
     qmlRegisterUncreatableType<PersistentTabModel>(uri, 1, 0, "PersistentTabModel", "");
     qmlRegisterType<DeclarativeWebContainer>(uri, 1, 0, "WebContainer");
     qmlRegisterType<DeclarativeWebPage>(uri, 1, 0, "WebPage");
-    qmlRegisterType<DeclarativeWebPageCreator>(uri, 1, 0, "WebPageCreator");
 
     qmlRegisterUncreatableType<PrivateTabModel>(uri, 1, 0, "PrivateTabModel", "");
     qmlRegisterType<DeclarativeBookmarkModel>(uri, 1, 0, "BookmarkModel");
@@ -910,7 +908,7 @@ int main(int argc, char *argv[])
     bool contextDestroyed = false;
 
     QObject::connect(SailfishOS::WebEngine::instance(),
-                     &SailfishOS::WebEngine::lastViewDestroyed,
+                     &SailfishOS::WebEngine::lastWindowDestroyed,
                      [&] {
         if (testcase->running) {
             return;

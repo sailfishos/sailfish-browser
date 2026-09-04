@@ -137,10 +137,6 @@ void DeclarativeWebUtils::updateWebEngineSettings()
     // Enable internet search
     webEngineSettings->setPreference(QString("keyword.enabled"), QVariant(true));
 
-    // Remove this override after rebasing the bundled Gecko to esr140 or
-    // newer, where HTTPS-First is the default for normal browsing.
-    webEngineSettings->setPreference(QStringLiteral("dom.security.https_first"), QVariant(true));
-
     setRenderingPreferences();
 }
 
