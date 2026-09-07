@@ -2585,6 +2585,10 @@ Page {
 
         width: browserPage.width
         height: Math.ceil(overlay.y)
+        // The opaque dimmer exposes legacy content from the separate web
+        // window through its alpha. Hosted content is already behind it in
+        // this scene, so painting the dimmer would replace the page instead.
+        visible: !browserPage.chromeHostMode && dimmerOpacity > 0.0
 
         dimmerOpacity: overlay.animator.atBottom
                        ? 0.0
@@ -2613,6 +2617,14 @@ Page {
             anchors.fill: contentDimmer
             visible: webView.privateMode && !overlay.animator.allowContentUse
         }
+    }
+
+    MouseArea {
+        width: browserPage.width
+        height: Math.ceil(overlay.y)
+        enabled: browserPage.chromeHostMode && overlay.animator.atTop
+                 && webView.tabModel.count > 0
+        onClicked: overlay.dismiss(true)
     }
 
     Label {
