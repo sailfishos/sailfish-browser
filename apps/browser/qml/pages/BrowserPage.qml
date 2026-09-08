@@ -2808,8 +2808,6 @@ Page {
         if (chromeHostMode) {
             webView.reportWindowOrientation(
                         webView._qtScreenOrientation(browserPage.orientation))
-        } else {
-            webView.applyContentOrientation(browserPage.orientation)
         }
         window.setBrowserCover(webView.tabModel)
         if (Qt.application.arguments.indexOf("-debugMode") > 0) {

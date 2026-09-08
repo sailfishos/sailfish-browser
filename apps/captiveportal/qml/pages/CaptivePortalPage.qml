@@ -227,6 +227,4 @@ Page {
             window.activate()
         }
     }
-
-    Component.onCompleted: webView.applyContentOrientation(browserPage.orientation)
 }
