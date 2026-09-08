@@ -40,9 +40,7 @@ QString FaviconManager::get(const QString &type, const QString &hostname)
     return m_faviconSets.value(type).favicons.value(hostname).favicon;
 }
 
-void FaviconManager::grabIcon(const QString &, DeclarativeWebPage *, const QSize &)
-{
-}
+
 
 void FaviconManager::clear(const QString &type)
 {

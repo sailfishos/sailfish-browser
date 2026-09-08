@@ -9,7 +9,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-
 import QtQuick 2.2
 import QtQuick.Window 2.2 as QuickWindow
 import Qt5Mozilla 1.0
@@ -44,9 +43,9 @@ Page {
     property alias overlay: overlay
     property alias tabs: webView.tabModel
     property alias history: historyModel
-    readonly property bool chromeHostMode: !!chromeHostLoader.item && !webView.privateMode
-    readonly property var chromeHostView: chromeHostMode ? chromeHostLoader.item : null
-    readonly property var _runtimeChromeView: chromeHostLoader.item
+    readonly property var chromeHostView: _runtimeChromeView
+    readonly property var _runtimeChromeView: webView.privateMode
+                                               ? privateChromeHostLoader.item : chromeHostLoader.item
     readonly property bool viewLoading: chromeHostView ? chromeHostView.loading : webView.loading
     readonly property int loadProgress: chromeHostView ? chromeHostView.loadProgress : webView.loadProgress
     readonly property string url: chromeHostView ? String(chromeHostView.url) : webView.url
@@ -91,17 +90,31 @@ Page {
     // Qt signal ordering reaches the feature handler exactly once.
     property var _pendingHostedGenericMessages: []
     property var _hostedTabAsyncMessages: []
-    property bool _runtimeRestoreSent
-    property bool _runtimeSnapshotInitialized
-    property var _runtimeAppliedState: ({})
-    property var _pendingRuntimeTitles: ({})
-    property var _pendingRuntimeCommands: []
-    property var _pendingRuntimeCloseCommands: []
-    property var _runtimeCloseInFlight: null
-    property bool _runtimeTabsClearInProgress
-    property var _pendingRuntimeNavigation: null
     property alias webView: webView
     property alias inputRegion: inputRegion
+
+    onChromeHostViewChanged: {
+        clearHostedSelection()
+        finishHostedOrientationWait()
+        _hostedMetadataTitle = ""
+        _hostedFavicon = ""
+        _hostedAcceptedTouchIcon = false
+        if (chromeHostView) {
+            webView.reportWindowOrientation(
+                        webView._qtScreenOrientation(browserPage.orientation))
+            syncHostedContainerState(chromeHostView)
+            syncHostedDesktopMode(chromeHostView)
+            applyHostedViewportFitState(chromeHostView)
+            updateHostedViewSuspension(chromeHostView)
+            resetHostedThumbnailCapture(chromeHostView)
+            requestHostedThumbnail()
+        }
+    }
+
+    function runtimeSession(hostView) {
+        var view = hostView || _runtimeChromeView
+        return view ? view.hostedSession : null
+    }
 
     function sendPageMessage(name, data) {
         if (chromeHostView) {
@@ -109,14 +122,12 @@ Page {
             return true
         }
 
-        webView.sendAsyncMessage(name, data)
-        return !!webView.contentItem
+        return false
     }
 
     function syncHostedContainerState(hostView, notifySecurity) {
         var view = hostView || _runtimeChromeView
-        if (!view || webView.privateMode) {
-            webView.clearHostedState()
+        if (!view || view !== chromeHostView) {
             return
         }
 
@@ -229,12 +240,12 @@ Page {
         if (!persistentId || !String(persistentId).length) {
             return false
         }
-        return webView.persistentTabModel.runtimeDesktopMode(String(persistentId))
+        return webView.tabModel.runtimeDesktopMode(String(persistentId))
     }
 
     function syncHostedDesktopMode(hostView) {
         var view = hostView || chromeHostView
-        if (!view) {
+        if (!view || view !== chromeHostView) {
             return
         }
 
@@ -248,7 +259,7 @@ Page {
             if (!persistentId.length || chromeHostView.desktopMode === desktopMode) {
                 return
             }
-            if (webView.persistentTabModel.setRuntimeDesktopMode(
+            if (webView.tabModel.setRuntimeDesktopMode(
                         persistentId, desktopMode)) {
                 chromeHostView.desktopMode = desktopMode
                 chromeHostView.reload()
@@ -256,11 +267,6 @@ Page {
             return
         }
 
-        if (webView.contentItem
-                && webView.contentItem.desktopMode !== desktopMode) {
-            webView.contentItem.desktopMode = desktopMode
-            webView.reload()
-        }
     }
 
     function clearHostedSelection() {
@@ -280,13 +286,7 @@ Page {
         }
     }
 
-    function clearSelection() {
-        if (chromeHostView) {
-            clearHostedSelection()
-        } else {
-            webView.clearSelection()
-        }
-    }
+    function clearSelection() { clearHostedSelection() }
 
     function updateHostedViewSuspension(hostView) {
         var view = hostView || chromeHostView
@@ -294,7 +294,7 @@ Page {
             return
         }
 
-        if (browserPage.active && !webView.privateMode
+        if (browserPage.active && view === chromeHostView
                 && view.visible && webView.foreground) {
             view.resumeView()
         } else {
@@ -360,7 +360,7 @@ Page {
         if (chromeHostView) {
             loadHostedContainerRequest(url, false)
         } else {
-            webView.load(url, title)
+            webView.load(url, false)
         }
     }
 
@@ -372,14 +372,11 @@ Page {
         if (chromeHostView.selectedTabId.length) {
             chromeHostView.load(url, !!fromExternal)
         } else {
-            webView.persistentTabModel.newTab(url, !!fromExternal)
+            webView.tabModel.newTab(url, !!fromExternal)
         }
     }
 
     function newTab(url, fromExternal) {
-        if (chromeHostView) {
-            return webView.persistentTabModel.newTab(url, !!fromExternal)
-        }
         return webView.tabModel.newTab(url, !!fromExternal)
     }
 
@@ -388,11 +385,9 @@ Page {
             // Page-driven traversals can leave the database cursor behind Gecko.
             var persistentId = selectedPersistentId()
             if (persistentId.length) {
-                webView.persistentTabModel.runtimeGoBack(persistentId)
+                webView.tabModel.runtimeGoBack(persistentId)
             }
             chromeHostView.goBack()
-        } else {
-            webView.goBack()
         }
     }
 
@@ -400,27 +395,21 @@ Page {
         if (chromeHostView) {
             var persistentId = selectedPersistentId()
             if (persistentId.length) {
-                webView.persistentTabModel.runtimeGoForward(persistentId)
+                webView.tabModel.runtimeGoForward(persistentId)
             }
             chromeHostView.goForward()
-        } else {
-            webView.goForward()
         }
     }
 
     function stop() {
         if (chromeHostView) {
             chromeHostView.stop()
-        } else {
-            webView.stop()
         }
     }
 
     function reload() {
         if (chromeHostView) {
             chromeHostView.reload()
-        } else {
-            webView.reload()
         }
     }
 
@@ -489,7 +478,7 @@ Page {
         }
         _hostedTabCrashStates = states
 
-        if (hostView && String(hostView.selectedTabId) === runtimeId) {
+        if (hostView === chromeHostView && hostView && String(hostView.selectedTabId) === runtimeId) {
             resetHostedThumbnailCapture(hostView)
             clearHostedSelection()
             overlay.animator.showChrome()
@@ -579,7 +568,7 @@ Page {
             "themeColor": data.themeColor || ""
         }
         _hostedViewportFitStates = states
-        if (hostView && String(hostView.selectedTabId) === runtimeId) {
+        if (hostView === chromeHostView && hostView && String(hostView.selectedTabId) === runtimeId) {
             applyHostedViewportFitState(hostView)
         }
     }
@@ -590,7 +579,8 @@ Page {
     }
 
     function hostedMessageTabIsSelected(hostView, tabId, persistentId) {
-        return hostView && String(hostView.selectedTabId) === String(tabId)
+        return hostView === chromeHostView && hostView
+                && String(hostView.selectedTabId) === String(tabId)
                 && hostedMessageTabIsLive(hostView, tabId, persistentId)
     }
 
@@ -960,7 +950,7 @@ Page {
                                                                   "pageStack": window.pageStack,
                                                                   "parentItem": browserPage,
                                                                   "contentItem": target,
-                                                                  "tabModel": webView.tabModel
+                                                                  "tabModel": chromeView.browserTabModel
                                                               })
         if (!opener || !opener.message(message, data)) {
             if (_activeHostedModalTarget === target) {
@@ -1096,10 +1086,7 @@ Page {
             _hostedTextSelectionController = webView.textSelectionControllerComponent.createObject(
                         browserPage, {
                             "contentItem": target,
-                            // Legacy content is a separate native window, so its
-                            // selection controller lives below the Browser page.
-                            // Hosted content is a QML texture and would otherwise
-                            // paint over the selection handles.
+                            // Keep selection handles above the hosted texture.
                             "z": 1
                         })
             _hostedSelectionTabId = String(tabId)
@@ -1118,7 +1105,7 @@ Page {
     }
 
     function refreshHostedHistoryIcon(hostView, tabId, persistentId, iconUrl) {
-        if (webView.privateMode || !iconUrl
+        if (hostView.privateMode || !iconUrl
                 || !hostedMessageTabIsSelected(hostView, tabId, persistentId)) {
             return
         }
@@ -1229,7 +1216,7 @@ Page {
             }
             break
         case "Link:AddSearch":
-            if (!webView.privateMode && data.engine) {
+            if (!hostView.privateMode && data.engine) {
                 SearchEngineModel.add(data.engine.title, data.engine.href)
             }
             break
@@ -1289,373 +1276,128 @@ Page {
     }
 
     function restoreRuntimeTabs(hostView) {
-        if (!hostView || _runtimeRestoreSent
-                || !webView.persistentTabModel.loaded) {
-            return
-        }
-
-        var restoreBatch = webView.persistentTabModel.runtimeRestoreBatch()
-        _runtimeRestoreSent = true
-        if (!hostView.restoreTabs(restoreBatch.tabs, restoreBatch.selectedIndex)) {
-            _runtimeRestoreSent = false
-            console.warn("Failed to restore Gecko tab session")
+        var session = runtimeSession(hostView)
+        if (session) {
+            return session.restoreRuntimeTabs(hostView)
         }
     }
 
     function queueRuntimeCommand(command) {
-        _pendingRuntimeCommands.push(command)
+        var session = runtimeSession(null)
+        if (session) {
+            return session.queueRuntimeCommand(command)
+        }
     }
 
     function drainRuntimeNewTabs() {
-        var pendingTabs = webView.persistentTabModel.takePendingRuntimeNewTabs()
-        for (var index = 0; index < pendingTabs.length; ++index) {
-            var pendingTab = pendingTabs[index]
-            var persistentId = String(pendingTab.persistentId)
-            var alreadyQueued = false
-            for (var commandIndex = 0;
-                 commandIndex < _pendingRuntimeCommands.length;
-                 ++commandIndex) {
-                var queuedCommand = _pendingRuntimeCommands[commandIndex]
-                if (queuedCommand.type === "new"
-                        && queuedCommand.persistentId === persistentId) {
-                    alreadyQueued = true
-                    break
-                }
-            }
-            if (!alreadyQueued) {
-                dispatchRuntimeCommand({
-                    "type": "new",
-                    "url": String(pendingTab.url),
-                    "persistentId": persistentId,
-                    "fromExternal": !!pendingTab.fromExternal
-                })
-            }
+        var session = runtimeSession(null)
+        if (session) {
+            return session.drainRuntimeNewTabs()
         }
     }
 
     function removeQueuedRuntimeNewTab(persistentId) {
-        var rejectedPersistentId = String(persistentId)
-        var remainingCommands = []
-        for (var index = 0; index < _pendingRuntimeCommands.length; ++index) {
-            var command = _pendingRuntimeCommands[index]
-            if (command.type !== "new"
-                    || String(command.persistentId) !== rejectedPersistentId) {
-                remainingCommands.push(command)
-            }
+        var session = runtimeSession(null)
+        if (session) {
+            return session.removeQueuedRuntimeNewTab(persistentId)
         }
-        _pendingRuntimeCommands = remainingCommands
     }
 
     function cancelPendingRuntimeNavigation() {
-        _pendingRuntimeNavigation = null
-        runtimeNavigationTimer.stop()
+        var session = runtimeSession(null)
+        if (session) {
+            return session.cancelPendingRuntimeNavigation()
+        }
     }
 
     function queueRuntimeClose(persistentId) {
-        var id = String(persistentId)
-        if (!id.length || (_runtimeCloseInFlight
-                           && _runtimeCloseInFlight.persistentId === id)) {
-            return
+        var session = runtimeSession(null)
+        if (session) {
+            return session.queueRuntimeClose(persistentId)
         }
-        for (var index = 0; index < _pendingRuntimeCloseCommands.length; ++index) {
-            if (_pendingRuntimeCloseCommands[index] === id) {
-                return
-            }
-        }
-        _pendingRuntimeCloseCommands.push(id)
     }
 
     function finishRuntimeTabsClear() {
-        if (_runtimeTabsClearInProgress) {
-            _runtimeTabsClearInProgress = false
-            runtimeTabsClearFinished()
+        var session = runtimeSession(null)
+        if (session) {
+            return session.finishRuntimeTabsClear()
         }
     }
 
     function startNextRuntimeClose(runtimeHostView) {
-        var hostView = runtimeHostView || _runtimeChromeView
-        if (!hostView || _runtimeCloseInFlight) {
-            return
-        }
-        if (!_pendingRuntimeCloseCommands.length) {
-            finishRuntimeTabsClear()
-            return
-        }
-
-        var persistentId = _pendingRuntimeCloseCommands.shift()
-        var runtimeId = webView.persistentTabModel.runtimeIdForPersistentId(persistentId)
-        if (!runtimeId.length) {
-            startNextRuntimeClose(hostView)
-            return
-        }
-
-        cancelPendingRuntimeNavigation()
-        _runtimeCloseInFlight = {
-            "persistentId": persistentId,
-            "runtimeId": runtimeId,
-            "revision": String(hostView.tabModel.revision)
-        }
-        if (!hostView.closeTab(runtimeId)) {
-            _runtimeCloseInFlight = null
-            _pendingRuntimeCloseCommands = []
-            finishRuntimeTabsClear()
+        var session = runtimeSession(runtimeHostView)
+        if (session) {
+            return session.startNextRuntimeClose(runtimeHostView)
         }
     }
 
     function resolveRuntimeCloseAfterSnapshot(runtimeHostView) {
-        var hostView = runtimeHostView || _runtimeChromeView
-        if (!hostView || !_runtimeCloseInFlight
-                || _runtimeCloseInFlight.revision === String(hostView.tabModel.revision)) {
-            return
+        var session = runtimeSession(runtimeHostView)
+        if (session) {
+            return session.resolveRuntimeCloseAfterSnapshot(runtimeHostView)
         }
-
-        var close = _runtimeCloseInFlight
-        var runtimeTab = hostedRuntimeTabByRuntimeId(hostView, close.runtimeId)
-        if (runtimeTab) {
-            // Snapshots can precede close processing or report the pending
-            // PermitUnload state. A rejected close has its own result signal.
-            return
-        }
-        _runtimeCloseInFlight = null
-        startNextRuntimeClose(hostView)
     }
 
     function runtimeTabCloseResult(runtimeId, closed) {
-        if (!_runtimeCloseInFlight
-                || String(_runtimeCloseInFlight.runtimeId) !== String(runtimeId)) {
-            return
+        var session = runtimeSession(null)
+        if (session) {
+            return session.runtimeTabCloseResult(runtimeId, closed)
         }
-
-        if (!closed) {
-            // A beforeunload prompt was declined. Do not issue the next
-            // close-all request until a later user action starts a new batch.
-            _runtimeCloseInFlight = null
-            _pendingRuntimeCloseCommands = []
-            finishRuntimeTabsClear()
-        }
-        // A successful close is still committed only by the next complete
-        // runtime snapshot, which retains persistence as the authority.
     }
 
     function dispatchRuntimeCommand(command, runtimeHostView) {
-        var hostView = runtimeHostView || _runtimeChromeView
-        if (!hostView || !_runtimeRestoreSent || !_runtimeSnapshotInitialized) {
-            queueRuntimeCommand(command)
-            return
-        }
-
-        if (command.type === "new") {
-            cancelPendingRuntimeNavigation()
-            if (!hostView.newTab(command.url, command.persistentId,
-                                 command.fromExternal, false)) {
-                webView.persistentTabModel.cancelRuntimeTabReservation(
-                            command.persistentId)
-            }
-        } else if (command.type === "activate") {
-            cancelPendingRuntimeNavigation()
-            var runtimeId = webView.persistentTabModel.runtimeIdForPersistentId(
-                        command.persistentId)
-            if (runtimeId.length && hostView.selectTab(runtimeId) && command.reload) {
-                hostView.reload()
-            }
-        } else if (command.type === "close") {
-            queueRuntimeClose(command.persistentId)
-            startNextRuntimeClose(hostView)
-        } else if (command.type === "navigate") {
-            cancelPendingRuntimeNavigation()
-            var navigateRuntimeId = webView.persistentTabModel.runtimeIdForPersistentId(
-                        command.persistentId)
-            if (navigateRuntimeId.length) {
-                if (hostView.selectedTabId === navigateRuntimeId) {
-                    hostView.load(command.url, command.fromExternal)
-                } else if (hostView.selectTab(navigateRuntimeId)) {
-                    _pendingRuntimeNavigation = command
-                    runtimeNavigationTimer.restart()
-                } else {
-                    cancelPendingRuntimeNavigation()
-                }
-            }
-        } else if (command.type === "clear") {
-            _runtimeTabsClearInProgress = true
-            var tabs = hostView.tabModel.snapshot()
-            for (var index = tabs.length - 1; index >= 0; --index) {
-                queueRuntimeClose(String(tabs[index].persistentId))
-            }
-            startNextRuntimeClose(hostView)
+        var session = runtimeSession(runtimeHostView)
+        if (session) {
+            return session.dispatchRuntimeCommand(command, runtimeHostView)
         }
     }
 
     function flushSelectedRuntimeNavigation(runtimeHostView) {
-        var hostView = runtimeHostView || _runtimeChromeView
-        var persistentId = selectedPersistentId(hostView)
-        var command = _pendingRuntimeNavigation
-        if (!hostView || !command || !persistentId.length) {
-            return
-        }
-
-        if (persistentId === command.persistentId) {
-            cancelPendingRuntimeNavigation()
-            hostView.load(command.url, command.fromExternal)
-            return
-        }
-
-        if (!webView.persistentTabModel.runtimeIdForPersistentId(
-                    command.persistentId).length) {
-            cancelPendingRuntimeNavigation()
+        var session = runtimeSession(runtimeHostView)
+        if (session) {
+            return session.flushSelectedRuntimeNavigation(runtimeHostView)
         }
     }
 
     function flushRuntimeCommands(runtimeHostView) {
-        var hostView = runtimeHostView || _runtimeChromeView
-        if (!_runtimeSnapshotInitialized || !hostView) {
-            return
-        }
-        var commands = _pendingRuntimeCommands
-        _pendingRuntimeCommands = []
-        for (var index = 0; index < commands.length; ++index) {
-            dispatchRuntimeCommand(commands[index], hostView)
+        var session = runtimeSession(runtimeHostView)
+        if (session) {
+            return session.flushRuntimeCommands(runtimeHostView)
         }
     }
 
     function hasPendingRuntimeTitles() {
-        for (var runtimeId in _pendingRuntimeTitles) {
-            return true
+        var session = runtimeSession(null)
+        if (session) {
+            return session.hasPendingRuntimeTitles()
         }
-        return false
     }
 
     function pairedRuntimeSnapshot(snapshot, acceptDeferredTitles) {
-        var pairedSnapshot = []
-        var nextPendingTitles = {}
-        var nextState = {}
-        for (var index = 0; index < snapshot.length; ++index) {
-            var tab = snapshot[index]
-            var runtimeId = String(tab.tabId)
-            var revision = String(tab.locationRevision)
-            var location = String(tab.location)
-            var runtimeTitle = String(tab.title)
-            var previous = _runtimeAppliedState[runtimeId]
-            var pending = _pendingRuntimeTitles[runtimeId]
-            var locationChanged = previous
-                    && (previous.revision !== revision
-                        || previous.location !== location)
-            var pairedTitle = runtimeTitle
-
-            if (locationChanged) {
-                // A grab can complete after Gecko has committed a new
-                // location. Its persistent-id/revision guard will reject the
-                // result too; invalidate it here so it is not written at all.
-                hostedThumbnailGrabber.invalidate(String(tab.persistentId))
-            }
-
-            if (_runtimeSnapshotInitialized) {
-                var pendingMatches = pending
-                        && pending.revision === revision
-                        && pending.location === location
-                        && pending.title === runtimeTitle
-                if (acceptDeferredTitles && pendingMatches) {
-                    pairedTitle = runtimeTitle
-                } else if (locationChanged
-                           || (previous && previous.title !== runtimeTitle)) {
-                    pairedTitle = locationChanged ? "" : previous.title
-                    if (runtimeTitle.length) {
-                        nextPendingTitles[runtimeId] = {
-                            "revision": revision,
-                            "location": location,
-                            "title": runtimeTitle
-                        }
-                    }
-                }
-            }
-
-            var pairedTab = {}
-            for (var key in tab) {
-                pairedTab[key] = tab[key]
-            }
-            pairedTab.title = pairedTitle
-            pairedSnapshot.push(pairedTab)
-            nextState[runtimeId] = {
-                "revision": revision,
-                "location": location,
-                "title": pairedTitle
-            }
+        var session = runtimeSession(null)
+        if (session) {
+            return session.pairedRuntimeSnapshot(snapshot, acceptDeferredTitles)
         }
-        _pendingRuntimeTitles = nextPendingTitles
-        _runtimeAppliedState = nextState
-        if (hasPendingRuntimeTitles()) {
-            runtimeTitlePairingTimer.restart()
-        } else {
-            runtimeTitlePairingTimer.stop()
-        }
-        return pairedSnapshot
     }
 
     function runtimeSnapshotChanged(snapshot) {
-        if (!_runtimeSnapshotInitialized) {
-            return false
+        var session = runtimeSession(null)
+        if (session) {
+            return session.runtimeSnapshotChanged(snapshot)
         }
-        for (var index = 0; index < snapshot.length; ++index) {
-            var tab = snapshot[index]
-            var previous = _runtimeAppliedState[String(tab.tabId)]
-            if (!previous
-                    || previous.revision !== String(tab.locationRevision)
-                    || previous.location !== String(tab.location)
-                    || previous.title !== String(tab.title)) {
-                return true
-            }
+    }
+
+    function applyRuntimeSnapshot(acceptDeferredTitles, runtimeHostView) {
+        var session = runtimeSession(runtimeHostView)
+        if (session) {
+            return session.applyRuntimeSnapshot(acceptDeferredTitles, runtimeHostView)
         }
-        var appliedCount = 0
-        for (var runtimeId in _runtimeAppliedState) {
-            ++appliedCount
-        }
-        return appliedCount !== snapshot.length
     }
 
     function refreshRuntimeHistory() {
         var search = overlay.searchField.text === browserPage.url
                 ? "" : overlay.searchField.text
         historyModel.search(search)
-    }
-
-    function applyRuntimeSnapshot(acceptDeferredTitles, runtimeHostView) {
-        var hostView = runtimeHostView || _runtimeChromeView
-        if (!hostView || !_runtimeRestoreSent || !hostView.tabModel.revision.length) {
-            return
-        }
-
-        var runtimeSnapshot = hostView.tabModel.snapshot()
-        pruneHostedTabCrashStates(runtimeSnapshot)
-        var historyChanged = runtimeSnapshotChanged(runtimeSnapshot)
-        var snapshot = pairedRuntimeSnapshot(runtimeSnapshot,
-                                             !!acceptDeferredTitles)
-        // Recover requests queued before the Connections object existed.
-        // While the first snapshot is still initializing, dispatching here
-        // appends them to the command queue. Applying the snapshot can then
-        // reject an expired reservation before that queue is flushed.
-        drainRuntimeNewTabs()
-        webView.persistentTabModel.applyRuntimeSnapshot(
-                    snapshot, hostView.selectedTabId)
-        if (historyChanged) {
-            // PersistentTabModel is the sole writer. Queueing a search after
-            // its snapshot update refreshes the live History UI without
-            // incrementing the visit count a second time.
-            refreshRuntimeHistory()
-        }
-        _runtimeSnapshotInitialized = true
-        resolveRuntimeCloseAfterSnapshot(hostView)
-        flushRuntimeCommands(hostView)
-        flushSelectedRuntimeNavigation(hostView)
-
-        if (chromeHostMode && snapshot.length === 0 && browserPage.active) {
-            overlay.startPage()
-        }
-    }
-
-    Timer {
-        id: runtimeTitlePairingTimer
-
-        interval: 120
-        onTriggered: browserPage.applyRuntimeSnapshot(true)
     }
 
     function hostedRuntimeTab(persistentId, location, locationRevision) {
@@ -1703,7 +1445,58 @@ Page {
         }
     }
 
+    property var privateCoverGrab
+    property var _privateTabGrabs: ({})
+    property string _privateCoverTab
+    property bool _privateCoverPending
+    property int _privateCaptureGeneration
+
+    function prunePrivateTabGrabs(snapshot) {
+        var grabs = {}
+        for (var i = 0; i < snapshot.length; ++i) {
+            var id = String(snapshot[i].persistentId)
+            if (_privateTabGrabs[id]) grabs[id] = _privateTabGrabs[id]
+        }
+        _privateTabGrabs = grabs
+        if (!snapshot.length) {
+            privateCoverGrab = null
+            _privateCoverTab = ""
+        }
+    }
+
+    function requestPrivateCover(tabViewCapture) {
+        var view = chromeHostView
+        if (!view || !view.privateMode || !view.selectedTabId.length
+                || !webView.foreground || (_privateCoverPending && !tabViewCapture)) return null
+        var tabId = view.selectedTabId
+        var persistentId = selectedPersistentId(view)
+        if (!persistentId.length) return null
+        var generation = --_privateCaptureGeneration
+        _privateCoverPending = true
+        var accepted = view.grabToImage(function(result) {
+            _privateCoverPending = false
+            if (view === chromeHostView && view.selectedTabId === tabId) {
+                var grabs = {}
+                for (var id in _privateTabGrabs) grabs[id] = _privateTabGrabs[id]
+                grabs[persistentId] = result
+                _privateTabGrabs = grabs
+                privateCoverGrab = result
+                _privateCoverTab = tabId
+                webView.privateTabModel.updateThumbnailPath(Number(persistentId), result.url)
+                if (tabViewCapture) {
+                    browserPage.hostedThumbnailGrabbed(persistentId, "", "", generation)
+                }
+            }
+        }, Qt.size(Math.max(1, Math.round(width / 2)), Math.max(1, Math.round(height / 2))))
+        if (!accepted) _privateCoverPending = false
+        return accepted ? { "persistentId": persistentId, "generation": generation } : null
+    }
+
     function requestHostedThumbnail() {
+        if (webView.privateMode) {
+            requestPrivateCover()
+            return
+        }
         _hostedThumbnailCapturePending = true
         continueHostedThumbnailCapture(chromeHostView)
     }
@@ -1745,6 +1538,9 @@ Page {
     }
 
     function beginHostedTabViewThumbnailCapture() {
+        if (webView.privateMode) {
+            return requestPrivateCover(true)
+        }
         // No other capture may supersede this one before the tab page has
         // deactivated the hosted view. Resume automatic captures when the
         // browser page becomes active again.
@@ -1826,22 +1622,8 @@ Page {
         }
     }
 
-    Timer {
-        id: runtimeNavigationTimer
-
-        interval: 1000
-        onTriggered: browserPage.cancelPendingRuntimeNavigation()
-    }
-
-    Timer {
-        id: runtimeNewTabDrainTimer
-
-        interval: 0
-        onTriggered: browserPage.drainRuntimeNewTabs()
-    }
-
     function bringToForeground(window) {
-        if ((webView.visibility < QuickWindow.Window.Maximized) && window) {
+        if (!webView.foreground && window) {
             window.raise()
         }
     }
@@ -1866,13 +1648,6 @@ Page {
             _hostedAcceptedTouchIcon = false
             webView.findInPageHasResult = false
             syncHostedContainerState(chromeHostView)
-        }
-    }
-    onChromeHostModeChanged: {
-        finishHostedOrientationWait()
-        if (chromeHostMode) {
-            webView.reportWindowOrientation(
-                        webView._qtScreenOrientation(browserPage.orientation))
         }
     }
     onStatusChanged: {
@@ -1910,9 +1685,9 @@ Page {
     Shared.OrientationFader {
         id: orientationFader
 
-        z: browserPage.chromeHostMode ? 100 : 0
+        z: 100
         visible: browserPage.chromeHostView || webView.contentItem
-        immediate: browserPage.chromeHostMode
+        immediate: true
         page: browserPage
         fadeTarget: overlay.animator.allowContentUse ? overlay : overlay.dragArea
         color: browserPage.chromeHostView
@@ -1930,28 +1705,12 @@ Page {
     Private.VirtualKeyboardObserver {
         id: virtualKeyboardObserver
 
-        active: webView.enabled || browserPage.chromeHostMode
+        active: webView.enabled || browserPage.chromeHostView
         transpose: window._transpose
         orientation: browserPage.orientation
 
         onWindowChanged: webView.chromeWindow = window
 
-        // Update content height only after virtual keyboard fully opened.
-        states: State {
-            name: "boundHeightControl"
-            when: virtualKeyboardObserver.opened && webView.enabled
-            PropertyChanges {
-                target: webView.contentItem
-                virtualKeyboardHeight: virtualKeyboardObserver.imSize
-            }
-        }
-    }
-
-    ConfigurationValue {
-        id: maxliveTabs
-
-        key: "/apps/sailfish-browser/settings/max_live_tab_count"
-        defaultValue: 3
     }
 
     Browser.DownloadRemorsePopup { id: downloadPopup }
@@ -1959,14 +1718,10 @@ Page {
     Shared.WebView {
         id: webView
 
-        // The chrome-hosted view lives in this QQuickWindow, so keep
-        // the full window input region on this window instead of forwarding
-        // content-area input to the legacy web-content window underneath.
-        enabled: !browserPage.chromeHostMode && overlay.animator.allowContentUse
+        enabled: overlay.animator.allowContentUse
         fullscreenHeight: portrait ? Screen.height : Screen.width
         portrait: browserPage.isPortrait
-        maxLiveTabCount: maxliveTabs.value
-        chromeContentItem: browserPage.chromeHostView || contentItem
+        contentItem: browserPage.chromeHostView
         toolbarHeight: overlay.animator.opened ? overlay.toolBar.rowHeight : 0
         rotationHandler: browserPage
         imOpened: virtualKeyboardObserver.opened
@@ -1976,52 +1731,15 @@ Page {
         // Show overlay immediately at top if needed.
         onTabModelChanged: handleModelChanges(true)
 
-        onChromeExposed: {
-            if (overlay.animator.atTop && overlay.searchField.focus && !WebUtils.firstUseDone) {
-                webView.chromeWindow.raise()
-            }
-        }
-
         onForegroundChanged: {
             if (foreground && webView.chromeWindow) {
                 webView.chromeWindow.raise()
             }
         }
 
-        onTouched: {
-            if (contentFullscreen) {
-                fullscreenCloseVisibleTimer.restart()
-            }
-        }
-
-        onWebContentOrientationChanged: orientationFader.waitForWebContentOrientationChanged = false
-
         function applyContentOrientation(orientation) {
-            if (browserPage.chromeHostMode) {
-                browserPage.beginHostedOrientationWait(browserPage.chromeHostView,
-                                                       orientation)
-                reportWindowOrientation(_qtScreenOrientation(orientation))
-                return
-            }
-
-            orientationFader.waitForWebContentOrientationChanged
-                    = (contentItem && contentItem.active)
-
-            switch (orientation) {
-            case Orientation.None:
-            case Orientation.Portrait:
-                updateContentOrientation(Qt.PortraitOrientation)
-                break
-            case Orientation.Landscape:
-                updateContentOrientation(Qt.LandscapeOrientation)
-                break
-            case Orientation.PortraitInverted:
-                updateContentOrientation(Qt.InvertedPortraitOrientation)
-                break
-            case Orientation.LandscapeInverted:
-                updateContentOrientation(Qt.InvertedLandscapeOrientation)
-                break
-            }
+            browserPage.beginHostedOrientationWait(browserPage.chromeHostView, orientation)
+            reportWindowOrientation(_qtScreenOrientation(orientation))
         }
 
         // Both model change and model count change are connected to this.
@@ -2204,19 +1922,61 @@ Page {
     Loader {
         id: chromeHostLoader
 
+        property bool privateSession: false
+
         anchors.fill: parent
         active: webView.persistentTabModel.loaded
-                && webView.persistentTabModel.runtimeAuthoritative
+        sourceComponent: chromeHostComponent
         onLoaded: {
-            browserPage.restoreRuntimeTabs(item)
-            // The initial empty snapshot can be replayed synchronously while
-            // the Loader is publishing its item, before Connections can see
-            // the model's revision change.
-            browserPage.applyRuntimeSnapshot(false, item)
+            item.hostedSession.restoreRuntimeTabs(item)
+            item.hostedSession.applyRuntimeSnapshot(false, item)
         }
-        sourceComponent: Component {
+    }
+
+    Loader {
+        id: privateChromeHostLoader
+
+        property bool privateSession: true
+
+        anchors.fill: parent
+        active: webView.privateTabModel.loaded
+        sourceComponent: chromeHostComponent
+        onLoaded: {
+            item.hostedSession.restoreRuntimeTabs(item)
+            item.hostedSession.applyRuntimeSnapshot(false, item)
+        }
+    }
+
+    Component {
+        id: chromeHostComponent
+
             QmlMozView {
                 id: chromeView
+
+                property alias hostedSession: tabSession
+                readonly property var browserTabModel: privateMode
+                                                       ? webView.privateTabModel : webView.persistentTabModel
+                privateMode: parent.privateSession
+
+                Shared.HostedTabSession {
+                    id: tabSession
+
+                    model: chromeView.browserTabModel
+                    view: chromeView
+                    onSnapshotApplied: {
+                        if (chromeView.privateMode) browserPage.prunePrivateTabGrabs(snapshot)
+                        if (chromeView === browserPage.chromeHostView) browserPage.pruneHostedTabCrashStates(snapshot)
+                    }
+                    onHistoryChanged: browserPage.refreshRuntimeHistory()
+                    onEmpty: {
+                        if (chromeView === browserPage.chromeHostView && browserPage.active) overlay.startPage()
+                    }
+                    privateMode: chromeView.privateMode
+                    onLocationInvalidated: hostedThumbnailGrabber.invalidate(persistentId)
+                    onRuntimeTabsClearFinished: {
+                        if (chromeView === browserPage.chromeHostView) browserPage.runtimeTabsClearFinished()
+                    }
+                }
 
                 property bool _qmozChromeHosted: true
                 property string _qmozChromeInitialUrl: ""
@@ -2239,11 +1999,11 @@ Page {
                     leftMargin: browserPage.hostedDisplayCutoutAllowed
                                 ? 0 : browserPage._hostedCutoutLeft
                 }
-                active: browserPage.active && !webView.privateMode
+                active: browserPage.active && privateMode === webView.privateMode
                 orientation: webView._screenOrientation
                 clip: true
                 focus: true
-                visible: !webView.privateMode
+                visible: privateMode === webView.privateMode
                 chromeGestureEnabled: !browserPage.hostedTabCrashed
                                       && !chromeForced && active
                                       && overlay.animator.allowContentUse
@@ -2264,7 +2024,7 @@ Page {
                 safeAreaInsetLeft: browserPage.hostedDisplayCutoutAllowed
                                    ? browserPage._hostedCutoutLeft : 0
                 throttlePainting: !webView.foreground && !webView.resourceController.videoActive
-                                  && webView.visible || !webView.visible
+                                  && webView.applicationVisible || !webView.applicationVisible
 
                 Component.onCompleted: {
                     browserPage.initializeHostedContentBridge(chromeView)
@@ -2276,7 +2036,7 @@ Page {
                                                                               "pageStack": window.pageStack,
                                                                               "parentItem": browserPage,
                                                                               "contentItem": chromeView,
-                                                                              "tabModel": webView.tabModel
+                                                                              "tabModel": chromeView.browserTabModel
                     })
                     browserPage.syncHostedDesktopMode(chromeView)
                     browserPage.syncHostedContainerState(chromeView)
@@ -2284,8 +2044,10 @@ Page {
                 }
 
                 Component.onDestruction: {
-                    browserPage.finishHostedOrientationWait()
-                    webView.clearHostedState()
+                    if (chromeView === browserPage.chromeHostView) {
+                        browserPage.finishHostedOrientationWait()
+                        webView.clearHostedState()
+                    }
                 }
 
                 onChromeForcedChanged: {
@@ -2295,6 +2057,8 @@ Page {
                 }
 
                 onSelectedTabChanged: {
+                    tabSession.applyRuntimeSnapshot(false, chromeView)
+                    if (chromeView !== browserPage.chromeHostView) return
                     if (virtualKeyboardObserver.opened) {
                         browserPage.focus = true
                         Qt.inputMethod.hide()
@@ -2314,6 +2078,7 @@ Page {
                 }
 
                 onLoadingChanged: {
+                    if (chromeView !== browserPage.chromeHostView) return
                     if (loading) {
                         browserPage.clearHostedTabCrashState(chromeView.selectedTabId)
                         chrome = true
@@ -2328,7 +2093,7 @@ Page {
                     browserPage.syncHostedContainerState(chromeView)
                 }
 
-                onFirstPaint: browserPage.requestHostedThumbnail()
+                onFirstPaint: if (chromeView === browserPage.chromeHostView) browserPage.requestHostedThumbnail()
                 onAtYBeginningChanged: {
                     if (atYBeginning && active && domContentLoaded) {
                         chrome = true
@@ -2342,6 +2107,8 @@ Page {
                     }
                 }
                 onPlatformFrameGenerationChanged: {
+                    if (chromeView !== browserPage.chromeHostView) return
+                    if (privateMode && browserPage._privateCoverTab !== selectedTabId) browserPage.requestPrivateCover()
                     browserPage.noteHostedOrientationFrame(chromeView)
                     browserPage.continueHostedThumbnailCapture(chromeView)
                 }
@@ -2359,13 +2126,14 @@ Page {
                 onCanGoForwardChanged: browserPage.syncHostedContainerState(chromeView)
                 onSecurityChanged: browserPage.syncHostedContainerState(chromeView, true)
                 onActiveChanged: {
-                    if (!active) {
+                    if (!active && chromeView === browserPage.chromeHostView) {
                         browserPage.finishHostedOrientationWait()
                     }
                     browserPage.updateHostedViewSuspension(chromeView)
                 }
                 onVisibleChanged: browserPage.updateHostedViewSuspension(chromeView)
                 onFullscreenChanged: {
+                    if (chromeView !== browserPage.chromeHostView) return
                     if (fullscreen) {
                         overlay.animator.showFullscreen()
                     } else {
@@ -2384,9 +2152,10 @@ Page {
                                                                 message, data)
                 }
 
-                onTabCloseResult: browserPage.runtimeTabCloseResult(tabId, closed)
+                onTabCloseResult: tabSession.runtimeTabCloseResult(tabId, closed)
 
                 onWindowCloseRequestedFromTab: {
+                    if (chromeView !== browserPage.chromeHostView) return
                     // Gecko removes this tab itself. Keep only tab-scoped UI
                     // state from surviving until the authoritative snapshot.
                     if (browserPage._hostedSelectionTabId === String(tabId)) {
@@ -2398,6 +2167,8 @@ Page {
                     target: chromeView.tabModel
                     ignoreUnknownSignals: true
                     onRevisionChanged: {
+                        tabSession.applyRuntimeSnapshot(false, chromeView)
+                        if (chromeView !== browserPage.chromeHostView) return
                         browserPage.applyHostedViewportFitState(chromeView)
                         browserPage.applyRuntimeSnapshot(false, chromeView)
                         browserPage.syncHostedDesktopMode(chromeView)
@@ -2412,6 +2183,8 @@ Page {
                     target: webView
                     ignoreUnknownSignals: true
                     onForegroundChanged: {
+                        browserPage.updateHostedViewSuspension(chromeView)
+                        if (chromeView !== browserPage.chromeHostView) return
                         if (!webView.foreground) {
                             browserPage.cancelHostedThumbnailCaptureForBackground()
                         }
@@ -2421,21 +2194,20 @@ Page {
                             browserPage.requestHostedThumbnail()
                         }
                     }
-                    onPrivateModeChanged: browserPage.syncHostedContainerState(chromeView)
-                    onHostedLoadRequested: browserPage.loadHostedContainerRequest(url, fromExternal)
-                    onHostedReloadRequested: browserPage.reload()
-                    onHostedGoBackRequested: browserPage.goBack()
-                    onHostedGoForwardRequested: browserPage.goForward()
+                    onPrivateModeChanged: browserPage.updateHostedViewSuspension(chromeView)
+                    onHostedLoadRequested: if (chromeView === browserPage.chromeHostView) browserPage.loadHostedContainerRequest(url, fromExternal)
+                    onHostedReloadRequested: if (chromeView === browserPage.chromeHostView) browserPage.reload()
+                    onHostedGoBackRequested: if (chromeView === browserPage.chromeHostView) browserPage.goBack()
+                    onHostedGoForwardRequested: if (chromeView === browserPage.chromeHostView) browserPage.goForward()
                 }
             }
-        }
     }
 
     Item {
         id: hostedTabCrashPage
 
         anchors.fill: parent
-        visible: browserPage.chromeHostMode && browserPage.hostedTabCrashed
+        visible: browserPage.chromeHostView && browserPage.hostedTabCrashed
 
         Shared.Background {
             anchors.fill: parent
@@ -2495,45 +2267,6 @@ Page {
         }
     }
 
-    Connections {
-        target: webView.persistentTabModel
-        // The persistent model records the recoverable command in another
-        // handler for this signal. Drain on the next event-loop turn so that
-        // state is visible regardless of connection ordering.
-        onRuntimeNewTabRequested: runtimeNewTabDrainTimer.restart()
-        onRuntimeTabActivationRequested: browserPage.dispatchRuntimeCommand({
-            "type": "activate",
-            "persistentId": persistentId,
-            "reload": reload
-        })
-        onRuntimeTabCloseRequested: browserPage.dispatchRuntimeCommand({
-            "type": "close",
-            "persistentId": persistentId
-        })
-        onRuntimeTabNavigationRequested: browserPage.dispatchRuntimeCommand({
-            "type": "navigate",
-            "persistentId": persistentId,
-            "url": url,
-            "fromExternal": fromExternal
-        })
-        onRuntimeTabsClearRequested: browserPage.dispatchRuntimeCommand({
-            "type": "clear"
-        })
-        onRuntimeTabAdopted: {
-            if (browserPage._runtimeChromeView) {
-                browserPage._runtimeChromeView.associateTab(runtimeId, persistentId)
-            }
-        }
-        onRuntimeTabReservationRejected: {
-            browserPage.removeQueuedRuntimeNewTab(persistentId)
-            if (browserPage._pendingRuntimeNavigation
-                    && browserPage._pendingRuntimeNavigation.persistentId
-                    === persistentId) {
-                browserPage.cancelPendingRuntimeNavigation()
-            }
-        }
-    }
-
     IconButton {
         id: fullscreenClose
 
@@ -2569,72 +2302,30 @@ Page {
     InputRegion {
         id: inputRegion
 
-        window: browserPage.chromeHostMode
-                ? (virtualKeyboardObserver.window || null) : webView.chromeWindow
+        window: webView.chromeWindow
         orientation: browserPage.orientation // Qt and Silica orientations match
-        overlayMask: (webView.enabled && browserPage.active && !webView.touchBlocked && !downloadPopup.visible)
-                     ? Qt.rect(0, overlay.y, browserPage.width, browserPage.height - overlay.y)
-                     : Qt.rect(0, 0, browserPage.width, browserPage.height)
+        overlayMask: Qt.rect(0, 0, browserPage.width, browserPage.height)
         closeButtonMask: fullscreenClose.visible ? Qt.rect(fullscreenClose.x, fullscreenClose.y,
                                                            fullscreenClose.width, fullscreenClose.height)
                                                  : Qt.rect(0, 0, 0, 0)
     }
 
-    Browser.DimmerEffect {
-        id: contentDimmer
-
-        width: browserPage.width
-        height: Math.ceil(overlay.y)
-        // The opaque dimmer exposes legacy content from the separate web
-        // window through its alpha. Hosted content is already behind it in
-        // this scene, so painting the dimmer would replace the page instead.
-        visible: !browserPage.chromeHostMode && dimmerOpacity > 0.0
-
-        dimmerOpacity: overlay.animator.atBottom
-                       ? 0.0
-                       : 0.9 - (overlay.y / (webView.fullscreenHeight - overlay.toolBar.rowHeight)) * 0.9
-
-        MouseArea {
-            property bool inEmptyPrivateMode: webView.privateMode && webView.privateTabModel.count === 0
-                                              && webView.persistentTabModel.count > 0
-
-            anchors.fill: parent
-            enabled: overlay.animator.atTop
-                     && (webView.tabModel.count > 0 || inEmptyPrivateMode)
-            onClicked: {
-                if (inEmptyPrivateMode) {
-                    webView.privateMode = false
-                    //% "Leaving private mode"
-                    Notices.show(qsTrId("sailfish_browser-la-leaving_private_mode"), Notice.Short, Notice.Top)
-                }
-                overlay.dismiss(true)
-            }
-        }
-
-        Browser.PrivateModeTexture {
-            id: privateModeTexture
-
-            anchors.fill: contentDimmer
-            visible: webView.privateMode && !overlay.animator.allowContentUse
-        }
-    }
-
     MouseArea {
         width: browserPage.width
         height: Math.ceil(overlay.y)
-        enabled: browserPage.chromeHostMode && overlay.animator.atTop
+        enabled: browserPage.chromeHostView && overlay.animator.atTop
                  && webView.tabModel.count > 0
         onClicked: overlay.dismiss(true)
     }
 
     Label {
-        x: (contentDimmer.width - implicitWidth) / 2
+        x: (browserPage.width - implicitWidth) / 2
         // Allow only half of the width
         width: parent.width / 2
         truncationMode: TruncationMode.Fade
-        opacity: privateModeTexture.visible ? 1.0 : 0.0
+        opacity: webView.privateMode && overlay.animator.atTop ? 1.0 : 0.0
         anchors {
-            bottom: contentDimmer.bottom
+            bottom: overlay.top
             bottomMargin: (overlay.toolBar.rowHeight - height) / 2
         }
 
@@ -2665,10 +2356,7 @@ Page {
             var isFullScreen = browserPage.contentFullscreen
             if (!isFullScreen && active && !overlay.enteringNewTabUrl) {
                 if (webView.hasInitialUrl
-                        || webView.tabModel.count !== 0
-                        || (!browserPage.chromeHostMode
-                            && WebUtils.homePage !== "about:blank"
-                            && WebUtils.homePage.length > 0)) {
+                        || webView.tabModel.count !== 0) {
                     overlay.animator.showChrome()
                 } else {
                     overlay.startPage()
@@ -2725,7 +2413,7 @@ Page {
                  || !webView.tabModel
                  || webView.tabModel.count === 0
         iconBackground: true
-        window: webView
+        window: webView.chromeWindow
 
         CoverAction {
             iconSource: "image://theme/icon-cover-new"
@@ -2765,20 +2453,10 @@ Page {
                 return
             }
 
-            if (!browserPage.chromeHostMode) {
-                webView.grabActivePage()
-            }
             if (webView.tabModel.activateTab(url)) {
-                if (!browserPage.chromeHostMode) {
-                    webView.releaseActiveTabOwnership()
-                }
+                webView.releaseActiveTabOwnership()
             } else if (!webView.tabModel.loaded) {
-                if (browserPage.chromeHostMode) {
-                    browserPage.newTab(url, true)
-                    overlay.dismiss(true, !Qt.application.active /* immediate */)
-                } else {
-                    webView.load(url)
-                }
+                webView.load(url, false, true)
             } else {
                 browserPage.clearSelection()
                 webView.tabModel.newTab(url, true)
@@ -2804,7 +2482,7 @@ Page {
     }
 
     Component.onCompleted: {
-        if (chromeHostMode) {
+        if (chromeHostView) {
             webView.reportWindowOrientation(
                         webView._qtScreenOrientation(browserPage.orientation))
         }

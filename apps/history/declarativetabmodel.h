@@ -13,8 +13,6 @@
 #define DECLARATIVETABMODEL_H
 
 #include <QAbstractListModel>
-#include <QPointer>
-#include <QScopedPointer>
 
 #include "tab.h"
 
@@ -28,8 +26,6 @@ protected:
     Q_PROPERTY(int activeTabIndex READ activeTabIndex NOTIFY activeTabIndexChanged FINAL)
     Q_PROPERTY(int count READ count NOTIFY countChanged FINAL)
     Q_PROPERTY(bool loaded READ loaded NOTIFY loadedChanged FINAL)
-    Q_PROPERTY(bool runtimeAuthoritative READ runtimeAuthoritative
-               WRITE setRuntimeAuthoritative NOTIFY runtimeAuthoritativeChanged FINAL)
 
 public:
     DeclarativeTabModel(int nextTabId, DeclarativeWebContainer *webContainer = 0);
@@ -76,8 +72,6 @@ public:
     int nextTabId() const;
 
     bool loaded() const;
-    bool runtimeAuthoritative() const;
-    void setRuntimeAuthoritative(bool authoritative);
 
     const QList<Tab>& tabs() const;
     const Tab& activeTab() const;
@@ -87,19 +81,12 @@ public:
 
 public slots:
     void updateThumbnailPath(int tabId, const QString &path);
-    void onUrlChanged();
-    void onDesktopModeChanged();
-    void onTitleChanged();
 
 signals:
     void activeTabIndexChanged();
     void countChanged();
-    void activeTabChanged(int activeTabId);
-    void tabAdded(int tabId);
     void tabClosed(int tabId);
     void loadedChanged();
-    void newTabRequested(const Tab& tab, bool fromExternal);
-    void runtimeAuthoritativeChanged();
     void runtimeNewTabRequested(const QString &url, const QString &persistentId,
                                 bool fromExternal);
     void runtimeTabActivationRequested(const QString &persistentId, bool reload);
@@ -109,25 +96,11 @@ signals:
     void runtimeTabsClearRequested();
 
 protected:
-    void addTab(const Tab &tab, int index);
-    void removeTab(int tabId, const QString &thumbnail, int index);
     int findTabIndex(int tabId) const;
-    void updateActiveTab(const Tab &activeTab, bool reload);
-    void updateUrl(int tabId, const QString &url);
 
     virtual void createTab(const Tab &tab) = 0;
-    virtual void updateTitle(int tabId, const QString &url, const QString &title) = 0;
     virtual void removeTab(int tabId) = 0;
-    virtual void updateRequestedUrl(int tabId, const QString &requestedUrl, const QString &resolvedUrl) = 0;
-    virtual void navigateTo(int tabId, const QString &url, const QString &title, const QString &path) = 0;
     virtual void updateThumbPath(int tabId, const QString &path) = 0;
-
-    int nextActiveTabIndex(int index);
-    // This should be only called after active tab is closed.
-    int shiftNewActiveIndex(int oldIndex, int newIndex);
-
-    // Used from the tab model unit tests only.
-    void setWebContainer(DeclarativeWebContainer *webContainer);
 
     bool matches(const QUrl &inputUrl, QString urlStr) const;
 
@@ -135,12 +108,9 @@ protected:
     QList<Tab> m_tabs;
 
     bool m_loaded;
-    bool m_runtimeAuthoritative;
     int m_nextTabId;
 
     bool m_unittestMode;
-
-    QPointer<DeclarativeWebContainer> m_webContainer;
 
     friend class tst_declarativehistorymodel;
     friend class tst_declarativetabmodel;

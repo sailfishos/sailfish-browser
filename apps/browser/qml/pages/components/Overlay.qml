@@ -56,9 +56,6 @@ Shared.Background {
 
     function loadPage(url, newTab) {
         if (url == "about:config") {
-            if (webView) {
-                webView.clearSurface()
-            }
             pageStack.animatorPush(Qt.resolvedUrl("ConfigWarning.qml"), {"browserPage": browserPage})
         } else if (url == "about:settings") {
             pageStack.animatorPush(Qt.resolvedUrl("../SettingsPage.qml"))
@@ -69,17 +66,10 @@ Shared.Background {
                 pageUrl = "\"" + pageUrl.trim() + "\""
             }
 
-            if (browserPage.chromeHostView && !searchField.enteringNewTabUrl && !newTab) {
+            if (!searchField.enteringNewTabUrl && !newTab) {
                 searchField.edited = false
                 webView.releaseActiveTabOwnership()
                 browserPage.load(pageUrl)
-            } else if (!browserPage.chromeHostView
-                       && !searchField.enteringNewTabUrl && !newTab) {
-                if (webView.tabModel.count === 0) {
-                    webView.clearSurface()
-                }
-                webView.releaseActiveTabOwnership()
-                webView.load(pageUrl)
             } else {
                 // Loading will start once overlay animator has animated chrome visible.
                 enteredUrl = pageUrl
@@ -109,7 +99,7 @@ Shared.Background {
         if (_hostedTabViewPending) {
             return
         }
-        if (browserPage.chromeHostMode) {
+        if (browserPage.chromeHostView) {
             // grabToImage() completes asynchronously. Keep the hosted view
             // active until its texture has been captured, otherwise pushing
             // the tab page replaces the thumbnail with the white fallback.
@@ -121,8 +111,6 @@ Shared.Background {
                 hostedTabViewCaptureTimeout.restart()
                 return
             }
-        } else {
-            webView.grabActivePage()
         }
         pageStack.animatorPush(tabView)
     }
@@ -257,7 +245,7 @@ Shared.Background {
         width: parent.width
         height: historyContainer.height
         enabled: !overlayAnimator.atBottom
-                 && (browserPage.chromeHostMode || webView.tabModel.count > 0)
+                 && (browserPage.chromeHostView || webView.tabModel.count > 0)
                  && !favoriteGrid.contextMenuActive
 
         drag.target: overlay
@@ -331,10 +319,8 @@ Shared.Background {
 
                 width: parent.width
                 height: isPortrait ? toolBar.scaledPortraitHeight : toolBar.scaledLandscapeHeight
-                active: browserPage.chromeHostView
-                        ? browserPage._hostedTextSelectionController
-                          && browserPage._hostedTextSelectionController.active
-                        : webView.contentItem && webView.contentItem.textSelectionActive
+                active: browserPage._hostedTextSelectionController
+                        && browserPage._hostedTextSelectionController.active
 
                 opacity: active ? 1.0 : 0.0
                 Behavior on opacity {
@@ -344,23 +330,14 @@ Shared.Background {
                 onActiveChanged: {
                     if (active) {
                         overlayAnimator.showChrome(false)
-                        if (!browserPage.chromeHostView && webView.contentItem) {
-                            webView.contentItem.forceChrome(true)
-                        }
-                    } else {
-                        if (!browserPage.chromeHostView && webView.contentItem) {
-                            webView.contentItem.forceChrome(false)
-                        }
+
                     }
                 }
 
                 sourceComponent: Component {
                     TextSelectionToolbar {
                         portrait: browserPage.isPortrait
-                        controller: browserPage.chromeHostView
-                                    ? browserPage._hostedTextSelectionController
-                                    : webView && webView.contentItem
-                                      && webView.contentItem.textSelectionController
+                        controller: browserPage._hostedTextSelectionController
                         width: textSelectionToolbar.width
                         height: textSelectionToolbar.height
                         leftPadding: toolBar.horizontalOffset

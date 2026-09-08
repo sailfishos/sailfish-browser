@@ -81,9 +81,6 @@ Column {
 
     function resetFind() {
         browserPage.resetFindInPage()
-        if (!hosted && webView.contentItem) {
-            webView.contentItem.forceChrome(false)
-        }
 
         findInPageActive = false
     }
@@ -93,8 +90,6 @@ Column {
             browserPage.goBack()
         } else if (toolBarRow.hostedPopup) {
             webView.tabModel.closeActiveTab()
-        } else if (!toolBarRow.hosted && webView.canGoBack) {
-            webView.goBack()
         } else if (!toolBarRow.hosted
                    && webView.contentItem && webView.contentItem.parentId > 0) {
             webView.tabModel.closeActiveTab()
@@ -103,12 +98,7 @@ Column {
 
     width: parent.width
 
-    onFindInPageActiveChanged: {
-        // Down allow hiding of toolbar when finding text from the page.
-        if (findInPageActive && !hosted && webView.contentItem) {
-            webView.contentItem.forceChrome(true)
-        }
-    }
+
 
     Item {
         id: certOverlay
@@ -204,7 +194,7 @@ Column {
 
                 Connections {
                     target: webView.tabModel
-                    onNewTabRequested: {
+                    onRuntimeNewTabRequested: {
                         // New tab request triggers 360 degrees clockwise rotation
                         // for the tab icon.
                         rotationAnimator.from = 0
@@ -245,8 +235,6 @@ Column {
                         return "image://theme/icon-m-back"
                     } else if (toolBarRow.hostedPopup) {
                         return "image://theme/icon-m-back-tab"
-                    } else if (!toolBarRow.hosted && webView.canGoBack) {
-                        return "image://theme/icon-m-back"
                     } else if (!toolBarRow.hosted
                                && webView.contentItem && webView.contentItem.parentId > 0) {
                         return "image://theme/icon-m-back-tab"
@@ -263,10 +251,7 @@ Column {
                 }
             }
 
-            active: (toolBarRow.hosted
-                     ? (hostedView.canGoBack || toolBarRow.hostedPopup)
-                     : (webView.canGoBack
-                        || (webView.contentItem && webView.contentItem.parentId > 0)))
+            active: toolBarRow.hosted && (hostedView.canGoBack || toolBarRow.hostedPopup)
                     && !findInPageActive
             onTapped: toolBarRow.activateBack()
         }

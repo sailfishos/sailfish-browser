@@ -26,6 +26,9 @@ import "." as Browser
 WebContainer {
     id: webView
 
+    anchors.fill: parent
+    property QtObject contentItem
+
     property bool activePortalMode
     readonly property bool moving: contentItem && contentItem.moving
     property bool portrait: true
@@ -36,7 +39,7 @@ WebContainer {
     property real fullscreenHeight
     property bool imOpened
     property real toolbarHeight
-    property string favicon: contentItem ? contentItem.favicon : ""
+    property string favicon: contentItem && contentItem.favicon ? contentItem.favicon : ""
     readonly property color _defaultThemeColor: WebEngineSettings.colorScheme === WebEngineSettings.PrefersLightMode
             || (WebEngineSettings.colorScheme === WebEngineSettings.FollowsAmbience
                 && Theme.colorScheme !== Theme.LightOnDark) ? "white" : "black"
@@ -51,8 +54,7 @@ WebContainer {
     readonly property int _safeAreaInsetLeft: 8
     readonly property int _pageOrientation: rotationHandler ? rotationHandler.orientation : Orientation.Portrait
     readonly property int _screenOrientation: _qtScreenOrientation(_pageOrientation)
-    readonly property int _contentOrientation: _validCutoutOrientation(pendingWebContentOrientation)
-            ? pendingWebContentOrientation : _screenOrientation
+    readonly property int _contentOrientation: _screenOrientation
     readonly property int _contentCutoutTop: _cutoutTop(_contentOrientation)
     readonly property int _contentCutoutRight: _cutoutRight(_contentOrientation)
     readonly property int _contentCutoutBottom: _cutoutBottom(_contentOrientation)
@@ -82,13 +84,6 @@ WebContainer {
             && (_viewportFitCoverPolicy === "strict"
                 || (_viewportFitCoverPolicy === "top_guard" && _safeAreaUsedForContentCutout))
     readonly property bool displayCutoutAllowed: contentFullscreen || _policyAllowsCoverViewportFit
-    webContentRect: displayCutoutAllowed
-                    ? Qt.rect(0, 0, width, height)
-                    : Qt.rect(_hostCutoutLeft,
-                              _hostCutoutTop,
-                              Math.max(0, width - _hostCutoutLeft - _hostCutoutRight),
-                              Math.max(0, height - _hostCutoutTop - _hostCutoutBottom))
-    webContentBackgroundColor: displayCutoutAllowed ? _defaultThemeColor : themeColor
 
     function _qtScreenOrientation(pageOrientation) {
         switch (pageOrientation) {
@@ -161,7 +156,7 @@ WebContainer {
 
     property var resourceController: ResourceController {
         webPage: contentItem
-        background: !webView.visible
+        background: !webView.applicationVisible
     }
 
     property Component textSelectionControllerComponent: Component {
@@ -275,441 +270,16 @@ WebContainer {
         }
     }
 
-    function thumbnailCaptureSize() {
-        if (webView.activePortalMode) {
-            console.log("Thumbnail size tried accessed in captive portal mode")
-            return Qt.size(0, 0)
-        }
-
-        var pageWidth = Math.min(browserPage.width, browserPage.height)
-        var pageHeight = Math.max(browserPage.width, browserPage.height)
-        var thumbnailWidth = pageWidth - Theme.horizontalPageMargin * 2
-        var thumbnailHeight = Math.max(pageHeight / 2.5, pageWidth / 1.66)
-                - (Theme.iconSizeSmall + Theme.paddingMedium * 2)
-
-        var ratio = Math.min(pageWidth / thumbnailWidth,
-                             pageHeight / thumbnailHeight)
-        var width = thumbnailWidth * ratio
-        var height = thumbnailHeight * ratio
-
-        return Qt.size(width, height)
-    }
-
-    function grabActivePage() {
-        if (webView.activePortalMode) {
-            console.warn("Refusing page grab in active portal mode")
-            return
-        }
-
-        if (webView.contentItem && webView.activeTabRendered) {
-            if (webView.privateMode) {
-                webView.contentItem.grabThumbnail(thumbnailCaptureSize())
-            } else {
-                webView.contentItem.grabToFile(thumbnailCaptureSize())
-            }
-        }
-    }
-
     function handleKeyPress(key) {
         if (key == Qt.Key_F5) {
             reload()
         }
     }
 
-    foreground: visibility >= QuickWindow.Window.Maximized && Qt.application.state === Qt.ApplicationActive
-    readyToPaint: resourceController.videoActive ? webView.visible && !resourceController.displayOff
-                                                 : webView.visible && webView.contentItem
-                                                   && (webView.contentItem.domContentLoaded
-                                                       || webView.contentItem.painted)
-
+    readonly property bool applicationVisible: chromeWindow && chromeWindow.visible
+    foreground: (chromeWindow ? chromeWindow.visibility : 0)
+                >= QuickWindow.Window.Maximized && Qt.application.state === Qt.ApplicationActive
     touchBlocked: contentItem && contentItem.popupOpener && contentItem.popupOpener.active
                   || !AccessPolicy.browserEnabled || false
 
-    onKeyPressed: handleKeyPress(key)
-
-    onBackButtonPressed: webView.goBack()
-
-    onForwardButtonPressed: webView.goForward()
-
-    onTouched: {
-        if (webView.contentItem && webView.contentItem.textSelectionActive) {
-            clearSelection()
-        }
-    }
-
-    webPageComponent: Component {
-        WebPage {
-            id: webPage
-
-            property bool acceptedTouchIcon
-            property int frameCounter
-            property bool rendered
-            readonly property bool textSelectionActive: textSelectionController && textSelectionController.active
-            property Item textSelectionController: null
-            readonly property bool activeWebPage: container.tabId == tabId
-            property bool userHasDraggedWhileLoading
-            property string favicon
-            property string metadataTitle
-            property var pendingClipboardPasteData
-            property QtObject _textZoomController: SailfishWebView.TextZoomController {
-                webPage: webPage
-            }
-
-            property QtObject pickerOpener: Pickers.PickerOpener {
-                pageStack: window.pageStack
-                contentItem: webPage
-            }
-
-            property QtObject popupOpener: Popups.PopupOpener {
-                pageStack: window.pageStack
-                parentItem: browserPage
-                contentItem: webPage
-                // ContextMenu needs a reference to correct TabModel so that
-                // private and public tabs are created to correct model. While context
-                // menu is open, tab model cannot change (at least at the moment).
-                tabModel: webView.tabModel
-
-                onAboutToOpenContextMenu: {
-                    if (Qt.inputMethod.visible) {
-                        browserPage.focus = true
-                        Qt.inputMethod.hide()
-                    }
-
-                    // Possible path that leads to a new tab. Thus, capturing current
-                    // view before opening context menu.
-                    if (!webView.activePortalMode) {
-                        webView.grabActivePage()
-                    }
-                    contextMenuRequested(data)
-                }
-
-                onLoginSaved: {
-                    if (!webView.activePortalMode) {
-                        FaviconManager.grabIcon("logins", webPage,
-                                                Qt.size(Theme.iconSizeMedium,
-                                                        Theme.iconSizeMedium))
-                    }
-                }
-            }
-
-            function effectiveTitle() {
-                return metadataTitle || title || String(url)
-            }
-
-            function updateHistoryIcon(force) {
-                if (loaded && !webView.activePortalMode && !webView.privateMode) {
-                    if (force) {
-                        FaviconManager.refreshIcon("history", webPage,
-                                                   Qt.size(Theme.iconSizeMedium,
-                                                           Theme.iconSizeMedium))
-                    } else {
-                        FaviconManager.grabIcon("history", webPage,
-                                                Qt.size(Theme.iconSizeMedium,
-                                                        Theme.iconSizeMedium))
-                    }
-                }
-            }
-
-            signal selectionCopied(var data)
-            signal contextMenuRequested(var data)
-
-            function grabItem() {
-                if (rendered && activeWebPage && active) {
-                    if (webView.privateMode) {
-                        grabThumbnail(thumbnailCaptureSize())
-                    } else {
-                        grabToFile(thumbnailCaptureSize())
-                    }
-                }
-            }
-
-            function clearSelection() {
-                if (textSelectionController) {
-                    textSelectionController.clearSelection()
-                    browserPage.inputRegion.selectionStartHandleMask = Qt.rect(0, 0, 0, 0)
-                    browserPage.inputRegion.selectionEndHandleMask = Qt.rect(0, 0, 0, 0)
-                }
-            }
-
-            function sendClipboardPasteResponse(data, accepted) {
-                var response = {
-                    "id": data.id,
-                    "accepted": accepted
-                }
-                if (data.winId) {
-                    response.winId = data.winId
-                }
-                webPage.sendAsyncMessage("embedui:clipboardreadpasteresponse", response)
-            }
-
-            function openPendingClipboardPasteDialog() {
-                if (window.pageStack.busy || !pendingClipboardPasteData) {
-                    return
-                }
-
-                window.pageStack.busyChanged.disconnect(openPendingClipboardPasteDialog)
-                var data = pendingClipboardPasteData
-                pendingClipboardPasteData = null
-                openClipboardPasteDialog(data)
-            }
-
-            function openClipboardPasteDialog(data) {
-                if (window.pageStack.busy) {
-                    if (pendingClipboardPasteData) {
-                        sendClipboardPasteResponse(pendingClipboardPasteData, false)
-                    } else {
-                        window.pageStack.busyChanged.connect(openPendingClipboardPasteDialog)
-                    }
-                    pendingClipboardPasteData = data
-                    return
-                }
-
-                var page = window.pageStack.animatorPush(clipboardPasteDialogComponent, {
-                    "origin": data.origin || "",
-                    "delay": Math.max(0, data.delay || 0)
-                })
-                page.pageCompleted.connect(function(dialog) {
-                    dialog.accepted.connect(function() {
-                        sendClipboardPasteResponse(data, true)
-                    })
-                    dialog.rejected.connect(function() {
-                        sendClipboardPasteResponse(data, false)
-                    })
-                })
-            }
-
-            fixedToolbar: fixedToolbarConfig.value
-            toolbarHeight: container.toolbarHeight
-            safeAreaTop: webView.displayCutoutAllowed ? webView._contentCutoutTop : 0
-            safeAreaRight: webView.displayCutoutAllowed ? webView._contentCutoutRight : 0
-            safeAreaBottom: webView.displayCutoutAllowed ? webView._contentCutoutBottom : 0
-            safeAreaLeft: webView.displayCutoutAllowed ? webView._contentCutoutLeft : 0
-            throttlePainting: !foreground && !resourceController.videoActive && webView.visible || !webView.visible
-            enabled: webView.enabled
-            chromeGestureThreshold: toolbarHeight / 3
-            chromeGestureEnabled: !forcedChrome && enabled && !webView.imOpened && !fixedToolbar
-
-            onFileGrabWritten: tabModel.updateThumbnailPath(tabId, fileName)
-
-            // Image data is base64 encoded which can be directly used as source in Image element
-            onThumbnailResult: tabModel.updateThumbnailPath(tabId, data)
-
-            onTitleChanged: {
-                if (title) {
-                    metadataTitle = title
-                }
-            }
-
-            onAtYBeginningChanged: {
-                if (atYBeginning && activeWebPage && domContentLoaded) {
-                    chrome = true
-                }
-            }
-
-            onAtYEndChanged: {
-                // Don't hide chrome if content length is short i.e. forcedChrome is enabled.
-                if (!atYBeginning && atYEnd && !forcedChrome && !fixedToolbar && chrome
-                        && activeWebPage && domContentLoaded) {
-                    chrome = false
-                }
-            }
-
-            onUrlChanged: {
-                if (url == "about:blank") {
-                    rendered = false
-                    frameCounter = 0
-                    webView.clearSurface()
-                    return
-                }
-
-                webView.findInPageHasResult = false
-                var modelUrl = tabModel.url(tabId)
-
-                rendered = false
-                frameCounter = 0
-
-                // If url has changed or url doesn't exist in the model,
-                // clear the thumbnail. Preserve the thumbnails in the model
-                // if it has the same url (restarting browser / resurrecting a tab).
-                if (!modelUrl || modelUrl != url) {
-                    tabModel.updateThumbnailPath(tabId, "")
-                }
-            }
-
-            onBackgroundColorChanged: {
-                // Update only webPage
-                if (container.contentItem === webPage) {
-                    sendAsyncMessage("Browser:SelectionColorUpdate",
-                                     {
-                                         "color": Theme.secondaryHighlightColor
-                                     })
-                }
-            }
-
-            onDraggingChanged: {
-                if (dragging && loading) {
-                    userHasDraggedWhileLoading = true
-                }
-            }
-
-            onLoadedChanged: {
-                if (loaded) {
-                    if (!userHasDraggedWhileLoading && resurrectedContentRect) {
-                        sendAsyncMessage("embedui:zoomToRect",
-                                         {
-                                             "x": resurrectedContentRect.x, "y": resurrectedContentRect.y,
-                                             "width": resurrectedContentRect.width, "height": resurrectedContentRect.height
-                                         })
-                        resurrectedContentRect = null
-                    }
-
-                    if (!webView.activePortalMode) {
-                        grabItem()
-
-                        if (!webView.privateMode) {
-                            // Update the favicon for history items.
-                            updateHistoryIcon(false)
-                        }
-                    }
-                }
-
-                // Refresh timers (if any) keep working even for suspended views. Hence
-                // suspend the view again explicitly if browser content window is in not visible (background).
-                if (loaded && !webView.visible) {
-                    suspendView()
-                }
-            }
-
-            onLoadingChanged: {
-                if (loading) {
-                    userHasDraggedWhileLoading = false
-                    webPage.chrome = true
-                    favicon = ""
-                    metadataTitle = ""
-                    acceptedTouchIcon = false
-                }
-            }
-
-            onAfterRendering: {
-                // Try to capture something else than glClear color.
-                if (frameCounter < 3) {
-                    ++frameCounter
-                } else if (!rendered) {
-                    rendered = true
-                    if (!webView.activePortalMode) {
-                        grabItem()
-                    }
-                }
-            }
-
-            onRecvAsyncMessage: {
-                if (pickerOpener.message(message, data) || popupOpener.message(message, data)) {
-                    return
-                }
-
-                switch (message) {
-                case "embed:clipboardreadpaste": {
-                    openClipboardPasteDialog(data)
-                    break
-                }
-                case "Link:SetIcon": {
-                    if (acceptedTouchIcon)
-                        return
-
-                    var previousFavicon = favicon
-                    acceptedTouchIcon = !!data.isRichIcon
-                    favicon = data.url
-                    if (favicon && favicon !== previousFavicon) {
-                        updateHistoryIcon(true)
-                    }
-                    break
-                }
-                case "embed:pageMetadata": {
-                    if (data.url && data.url !== String(url)) {
-                        break
-                    }
-
-                    if (data.title) {
-                        metadataTitle = data.title
-                    }
-
-                    var richIcon = !!data.isRichIcon
-                    if (data.favicon && (richIcon || !acceptedTouchIcon)) {
-                        var oldFavicon = favicon
-                        acceptedTouchIcon = richIcon
-                        favicon = data.favicon
-                        if (favicon !== oldFavicon) {
-                            updateHistoryIcon(true)
-                        }
-                    }
-                    break
-                }
-                case "Content:SelectionRange": {
-                    if (textSelectionController === null) {
-                        textSelectionController = textSelectionControllerComponent.createObject(browserPage,
-                                                                                                {"contentItem": webPage})
-                    }
-                    textSelectionController.selectionRangeUpdated(data)
-                    break
-                }
-                case "Content:SelectionSwap": {
-                    if (textSelectionController) {
-                        textSelectionController.swap()
-                    }
-
-                    break
-                }
-                case "embed:find": {
-                    // Found, or found wrapped
-                    if (data.r == 0 || data.r == 2) {
-                        webView.findInPageHasResult = true
-                    } else {
-                        webView.findInPageHasResult = false
-                    }
-                    break
-                }
-                // embed:OpenLink listener is registered only in the captive portal mode
-                case "embed:OpenLink": {
-                    linkHandler.handleLink(data.uri)
-                    break
-                }
-                case "Link:AddSearch": {
-                    if (!webView.privateMode) {
-                        // This adds this search as available if not already there
-                        SearchEngineModel.add(data.engine.title, data.engine.href)
-                    }
-                    break
-                }
-                }
-            }
-            onRecvSyncMessage: {
-                // sender expects that this handler will update `response` argument
-                switch (message) {
-                case "Content:SelectionCopied": {
-                    if (data.succeeded && textSelectionController) {
-                        textSelectionController.showNotification()
-                        response.message = {"": ""}
-                    }
-                    break
-                }
-                }
-            }
-
-            onContextMenuRequested: {
-                if (data.types.indexOf("content-text") !== -1) {
-                    // we want to select some content text
-                    webPage.sendAsyncMessage("Browser:SelectionStart", {"xPos": data.xPos, "yPos": data.yPos})
-                }
-            }
-
-            Component.onCompleted: {
-                addMessageListener("Content:SelectionRange")
-                addMessageListener("Content:SelectionCopied")
-                addMessageListener("Content:SelectionSwap")
-                addMessageListener("embed:clipboardreadpaste")
-
-                PermissionManager.instance()
-            }
-        }
-    }
 }

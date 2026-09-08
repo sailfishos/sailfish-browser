@@ -26,7 +26,6 @@
 #include "privatetabmodel.h"
 #include "declarativehistorymodel.h"
 #include "declarativewebcontainer.h"
-#include "declarativewebpage.h"
 #include "inputregion.h"
 
 #ifdef HAS_BOOSTER
@@ -103,7 +102,6 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 
     qmlRegisterUncreatableType<DownloadStatus>(uri, 1, 0, "DownloadStatus", "");
     qmlRegisterType<DeclarativeWebContainer>(uri, 1, 0, "WebContainer");
-    qmlRegisterType<DeclarativeWebPage>(uri, 1, 0, "WebPage");
     qmlRegisterType<InputRegion>(uri, 1, 0, "InputRegion");
 
     Browser *browser = new Browser(view.data(), DEPLOYMENT_PATH, app.data());

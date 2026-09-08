@@ -20,7 +20,7 @@ for (const direction of ["Back", "Forward"]) {
       const scope = {
         selectedPersistentId() { return persistentId; },
         chromeHostView: { ["go" + direction]() { calls.push("native"); } },
-        webView: { persistentTabModel: {
+        webView: { tabModel: {
           ["runtimeGo" + direction](id) {
             assert.equal(id, persistentId);
             calls.push("bookkeeping");
@@ -41,6 +41,6 @@ for (const direction of ["Back", "Forward"]) {
   };
   vm.createContext(scope);
   vm.runInContext(method[0] + "\ngo" + direction + "();", scope);
-  assert.equal(legacyCalls, 1);
+  assert.equal(legacyCalls, 0, "No native fallback while the QML view initializes");
 }
 console.log("Hosted Back/Forward tests passed");

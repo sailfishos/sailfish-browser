@@ -153,7 +153,8 @@ Private.SwipeItem {
             width: root.implicitWidth
             height: root.implicitHeight
 
-            cache: false
+            // In-memory grab URLs are resolved through the QML image cache.
+            cache: source.toString().indexOf("itemgrabber:") === 0
             asynchronous: true
             opacity: status !== Image.Ready && source !== "" ? 0.0 : 1.0
             fillMode: Image.PreserveAspectCrop

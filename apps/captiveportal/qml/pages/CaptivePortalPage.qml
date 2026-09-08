@@ -34,7 +34,7 @@ Page {
     }
 
     function bringToForeground(window) {
-        if ((webView.visibility < QuickWindow.Window.Maximized) && window) {
+        if ((webView.chromeWindow.visibility < QuickWindow.Window.Maximized) && window) {
             window.raise()
         }
     }
@@ -60,6 +60,7 @@ Page {
     Shared.OrientationFader {
         id: orientationFader
 
+        immediate: true
         visible: webView.contentItem
         page: browserPage
         fadeTarget: overlay
@@ -92,10 +93,10 @@ Page {
         id: webView
 
         activePortalMode: true
+        contentItem: portalView
         enabled: overlay.animator.allowContentUse
         fullscreenHeight: portrait ? Screen.height : Screen.width
         portrait: browserPage.isPortrait
-        maxLiveTabCount: 3
         toolbarHeight: overlay.animator.opened ? overlay.toolBar.rowHeight : 0
         rotationHandler: browserPage
         imOpened: virtualKeyboardObserver.opened
@@ -107,33 +108,26 @@ Page {
             }
         }
 
-        onTouched: {
-            if (contentFullscreen) {
-                fullscreenCloseVisibleTimer.restart()
-            }
-        }
 
-        onWebContentOrientationChanged: orientationFader.waitForWebContentOrientationChanged = false
+
 
         function applyContentOrientation(orientation) {
-            orientationFader.waitForWebContentOrientationChanged = (contentItem && contentItem.active)
-
-            switch (orientation) {
-            case Orientation.None:
-            case Orientation.Portrait:
-                updateContentOrientation(Qt.PortraitOrientation)
-                break
-            case Orientation.Landscape:
-                updateContentOrientation(Qt.LandscapeOrientation)
-                break
-            case Orientation.PortraitInverted:
-                updateContentOrientation(Qt.InvertedPortraitOrientation)
-                break
-            case Orientation.LandscapeInverted:
-                updateContentOrientation(Qt.InvertedLandscapeOrientation)
-                break
-            }
+            reportWindowOrientation(_qtScreenOrientation(orientation))
         }
+    }
+
+    Shared.CaptivePortalView {
+        id: portalView
+
+        webView: webView
+        anchors {
+            fill: parent
+            topMargin: webView.displayCutoutAllowed ? 0 : webView._contentCutoutTop
+            rightMargin: webView.displayCutoutAllowed ? 0 : webView._contentCutoutRight
+            bottomMargin: webView.displayCutoutAllowed ? 0 : webView._contentCutoutBottom
+            leftMargin: webView.displayCutoutAllowed ? 0 : webView._contentCutoutLeft
+        }
+        onTouched: if (fullscreen) fullscreenCloseVisibleTimer.restart()
     }
 
     IconButton {
@@ -168,9 +162,7 @@ Page {
 
         window: webView.chromeWindow
         orientation: browserPage.orientation // Qt and Silica orientations match
-        overlayMask: (webView.enabled && browserPage.active && !webView.touchBlocked)
-                     ? Qt.rect(0, overlay.y, browserPage.width, browserPage.height - overlay.y)
-                     : Qt.rect(0, 0, browserPage.width, browserPage.height)
+        overlayMask: Qt.rect(0, 0, browserPage.width, browserPage.height)
         closeButtonMask: fullscreenClose.visible ? Qt.rect(fullscreenClose.x, fullscreenClose.y,
                                                            fullscreenClose.width, fullscreenClose.height)
                                                  : Qt.rect(0, 0, 0, 0)

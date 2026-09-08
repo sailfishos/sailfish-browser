@@ -17,29 +17,29 @@ import "shared"
 BrowserWindow {
     id: window
 
-    hostedContent: rootPage && rootPage.chromeHostMode
-
     function setBrowserCover(model) {
         if (!model || model.count === 0 || !WebUtils.firstUseDone) {
             cover = Qt.resolvedUrl("cover/NoTabsCover.qml")
-        } else if (hostedContent) {
-            cover = hostedPageCover
         } else {
-            if (cover != null && window.webView) {
-                window.webView.clearSurface()
-            }
-            cover = null
+            cover = hostedPageCover
         }
     }
-
-    onHostedContentChanged: setBrowserCover(webView ? webView.tabModel : null)
 
     Component {
         id: hostedPageCover
 
         CoverBackground {
+            Image {
+                anchors.fill: parent
+                visible: window.webView && window.webView.privateMode
+                source: visible && window.rootPage && window.rootPage.privateCoverGrab
+                        ? window.rootPage.privateCoverGrab.url : ""
+                fillMode: Image.PreserveAspectCrop
+                horizontalAlignment: Image.AlignLeft
+                verticalAlignment: Image.AlignTop
+            }
             Repeater {
-                model: window.webView
+                model: window.webView && !window.webView.privateMode
                         ? window.webView.persistentTabModel : null
 
                 delegate: Image {

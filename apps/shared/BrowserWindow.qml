@@ -24,7 +24,6 @@ ApplicationWindow {
 
     property var rootPage
     property QtObject webView
-    property bool hostedContent
     property alias activityDisabledByMdm: mdmView.activity
 
     allowedOrientations: defaultAllowedOrientations
@@ -32,9 +31,8 @@ ApplicationWindow {
     _defaultLabelFormat: Text.PlainText
     _clippingItem.opacity: 1.0
     _resizeContent: !window.rootPage.active
-    _mainWindow: webView
     _backgroundVisible: false
-    _opaque: false
+    _opaque: true
 
     cover: null
 
