@@ -3,14 +3,10 @@ TEMPLATE = subdirs
 SUBDIRS += tst_dbmanager \
     tst_declarativebookmarkmodel \
     tst_declarativehistorymodel \
-#    tst_declarativewebcontainer \
     tst_desktopbookmarkwriter \
     tst_logins \
     tst_persistenttabmodel \
-#    tst_webpages \
-    tst_webpagefactory \
-    tst_webutils \
-    tst_webview
+    tst_webutils
 
 OTHER_FILES += \
     *.xml

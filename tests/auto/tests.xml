@@ -16,9 +16,6 @@
            <case manual="false" name="dbmanager">
                <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_dbmanager</step>
            </case>
-           <case manual="false" name="webview">
-               <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; LOW_MEMORY_DISABLED=1 ./tst_webview -platform wayland-egl</step>
-           </case>
            <case manual="false" name="desktopbookmarkwriter">
                <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_desktopbookmarkwriter</step>
            </case>
@@ -27,9 +24,6 @@
            </case>
            <case manual="false" name="webutils">
                <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_webutils</step>
-           </case>
-           <case manual="false" name="webpagefactory">
-               <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_webpagefactory</step>
            </case>
            <case manual="false" name="logins">
                <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_logins</step>

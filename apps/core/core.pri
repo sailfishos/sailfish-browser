@@ -18,9 +18,7 @@ SOURCES += \
     $$PWD/inputregion.cpp \
     $$PWD/logging.cpp \
     $$PWD/secureaction.cpp \
-    $$PWD/settingmanager.cpp \
-    $$PWD/webpagequeue.cpp \
-    $$PWD/webpages.cpp
+    $$PWD/settingmanager.cpp
 
 # C++ headers
 HEADERS += \
@@ -37,6 +35,4 @@ HEADERS += \
     $$PWD/inputregion.h \
     $$PWD/logging.h \
     $$PWD/secureaction.h \
-    $$PWD/settingmanager.h \
-    $$PWD/webpagequeue.h \
-    $$PWD/webpages.h
+    $$PWD/settingmanager.h

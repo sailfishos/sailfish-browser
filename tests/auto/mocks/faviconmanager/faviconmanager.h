@@ -15,7 +15,6 @@
 #include <QString>
 #include <QMap>
 
-class DeclarativeWebPage;
 class FaviconManager : public QObject
 {
     Q_OBJECT
@@ -27,7 +26,6 @@ public:
     Q_INVOKABLE void add(const QString &type, const QString &hostname, const QString &favicon, bool hasTouchIcon);
     Q_INVOKABLE void remove(const QString &type, const QString &hostname);
     QString get(const QString &type, const QString &hostname);
-    Q_INVOKABLE void grabIcon(const QString &type, DeclarativeWebPage *webPage, const QSize &size);
     Q_INVOKABLE void clear(const QString &type);
 
 private:

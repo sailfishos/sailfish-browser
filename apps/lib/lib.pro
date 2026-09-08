@@ -11,6 +11,5 @@ include(../../common/opensearchconfigs.pri)
 include(../core/core.pri)
 include(../history/history.pri)
 include(../qtmozembed/qtmozembed.pri)
-include(../factories/factories.pri)
 
 INSTALLS += target

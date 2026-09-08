@@ -6,6 +6,7 @@ include(../storage/storage.pri)
 # C++ sources
 SOURCES += \
     $$PWD/declarativetabmodel.cpp \
+    $$PWD/hostedtabmodel.cpp \
     $$PWD/persistenttabmodel.cpp \
     $$PWD/privatetabmodel.cpp \
     $$PWD/declarativetabfiltermodel.cpp \
@@ -14,6 +15,7 @@ SOURCES += \
 # C++ headers
 HEADERS += \
     $$PWD/declarativetabmodel.h \
+    $$PWD/hostedtabmodel.h \
     $$PWD/persistenttabmodel.h \
     $$PWD/privatetabmodel.h \
     $$PWD/declarativetabfiltermodel.h \

@@ -12,21 +12,13 @@
 #ifndef PRIVATETABMODEL_H
 #define PRIVATETABMODEL_H
 
-#include "declarativetabmodel.h"
+#include "hostedtabmodel.h"
 
 class DeclarativeWebContainer;
 
-class PrivateTabModel : public DeclarativeTabModel
+class PrivateTabModel : public HostedTabModel
 {
     Q_OBJECT
-
-protected:
-    void createTab(const Tab &tab) override;
-    void updateTitle(int tabId, const QString &url, const QString &title) override;
-    void removeTab(int tabId) override;
-    void updateRequestedUrl(int tabId, const QString &requestedUrl, const QString &resolvedUrl) override;
-    void navigateTo(int tabId, const QString &url, const QString &title, const QString &path) override;
-    void updateThumbPath(int tabId, const QString &path) override;
 
 public:
     PrivateTabModel(int nextTabId, DeclarativeWebContainer *webContainer = nullptr);
