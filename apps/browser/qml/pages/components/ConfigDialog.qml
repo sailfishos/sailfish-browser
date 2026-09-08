@@ -277,6 +277,7 @@ Dialog {
                                 width: parent.width
                                 color: Theme.primaryColor
                                 font.pixelSize: preferenceNameFontSize
+                                font.bold: model.modified
                                 wrapMode: Text.Wrap
                                 text: model.name
                             }
@@ -350,6 +351,7 @@ Dialog {
                                 width: parent.width
                                 color: boolItem.highlighted ? Theme.highlightColor : Theme.primaryColor
                                 font.pixelSize: preferenceNameFontSize
+                                font.bold: model.modified
                                 wrapMode: Text.Wrap
                                 text: model.name
                             }
