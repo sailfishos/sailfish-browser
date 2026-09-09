@@ -667,7 +667,7 @@ Page {
             break
         case "embed:selectasync":
             responseMessage = "embedui:selectresponse"
-            response = { "result": -1 }
+            response = { "id": data.id, "result": -1 }
             break
         case "embedui:downloadpicker":
         case "embed:downloadpicker":
@@ -862,9 +862,36 @@ Page {
         target.destroy()
     }
 
+    function cancelHostedSelect(hostView, tabId, persistentId, data) {
+        function matches(request) {
+            return request && request.message === "embed:selectasync"
+                    && request.hostView === hostView
+                    && request.tabId === String(tabId)
+                    && (!persistentId || request.persistentId === String(persistentId))
+                    && String(request.data.id) === String(data.id)
+        }
+
+        var pending = []
+        for (var index = 0; index < _pendingHostedModalRequests.length; ++index) {
+            var request = _pendingHostedModalRequests[index]
+            if (!matches(request)) pending.push(request)
+        }
+        _pendingHostedModalRequests = pending
+
+        var target = _activeHostedModalTarget
+        if (target && matches(target.modalRequest) && target.opener) {
+            target.opener.message("embed:selectabort", data)
+        }
+    }
+
     function openHostedPicker(hostView, tabId, persistentId, message, data) {
+        if (message === "embed:selectabort") {
+            cancelHostedSelect(hostView, tabId, persistentId, data)
+            return true
+        }
+
         var pickerTopics = [ "embed:colorpicker", "embed:filepicker",
-                             "embed:selectasync", "embedui:downloadpicker",
+                             "embed:selectasync", "embed:selectabort", "embedui:downloadpicker",
                              "embed:downloadpicker" ]
         if (pickerTopics.indexOf(message) === -1) {
             return false
@@ -1268,7 +1295,7 @@ Page {
                           "embed:permissions", "embed:webrtcrequest",
                           "embed:popupblocked", "embed:select",
                           "embed:colorpicker", "embed:filepicker",
-                          "embed:selectasync", "embedui:downloadpicker",
+                          "embed:selectasync", "embed:selectabort", "embedui:downloadpicker",
                           "embed:downloadpicker" ]
         for (var index = 0; index < listeners.length; ++index) {
             hostView.addMessageListener(listeners[index])
