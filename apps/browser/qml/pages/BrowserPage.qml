@@ -950,7 +950,7 @@ Page {
                                                                   "pageStack": window.pageStack,
                                                                   "parentItem": browserPage,
                                                                   "contentItem": target,
-                                                                  "tabModel": chromeView.browserTabModel
+                                                                  "tabModel": hostView.browserTabModel
                                                               })
         if (!opener || !opener.message(message, data)) {
             if (_activeHostedModalTarget === target) {
@@ -1978,7 +1978,6 @@ Page {
                     }
                 }
 
-                property bool _qmozChromeHosted: true
                 property string _qmozChromeInitialUrl: ""
                 property QtObject pickerOpener
                 property QtObject popupOpener

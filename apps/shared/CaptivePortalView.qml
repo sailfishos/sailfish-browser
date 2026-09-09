@@ -19,7 +19,6 @@ QmlMozView {
     active: browserPage.active
     orientation: webView._screenOrientation
     clip: true
-    property bool _qmozChromeHosted: true
     property string _qmozChromeInitialUrl: ""
     dynamicToolbarHeight: forcedChrome ? 0 : webView.toolbarHeight
     marginBottom: webView.imOpened ? virtualKeyboardHeight : (forcedChrome ? webView.toolbarHeight : 0)
