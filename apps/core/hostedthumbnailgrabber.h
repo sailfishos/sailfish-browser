@@ -57,6 +57,7 @@ private:
     static QString saveImage(const QImage &image, const QString &persistentId,
                              const QString &locationRevision, quint64 generation);
     bool current(const Capture &capture) const;
+    void writeCapture(const Capture &capture, QImage image);
 
     QHash<QString, quint64> m_generations;
     QHash<QQuickItemGrabResult *, Capture> m_grabs;

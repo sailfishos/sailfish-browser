@@ -11,9 +11,14 @@ import Sailfish.WebView.Pickers 1.0 as Pickers
 import Sailfish.WebView.Popups 1.0 as Popups
 import Sailfish.WebView 1.0 as SailfishWebView
 
-QmlMozView {
+BrowserContentView {
     id: webPage
 
+    Binding {
+        target: webView && webView.nativeWindow ? webPage : null
+        property: "presentationWindow"
+        value: webView ? webView.nativeWindow : null
+    }
     property var webView
     privateMode: true
     active: browserPage.active

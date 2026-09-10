@@ -15,6 +15,26 @@ Engine and adaptation
 - Embedlite components - https://github.com/sailfishos/embedlite-components
 - Gecko browser engine with embedlite API - https://github.com/sailfishos/gecko-dev
 
+Browser presentation
+--------------------
+Browser uses a separate native content window by default. For comparison with
+Qt Quick scene-graph presentation, run this as the device session user:
+
+```sh
+dconf write /apps/sailfish-browser/settings/native_presentation false
+```
+
+Set it to `true`, or reset the key, to return to the native window:
+
+```sh
+dconf reset /apps/sailfish-browser/settings/native_presentation
+```
+
+The setting is read once per process. Restart Browser after changing it; restart
+an already running captive portal separately. It applies to normal and private
+Browser tabs and captive portals, including their thumbnail capture paths.
+Embedded Sailfish WebView continues to use Qt Quick independently of this key.
+
 Tools
 -----
 All tools are located in source tree under [tools](https://github.com/sailfishos/sailfish-browser/tree/master/tools).
