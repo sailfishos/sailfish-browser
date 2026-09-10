@@ -90,6 +90,11 @@ void DeclarativeHistoryModel::add(const QString &url, const QString &title)
     search(m_searchTerm);
 }
 
+void DeclarativeHistoryModel::setTitle(const QString &url, const QString &title)
+{
+    DBManager::instance()->updateHistoryTitle(url, title);
+}
+
 void DeclarativeHistoryModel::search(const QString &filter)
 {
     m_searchTerm = filter;
@@ -190,5 +195,9 @@ void DeclarativeHistoryModel::updateTitle(const QString &url, const QString &tit
             QModelIndex end = index(i, 0);
             emit dataChanged(start, end, roles);
         }
+    }
+
+    if (!m_searchTerm.isEmpty()) {
+        search(m_searchTerm);
     }
 }

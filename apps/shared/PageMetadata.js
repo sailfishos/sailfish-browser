@@ -4,6 +4,7 @@
 
 (function() {
     var PAGE_METADATA_MESSAGE = "embed:pageMetadata";
+    var INTERNAL_PAGE_MESSAGE = "embed:internalPage";
     var RICH_ICON_MIN_WIDTH = 96;
     var lastMetadataState = "";
     var pendingIconTimer = 0;
@@ -143,6 +144,28 @@
         }, 100);
     }
 
+    function internalPageForClick(event) {
+        if (!event.isTrusted || event.defaultPrevented || event.button !== 0
+                || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
+            return "";
+        }
+
+        var node = event.originalTarget;
+        while (node && node !== content.document) {
+            if (node.nodeType === content.Node.ELEMENT_NODE
+                    && (node.localName === "a" || node.localName === "area")) {
+                var href = node.href || "";
+                if (href === "about:config" || href === "about:settings") {
+                    return href;
+                }
+                return "";
+            }
+            node = node.parentNode;
+        }
+
+        return "";
+    }
+
     addEventListener("DOMContentLoaded", function(event) {
         if (topLevelContentEvent(event)) {
             notifyMetadata(true);
@@ -163,6 +186,16 @@
 
     addEventListener("DOMLinkAdded", scheduleIconMetadata, true);
     addEventListener("DOMLinkChanged", scheduleIconMetadata, true);
+
+    addEventListener("click", function(event) {
+        var internalPage = internalPageForClick(event);
+        if (!internalPage) {
+            return;
+        }
+
+        event.preventDefault();
+        sendAsyncMessage(INTERNAL_PAGE_MESSAGE, { url: internalPage });
+    }, true);
 
     notifyMetadata(true);
 })();

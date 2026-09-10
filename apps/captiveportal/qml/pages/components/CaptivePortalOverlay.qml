@@ -29,9 +29,6 @@ Shared.Background {
     property alias animator: overlayAnimator
 
     function loadPage(url)  {
-        if (webView && webView.tabModel.count === 0) {
-            webView.clearSurface()
-        }
         // let gecko figure out how to handle malformed URLs
         var pageUrl = url
         if (!isNaN(pageUrl) && pageUrl.trim()) {

@@ -289,8 +289,8 @@ Item {
                             atTop = true
                         }
 
-                        if (webView.contentItem && !webView.contentItem.fullscreen) {
-                            webView.contentItem.chrome = animator.state !== _fullscreenWebPage
+                        if (webView.chromeContentItem && !webView.chromeContentItem.fullscreen) {
+                            webView.chromeContentItem.chrome = animator.state !== _fullscreenWebPage
                         }
                         _immediate = false
                         overlay.visible = animator.state !== _fullscreenWebPage && animator.state !== _noOverlay

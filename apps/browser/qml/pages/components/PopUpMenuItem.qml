@@ -32,6 +32,8 @@ Item {
 
             OverlayListItem {
                 height: Theme.itemSizeSmall
+                enabled: browserPage.chromeHostView ? true : webView.contentItem
+                opacity: enabled ? 1.0 : 0.5
                 iconWidth: root.iconWidth
                 horizontalOffset: root.horizontalOffset
                 iconSource: "image://theme/icon-m-tab-new"
@@ -65,7 +67,7 @@ Item {
                 iconWidth: root.iconWidth
                 horizontalOffset: root.horizontalOffset
                 iconSource: "image://theme/icon-m-search-on-page"
-                enabled: webView.contentItem
+                enabled: browserPage.chromeHostView ? true : webView.contentItem
                 //% "Search on page"
                 text: qsTrId("sailfish_browser-la-search_on_page")
 
@@ -84,6 +86,17 @@ Item {
                 text: qsTrId("sailfish_browser-la-add_to_apps_grid")
                 onClicked: {
                     overlay.animator.showChrome()
+                    if (browserPage.chromeHostView) {
+                        pageStack.animatorPush("AddToAppGridDialog.qml", {
+                            "url": browserPage.url,
+                            "title": browserPage.title || browserPage.url,
+                            "icon": browserPage._hostedFavicon,
+                            "desktopBookmarkWriter": desktopBookmarkWriter,
+                            "bookmarkWriterParent": pageStack
+                        })
+                        return
+                    }
+
                     var page = webView.contentItem
                     if (!page) {
                         return
@@ -125,7 +138,8 @@ Item {
 
             OverlayListItem {
                 height: Theme.itemSizeSmall
-                enabled: webView.contentItem
+                enabled: browserPage.chromeHostView
+                         ? overlay.toolBar.url.length > 0 : webView.contentItem
                 opacity: enabled ? 1.0 : 0.5
                 iconWidth: root.iconWidth
                 horizontalOffset: root.horizontalOffset
@@ -142,6 +156,9 @@ Item {
             OverlayListItem {
                 height: Theme.itemSizeSmall
                 enabled: !DownloadManager.pdfPrinting
+                         && (browserPage.chromeHostView
+                             ? browserPage.chromeHostView.selectedTabId.length
+                             : webView.contentItem)
                 opacity: enabled ? 1.0 : 0.5
                 iconWidth: root.iconWidth
                 horizontalOffset: root.horizontalOffset
@@ -161,12 +178,14 @@ Item {
         }
 
         OverlayListItem {
-            enabled: webView.contentItem
+            enabled: browserPage.chromeHostView ? true : webView.contentItem
             height: Theme.itemSizeSmall
             iconWidth: root.iconWidth
             horizontalOffset: root.horizontalOffset
             checkable: true
-            checked: webView.contentItem && webView.contentItem.desktopMode
+            checked: browserPage.chromeHostView
+                     ? browserPage.chromeHostView.desktopMode
+                     : webView.contentItem && webView.contentItem.desktopMode
             iconSource: "image://theme/icon-m-computer"
             //: Label for text switch that reloads page in desktop mode
             //% "Desktop version"
@@ -174,7 +193,10 @@ Item {
 
             onClicked: {
                 overlay.animator.showChrome()
-                webView.contentItem.desktopMode = !webView.contentItem.desktopMode
+                var desktopMode = browserPage.chromeHostView
+                                  ? browserPage.chromeHostView.desktopMode
+                                  : webView.contentItem.desktopMode
+                browserPage.setDesktopMode(!desktopMode)
             }
         }
 

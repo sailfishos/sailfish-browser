@@ -16,7 +16,7 @@ Item {
     id: debugOverlay
 
     function dump(fileName) {
-        webView.sendAsyncMessage("Memory:Dump", {"fileName": fileName})
+        browserPage.sendPageMessage("Memory:Dump", {"fileName": fileName})
         readTimer.restart()
     }
 

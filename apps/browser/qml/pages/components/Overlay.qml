@@ -40,6 +40,9 @@ Shared.Background {
     property real _overlayGap: browserPage.isPortrait ? toolBar.rowHeight : 0
     property bool _showFindInPage
     property bool _showUrlEntry
+    property bool _hostedTabViewPending
+    property string _hostedTabViewPersistentId
+    property real _hostedTabViewGeneration
     readonly property bool _topGap: _showUrlEntry || _showFindInPage
     property int _biggestCorner: Math.max(Screen.topLeftCorner.radius,
                                           Screen.topRightCorner.radius,
@@ -53,16 +56,10 @@ Shared.Background {
 
     function loadPage(url, newTab) {
         if (url == "about:config") {
-            if (webView) {
-                webView.clearSurface()
-            }
             pageStack.animatorPush(Qt.resolvedUrl("ConfigWarning.qml"), {"browserPage": browserPage})
         } else if (url == "about:settings") {
             pageStack.animatorPush(Qt.resolvedUrl("../SettingsPage.qml"))
         } else {
-            if (webView && webView.tabModel.count === 0) {
-                webView.clearSurface()
-            }
             // let gecko figure out how to handle malformed URLs
             var pageUrl = url
             if (!isNaN(pageUrl) && pageUrl.trim()) {
@@ -70,8 +67,9 @@ Shared.Background {
             }
 
             if (!searchField.enteringNewTabUrl && !newTab) {
+                searchField.edited = false
                 webView.releaseActiveTabOwnership()
-                webView.load(pageUrl)
+                browserPage.load(pageUrl)
             } else {
                 // Loading will start once overlay animator has animated chrome visible.
                 enteredUrl = pageUrl
@@ -97,9 +95,45 @@ Shared.Background {
         overlayAnimator.showStartPage(action !== PageStackAction.Animated)
     }
 
+    function showTabView() {
+        if (_hostedTabViewPending) {
+            return
+        }
+        if (browserPage.chromeHostView) {
+            // grabToImage() completes asynchronously. Keep the hosted view
+            // active until its texture has been captured, otherwise pushing
+            // the tab page replaces the thumbnail with the white fallback.
+            var capture = browserPage.beginHostedTabViewThumbnailCapture()
+            if (capture) {
+                _hostedTabViewPending = true
+                _hostedTabViewPersistentId = capture.persistentId
+                _hostedTabViewGeneration = capture.generation
+                hostedTabViewCaptureTimeout.restart()
+                return
+            }
+        }
+        pageStack.animatorPush(tabView)
+    }
+
+    function finishHostedTabViewCapture(persistentId, generation, timedOut) {
+        if (!_hostedTabViewPending
+                || persistentId !== _hostedTabViewPersistentId
+                || generation !== _hostedTabViewGeneration) {
+            return
+        }
+        _hostedTabViewPending = false
+        hostedTabViewCaptureTimeout.stop()
+        if (timedOut) {
+            browserPage.cancelHostedThumbnailCapture(persistentId, generation)
+        }
+        _hostedTabViewPersistentId = ""
+        _hostedTabViewGeneration = 0
+        pageStack.animatorPush(tabView)
+    }
+
     function dismiss(canShowChrome, immediate) {
         toolBar.resetFind()
-        if (webView.contentItem && webView.contentItem.fullscreen) {
+        if (browserPage.contentFullscreen) {
             // Web content is in fullscreen mode thus we don't show chrome
             overlay.animator.showFullscreen()
         } else if (canShowChrome) {
@@ -140,10 +174,15 @@ Shared.Background {
                 searchField.enteringNewTabUrl = false
 
                 if (enteredUrl) {
-                    webView.tabModel.newTab(enteredUrl, true)
+                    if (browserPage.chromeHostView) {
+                        searchField.edited = false
+                        browserPage.newTab(enteredUrl, true)
+                    } else {
+                        webView.tabModel.newTab(enteredUrl, true)
+                    }
                     enteredUrl = ""
                 } else if (!toolBar.findInPageActive) {
-                    searchField.resetUrl(webView.url)
+                    searchField.resetUrl(browserPage.url)
                 }
 
                 favoriteGrid.positionViewAtBeginning()
@@ -172,17 +211,17 @@ Shared.Background {
     }
 
     Connections {
-        target: webView
+        target: browserPage
 
-        onLoadingChanged: {
-            if (webView.loading) {
+        onViewLoadingChanged: {
+            if (browserPage.viewLoading) {
                 toolBar.resetFind()
             }
         }
 
         onUrlChanged: {
             if (!toolBar.findInPageActive && !searchField.enteringNewTabUrl && !searchField.edited) {
-                searchField.resetUrl(webView.url)
+                searchField.resetUrl(browserPage.url)
             }
         }
     }
@@ -205,7 +244,9 @@ Shared.Background {
 
         width: parent.width
         height: historyContainer.height
-        enabled: !overlayAnimator.atBottom && webView.tabModel.count > 0 && !favoriteGrid.contextMenuActive
+        enabled: !overlayAnimator.atBottom
+                 && (browserPage.chromeHostView || webView.tabModel.count > 0)
+                 && !favoriteGrid.contextMenuActive
 
         drag.target: overlay
         drag.filterChildren: true
@@ -241,8 +282,8 @@ Shared.Background {
             width: parent.width
             height: toolBar.rowHeight
             visible: !searchField.enteringNewTabUrl
-            opacity: webView.loading ? 1.0 : 0.0
-            progress: webView.loadProgress / 100.0
+            opacity: browserPage.viewLoading ? 1.0 : 0.0
+            progress: browserPage.loadProgress / 100.0
         }
 
         Item {
@@ -253,10 +294,10 @@ Shared.Background {
                                                   && _showUrlEntry
             readonly property bool showHistoryList: showFavorites
                                                     && searchField.edited
-                                                    && searchField.text !== webView.url
+                                                    && searchField.text !== browserPage.url
                                                     && searchField.text
             readonly property bool showHistoryButton: !toolBar.findInPageActive
-                                                      && (!searchField.edited && searchField.text === webView.url
+                                                      && (!searchField.edited && searchField.text === browserPage.url
                                                           || !searchField.text)
 
             width: parent.width
@@ -278,7 +319,8 @@ Shared.Background {
 
                 width: parent.width
                 height: isPortrait ? toolBar.scaledPortraitHeight : toolBar.scaledLandscapeHeight
-                active: webView.contentItem && webView.contentItem.textSelectionActive
+                active: browserPage._hostedTextSelectionController
+                        && browserPage._hostedTextSelectionController.active
 
                 opacity: active ? 1.0 : 0.0
                 Behavior on opacity {
@@ -288,20 +330,14 @@ Shared.Background {
                 onActiveChanged: {
                     if (active) {
                         overlayAnimator.showChrome(false)
-                        if (webView.contentItem) {
-                            webView.contentItem.forceChrome(true)
-                        }
-                    } else {
-                        if (webView.contentItem) {
-                            webView.contentItem.forceChrome(false)
-                        }
+
                     }
                 }
 
                 sourceComponent: Component {
                     TextSelectionToolbar {
                         portrait: browserPage.isPortrait
-                        controller: webView && webView.contentItem && webView.contentItem.textSelectionController
+                        controller: browserPage._hostedTextSelectionController
                         width: textSelectionToolbar.width
                         height: textSelectionToolbar.height
                         leftPadding: toolBar.horizontalOffset
@@ -314,7 +350,7 @@ Shared.Background {
                         }
                         onSearch: {
                             // Open new tab with the search uri.
-                            webView.tabModel.newTab(controller.searchUri, true)
+                            browserPage.newTab(controller.searchUri, true)
                             overlay.animator.showChrome(true)
                         }
                     }
@@ -398,7 +434,7 @@ Shared.Background {
 
                     if (toolBar.findInPageActive) {
                         lastFindText = text
-                        webView.sendAsyncMessage("embedui:find", { text: text, backwards: false, again: false })
+                        browserPage.findInPage(text, false, false)
                         overlayAnimator.showChrome()
                     } else {
                         overlay.loadPage(text)
@@ -439,7 +475,7 @@ Shared.Background {
                 }
 
                 onTextChanged: {
-                    if (!_resetting && !edited && text !== webView.url) {
+                    if (!_resetting && !edited && text !== browserPage.url) {
                         edited = true
                     }
                 }
@@ -510,12 +546,14 @@ Shared.Background {
             Browser.ToolBar {
                 id: toolBar
 
+                hostedView: browserPage.chromeHostView
+                urlSwipeEnabled: overlayAnimator.atBottom
                 property real crossfadeRatio: (_showFindInPage || _showUrlEntry)
                                               ? (overlay.y - webView.fullscreenHeight/2)
                                                 / (webView.fullscreenHeight/2 - toolBar.height)
                                               : 1.0
 
-                url: webView.contentItem && webView.contentItem.url || ""
+                url: browserPage.url
                 findText: searchField.text
                 bookmarked: bookmarkModel.activeUrlBookmarked
 
@@ -539,14 +577,13 @@ Shared.Background {
                 onShowOverlay: {
                     _showUrlEntry = true
                     _overlayGap = Qt.binding(function() { return overlayAnimator.fullscreenGap })
-                    searchField.resetUrl(webView.url)
+                    searchField.resetUrl(browserPage.url)
                     overlayAnimator.showOverlay()
                 }
                 onShowTabs: {
                     // Push the currently active tab index.
                     // Changing of active tab cannot cause blinking.
-                    webView.grabActivePage()
-                    pageStack.animatorPush(tabView)
+                    overlay.showTabView()
                 }
                 onShowSecondaryTools: overlayAnimator.showSecondaryTools()
                 onShowInfoOverlay: {
@@ -568,26 +605,48 @@ Shared.Background {
                     _overlayGap = Qt.binding(function () { return overlayAnimator.fullscreenGap })
                     overlayAnimator.showOverlay()
                 }
-                onShareActivePage: webShareAction.shareLink(webView.url, webView.title)
-                onBookmarkActivePage: favoriteGrid.fetchAndSaveBookmark()
-                onRemoveActivePageFromBookmarks: bookmarkModel.remove(webView.url)
+                onShareActivePage: {
+                    if (browserPage.chromeHostView) {
+                        webShareAction.shareLink(browserPage.url, browserPage.title)
+                    } else {
+                        webShareAction.shareLink(webView.url, webView.title)
+                    }
+                }
+                onBookmarkActivePage: {
+                    if (browserPage.chromeHostView) {
+                        favoriteGrid.fetchAndSaveHostedBookmark()
+                    } else {
+                        favoriteGrid.fetchAndSaveBookmark()
+                    }
+                }
+                onRemoveActivePageFromBookmarks: {
+                    bookmarkModel.remove(browserPage.chromeHostView
+                                         ? browserPage.url : webView.url)
+                }
 
                 onShowCertDetail: {
-                    if (webView.security && !webView.security.certIsNull) {
+                    if (browserPage.security && !browserPage.security.certIsNull) {
                         pageStack.animatorPush("com.jolla.settings.system.CertificateDetailsPage",
-                                               {"website": webView.security.subjectDisplayName,
-                                                   "details": webView.security.serverCertDetails})
+                                               {"website": browserPage.security.subjectDisplayName,
+                                                   "details": browserPage.security.serverCertDetails})
                     }
                 }
                 onSavePageAsPDF: {
-                    var filename = ((webView.title && webView.title.length !== 0)
-                                    ? webView.title : (WebUtils.pageName(webView.url) || "unnamed_file")) + ".pdf"
+                    var pageTitle = browserPage.title
+                    var pageUrl = browserPage.url
+                    var filename = ((pageTitle && pageTitle.length !== 0)
+                                    ? pageTitle
+                                    : (WebUtils.pageName(pageUrl) || "unnamed_file")) + ".pdf"
                     var targetUrl = DownloadHelper.createUniqueFileUrl(filename, StandardPaths.download)
-                    WebEngine.notifyObservers("embedui:download",
-                                              {
-                                                  "msg": "saveAsPdf",
-                                                  "to": targetUrl
-                                              })
+                    var request = {
+                        "msg": "saveAsPdf",
+                        "to": targetUrl
+                    }
+                    if (browserPage.chromeHostView) {
+                        request.windowId = browserPage.chromeHostView.uniqueId
+                        request.tabId = browserPage.chromeHostView.selectedTabId
+                    }
+                    WebEngine.notifyObservers("embedui:download", request)
                 }
             }
 
@@ -642,12 +701,12 @@ Shared.Background {
                     Behavior on opacity { FadeAnimator {} }
                 }
 
-                search: searchField.text
+                search: searchField.text === browserPage.url ? "" : searchField.text
                 opacity: visible && toolBar.opacity < 0.9 ? 1.0 : 0.0
                 enabled: overlayAnimator.atTop
                 visible: !overlayAnimator.atBottom && _showUrlEntry
                 onMovingChanged: if (moving) historyList.focus = true
-                onSearchChanged: if (search !== webView.url) historyModel.search(search)
+                onSearchChanged: historyModel.search(search)
                 model: historyContainer.showHistoryList ? historyModel : 0
                 contentY: favoriteGrid.y
                 showDeleteButton: true
@@ -664,6 +723,21 @@ Shared.Background {
                 Behavior on opacity { FadeAnimator {} }
             }
         }
+    }
+
+    Timer {
+        id: hostedTabViewCaptureTimeout
+
+        interval: 500
+        onTriggered: overlay.finishHostedTabViewCapture(
+                         overlay._hostedTabViewPersistentId,
+                         overlay._hostedTabViewGeneration, true)
+    }
+
+    Connections {
+        target: browserPage
+        onHostedThumbnailGrabbed: overlay.finishHostedTabViewCapture(
+                                      persistentId, generation, false)
     }
 
     Component {
