@@ -92,6 +92,19 @@ Page {
     property var _hostedTabAsyncMessages: []
     property alias webView: webView
     property alias inputRegion: inputRegion
+    property bool _inputMethodDismissPending
+
+    function dismissInputMethod() {
+        // Tab selection can happen while the tab view covers BrowserPage.
+        // Wait until this page can take focus before hiding the input method.
+        if (!active) {
+            _inputMethodDismissPending = true
+            return
+        }
+        _inputMethodDismissPending = false
+        forceActiveFocus()
+        Qt.inputMethod.hide()
+    }
 
     onChromeHostViewChanged: {
         clearHostedSelection()
@@ -1683,6 +1696,9 @@ Page {
     onStatusChanged: {
         if (status == PageStatus.Active) {
             resumeHostedThumbnailCapture()
+            if (_inputMethodDismissPending) {
+                dismissInputMethod()
+            }
         } else {
             finishHostedOrientationWait()
         }
@@ -2097,10 +2113,7 @@ Page {
                 onSelectedTabChanged: {
                     tabSession.applyRuntimeSnapshot(false, chromeView)
                     if (chromeView !== browserPage.chromeHostView) return
-                    if (virtualKeyboardObserver.opened) {
-                        browserPage.focus = true
-                        Qt.inputMethod.hide()
-                    }
+                    browserPage.dismissInputMethod()
                     chrome = true
                     browserPage.resetHostedThumbnailCapture(chromeView)
                     browserPage.requestHostedThumbnail()
