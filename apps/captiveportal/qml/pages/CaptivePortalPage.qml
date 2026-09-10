@@ -76,7 +76,6 @@ Page {
         transpose: window._transpose
         orientation: browserPage.orientation
 
-        onWindowChanged: webView.chromeWindow = window
 
         // Update content height only after virtual keyboard fully opened.
         states: State {

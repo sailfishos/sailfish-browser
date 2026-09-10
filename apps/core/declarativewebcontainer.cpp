@@ -18,6 +18,13 @@
 #include "declarativehistorymodel.h"
 #include <webengine.h>
 #include <QGuiApplication>
+#include <QWindow>
+#include <QScreen>
+#include <QSurfaceFormat>
+#include <QOpenGLContext>
+#include <QOpenGLFunctions>
+#include <QPlatformSurfaceEvent>
+#include <qpa/qplatformnativeinterface.h>
 #include <MDConfItem>
 #include <QDBusConnection>
 #include <dsme/dsme_dbus_if.h>
@@ -30,6 +37,26 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
 {
     Q_ASSERT(!s_instance);
     s_instance = this;
+    connect(this, &QQuickItem::windowChanged, this, [this](QQuickWindow *window) {
+        setChromeWindow(window);
+    });
+    if (nativePresentationEnabled()) {
+        m_nativeWindow = new QWindow;
+        m_nativeWindow->setSurfaceType(QWindow::OpenGLSurface);
+        QSurfaceFormat format;
+        format.setRenderableType(QSurfaceFormat::OpenGLES);
+        format.setVersion(2, 0);
+        format.setRedBufferSize(5);
+        format.setGreenBufferSize(6);
+        format.setBlueBufferSize(5);
+        format.setAlphaBufferSize(0);
+        format.setDepthBufferSize(0);
+        format.setStencilBufferSize(0);
+        m_nativeWindow->setFormat(format);
+        m_nativeWindow->resize(qApp->primaryScreen()->size());
+        m_nativeWindow->setTitle(QStringLiteral("BrowserContent"));
+        m_nativeWindow->setObjectName(QStringLiteral("WebView"));
+    }
     MDConfItem privateAutostart(QStringLiteral("/apps/sailfish-browser/settings/browser_privatebrowsing_autostart"));
     m_privateMode = BrowserAppInfo::captivePortal() || !browserEnabled()
             || privateAutostart.value(false).toBool();
@@ -47,7 +74,23 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
 
 DeclarativeWebContainer::~DeclarativeWebContainer()
 {
+    delete m_nativeWindow;
     s_instance = nullptr;
+}
+
+bool DeclarativeWebContainer::nativePresentationEnabled()
+{
+    // Select once per process so changing dconf cannot mix presentation paths.
+    static const bool enabled = []() {
+        MDConfItem setting(QStringLiteral("/apps/sailfish-browser/settings/native_presentation"));
+        return setting.value(true).toBool();
+    }();
+    return enabled;
+}
+
+QWindow *DeclarativeWebContainer::nativeWindow() const
+{
+    return m_nativeWindow;
 }
 
 DeclarativeWebContainer *DeclarativeWebContainer::instance()
@@ -331,6 +374,10 @@ void DeclarativeWebContainer::setChromeWindow(QObject *window)
     QQuickView *view = qobject_cast<QQuickView *>(window);
     if (view && view != m_chromeWindow) {
         m_chromeWindow = view;
+        if (m_nativeWindow) {
+            m_chromeWindow->setTransientParent(m_nativeWindow);
+            m_nativeWindow->showFullScreen();
+        }
         m_chromeWindow->showFullScreen();
         emit chromeWindowChanged();
         initialize();
@@ -340,6 +387,7 @@ void DeclarativeWebContainer::setChromeWindow(QObject *window)
 void DeclarativeWebContainer::componentComplete()
 {
     QQuickItem::componentComplete();
+    setChromeWindow(window());
     initialize();
 }
 
@@ -385,7 +433,34 @@ bool DeclarativeWebContainer::isActiveTab(int id) { return m_model && m_model->a
 
 bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
 {
-    if (obj == m_chromeWindow && event->type() == QEvent::Close && !m_closing) {
+    if (obj == m_nativeWindow && event->type() == QEvent::Expose
+            && m_nativeWindow->isExposed() && !m_nativeInitialized) {
+        // Wayland cannot map a surface (or expose its transient QML window)
+        // before the first buffer is committed. Gecko's view initialization
+        // itself needs the QML window to render, so bootstrap independently.
+        QOpenGLContext context;
+        context.setFormat(m_nativeWindow->format());
+        if (context.create() && context.makeCurrent(m_nativeWindow)) {
+            context.functions()->glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            context.functions()->glClear(GL_COLOR_BUFFER_BIT);
+            context.swapBuffers(m_nativeWindow);
+            context.doneCurrent();
+            m_nativeInitialized = true;
+        } else {
+            qCWarning(lcCoreLog) << "Cannot initialize the native Browser surface";
+        }
+    }
+    if (obj == m_nativeWindow && event->type() == QEvent::PlatformSurface) {
+        auto *surfaceEvent = static_cast<QPlatformSurfaceEvent *>(event);
+        m_nativeInitialized = false;
+        if (surfaceEvent->surfaceEventType() == QPlatformSurfaceEvent::SurfaceCreated
+                && m_nativeWindow->handle()) {
+            QPlatformNativeInterface *native = QGuiApplication::platformNativeInterface();
+            native->setWindowProperty(m_nativeWindow->handle(), QStringLiteral("BACKGROUND_VISIBLE"), false);
+            native->setWindowProperty(m_nativeWindow->handle(), QStringLiteral("HAS_CHILD_WINDOWS"), true);
+        }
+    }
+    if ((obj == m_chromeWindow || obj == m_nativeWindow) && event->type() == QEvent::Close && !m_closing) {
         m_closing = true;
         m_closeEventFilter->applicationClosingStarted();
         emit applicationClosing();

@@ -19,11 +19,12 @@ class DeclarativeTabModel;
 class DeclarativeHistoryModel;
 class CloseEventFilter;
 
-// Application state and D-Bus controller. Content is presented by QmlMozView
-// items in the application's single QML window.
+// Application state and D-Bus controller, with an optional native content
+// window below the translucent QML controls window.
 class DeclarativeWebContainer : public QQuickItem
 {
     Q_OBJECT
+    Q_PROPERTY(QWindow *nativeWindow READ nativeWindow CONSTANT)
     Q_PROPERTY(QQuickItem *rotationHandler MEMBER m_rotationHandler NOTIFY rotationHandlerChanged FINAL)
     Q_PROPERTY(DeclarativeTabModel *tabModel READ tabModel NOTIFY tabModelChanged FINAL)
     Q_PROPERTY(DeclarativeTabModel *persistentTabModel READ persistentTabModel CONSTANT)
@@ -48,6 +49,8 @@ public:
     DeclarativeWebContainer(QQuickItem *parent = 0);
     ~DeclarativeWebContainer();
     static DeclarativeWebContainer *instance();
+    static bool nativePresentationEnabled();
+    QWindow *nativeWindow() const;
     DeclarativeTabModel *tabModel() const;
     DeclarativeTabModel *persistentTabModel() const;
     DeclarativeTabModel *privateTabModel() const;
@@ -127,11 +130,13 @@ private:
     bool canInitialize() const;
     bool browserEnabled() const;
 
+    QWindow *m_nativeWindow = nullptr;
     QPointer<QQuickItem> m_rotationHandler;
     QPointer<QQuickView> m_chromeWindow;
     QPointer<DeclarativeTabModel> m_model;
     QPointer<DeclarativeTabModel> m_persistentTabModel;
     QPointer<DeclarativeTabModel> m_privateTabModel;
+    bool m_nativeInitialized = false;
     bool m_foreground = true;
     bool m_touchBlocked = false;
     bool m_privateMode = false;

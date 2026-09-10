@@ -32,7 +32,12 @@ ApplicationWindow {
     _clippingItem.opacity: 1.0
     _resizeContent: !window.rootPage.active
     _backgroundVisible: false
-    _opaque: true
+    _opaque: !webView || !webView.nativeWindow
+    Binding {
+        target: webView && webView.nativeWindow ? window : null
+        property: "_mainWindow"
+        value: webView ? webView.nativeWindow : null
+    }
 
     cover: null
 

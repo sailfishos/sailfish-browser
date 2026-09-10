@@ -26,6 +26,7 @@
 #include "privatetabmodel.h"
 #include "declarativehistorymodel.h"
 #include "declarativewebcontainer.h"
+#include <qmoznativeview.h>
 #include "inputregion.h"
 
 #ifdef HAS_BOOSTER
@@ -102,6 +103,11 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
 
     qmlRegisterUncreatableType<DownloadStatus>(uri, 1, 0, "DownloadStatus", "");
     qmlRegisterType<DeclarativeWebContainer>(uri, 1, 0, "WebContainer");
+    if (DeclarativeWebContainer::nativePresentationEnabled()) {
+        qmlRegisterType<QMozNativeView>(uri, 1, 0, "BrowserContentView");
+    } else {
+        qmlRegisterType<QuickMozView>(uri, 1, 0, "BrowserContentView");
+    }
     qmlRegisterType<InputRegion>(uri, 1, 0, "InputRegion");
 
     Browser *browser = new Browser(view.data(), DEPLOYMENT_PATH, app.data());

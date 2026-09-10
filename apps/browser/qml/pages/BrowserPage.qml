@@ -1500,7 +1500,7 @@ Page {
         if (!persistentId.length) return null
         var generation = --_privateCaptureGeneration
         _privateCoverPending = true
-        var accepted = view.grabToImage(function(result) {
+        var callback = function(result) {
             _privateCoverPending = false
             if (view === chromeHostView && view.selectedTabId === tabId) {
                 var grabs = {}
@@ -1514,7 +1514,10 @@ Page {
                     browserPage.hostedThumbnailGrabbed(persistentId, "", "", generation)
                 }
             }
-        }, Qt.size(Math.max(1, Math.round(width / 2)), Math.max(1, Math.round(height / 2))))
+        }
+        var size = Qt.size(Math.max(1, Math.round(width / 2)), Math.max(1, Math.round(height / 2)))
+        var accepted = webView.nativeWindow ? view.grabNativeImage(callback, size)
+                                            : view.grabToImage(callback, size)
         if (!accepted) _privateCoverPending = false
         return accepted ? { "persistentId": persistentId, "generation": generation } : null
     }
@@ -1736,7 +1739,6 @@ Page {
         transpose: window._transpose
         orientation: browserPage.orientation
 
-        onWindowChanged: webView.chromeWindow = window
 
     }
 
@@ -1977,9 +1979,19 @@ Page {
     Component {
         id: chromeHostComponent
 
-            QmlMozView {
+            BrowserContentView {
                 id: chromeView
 
+                Binding {
+                    target: webView.nativeWindow ? chromeView : null
+                    property: "presentationWindow"
+                    value: webView.nativeWindow
+                }
+                Binding {
+                    target: webView.nativeWindow ? chromeView : null
+                    property: "surfaceColor"
+                    value: browserPage.contentFullscreen ? "black" : browserPage._hostedSurfaceColor
+                }
                 property alias hostedSession: tabSession
                 readonly property var browserTabModel: privateMode
                                                        ? webView.privateTabModel : webView.persistentTabModel

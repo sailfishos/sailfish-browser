@@ -9,6 +9,8 @@
 #include <QFile>
 #include <QFutureWatcher>
 #include <QImage>
+#include <QTimer>
+#include <qmoznativeview.h>
 #include <QSaveFile>
 #include <QtConcurrentRun>
 #include <QtQuick/QQuickItem>
@@ -56,6 +58,17 @@ quint64 HostedThumbnailGrabber::grab(QQuickItem *item,
     grabSize.scale(size, Qt::KeepAspectRatioByExpanding);
 
     const quint64 generation = ++m_generations[persistentId];
+    if (QMozNativeView *view = qobject_cast<QMozNativeView *>(item)) {
+        const QImage image = view->captureImage(grabSize);
+        if (image.isNull()) return 0;
+        const Capture capture = {persistentId, location, locationRevision,
+                                 generation, size, {}};
+        // Let QML record the generation before delivering the capture.
+        QTimer::singleShot(0, this, [this, capture, image]() {
+            writeCapture(capture, image);
+        });
+        return generation;
+    }
     QSharedPointer<QQuickItemGrabResult> result = item->grabToImage(grabSize);
     if (!result) {
         return 0;
@@ -113,7 +126,11 @@ void HostedThumbnailGrabber::handleGrabReady()
     }
 
     const Capture capture = m_grabs.take(result);
-    QImage image = capture.result->image();
+    writeCapture(capture, capture.result->image());
+}
+
+void HostedThumbnailGrabber::writeCapture(const Capture &capture, QImage image)
+{
     if (image.isNull() || !current(capture)) {
         return;
     }

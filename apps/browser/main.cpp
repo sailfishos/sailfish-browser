@@ -30,6 +30,7 @@
 #include "declarativehistorymodel.h"
 #include "declarativetabfiltermodel.h"
 #include "declarativewebcontainer.h"
+#include <qmoznativeview.h>
 #include "declarativeloginmodel.h"
 #include "loginfiltermodel.h"
 #include "datafetcher.h"
@@ -162,6 +163,11 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     qmlRegisterSingletonType<FaviconManager>(uri, 1, 0, "FaviconManager", faviconmanager_factory);
     qmlRegisterUncreatableType<DownloadStatus>(uri, 1, 0, "DownloadStatus", "");
     qmlRegisterType<DeclarativeWebContainer>(uri, 1, 0, "WebContainer");
+    if (DeclarativeWebContainer::nativePresentationEnabled()) {
+        qmlRegisterType<QMozNativeView>(uri, 1, 0, "BrowserContentView");
+    } else {
+        qmlRegisterType<QuickMozView>(uri, 1, 0, "BrowserContentView");
+    }
     qmlRegisterType<DesktopBookmarkWriter>(uri, 1, 0, "DesktopBookmarkWriter");
     qmlRegisterType<DataFetcher>(uri, 1, 0, "DataFetcher");
     qmlRegisterType<InputRegion>(uri, 1, 0, "InputRegion");
