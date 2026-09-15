@@ -54,7 +54,7 @@ BrowserContentView {
         onHostedGoBackRequested: webPage.goBack()
         onHostedGoForwardRequested: webPage.goForward()
     }
-    onSelectedTabChanged: { viewSession.applyRuntimeSnapshot(false); syncState() }
+    onSelectedTabChanged: syncState()
     onTabCloseResult: viewSession.runtimeTabCloseResult(tabId, closed)
     onLoadingChanged: syncState()
     onUrlChanged: syncState()
@@ -63,11 +63,8 @@ BrowserContentView {
     onCanGoForwardChanged: syncState()
     onSecurityChanged: syncState()
 
-    property bool acceptedTouchIcon
-    readonly property bool textSelectionActive: textSelectionController && textSelectionController.active
     property Item textSelectionController: null
     readonly property bool activeWebPage: viewSession.selectedPersistentId(webPage) === String(webView.tabId)
-    property string favicon
     property string metadataTitle
     property var pendingClipboardPasteData
     property QtObject _textZoomController: SailfishWebView.TextZoomController {
@@ -103,7 +100,6 @@ BrowserContentView {
         return metadataTitle || title || String(url)
     }
 
-    signal selectionCopied(var data)
     signal contextMenuRequested(var data)
 
     function clearSelection() {
@@ -229,16 +225,6 @@ BrowserContentView {
             openClipboardPasteDialog(data)
             break
         }
-        case "Link:SetIcon": {
-            if (acceptedTouchIcon)
-                return
-
-            var previousFavicon = favicon
-            acceptedTouchIcon = !!data.isRichIcon
-            favicon = data.url
-
-            break
-        }
         case "embed:pageMetadata": {
             if (data.url && data.url !== String(url)) {
                 break
@@ -246,14 +232,6 @@ BrowserContentView {
 
             if (data.title) {
                 metadataTitle = data.title
-            }
-
-            var richIcon = !!data.isRichIcon
-            if (data.favicon && (richIcon || !acceptedTouchIcon)) {
-                var oldFavicon = favicon
-                acceptedTouchIcon = richIcon
-                favicon = data.favicon
-
             }
             break
         }

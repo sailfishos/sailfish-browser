@@ -17,6 +17,7 @@
 
 #include "persistenttabmodel.h"
 #include "privatetabmodel.h"
+#include "declarativetabfiltermodel.h"
 #include "dbmanager.h"
 #include "declarativewebcontainer.h"
 #include "browserpaths.h"
@@ -38,6 +39,7 @@ private slots:
     void roleNames();
     void data_data();
     void data();
+    void activeTabIndexFiltersHiddenRows();
     void applyRuntimeSnapshot();
     void runtimeSnapshotThumbnailInvalidation();
     void runtimeDesktopModeIsPerPersistentTab();
@@ -66,17 +68,18 @@ void tst_persistenttabmodel::privateRuntimeDoesNotPersist()
     QVERIFY(privateTabs.loaded());
     QVERIFY(privateTabs.runtimeRestoreBatch().value(QStringLiteral("tabs")).toList().isEmpty());
 
-    const QString id = privateTabs.reserveRuntimeTab(QStringLiteral("https://private.example/one"));
+    const QString id = QString::number(privateTabs.newTab(
+            QStringLiteral("https://private.example/one"), false));
     privateTabs.applyRuntimeSnapshot(QList<PersistentRuntimeTabState>()
             << PersistentRuntimeTabState(9001, id.toInt(), QStringLiteral("https://private.example/one"),
-                                         QStringLiteral("Private"), true, false, 1));
+                                         QStringLiteral("Private"), true, 1));
     QCOMPARE(privateTabs.count(), 1);
     QCOMPARE(privateTabs.runtimeIdForPersistentId(id), QStringLiteral("9001"));
     QVERIFY(privateTabs.setRuntimeDesktopMode(id, true));
     QVERIFY(privateTabs.runtimeGoBack(id));
     privateTabs.applyRuntimeSnapshot(QList<PersistentRuntimeTabState>()
             << PersistentRuntimeTabState(9001, id.toInt(), QStringLiteral("https://private.example/two"),
-                                         QStringLiteral("Private two"), true, false, 2));
+                                         QStringLiteral("Private two"), true, 2));
 
     QSignalSpy restoreSpy(DBManager::instance(),
                          &DBManager::persistentTabRestoreBatchAvailable);
@@ -90,6 +93,23 @@ void tst_persistenttabmodel::privateRuntimeDoesNotPersist()
     privateTabs.applyRuntimeSnapshot(QList<PersistentRuntimeTabState>());
     QCOMPARE(privateTabs.count(), 0);
     QVERIFY(privateTabs.runtimeIdForPersistentId(id).isEmpty());
+}
+
+void tst_persistenttabmodel::activeTabIndexFiltersHiddenRows()
+{
+    tabModel->m_tabs.append(Tab(1, QStringLiteral("https://hidden.example/"),
+                                QStringLiteral("Hidden"), QString(), true));
+    tabModel->m_tabs.append(Tab(2, QStringLiteral("https://visible.example/"),
+                                QStringLiteral("Visible"), QString(), false));
+    tabModel->m_activeTabId = 2;
+
+    DeclarativeTabFilterModel filterModel;
+    filterModel.setSourceModel(tabModel);
+    QCOMPARE(filterModel.count(), 1);
+    QCOMPARE(filterModel.activeTabIndex(), 0);
+
+    tabModel->m_activeTabId = 1;
+    QCOMPARE(filterModel.activeTabIndex(), -1);
 }
 
 void tst_persistenttabmodel::initTestCase()
@@ -147,8 +167,8 @@ void tst_persistenttabmodel::newTabInvalidInput()
 void tst_persistenttabmodel::updateThumbnailPath()
 {
     // set up environment
-    QSignalSpy dataChangedSpy(tabModel, SIGNAL(dataChanged(QModelIndex, QModelIndex, QVector<int>)));
     addThreeTabs();
+    QSignalSpy dataChangedSpy(tabModel, SIGNAL(dataChanged(QModelIndex, QModelIndex, QVector<int>)));
 
     QString path("/path/to/thumbnail");
     tabModel->updateThumbnailPath(1, path);
@@ -215,7 +235,6 @@ void tst_persistenttabmodel::applyRuntimeSnapshot()
     popup.insert(QStringLiteral("persistentId"), QStringLiteral("0"));
     popup.insert(QStringLiteral("location"), QStringLiteral("https://popup.example/"));
     popup.insert(QStringLiteral("title"), QStringLiteral("Popup"));
-    popup.insert(QStringLiteral("discarded"), false);
     tabModel->applyRuntimeSnapshot(QVariantList() << popup, QStringLiteral("100"));
 
     QCOMPARE(tabModel->count(), 1);
@@ -231,8 +250,8 @@ void tst_persistenttabmodel::applyRuntimeSnapshot()
              QStringLiteral("100"));
     QCOMPARE(tabModel->persistentIdAt(0), QStringLiteral("1"));
 
-    const QString reservedId = tabModel->reserveRuntimeTab(
-                QStringLiteral("https://second.example/"), QStringLiteral("Second"));
+    const QString reservedId = QString::number(tabModel->newTab(
+            QStringLiteral("https://second.example/"), false));
     QCOMPARE(reservedId, QStringLiteral("2"));
 
     QVariantMap second;
@@ -240,7 +259,6 @@ void tst_persistenttabmodel::applyRuntimeSnapshot()
     second.insert(QStringLiteral("persistentId"), reservedId);
     second.insert(QStringLiteral("location"), QStringLiteral("https://second.example/"));
     second.insert(QStringLiteral("title"), QStringLiteral("Second"));
-    second.insert(QStringLiteral("discarded"), true);
     popup.insert(QStringLiteral("persistentId"), QStringLiteral("1"));
     popup.insert(QStringLiteral("location"), QStringLiteral("https://popup.example/post"));
     popup.insert(QStringLiteral("title"), QStringLiteral("Post"));
@@ -464,8 +482,6 @@ void tst_persistenttabmodel::runtimeHistoryTraversal()
     tab.insert(QStringLiteral("locationRevision"), QStringLiteral("2"));
     tabModel->applyRuntimeSnapshot(QVariantList() << tab, QStringLiteral("100"));
 
-    QSignalSpy traversalSpy(tabModel,
-                            SIGNAL(runtimeHistoryTraversalConfirmed(QString,QString)));
     QVERIFY(tabModel->runtimeGoBack(QStringLiteral("1")));
     QVERIFY(!tabModel->runtimeGoBack(QStringLiteral("1")));
 
@@ -489,13 +505,6 @@ void tst_persistenttabmodel::runtimeHistoryTraversal()
     tab.insert(QStringLiteral("title"), QStringLiteral("One"));
     tab.insert(QStringLiteral("locationRevision"), QStringLiteral("3"));
     tabModel->applyRuntimeSnapshot(QVariantList() << tab, QStringLiteral("100"));
-    QCOMPARE(traversalSpy.count(), 1);
-    QCOMPARE(traversalSpy.at(0).at(0).toString(), QStringLiteral("100"));
-    QCOMPARE(traversalSpy.at(0).at(1).toString(), QStringLiteral("3"));
-    QVERIFY(tabModel->consumeConfirmedRuntimeTraversal(QStringLiteral("100"),
-                                                       QStringLiteral("3")));
-    QVERIFY(!tabModel->consumeConfirmedRuntimeTraversal(QStringLiteral("100"),
-                                                        QStringLiteral("3")));
 
     QSignalSpy restoreSpy(DBManager::instance(),
                           SIGNAL(persistentTabRestoreBatchAvailable(PersistentTabRestoreBatch)));
@@ -512,11 +521,7 @@ void tst_persistenttabmodel::runtimeHistoryTraversal()
     tab.insert(QStringLiteral("title"), QStringLiteral("Two"));
     tab.insert(QStringLiteral("locationRevision"), QStringLiteral("4"));
     tabModel->applyRuntimeSnapshot(QVariantList() << tab, QStringLiteral("100"));
-    QCOMPARE(traversalSpy.count(), 2);
-    // An unconsumed confirmation expires on the next complete snapshot.
     tabModel->applyRuntimeSnapshot(QVariantList() << tab, QStringLiteral("100"));
-    QVERIFY(!tabModel->consumeConfirmedRuntimeTraversal(QStringLiteral("100"),
-                                                        QStringLiteral("4")));
 
     restoreSpy.clear();
     DBManager::instance()->getPersistentTabRestoreBatch();
@@ -533,7 +538,6 @@ void tst_persistenttabmodel::runtimeHistoryTraversal()
     tab.insert(QStringLiteral("title"), QStringLiteral("Three"));
     tab.insert(QStringLiteral("locationRevision"), QStringLiteral("5"));
     tabModel->applyRuntimeSnapshot(QVariantList() << tab, QStringLiteral("100"));
-    QCOMPARE(traversalSpy.count(), 2);
 
     restoreSpy.clear();
     DBManager::instance()->getPersistentTabRestoreBatch();
@@ -560,8 +564,6 @@ void tst_persistenttabmodel::runtimeHistoryTraversalCancellation()
     tab.insert(QStringLiteral("locationRevision"), QStringLiteral("2"));
     tabModel->applyRuntimeSnapshot(QVariantList() << tab, QStringLiteral("100"));
 
-    QSignalSpy traversalSpy(tabModel,
-                            SIGNAL(runtimeHistoryTraversalConfirmed(QString,QString)));
     QVERIFY(tabModel->runtimeGoBack(QStringLiteral("1")));
     QVERIFY(!tabModel->runtimeGoForward(QStringLiteral("1")));
 
@@ -594,7 +596,6 @@ void tst_persistenttabmodel::runtimeHistoryTraversalCancellation()
     // a normal navigation from the cursor which never moved.
     tab.insert(QStringLiteral("locationRevision"), QStringLiteral("4"));
     tabModel->applyRuntimeSnapshot(QVariantList() << tab, QStringLiteral("100"));
-    QCOMPARE(traversalSpy.count(), 0);
 
     QSignalSpy restoreSpy(DBManager::instance(),
                           SIGNAL(persistentTabRestoreBatchAvailable(PersistentTabRestoreBatch)));
@@ -647,8 +648,8 @@ void tst_persistenttabmodel::runtimeHistoryTraversalTimeout()
 
 void tst_persistenttabmodel::runtimeReservationReconciliation()
 {
-    const QString persistentId = tabModel->reserveRuntimeTab(
-                QStringLiteral("https://rejected.example/"), QStringLiteral("Rejected"));
+    const QString persistentId = QString::number(tabModel->newTab(
+            QStringLiteral("https://rejected.example/"), false));
     QCOMPARE(persistentId, QStringLiteral("1"));
     QVERIFY(tabModel->m_runtimeTabReservationTimer.isActive());
     QSignalSpy rejectedSpy(tabModel,
@@ -700,9 +701,8 @@ void tst_persistenttabmodel::runtimeReservationReconciliation()
 
     // Authoritative presence before expiry acknowledges a reservation and
     // cancels its timeout.
-    const QString acknowledgedId = tabModel->reserveRuntimeTab(
-                QStringLiteral("https://acknowledged.example/"),
-                QStringLiteral("Acknowledged"));
+    const QString acknowledgedId = QString::number(tabModel->newTab(
+            QStringLiteral("https://acknowledged.example/"), false));
     QVERIFY(tabModel->m_runtimeTabReservationTimer.isActive());
     QVariantMap acknowledgedTab;
     acknowledgedTab.insert(QStringLiteral("tabId"), QStringLiteral("200"));
@@ -730,9 +730,8 @@ void tst_persistenttabmodel::cancelRuntimeTabReservation()
     QVERIFY(!tabModel->cancelRuntimeTabReservation(QStringLiteral("1")));
     QCOMPARE(tabModel->count(), 3);
 
-    const QString reservedId = tabModel->reserveRuntimeTab(
-                QStringLiteral("https://cancelled.example/"),
-                QStringLiteral("Cancelled"));
+    const QString reservedId = QString::number(tabModel->newTab(
+            QStringLiteral("https://cancelled.example/"), false));
     QCOMPARE(reservedId, QStringLiteral("4"));
     QVERIFY(tabModel->cancelRuntimeTabReservation(reservedId));
     QVERIFY(!tabModel->cancelRuntimeTabReservation(reservedId));
@@ -773,9 +772,15 @@ void tst_persistenttabmodel::runtimeSnapshotRemovalSignalsTabClosed()
                                    QStringLiteral("100"));
 
     QSignalSpy closedSpy(tabModel, SIGNAL(tabClosed(int)));
+    QSignalSpy resetSpy(tabModel, SIGNAL(modelReset()));
+    QSignalSpy rowsRemovedSpy(tabModel, SIGNAL(rowsRemoved(QModelIndex,int,int)));
     second.insert(QStringLiteral("persistentId"), QStringLiteral("2"));
     tabModel->applyRuntimeSnapshot(QVariantList() << second, QStringLiteral("200"));
     QCOMPARE(closedSpy.count(), 1);
+    QCOMPARE(resetSpy.count(), 0);
+    QCOMPARE(rowsRemovedSpy.count(), 1);
+    QCOMPARE(rowsRemovedSpy.at(0).at(1).toInt(), 0);
+    QCOMPARE(rowsRemovedSpy.at(0).at(2).toInt(), 0);
     QCOMPARE(closedSpy.at(0).at(0).toInt(), 1);
     QCOMPARE(tabModel->count(), 1);
     QCOMPARE(tabModel->persistentIdForRuntimeId(100), 0);
@@ -783,6 +788,8 @@ void tst_persistenttabmodel::runtimeSnapshotRemovalSignalsTabClosed()
     // An unchanged authoritative snapshot does not repeat close semantics.
     tabModel->applyRuntimeSnapshot(QVariantList() << second, QStringLiteral("200"));
     QCOMPARE(closedSpy.count(), 1);
+    QCOMPARE(resetSpy.count(), 0);
+    QCOMPARE(rowsRemovedSpy.count(), 1);
 }
 
 void tst_persistenttabmodel::pendingRuntimeNewTabs()

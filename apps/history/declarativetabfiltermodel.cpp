@@ -1,3 +1,5 @@
+/* Copyright (c) 2026 Jolla Mobile Ltd */
+
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -63,15 +65,13 @@ void DeclarativeTabFilterModel::setShowHidden(bool showHidden)
 
 int DeclarativeTabFilterModel::activeTabIndex() const
 {
-    int sourceTabIndex = static_cast<DeclarativeTabModel*>(sourceModel())->activeTabIndex();
-    return sourceTabIndex;
+    const int sourceTabIndex = static_cast<DeclarativeTabModel*>(sourceModel())->activeTabIndex();
     int proxyTabIndex = -1;
     if (sourceTabIndex >= 0) {
-        QModelIndex sourceIndex = index(static_cast<DeclarativeTabModel*>(sourceModel())->activeTabIndex(), 0);
-        QModelIndex proxyIndex = mapFromSource(sourceIndex);
+        const QModelIndex sourceIndex = sourceModel()->index(sourceTabIndex, 0);
+        const QModelIndex proxyIndex = mapFromSource(sourceIndex);
         proxyTabIndex = proxyIndex.row();
     }
-    qDebug() << "PRINT: activeTabIndex proxy: " << proxyTabIndex;
     return proxyTabIndex;
 }
 
@@ -79,4 +79,3 @@ int DeclarativeTabFilterModel::count() const
 {
     return rowCount();
 }
-
