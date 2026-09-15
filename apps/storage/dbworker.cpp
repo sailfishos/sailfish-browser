@@ -267,6 +267,7 @@ void DBWorker::removeTab(int tabId)
                     "))");
     query.bindValue(0, tabId);
     query.bindValue(1, tabId);
+    execute(query);
 
     // Remove history
     query = prepare("DELETE FROM tab_history WHERE tab_id = ?;");

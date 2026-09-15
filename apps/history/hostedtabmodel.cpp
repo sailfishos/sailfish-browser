@@ -31,21 +31,19 @@ PersistentRuntimeTabState::PersistentRuntimeTabState()
     : m_runtimeId(0)
     , m_persistentId(0)
     , m_selected(false)
-    , m_discarded(false)
     , m_locationRevision(0)
 {
 }
 
 PersistentRuntimeTabState::PersistentRuntimeTabState(
         quint64 runtimeId, int persistentId, const QString &url,
-        const QString &title, bool selected, bool discarded,
+        const QString &title, bool selected,
         quint64 locationRevision)
     : m_runtimeId(runtimeId)
     , m_persistentId(persistentId)
     , m_url(url)
     , m_title(title)
     , m_selected(selected)
-    , m_discarded(discarded)
     , m_locationRevision(locationRevision)
 {
 }
@@ -73,11 +71,6 @@ QString PersistentRuntimeTabState::title() const
 bool PersistentRuntimeTabState::selected() const
 {
     return m_selected;
-}
-
-bool PersistentRuntimeTabState::discarded() const
-{
-    return m_discarded;
 }
 
 quint64 PersistentRuntimeTabState::locationRevision() const
@@ -154,7 +147,6 @@ void HostedTabModel::persistentTabRestoreBatchAvailable(
 
     m_restoreBatch = batch;
     setRestoredTabs(tabs, batch.activePersistentId());
-    emit restoreBatchReady(batch);
 }
 
 void HostedTabModel::setRestoredTabs(const QList<Tab> &tabs,
@@ -202,11 +194,6 @@ void HostedTabModel::setRestoredTabs(const QList<Tab> &tabs,
 
     connect(this, &HostedTabModel::activeTabIndexChanged,
             this, &HostedTabModel::saveActiveTab, Qt::UniqueConnection);
-}
-
-const PersistentTabRestoreBatch &HostedTabModel::restoreBatch() const
-{
-    return m_restoreBatch;
 }
 
 int HostedTabModel::persistentIdForRuntimeId(quint64 runtimeId) const
@@ -264,22 +251,6 @@ bool HostedTabModel::setRuntimeDesktopMode(const QString &persistentId,
         saveDesktopModes();
     }
     return true;
-}
-
-QString HostedTabModel::reserveRuntimeTab(const QString &url, const QString &title)
-{
-    Q_UNUSED(url)
-    Q_UNUSED(title)
-    const int persistentId = m_nextTabId++;
-    Tab tab(persistentId, QString(), QString(), QString(), false);
-    tab.setRequestedUrl(QString());
-    m_reservedRuntimeTabs.insert(persistentId, tab);
-    m_reservedRuntimeTabDeadlines.insert(
-                persistentId,
-                QDateTime::currentMSecsSinceEpoch() + RuntimeTabReservationTimeout);
-    scheduleRuntimeTabReservationExpiry();
-    createTab(tab);
-    return QString::number(persistentId);
 }
 
 bool HostedTabModel::cancelRuntimeTabReservation(const QString &persistentId)
@@ -352,22 +323,6 @@ bool HostedTabModel::runtimeGoForward(const QString &persistentId)
     traversal.deadline = QDateTime::currentMSecsSinceEpoch() + RuntimeTraversalTimeout;
     m_pendingRuntimeTraversals.insert(id, traversal);
     scheduleRuntimeTraversalExpiry();
-    return true;
-}
-
-bool HostedTabModel::consumeConfirmedRuntimeTraversal(
-        const QString &runtimeId, const QString &locationRevision)
-{
-    bool runtimeIdOk = false;
-    bool revisionOk = false;
-    const quint64 runtime = runtimeId.toULongLong(&runtimeIdOk);
-    const quint64 revision = locationRevision.toULongLong(&revisionOk);
-    if (!runtimeIdOk || !revisionOk
-            || !m_confirmedRuntimeTraversals.contains(runtime)
-            || m_confirmedRuntimeTraversals.value(runtime) != revision) {
-        return false;
-    }
-    m_confirmedRuntimeTraversals.remove(runtime);
     return true;
 }
 
@@ -547,7 +502,6 @@ void HostedTabModel::applyRuntimeSnapshot(const QVariantList &runtimeTabs,
                         runtimeTab.value(QStringLiteral("location")).toString(),
                         runtimeTab.value(QStringLiteral("title")).toString(),
                         selectedTabIdOk && runtimeId == selectedRuntimeId,
-                        runtimeTab.value(QStringLiteral("discarded")).toBool(),
                         locationRevisionOk ? locationRevision : 0));
     }
     applyRuntimeSnapshot(tabs);
@@ -567,7 +521,6 @@ void HostedTabModel::applyRuntimeSnapshot(
     QSet<quint64> seenRuntimeIds;
     QSet<int> seenPersistentIds;
     QList<QPair<quint64, int> > adoptedTabs;
-    QList<QPair<quint64, quint64> > confirmedTraversals;
     int activePersistentId = 0;
 
     for (const PersistentRuntimeTabState &runtimeTab : runtimeTabs) {
@@ -616,11 +569,6 @@ void HostedTabModel::applyRuntimeSnapshot(
         }
         newTabs.append(tab);
 
-        // Confirmation is consumable only until the next complete snapshot.
-        if (m_confirmedRuntimeTraversals.contains(runtimeTab.runtimeId())) {
-            m_confirmedRuntimeTraversals.remove(runtimeTab.runtimeId());
-        }
-
         bool confirmedTraversal = false;
         bool persistCommittedNavigation = false;
         bool awaitingTraversal = false;
@@ -642,11 +590,6 @@ void HostedTabModel::applyRuntimeSnapshot(
                             : DBManager::instance()->goForwardTarget(persistentId);
                     if (movedTarget == traversal.targetLocation) {
                         confirmedTraversal = true;
-                        m_confirmedRuntimeTraversals.insert(
-                                    runtimeTab.runtimeId(), runtimeTab.locationRevision());
-                        confirmedTraversals.append(qMakePair(
-                                                       runtimeTab.runtimeId(),
-                                                       runtimeTab.locationRevision()));
                     } else {
                         persistCommittedNavigation = true;
                     }
@@ -722,24 +665,82 @@ void HostedTabModel::applyRuntimeSnapshot(
 
     const int oldCount = count();
     const int oldActivePersistentId = m_activeTabId;
-    beginResetModel();
-    m_tabs = newTabs;
-    m_activeTabId = activePersistentId;
-    m_runtimePersistentIds = runtimePersistentIds;
-    endResetModel();
+    const int oldActiveIndex = activeTabIndex();
 
-    const QList<quint64> confirmedRuntimeIds = m_confirmedRuntimeTraversals.keys();
-    for (quint64 runtimeId : confirmedRuntimeIds) {
-        if (!seenRuntimeIds.contains(runtimeId)) {
-            m_confirmedRuntimeTraversals.remove(runtimeId);
+    for (int index = m_tabs.count() - 1; index >= 0; --index) {
+        if (!seenPersistentIds.contains(m_tabs.at(index).tabId())) {
+            beginRemoveRows(QModelIndex(), index, index);
+            m_tabs.removeAt(index);
+            endRemoveRows();
         }
     }
+
+    for (int targetIndex = 0; targetIndex < newTabs.count(); ++targetIndex) {
+        const Tab &newTab = newTabs.at(targetIndex);
+        int currentIndex = findTabIndex(newTab.tabId());
+        if (currentIndex < 0) {
+            beginInsertRows(QModelIndex(), targetIndex, targetIndex);
+            m_tabs.insert(targetIndex, newTab);
+            endInsertRows();
+            continue;
+        }
+
+        if (currentIndex != targetIndex) {
+            const int destination = currentIndex < targetIndex
+                    ? targetIndex + 1 : targetIndex;
+            beginMoveRows(QModelIndex(), currentIndex, currentIndex,
+                          QModelIndex(), destination);
+            m_tabs.move(currentIndex, targetIndex);
+            endMoveRows();
+        }
+
+        const Tab &oldTab = m_tabs.at(targetIndex);
+        QVector<int> changedRoles;
+        if (oldTab.thumbnailPath() != newTab.thumbnailPath()) {
+            changedRoles.append(ThumbPathRole);
+        }
+        if (oldTab.title() != newTab.title()) {
+            changedRoles.append(TitleRole);
+        }
+        if (oldTab.url() != newTab.url()) {
+            changedRoles.append(UrlRole);
+        }
+        if (oldTab.desktopMode() != newTab.desktopMode()) {
+            changedRoles.append(DesktopModeRole);
+        }
+        if (oldTab.hidden() != newTab.hidden()) {
+            changedRoles.append(HiddenRole);
+        }
+        m_tabs[targetIndex] = newTab;
+        if (!changedRoles.isEmpty()) {
+            emit dataChanged(index(targetIndex, 0), index(targetIndex, 0),
+                             changedRoles);
+        }
+    }
+
+    m_activeTabId = activePersistentId;
+    m_runtimePersistentIds = runtimePersistentIds;
 
     if (oldCount != count()) {
         emit countChanged();
     }
     if (oldActivePersistentId != m_activeTabId) {
+        const int oldActiveRow = findTabIndex(oldActivePersistentId);
+        const int newActiveRow = activeTabIndex();
+        QVector<int> roles;
+        roles.append(ActiveRole);
+        if (oldActiveRow >= 0) {
+            emit dataChanged(index(oldActiveRow, 0), index(oldActiveRow, 0), roles);
+        }
+        if (newActiveRow >= 0) {
+            emit dataChanged(index(newActiveRow, 0), index(newActiveRow, 0), roles);
+        }
+    }
+    if (oldActivePersistentId != m_activeTabId
+            || oldActiveIndex != activeTabIndex()) {
         emit activeTabIndexChanged();
+    }
+    if (oldActivePersistentId != m_activeTabId) {
         emit authoritativeActiveTabChanged(QString::number(m_activeTabId));
     }
 
@@ -748,10 +749,6 @@ void HostedTabModel::applyRuntimeSnapshot(
     for (const QPair<quint64, int> &adoptedTab : adoptedTabs) {
         emit runtimeTabAdopted(QString::number(adoptedTab.first),
                                QString::number(adoptedTab.second));
-    }
-    for (const QPair<quint64, quint64> &traversal : confirmedTraversals) {
-        emit runtimeHistoryTraversalConfirmed(QString::number(traversal.first),
-                                              QString::number(traversal.second));
     }
     for (int persistentId : removedPersistentIds) {
         emit tabClosed(persistentId);

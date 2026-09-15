@@ -49,8 +49,6 @@ public:
     Q_INVOKABLE int newTab(const QString &url, bool fromExternal);
     Q_INVOKABLE QString url(int tabId) const;
 
-    Q_INVOKABLE void dumpTabs() const;
-
     int activeTabIndex() const;
     int activeTabId() const;
     int count() const;
@@ -58,9 +56,6 @@ public:
     void removeTabById(int tabId, bool activeTab);
     bool requestRuntimeTabNavigation(int tabId, const QString &url,
                                      bool fromExternal = false);
-    Q_INVOKABLE bool runtimeNavigateTab(const QString &persistentId,
-                                        const QString &url,
-                                        bool fromExternal = false);
     // C++ only: parentId and browsingContext better not to leak to QML side.
     int newTab(const QString &url, int parentId, uintptr_t browsingContext, bool hidden, bool fromExternal);
 
@@ -75,7 +70,6 @@ public:
 
     const QList<Tab>& tabs() const;
     const Tab& activeTab() const;
-    Tab *getTab(int tabId);
 
     bool contains(int tabId) const;
 
@@ -113,9 +107,6 @@ protected:
     bool m_unittestMode;
 
     friend class tst_declarativehistorymodel;
-    friend class tst_declarativetabmodel;
-    friend class tst_webview;
-    friend class tst_declarativewebcontainer;
     friend class tst_persistenttabmodel;
 };
 #endif // DECLARATIVETABMODEL_H

@@ -91,11 +91,9 @@ Page {
     Shared.WebView {
         id: webView
 
-        activePortalMode: true
         contentItem: portalView
         enabled: overlay.animator.allowContentUse
-        fullscreenHeight: portrait ? Screen.height : Screen.width
-        portrait: browserPage.isPortrait
+        fullscreenHeight: browserPage.isPortrait ? Screen.height : Screen.width
         toolbarHeight: overlay.animator.opened ? overlay.toolBar.rowHeight : 0
         rotationHandler: browserPage
         imOpened: virtualKeyboardObserver.opened

@@ -63,15 +63,13 @@ void DeclarativeTabFilterModel::setShowHidden(bool showHidden)
 
 int DeclarativeTabFilterModel::activeTabIndex() const
 {
-    int sourceTabIndex = static_cast<DeclarativeTabModel*>(sourceModel())->activeTabIndex();
-    return sourceTabIndex;
+    const int sourceTabIndex = static_cast<DeclarativeTabModel*>(sourceModel())->activeTabIndex();
     int proxyTabIndex = -1;
     if (sourceTabIndex >= 0) {
-        QModelIndex sourceIndex = index(static_cast<DeclarativeTabModel*>(sourceModel())->activeTabIndex(), 0);
-        QModelIndex proxyIndex = mapFromSource(sourceIndex);
+        const QModelIndex sourceIndex = sourceModel()->index(sourceTabIndex, 0);
+        const QModelIndex proxyIndex = mapFromSource(sourceIndex);
         proxyTabIndex = proxyIndex.row();
     }
-    qDebug() << "PRINT: activeTabIndex proxy: " << proxyTabIndex;
     return proxyTabIndex;
 }
 
@@ -79,4 +77,3 @@ int DeclarativeTabFilterModel::count() const
 {
     return rowCount();
 }
-

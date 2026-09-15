@@ -9,6 +9,8 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include <QtTest>
+#include <QSqlDatabase>
+#include <QSqlQuery>
 #include "dbmanager.h"
 #include "browserpaths.h"
 
@@ -28,6 +30,7 @@ private slots:
     void getAllTabs();
     void removeTab_data();
     void removeTab();
+    void removeTabRemovesOrphanedLinks();
     void removeAllTabs_data();
     void removeAllTabs();
     void clearHistory_data();
@@ -48,8 +51,30 @@ private slots:
     void getMaxTabId();
 
 private:
+    int linkCount() const;
+
     QString mDbFile;
 };
+
+int tst_dbmanager::linkCount() const
+{
+    const QString connectionName(QStringLiteral("tst_dbmanager_link_count"));
+    int count = -1;
+    {
+        QSqlDatabase database = QSqlDatabase::addDatabase(
+                    QStringLiteral("QSQLITE"), connectionName);
+        database.setDatabaseName(mDbFile);
+        if (database.open()) {
+            QSqlQuery query(database);
+            if (query.exec(QStringLiteral("SELECT COUNT(*) FROM link"))
+                    && query.next()) {
+                count = query.value(0).toInt();
+            }
+        }
+    }
+    QSqlDatabase::removeDatabase(connectionName);
+    return count;
+}
 
 void tst_dbmanager::initTestCase()
 {
@@ -179,6 +204,27 @@ void tst_dbmanager::removeTab()
     DBManager::instance()->removeTab(tabId);
     tabsAvailableSpy.wait(1000);
     QCOMPARE(tabsAvailableSpy.count(), expectedTabsAvailable);
+}
+
+void tst_dbmanager::removeTabRemovesOrphanedLinks()
+{
+    DBManager::instance()->createTab(
+                Tab(1, QStringLiteral("https://example.com/one"),
+                    QStringLiteral("One"), QString(), false));
+    DBManager::instance()->navigateTo(
+                1, QStringLiteral("https://example.com/two"),
+                QStringLiteral("Two"), QString());
+
+    QSignalSpy tabsAvailableSpy(DBManager::instance(),
+                                SIGNAL(tabsAvailable(QList<Tab>)));
+    DBManager::instance()->getAllTabs();
+    QVERIFY(tabsAvailableSpy.wait(5000));
+    QCOMPARE(linkCount(), 2);
+
+    tabsAvailableSpy.clear();
+    DBManager::instance()->removeTab(1);
+    QVERIFY(tabsAvailableSpy.wait(5000));
+    QCOMPARE(linkCount(), 0);
 }
 
 void tst_dbmanager::removeAllTabs_data()

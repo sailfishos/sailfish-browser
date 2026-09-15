@@ -14,14 +14,11 @@ import QtQuick.Window 2.2 as QuickWindow
 import Nemo.Configuration 1.0
 import Sailfish.Silica 1.0
 import Sailfish.Browser 1.0
-import Sailfish.WebView.Pickers 1.0 as Pickers
 import Sailfish.WebView.Popups 1.0 as Popups
 import Sailfish.WebView.Controls 1.0
-import Sailfish.WebView 1.0 as SailfishWebView
 import Sailfish.WebEngine 1.0
 import Sailfish.Policy 1.0
 import Sailfish.TextLinking 1.0
-import "." as Browser
 
 WebContainer {
     id: webView
@@ -29,9 +26,6 @@ WebContainer {
     anchors.fill: parent
     property QtObject contentItem
 
-    property bool activePortalMode
-    readonly property bool moving: contentItem && contentItem.moving
-    property bool portrait: true
     property bool contentFullscreen: contentItem && contentItem.fullscreen
     property QtObject chromeContentItem: contentItem
     property bool needChrome: !chromeContentItem
@@ -39,12 +33,9 @@ WebContainer {
     property real fullscreenHeight
     property bool imOpened
     property real toolbarHeight
-    property string favicon: contentItem && contentItem.favicon ? contentItem.favicon : ""
     readonly property color _defaultThemeColor: WebEngineSettings.colorScheme === WebEngineSettings.PrefersLightMode
             || (WebEngineSettings.colorScheme === WebEngineSettings.FollowsAmbience
                 && Theme.colorScheme !== Theme.LightOnDark) ? "white" : "black"
-    readonly property color themeColor: contentItem && contentItem.hasThemeColor
-            ? contentItem.themeColor : _defaultThemeColor
     property bool findInPageHasResult
     property bool canShowSelectionMarkers: true
     readonly property int _topCutoutInset: Math.max(0, Screen.topCutout.y + Screen.topCutout.height)
@@ -65,16 +56,6 @@ WebContainer {
     readonly property int _hostBaseCutoutRight: _cutoutRight(_screenOrientation)
     readonly property int _hostBaseCutoutBottom: _cutoutBottom(_screenOrientation)
     readonly property int _hostBaseCutoutLeft: _cutoutLeft(_screenOrientation)
-    readonly property bool _hostBaseCutoutVertical: _hostBaseCutoutTop > 0 || _hostBaseCutoutBottom > 0
-    readonly property bool _hostBaseCutoutHorizontal: _hostBaseCutoutLeft > 0 || _hostBaseCutoutRight > 0
-    readonly property int _hostCutoutTop: width <= height && _hostBaseCutoutHorizontal
-            ? _topCutoutInset : (width > height && _hostBaseCutoutVertical ? 0 : _hostBaseCutoutTop)
-    readonly property int _hostCutoutRight: width <= height && _hostBaseCutoutHorizontal
-            ? 0 : (width > height && _hostBaseCutoutVertical ? 0 : _hostBaseCutoutRight)
-    readonly property int _hostCutoutBottom: width <= height && _hostBaseCutoutHorizontal
-            ? 0 : (width > height && _hostBaseCutoutVertical ? 0 : _hostBaseCutoutBottom)
-    readonly property int _hostCutoutLeft: width > height && _hostBaseCutoutVertical
-            ? _topCutoutInset : (width <= height && _hostBaseCutoutHorizontal ? 0 : _hostBaseCutoutLeft)
     readonly property bool coverViewportFit: contentItem && contentItem.viewportFit === "cover"
     readonly property string _viewportFitCoverPolicy: _normalizedCutoutGuard(cutoutGuardConfig.value)
     readonly property bool _safeAreaUsedForContentCutout: contentItem
@@ -95,18 +76,6 @@ WebContainer {
             return Qt.InvertedLandscapeOrientation
         default:
             return Qt.PortraitOrientation
-        }
-    }
-
-    function _validCutoutOrientation(orientation) {
-        switch (orientation) {
-        case Qt.PortraitOrientation:
-        case Qt.InvertedLandscapeOrientation:
-        case Qt.InvertedPortraitOrientation:
-        case Qt.LandscapeOrientation:
-            return true
-        default:
-            return false
         }
     }
 

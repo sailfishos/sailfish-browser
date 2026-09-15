@@ -146,14 +146,6 @@ bool DeclarativeTabModel::requestRuntimeTabNavigation(
     return true;
 }
 
-bool DeclarativeTabModel::runtimeNavigateTab(
-        const QString &persistentId, const QString &url, bool fromExternal)
-{
-    bool ok = false;
-    const int tabId = persistentId.toInt(&ok);
-    return ok && requestRuntimeTabNavigation(tabId, url, fromExternal);
-}
-
 /**
  * @brief DeclarativeTabModel::closeActiveTab
  * Closes the active tab and activates a tab next to the current tab. If possible
@@ -204,13 +196,6 @@ QString DeclarativeTabModel::url(int tabId) const
         return m_tabs.at(index).url();
     }
     return "";
-}
-
-void DeclarativeTabModel::dumpTabs() const
-{
-    for (int i = 0; i < m_tabs.size(); i++) {
-        qDebug() << "tab[" << i << "]:" << &m_tabs.at(i);
-    }
 }
 
 int DeclarativeTabModel::activeTabIndex() const
@@ -272,16 +257,6 @@ const Tab &DeclarativeTabModel::activeTab() const
 {
     Q_ASSERT(contains(m_activeTabId));
     return m_tabs.at(findTabIndex(m_activeTabId));
-}
-
-Tab *DeclarativeTabModel::getTab(int tabId)
-{
-    int index = findTabIndex(tabId);
-    if (index >= 0) {
-        return &m_tabs[index];
-    }
-
-    return nullptr;
 }
 
 bool DeclarativeTabModel::contains(int tabId) const

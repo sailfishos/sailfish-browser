@@ -25,7 +25,7 @@ public:
     PersistentRuntimeTabState();
     PersistentRuntimeTabState(quint64 runtimeId, int persistentId,
                               const QString &url, const QString &title,
-                              bool selected, bool discarded,
+                              bool selected,
                               quint64 locationRevision);
 
     quint64 runtimeId() const;
@@ -33,7 +33,6 @@ public:
     QString url() const;
     QString title() const;
     bool selected() const;
-    bool discarded() const;
     quint64 locationRevision() const;
 
 private:
@@ -42,7 +41,6 @@ private:
     QString m_url;
     QString m_title;
     bool m_selected;
-    bool m_discarded;
     quint64 m_locationRevision;
 };
 
@@ -71,12 +69,9 @@ public:
     HostedTabModel(int nextTabId, bool persistent, DeclarativeWebContainer *webContainer = nullptr);
     ~HostedTabModel();
 
-    const PersistentTabRestoreBatch &restoreBatch() const;
     int persistentIdForRuntimeId(quint64 runtimeId) const;
     QString runtimeIdForPersistentId(int persistentId) const;
     void applyRuntimeSnapshot(const QList<PersistentRuntimeTabState> &tabs);
-    Q_INVOKABLE QString reserveRuntimeTab(const QString &url,
-                                          const QString &title = QString());
     Q_INVOKABLE bool cancelRuntimeTabReservation(const QString &persistentId);
     Q_INVOKABLE QString runtimeIdForPersistentId(const QString &persistentId) const;
     Q_INVOKABLE QString persistentIdAt(int index) const;
@@ -86,19 +81,14 @@ public:
     Q_INVOKABLE bool runtimeGoBack(const QString &persistentId);
     Q_INVOKABLE bool runtimeGoForward(const QString &persistentId);
     Q_INVOKABLE QVariantList takePendingRuntimeNewTabs();
-    Q_INVOKABLE bool consumeConfirmedRuntimeTraversal(
-            const QString &runtimeId, const QString &locationRevision);
     Q_INVOKABLE QVariantMap runtimeRestoreBatch() const;
     Q_INVOKABLE void applyRuntimeSnapshot(const QVariantList &tabs,
                                           const QString &selectedTabId);
 
 signals:
-    void restoreBatchReady(PersistentTabRestoreBatch batch);
     void runtimeTabAdopted(const QString &runtimeId, const QString &persistentId);
     void authoritativeActiveTabChanged(const QString &persistentId);
     void authoritativeSnapshotApplied();
-    void runtimeHistoryTraversalConfirmed(const QString &runtimeId,
-                                          const QString &locationRevision);
     void runtimeTabReservationRejected(const QString &persistentId);
 
 private:
@@ -134,10 +124,8 @@ private:
     QHash<int, quint64> m_runtimeLocationRevisions;
     QHash<int, PendingRuntimeTraversal> m_pendingRuntimeTraversals;
     QTimer m_runtimeTraversalTimer;
-    QHash<quint64, quint64> m_confirmedRuntimeTraversals;
 
     friend class tst_persistenttabmodel;
-    friend class tst_hostedtabmodel;
 };
 
 #endif // HOSTEDTABMODEL_H

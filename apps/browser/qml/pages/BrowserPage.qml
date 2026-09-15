@@ -34,11 +34,7 @@ Page {
 
     readonly property bool active: status == PageStatus.Active
     property bool tabPageActive
-    readonly property size thumbnailSize: Qt.size(width - Theme.horizontalPageMargin * 2,
-                                                  Math.max(height / 2.5, width / 1.66)
-                                                  - (Theme.iconSizeSmall + Theme.paddingMedium * 2))
     property Item debug
-    property Component tabPageComponent
 
     property alias overlay: overlay
     property alias tabs: webView.tabModel
@@ -1315,125 +1311,6 @@ Page {
         }
     }
 
-    function restoreRuntimeTabs(hostView) {
-        var session = runtimeSession(hostView)
-        if (session) {
-            return session.restoreRuntimeTabs(hostView)
-        }
-    }
-
-    function queueRuntimeCommand(command) {
-        var session = runtimeSession(null)
-        if (session) {
-            return session.queueRuntimeCommand(command)
-        }
-    }
-
-    function drainRuntimeNewTabs() {
-        var session = runtimeSession(null)
-        if (session) {
-            return session.drainRuntimeNewTabs()
-        }
-    }
-
-    function removeQueuedRuntimeNewTab(persistentId) {
-        var session = runtimeSession(null)
-        if (session) {
-            return session.removeQueuedRuntimeNewTab(persistentId)
-        }
-    }
-
-    function cancelPendingRuntimeNavigation() {
-        var session = runtimeSession(null)
-        if (session) {
-            return session.cancelPendingRuntimeNavigation()
-        }
-    }
-
-    function queueRuntimeClose(persistentId) {
-        var session = runtimeSession(null)
-        if (session) {
-            return session.queueRuntimeClose(persistentId)
-        }
-    }
-
-    function finishRuntimeTabsClear() {
-        var session = runtimeSession(null)
-        if (session) {
-            return session.finishRuntimeTabsClear()
-        }
-    }
-
-    function startNextRuntimeClose(runtimeHostView) {
-        var session = runtimeSession(runtimeHostView)
-        if (session) {
-            return session.startNextRuntimeClose(runtimeHostView)
-        }
-    }
-
-    function resolveRuntimeCloseAfterSnapshot(runtimeHostView) {
-        var session = runtimeSession(runtimeHostView)
-        if (session) {
-            return session.resolveRuntimeCloseAfterSnapshot(runtimeHostView)
-        }
-    }
-
-    function runtimeTabCloseResult(runtimeId, closed) {
-        var session = runtimeSession(null)
-        if (session) {
-            return session.runtimeTabCloseResult(runtimeId, closed)
-        }
-    }
-
-    function dispatchRuntimeCommand(command, runtimeHostView) {
-        var session = runtimeSession(runtimeHostView)
-        if (session) {
-            return session.dispatchRuntimeCommand(command, runtimeHostView)
-        }
-    }
-
-    function flushSelectedRuntimeNavigation(runtimeHostView) {
-        var session = runtimeSession(runtimeHostView)
-        if (session) {
-            return session.flushSelectedRuntimeNavigation(runtimeHostView)
-        }
-    }
-
-    function flushRuntimeCommands(runtimeHostView) {
-        var session = runtimeSession(runtimeHostView)
-        if (session) {
-            return session.flushRuntimeCommands(runtimeHostView)
-        }
-    }
-
-    function hasPendingRuntimeTitles() {
-        var session = runtimeSession(null)
-        if (session) {
-            return session.hasPendingRuntimeTitles()
-        }
-    }
-
-    function pairedRuntimeSnapshot(snapshot, acceptDeferredTitles) {
-        var session = runtimeSession(null)
-        if (session) {
-            return session.pairedRuntimeSnapshot(snapshot, acceptDeferredTitles)
-        }
-    }
-
-    function runtimeSnapshotChanged(snapshot) {
-        var session = runtimeSession(null)
-        if (session) {
-            return session.runtimeSnapshotChanged(snapshot)
-        }
-    }
-
-    function applyRuntimeSnapshot(acceptDeferredTitles, runtimeHostView) {
-        var session = runtimeSession(runtimeHostView)
-        if (session) {
-            return session.applyRuntimeSnapshot(acceptDeferredTitles, runtimeHostView)
-        }
-    }
-
     function refreshRuntimeHistory() {
         var search = overlay.searchField.text === browserPage.url
                 ? "" : overlay.searchField.text
@@ -1514,8 +1391,9 @@ Page {
         var generation = --_privateCaptureGeneration
         _privateCoverPending = true
         var callback = function(result) {
+            if (generation !== _privateCaptureGeneration) return
             _privateCoverPending = false
-            if (view === chromeHostView && view.selectedTabId === tabId) {
+            if (result && view === chromeHostView && view.selectedTabId === tabId) {
                 var grabs = {}
                 for (var id in _privateTabGrabs) grabs[id] = _privateTabGrabs[id]
                 grabs[persistentId] = result
@@ -1533,6 +1411,13 @@ Page {
                                             : view.grabToImage(callback, size)
         if (!accepted) _privateCoverPending = false
         return accepted ? { "persistentId": persistentId, "generation": generation } : null
+    }
+
+    function cancelPrivateCoverCapture(generation) {
+        if (generation === _privateCaptureGeneration) {
+            --_privateCaptureGeneration
+            _privateCoverPending = false
+        }
     }
 
     function requestHostedThumbnail() {
@@ -1764,8 +1649,7 @@ Page {
         id: webView
 
         enabled: overlay.animator.allowContentUse
-        fullscreenHeight: portrait ? Screen.height : Screen.width
-        portrait: browserPage.isPortrait
+        fullscreenHeight: browserPage.isPortrait ? Screen.height : Screen.width
         contentItem: browserPage.chromeHostView
         toolbarHeight: overlay.animator.opened ? overlay.toolBar.rowHeight : 0
         rotationHandler: browserPage
@@ -2111,7 +1995,6 @@ Page {
                 }
 
                 onSelectedTabChanged: {
-                    tabSession.applyRuntimeSnapshot(false, chromeView)
                     if (chromeView !== browserPage.chromeHostView) return
                     browserPage.dismissInputMethod()
                     chrome = true
@@ -2122,7 +2005,6 @@ Page {
                     browserPage._hostedFavicon = ""
                     browserPage._hostedAcceptedTouchIcon = false
                     browserPage.applyHostedViewportFitState(chromeView)
-                    browserPage.applyRuntimeSnapshot(false, chromeView)
                     browserPage.syncHostedDesktopMode(chromeView)
                     browserPage.syncHostedContainerState(chromeView)
                     browserPage.processPendingHostedModalRequests(chromeView)
@@ -2221,7 +2103,6 @@ Page {
                         tabSession.applyRuntimeSnapshot(false, chromeView)
                         if (chromeView !== browserPage.chromeHostView) return
                         browserPage.applyHostedViewportFitState(chromeView)
-                        browserPage.applyRuntimeSnapshot(false, chromeView)
                         browserPage.syncHostedDesktopMode(chromeView)
                         // The accepted frame can arrive before its committed
                         // tab snapshot. Retry from this state transition

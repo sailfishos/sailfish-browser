@@ -124,7 +124,11 @@ Shared.Background {
         _hostedTabViewPending = false
         hostedTabViewCaptureTimeout.stop()
         if (timedOut) {
-            browserPage.cancelHostedThumbnailCapture(persistentId, generation)
+            if (generation < 0) {
+                browserPage.cancelPrivateCoverCapture(generation)
+            } else {
+                browserPage.cancelHostedThumbnailCapture(persistentId, generation)
+            }
         }
         _hostedTabViewPersistentId = ""
         _hostedTabViewGeneration = 0
