@@ -31,6 +31,8 @@ class DeclarativeWebContainer : public QQuickItem
     Q_PROPERTY(DeclarativeTabModel *privateTabModel READ privateTabModel CONSTANT)
     Q_PROPERTY(bool completed READ completed NOTIFY completedChanged FINAL)
     Q_PROPERTY(bool foreground READ foreground WRITE setForeground NOTIFY foregroundChanged FINAL)
+    Q_PROPERTY(bool nativeContentVisible MEMBER m_nativeContentVisible
+               NOTIFY nativeContentVisibleChanged FINAL)
     Q_PROPERTY(bool touchBlocked MEMBER m_touchBlocked NOTIFY touchBlockedChanged FINAL)
     Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged FINAL)
     Q_PROPERTY(int loadProgress READ loadProgress NOTIFY loadProgressChanged FINAL)
@@ -96,6 +98,7 @@ signals:
     void tabModelChanged();
     void completedChanged();
     void foregroundChanged();
+    void nativeContentVisibleChanged();
     void touchBlockedChanged();
     void loadingChanged();
     void loadProgressChanged();
@@ -138,6 +141,7 @@ private:
     QPointer<DeclarativeTabModel> m_privateTabModel;
     bool m_nativeInitialized = false;
     bool m_foreground = true;
+    bool m_nativeContentVisible = true;
     bool m_touchBlocked = false;
     bool m_privateMode = false;
     bool m_completed = false;

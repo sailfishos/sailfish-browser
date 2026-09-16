@@ -434,10 +434,14 @@ bool DeclarativeWebContainer::isActiveTab(int id) { return m_model && m_model->a
 bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
 {
     if (obj == m_nativeWindow && event->type() == QEvent::Expose
-            && m_nativeWindow->isExposed() && !m_nativeInitialized) {
+            && m_nativeWindow->isExposed()
+            && (!m_nativeInitialized || !m_nativeContentVisible)) {
         // Wayland cannot map a surface (or expose its transient QML window)
-        // before the first buffer is committed. Gecko's view initialization
-        // itself needs the QML window to render, so bootstrap independently.
+        // before a buffer is committed. Gecko's view initialization itself
+        // needs the QML window to render, so bootstrap independently. Refresh
+        // this buffer when chrome-only pages are visible too: their hosted
+        // Gecko view is deliberately suspended and will not commit one when
+        // the application is restored.
         QOpenGLContext context;
         context.setFormat(m_nativeWindow->format());
         if (context.create() && context.makeCurrent(m_nativeWindow)) {

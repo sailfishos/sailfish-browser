@@ -89,6 +89,95 @@ Page {
     property alias webView: webView
     property alias inputRegion: inputRegion
     property bool _inputMethodDismissPending
+    property bool _foregroundNewTabPending
+    property bool _foregroundNewTabSelected
+    property bool _foregroundNewTabKeyboardSettled
+    property int _foregroundNewTabFrameBaseline
+    property bool _foregroundNewTabDispatchPending
+    property string _foregroundNewTabUrl
+    property bool _foregroundNewTabFromExternal
+
+    function beginForegroundNewTabWait(hostView) {
+        if (!hostView) {
+            return
+        }
+        _foregroundNewTabPending = true
+        _foregroundNewTabSelected = false
+        _foregroundNewTabKeyboardSettled = !virtualKeyboardObserver.opened
+                && virtualKeyboardObserver.panelSize <= 0
+        _foregroundNewTabFrameBaseline = hostView.platformFrameGeneration
+    }
+
+    function noteForegroundNewTabSelection(hostView) {
+        if (!_foregroundNewTabPending || hostView !== chromeHostView) {
+            return
+        }
+        _foregroundNewTabSelected = true
+        _foregroundNewTabKeyboardSettled = !virtualKeyboardObserver.opened
+                && virtualKeyboardObserver.panelSize <= 0
+        _foregroundNewTabFrameBaseline = hostView.platformFrameGeneration
+    }
+
+    function scheduleForegroundNewTabDispatch() {
+        if (_foregroundNewTabDispatchPending
+                && !virtualKeyboardObserver.opened
+                && virtualKeyboardObserver.panelSize <= 0) {
+            // Let the restored viewport geometry propagate before Gecko sees it.
+            foregroundNewTabDispatchTimer.restart()
+        }
+    }
+
+    function dispatchForegroundNewTab() {
+        if (!_foregroundNewTabDispatchPending
+                || virtualKeyboardObserver.opened
+                || virtualKeyboardObserver.panelSize > 0) {
+            return 0
+        }
+
+        var url = _foregroundNewTabUrl
+        var fromExternal = _foregroundNewTabFromExternal
+        _foregroundNewTabDispatchPending = false
+        _foregroundNewTabUrl = ""
+        _foregroundNewTabFromExternal = false
+
+        var tabId = webView.tabModel.newTab(url, fromExternal)
+        if (!tabId) {
+            finishForegroundNewTabWait()
+        }
+        return tabId
+    }
+
+    function noteForegroundNewTabKeyboardSettled() {
+        var hostView = chromeHostView
+        if (!_foregroundNewTabPending || !_foregroundNewTabSelected
+                || _foregroundNewTabKeyboardSettled || !hostView
+                || virtualKeyboardObserver.opened
+                || virtualKeyboardObserver.panelSize > 0) {
+            return
+        }
+        _foregroundNewTabKeyboardSettled = true
+        _foregroundNewTabFrameBaseline = hostView.platformFrameGeneration
+    }
+
+    function noteForegroundNewTabFrame(hostView) {
+        if (_foregroundNewTabPending && _foregroundNewTabSelected
+                && _foregroundNewTabKeyboardSettled
+                && hostView === chromeHostView
+                && hostView.platformFrameGeneration
+                   > _foregroundNewTabFrameBaseline) {
+            finishForegroundNewTabWait()
+        }
+    }
+
+    function finishForegroundNewTabWait() {
+        _foregroundNewTabPending = false
+        _foregroundNewTabSelected = false
+        _foregroundNewTabKeyboardSettled = false
+        _foregroundNewTabFrameBaseline = 0
+        _foregroundNewTabDispatchPending = false
+        _foregroundNewTabUrl = ""
+        _foregroundNewTabFromExternal = false
+    }
 
     function dismissInputMethod() {
         // Tab selection can happen while the tab view covers BrowserPage.
@@ -103,6 +192,7 @@ Page {
     }
 
     onChromeHostViewChanged: {
+        finishForegroundNewTabWait()
         clearHostedSelection()
         finishHostedOrientationWait()
         _hostedMetadataTitle = ""
@@ -386,7 +476,23 @@ Page {
     }
 
     function newTab(url, fromExternal) {
-        return webView.tabModel.newTab(url, !!fromExternal)
+        if (_foregroundNewTabDispatchPending) {
+            return 0
+        }
+        var hostView = chromeHostView
+        beginForegroundNewTabWait(hostView)
+        _foregroundNewTabDispatchPending = true
+        _foregroundNewTabUrl = url
+        _foregroundNewTabFromExternal = !!fromExternal
+        if (hostView && (virtualKeyboardObserver.opened
+                         || virtualKeyboardObserver.panelSize > 0)) {
+            // Creating the Gecko tab against the input-method viewport can
+            // leave its first document permanently sized to that viewport.
+            dismissInputMethod()
+            scheduleForegroundNewTabDispatch()
+            return 0
+        }
+        return dispatchForegroundNewTab()
     }
 
     function goBack() {
@@ -1640,7 +1746,18 @@ Page {
         transpose: window._transpose
         orientation: browserPage.orientation
 
+        onOpenedChanged: browserPage.scheduleForegroundNewTabDispatch()
+        onPanelSizeChanged: {
+            browserPage.scheduleForegroundNewTabDispatch()
+            browserPage.noteForegroundNewTabKeyboardSettled()
+        }
+    }
 
+    Timer {
+        id: foregroundNewTabDispatchTimer
+
+        interval: 0
+        onTriggered: browserPage.dispatchForegroundNewTab()
     }
 
     Browser.DownloadRemorsePopup { id: downloadPopup }
@@ -1649,6 +1766,7 @@ Page {
         id: webView
 
         enabled: overlay.animator.allowContentUse
+        nativeContentVisible: browserPage.active
         fullscreenHeight: browserPage.isPortrait ? Screen.height : Screen.width
         contentItem: browserPage.chromeHostView
         toolbarHeight: overlay.animator.opened ? overlay.toolBar.rowHeight : 0
@@ -1996,6 +2114,7 @@ Page {
 
                 onSelectedTabChanged: {
                     if (chromeView !== browserPage.chromeHostView) return
+                    browserPage.noteForegroundNewTabSelection(chromeView)
                     browserPage.dismissInputMethod()
                     chrome = true
                     browserPage.resetHostedThumbnailCapture(chromeView)
@@ -2041,6 +2160,7 @@ Page {
                 }
                 onPlatformFrameGenerationChanged: {
                     if (chromeView !== browserPage.chromeHostView) return
+                    browserPage.noteForegroundNewTabFrame(chromeView)
                     if (privateMode && browserPage._privateCoverTab !== selectedTabId) browserPage.requestPrivateCover()
                     browserPage.noteHostedOrientationFrame(chromeView)
                     browserPage.continueHostedThumbnailCapture(chromeView)
@@ -2240,6 +2360,13 @@ Page {
         closeButtonMask: fullscreenClose.visible ? Qt.rect(fullscreenClose.x, fullscreenClose.y,
                                                            fullscreenClose.width, fullscreenClose.height)
                                                  : Qt.rect(0, 0, 0, 0)
+    }
+
+    Rectangle {
+        anchors.fill: parent
+        visible: overlay.enteringNewTabUrl
+                 || browserPage._foregroundNewTabPending
+        color: browserPage.contentFullscreen ? "black" : webView._defaultThemeColor
     }
 
     MouseArea {
