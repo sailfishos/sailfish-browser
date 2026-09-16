@@ -8,8 +8,10 @@
         <file>MockHostedModel.qml</file>
         <file>MockHostedView.qml</file>
         <file>navigation.js</file>
+        <file>new-tab-presentation.js</file>
         <file>private-thumbnail.js</file>
         <file>select-cancellation.js</file>
         <file>SessionHarness.qml</file>
+        <file>view-suspension.js</file>
     </qresource>
 </RCC>

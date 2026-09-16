@@ -18,7 +18,9 @@ class tst_hostedqml : public QObject
 
 private slots:
     void contextMenuRouting();
+    void hostedViewSuspension();
     void navigation();
+    void newTabPresentation();
     void privateThumbnailCapture();
     void selectCancellation();
     void sessionOwnership();
@@ -90,6 +92,14 @@ void tst_hostedqml::contextMenuRouting()
                           QStringLiteral("presentHostedPopup")));
 }
 
+void tst_hostedqml::hostedViewSuspension()
+{
+    runJavaScriptTest(QStringLiteral(":/view-suspension.js"),
+                      QStringList() << functionSource(
+                          QStringLiteral(":/BrowserPage.qml"),
+                          QStringLiteral("updateHostedViewSuspension")));
+}
+
 void tst_hostedqml::navigation()
 {
     runJavaScriptTest(QStringLiteral(":/navigation.js"),
@@ -98,6 +108,28 @@ void tst_hostedqml::navigation()
                                         QStringLiteral("goBack"))
                       << functionSource(QStringLiteral(":/BrowserPage.qml"),
                                         QStringLiteral("goForward")));
+}
+
+void tst_hostedqml::newTabPresentation()
+{
+    runJavaScriptTest(QStringLiteral(":/new-tab-presentation.js"),
+                      QStringList()
+                      << functionSource(QStringLiteral(":/BrowserPage.qml"),
+                                        QStringLiteral("beginForegroundNewTabWait"))
+                      << functionSource(QStringLiteral(":/BrowserPage.qml"),
+                                        QStringLiteral("scheduleForegroundNewTabDispatch"))
+                      << functionSource(QStringLiteral(":/BrowserPage.qml"),
+                                        QStringLiteral("dispatchForegroundNewTab"))
+                      << functionSource(QStringLiteral(":/BrowserPage.qml"),
+                                        QStringLiteral("noteForegroundNewTabSelection"))
+                      << functionSource(QStringLiteral(":/BrowserPage.qml"),
+                                        QStringLiteral("noteForegroundNewTabKeyboardSettled"))
+                      << functionSource(QStringLiteral(":/BrowserPage.qml"),
+                                        QStringLiteral("noteForegroundNewTabFrame"))
+                      << functionSource(QStringLiteral(":/BrowserPage.qml"),
+                                        QStringLiteral("finishForegroundNewTabWait"))
+                      << functionSource(QStringLiteral(":/BrowserPage.qml"),
+                                        QStringLiteral("newTab")));
 }
 
 void tst_hostedqml::privateThumbnailCapture()
