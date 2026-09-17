@@ -62,9 +62,11 @@ void DesktopBookmarkWriter::save(const QString &url, const QString &title, const
             if (fetcher->status() == DataFetcher::Error) {
                 m_writer.setFuture(QtConcurrent::run(this, &DesktopBookmarkWriter::write, url, title,
                                                      FaviconManager::defaultDesktopBookmarkIcon()));
+                fetcher->deleteLater();
             } else if (fetcher->status() == DataFetcher::Ready) {
                 m_writer.setFuture(QtConcurrent::run(this, &DesktopBookmarkWriter::write, url, title,
                                                      fetcher->data()));
+                fetcher->deleteLater();
             }
         });
         fetcher->fetch(icon);
