@@ -223,11 +223,6 @@ Page {
         }
     }
 
-    function runtimeSession(hostView) {
-        var view = hostView || _runtimeChromeView
-        return view ? view.hostedSession : null
-    }
-
     function sendPageMessage(name, data) {
         if (chromeHostView) {
             chromeHostView.sendAsyncMessage(name, data)

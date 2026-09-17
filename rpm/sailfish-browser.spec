@@ -57,7 +57,6 @@ Requires: mapplauncherd-booster-browser
 Requires: nemo-qml-plugin-connectivity
 Requires: jolla-settings >= 0.11.29
 Requires: jolla-settings-system >= 1.0.70
-Requires: sailfish-policy
 Obsoletes: sailfish-browser-settings <= 2.3.29
 Provides: sailfish-browser-settings > 2.3.29
 

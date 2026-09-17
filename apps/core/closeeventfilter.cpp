@@ -69,12 +69,6 @@ void CloseEventFilter::onWatchdogTimeout()
     qFatal("Browser failed to terminate in acceptable time!");
 }
 
-void CloseEventFilter::cancelCloseApplication()
-{
-    m_closing = false;
-    m_shutdownWatchdog.stop();
-}
-
 void CloseEventFilter::allTransfersCompleted()
 {
     if (m_closing) {

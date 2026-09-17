@@ -43,7 +43,6 @@ signals:
     void allTransfersCompleted();
 
 public slots:
-    void cancelActiveTransfers();
     void cancel(int downloadId);
 
 private slots:

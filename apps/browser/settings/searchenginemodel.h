@@ -12,14 +12,12 @@
 #define SEARCHENGINEMODEL_H
 
 #include <QAbstractListModel>
-#include <QQmlParserStatus>
 #include <QList>
 #include <QUrl>
 
-class SearchEngineModel : public QAbstractListModel, public QQmlParserStatus
+class SearchEngineModel : public QAbstractListModel
 {
     Q_OBJECT
-    Q_INTERFACES(QQmlParserStatus)
     Q_ENUMS(Status)
     Q_PROPERTY(int count READ rowCount NOTIFY countChanged)
 
@@ -37,9 +35,8 @@ public:
     };
 
     explicit SearchEngineModel(QObject *parent = 0);
-    virtual ~SearchEngineModel();
+    ~SearchEngineModel() override;
 
-    QStringList searchEngines();
     Q_INVOKABLE void add(const QString &title, const QString &url);
     Q_INVOKABLE void install(const QString &title);
     Q_INVOKABLE void remove(const QString &title);
@@ -48,10 +45,6 @@ public:
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QHash<int, QByteArray> roleNames() const override;
-
-    // From QQmlParserStatus
-    void classBegin() override;
-    void componentComplete() override;
 
 signals:
     void countChanged();

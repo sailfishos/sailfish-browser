@@ -24,7 +24,6 @@ public:
     explicit Tab(int tabId, const QString &url, const QString &title, const QString &thumbPath, bool hidden);
 
     int tabId() const;
-    void setTabId(int tabId);
 
     void setRequestedUrl(const QString &url);
     QString requestedUrl() const;

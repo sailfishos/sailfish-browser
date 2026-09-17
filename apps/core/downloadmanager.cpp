@@ -154,15 +154,6 @@ void DownloadManager::recvObserve(const QString message, const QVariant data)
     }
 }
 
-void DownloadManager::cancelActiveTransfers()
-{
-    for (qulonglong downloadId : m_statusCache.keys()) {
-        if (m_statusCache.value(downloadId) == DownloadStatus::Started) {
-            cancelTransfer(m_download2transferMap.value(downloadId));
-        }
-    }
-}
-
 void DownloadManager::cancel(int downloadId)
 {
     QVariantMap data;

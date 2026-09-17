@@ -151,7 +151,6 @@ void SettingManager::handleObserve(const QString &message, const QVariant &data)
             const StringMap configs(OpenSearchConfigs::getAvailableOpenSearchConfigs());
             const QStringList configuredEngines = configs.keys();
             QStringList registeredSearches(dataMap.value(QLatin1String("engines")).toStringList());
-            QString defaultSearchEngine = dataMap.value(QLatin1String("defaultEngine")).toString();
             m_searchEnginesInitialized = !registeredSearches.isEmpty();
 
             // Upon first start, engine doesn't know about the search engines.

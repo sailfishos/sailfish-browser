@@ -71,7 +71,6 @@ public:
     int tabId() const;
     QString title() const;
     QString url() const;
-    bool isActiveTab(int tabId);
     uint tabOwner(int tabId) const;
     int requestTabWithOwner(int tabId, const QString &url, uint ownerPid);
     void requestTabWithOwnerAsync(int tabId, const QString &url, uint ownerPid, void *context);

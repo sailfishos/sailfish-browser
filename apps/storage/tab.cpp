@@ -38,11 +38,6 @@ int Tab::tabId() const
     return m_tabId;
 }
 
-void Tab::setTabId(int tabId)
-{
-    m_tabId = tabId;
-}
-
 void Tab::setRequestedUrl(const QString &url)
 {
     m_requestedUrl = url;

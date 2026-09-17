@@ -90,7 +90,6 @@ void BookmarkFilterModel::resetCounts()
 {
     m_maxSourceModelPosition = 0;
     m_countFilterAccepts = 0;
-    m_sourceMaxAccept = 0;
 }
 
 void BookmarkFilterModel::extendCheckPosition(int sourceRow, const QModelIndex &sourceParent) const
@@ -104,4 +103,3 @@ void BookmarkFilterModel::extendCheckPosition(int sourceRow, const QModelIndex &
         ++m_maxSourceModelPosition;
     }
 }
-

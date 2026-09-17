@@ -429,8 +429,6 @@ bool DeclarativeWebContainer::canGoForward() const { return m_hostedCanGoForward
 QString DeclarativeWebContainer::url() const { return m_hostedUrl; }
 QString DeclarativeWebContainer::title() const { return m_hostedTitle; }
 QMozSecurity *DeclarativeWebContainer::security() const { return m_hostedSecurity; }
-bool DeclarativeWebContainer::isActiveTab(int id) { return m_model && m_model->activeTabId() == id; }
-
 bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
 {
     if (obj == m_nativeWindow && event->type() == QEvent::Expose
