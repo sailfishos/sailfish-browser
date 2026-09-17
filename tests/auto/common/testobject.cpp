@@ -23,6 +23,7 @@
 TestObject::TestObject()
     : QObject()
     , running(true)
+    , mRootObject(nullptr)
 {
     QTime time = QTime::currentTime();
     qsrand((uint)time.msec());
@@ -31,6 +32,7 @@ TestObject::TestObject()
 TestObject::TestObject(QByteArray qmlData)
     : QObject()
     , running(true)
+    , mRootObject(nullptr)
 {
     QTime time = QTime::currentTime();
     qsrand((uint)time.msec());
