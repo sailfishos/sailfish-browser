@@ -25,8 +25,6 @@ class SettingManager : public QObject
     Q_PROPERTY(int toolbarLarge READ toolbarLarge NOTIFY toolbarLargeChanged FINAL)
 
 public:
-    bool initialize();
-
     int toolbarSmall();
     int toolbarLarge();
 
