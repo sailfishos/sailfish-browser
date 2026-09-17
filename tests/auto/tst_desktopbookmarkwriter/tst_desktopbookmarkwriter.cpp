@@ -30,6 +30,7 @@ private slots:
     void invalidInput();
     void writeDesktopFile_data();
     void writeDesktopFile();
+    void escapeDesktopEntryValues();
     void cleanupTestCase();
 
 private:
@@ -133,6 +134,28 @@ void tst_desktopbookmarkwriter::writeDesktopFile()
     QCOMPARE(desktopEntry.url(), outputLink);
     QVERIFY(desktopEntry.icon().startsWith(outputIcon));
     QCOMPARE(desktopEntry.comment(), outputTitle);
+}
+
+void tst_desktopbookmarkwriter::escapeDesktopEntryValues()
+{
+    const QString title(QStringLiteral("Title\nType=Application\\suffix"));
+    const QString url(QStringLiteral("https://example.com/path\\part"));
+    QSignalSpy savedSpy(&writer, SIGNAL(saved(QString)));
+    writer.save(url, title, QStringLiteral("icon\\name"));
+    const QString desktopFile = writtenDesktopFile(savedSpy);
+    desktopFiles << desktopFile;
+
+    QFile file(desktopFile);
+    QVERIFY(file.open(QIODevice::ReadOnly));
+    const QByteArray contents = file.readAll();
+    QVERIFY(contents.contains("Name=Title\\nType=Application\\\\suffix\n"));
+    QVERIFY(contents.contains("Icon=icon\\\\name\n"));
+    QVERIFY(contents.contains("URL=https://example.com/path\\\\part\n"));
+    QVERIFY(!contents.contains("\nType=Application\n"));
+
+    MDesktopEntry desktopEntry(desktopFile);
+    QCOMPARE(desktopEntry.name(), title);
+    QCOMPARE(desktopEntry.url(), url);
 }
 
 void tst_desktopbookmarkwriter::cleanupTestCase()
