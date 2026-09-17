@@ -12,7 +12,9 @@ var _foregroundNewTabFrameBaseline
 var _foregroundNewTabDispatchPending
 var _foregroundNewTabUrl
 var _foregroundNewTabFromExternal
+var _foregroundNewTabPersistentId
 var foregroundNewTabDispatchTimer
+var foregroundNewTabWaitTimer
 var webView
 var dismissInputMethod
 
@@ -20,11 +22,16 @@ var dismissInputMethod
     var view = { "platformFrameGeneration": 4 }
     var dispatchRestartCount = 0
     var dismissCount = 0
+    var waitTimerRunning = false
     var createdTabs = []
     chromeHostView = view
     virtualKeyboardObserver = { "opened": true, "panelSize": 300 }
     foregroundNewTabDispatchTimer = {
         "restart": function() { ++dispatchRestartCount }
+    }
+    foregroundNewTabWaitTimer = {
+        "restart": function() { waitTimerRunning = true },
+        "stop": function() { waitTimerRunning = false }
     }
     webView = {
         "tabModel": {
@@ -56,8 +63,15 @@ var dismissInputMethod
     equal(createdTabs[0].url, "https://example.com/")
     check(createdTabs[0].fromExternal)
     check(!_foregroundNewTabDispatchPending)
+    equal(_foregroundNewTabPersistentId, "17")
+    check(waitTimerRunning)
 
-    finishForegroundNewTabWait()
+    rejectForegroundNewTab("18")
+    check(_foregroundNewTabPending,
+          "A rejection for another tab must not clear the cover")
+    rejectForegroundNewTab("17")
+    check(!_foregroundNewTabPending)
+    check(!waitTimerRunning)
     virtualKeyboardObserver.opened = true
     virtualKeyboardObserver.panelSize = 300
 
