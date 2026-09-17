@@ -13,6 +13,9 @@
 
 BookmarkFilterModel::BookmarkFilterModel(QObject *parent)
     : QSortFilterProxyModel(parent)
+    , m_maxDisplayedItems(0)
+    , m_countFilterAccepts(0)
+    , m_maxSourceModelPosition(0)
 {
 }
 

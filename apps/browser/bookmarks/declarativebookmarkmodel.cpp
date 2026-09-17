@@ -1,6 +1,7 @@
 /****************************************************************************
 **
 ** Copyright (c) 2013 - 2021 Jolla Ltd.
+** Copyright (c) 2026 Jolla Mobile Ltd
 **
 ****************************************************************************/
 
@@ -10,6 +11,8 @@
 
 #include "declarativebookmarkmodel.h"
 #include "bookmarkmanager.h"
+
+#include <QtAlgorithms>
 
 DeclarativeBookmarkModel::DeclarativeBookmarkModel(QObject *parent)
     : QAbstractListModel(parent)
@@ -25,6 +28,11 @@ DeclarativeBookmarkModel::DeclarativeBookmarkModel(QObject *parent)
         bookmarkIndexes.insertMulti(bookmark->url(), index);
         index++;
     }
+}
+
+DeclarativeBookmarkModel::~DeclarativeBookmarkModel()
+{
+    qDeleteAll(bookmarks);
 }
 
 QHash<int, QByteArray> DeclarativeBookmarkModel::roleNames() const
@@ -173,11 +181,17 @@ bool DeclarativeBookmarkModel::activeUrlBookmarked() const
 
 void DeclarativeBookmarkModel::clearBookmarks()
 {
-    beginRemoveRows(QModelIndex(), 0, qMax<int>(0, bookmarks.count()-1));
+    if (bookmarks.isEmpty()) {
+        return;
+    }
+
+    beginRemoveRows(QModelIndex(), 0, bookmarks.count() - 1);
+    qDeleteAll(bookmarks);
     bookmarks.clear();
     bookmarkIndexes.clear();
     endRemoveRows();
     emit countChanged();
+    emit activeUrlBookmarkedChanged();
 }
 
 void DeclarativeBookmarkModel::save()
