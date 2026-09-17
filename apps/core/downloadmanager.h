@@ -16,6 +16,8 @@
 
 #include <QObject>
 #include <QHash>
+#include <QList>
+#include <QSet>
 #include <QString>
 #include <QVariant>
 
@@ -65,6 +67,8 @@ private:
     QHash<qulonglong, int> m_download2transferMap;
     QHash<int, qulonglong> m_transfer2downloadMap;
     QHash<qulonglong, DownloadStatus::Status> m_statusCache;
+    QSet<qulonglong> m_pendingTransferCreations;
+    QHash<qulonglong, QList<QVariantMap> > m_pendingTransferMessages;
 
     TransferEngineInterface *m_transferClient;
 
