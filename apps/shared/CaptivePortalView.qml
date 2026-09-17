@@ -301,7 +301,8 @@ BrowserContentView {
                          "embed:fullscreenchanged", "embed:alert", "embed:confirm",
                          "embed:prompt", "embed:auth", "embed:login", "embed:permissions",
                          "embed:webrtcrequest", "embed:select", "embed:selectasync",
-                         "embed:colorpicker", "embed:filepicker", "Content:ContextMenu"]
+                         "embed:colorpicker", "embed:datepicker",
+                         "embed:datepickerabort", "embed:filepicker", "Content:ContextMenu"]
         for (var i = 0; i < listeners.length; ++i) addMessageListener(listeners[i])
         viewSession.restoreRuntimeTabs(webPage)
         addMessageListener("Content:SelectionRange")

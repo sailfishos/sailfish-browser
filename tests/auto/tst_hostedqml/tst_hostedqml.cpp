@@ -18,6 +18,7 @@ class tst_hostedqml : public QObject
 
 private slots:
     void contextMenuRouting();
+    void datePickerRouting();
     void hostedViewSuspension();
     void navigation();
     void newTabPresentation();
@@ -90,6 +91,16 @@ void tst_hostedqml::contextMenuRouting()
                       QStringList() << functionSource(
                           QStringLiteral(":/BrowserPage.qml"),
                           QStringLiteral("presentHostedPopup")));
+}
+
+void tst_hostedqml::datePickerRouting()
+{
+    runJavaScriptTest(QStringLiteral(":/date-picker-routing.js"),
+                      QStringList()
+                      << functionSource(QStringLiteral(":/BrowserPage.qml"),
+                                        QStringLiteral("openHostedPicker"))
+                      << functionSource(QStringLiteral(":/BrowserPage.qml"),
+                                        QStringLiteral("rejectHostedModalRequest")));
 }
 
 void tst_hostedqml::hostedViewSuspension()

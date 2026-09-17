@@ -780,6 +780,11 @@ Page {
             response = { "winId": data.winId, "accepted": false,
                          "items": [] }
             break
+        case "embed:datepicker":
+            responseMessage = "embedui:datepickerresponse"
+            response = { "winId": data.winId, "id": data.id,
+                         "accepted": false, "year": 0, "month": 0, "day": 0 }
+            break
         case "embed:selectasync":
             responseMessage = "embedui:selectresponse"
             response = { "id": data.id, "result": -1 }
@@ -999,13 +1004,40 @@ Page {
         }
     }
 
+    function cancelHostedDate(hostView, tabId, persistentId, data) {
+        function matches(request) {
+            return request && request.message === "embed:datepicker"
+                    && request.hostView === hostView
+                    && request.tabId === String(tabId)
+                    && (!persistentId || request.persistentId === String(persistentId))
+                    && String(request.data.id) === String(data.id)
+        }
+
+        var pending = []
+        for (var index = 0; index < _pendingHostedModalRequests.length; ++index) {
+            var request = _pendingHostedModalRequests[index]
+            if (!matches(request)) pending.push(request)
+        }
+        _pendingHostedModalRequests = pending
+
+        var target = _activeHostedModalTarget
+        if (target && matches(target.modalRequest) && target.opener) {
+            target.opener.message("embed:datepickerabort", data)
+        }
+    }
+
     function openHostedPicker(hostView, tabId, persistentId, message, data) {
         if (message === "embed:selectabort") {
             cancelHostedSelect(hostView, tabId, persistentId, data)
             return true
         }
+        if (message === "embed:datepickerabort") {
+            cancelHostedDate(hostView, tabId, persistentId, data)
+            return true
+        }
 
         var pickerTopics = [ "embed:colorpicker", "embed:filepicker",
+                             "embed:datepicker", "embed:datepickerabort",
                              "embed:selectasync", "embed:selectabort", "embedui:downloadpicker",
                              "embed:downloadpicker" ]
         if (pickerTopics.indexOf(message) === -1) {
@@ -1028,6 +1060,7 @@ Page {
         target.modalRequest = request
         _activeHostedModalTarget = target
         target.responseMessages = [ "embedui:colorpickerresponse",
+                                    "embedui:datepickerresponse",
                                     "filepickerresponse",
                                     "embedui:selectresponse" ]
         var pickerMessage = message === "embedui:downloadpicker"
@@ -1410,6 +1443,7 @@ Page {
                           "embed:permissions", "embed:webrtcrequest",
                           "embed:popupblocked", "embed:select",
                           "embed:colorpicker", "embed:filepicker",
+                          "embed:datepicker", "embed:datepickerabort",
                           "embed:selectasync", "embed:selectabort", "embedui:downloadpicker",
                           "embed:downloadpicker" ]
         for (var index = 0; index < listeners.length; ++index) {
