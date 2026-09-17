@@ -20,6 +20,38 @@
 
 static bool dbw_testMode = false;
 
+namespace {
+
+QString escapeDesktopEntryValue(const QString &value)
+{
+    QString escaped;
+    escaped.reserve(value.size());
+    for (const QChar character : value) {
+        switch (character.unicode()) {
+        case '\\':
+            escaped.append(QStringLiteral("\\\\"));
+            break;
+        case '\n':
+            escaped.append(QStringLiteral("\\n"));
+            break;
+        case '\r':
+            escaped.append(QStringLiteral("\\r"));
+            break;
+        case '\t':
+            escaped.append(QStringLiteral("\\t"));
+            break;
+        default:
+            if (character.unicode() >= 0x20 && character.unicode() != 0x7f) {
+                escaped.append(character);
+            }
+            break;
+        }
+    }
+    return escaped;
+}
+
+}
+
 DesktopBookmarkWriter::DesktopBookmarkWriter(QObject *parent)
     : QObject(parent)
 {
@@ -91,6 +123,7 @@ QString DesktopBookmarkWriter::uniqueDesktopFileName(QString title)
         filePath = BrowserPaths::dataLocation();
     }
     title = title.simplified().replace(QString(" "), QString("-"));
+    title.replace(QLatin1Char('/'), QLatin1Char('-'));
 
     QDir dir(filePath);
     dir.mkpath(filePath);
@@ -111,13 +144,16 @@ QString DesktopBookmarkWriter::uniqueDesktopFileName(QString title)
 QString DesktopBookmarkWriter::write(const QString &url, const QString &title, const QString &icon)
 {
     QString fileName = uniqueDesktopFileName(title);
+    const QString escapedTitle = escapeDesktopEntryValue(title.trimmed());
     QString desktopFileData = QString("[Desktop Entry]\n" \
                                       "Type=Link\n" \
                                       "Name=%1\n" \
                                       "Icon=%2\n" \
                                       "URL=%3\n" \
-                                      "Comment=%4\n").arg(title.trimmed(), icon,
-                                                          url.trimmed(), title.trimmed());
+                                      "Comment=%4\n").arg(escapedTitle,
+                                                          escapeDesktopEntryValue(icon),
+                                                          escapeDesktopEntryValue(url.trimmed()),
+                                                          escapedTitle);
     QFile desktopFile(fileName);
     if (desktopFile.open(QFile::WriteOnly)) {
         desktopFile.write(desktopFileData.toUtf8());
