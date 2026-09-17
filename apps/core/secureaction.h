@@ -2,6 +2,7 @@
 **
 ** Copyright (c) 2018 - 2021 Jolla Ltd.
 ** Copyright (c) 2021 Open Mobile Platform LLC.
+** Copyright (c) 2026 Jolla Mobile Ltd
 **
 ****************************************************************************/
 
@@ -14,6 +15,7 @@
 
 #include <QObject>
 #include <QDBusAbstractAdaptor>
+#include <QDBusContext>
 
 #include <QJSValue>
 
@@ -25,7 +27,7 @@ QT_END_NAMESPACE
 
 class SecureAction;
 
-class SecureActionAuthenticatorAdaptor : public QDBusAbstractAdaptor
+class SecureActionAuthenticatorAdaptor : public QDBusAbstractAdaptor, protected QDBusContext
 {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "org.nemomobile.devicelock.client.Authenticator")
