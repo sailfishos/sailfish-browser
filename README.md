@@ -12,8 +12,7 @@ Engine and adaptation
 ---------------------
 - Sailfish WebView - https://github.com/sailfishos/sailfish-components-webview
 - QtMozEmbed - Qt bindings - https://github.com/sailfishos/qtmozembed
-- Embedlite components - https://github.com/sailfishos/embedlite-components
-- Gecko browser engine with embedlite API - https://github.com/sailfishos/gecko-dev
+- Gecko browser engine with EmbedLite components and API - https://github.com/sailfishos/gecko-dev
 
 Browser presentation
 --------------------

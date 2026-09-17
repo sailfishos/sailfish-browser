@@ -1,6 +1,4 @@
-%global min_xulrunner_version 153.2.0
 %global min_qtmozembed_version 2.0.0
-%global min_embedlite_components_version 2.1.0
 %global min_sailfishwebengine_version 1.8.0
 
 %global captiveportal sailfish-captiveportal
@@ -36,8 +34,6 @@ BuildRequires:  pkgconfig(dsme_dbus_if)
 
 Requires: sailfishsilica-qt5 >= 1.2.33
 Requires: sailfish-content-graphics
-Requires: xulrunner-qt5 >= %{min_xulrunner_version}
-Requires: embedlite-components-qt5 >= %{min_embedlite_components_version}
 Requires: qtmozembed-qt5 >= %{min_qtmozembed_version}
 Requires: sailfish-components-webview-qt5 >= %{min_sailfishwebengine_version}
 Requires: sailfish-components-webview-qt5-popups >= %{min_sailfishwebengine_version}
