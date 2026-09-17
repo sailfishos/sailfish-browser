@@ -1,6 +1,7 @@
 /****************************************************************************
 **
 ** Copyright (c) 2014 Jolla Ltd.
+** Copyright (c) 2026 Jolla Mobile Ltd
 ** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **
 ****************************************************************************/
@@ -62,9 +63,11 @@ void DesktopBookmarkWriter::save(const QString &url, const QString &title, const
             if (fetcher->status() == DataFetcher::Error) {
                 m_writer.setFuture(QtConcurrent::run(this, &DesktopBookmarkWriter::write, url, title,
                                                      FaviconManager::defaultDesktopBookmarkIcon()));
+                fetcher->deleteLater();
             } else if (fetcher->status() == DataFetcher::Ready) {
                 m_writer.setFuture(QtConcurrent::run(this, &DesktopBookmarkWriter::write, url, title,
                                                      fetcher->data()));
+                fetcher->deleteLater();
             }
         });
         fetcher->fetch(icon);

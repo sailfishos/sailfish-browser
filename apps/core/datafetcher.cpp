@@ -45,10 +45,9 @@ void DataFetcher::fetch(const QString &url)
         QNetworkRequest request(m_url);
         QNetworkReply *reply = m_networkAccessManager.get(request);
         connect(reply, &QNetworkReply::finished, this, &DataFetcher::dataReady);
-        // qOverload(T functionPointer) would be handy to resolve right error method but it is introduced only
-        // in Qt5.7. QNetWorkReply has signal error(QNetworkReply::NetworkError) and method error().
-        // connect(reply, qOverload<QNetworkReply::NetworkError>(&QNetworkReply::error), this, DataFetcher::error);
-        connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(error(QNetworkReply::NetworkError)));
+        connect(reply,
+                static_cast<void (QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error),
+                this, &DataFetcher::error);
     }
 }
 
@@ -129,6 +128,7 @@ void DataFetcher::error(QNetworkReply::NetworkError)
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
     if (reply) {
+        disconnect(reply, &QNetworkReply::finished, this, &DataFetcher::dataReady);
         reply->deleteLater();
     }
 
