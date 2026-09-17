@@ -178,12 +178,8 @@ Shared.Background {
                 searchField.enteringNewTabUrl = false
 
                 if (enteredUrl) {
-                    if (browserPage.chromeHostView) {
-                        searchField.edited = false
-                        browserPage.newTab(enteredUrl, true)
-                    } else {
-                        webView.tabModel.newTab(enteredUrl, true)
-                    }
+                    searchField.edited = false
+                    browserPage.newTab(enteredUrl, true)
                     enteredUrl = ""
                 } else if (!toolBar.findInPageActive) {
                     searchField.resetUrl(browserPage.url)

@@ -96,6 +96,7 @@ Page {
     property bool _foregroundNewTabDispatchPending
     property string _foregroundNewTabUrl
     property bool _foregroundNewTabFromExternal
+    property string _foregroundNewTabPersistentId
 
     function beginForegroundNewTabWait(hostView) {
         if (!hostView) {
@@ -143,6 +144,9 @@ Page {
         var tabId = webView.tabModel.newTab(url, fromExternal)
         if (!tabId) {
             finishForegroundNewTabWait()
+        } else if (_foregroundNewTabPending) {
+            _foregroundNewTabPersistentId = String(tabId)
+            foregroundNewTabWaitTimer.restart()
         }
         return tabId
     }
@@ -170,6 +174,7 @@ Page {
     }
 
     function finishForegroundNewTabWait() {
+        foregroundNewTabWaitTimer.stop()
         _foregroundNewTabPending = false
         _foregroundNewTabSelected = false
         _foregroundNewTabKeyboardSettled = false
@@ -177,6 +182,14 @@ Page {
         _foregroundNewTabDispatchPending = false
         _foregroundNewTabUrl = ""
         _foregroundNewTabFromExternal = false
+        _foregroundNewTabPersistentId = ""
+    }
+
+    function rejectForegroundNewTab(persistentId) {
+        if (_foregroundNewTabPending
+                && _foregroundNewTabPersistentId === String(persistentId)) {
+            finishForegroundNewTabWait()
+        }
     }
 
     function dismissInputMethod() {
@@ -471,7 +484,7 @@ Page {
         if (chromeHostView.selectedTabId.length) {
             chromeHostView.load(url, !!fromExternal)
         } else {
-            webView.tabModel.newTab(url, !!fromExternal)
+            newTab(url, !!fromExternal)
         }
     }
 
@@ -1794,6 +1807,18 @@ Page {
         onTriggered: browserPage.dispatchForegroundNewTab()
     }
 
+    Timer {
+        id: foregroundNewTabWaitTimer
+
+        interval: 10000
+        onTriggered: browserPage.finishForegroundNewTabWait()
+    }
+
+    Connections {
+        target: webView.tabModel
+        onRuntimeTabReservationRejected: browserPage.rejectForegroundNewTab(persistentId)
+    }
+
     Browser.DownloadRemorsePopup { id: downloadPopup }
 
     Shared.WebView {
@@ -2552,7 +2577,7 @@ Page {
                 webView.load(url, false, true)
             } else {
                 browserPage.clearSelection()
-                webView.tabModel.newTab(url, true)
+                browserPage.newTab(url, true)
                 overlay.dismiss(true, !Qt.application.active /* immediate */)
             }
             bringToForeground(webView.chromeWindow)

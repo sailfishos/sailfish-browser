@@ -140,6 +140,8 @@ void tst_hostedqml::newTabPresentation()
                       << functionSource(QStringLiteral(":/BrowserPage.qml"),
                                         QStringLiteral("finishForegroundNewTabWait"))
                       << functionSource(QStringLiteral(":/BrowserPage.qml"),
+                                        QStringLiteral("rejectForegroundNewTab"))
+                      << functionSource(QStringLiteral(":/BrowserPage.qml"),
                                         QStringLiteral("newTab")));
 }
 
