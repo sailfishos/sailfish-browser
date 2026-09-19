@@ -62,13 +62,17 @@ Private.SwipeItem {
     contentItem.width: root.implicitWidth
     contentItem.height: root.implicitHeight
 
-    onClicked: view.activateTab(index)
+    onClicked: {
+        tapEffectTimer.restart()
+        view.activateTab(index)
+    }
 
     Item {
         width: root.implicitWidth
         height: root.implicitHeight
+        // Wait for clicked to distinguish a tap from a swipe.
         layer.effect: PressEffect {}
-        layer.enabled: _showPress
+        layer.enabled: tapEffectTimer.running || root._keyFocused
 
         Rectangle {
             anchors.fill: parent
@@ -163,6 +167,12 @@ Private.SwipeItem {
             Behavior on opacity { FadeAnimation {} }
 
         }
+    }
+
+    Timer {
+        id: tapEffectTimer
+
+        interval: Theme.minimumPressHighlightTime
     }
 
     Timer {
