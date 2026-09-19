@@ -28,17 +28,31 @@ IconGridViewBase {
     rows: Math.floor(pageHeight / minimumCellHeight)
     columns: Math.floor(browserPage.width / minimumCellWidth)
 
-    function fetchAndSaveBookmark() {
-        var webPage = webView && webView.contentItem
-        if (webPage) {
-            // Fetcher itself does async fetching. No need to create this asynchronously.
-            var fetcher = iconFetcher.createObject(favoriteGrid,
-                                                   {
-                                                       "url": webPage.url,
-                                                       "title": webPage.title,
-                                                       "webPage": webPage
-                                                   })
-            fetcher.fetch(webPage.favicon)
+    function fetchAndSaveBookmark() { fetchAndSaveHostedBookmark() }
+
+    function fetchAndSaveHostedBookmark() {
+        var hostView = browserPage.chromeHostView
+        if (!hostView || !hostView.selectedTabId.length) {
+            return
+        }
+        var tab = browserPage.hostedRuntimeTabByRuntimeId(
+                    hostView, hostView.selectedTabId)
+        if (!tab || !String(tab.persistentId).length) {
+            return
+        }
+
+        var url = String(tab.location)
+        var title = browserPage.title || url
+        var fetcher = hostedIconFetcher.createObject(favoriteGrid, {
+                                                         "hostView": hostView,
+                                                         "tabId": String(tab.tabId),
+                                                         "persistentId": String(tab.persistentId),
+                                                         "location": url,
+                                                         "locationRevision": String(tab.locationRevision),
+                                                         "title": title
+                                                     })
+        if (fetcher) {
+            fetcher.fetch(browserPage._hostedFavicon)
         }
     }
 
@@ -124,48 +138,91 @@ IconGridViewBase {
         }
     }
 
+
+
     Component {
-        id: iconFetcher
+        id: hostedIconFetcher
 
         DataFetcher {
-            id: fetcher
+            id: hostedFetcher
 
-            property url url
+            property var hostView
+            property string tabId
+            property string persistentId
+            property string location
+            property string locationRevision
             property string title
-            property var webPage
-            readonly property bool sameWebPage: webPage && title === webPage.title && url === webPage.url
+            property bool fetchingThumbnail
+            property bool waitingForThumbnail
 
-            function handleGrabbedThumbnail(data) {
-                // If on the same web page, update thumbnail data.
-                if (sameWebPage) {
-                    bookmarkModel.updateFavoriteIcon(url, data, false)
+            function currentTab() {
+                var tab = browserPage.hostedRuntimeTabByRuntimeId(hostView, tabId)
+                return tab && String(tab.persistentId) === persistentId
+                        && String(tab.location) === location
+                        && String(tab.locationRevision) === locationRevision
+            }
+
+            function stopWaitingForThumbnail() {
+                if (waitingForThumbnail) {
+                    browserPage.hostedThumbnailUpdated.disconnect(
+                                handleHostedThumbnail)
+                    waitingForThumbnail = false
                 }
-                webPage.onThumbnailResult.disconnect(handleGrabbedThumbnail)
-                fetcher.destroy()
+                thumbnailWaitTimer.stop()
+            }
+
+            function finish(iconData, touchIcon) {
+                stopWaitingForThumbnail()
+                if (currentTab()) {
+                    bookmarkModel.updateFavoriteIcon(location, iconData,
+                                                     touchIcon)
+                }
+                destroy()
+            }
+
+            function handleHostedThumbnail(capturedPersistentId,
+                                           capturedLocation,
+                                           capturedLocationRevision,
+                                           fileName) {
+                if (capturedPersistentId !== persistentId
+                        || capturedLocation !== location
+                        || capturedLocationRevision !== locationRevision) {
+                    return
+                }
+                stopWaitingForThumbnail()
+                fetchingThumbnail = true
+                fetch("file://" + fileName)
             }
 
             minimumIconSize: Theme.iconSizeSmallPlus
 
             onDataChanged: {
-                var canDestroy = true
-                if (hasAcceptedTouchIcon) {
-                    bookmarkModel.updateFavoriteIcon(url, data, hasAcceptedTouchIcon)
-                } else if (sameWebPage) {
-                    // We are still at same web page but no accepted touch icon. Let's grab thumbnail.
-                    canDestroy = false
-                    webPage.onThumbnailResult.connect(handleGrabbedThumbnail)
-                    webPage.grabThumbnail(Qt.size(favoriteGrid.cellHeight, favoriteGrid.cellWidth))
-                }
-
-                if (canDestroy) {
-                    fetcher.destroy()
+                if (fetchingThumbnail) {
+                    finish(data, false)
+                } else if (hasAcceptedTouchIcon) {
+                    finish(data, true)
+                } else if (!waitingForThumbnail && currentTab()) {
+                    waitingForThumbnail = true
+                    browserPage.hostedThumbnailUpdated.connect(
+                                handleHostedThumbnail)
+                    thumbnailWaitTimer.restart()
+                    browserPage.captureHostedThumbnail()
+                } else if (!currentTab()) {
+                    finish(data, false)
                 }
             }
 
             Component.onCompleted: {
-                // Add bookmark immediately with the defaultIcon. Update the favorite
-                // asynchronously.
-                bookmarkModel.add(url, title || url, defaultIcon, true)
+                // Add immediately, then replace the
+                // placeholder with a durable fetched data URI asynchronously.
+                bookmarkModel.add(location, title || location, defaultIcon, true)
+            }
+
+            Component.onDestruction: stopWaitingForThumbnail()
+
+            property Timer thumbnailWaitTimer: Timer {
+                interval: 2000
+                onTriggered: hostedFetcher.finish(hostedFetcher.data, false)
             }
         }
     }

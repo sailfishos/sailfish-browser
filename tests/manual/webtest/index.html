@@ -1,0 +1,1506 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#10243b">
+  <title>Gecko migration test bench</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #10243b;
+      --muted: #66768a;
+      --line: #dbe3ec;
+      --paper: #ffffff;
+      --wash: #f4f7fb;
+      --blue: #087ea4;
+      --blue-dark: #075a78;
+      --teal: #0e9f93;
+      --green: #278c5c;
+      --amber: #c77a13;
+      --red: #c44b50;
+      --shadow: 0 16px 40px rgba(16, 36, 59, 0.11);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { background: #e8eff6; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 0%, rgba(36, 169, 178, 0.18), transparent 29rem),
+        linear-gradient(180deg, #eaf3f8 0%, #f8fafc 28rem, #f8fafc 100%);
+      font: 16px/1.48 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-width: 320px;
+    }
+
+    button, input, select, textarea { font: inherit; }
+
+    button, .button {
+      border: 0;
+      border-radius: 9px;
+      padding: 0.62rem 0.82rem;
+      color: #fff;
+      background: var(--blue);
+      cursor: pointer;
+      font-weight: 700;
+      text-decoration: none;
+      transition: background 120ms ease, transform 120ms ease;
+    }
+
+    button:hover, .button:hover { background: var(--blue-dark); }
+    button:active, .button:active { transform: translateY(1px); }
+    button:disabled { cursor: wait; opacity: 0.68; }
+    button.secondary, .button.secondary { color: var(--ink); background: #e6edf4; }
+    button.secondary:hover, .button.secondary:hover { background: #d7e2ec; }
+    button.small, .button.small { min-height: 42px; padding: 0.52rem 0.68rem; font-size: 0.88rem; }
+
+    .topbar {
+      color: #fff;
+      background: linear-gradient(135deg, #10243b, #075a78 65%, #0e9f93);
+      box-shadow: 0 8px 28px rgba(16, 36, 59, 0.18);
+    }
+
+    .topbar-inner, main, footer {
+      width: min(1180px, calc(100% - 2rem));
+      margin: 0 auto;
+    }
+
+    .topbar-inner { padding: 2.1rem 0 1.7rem; }
+    .eyebrow { margin: 0 0 0.5rem; color: #9ee9e1; font-size: 0.76rem; font-weight: 800; letter-spacing: 0.13em; text-transform: uppercase; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { max-width: 780px; margin-bottom: 0.55rem; font-size: clamp(2.15rem, 7vw, 4.1rem); line-height: 0.98; letter-spacing: -0.045em; }
+    .lede { max-width: 710px; margin-bottom: 1.15rem; color: #d6e8f1; font-size: 1.06rem; }
+    .top-actions { display: flex; flex-wrap: wrap; gap: 0.55rem; }
+    .top-actions button { color: var(--ink); background: #fff; }
+    .top-actions button.secondary { color: #fff; background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.35); }
+    .top-actions button:hover { background: #dff7f3; }
+    .top-actions button.reset-complete, .top-actions button.reset-complete:hover { color: #fff; background: var(--green); transform: none; }
+
+    .quick-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.42rem;
+      align-items: center;
+      margin-top: 1rem;
+    }
+    .quick-links strong { margin-right: 0.15rem; color: #9ee9e1; font-size: 0.78rem; }
+    .quick-links a { padding: 0.36rem 0.58rem; border: 1px solid rgba(255,255,255,0.3); border-radius: 999px; color: #fff; background: rgba(255,255,255,0.1); font-size: 0.8rem; font-weight: 800; text-decoration: none; }
+    .quick-links a:hover, .quick-links a:focus { background: rgba(255,255,255,0.22); }
+
+    main { padding: 1rem 0 2.5rem; }
+
+    .notice {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.8rem;
+      align-items: start;
+      margin: 0 0 1rem;
+      padding: 1rem 1.1rem;
+      border: 1px solid #b9dfe1;
+      border-radius: 14px;
+      background: #effafa;
+    }
+
+    .notice-mark {
+      display: grid;
+      place-items: center;
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      color: #fff;
+      background: var(--teal);
+      font-weight: 900;
+    }
+
+    .notice p { margin-bottom: 0; }
+    .notice strong { color: var(--blue-dark); }
+    .notice.running { border-color: #abd0e1; background: #edf7fb; }
+    .notice.running .notice-mark { background: var(--blue); }
+    .notice.pass { border-color: #a8d8bd; background: #edf8f1; }
+    .notice.pass .notice-mark { background: var(--green); }
+    .notice.fail { border-color: #e6b4b7; background: #fff1f1; }
+    .notice.fail .notice-mark { background: var(--red); }
+    .automatic-summary-links { display: flex; flex-wrap: wrap; gap: 0.42rem 0.7rem; margin-top: 0.65rem; }
+    .automatic-summary-links[hidden] { display: none; }
+    .automatic-summary-link-group { display: inline-flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; }
+    .automatic-summary-link-group strong { font-size: 0.8rem; }
+    .automatic-summary-link-group a { padding: 0.25rem 0.46rem; border-radius: 999px; color: var(--blue-dark); background: rgba(255,255,255,0.82); font-size: 0.76rem; font-weight: 800; text-decoration: none; }
+    .automatic-summary-link-group a:hover, .automatic-summary-link-group a:focus { background: #fff; }
+
+    .route-banner {
+      margin: 0 0 1rem;
+      padding: 0.85rem 1rem;
+      border-left: 5px solid var(--teal);
+      border-radius: 9px;
+      color: var(--blue-dark);
+      background: #e6f7f5;
+      font-weight: 800;
+    }
+
+    .run-details {
+      display: grid;
+      grid-template-columns: 1.25fr repeat(3, minmax(0, 1fr));
+      gap: 0.7rem;
+      align-items: end;
+      margin-bottom: 1rem;
+      padding: 0.9rem 1rem;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.82);
+    }
+
+    .run-details h2 { margin-bottom: 0.15rem; font-size: 1.05rem; }
+    .run-details p { margin-bottom: 0; color: var(--muted); font-size: 0.83rem; }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.7rem;
+      margin-bottom: 1rem;
+    }
+
+    .metric {
+      min-height: 94px;
+      padding: 0.85rem 0.95rem;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: rgba(255,255,255,0.82);
+      box-shadow: 0 4px 16px rgba(16, 36, 59, 0.04);
+    }
+
+    .metric-label { display: block; margin-bottom: 0.28rem; color: var(--muted); font-size: 0.74rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+    .metric-value { display: block; overflow-wrap: anywhere; font-weight: 800; }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.55rem 0.9rem;
+      margin-bottom: 1.35rem;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .legend span { display: inline-flex; gap: 0.35rem; align-items: center; }
+    .dot { width: 0.62rem; height: 0.62rem; border-radius: 50%; background: #b8c5d1; }
+    .dot.pass { background: var(--green); }
+    .dot.fail { background: var(--red); }
+    .dot.manual { background: var(--amber); }
+
+    .section-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.42rem;
+      margin: -0.35rem 0 1.35rem;
+      padding: 0.75rem;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: rgba(255,255,255,0.76);
+    }
+    .section-nav strong { align-self: center; margin-right: 0.2rem; font-size: 0.82rem; }
+    .section-nav a { padding: 0.32rem 0.52rem; border-radius: 999px; color: var(--blue-dark); background: #edf5f8; font-size: 0.78rem; font-weight: 800; text-decoration: none; }
+    .section-nav a:hover { background: #dbeef1; }
+
+    .section { margin-top: 1.5rem; }
+    .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 1rem; margin-bottom: 0.7rem; }
+    .section-heading h2 { margin-bottom: 0; font-size: 1.35rem; letter-spacing: -0.02em; }
+    .section-heading p { max-width: 670px; margin-bottom: 0; color: var(--muted); font-size: 0.92rem; }
+
+    .cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.85rem; }
+
+    .card {
+      position: relative;
+      scroll-margin-top: 0.75rem;
+      min-width: 0;
+      padding: 1rem;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+
+    .card.wide { grid-column: 1 / -1; }
+    .card-head { display: flex; align-items: start; justify-content: space-between; gap: 0.7rem; margin-bottom: 0.75rem; }
+    .card h3 { margin-bottom: 0.12rem; font-size: 1.08rem; line-height: 1.2; }
+    .card h3 a { color: inherit; text-decoration: none; }
+    .card h3 a::after { content: " #"; color: #8aa1b5; font-size: 0.82em; opacity: 0; }
+    .card h3 a:hover::after, .card h3 a:focus::after { opacity: 1; }
+    .risk { margin: 0; color: var(--muted); font-size: 0.82rem; }
+    .status { display: inline-flex; align-items: center; gap: 0.32rem; flex: 0 0 auto; padding: 0.28rem 0.48rem; border-radius: 999px; color: var(--muted); background: #eef2f6; font-size: 0.74rem; font-weight: 800; white-space: nowrap; }
+    .status .dot { width: 0.5rem; height: 0.5rem; }
+    .status.pass { color: #17633e; background: #e6f5ec; }
+    .status.fail { color: #8c2c31; background: #fce8e9; }
+    .status.manual { color: #8a560b; background: #fff3dd; }
+    .card p { margin-bottom: 0.72rem; }
+    .expect { margin: 0 0 0.85rem; padding-left: 1.1rem; color: #44566a; font-size: 0.9rem; }
+    .expect li + li { margin-top: 0.24rem; }
+    .card-actions { display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: center; }
+    .card-actions .spacer { flex: 1; }
+    .result { min-height: 1.45em; margin: 0.65rem 0 0; color: var(--blue-dark); font-size: 0.88rem; font-weight: 700; }
+
+    .auto-result { display: flex; gap: 0.42rem; align-items: start; margin: -0.15rem 0 0.75rem; padding: 0.48rem 0.58rem; border-radius: 8px; color: #53677b; background: #f1f4f7; font-size: 0.8rem; }
+    .auto-result::before { flex: 0 0 auto; width: 0.58rem; height: 0.58rem; margin-top: 0.27rem; border-radius: 3px; content: ""; background: #b8c5d1; }
+    .auto-result strong { color: inherit; }
+    .auto-result.pass { color: #17633e; background: #e6f5ec; }
+    .auto-result.pass::before { background: var(--green); }
+    .auto-result.fail { color: #8c2c31; background: #fce8e9; }
+    .auto-result.fail::before { background: var(--red); }
+    .auto-result.manual { color: #8a560b; background: #fff3dd; }
+    .auto-result.manual::before { background: var(--amber); }
+    .auto-result.running { color: var(--blue-dark); background: #e3f1f6; }
+    .auto-result.running::before { background: var(--blue); animation: pulse 0.9s ease-in-out infinite alternate; }
+    @keyframes pulse { to { opacity: 0.3; } }
+
+    .surface {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 0.75rem;
+      align-items: stretch;
+    }
+
+    .render-stage {
+      position: relative;
+      min-height: 170px;
+      overflow: hidden;
+      border-radius: 13px;
+      background: linear-gradient(135deg, #10243b 0%, #087ea4 48%, #efb84a 49%, #ee6d5b 100%);
+    }
+
+    .render-stage::after {
+      position: absolute;
+      inset: 0;
+      content: "";
+      background: repeating-linear-gradient(115deg, transparent 0 22px, rgba(255,255,255,0.18) 23px 24px);
+      mix-blend-mode: overlay;
+    }
+
+    #render-canvas { position: absolute; right: 1rem; bottom: 1rem; z-index: 1; width: 126px; height: 126px; border: 2px solid rgba(255,255,255,0.7); border-radius: 50%; background: rgba(255,255,255,0.14); }
+    .render-label { position: absolute; left: 1rem; bottom: 0.9rem; z-index: 2; color: #fff; font-size: 1.05rem; font-weight: 900; text-shadow: 0 2px 10px rgba(0,0,0,0.35); }
+    .swatch-notes { display: grid; gap: 0.5rem; align-content: center; padding: 0.75rem; border-radius: 13px; background: var(--wash); }
+    .swatch-notes div { padding: 0.6rem 0.7rem; border-radius: 9px; background: #fff; font-size: 0.85rem; }
+    .swatch-notes strong { display: block; color: var(--blue-dark); }
+
+    .scroll-box { height: 180px; overflow: auto; padding: 0.7rem; border: 1px solid #cdd8e3; border-radius: 11px; background: #f7fafc; scroll-behavior: smooth; }
+    .scroll-box .scroll-row { display: flex; align-items: center; justify-content: space-between; min-height: 46px; padding: 0.45rem 0.6rem; border-bottom: 1px solid #e2e9f0; }
+    .scroll-box .scroll-row:nth-child(odd) { background: #fff; }
+    .scroll-row button { min-width: 46px; min-height: 42px; padding: 0.45rem 0.58rem; font-size: 0.8rem; }
+    .touch-pad { display: grid; place-items: center; min-height: 112px; margin-top: 0.65rem; border: 2px dashed #75bdc3; border-radius: 11px; color: var(--blue-dark); background: #e8f8f7; text-align: center; user-select: none; touch-action: manipulation; }
+    .touch-pad strong { display: block; font-size: 1.12rem; }
+
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.65rem; }
+    label { display: grid; gap: 0.25rem; color: #4b5e73; font-size: 0.82rem; font-weight: 800; }
+    input, select, textarea { width: 100%; min-width: 0; padding: 0.58rem 0.62rem; border: 1px solid #bac9d8; border-radius: 8px; color: var(--ink); background: #fff; }
+    textarea { min-height: 70px; resize: vertical; }
+    input:focus, select:focus, textarea:focus, button:focus, a:focus { outline: 3px solid rgba(14,159,147,0.35); outline-offset: 2px; }
+    .field-hint { color: var(--muted); font-size: 0.75rem; font-weight: 500; }
+    .event-log { height: 86px; overflow: auto; margin-top: 0.65rem; padding: 0.55rem 0.65rem; border-radius: 8px; color: #d9f0f2; background: #10243b; font: 0.76rem/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .observation { margin: 0.75rem 0; }
+    .observation textarea { min-height: 58px; font-weight: 400; }
+
+    .history-strip { display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: center; margin-bottom: 0.65rem; padding: 0.65rem; border-radius: 10px; background: var(--wash); }
+    .history-strip code { flex: 1 1 210px; overflow-wrap: anywhere; color: var(--blue-dark); }
+    .route-result { padding: 0.7rem; border-left: 4px solid var(--teal); border-radius: 6px; background: #effafa; }
+
+    .safe-demo { position: relative; overflow: hidden; min-height: 190px; padding: 0.85rem; border-radius: 12px; color: #fff; background: #10243b; }
+    .safe-demo::before { position: absolute; inset: 0; content: ""; border-style: solid; border-width: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); border-color: rgba(239,184,74,0.68); pointer-events: none; }
+    .safe-inset-frame { position: absolute; z-index: 1; top: env(safe-area-inset-top, 0px); right: env(safe-area-inset-right, 0px); bottom: env(safe-area-inset-bottom, 0px); left: env(safe-area-inset-left, 0px); border: 2px dashed #9ee9e1; border-radius: 8px; pointer-events: none; }
+    .safe-demo .safe-content { position: relative; z-index: 2; }
+    .safe-toolbar { display: flex; align-items: start; justify-content: space-between; gap: 0.75rem; }
+    .safe-toolbar p { margin: 0.2rem 0 0; font-size: 0.84rem; }
+    .safe-toolbar .card-actions { justify-content: end; flex: 0 0 auto; }
+    .safe-values { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.5rem; margin-top: 0.7rem; }
+    .safe-values div { padding: 0.45rem; border-radius: 7px; background: rgba(255,255,255,0.12); font-size: 0.8rem; }
+    .safe-values strong { display: block; color: #9ee9e1; }
+    .safe-demo:fullscreen { width: 100vw; height: 100vh; min-height: 0; overflow: auto; padding: calc(1rem + env(safe-area-inset-top, 0px)) calc(1rem + env(safe-area-inset-right, 0px)) calc(1rem + env(safe-area-inset-bottom, 0px)) calc(1rem + env(safe-area-inset-left, 0px)); border-radius: 0; }
+    .safe-demo:fullscreen .safe-content { display: grid; width: min(960px, 100%); min-height: calc(100vh - 2rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); margin: auto; align-content: center; }
+
+    .picker-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.55rem; }
+    .picker-row .button, .picker-row button { display: grid; place-items: center; min-height: 62px; text-align: center; }
+    input[type="color"] { width: 100%; height: 62px; padding: 0.2rem; }
+    .media-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7rem; }
+    video, audio { width: 100%; border-radius: 10px; background: #10243b; }
+    .font-sample { padding: 0.75rem; border-radius: 10px; color: #fff; background: linear-gradient(135deg, #075a78, #0e9f93); font-family: Georgia, serif; font-size: 1.35rem; }
+
+    .link-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
+    .link-list a { display: block; padding: 0.65rem 0.7rem; border-radius: 9px; color: var(--blue-dark); background: #edf5f8; font-weight: 800; text-decoration: none; }
+    .link-list a:hover { background: #dbeef1; }
+    .warning { padding: 0.65rem 0.75rem; border-radius: 9px; color: #81500b; background: #fff5df; font-size: 0.84rem; }
+
+    .report {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.8rem;
+      margin-top: 1.5rem;
+      padding: 1rem;
+      border-radius: 15px;
+      color: #fff;
+      background: #10243b;
+    }
+    .report h2 { margin-bottom: 0.2rem; font-size: 1.12rem; }
+    .report p { margin-bottom: 0; color: #cfe0e9; font-size: 0.9rem; }
+    .report strong { color: #9ee9e1; }
+    .report-actions { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+    .report-actions button { color: var(--ink); background: #fff; }
+    .report-actions button.secondary { color: #fff; background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.35); }
+
+    footer { padding: 0 0 2.5rem; color: var(--muted); font-size: 0.82rem; }
+    footer a { color: var(--blue-dark); }
+
+    @media (max-width: 800px) {
+      .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .cards, .surface, .run-details { grid-template-columns: 1fr; }
+      .card.wide { grid-column: auto; }
+    }
+
+    @media (max-width: 520px) {
+      .topbar-inner, main, footer { width: min(100% - 1rem, 1180px); }
+      .summary, .form-grid, .picker-row, .media-grid, .link-list { grid-template-columns: 1fr; }
+      .section-heading { display: block; }
+      .section-heading p { margin-top: 0.25rem; }
+      .card { padding: 0.85rem; }
+      h1 { font-size: 2.6rem; }
+      .safe-toolbar { display: block; }
+      .safe-toolbar .card-actions { justify-content: start; margin-top: 0.65rem; }
+      .safe-values { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <p class="eyebrow">Sailfish Browser · Gecko migration</p>
+      <h1>Gecko migration<br>test bench</h1>
+      <p class="lede">A compact, repeatable regression suite for the browser boundaries most likely to change during an engine migration: compositor frames, touch, prompts, tabs, storage, native pickers, media, and device geometry.</p>
+      <div class="top-actions">
+        <button id="run-quick">Run automated checks</button>
+        <button id="copy-report" class="secondary">Copy report</button>
+        <button id="reset-report" class="secondary" aria-live="polite">Clear results</button>
+      </div>
+      <nav class="quick-links" aria-label="Quick test shortcuts">
+        <strong>Quick tests</strong>
+        <a href="#navigation">Popups</a>
+        <a href="#permissions">Permissions</a>
+        <a href="#robustness">Tab UI / crash</a>
+        <a href="#render">Paint</a>
+        <a href="#touch">Touch / selection</a>
+        <a href="#forms">Keyboard / forms</a>
+        <a href="#lifecycle">Lifecycle</a>
+        <a href="#media">Media</a>
+        <a href="#test-sections">All tests</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div id="route-banner" class="route-banner" hidden></div>
+    <div id="automatic-summary-panel" class="notice" role="status" aria-live="polite">
+      <div id="automatic-summary-mark" class="notice-mark">!</div>
+      <div>
+        <p><strong id="automatic-summary-title">How to use this page:</strong> <span id="automatic-summary-detail">run the cards in a real browser tab, especially after a clean start. Record the build and device below, then mark a card only after checking its expected behaviour. Save one report from the known-good build and another from the candidate build.</span></p>
+        <div id="automatic-summary-links" class="automatic-summary-links" hidden></div>
+      </div>
+    </div>
+
+    <section class="run-details" aria-label="Test run details">
+      <div><h2>Test run</h2><p>These values are stored with the local report and included when you copy it.</p></div>
+      <label>Build<input id="run-build" type="text" autocomplete="off" placeholder="Package or build identifier"></label>
+      <label>Device<input id="run-device" type="text" autocomplete="off" placeholder="Device / architecture"></label>
+      <label>Context<select id="run-context"><option>Normal browser</option><option>Private browsing</option><option>Embedded WebView</option><option>Email WebView</option><option>Other</option></select></label>
+    </section>
+
+    <section class="summary" aria-label="Runtime summary">
+      <div class="metric"><span class="metric-label">User agent</span><span id="ua" class="metric-value">Reading…</span></div>
+      <div class="metric"><span class="metric-label">Viewport / DPR</span><span id="viewport" class="metric-value">Reading…</span></div>
+      <div class="metric"><span class="metric-label">Storage / worker</span><span id="capabilities" class="metric-value">Reading…</span></div>
+      <div class="metric"><span class="metric-label">Page lifecycle</span><span id="lifecycle-summary" class="metric-value">Loading…</span></div>
+    </section>
+
+    <div class="legend" aria-label="Mark legend">
+      <span><i class="dot"></i> not run</span>
+      <span><i class="dot pass"></i> observed pass</span>
+      <span><i class="dot fail"></i> observed failure</span>
+      <span><i class="dot manual"></i> follow-up / incomplete</span>
+      <span id="report-count">0 marked</span>
+      <span id="auto-summary">Automatic checks not run</span>
+    </div>
+
+    <nav id="test-sections" class="section-nav" aria-label="Jump to a test section">
+      <strong>Jump to</strong>
+      <a href="#render">1.1 Paint</a><a href="#touch">1.2 Touch</a><a href="#forms">1.3 Forms</a><a href="#prompts">2.1 Prompts</a><a href="#navigation">2.2 Navigation</a><a href="#lifecycle">2.3 Lifecycle</a><a href="#storage">3.1 Storage</a><a href="#geometry">3.2 Geometry</a><a href="#bridges">3.3 Bridges</a><a href="#about">3.4 Internal pages</a><a href="#permissions">3.5 Permissions</a><a href="#media">4.1 Media</a><a href="#network">4.2 Network</a><a href="#robustness">4.3 Robustness</a>
+    </nav>
+
+    <section class="section">
+      <div class="section-heading">
+        <h2>01 · Paint, input, and forms</h2>
+        <p>These are the high-signal paths for WebRender/offscreen presentation, APZ tap routing, repaint recovery, and keyboard/IME behaviour.</p>
+      </div>
+      <div class="cards">
+        <article id="render" class="card wide" data-test="render">
+          <div class="card-head"><div><h3><a href="#render">1.1 · First paint, WebRender surface, and repaint</a></h3><p class="risk">Risk: offscreen compositor / EGL image / texture target / stale painted state</p></div><div class="status"><i class="dot"></i><span>Not run</span></div></div>
+          <div class="surface">
+            <div class="render-stage" aria-label="Rendering test surface"><canvas id="render-canvas" width="252" height="252"></canvas><span class="render-label">upright · animated · layered</span></div>
+            <div class="swatch-notes"><div><strong>Look for</strong> first paint without a white flash, repeated surface creation, or stalled animation.</div><div><strong>Then</strong> navigate away, press Back, rotate, and return. Pixels should continue updating.</div><div><strong>Frame tick</strong> <span id="frame-counter">0</span> · canvas pixel <span id="canvas-pixel">pending</span></div></div>
+          </div>
+          <p class="result" id="render-result"></p>
+          <div class="card-actions"><button class="small" data-action="pass">Mark pass</button><button class="small secondary" data-action="fail">Mark failure</button><span class="spacer"></span><button id="render-check" class="small secondary">Run self-check</button></div>
+        </article>
+
+        <article id="touch" class="card" data-test="touch">
+          <div class="card-head"><div><h3><a href="#touch">1.2 · Scroll, tap, long-press, and selection</a></h3><p class="risk">Risk: APZ single-tap / long-tap / visual-to-layout coordinates</p></div><div class="status"><i class="dot"></i><span>Not run</span></div></div>
+          <div class="scroll-box" id="scroll-box">
+            <div class="scroll-row"><span>Scroll to this list; keep the page responsive.</span><button class="row-tap">Tap</button></div>
+            <div class="scroll-row"><span>02 · frame metrics</span><button class="row-tap">Tap</button></div>
+            <div class="scroll-row"><span>03 · APZ handoff</span><button class="row-tap">Tap</button></div>
+            <div class="scroll-row"><span>04 · visual viewport</span><button class="row-tap">Tap</button></div>
+            <div class="scroll-row"><span>05 · content offset</span><button class="row-tap">Tap</button></div>
+            <div class="scroll-row"><span>06 · fling and settle</span><button class="row-tap">Tap</button></div>
+            <div class="scroll-row"><span>07 · focus after scroll</span><button class="row-tap">Tap</button></div>
+          </div>
+          <div class="touch-pad" id="touch-pad"><div><strong>Tap / press / hold here</strong><span id="touch-result">No input yet</span></div></div>
+          <ul class="expect"><li>Buttons activate at the visible position after scrolling and rotation.</li><li>Long-press opens selection or the appropriate context menu; pinch/double-tap zoom remains usable.</li></ul>
+          <p class="result" id="touch-log">Tap count 0 · touch events 0 · scroll 0px</p>
+          <div class="card-actions"><button class="small" data-action="pass">Mark pass</button><button class="small secondary" data-action="fail">Mark failure</button></div>
+        </article>
+
+        <article id="forms" class="card" data-test="forms">
+          <div class="card-head"><div><h3><a href="#forms">1.3 · Keyboard, IME, and form controls</a></h3><p class="risk">Risk: hosted input path, focus, autocomplete, and Qt form-control rendering</p></div><div class="status"><i class="dot"></i><span>Not run</span></div></div>
+          <div class="form-grid">
+            <label>Text / IME<input id="text-input" type="text" autocomplete="name" placeholder="Type, compose, select"></label>
+            <label>Number<input id="number-input" type="number" inputmode="decimal" placeholder="123.45"></label>
+            <label>URL<input id="url-input" type="url" autocomplete="url" placeholder="https://…"></label>
+            <label>Native select dialog<select id="select-input"><option>First option</option><option>Second option</option><option>Third option</option></select><span class="field-hint">On Sailfish, tapping this should open the platform selection dialog.</span></label>
+          </div>
+          <label style="margin-top:0.65rem">Multiline / selection<textarea id="textarea-input" autocomplete="off" placeholder="Focus, type, move the cursor, select text, and paste."></textarea></label>
+          <div class="event-log" id="form-log" aria-live="polite">Waiting for focus and input events…</div>
+          <p class="result" id="form-result">Check that focus opens the expected keyboard, IME composition is preserved, and the select dialog returns the chosen option without freezing the page.</p>
+          <div class="card-actions"><button class="small" data-action="pass">Mark pass</button><button class="small secondary" data-action="fail">Mark failure</button><button id="clear-form" class="small secondary">Clear fields</button></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <h2>02 · Navigation, prompts, and tabs</h2>
+        <p>Use these cards with the browser chrome visible. They exercise cancellation, per-view prompt routing, popup creation, address-bar state, and session history.</p>
+      </div>
+      <div class="cards">
+        <article id="prompts" class="card" data-test="prompts">
+          <div class="card-head"><div><h3><a href="#prompts">2.1 · Native prompts and beforeunload</a></h3><p class="risk">Risk: Stay/Leave/Cancel, prompt routing, PageStack re-entry, repaint after cancel</p></div><div class="status"><i class="dot"></i><span>Not run</span></div></div>
+          <p>Open a prompt, cancel it, and verify that the page still accepts taps and keyboard input. Then arm beforeunload, navigate away, choose <strong>Stay</strong>, press Reload, and repeat with <strong>Leave</strong>.</p>
+          <div class="card-actions"><button id="alert-button" class="small">Alert</button><button id="confirm-button" class="small">Confirm</button><button id="prompt-button" class="small">Prompt</button><button id="arm-unload" class="small secondary">Arm beforeunload</button><a class="button small secondary" href="?test=destination">Navigate away</a></div>
+          <p class="result" id="prompt-result"></p>
+          <ul class="expect"><li>Stay keeps the current URL and the page visibly repaints.</li><li>Leave completes navigation; Back returns here without a hang.</li><li>Two tabs can prompt independently; closing an inactive tab must not prompt.</li></ul>
+          <div class="card-actions"><button class="small" data-action="pass">Mark pass</button><button class="small secondary" data-action="fail">Mark failure</button></div>
+        </article>
+
+        <article id="navigation" class="card" data-test="navigation">
+          <div class="card-head"><div><h3><a href="#navigation">2.2 · History, redirects, SPA routes, and popups</a></h3><p class="risk">Risk: parent session history, opener/referrer, target=_blank, lazy tab restore</p></div><div class="status"><i class="dot"></i><span>Not run</span></div></div>
+          <div class="history-strip"><code id="route-code">route: initial</code><button id="push-route" class="small">pushState</button><button id="history-back" class="small secondary">Back</button><button id="history-forward" class="small secondary">Forward</button></div>
+          <div class="route-result" id="route-result">Use pushState twice, Back/Forward, then Reload. The URL and title should pair with the visible route.</div>
+          <p>After using this page's Back button, use the browser toolbar's Forward action. It must advance even when the page initiated the previous traversal.</p>
+          <div class="card-actions"><button id="long-title" class="small secondary">Set long page title</button></div>
+          <p>Set the long title, open another tab, then quit and restart the browser. Both tabs must restore, and this page must still open. A shortened restored title is expected.</p>
+          <div class="link-list" style="margin-top:0.7rem"><a id="popup-link" href="?test=popup" target="_blank" rel="noopener">Open target=_blank tab</a><button id="window-open-button">Open with window.open()</button></div>
+          <ul class="expect"><li>Both controls create a new browser tab or popup without replacing this page.</li><li>The popup page reports its opener/referrer state, then closes cleanly without breaking the source tab.</li></ul>
+          <p class="result" id="navigation-result"></p>
+          <div class="card-actions"><button class="small" data-action="pass">Mark pass</button><button class="small secondary" data-action="fail">Mark failure</button></div>
+        </article>
+
+        <article id="lifecycle" class="card wide" data-test="lifecycle">
+          <div class="card-head"><div><h3><a href="#lifecycle">2.3 · View lifecycle and same-origin frame</a></h3><p class="risk">Risk: pageshow/pagehide, suspend/resume, child-frame routing, teardown without stale processes</p></div><div class="status"><i class="dot"></i><span>Not run</span></div></div>
+          <div class="surface"><div><p>Switch away from this tab, return, rotate the device, lock/unlock if available, and close/reopen the tab. The lifecycle log should keep receiving sensible events and the page should not remain frozen.</p><div class="event-log" id="lifecycle-log">Waiting for lifecycle events…</div></div><iframe title="same-origin frame smoke test" srcdoc="<!doctype html><html><body style='font:16px sans-serif;margin:12px;background:#effafa;color:#075a78'><strong>Child frame ready</strong><p id='frame-message'>Waiting for parent.</p><button onclick=&quot;parent.postMessage({type:'frame-click'}, '*')&quot;>Send frame click</button></body></html>" style="width:100%;min-height:135px;border:1px solid #b9dfe1;border-radius:11px;background:#effafa"></iframe></div>
+          <p class="result" id="lifecycle-result"></p>
+          <div class="card-actions"><button class="small" data-action="pass">Mark pass</button><button class="small secondary" data-action="fail">Mark failure</button></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <h2>03 · Storage, device geometry, and platform bridges</h2>
+        <p>These checks exercise profile startup notifications, safe-area forwarding, fullscreen, native dialogs, and the browser’s small platform contracts.</p>
+      </div>
+      <div class="cards">
+        <article id="storage" class="card" data-test="storage">
+          <div class="card-head"><div><h3><a href="#storage">3.1 · Cookies, localStorage, and ServiceWorker</a></h3><p class="risk">Risk: profile startup ordering, legacy storage fallback, worker registration</p></div><div class="status"><i class="dot"></i><span>Not run</span></div></div>
+          <p>Exercise cookies, local/session storage, IndexedDB, Cache Storage, and quota reporting. Reload and check that persistent values survive. Then register the same-origin worker and complete a ping/pong round trip. Private browsing is a separate run: storage may be isolated or unavailable by design.</p>
+          <div class="card-actions"><button id="storage-check" class="small">Run storage stack</button><button id="worker-check" class="small">Register + ping worker</button><button id="storage-clear" class="small secondary">Clear test data</button></div>
+          <p class="result" id="storage-result">No storage check yet.</p>
+          <div class="card-actions"><button class="small" data-action="pass">Mark pass</button><button class="small secondary" data-action="fail">Mark failure</button></div>
+        </article>
+
+        <article id="geometry" class="card" data-test="geometry">
+          <div class="card-head"><div><h3><a href="#geometry">3.2 · Viewport-fit, safe area, rotation, fullscreen</a></h3><p class="risk">Risk: cutout insets, orientation changes, fullscreen content bounds</p></div><div class="status"><i class="dot"></i><span>Not run</span></div></div>
+          <div id="safe-demo" class="safe-demo"><div class="safe-inset-frame" aria-hidden="true"></div><div class="safe-content"><div class="safe-toolbar"><div><strong>viewport-fit=cover probe</strong><p>Amber bands are the CSS safe-area insets; the dashed line is the safe content rectangle. Rotate and compare all four edges.</p></div><div class="card-actions"><button id="fullscreen-button" class="small" aria-pressed="false">Enter fullscreen</button><button id="geometry-refresh" class="small secondary">Refresh values</button></div></div><div class="safe-values"><div><strong>CSS top</strong><span id="safe-top">Reading…</span></div><div><strong>CSS right</strong><span id="safe-right">Reading…</span></div><div><strong>CSS bottom</strong><span id="safe-bottom">Reading…</span></div><div><strong>CSS left</strong><span id="safe-left">Reading…</span></div><div><strong>Orientation</strong><span id="orientation">Reading…</span></div><div><strong>Viewport</strong><span id="safe-viewport">Reading…</span></div><div><strong>DPR</strong><span id="safe-dpr">Reading…</span></div><div><strong>Fullscreen</strong><span id="fullscreen-state">off</span></div></div></div></div>
+          <p class="result" id="geometry-result"></p>
+          <div class="card-actions"><button class="small" data-action="pass">Mark pass</button><button class="small secondary" data-action="fail">Mark failure</button></div>
+        </article>
+
+        <article id="bridges" class="card" data-test="bridges">
+          <div class="card-head"><div><h3><a href="#bridges">3.3 · File, color, clipboard, and download</a></h3><p class="risk">Risk: native picker bridge, clipboard service, helper-app/download path</p></div><div class="status"><i class="dot"></i><span>Not run</span></div></div>
+          <div class="picker-row"><label class="button secondary">Choose file<input id="file-input" type="file" style="display:none"></label><label>Color<input id="color-input" type="color" value="#0e9f93"></label><button id="clipboard-button" class="secondary">Copy text</button></div>
+          <div class="card-actions" style="margin-top:0.65rem"><a class="button small" download="gecko-migration-smoke.txt" href="data:text/plain;charset=utf-8,Gecko%20migration%20download%20smoke%20test%0A">Download smoke file</a></div>
+          <ul class="expect"><li>Native pickers open, return the chosen value, and close without leaving a modal overlay.</li><li>Copy/paste and download handling act on this tab and return control cleanly.</li><li>Use the Browser menu’s <strong>Save web page as PDF</strong>; it creates a non-empty PDF without opening another tab.</li></ul>
+          <p class="result" id="bridge-result">Choose a file, change the color, copy text, trigger a download, then save this page as PDF from the Browser menu.</p>
+          <div class="card-actions"><button class="small" data-action="pass">Mark pass</button><button class="small secondary" data-action="fail">Mark failure</button></div>
+        </article>
+
+        <article id="about" class="card" data-test="about">
+          <div class="card-head"><div><h3><a href="#about">3.4 · Internal pages, UA, and external protocols</a></h3><p class="risk">Risk: about:config route, UA update data, search/external handler plumbing</p></div><div class="status"><i class="dot"></i><span>Not run</span></div></div>
+          <div class="link-list"><a href="about:config">Open about:config</a><a href="https://httpbin.org/user-agent" target="_blank" rel="noopener">Inspect request User-Agent</a><a href="mailto:browser-test@example.invalid">Try mailto handler</a><a href="tel:+123456789">Try tel handler</a></div>
+          <ul class="expect"><li>Internal pages open in the correct native or Gecko UI and remain searchable.</li><li>External protocols ask for an appropriate handler and can be cancelled without navigating this tab.</li></ul>
+          <p class="warning" style="margin-top:0.7rem">The protocol links are intentional smoke tests. Cancel any external action if no handler is configured.</p>
+          <p class="result" id="about-result"></p>
+          <div class="card-actions"><button class="small" data-action="pass">Mark pass</button><button class="small secondary" data-action="fail">Mark failure</button></div>
+        </article>
+
+        <article id="permissions" class="card" data-test="permissions">
+          <div class="card-head"><div><h3><a href="#permissions">3.5 · Location, camera, and microphone permissions</a></h3><p class="risk">Risk: permission prompts, WebRTC capture, cancellation, and view ownership</p></div><div class="status"><i class="dot"></i><span>Not run</span></div></div>
+          <p>Run these only on a device where you can safely grant or deny the prompts. Capture is stopped immediately after success and nothing is uploaded.</p>
+          <div class="card-actions"><button id="location-button" class="small">Request location</button><button id="media-permission-button" class="small">Request camera + mic</button></div>
+          <ul class="expect"><li>Each prompt belongs to this tab, accepts both Allow and Deny, and disappears on cancellation.</li><li>A successful camera/microphone request starts without a crash, then releases the devices immediately.</li></ul>
+          <p class="result" id="permission-result">No permission request made.</p>
+          <div class="card-actions"><button class="small" data-action="pass">Mark pass</button><button class="small secondary" data-action="fail">Mark failure</button></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <h2>04 · Media, security, and failure paths</h2>
+        <p>These links are deliberately explicit because they need browser chrome, network, or device capabilities to show their real result.</p>
+      </div>
+      <div class="cards">
+        <article id="media" class="card wide" data-test="media">
+          <div class="card-head"><div><h3><a href="#media">4.1 · Audio, video, fonts, and repeated teardown</a></h3><p class="risk">Risk: gecko-camera chroma sampling, decoder EOS/drain, blob fonts, suspend/resume</p></div><div class="status"><i class="dot"></i><span>Not run</span></div></div>
+          <div class="media-grid"><div><video id="video" controls preload="metadata" playsinline poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='360'%3E%3Crect width='640' height='360' fill='%2310243b'/%3E%3Ctext x='320' y='185' fill='white' text-anchor='middle' font-family='sans-serif' font-size='28'%3Evideo smoke test%3C/text%3E%3C/svg%3E"><source src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" type="video/mp4"></video><p class="result" id="video-result">Play, seek, let it end, then play again and rotate while playing.</p></div><div><audio id="audio" controls preload="metadata"><source src="https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3" type="audio/mpeg"></audio><div class="font-sample" style="margin-top:0.65rem">Blob-font sample: Sphinx of black quartz, judge my vow.</div><p class="result" id="audio-result">Play, pause, seek, and repeat.</p></div></div>
+          <p class="warning" style="margin-top:0.7rem">Environment-dependent: the media files are fetched from MDN. A network failure is not an engine failure.</p>
+          <div class="card-actions"><button class="small" data-action="pass">Mark pass</button><button class="small secondary" data-action="fail">Mark failure</button></div>
+        </article>
+
+        <article id="network" class="card" data-test="network">
+          <div class="card-head"><div><h3><a href="#network">4.2 · Certificate, auth, CORS, and error pages</a></h3><p class="risk">Risk: native neterror controls, HTTP auth prompt, security policy scope</p></div><div class="status"><i class="dot"></i><span>Not run</span></div></div>
+          <div class="link-list"><a href="https://self-signed.badssl.com/" target="_blank" rel="noopener">Open certificate error</a><a href="https://httpbin.org/basic-auth/user/passwd" target="_blank" rel="noopener">Open HTTP auth (user/passwd)</a><a href="https://invalid.invalid/gecko-migration-error" target="_blank" rel="noopener">Open DNS error</a><a href="https://httpbin.org/redirect-to?url=https%3A%2F%2Fexample.com%2F" target="_blank" rel="noopener">Open redirect</a></div>
+          <p class="warning" style="margin-top:0.7rem">For the certificate page, check Back, Advanced/details, View Certificate, and that action buttons stay above the Sailfish toolbar. Do not accept an exception unless you need to test that path.</p>
+          <p class="result" id="network-result"></p>
+          <div class="card-actions"><button id="cors-check" class="small secondary">Run cross-origin probe</button><button class="small" data-action="pass">Mark pass</button><button class="small secondary" data-action="fail">Mark failure</button></div>
+        </article>
+
+        <article id="robustness" class="card" data-test="robustness">
+          <div class="card-head"><div><h3><a href="#robustness">4.3 · Close, restore, and soak</a></h3><p class="risk">Risk: stale content processes, compositor bridge teardown, inactive-tab shutdown</p></div><div class="status"><i class="dot"></i><span>Not run</span></div></div>
+          <p>Open this page in two tabs, navigate both, leave one inactive, switch repeatedly, and close each tab from the tab overview. Repeat after a suspend/resume or rotation cycle.</p>
+          <ul class="expect"><li>No crash, hang, QML error, white page, or stale address-bar URL.</li><li>Inactive tab close does not show a beforeunload prompt.</li><li>Restored tabs keep their URL/title/history and only materialize when selected.</li></ul>
+          <p class="result" id="robustness-result">Use the browser UI for this card; the page cannot close its own tab reliably.</p>
+          <div class="card-actions"><button class="small" data-action="pass">Mark pass</button><button class="small secondary" data-action="fail">Mark failure</button></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="report" aria-live="polite">
+      <div><h2>Migration report · <strong id="report-summary">0 / 14 marked</strong></h2><p>Copy the report after each run and attach it to the migration notes. Unfinished cards can be marked for follow-up before copying.</p></div>
+      <div class="report-actions"><button id="copy-report-bottom">Copy report</button><button id="mark-manual" class="secondary">Mark remaining follow-up</button></div>
+    </section>
+  </main>
+
+  <footer><p>Standalone static page. No analytics, third-party scripts, or build step. Media and network cards intentionally use external test endpoints only when you activate them.</p></footer>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var REPORT_KEY = "gecko-migration-test-report-v1";
+      var report = { statuses: {}, notes: {}, auto: {}, context: {}, started: new Date().toISOString(), events: [] };
+      var beforeUnloadArmed = false;
+      var routeNumber = 0;
+      var touchCount = 0;
+      var tapCount = 0;
+      var scrollTop = 0;
+      var frameCount = 0;
+      var automaticRunActive = false;
+
+      function byId(id) { return document.getElementById(id); }
+      function all(selector) { return Array.prototype.slice.call(document.querySelectorAll(selector)); }
+      function write(id, value) { var node = byId(id); if (node) { node.textContent = value; } }
+      function now() { return new Date().toLocaleTimeString(); }
+
+      function loadReport() {
+        try {
+          var saved = window.localStorage.getItem(REPORT_KEY);
+          if (saved) {
+            var parsed = JSON.parse(saved);
+            if (parsed && parsed.statuses) { report = parsed; }
+          }
+          if (!report.context) { report.context = {}; }
+          if (!report.notes) { report.notes = {}; }
+          if (!report.auto) { report.auto = {}; }
+          if (!report.events) { report.events = []; }
+        } catch (error) {
+          report.events.push("local report unavailable: " + error.name);
+        }
+      }
+
+      function saveReport() {
+        try { window.localStorage.setItem(REPORT_KEY, JSON.stringify(report)); } catch (error) { /* private mode may reject this */ }
+        updateReportSummary();
+      }
+
+      function updateReportSummary() {
+        var cards = all(".card[data-test]");
+        var marked = 0;
+        var passed = 0;
+        cards.forEach(function (card) {
+          var id = card.getAttribute("data-test");
+          var status = report.statuses[id] || "";
+          if (status) { marked += 1; }
+          if (status === "pass") { passed += 1; }
+          var badge = card.querySelector(".status");
+          if (badge) {
+            badge.className = "status" + (status ? " " + status : "");
+            badge.innerHTML = '<i class="dot"></i><span>' + (status === "pass" ? "Pass" : status === "fail" ? "Failure" : status === "manual" ? "Follow-up" : "Not run") + "</span>";
+            badge.setAttribute("role", "status");
+            badge.setAttribute("aria-label", card.querySelector("h3").textContent + ": " + (status || "not run"));
+          }
+        });
+        write("report-count", marked + " marked · " + passed + " pass");
+        write("report-summary", marked + " / " + cards.length + " marked");
+        updateAutoSummary();
+      }
+
+      function updateAutoSummary() {
+        var passed = 0;
+        var failed = 0;
+        var manual = 0;
+        var running = 0;
+        Object.keys(report.auto || {}).forEach(function (id) {
+          var status = report.auto[id] && report.auto[id].status;
+          if (status === "pass") { passed += 1; }
+          if (status === "fail") { failed += 1; }
+          if (status === "manual") { manual += 1; }
+          if (status === "running") { running += 1; }
+        });
+        var total = passed + failed + manual;
+        var isRunning = automaticRunActive || running;
+        var summary = isRunning ? "Automatic checks running…" : total ? "Automatic: " + passed + " pass · " + failed + " fail · " + manual + " manual" : "Automatic checks not run";
+        write("auto-summary", summary);
+        updateAutomaticSummaryPanel(passed, failed, manual, isRunning);
+      }
+
+      function appendAutomaticSummaryLinks(container, status, label) {
+        var matches = all(".card[data-test]").filter(function (card) {
+          var id = card.getAttribute("data-test");
+          return report.auto[id] && report.auto[id].status === status;
+        });
+        if (!matches.length) { return; }
+
+        var group = document.createElement("span");
+        var heading = document.createElement("strong");
+        group.className = "automatic-summary-link-group";
+        heading.textContent = label;
+        group.appendChild(heading);
+        matches.forEach(function (card) {
+          var link = document.createElement("a");
+          link.href = "#" + card.getAttribute("data-test");
+          link.textContent = card.querySelector("h3").textContent;
+          group.appendChild(link);
+        });
+        container.appendChild(group);
+      }
+
+      function updateAutomaticSummaryPanel(passed, failed, manual, isRunning) {
+        var panel = byId("automatic-summary-panel");
+        var mark = byId("automatic-summary-mark");
+        var title = byId("automatic-summary-title");
+        var detail = byId("automatic-summary-detail");
+        var links = byId("automatic-summary-links");
+        var completed = passed + failed + manual;
+        var checkCount = all(".card[data-test]").length;
+
+        panel.className = "notice";
+        links.innerHTML = "";
+        links.hidden = true;
+        if (isRunning) {
+          panel.className += " running";
+          mark.textContent = "…";
+          title.textContent = "Automated checks running:";
+          detail.textContent = completed + " of " + checkCount + " completed.";
+          return;
+        }
+        if (completed) {
+          panel.className += failed ? " fail" : " pass";
+          mark.textContent = failed ? "×" : "✓";
+          title.textContent = failed ? "Automated checks found failures:" : "Automated checks complete:";
+          detail.textContent = passed + " passed · " + failed + " failed · " + manual + " manual follow-up" + (manual === 1 ? "" : "s") + ".";
+          appendAutomaticSummaryLinks(links, "fail", "Failures");
+          appendAutomaticSummaryLinks(links, "manual", "Manual follow-up");
+          links.hidden = !links.childNodes.length;
+          return;
+        }
+
+        mark.textContent = "!";
+        title.textContent = "How to use this page:";
+        detail.textContent = "run the cards in a real browser tab, especially after a clean start. Record the build and device below, then mark a card only after checking its expected behaviour. Save one report from the known-good build and another from the candidate build.";
+      }
+
+      function setAutoResult(id, status, message) {
+        report.auto[id] = { status: status, message: message, captured: new Date().toISOString() };
+        var node = byId("auto-" + id);
+        if (node) {
+          node.className = "auto-result " + status;
+          node.innerHTML = "<span><strong>Automatic evidence:</strong> " + escapeHtml(message) + "</span>";
+        }
+        saveReport();
+      }
+
+      function escapeHtml(value) {
+        var node = document.createElement("span");
+        node.textContent = String(value);
+        return node.innerHTML;
+      }
+
+      function mark(card, status) {
+        var id = card.getAttribute("data-test");
+        report.statuses[id] = status;
+        report.events.push(now() + " · " + id + " = " + status);
+        saveReport();
+      }
+
+      function log(id, message) {
+        var node = byId(id);
+        if (!node) { return; }
+        var line = document.createElement("div");
+        line.textContent = now() + " · " + message;
+        node.appendChild(line);
+        node.scrollTop = node.scrollHeight;
+      }
+
+      function setResult(id, message) { write(id, message); }
+
+      function updateEnvironment() {
+        var ua = navigator.userAgent || "unknown";
+        write("ua", ua);
+        write("viewport", window.innerWidth + " × " + window.innerHeight + " · DPR " + window.devicePixelRatio);
+        var storage = "localStorage " + (storageWorks() ? "yes" : "no");
+        var worker = "ServiceWorker " + ("serviceWorker" in navigator ? "yes" : "no");
+        write("capabilities", storage + " · " + worker);
+        write("lifecycle-summary", document.visibilityState + " · online " + navigator.onLine);
+        updateGeometry();
+      }
+
+      function storageWorks() {
+        try {
+          var key = "gecko-storage-probe";
+          window.localStorage.setItem(key, "1");
+          window.localStorage.removeItem(key);
+          return true;
+        } catch (error) { return false; }
+      }
+
+      function drawCanvas() {
+        var canvas = byId("render-canvas");
+        if (!canvas || !canvas.getContext) { return false; }
+        var context = canvas.getContext("2d");
+        var size = canvas.width;
+        var gradient = context.createLinearGradient(0, 0, size, size);
+        gradient.addColorStop(0, "#9ee9e1");
+        gradient.addColorStop(0.48, "#087ea4");
+        gradient.addColorStop(1, "#10243b");
+        context.clearRect(0, 0, size, size);
+        context.fillStyle = gradient;
+        context.fillRect(0, 0, size, size);
+        context.save();
+        context.translate(size / 2, size / 2);
+        context.rotate(frameCount / 70);
+        context.fillStyle = "#efb84a";
+        context.fillRect(-size / 5, -size / 5, size * 0.4, size * 0.4);
+        context.strokeStyle = "#ffffff";
+        context.lineWidth = 7;
+        context.strokeRect(-size / 3, -size / 3, size * 0.66, size * 0.66);
+        context.restore();
+        var pixel = context.getImageData(10, 10, 1, 1).data;
+        write("canvas-pixel", pixel[0] + "," + pixel[1] + "," + pixel[2]);
+        return pixel[3] > 0;
+      }
+
+      function animate() {
+        frameCount += 1;
+        if (frameCount % 4 === 0) { drawCanvas(); }
+        write("frame-counter", String(frameCount));
+        window.requestAnimationFrame(animate);
+      }
+
+      function runRenderCheck() {
+        var ok = drawCanvas();
+        var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        var svgOk = !!svg.createSVGRect;
+        var message = ok && svgOk ? "Canvas and SVG APIs produced pixels. Manually confirm the surface is visible, animated, upright, and still repainting after Back, rotation, and cancelled navigation." : "Rendering self-check could not produce both canvas and SVG output.";
+        setResult("render-result", message);
+      }
+
+      function initRunDetails() {
+        var fields = { "run-build": "build", "run-device": "device", "run-context": "mode" };
+        Object.keys(fields).forEach(function (id) {
+          var node = byId(id);
+          var key = fields[id];
+          if (report.context[key]) { node.value = report.context[key]; }
+          node.addEventListener("change", function () { report.context[key] = node.value; saveReport(); });
+          if (node.tagName === "INPUT") { node.addEventListener("input", function () { report.context[key] = node.value; saveReport(); }); }
+        });
+      }
+
+      function initCardNotes() {
+        all(".card[data-test]").forEach(function (card) {
+          var id = card.getAttribute("data-test");
+          var actions = card.querySelectorAll(".card-actions");
+          var auto = document.createElement("div");
+          var label = document.createElement("label");
+          var title = document.createElement("span");
+          var area = document.createElement("textarea");
+          auto.id = "auto-" + id;
+          auto.className = "auto-result";
+          auto.setAttribute("role", "status");
+          auto.setAttribute("aria-live", "polite");
+          auto.innerHTML = "<span><strong>Automatic evidence:</strong> Not run</span>";
+          card.insertBefore(auto, card.querySelector(".card-head").nextSibling);
+          if (report.auto[id]) { setAutoResult(id, report.auto[id].status, report.auto[id].message); }
+          label.className = "observation";
+          title.textContent = "Observation / evidence";
+          area.placeholder = "Optional note, result, log marker, or follow-up";
+          area.value = report.notes[id] || "";
+          area.setAttribute("aria-label", card.querySelector("h3").textContent + " observation");
+          area.addEventListener("input", function () { report.notes[id] = area.value; saveReport(); });
+          label.appendChild(title);
+          label.appendChild(area);
+          card.insertBefore(label, actions[actions.length - 1]);
+        });
+      }
+
+      function initForms() {
+        var ids = ["text-input", "number-input", "url-input", "select-input", "textarea-input"];
+        ids.forEach(function (id) {
+          var node = byId(id);
+          ["focus", "blur", "input", "change", "compositionstart", "compositionend"].forEach(function (eventName) {
+            node.addEventListener(eventName, function () {
+              log("form-log", id + " · " + eventName + (node.value ? " · " + node.value.slice(0, 42) : ""));
+              setResult("form-result", "Last event: " + id + " / " + eventName + ". Check cursor, IME composition, selection, and paste.");
+            });
+          });
+        });
+        byId("clear-form").addEventListener("click", function () { ids.forEach(function (id) { byId(id).value = ""; }); setResult("form-result", "Fields cleared."); });
+      }
+
+      function initTouch() {
+        var pad = byId("touch-pad");
+        ["touchstart", "touchmove", "touchend"].forEach(function (eventName) {
+          pad.addEventListener(eventName, function (event) {
+            if (eventName === "touchstart") { touchCount += 1; }
+            write("touch-result", eventName + " · touch events " + touchCount);
+            write("touch-log", "Tap count " + tapCount + " · touch events " + touchCount + " · scroll " + Math.round(scrollTop) + "px");
+          }, { passive: true });
+        });
+        pad.addEventListener("click", function () { tapCount += 1; write("touch-result", "click · tap " + tapCount); write("touch-log", "Tap count " + tapCount + " · touch events " + touchCount + " · scroll " + Math.round(scrollTop) + "px"); });
+        all(".row-tap").forEach(function (button) { button.addEventListener("click", function () { tapCount += 1; write("touch-result", "list button activated · tap " + tapCount); }); });
+        byId("scroll-box").addEventListener("scroll", function () { scrollTop = this.scrollTop; write("touch-log", "Tap count " + tapCount + " · touch events " + touchCount + " · scroll " + Math.round(scrollTop) + "px"); });
+      }
+
+      function initPrompts() {
+        byId("alert-button").addEventListener("click", function () { window.alert("Alert returned to the page."); setResult("prompt-result", "Alert returned; check that the page still repaints and accepts input."); });
+        byId("confirm-button").addEventListener("click", function () { var answer = window.confirm("Choose OK or Cancel. Then tap the page."); setResult("prompt-result", "Confirm returned " + answer + "."); });
+        byId("prompt-button").addEventListener("click", function () { var answer = window.prompt("Enter a short value:", "migration test"); setResult("prompt-result", answer === null ? "Prompt cancelled." : "Prompt returned: " + answer); });
+        byId("arm-unload").addEventListener("click", function () {
+          beforeUnloadArmed = !beforeUnloadArmed;
+          byId("arm-unload").textContent = beforeUnloadArmed ? "Disarm beforeunload" : "Arm beforeunload";
+          setResult("prompt-result", beforeUnloadArmed ? "beforeunload armed. Use Navigate away, choose Stay, then Reload." : "beforeunload disarmed.");
+        });
+        window.addEventListener("beforeunload", function (event) {
+          if (!beforeUnloadArmed) { return; }
+          event.preventDefault();
+          event.returnValue = "Unsaved migration test state";
+          return event.returnValue;
+        });
+        if (new URLSearchParams(window.location.search).get("test") === "destination") {
+          setResult("prompt-result", "Destination loaded. Use Back to return and verify history/title pairing.");
+          byId("route-banner").hidden = false;
+          write("route-banner", "Navigation destination loaded. Use the browser Back control to return to the guarded page.");
+        }
+      }
+
+      function initNavigation() {
+        function refreshRoute(message) {
+          var route = window.location.pathname + window.location.search + window.location.hash;
+          write("route-code", "route: " + route);
+          setResult("navigation-result", message || "Route changed; check URL, title, and address-bar state.");
+        }
+        byId("push-route").addEventListener("click", function () {
+          routeNumber += 1;
+          var state = { route: routeNumber, title: "Migration route " + routeNumber };
+          window.history.pushState(state, state.title, "?route=" + routeNumber);
+          document.title = state.title;
+          refreshRoute("pushState committed route " + routeNumber + ". Use Back/Forward and Reload now.");
+        });
+        byId("history-back").addEventListener("click", function () { window.history.back(); });
+        byId("history-forward").addEventListener("click", function () { window.history.forward(); });
+        byId("long-title").addEventListener("click", function () {
+          document.title = "T".repeat(16385);
+          setResult("navigation-result", "Set a 16385-character title. Open another tab, quit, and restart to check session restore.");
+        });
+        byId("window-open-button").addEventListener("click", function () {
+          var popup = window.open("?test=popup&opened=window", "_blank");
+          setResult("navigation-result", popup ? "window.open() returned a window handle. Check the new tab's opener/referrer banner." : "window.open() was blocked or did not return a handle.");
+        });
+        window.addEventListener("popstate", function (event) { refreshRoute("popstate returned " + (event.state ? JSON.stringify(event.state) : "the initial entry") + "."); });
+        refreshRoute();
+        if (new URLSearchParams(window.location.search).get("test") === "popup") {
+          byId("route-banner").hidden = false;
+          write("route-banner", "Popup test loaded · opener " + (window.opener ? "available" : "not available") + " · referrer " + (document.referrer || "none"));
+          setResult("navigation-result", "Popup route loaded. Close this tab and confirm the source tab remains responsive.");
+        }
+      }
+
+      var storageKey = "gecko-migration-value";
+
+      function checkIndexedDb(value) {
+        if (!window.indexedDB) { return Promise.resolve({ ok: false, text: "IndexedDB unavailable" }); }
+        return new Promise(function (resolve, reject) {
+          var request = window.indexedDB.open("gecko-migration-test", 1);
+          request.onupgradeneeded = function () {
+            if (!request.result.objectStoreNames.contains("values")) { request.result.createObjectStore("values"); }
+          };
+          request.onerror = function () { reject(request.error || new Error("IndexedDB open failed")); };
+          request.onsuccess = function () {
+            var database = request.result;
+            var writeTransaction = database.transaction("values", "readwrite");
+            writeTransaction.objectStore("values").put(value, "last");
+            writeTransaction.onerror = function () { database.close(); reject(writeTransaction.error || new Error("IndexedDB write failed")); };
+            writeTransaction.oncomplete = function () {
+              var readRequest = database.transaction("values").objectStore("values").get("last");
+              readRequest.onerror = function () { database.close(); reject(readRequest.error || new Error("IndexedDB read failed")); };
+              readRequest.onsuccess = function () {
+                var matches = readRequest.result === value;
+                database.close();
+                resolve({ ok: matches, text: "IndexedDB " + (matches ? "OK" : "FAIL") });
+              };
+            };
+          };
+        });
+      }
+
+      function checkCacheStorage(value) {
+        if (!window.caches || !window.Response || !window.Request) { return Promise.resolve({ ok: false, text: "Cache Storage unavailable" }); }
+        var request = new Request(new URL("cache-probe.txt", window.location.href).href);
+        return window.caches.open("gecko-migration-test").then(function (cache) {
+          return cache.put(request, new Response(value)).then(function () { return cache.match(request); });
+        }).then(function (response) { return response ? response.text() : ""; }).then(function (stored) {
+          var matches = stored === value;
+          return { ok: matches, text: "Cache Storage " + (matches ? "OK" : "FAIL") };
+        });
+      }
+
+      function checkQuota() {
+        if (!navigator.storage || !navigator.storage.estimate) { return Promise.resolve({ ok: false, text: "quota unavailable" }); }
+        return navigator.storage.estimate().then(function (estimate) {
+          var usage = typeof estimate.usage === "number" ? Math.round(estimate.usage / 1024) + " KiB used" : "usage unknown";
+          return { ok: typeof estimate.usage === "number", text: "quota " + usage };
+        });
+      }
+
+      function runStorageStack() {
+        var value = "saved-" + Date.now();
+        var base;
+        try {
+          window.localStorage.setItem(storageKey, value);
+          window.sessionStorage.setItem(storageKey, value);
+          document.cookie = storageKey + "=cookie-ok; path=/; SameSite=Lax";
+          var localOk = window.localStorage.getItem(storageKey) === value;
+          var sessionOk = window.sessionStorage.getItem(storageKey) === value;
+          var cookieOk = document.cookie.indexOf(storageKey + "=cookie-ok") >= 0;
+          base = { ok: localOk && sessionOk && cookieOk, text: "localStorage " + (localOk ? "OK" : "FAIL") + " · sessionStorage " + (sessionOk ? "OK" : "FAIL") + " · cookie " + (cookieOk ? "visible" : "not visible") };
+        } catch (error) {
+          base = { ok: false, text: "Storage blocked or unavailable: " + error.name };
+        }
+        setResult("storage-result", base.text + (base.ok ? " · checking IndexedDB and caches…" : ""));
+        if (!base.ok) { return Promise.resolve(base); }
+        return Promise.all([checkIndexedDb(value), checkCacheStorage(value), checkQuota()]).then(function (parts) {
+          var result = { ok: base.ok && parts.every(function (part) { return part.ok; }), text: base.text + " · " + parts.map(function (part) { return part.text; }).join(" · ") };
+          setResult("storage-result", result.text);
+          return result;
+        }).catch(function (error) {
+          var result = { ok: false, text: base.text + " · persistent storage failed: " + error.message };
+          setResult("storage-result", result.text);
+          return result;
+        });
+      }
+
+      function runWorkerCheck() {
+        if (!("serviceWorker" in navigator)) {
+          var unavailable = { ok: false, text: "ServiceWorker API is unavailable in this browser/profile." };
+          setResult("storage-result", unavailable.text);
+          return Promise.resolve(unavailable);
+        }
+        setResult("storage-result", "Registering same-origin worker…");
+        return navigator.serviceWorker.register("service-worker.js", { scope: "./" }).then(function () { return navigator.serviceWorker.ready; }).then(function (registration) {
+          return new Promise(function (resolve, reject) {
+            var channel = new MessageChannel();
+            var timeout = window.setTimeout(function () { reject(new Error("worker timeout")); }, 5000);
+            channel.port1.onmessage = function (event) { window.clearTimeout(timeout); resolve(event.data); };
+            registration.active.postMessage({ type: "ping" }, [channel.port2]);
+          });
+        }).then(function (reply) {
+          var pong = !!(reply && reply.type === "pong");
+          var result = { ok: pong, text: "ServiceWorker round trip: " + JSON.stringify(reply) };
+          setResult("storage-result", result.text + ". Reload and repeat if checking startup notifications.");
+          return result;
+        }).catch(function (error) {
+          var result = { ok: false, text: "ServiceWorker failed: " + error.message };
+          setResult("storage-result", result.text);
+          return result;
+        });
+      }
+
+      function initStorage() {
+        byId("storage-check").addEventListener("click", function () { runStorageStack(); });
+        byId("storage-clear").addEventListener("click", function () {
+          try { window.localStorage.removeItem(storageKey); window.sessionStorage.removeItem(storageKey); } catch (error) {}
+          document.cookie = storageKey + "=; path=/; Max-Age=0; SameSite=Lax";
+          if (window.caches) { window.caches.delete("gecko-migration-test"); }
+          if (window.indexedDB) { window.indexedDB.deleteDatabase("gecko-migration-test"); }
+          setResult("storage-result", "Test data cleared. Reload before starting another persistence run.");
+        });
+        byId("worker-check").addEventListener("click", function () { runWorkerCheck(); });
+      }
+
+      function fullscreenElement() {
+        return document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || null;
+      }
+
+      function fullscreenRequest(element) {
+        return element.requestFullscreen || element.mozRequestFullScreen || element.webkitRequestFullscreen || null;
+      }
+
+      function fullscreenExit() {
+        return document.exitFullscreen || document.mozCancelFullScreen || document.webkitExitFullscreen || null;
+      }
+
+      function updateGeometry() {
+        var probe = document.createElement("div");
+        probe.style.cssText = "position:fixed;left:-1000px;top:0;width:1px;height:1px;padding-top:env(safe-area-inset-top);padding-right:env(safe-area-inset-right);padding-bottom:env(safe-area-inset-bottom);padding-left:env(safe-area-inset-left);";
+        document.body.appendChild(probe);
+        var style = window.getComputedStyle(probe);
+        write("safe-top", style.paddingTop);
+        write("safe-right", style.paddingRight);
+        write("safe-bottom", style.paddingBottom);
+        write("safe-left", style.paddingLeft);
+        probe.remove();
+        var orientation = window.innerWidth > window.innerHeight ? "landscape" : "portrait";
+        var activeElement = fullscreenElement();
+        var demo = byId("safe-demo");
+        var demoFullscreen = activeElement === demo;
+        var button = byId("fullscreen-button");
+        write("orientation", orientation);
+        write("safe-viewport", window.innerWidth + " × " + window.innerHeight);
+        write("safe-dpr", String(window.devicePixelRatio));
+        write("fullscreen-state", demoFullscreen ? "probe" : activeElement ? "other element" : "off");
+        button.textContent = demoFullscreen ? "Exit fullscreen" : "Enter fullscreen";
+        button.setAttribute("aria-pressed", demoFullscreen ? "true" : "false");
+        button.classList.toggle("secondary", demoFullscreen);
+        button.disabled = !activeElement && !fullscreenRequest(demo);
+      }
+
+      function initGeometry() {
+        byId("geometry-refresh").addEventListener("click", function () { updateGeometry(); setResult("geometry-result", "Geometry refreshed. Rotate and repeat; compare all four CSS insets and viewport dimensions."); });
+        byId("fullscreen-button").addEventListener("click", function () {
+          var activeElement = fullscreenElement();
+          var demo = byId("safe-demo");
+          var operation;
+          try {
+            if (activeElement) {
+              operation = fullscreenExit();
+              if (!operation) { setResult("geometry-result", "Fullscreen exit API unavailable; use the browser or system Back control."); return; }
+              operation = operation.call(document);
+            } else {
+              operation = fullscreenRequest(demo);
+              if (!operation) { setResult("geometry-result", "Fullscreen API unavailable."); updateGeometry(); return; }
+              operation = operation.call(demo);
+            }
+            Promise.resolve(operation).then(function () {
+              updateGeometry();
+              setResult("geometry-result", fullscreenElement() === demo ? "Inset probe fills the fullscreen viewport. Check the amber edge bands and dashed safe rectangle; rotate and repeat." : "Exited the fullscreen inset probe.");
+            }).catch(function (error) { setResult("geometry-result", "Fullscreen rejected: " + error.name); updateGeometry(); });
+          } catch (error) { setResult("geometry-result", "Fullscreen failed: " + error.name); updateGeometry(); }
+        });
+        function fullscreenChanged() {
+          updateGeometry();
+          setResult("geometry-result", fullscreenElement() === byId("safe-demo") ? "Inset probe fills the fullscreen viewport. Check all four edges, then rotate and repeat." : "Fullscreen inset probe closed.");
+        }
+        document.addEventListener("fullscreenchange", fullscreenChanged);
+        document.addEventListener("mozfullscreenchange", fullscreenChanged);
+        document.addEventListener("webkitfullscreenchange", fullscreenChanged);
+        window.addEventListener("resize", function () { updateEnvironment(); });
+        window.addEventListener("orientationchange", function () { window.setTimeout(updateEnvironment, 250); });
+      }
+
+      function initBridges() {
+        byId("file-input").addEventListener("change", function () { setResult("bridge-result", this.files && this.files.length ? "Selected: " + this.files[0].name + " (" + this.files[0].size + " bytes)" : "File picker cancelled."); });
+        byId("color-input").addEventListener("change", function () { setResult("bridge-result", "Color picker returned " + this.value + "."); });
+        byId("clipboard-button").addEventListener("click", function () {
+          var text = "Gecko migration clipboard smoke test";
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(function () { setResult("bridge-result", "Clipboard write succeeded; paste into the IME field to verify read/paste."); }).catch(function (error) { setResult("bridge-result", "Clipboard write rejected: " + error.name + ". Try the browser copy menu instead."); });
+          } else { setResult("bridge-result", "Async clipboard API unavailable; use selection and the browser copy/paste menu."); }
+        });
+      }
+
+      function initPermissions() {
+        byId("location-button").addEventListener("click", function () {
+          if (!navigator.geolocation) { setResult("permission-result", "Geolocation API unavailable."); return; }
+          setResult("permission-result", "Waiting for the location permission response…");
+          navigator.geolocation.getCurrentPosition(function () {
+            setResult("permission-result", "Location permission granted and a position was received; coordinates are intentionally not displayed.");
+          }, function (error) {
+            setResult("permission-result", "Location request ended with " + error.code + ": " + error.message);
+          }, { enableHighAccuracy: false, maximumAge: 0, timeout: 15000 });
+        });
+        byId("media-permission-button").addEventListener("click", function () {
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { setResult("permission-result", "Camera/microphone capture API unavailable."); return; }
+          setResult("permission-result", "Waiting for the camera and microphone permission response…");
+          navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(function (stream) {
+            stream.getTracks().forEach(function (track) { track.stop(); });
+            setResult("permission-result", "Camera and microphone opened successfully; all capture tracks were stopped immediately.");
+          }).catch(function (error) { setResult("permission-result", "Camera/microphone request ended with " + error.name + ": " + error.message); });
+        });
+      }
+
+      function initMedia() {
+        [["video", "video-result"], ["audio", "audio-result"]].forEach(function (pair) {
+          var media = byId(pair[0]);
+          ["loadstart", "loadedmetadata", "play", "pause", "ended", "error"].forEach(function (eventName) {
+            media.addEventListener(eventName, function () { setResult(pair[1], eventName + (media.duration ? " · duration " + media.duration.toFixed(1) + "s" : "") + ". Repeat after EOS and after rotation."); });
+          });
+        });
+      }
+
+      function initNetwork() {
+        byId("cors-check").addEventListener("click", function () {
+          setResult("network-result", "Requesting https://example.com/ with mode=cors…");
+          fetch("https://example.com/", { mode: "cors", cache: "no-store" }).then(function (response) { setResult("network-result", "Cross-origin response was exposed with status " + response.status + ". Check whether that is expected for this app origin."); }).catch(function (error) { setResult("network-result", "Cross-origin request was blocked or unavailable (" + error.name + "). This is the expected failure for a non-CORS response."); });
+        });
+      }
+
+      function delay(milliseconds) {
+        return new Promise(function (resolve) { window.setTimeout(resolve, milliseconds); });
+      }
+
+      function automaticRenderCheck() {
+        var firstFrame = frameCount;
+        var canvas = byId("render-canvas");
+        return delay(350).then(function () {
+          var pixelOk = drawCanvas();
+          var rect = canvas.getBoundingClientRect();
+          var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+          var frameOk = frameCount > firstFrame;
+          var ok = pixelOk && !!svg.createSVGRect && frameOk && rect.width > 0 && rect.height > 0;
+          var message = "canvas pixels " + (pixelOk ? "OK" : "FAIL") + " · SVG " + (svg.createSVGRect ? "OK" : "FAIL") + " · animation " + (frameOk ? "advanced" : "stalled") + " · surface " + Math.round(rect.width) + "×" + Math.round(rect.height) + ". Visual compositing still needs confirmation.";
+          setResult("render-result", message);
+          return { ok: ok, text: message };
+        });
+      }
+
+      function automaticTouchCheck() {
+        var box = byId("scroll-box");
+        var oldTop = box.scrollTop;
+        var oldScrollBehavior = box.style.scrollBehavior;
+        var scrollRange = Math.max(0, box.scrollHeight - box.clientHeight);
+        var overflow = scrollRange > 1;
+        var targets = all("#touch button");
+        var targetSize = targets.every(function (button) { return button.getBoundingClientRect().height >= 42; });
+        box.style.scrollBehavior = "auto";
+        box.getBoundingClientRect();
+        box.scrollTop = Math.min(50, scrollRange);
+        return delay(60).then(function () {
+          var scrolled = box.scrollTop > 0;
+          var input = (navigator.maxTouchPoints || 0) + " touch point(s)" + (window.PointerEvent ? " · PointerEvent" : "");
+          box.scrollTop = oldTop;
+          box.style.scrollBehavior = oldScrollBehavior;
+          return { ok: overflow && targetSize, text: "scroll range " + Math.round(scrollRange) + "px " + (overflow ? "OK" : "FAIL") + " · position probe " + (scrolled ? "OK" : "not observed") + " · 42px targets " + (targetSize ? "OK" : "FAIL") + " · " + input + ". Real APZ gestures, hit-testing, zoom, and long-press remain manual." };
+        });
+      }
+
+      function automaticFormsCheck() {
+        var select = byId("select-input");
+        var oldIndex = select.selectedIndex;
+        var controls = [byId("text-input"), byId("number-input"), byId("url-input"), select, byId("textarea-input")];
+        var typesOk = byId("number-input").type === "number" && byId("url-input").type === "url" && select.options.length >= 3;
+        var eventOk = false;
+        function observed() { eventOk = true; }
+        select.addEventListener("change", observed);
+        select.selectedIndex = oldIndex === 1 ? 2 : 1;
+        select.dispatchEvent(new Event("change", { bubbles: true }));
+        select.selectedIndex = oldIndex;
+        select.removeEventListener("change", observed);
+        var ok = controls.every(function (node) { return !!node && typeof node.value === "string"; }) && typesOk && eventOk;
+        return { ok: ok, text: "control types " + (typesOk ? "OK" : "FAIL") + " · synthetic change wiring " + (eventOk ? "OK" : "FAIL") + ". Keyboard, IME, selection, paste, and the native select dialog remain manual." };
+      }
+
+      function automaticPromptsCheck() {
+        var available = typeof window.alert === "function" && typeof window.confirm === "function" && typeof window.prompt === "function";
+        return { status: "manual", text: "Alert, confirm, prompt, and beforeunload APIs " + (available ? "are present" : "are incomplete") + ". Dialog routing and Stay/Leave are intentionally not triggered automatically." };
+      }
+
+      function automaticNavigationCheck() {
+        var originalHref = window.location.href;
+        var originalTitle = document.title;
+        var originalState = window.history.state;
+        var probeUrl = new URL(originalHref);
+        probeUrl.searchParams.set("auto-history-probe", String(Date.now()));
+        return new Promise(function (resolve) {
+          var finished = false;
+          var timeout;
+          function finish(ok, text) {
+            if (finished) { return; }
+            finished = true;
+            window.clearTimeout(timeout);
+            window.removeEventListener("popstate", returned);
+            document.title = originalTitle;
+            resolve({ ok: ok, text: text });
+          }
+          function returned() {
+            var restored = window.location.href === originalHref;
+            setResult("navigation-result", "Automatic pushState/popstate round trip " + (restored ? "returned to the original route." : "did not restore the original route."));
+            finish(restored, "pushState/popstate round trip " + (restored ? "OK" : "FAIL") + ". Browser chrome history, redirects, and popup/tab handling remain manual.");
+          }
+          window.addEventListener("popstate", returned);
+          timeout = window.setTimeout(function () {
+            if (window.location.href !== originalHref) { window.history.replaceState(originalState, originalTitle, originalHref); }
+            finish(false, "pushState/popstate timed out. Browser chrome history remains manual.");
+          }, 2500);
+          try {
+            window.history.pushState({ automaticProbe: true }, originalTitle, probeUrl.href);
+            if (window.location.href === originalHref) { finish(false, "pushState did not change the route."); return; }
+            window.history.back();
+          } catch (error) {
+            finish(false, "History API probe failed: " + error.name);
+          }
+        });
+      }
+
+      function automaticLifecycleCheck() {
+        var frame = document.querySelector("#lifecycle iframe");
+        var token = "lifecycle-" + Date.now();
+        var frameReady = !!(frame && frame.contentDocument && frame.contentDocument.body);
+        return new Promise(function (resolve) {
+          var timeout;
+          function receive(event) {
+            if (!event.data || event.data.type !== "automatic-lifecycle" || event.data.token !== token) { return; }
+            window.clearTimeout(timeout);
+            window.removeEventListener("message", receive);
+            resolve({ ok: frameReady && typeof document.visibilityState === "string", text: "same-window message OK · child frame " + (frameReady ? "ready" : "not ready") + " · visibility " + document.visibilityState + ". Tab switching, suspend/resume, and process teardown remain manual." });
+          }
+          window.addEventListener("message", receive);
+          timeout = window.setTimeout(function () { window.removeEventListener("message", receive); resolve({ ok: false, text: "postMessage round trip timed out; child frame " + (frameReady ? "ready" : "not ready") + "." }); }, 1200);
+          window.postMessage({ type: "automatic-lifecycle", token: token }, window.location.origin);
+        });
+      }
+
+      function automaticStorageCheck() {
+        return runStorageStack().then(function (storageResult) {
+          return runWorkerCheck().then(function (workerResult) {
+            return { ok: storageResult.ok && workerResult.ok, text: storageResult.text + " · " + workerResult.text + ". Reload/restart persistence remains manual." };
+          });
+        });
+      }
+
+      function automaticGeometryCheck() {
+        updateGeometry();
+        var viewportOk = window.innerWidth > 0 && window.innerHeight > 0 && window.devicePixelRatio > 0;
+        var safeValues = ["safe-top", "safe-right", "safe-bottom", "safe-left"].map(function (id) { return byId(id).textContent; });
+        var safeOk = safeValues.every(function (value) { return /^\d+(\.\d+)?px$/.test(value); });
+        return { ok: viewportOk && safeOk, text: "viewport " + window.innerWidth + "×" + window.innerHeight + " · DPR " + window.devicePixelRatio + " · safe-area T/R/B/L " + safeValues.join("/") + " · fullscreen probe " + (fullscreenRequest(byId("safe-demo")) ? "available" : "unavailable") + ". Rotation and physical bounds remain manual." };
+      }
+
+      function automaticBridgesCheck() {
+        var fileOk = byId("file-input").type === "file";
+        var colorOk = byId("color-input").type === "color";
+        var downloadOk = !!document.querySelector("#bridges a[download]");
+        var clipboard = !!(navigator.clipboard && navigator.clipboard.writeText);
+        return { ok: fileOk && colorOk && downloadOk, text: "file input " + (fileOk ? "OK" : "FAIL") + " · color input " + (colorOk ? "OK" : "FAIL") + " · download attribute " + (downloadOk ? "OK" : "FAIL") + " · async clipboard " + (clipboard ? "available" : "unavailable") + ". Native pickers, clipboard, download, and Browser-menu PDF output remain manual." };
+      }
+
+      function automaticAboutCheck() {
+        var links = all("#about a");
+        var schemesOk = links.some(function (link) { return link.getAttribute("href") === "about:config"; }) && links.some(function (link) { return link.protocol === "mailto:"; }) && links.some(function (link) { return link.protocol === "tel:"; });
+        return { status: "manual", text: "UA is readable and internal/external protocol links are " + (schemesOk ? "well formed" : "incomplete") + ". Their browser and handler routing must be exercised manually." };
+      }
+
+      function automaticPermissionsCheck() {
+        var geo = !!navigator.geolocation;
+        var capture = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+        var base = "geolocation API " + (geo ? "available" : "unavailable") + " · camera/mic API " + (capture ? "available" : "unavailable");
+        if (!navigator.permissions || !navigator.permissions.query) { return Promise.resolve({ ok: geo && capture, text: base + " · permission state query unavailable. Prompts remain manual." }); }
+        return navigator.permissions.query({ name: "geolocation" }).then(function (permission) {
+          return { ok: geo && capture, text: base + " · current location permission " + permission.state + ". No prompt was opened; Allow/Deny and device acquisition remain manual." };
+        }).catch(function () { return { ok: geo && capture, text: base + " · location permission state unsupported. Prompts remain manual." }; });
+      }
+
+      function automaticMediaCheck() {
+        var video = byId("video");
+        var audio = byId("audio");
+        var videoSupport = video.canPlayType("video/mp4") || "none";
+        var audioSupport = audio.canPlayType("audio/mpeg") || "none";
+        var font = window.getComputedStyle(document.querySelector(".font-sample")).fontFamily;
+        return { ok: videoSupport !== "none" && audioSupport !== "none" && !!font, text: "MP4 " + videoSupport + " · MP3 " + audioSupport + " · font style resolved. Playback, seek, EOS, rotation, and teardown remain manual; external media loading is not scored." };
+      }
+
+      function automaticNetworkCheck() {
+        return fetch("service-worker.js?automatic-network-probe=" + Date.now(), { cache: "no-store", credentials: "same-origin" }).then(function (response) {
+          return response.text().then(function (body) {
+            var ok = response.ok && body.indexOf("addEventListener") >= 0;
+            return { ok: ok, text: "same-origin fetch status " + response.status + " · response body " + (body.length ? "received" : "empty") + ". Certificate, auth, CORS UI, redirects, and error pages remain manual." };
+          });
+        }).catch(function (error) { return { ok: false, text: "same-origin fetch failed: " + error.name + ". External network paths remain manual." }; });
+      }
+
+      function automaticRobustnessCheck() {
+        return { status: "manual", text: "No safe in-page substitute for tab close, restore, process teardown, or soak testing. Use the browser UI and watch the lifecycle log." };
+      }
+
+      function runAutomatedChecks() {
+        var button = byId("run-quick");
+        var checks = [
+          ["render", automaticRenderCheck], ["touch", automaticTouchCheck], ["forms", automaticFormsCheck], ["prompts", automaticPromptsCheck],
+          ["navigation", automaticNavigationCheck], ["lifecycle", automaticLifecycleCheck], ["storage", automaticStorageCheck], ["geometry", automaticGeometryCheck],
+          ["bridges", automaticBridgesCheck], ["about", automaticAboutCheck], ["permissions", automaticPermissionsCheck], ["media", automaticMediaCheck],
+          ["network", automaticNetworkCheck], ["robustness", automaticRobustnessCheck]
+        ];
+        automaticRunActive = true;
+        report.auto = {};
+        all(".auto-result").forEach(function (node) { node.className = "auto-result"; node.innerHTML = "<span><strong>Automatic evidence:</strong> Waiting</span>"; });
+        button.disabled = true;
+        button.textContent = "Running 0 / " + checks.length + "…";
+        report.events.push(now() + " · automated evidence run started");
+        saveReport();
+        var sequence = Promise.resolve();
+        checks.forEach(function (entry, index) {
+          sequence = sequence.then(function () {
+            var id = entry[0];
+            setAutoResult(id, "running", "Running…");
+            button.textContent = "Running " + (index + 1) + " / " + checks.length + "…";
+            return Promise.resolve().then(entry[1]).then(function (result) {
+              var status = result.status || (result.ok ? "pass" : "fail");
+              setAutoResult(id, status, result.text);
+            }).catch(function (error) {
+              setAutoResult(id, "fail", "Check failed unexpectedly: " + (error.message || error.name || error));
+            });
+          });
+        });
+        return sequence.then(function () {
+          automaticRunActive = false;
+          button.disabled = false;
+          button.textContent = "Run automated checks";
+          report.events.push(now() + " · automated evidence run completed");
+          saveReport();
+        });
+      }
+
+      function lifecycle(message) {
+        write("lifecycle-summary", message || (document.visibilityState + " · online " + navigator.onLine));
+        log("lifecycle-log", message || document.visibilityState);
+      }
+
+      function reportText() {
+        var lines = ["Gecko migration test bench", "Build: " + (report.context.build || "not recorded"), "Device: " + (report.context.device || "not recorded"), "Context: " + (report.context.mode || "Normal browser"), "URL: " + window.location.href, "UA: " + navigator.userAgent, "Viewport: " + window.innerWidth + "x" + window.innerHeight + " DPR " + window.devicePixelRatio, "Started: " + report.started, "Captured: " + new Date().toISOString(), ""];
+        all(".card[data-test]").forEach(function (card) {
+          var id = card.getAttribute("data-test");
+          var title = card.querySelector("h3").textContent;
+          lines.push((report.statuses[id] || "not run").toUpperCase() + " · " + title);
+          lines.push("  Link: " + new URL("#" + id, window.location.href).href);
+          if (report.auto[id]) { lines.push("  Automatic " + report.auto[id].status.toUpperCase() + ": " + report.auto[id].message); }
+          else { lines.push("  Automatic: not run"); }
+          if (report.notes[id] && report.notes[id].trim()) { lines.push("  Note: " + report.notes[id].trim().replace(/\n/g, "\n  ")); }
+        });
+        lines.push("", "Recent events:");
+        report.events.slice(-20).forEach(function (event) { lines.push(event); });
+        return lines.join("\n");
+      }
+
+      function copyText(text) {
+        function fallbackCopy() {
+          var area = document.createElement("textarea");
+          area.value = text;
+          area.style.position = "fixed";
+          area.style.left = "-1000px";
+          document.body.appendChild(area);
+          area.select();
+          try { document.execCommand("copy"); } finally { area.remove(); }
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) { return navigator.clipboard.writeText(text).catch(function () { fallbackCopy(); }); }
+        fallbackCopy();
+        return Promise.resolve();
+      }
+
+      function initMarks() {
+        var resetLabelTimer;
+        all(".card").forEach(function (card) {
+          card.querySelectorAll('[data-action="pass"]').forEach(function (button) { button.addEventListener("click", function () { mark(card, "pass"); }); });
+          card.querySelectorAll('[data-action="fail"]').forEach(function (button) { button.addEventListener("click", function () { mark(card, "fail"); }); });
+        });
+        byId("reset-report").addEventListener("click", function (event) {
+          var resetButton = byId("reset-report");
+          automaticRunActive = false;
+          report.statuses = {};
+          report.notes = {};
+          report.auto = {};
+          report.started = new Date().toISOString();
+          report.events = [now() + " · report reset"];
+          all(".observation textarea").forEach(function (area) { area.value = ""; });
+          all(".auto-result").forEach(function (node) { node.className = "auto-result"; node.innerHTML = "<span><strong>Automatic evidence:</strong> Not run</span>"; });
+          saveReport();
+          window.clearTimeout(resetLabelTimer);
+          resetButton.textContent = "Results cleared";
+          resetButton.classList.add("reset-complete");
+          if (event.detail) { resetButton.blur(); }
+          resetLabelTimer = window.setTimeout(function () {
+            resetButton.textContent = "Clear results";
+            resetButton.classList.remove("reset-complete");
+          }, 1400);
+        });
+        byId("mark-manual").addEventListener("click", function () { all(".card[data-test]").forEach(function (card) { if (!report.statuses[card.getAttribute("data-test")]) { mark(card, "manual"); } }); });
+        function copyReport() { copyText(reportText()).then(function () { write("report-count", "Report copied · " + Object.keys(report.statuses).length + " marked"); }).catch(function () { write("report-count", "Copy failed; select the report from the page or use browser copy."); }); }
+        byId("copy-report").addEventListener("click", copyReport);
+        byId("copy-report-bottom").addEventListener("click", copyReport);
+      }
+
+      loadReport();
+      initRunDetails();
+      initCardNotes();
+      updateEnvironment();
+      initForms();
+      initTouch();
+      initPrompts();
+      initNavigation();
+      initStorage();
+      initGeometry();
+      initBridges();
+      initPermissions();
+      initMedia();
+      initNetwork();
+      initMarks();
+      byId("render-check").addEventListener("click", runRenderCheck);
+      byId("run-quick").addEventListener("click", runAutomatedChecks);
+      document.addEventListener("visibilitychange", function () { lifecycle("visibility: " + document.visibilityState); });
+      window.addEventListener("pageshow", function () { lifecycle("pageshow"); });
+      window.addEventListener("pagehide", function () { lifecycle("pagehide"); saveReport(); });
+      window.addEventListener("online", function () { lifecycle("online"); });
+      window.addEventListener("offline", function () { lifecycle("offline"); });
+      window.addEventListener("message", function (event) { if (event.data && event.data.type === "frame-click") { setResult("lifecycle-result", "Same-origin child frame sent a click message."); } });
+      byId("lifecycle-result").textContent = "Same-origin frame ready; switch away and return to build a lifecycle trace.";
+      updateReportSummary();
+      drawCanvas();
+      window.requestAnimationFrame(animate);
+    }());
+  </script>
+</body>
+</html>

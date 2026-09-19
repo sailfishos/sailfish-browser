@@ -16,8 +16,6 @@ class QString;
 
 struct BrowserPaths
 {
-    static QString downloadLocation();
-    static QString picturesLocation();
     static QString dataLocation();
     static QString applicationsLocation();
     static QString cacheLocation();

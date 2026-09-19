@@ -87,14 +87,6 @@ QHash<int, QByteArray> SearchEngineModel::roleNames() const
     return roles;
 }
 
-void SearchEngineModel::classBegin()
-{
-}
-
-void SearchEngineModel::componentComplete()
-{
-}
-
 void SearchEngineModel::add(const QString &title, const QString &url)
 {
     for (const SearchEngine& engine : m_searchEngines) {

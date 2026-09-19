@@ -15,6 +15,7 @@
 #include <transferengineinterface.h>
 #include <transfertypes.h>
 #include <QDir>
+#include <QDBusPendingCallWatcher>
 #include <QFile>
 #include <QDebug>
 
@@ -60,6 +61,13 @@ void DownloadManager::recvObserve(const QString message, const QVariant data)
     bool isSaveAsPdf = dataMap.value(QStringLiteral("saveAsPdf")).toBool();
     qulonglong downloadId(dataMap.value(QStringLiteral("id")).toULongLong());
 
+    if (m_pendingTransferCreations.contains(downloadId)) {
+        if (msg != QLatin1Literal("dl-start")) {
+            m_pendingTransferMessages[downloadId].append(dataMap);
+        }
+        return;
+    }
+
     qCInfo(lcDownloadLog) << "Browser received embed:download message:" << msg
                           << "target path:" << targetPath
                           << "existing transfer:" << m_download2transferMap.contains(downloadId);
@@ -80,6 +88,7 @@ void DownloadManager::recvObserve(const QString message, const QVariant data)
         emit downloadStatusChanged(downloadId, DownloadStatus::Started, data);
     } else if (msg == QLatin1Literal("dl-start")) { // create new transfer
         emit downloadStarted();
+        m_pendingTransferCreations.insert(downloadId);
 
         QLatin1Literal browserInterface("org.sailfishos.browser");
         QStringList callback;
@@ -93,19 +102,32 @@ void DownloadManager::recvObserve(const QString message, const QVariant data)
                                                                         callback,
                                                                         QString("cancelTransfer"),
                                                                         QString("restartTransfer"));
-        reply.waitForFinished();
+        QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(reply, this);
+        connect(watcher, &QDBusPendingCallWatcher::finished,
+                this, [this, downloadId, data](QDBusPendingCallWatcher *watcher) {
+            QDBusPendingReply<int> reply = *watcher;
+            watcher->deleteLater();
+            m_pendingTransferCreations.remove(downloadId);
 
-        if (reply.isError()) {
-            qWarning() << "DownloadManager::recvObserve: failed to get transfer ID!" << reply.error();
-            return;
-        }
+            if (reply.isError()) {
+                m_pendingTransferMessages.remove(downloadId);
+                qWarning() << "DownloadManager::recvObserve: failed to get transfer ID!"
+                           << reply.error();
+                checkAllTransfers();
+                return;
+            }
 
-        int transferId(reply.value());
+            const int transferId = reply.value();
+            m_download2transferMap.insert(downloadId, transferId);
+            m_transfer2downloadMap.insert(transferId, downloadId);
+            m_transferClient->startTransfer(transferId);
+            emit downloadStatusChanged(downloadId, DownloadStatus::Started, data);
 
-        m_download2transferMap.insert(downloadId, transferId);
-        m_transfer2downloadMap.insert(transferId, downloadId);
-        m_transferClient->startTransfer(transferId);
-        emit downloadStatusChanged(downloadId, DownloadStatus::Started, data);
+            const QList<QVariantMap> pendingMessages = m_pendingTransferMessages.take(downloadId);
+            for (const QVariantMap &pendingMessage : pendingMessages) {
+                recvObserve(QStringLiteral("embed:download"), pendingMessage);
+            }
+        });
     } else if (msg == QLatin1Literal("dl-progress")) {
         qreal progress(dataMap.value(QStringLiteral("percent")).toULongLong() / 100.0);
         qCInfo(lcDownloadLog) << "Browser update download progress:" << progress;
@@ -129,15 +151,6 @@ void DownloadManager::recvObserve(const QString message, const QVariant data)
                                          QString("download canceled"));
         emit downloadStatusChanged(downloadId, DownloadStatus::Canceled, data);
         checkAllTransfers();
-    }
-}
-
-void DownloadManager::cancelActiveTransfers()
-{
-    for (qulonglong downloadId : m_statusCache.keys()) {
-        if (m_statusCache.value(downloadId) == DownloadStatus::Started) {
-            cancelTransfer(m_download2transferMap.value(downloadId));
-        }
     }
 }
 
@@ -204,6 +217,10 @@ DownloadManager *DownloadManager::instance()
 
 bool DownloadManager::existActiveTransfers()
 {
+    if (!m_pendingTransferCreations.isEmpty()) {
+        return true;
+    }
+
     bool exists(false);
 
     for (DownloadStatus::Status status : m_statusCache) {

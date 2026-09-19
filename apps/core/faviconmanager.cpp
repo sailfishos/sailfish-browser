@@ -22,7 +22,6 @@
 
 #include "faviconmanager.h"
 
-#include "declarativewebpage.h"
 
 FaviconManager::FaviconManager(QObject *parent)
     : QObject(parent)
@@ -184,46 +183,6 @@ QString FaviconManager::get(const QString &type, const QString &hostname)
         favicon = m_faviconSets.value(type).favicons.value(host).favicon;
     }
     return favicon;
-}
-
-void FaviconManager::grabIcon(const QString &type, DeclarativeWebPage *webPage, const QSize &size)
-{
-    grabIcon(type, webPage, size, false);
-}
-
-void FaviconManager::refreshIcon(const QString &type, DeclarativeWebPage *webPage, const QSize &size)
-{
-    grabIcon(type, webPage, size, true);
-}
-
-void FaviconManager::grabIcon(const QString &type, DeclarativeWebPage *webPage, const QSize &size, bool force)
-{
-    if (!force && !get(type, webPage->url().toString()).isEmpty()) {
-        return; // favicon was previously already loaded.
-    }
-
-    DataFetcher *dataFetcher = new DataFetcher(this);
-
-    std::shared_ptr<QMetaObject::Connection> dataConn = std::make_shared<QMetaObject::Connection>();
-    *dataConn = connect(dataFetcher, &DataFetcher::dataChanged,
-                        this, [this, dataFetcher, type, webPage, size, dataConn]() {
-        QObject::disconnect(*dataConn);
-        if (dataFetcher->hasAcceptedTouchIcon()) {
-            qCDebug(lcFavoritesLog) << "Storing favicon for" << type;
-            add(type, webPage->url().toString(), dataFetcher->data(), true);
-        } else {
-            std::shared_ptr<QMetaObject::Connection> thumbConn = std::make_shared<QMetaObject::Connection>();
-            *thumbConn = connect(webPage, &DeclarativeWebPage::thumbnailResult,
-                                 [this, type, webPage, thumbConn](const QString &data) {
-                qCDebug(lcFavoritesLog) << "Storing thumbnail for" << type;
-                QObject::disconnect(*thumbConn);
-                add(type, webPage->url().toString(), data, false);
-            });
-            webPage->grabThumbnail(size);
-        }
-        dataFetcher->deleteLater();
-    });
-    dataFetcher->fetch(webPage->property("favicon").toString());
 }
 
 void FaviconManager::clear(const QString &type)

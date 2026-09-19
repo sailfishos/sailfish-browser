@@ -52,8 +52,6 @@ signals:
     void firstUseDoneChanged();
     void dumpMemoryInfo(const QString &fileName);
     void cssPixelRatioChanged();
-    void touchTopRadiusChanged();
-    void touchBottomRadiusChanged();
 
 private slots:
     void updateWebEngineSettings();

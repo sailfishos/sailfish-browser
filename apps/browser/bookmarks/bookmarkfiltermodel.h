@@ -44,7 +44,6 @@ private:
     QString m_search;
     int m_maxDisplayedItems;
     mutable int m_countFilterAccepts;
-    mutable int m_sourceMaxAccept;
     mutable int m_maxSourceModelPosition;
 };
 

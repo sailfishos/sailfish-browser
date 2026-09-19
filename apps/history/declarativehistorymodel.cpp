@@ -64,15 +64,14 @@ void DeclarativeHistoryModel::remove(const QString &url)
 {
     const QString sanitizedUrl = FaviconManager::sanitizedHostname(url);
     bool canClearFavicon = true;
-    int index = 0;
-    for (const auto &link : m_links) {
+    for (int index = m_links.count() - 1; index >= 0; --index) {
+        const Link link = m_links.at(index);
         if (link.url() == url) {
             remove(index);
         } else if (FaviconManager::sanitizedHostname(link.url()) == sanitizedUrl) {
             // this site is still represented in history, so cannot clear icon
             canClearFavicon = false;
         }
-        index++;
     }
 
     // Not in model but remove from database anyway
@@ -88,6 +87,11 @@ void DeclarativeHistoryModel::add(const QString &url, const QString &title)
 {
     DBManager::instance()->addHistoryEntry(url, title);
     search(m_searchTerm);
+}
+
+void DeclarativeHistoryModel::setTitle(const QString &url, const QString &title)
+{
+    DBManager::instance()->updateHistoryTitle(url, title);
 }
 
 void DeclarativeHistoryModel::search(const QString &filter)
@@ -190,5 +194,9 @@ void DeclarativeHistoryModel::updateTitle(const QString &url, const QString &tit
             QModelIndex end = index(i, 0);
             emit dataChanged(start, end, roles);
         }
+    }
+
+    if (!m_searchTerm.isEmpty()) {
+        search(m_searchTerm);
     }
 }

@@ -1,0 +1,18 @@
+<RCC>
+    <qresource prefix="/">
+        <file alias="BrowserPage.qml">../../../apps/browser/qml/pages/BrowserPage.qml</file>
+        <file alias="CaptivePortalView.qml">../../../apps/shared/CaptivePortalView.qml</file>
+        <file alias="HostedTabSession.qml">../../../apps/shared/HostedTabSession.qml</file>
+        <file alias="Overlay.qml">../../../apps/browser/qml/pages/components/Overlay.qml</file>
+        <file>context-menu.js</file>
+        <file>date-picker-routing.js</file>
+        <file>MockHostedModel.qml</file>
+        <file>MockHostedView.qml</file>
+        <file>navigation.js</file>
+        <file>new-tab-presentation.js</file>
+        <file>private-thumbnail.js</file>
+        <file>select-cancellation.js</file>
+        <file>SessionHarness.qml</file>
+        <file>view-suspension.js</file>
+    </qresource>
+</RCC>

@@ -20,18 +20,14 @@ Rectangle {
     property alias fadeTarget: fadeOut.target
     readonly property alias running: transition.running
     property bool waitForWebContentOrientationChanged
-
-    signal applyContentOrientation
+    property bool immediate
 
     anchors.fill: parent
-    opacity: (running || waitForWebContentOrientationChanged) && orientationChangeTimeout.running ? 1.0 : 0.0
-
-    Timer {
-        id: orientationChangeTimeout
-        interval: 3500
-    }
+    opacity: running || waitForWebContentOrientationChanged ? 1.0 : 0.0
 
     Behavior on opacity {
+        enabled: !orientationFader.immediate
+
         FadeAnimation {
             alwaysRunToEnd: true
             duration: 100
@@ -54,24 +50,17 @@ Rectangle {
             FadeAnimation {
                 id: fadeOut
                 to: 0
-                duration: 100
+                duration: orientationFader.immediate ? 0 : 100
             }
 
             PropertyAction {
                 properties: 'width,height,rotation,orientation'
             }
 
-            ScriptAction {
-                script: {
-                    orientationFader.applyContentOrientation()
-                    orientationChangeTimeout.restart()
-                }
-            }
-
             FadeAnimation {
                 target: fadeTarget
                 to: 1
-                duration: 150
+                duration: orientationFader.immediate ? 0 : 150
             }
 
             PropertyAction {
