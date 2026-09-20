@@ -1,3 +1,5 @@
+/* Copyright (c) 2026 Jolla Mobile Ltd */
+
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -6,6 +8,7 @@
 #define DECLARATIVETABFILTERMODEL_H
 
 #include <QSortFilterProxyModel>
+#include <QVariantMap>
 
 class DeclarativeTabFilterModel : public QSortFilterProxyModel
 {
@@ -18,6 +21,7 @@ public:
     DeclarativeTabFilterModel(QObject *parent = nullptr);
 
     Q_INVOKABLE int getIndex(int currentIndex);
+    Q_INVOKABLE QVariantMap get(int row) const;
 
     bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const override;
     void setSourceModel(QAbstractItemModel *sourceModel) override;

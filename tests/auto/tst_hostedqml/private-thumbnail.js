@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: MPL-2.0
  */
 
+var _tabSwipeBusy = false
+var _tabClosePendingId = ""
 var chromeHostView
 var width
 var height
