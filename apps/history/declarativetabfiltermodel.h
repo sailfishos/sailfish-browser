@@ -6,6 +6,7 @@
 #define DECLARATIVETABFILTERMODEL_H
 
 #include <QSortFilterProxyModel>
+#include <QVariantMap>
 
 class DeclarativeTabFilterModel : public QSortFilterProxyModel
 {
@@ -18,6 +19,7 @@ public:
     DeclarativeTabFilterModel(QObject *parent = nullptr);
 
     Q_INVOKABLE int getIndex(int currentIndex);
+    Q_INVOKABLE QVariantMap get(int row) const;
 
     bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const override;
     void setSourceModel(QAbstractItemModel *sourceModel) override;

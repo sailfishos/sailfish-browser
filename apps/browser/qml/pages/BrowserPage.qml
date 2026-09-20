@@ -20,6 +20,7 @@ import Sailfish.WebEngine 1.0
 import Sailfish.WebView.Pickers 1.0 as Pickers
 import Sailfish.WebView.Popups 1.0 as Popups
 import Nemo.Configuration 1.0
+import "TabTransition.js" as TabTransition
 import "components" as Browser
 import "../shared" as Shared
 
@@ -97,6 +98,300 @@ Page {
     property string _foregroundNewTabUrl
     property bool _foregroundNewTabFromExternal
     property string _foregroundNewTabPersistentId
+    readonly property bool tabSwipeInProgress: _tabSwipeActive
+    readonly property real tabSwipeOffset: _tabSwipeOffset
+    readonly property int tabSwipeDirection: _tabSwipeDirection
+    readonly property string tabSwipeCurrentUrl: _tabSwipeCurrentUrl
+    readonly property string tabSwipeTargetUrl: _tabSwipeTargetUrl
+    // idle -> dragging -> settling-back/settling-forward -> waiting-selection
+    // -> waiting-frame -> fading. Close waits for confirmation before settling.
+    property int _tabSwipePhase: TabTransition.Phase.Idle
+    property int _tabSwipeOperation: TabTransition.Operation.None
+    readonly property bool _tabSwipeBusy: _tabSwipePhase !== TabTransition.Phase.Idle
+    readonly property bool _tabSwipeActive: _tabSwipeBusy && _tabSwipePhase !== TabTransition.Phase.AwaitingClose
+    property int _tabSwipeDirection
+    property int _tabSwipeCaptureSerial
+    property real _tabSwipeOffset
+    property real _tabSwipeOpacity
+    property real _tabSwipeFrameBaseline: -1
+    property var _tabSwipeCurrentGrab
+    property string _tabSwipeCurrentUrl
+    property string _tabSwipeTargetUrl
+
+    property string _tabClosePendingId
+
+    property var _tabSwipeCurrentTab
+    property var _tabSwipePreviousTab
+    property var _tabSwipeNextTab
+    property var _tabSwipeTargetTab
+
+    function tabSwipeTabAt(index) {
+        var tab = tabSwipeModel.get(index)
+        if (!tab.tabId) return null
+        tab.runtimeId = webView.tabModel.runtimeIdForPersistentId(String(tab.tabId))
+        var runtimeTab = hostedRuntimeTabByRuntimeId(chromeHostView, tab.runtimeId)
+        if (!runtimeTab) return null
+        tab.location = String(runtimeTab.location)
+        tab.locationRevision = String(runtimeTab.locationRevision)
+        tab.grab = webView.privateMode ? _privateTabGrabs[String(tab.tabId)] : null
+        var state = _hostedViewportFitStates[tab.runtimeId]
+        if (state && (state.persistentId !== String(tab.tabId)
+                      || state.locationRevision !== tab.locationRevision)) state = null
+        var allowed = state && state.viewportFit === "cover"
+                && (webView.cutoutGuardConfig.value === "strict"
+                    || (webView.cutoutGuardConfig.value === "top_guard"
+                        && (state.safeAreaInsetUsage & _hostedCutoutInsetUsage) === _hostedCutoutInsetUsage))
+        if (tab.runtimeId === String(chromeHostView.selectedTabId)) {
+            var origin = chromeHostView.mapToItem(browserPage, 0, 0)
+            tab.rect = Qt.rect(origin.x, origin.y, chromeHostView.width, chromeHostView.height)
+            tab.color = contentFullscreen ? "black" : _hostedSurfaceColor
+        } else {
+            tab.rect = allowed ? Qt.rect(0, 0, width, height)
+                    : Qt.rect(_hostedCutoutLeft, _hostedCutoutTop,
+                              width - _hostedCutoutLeft - _hostedCutoutRight,
+                              height - _hostedCutoutTop - _hostedCutoutBottom)
+            tab.color = state && state.themeColor ? state.themeColor : webView._defaultThemeColor
+        }
+        return tab
+    }
+
+    function closeTabWithTransition() {
+        var hostView = chromeHostView
+        if (!hostView || _tabSwipeBusy) return
+        var openerId = String(hostView.tabModel.selectedTabOpenerId)
+        var target = null
+        var direction = 0
+        for (var i = 0; i < tabSwipeModel.count; ++i) {
+            var tab = tabSwipeModel.get(i)
+            if (webView.tabModel.runtimeIdForPersistentId(String(tab.tabId)) === openerId) {
+                target = tabSwipeTabAt(i)
+                direction = i < tabSwipeModel.activeTabIndex ? -1 : 1
+                break
+            }
+        }
+        if (!target || !beginTabSwipe()) {
+            webView.tabModel.closeActiveTab()
+            return
+        }
+        _tabClosePendingId = String(hostView.selectedTabId)
+        _tabSwipeTargetTab = target
+        _tabSwipeTargetUrl = target.url
+        _tabSwipeDirection = direction
+        // Keep beforeunload prompts and the live page visible until close succeeds.
+        _tabSwipeOperation = TabTransition.Operation.Close
+        _tabSwipePhase = TabTransition.Phase.AwaitingClose
+        webView.tabModel.closeActiveTab()
+    }
+
+    function noteTabCloseResult(hostView, tabId, closed) {
+        if (hostView !== chromeHostView || String(tabId) !== _tabClosePendingId) return
+        if (closed) noteTabSwipeSelection(hostView)
+        _tabClosePendingId = ""
+        if (!closed || !_tabSwipeTargetTab
+                || String(hostView.selectedTabId) !== _tabSwipeTargetTab.runtimeId) {
+            finishTabSwipe()
+            return
+        }
+        _tabSwipePhase = TabTransition.Phase.SettlingForward
+        tabSwipeSettleMotion.to = -_tabSwipeDirection * Math.max(1, width)
+        tabSwipeSettleMotion.duration = 250
+        tabSwipeSettleAnimation.restart()
+    }
+
+    function tabSwipeTargetForDistance(distance) {
+        return distance < 0 ? _tabSwipeNextTab : distance > 0 ? _tabSwipePreviousTab : null
+    }
+
+    function saveTabSwipeCapture() {
+        if (webView.privateMode || !_tabSwipeCurrentGrab
+                || !_tabSwipeCurrentTab || _tabSwipeCurrentTab.location === "about:blank") return
+        var tab = _tabSwipeCurrentTab
+        hostedThumbnailGrabber.saveGrab(
+                    _tabSwipeCurrentGrab, String(tab.tabId), tab.location,
+                    tab.locationRevision, Qt.size(tab.rect.width, tab.rect.height))
+    }
+
+    function captureTabSwipeFrame(hostView, tabId, serial) {
+        var callback = function(result) {
+            if (browserPage._tabSwipeBusy
+                    && serial === browserPage._tabSwipeCaptureSerial
+                    && hostView === browserPage.chromeHostView
+                    && String(hostView.selectedTabId) === tabId) {
+                browserPage._tabSwipeCurrentGrab = result
+                if (hostView.privateMode) {
+                    var persistentId = browserPage.selectedPersistentId(hostView)
+                    if (persistentId.length) {
+                        var grabs = {}
+                        for (var id in browserPage._privateTabGrabs) {
+                            grabs[id] = browserPage._privateTabGrabs[id]
+                        }
+                        grabs[persistentId] = result
+                        browserPage._privateTabGrabs = grabs
+                        browserPage.privateCoverGrab = result
+                        browserPage._privateCoverTab = tabId
+                        webView.privateTabModel.updateThumbnailPath(
+                                    Number(persistentId), result.url)
+                    }
+                }
+            }
+        }
+        var size = Qt.size(Math.max(1, Math.round(hostView.width)),
+                           Math.max(1, Math.round(hostView.height)))
+        if (webView.nativeWindow) {
+            hostView.grabNativeImage(callback, size)
+        } else {
+            hostView.grabToImage(callback, size)
+        }
+    }
+
+    function beginTabSwipe() {
+        var hostView = chromeHostView
+        var currentIndex = tabSwipeModel.activeTabIndex
+        if (_tabSwipeBusy || !hostView || !hostView.selectedTabId.length
+                || currentIndex < 0 || tabSwipeModel.count < 2) {
+            return false
+        }
+
+        var current = tabSwipeTabAt(currentIndex)
+        if (!current) return false
+        _tabSwipeCurrentTab = current
+        _tabSwipePreviousTab = tabSwipeTabAt(currentIndex - 1)
+        _tabSwipeNextTab = tabSwipeTabAt(currentIndex + 1)
+        _tabSwipeTargetTab = null
+        ++_tabSwipeCaptureSerial
+        _tabSwipeOperation = TabTransition.Operation.Swipe
+        _tabSwipePhase = TabTransition.Phase.Dragging
+        _tabSwipeDirection = 0
+        _tabSwipeOffset = 0
+        _tabSwipeOpacity = 1
+        _tabSwipeFrameBaseline = -1
+        _tabSwipeCurrentGrab = null
+        _tabSwipeCurrentUrl = browserPage.url
+        _tabSwipeTargetUrl = ""
+        captureTabSwipeFrame(hostView, String(hostView.selectedTabId),
+                             _tabSwipeCaptureSerial)
+        return true
+    }
+
+    function updateTabSwipe(distance) {
+        if (_tabSwipePhase !== TabTransition.Phase.Dragging) {
+            return
+        }
+
+        var limit = Math.max(1, width)
+        var boundedDistance = Math.max(-limit, Math.min(limit, distance))
+        _tabSwipeTargetTab = tabSwipeTargetForDistance(boundedDistance)
+        _tabSwipeDirection = !_tabSwipeTargetTab ? 0 : (boundedDistance < 0 ? 1 : -1)
+        _tabSwipeTargetUrl = _tabSwipeTargetTab ? _tabSwipeTargetTab.url : ""
+        _tabSwipeOffset = !_tabSwipeTargetTab ? boundedDistance / 4 : boundedDistance
+    }
+
+    function endTabSwipe(distance, switchTab) {
+        if (_tabSwipePhase !== TabTransition.Phase.Dragging) {
+            return
+        }
+
+        updateTabSwipe(distance)
+        var commit = switchTab && !!_tabSwipeTargetTab
+        _tabSwipePhase = commit ? TabTransition.Phase.SettlingForward : TabTransition.Phase.SettlingBack
+        var destination = commit
+                ? -_tabSwipeDirection * Math.max(1, width) : 0
+        var remaining = Math.abs(destination - _tabSwipeOffset)
+        if (remaining < 1) {
+            _tabSwipeOffset = destination
+            finishTabSwipeSettle()
+            return
+        }
+
+        tabSwipeSettleMotion.to = destination
+        tabSwipeSettleMotion.duration = Math.max(
+                    80, Math.round(180 * remaining / Math.max(1, width)))
+        tabSwipeSettleAnimation.restart()
+    }
+
+    function finishTabSwipeSettle() {
+        if (_tabSwipePhase === TabTransition.Phase.SettlingBack) {
+            finishTabSwipe()
+            return
+        }
+        if (_tabSwipePhase !== TabTransition.Phase.SettlingForward) return
+
+        if (_tabSwipeOperation === TabTransition.Operation.Close) {
+            _tabSwipePhase = TabTransition.Phase.WaitingFrame
+            tabSwipeWaitTimer.restart()
+            noteTabSwipeFrame(chromeHostView)
+            return
+        }
+        if (!_tabSwipeTargetTab || !chromeHostView
+                || String(chromeHostView.selectedTabId) !== _tabSwipeCurrentTab.runtimeId
+                || webView.tabModel.runtimeIdForPersistentId(String(_tabSwipeTargetTab.tabId))
+                   !== _tabSwipeTargetTab.runtimeId) {
+            finishTabSwipe()
+            return
+        }
+
+        _tabSwipePhase = TabTransition.Phase.WaitingSelection
+        saveTabSwipeCapture()
+        tabSwipeWaitTimer.restart()
+        if (!webView.tabModel.activateTabById(Number(_tabSwipeTargetTab.tabId))) {
+            finishTabSwipe()
+        }
+    }
+
+    function noteTabSwipeSelection(hostView) {
+        if (hostView !== chromeHostView || !_tabSwipeBusy) return
+        var selected = String(hostView.selectedTabId)
+        if (!_tabSwipeTargetTab || selected !== _tabSwipeTargetTab.runtimeId) {
+            if (_tabSwipeCurrentTab && selected !== _tabSwipeCurrentTab.runtimeId) finishTabSwipe()
+            return
+        }
+        if (_tabSwipeFrameBaseline < 0
+                && (_tabSwipePhase === TabTransition.Phase.WaitingSelection || _tabSwipePhase === TabTransition.Phase.AwaitingClose)) {
+            // Close selects its destination before the slide; preserve that
+            // acknowledgement independently of the animation phase.
+            _tabSwipeFrameBaseline = hostView.platformFrameGeneration
+            if (_tabSwipePhase === TabTransition.Phase.WaitingSelection) _tabSwipePhase = TabTransition.Phase.WaitingFrame
+        }
+    }
+
+    function noteTabSwipeFrame(hostView) {
+        if (_tabSwipePhase === TabTransition.Phase.WaitingFrame && _tabSwipeFrameBaseline >= 0
+                && hostView === chromeHostView && _tabSwipeTargetTab
+                && String(hostView.selectedTabId) === _tabSwipeTargetTab.runtimeId
+                && hostView.platformFrameGeneration > _tabSwipeFrameBaseline) {
+            startTabSwipeFade()
+        }
+    }
+
+    function startTabSwipeFade() {
+        if (_tabSwipePhase !== TabTransition.Phase.WaitingSelection && _tabSwipePhase !== TabTransition.Phase.WaitingFrame) return
+        tabSwipeWaitTimer.stop()
+        _tabSwipePhase = TabTransition.Phase.Fading
+        tabSwipeFadeAnimation.restart()
+    }
+
+    function finishTabSwipe() {
+        // Retire the phase before stopping animations, so their callbacks
+        // cannot complete or commit a cancelled transition.
+        _tabSwipePhase = TabTransition.Phase.Idle
+        tabSwipeWaitTimer.stop()
+        tabSwipeSettleAnimation.stop()
+        tabSwipeFadeAnimation.stop()
+        _tabSwipeOperation = TabTransition.Operation.None
+        _tabClosePendingId = ""
+        _tabSwipeCurrentTab = null
+        _tabSwipePreviousTab = null
+        _tabSwipeNextTab = null
+        _tabSwipeTargetTab = null
+        _tabSwipeDirection = 0
+        _tabSwipeOffset = 0
+        _tabSwipeOpacity = 0
+        _tabSwipeFrameBaseline = -1
+        _tabSwipeCurrentGrab = null
+        _tabSwipeCurrentUrl = ""
+        _tabSwipeTargetUrl = ""
+        requestHostedThumbnail()
+    }
 
     function beginForegroundNewTabWait(hostView) {
         if (!hostView) {
@@ -205,6 +500,9 @@ Page {
     }
 
     onChromeHostViewChanged: {
+        if (_tabSwipeBusy) {
+            finishTabSwipe()
+        }
         finishForegroundNewTabWait()
         clearHostedSelection()
         finishHostedOrientationWait()
@@ -1531,7 +1829,8 @@ Page {
 
     function requestPrivateCover(tabViewCapture) {
         var view = chromeHostView
-        if (!view || !view.privateMode || !view.selectedTabId.length
+        if (_tabSwipeBusy
+                || !view || !view.privateMode || !view.selectedTabId.length
                 || !webView.foreground || (_privateCoverPending && !tabViewCapture)) return null
         var tabId = view.selectedTabId
         var persistentId = selectedPersistentId(view)
@@ -1578,7 +1877,8 @@ Page {
     }
 
     function captureHostedThumbnail(tabViewCapture) {
-        if (_hostedThumbnailCaptureSuspended && !tabViewCapture) {
+        if (_tabSwipeBusy
+                || (_hostedThumbnailCaptureSuspended && !tabViewCapture)) {
             return null
         }
         var hostView = chromeHostView
@@ -1753,7 +2053,10 @@ Page {
             webView.applyContentOrientation(pageOrientation)
         }
     }
-    onOrientationChanged: webView.applyContentOrientation(orientation)
+    onOrientationChanged: {
+        if (_tabSwipeBusy) finishTabSwipe()
+        webView.applyContentOrientation(orientation)
+    }
 
     orientationTransitions: orientationFader.orientationTransition
 
@@ -1898,6 +2201,49 @@ Page {
             }
             browserPage.processPendingHostedModalRequests(browserPage.chromeHostView)
         }
+    }
+
+    SequentialAnimation {
+        id: tabSwipeSettleAnimation
+
+        NumberAnimation {
+            id: tabSwipeSettleMotion
+
+            target: browserPage
+            property: "_tabSwipeOffset"
+            easing.type: Easing.OutCubic
+        }
+        ScriptAction {
+            script: {
+                browserPage.finishTabSwipeSettle()
+            }
+        }
+    }
+
+    SequentialAnimation {
+        id: tabSwipeFadeAnimation
+
+        NumberAnimation {
+            target: browserPage
+            property: "_tabSwipeOpacity"
+            to: 0
+            duration: 150
+            easing.type: Easing.OutCubic
+        }
+        ScriptAction {
+            script: {
+                if (browserPage._tabSwipePhase === TabTransition.Phase.Fading) {
+                    browserPage.finishTabSwipe()
+                }
+            }
+        }
+    }
+
+    Timer {
+        id: tabSwipeWaitTimer
+
+        interval: 3000
+        onTriggered: browserPage.startTabSwipeFade()
     }
 
     Timer {
@@ -2048,6 +2394,66 @@ Page {
         }
     }
 
+    TabFilterModel {
+        id: tabSwipeModel
+
+        sourceModel: webView.tabModel
+        showHidden: false
+    }
+
+    Item {
+        id: tabSwipeLayer
+
+        anchors.fill: parent
+        clip: true
+        visible: browserPage._tabSwipeActive
+        opacity: browserPage._tabSwipeOpacity
+
+        Rectangle {
+            anchors.fill: parent
+            color: browserPage.contentFullscreen ? "black" : webView._defaultThemeColor
+        }
+
+        Repeater {
+            model: 2
+
+            delegate: Item {
+                readonly property var tab: index ? browserPage._tabSwipeTargetTab : browserPage._tabSwipeCurrentTab
+
+                x: browserPage._tabSwipeOffset
+                   + (index ? browserPage._tabSwipeDirection * tabSwipeLayer.width : 0)
+                width: tabSwipeLayer.width
+                height: tabSwipeLayer.height
+                visible: !!tab
+                clip: true
+
+                Rectangle {
+                    anchors.fill: parent
+                    color: parent.tab ? parent.tab.color : webView._defaultThemeColor
+                }
+                Image {
+                    x: parent.tab ? parent.tab.rect.x : 0
+                    y: parent.tab ? parent.tab.rect.y : 0
+                    width: parent.tab ? parent.tab.rect.width : 0
+                    height: parent.tab ? parent.tab.rect.height : 0
+                    source: !parent.tab ? ""
+                            : !index && browserPage._tabSwipeCurrentGrab
+                              ? browserPage._tabSwipeCurrentGrab.url : parent.tab.thumbnailPath
+                    cache: source.toString().indexOf("itemgrabber:") === 0
+                           || source.toString().indexOf("image://") === 0
+                    asynchronous: true
+                    fillMode: Image.PreserveAspectCrop
+                    horizontalAlignment: Image.AlignLeft
+                    verticalAlignment: Image.AlignTop
+                }
+            }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+        }
+    }
+
     Component {
         id: chromeHostComponent
 
@@ -2168,6 +2574,10 @@ Page {
 
                 onSelectedTabChanged: {
                     if (chromeView !== browserPage.chromeHostView) return
+                    // Timers are suspended per tab; a swipe does not leave and
+                    // re-enter BrowserPage to resume the newly selected tab.
+                    browserPage.updateHostedViewSuspension(chromeView)
+                    browserPage.noteTabSwipeSelection(chromeView)
                     browserPage.noteForegroundNewTabSelection(chromeView)
                     browserPage.dismissInputMethod()
                     chrome = true
@@ -2214,6 +2624,7 @@ Page {
                 }
                 onPlatformFrameGenerationChanged: {
                     if (chromeView !== browserPage.chromeHostView) return
+                    browserPage.noteTabSwipeFrame(chromeView)
                     browserPage.noteForegroundNewTabFrame(chromeView)
                     if (privateMode && browserPage._privateCoverTab !== selectedTabId) browserPage.requestPrivateCover()
                     browserPage.noteHostedOrientationFrame(chromeView)
@@ -2259,7 +2670,10 @@ Page {
                                                                 message, data)
                 }
 
-                onTabCloseResult: tabSession.runtimeTabCloseResult(tabId, closed)
+                onTabCloseResult: {
+                    tabSession.runtimeTabCloseResult(tabId, closed)
+                    browserPage.noteTabCloseResult(chromeView, tabId, closed)
+                }
 
                 onWindowCloseRequestedFromTab: {
                     if (chromeView !== browserPage.chromeHostView) return

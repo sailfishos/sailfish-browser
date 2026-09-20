@@ -29,6 +29,10 @@ public:
                              const QString &location,
                              const QString &locationRevision,
                              const QSize &size);
+    Q_INVOKABLE quint64 saveGrab(QObject *grab, const QString &persistentId,
+                                const QString &location,
+                                const QString &locationRevision,
+                                const QSize &size);
     Q_INVOKABLE void invalidate(const QString &persistentId);
     Q_INVOKABLE void invalidateAll();
     Q_INVOKABLE void cancel(const QString &persistentId, quint64 generation);

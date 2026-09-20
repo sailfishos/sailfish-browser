@@ -548,6 +548,12 @@ Shared.Background {
 
                 hostedView: browserPage.chromeHostView
                 urlSwipeEnabled: overlayAnimator.atBottom
+                tabSwipeActive: browserPage.tabSwipeInProgress
+                tabSwipeOffset: browserPage.tabSwipeOffset
+                tabSwipePageWidth: browserPage.width
+                tabSwipeDirection: browserPage.tabSwipeDirection
+                tabSwipeCurrentUrl: browserPage.tabSwipeCurrentUrl
+                tabSwipeTargetUrl: browserPage.tabSwipeTargetUrl
                 property real crossfadeRatio: (_showFindInPage || _showUrlEntry)
                                               ? (overlay.y - webView.fullscreenHeight/2)
                                                 / (webView.fullscreenHeight/2 - toolBar.height)
@@ -585,6 +591,9 @@ Shared.Background {
                     // Changing of active tab cannot cause blinking.
                     overlay.showTabView()
                 }
+                onTabSwipeStarted: browserPage.beginTabSwipe()
+                onTabSwipeMoved: browserPage.updateTabSwipe(distance)
+                onTabSwipeEnded: browserPage.endTabSwipe(distance, switchTab)
                 onShowSecondaryTools: overlayAnimator.showSecondaryTools()
                 onShowInfoOverlay: {
                     toolBar.certOverlayActive = true

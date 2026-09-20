@@ -26,6 +26,12 @@ Column {
     property real certOverlayAnimPos
     property var hostedView
     property bool urlSwipeEnabled
+    property bool tabSwipeActive
+    property real tabSwipeOffset
+    property real tabSwipePageWidth
+    property int tabSwipeDirection
+    property string tabSwipeCurrentUrl
+    property string tabSwipeTargetUrl
     readonly property bool hosted: !!hostedView
     readonly property bool hostedPopup: hosted && hostedView.tabModel
                                         && !!hostedView.tabModel.selectedTabOpenerId
@@ -69,6 +75,9 @@ Column {
     signal showInfoOverlay
     signal showChrome
     signal showCertDetail
+    signal tabSwipeStarted
+    signal tabSwipeMoved(real distance)
+    signal tabSwipeEnded(real distance, bool switchTab)
 
     // Used from the PopUpMenu
     signal loadPage(string url)
@@ -89,10 +98,24 @@ Column {
         if (toolBarRow.hosted && hostedView.canGoBack) {
             browserPage.goBack()
         } else if (toolBarRow.hostedPopup) {
-            webView.tabModel.closeActiveTab()
+            browserPage.closeTabWithTransition()
         } else if (!toolBarRow.hosted
                    && webView.contentItem && webView.contentItem.parentId > 0) {
             webView.tabModel.closeActiveTab()
+        }
+    }
+
+    function tabSwipeUrlText(address) {
+        if (address === "about:blank") {
+            //: Placeholder text for url typing and searching
+            //% "Type URL or search"
+            return qsTrId("sailfish_browser-ph-type_url_or_search")
+        } else if (address) {
+            return WebUtils.displayableUrl(address)
+        } else {
+            //: Loading text that is visible when url is not yet resolved.
+            //% "Loading"
+            return qsTrId("sailfish_browser-la-loading")
         }
     }
 
@@ -323,6 +346,7 @@ Column {
             height: parent.height
             width: toolsRow.width - (tabButton.width + stopButton.width + padlockIcon.width + backIcon.width + menuButton.width)
             enabled: !showFindButtons
+            clip: tabSwipeActive
             _showPress: false
 
             onPressed: {
@@ -357,23 +381,22 @@ Column {
 
             drag {
                 axis: Drag.XAxis
-                minimumX: 0
-                maximumX: Theme.itemSizeLarge
+                minimumX: -toolBarRow.width
+                maximumX: toolBarRow.width
 
                 onActiveChanged: {
                     if (drag.active) {
                         touchArea._dragTriggered = true
+                        toolBarRow.tabSwipeStarted()
                     } else if (touchArea._dragTriggered) {
                         var horizontalDistance = swipeTracker.x
                         var verticalDistance = Math.abs(touchArea.mouseY
                                                         - touchArea._pressY)
-                        var backSwipe = !_pressAndHoldTriggered
-                                && horizontalDistance >= Theme.itemSizeMedium
-                                && horizontalDistance > verticalDistance * 2
+                        var switchTab = !_pressAndHoldTriggered
+                                && Math.abs(horizontalDistance) >= Theme.itemSizeMedium
+                                && Math.abs(horizontalDistance) > verticalDistance * 2
+                        toolBarRow.tabSwipeEnded(horizontalDistance, switchTab)
                         swipeTracker.x = 0
-                        if (backSwipe && backIcon.active) {
-                            toolBarRow.activateBack()
-                        }
                     }
                 }
             }
@@ -384,6 +407,12 @@ Column {
                 width: 1
                 height: 1
                 visible: false
+
+                onXChanged: {
+                    if (touchArea.drag.active) {
+                        toolBarRow.tabSwipeMoved(x)
+                    }
+                }
             }
 
             Notice {
@@ -397,11 +426,15 @@ Column {
             }
 
             Label {
+                x: tabSwipeActive ? tabSwipeOffset : 0
                 anchors.verticalCenter: parent.verticalCenter
                 width: parent.width + Theme.paddingMedium
                 color: touchArea.highlighted ? Theme.highlightColor : Theme.primaryColor
 
                 text: {
+                    if (tabSwipeActive) {
+                        return tabSwipeUrlText(tabSwipeCurrentUrl)
+                    }
                     if (findInPageActive) {
                         //: No text search results were found from the page.
                         //% "No results"
@@ -426,6 +459,17 @@ Column {
 
                 opacity: showFindButtons ? 0.0 : 1.0
                 Behavior on opacity { FadeAnimation {} }
+            }
+
+            Label {
+                x: tabSwipeOffset + tabSwipeDirection * tabSwipePageWidth
+                anchors.verticalCenter: parent.verticalCenter
+                width: parent.width + Theme.paddingMedium
+                color: touchArea.highlighted ? Theme.highlightColor : Theme.primaryColor
+                text: tabSwipeUrlText(tabSwipeTargetUrl)
+                truncationMode: TruncationMode.Fade
+                visible: tabSwipeActive && tabSwipeDirection !== 0
+                opacity: showFindButtons ? 0.0 : 1.0
             }
 
             Shared.ExpandingButton {

@@ -52,7 +52,7 @@ public:
     int activeTabIndex() const;
     int activeTabId() const;
     int count() const;
-    bool activateTabById(int tabId);
+    Q_INVOKABLE bool activateTabById(int tabId);
     void removeTabById(int tabId, bool activeTab);
     bool requestRuntimeTabNavigation(int tabId, const QString &url,
                                      bool fromExternal = false);

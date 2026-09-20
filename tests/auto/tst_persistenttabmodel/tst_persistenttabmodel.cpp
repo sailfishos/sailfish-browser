@@ -106,6 +106,19 @@ void tst_persistenttabmodel::activeTabIndexFiltersHiddenRows()
     filterModel.setSourceModel(tabModel);
     QCOMPARE(filterModel.count(), 1);
     QCOMPARE(filterModel.activeTabIndex(), 0);
+    const QVariantMap visibleTab = filterModel.get(0);
+    QCOMPARE(visibleTab.value(QStringLiteral("tabId")).toInt(), 2);
+    QCOMPARE(visibleTab.value(QStringLiteral("url")).toString(),
+             QStringLiteral("https://visible.example/"));
+    QVERIFY(filterModel.get(-1).isEmpty());
+    QVERIFY(filterModel.get(filterModel.count()).isEmpty());
+
+    QSignalSpy activationSpy(tabModel, &DeclarativeTabModel::runtimeTabActivationRequested);
+    QVERIFY(tabModel->activateTabById(visibleTab.value(QStringLiteral("tabId")).toInt()));
+    QCOMPARE(activationSpy.count(), 1);
+    QCOMPARE(activationSpy.first().first().toString(), QStringLiteral("2"));
+    QVERIFY(!tabModel->activateTabById(999));
+    QCOMPARE(activationSpy.count(), 1);
 
     tabModel->m_activeTabId = 1;
     QCOMPARE(filterModel.activeTabIndex(), -1);

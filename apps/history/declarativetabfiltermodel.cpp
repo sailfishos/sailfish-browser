@@ -17,6 +17,19 @@ int DeclarativeTabFilterModel::getIndex(int currentIndex)
     return sourceIndex.row();
 }
 
+QVariantMap DeclarativeTabFilterModel::get(int row) const
+{
+    const QModelIndex item = index(row, 0);
+    QVariantMap result;
+    if (item.isValid()) {
+        const auto roles = roleNames();
+        for (auto role = roles.constBegin(); role != roles.constEnd(); ++role) {
+            result.insert(QString::fromUtf8(role.value()), data(item, role.key()));
+        }
+    }
+    return result;
+}
+
 bool DeclarativeTabFilterModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const
 {
     QModelIndex index = sourceModel()->index(sourceRow, 0, sourceParent);

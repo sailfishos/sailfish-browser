@@ -24,6 +24,7 @@ private slots:
     void newTabPresentation();
     void privateThumbnailCapture();
     void selectCancellation();
+    void tabSwipe();
     void sessionOwnership();
     void snapshotApplicationTriggers();
 
@@ -167,6 +168,44 @@ void tst_hostedqml::selectCancellation()
                       QStringList() << functionSource(
                           QStringLiteral(":/BrowserPage.qml"),
                           QStringLiteral("cancelHostedSelect")));
+}
+
+void tst_hostedqml::tabSwipe()
+{
+    QString constants = readResource(QStringLiteral(":/TabTransition.js"));
+    QVERIFY(!constants.isEmpty());
+    constants.remove(QStringLiteral(".pragma library"));
+    runJavaScriptTest(QStringLiteral(":/tab-swipe.js"),
+                      QStringList()
+                      << (QStringLiteral("var TabTransition = (function() {\n")
+                          + constants
+                          + QStringLiteral("\nreturn { Phase: Phase, Operation: Operation }; })();"))
+                      << functionSource(QStringLiteral(":/BrowserPage.qml"),
+                                        QStringLiteral("tabSwipeTabAt"))
+                      << functionSource(QStringLiteral(":/BrowserPage.qml"),
+                                        QStringLiteral("saveTabSwipeCapture"))
+                      << functionSource(QStringLiteral(":/BrowserPage.qml"),
+                                        QStringLiteral("closeTabWithTransition"))
+                      << functionSource(QStringLiteral(":/BrowserPage.qml"),
+                                        QStringLiteral("noteTabCloseResult"))
+                      << functionSource(QStringLiteral(":/BrowserPage.qml"),
+                                        QStringLiteral("tabSwipeTargetForDistance"))
+                      << functionSource(QStringLiteral(":/BrowserPage.qml"),
+                                        QStringLiteral("beginTabSwipe"))
+                      << functionSource(QStringLiteral(":/BrowserPage.qml"),
+                                        QStringLiteral("updateTabSwipe"))
+                      << functionSource(QStringLiteral(":/BrowserPage.qml"),
+                                        QStringLiteral("endTabSwipe"))
+                      << functionSource(QStringLiteral(":/BrowserPage.qml"),
+                                        QStringLiteral("finishTabSwipeSettle"))
+                      << functionSource(QStringLiteral(":/BrowserPage.qml"),
+                                        QStringLiteral("noteTabSwipeSelection"))
+                      << functionSource(QStringLiteral(":/BrowserPage.qml"),
+                                        QStringLiteral("noteTabSwipeFrame"))
+                      << functionSource(QStringLiteral(":/BrowserPage.qml"),
+                                        QStringLiteral("startTabSwipeFade"))
+                      << functionSource(QStringLiteral(":/BrowserPage.qml"),
+                                        QStringLiteral("finishTabSwipe")));
 }
 
 void tst_hostedqml::sessionOwnership()

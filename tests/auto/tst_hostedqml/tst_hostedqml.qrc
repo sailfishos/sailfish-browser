@@ -12,6 +12,8 @@
         <file>new-tab-presentation.js</file>
         <file>private-thumbnail.js</file>
         <file>select-cancellation.js</file>
+        <file>tab-swipe.js</file>
+        <file alias="TabTransition.js">../../../apps/browser/qml/pages/TabTransition.js</file>
         <file>SessionHarness.qml</file>
         <file>view-suspension.js</file>
     </qresource>

@@ -10,6 +10,9 @@
 #include <QFutureWatcher>
 #include <QImage>
 #include <QTimer>
+#include <QQmlEngine>
+#include <QQuickImageProvider>
+#include <QUrl>
 #include <qmoznativeview.h>
 #include <QSaveFile>
 #include <QtConcurrentRun>
@@ -85,6 +88,40 @@ quint64 HostedThumbnailGrabber::grab(QQuickItem *item,
 
     connect(result.data(), &QQuickItemGrabResult::ready,
             this, &HostedThumbnailGrabber::handleGrabReady);
+    return generation;
+}
+
+quint64 HostedThumbnailGrabber::saveGrab(QObject *grab,
+                                         const QString &persistentId,
+                                         const QString &location,
+                                         const QString &locationRevision,
+                                         const QSize &size)
+{
+    if (!grab || persistentId.isEmpty() || location.isEmpty() || !size.isValid()) {
+        return 0;
+    }
+    QImage image = grab->property("image").value<QImage>();
+    if (image.isNull()) {
+        const QUrl url = grab->property("url").toUrl();
+        QQmlEngine *engine = qmlEngine(this);
+        if (engine && url.scheme() == QLatin1String("image")
+                && url.host() == QLatin1String("qmoznative")) {
+            QQmlImageProviderBase *provider = engine->imageProvider(url.host());
+            if (provider && provider->imageType() == QQmlImageProviderBase::Image) {
+                image = static_cast<QQuickImageProvider *>(provider)->requestImage(
+                            url.path().mid(1), nullptr, QSize());
+            }
+        }
+    }
+    if (image.isNull()) {
+        return 0;
+    }
+    const quint64 generation = ++m_generations[persistentId];
+    const Capture capture = {persistentId, location, locationRevision,
+                             generation, size, {}};
+    QTimer::singleShot(0, this, [this, capture, image]() {
+        writeCapture(capture, image);
+    });
     return generation;
 }
 
