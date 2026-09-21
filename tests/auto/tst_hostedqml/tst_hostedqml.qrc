@@ -11,6 +11,7 @@
         <file>navigation.js</file>
         <file>new-tab-presentation.js</file>
         <file>private-thumbnail.js</file>
+        <file>thumbnail-scroll.js</file>
         <file>select-cancellation.js</file>
         <file>tab-swipe.js</file>
         <file alias="TabTransition.js">../../../apps/browser/qml/pages/TabTransition.js</file>
