@@ -40,6 +40,7 @@ private slots:
     void data();
     void activeTabIndexFiltersHiddenRows();
     void applyRuntimeSnapshot();
+    void runtimeSnapshotUnchangedTabOrder();
     void runtimeSnapshotThumbnailInvalidation();
     void runtimeDesktopModeIsPerPersistentTab();
     void runtimeAuthoritativeCommands();
@@ -295,6 +296,40 @@ void tst_persistenttabmodel::applyRuntimeSnapshot()
     QCOMPARE(batch.tabs().at(0).persistentId(), 2);
     QCOMPARE(batch.tabs().at(1).persistentId(), 1);
     QCOMPARE(batch.activePersistentId(), 2);
+}
+
+void tst_persistenttabmodel::runtimeSnapshotUnchangedTabOrder()
+{
+    const PersistentRuntimeTabState first(100, 1, QStringLiteral("https://forum.example/1"),
+                                          QStringLiteral("Forum"), true, 1);
+    const PersistentRuntimeTabState second(200, 2, QStringLiteral("https://second.example/"),
+                                           QStringLiteral("Second"), false, 1);
+    tabModel->applyRuntimeSnapshot(QList<PersistentRuntimeTabState>() << first << second);
+    QCOMPARE(DBManager::instance()->getSetting(QStringLiteral("tabOrder")),
+             QStringLiteral("1,2"));
+
+    QSignalSpy settingsSpy(DBManager::instance(), &DBManager::settingsChanged);
+    tabModel->applyRuntimeSnapshot(QList<PersistentRuntimeTabState>() << first << second);
+    const PersistentRuntimeTabState nextPost(100, 1, QStringLiteral("https://forum.example/2"),
+                                             QStringLiteral("Forum - next post"), true, 2);
+    tabModel->applyRuntimeSnapshot(QList<PersistentRuntimeTabState>() << nextPost << second);
+    QCOMPARE(settingsSpy.count(), 0);
+    QCOMPARE(tabModel->tabs().first().url(), nextPost.url());
+    QCOMPARE(tabModel->tabs().first().title(), nextPost.title());
+
+    tabModel->applyRuntimeSnapshot(QList<PersistentRuntimeTabState>() << second << nextPost);
+    QCOMPARE(DBManager::instance()->getSetting(QStringLiteral("tabOrder")),
+             QStringLiteral("2,1"));
+
+    QSignalSpy restoreSpy(DBManager::instance(),
+                         &DBManager::persistentTabRestoreBatchAvailable);
+    DBManager::instance()->getPersistentTabRestoreBatch();
+    QVERIFY(restoreSpy.wait(5000));
+    const PersistentTabRestoreBatch batch = restoreSpy.first().first()
+            .value<PersistentTabRestoreBatch>();
+    QCOMPARE(batch.tabs().count(), 2);
+    QCOMPARE(batch.tabs().at(0).persistentId(), 2);
+    QCOMPARE(batch.tabs().at(1).persistentId(), 1);
 }
 
 void tst_persistenttabmodel::runtimeSnapshotThumbnailInvalidation()

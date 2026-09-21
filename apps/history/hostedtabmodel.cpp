@@ -803,7 +803,10 @@ void HostedTabModel::saveTabOrder() const
     for (const Tab &tab : m_tabs) {
         persistentIds.append(QString::number(tab.tabId()));
     }
-    DBManager::instance()->saveSetting("tabOrder", persistentIds.join(QLatin1Char(',')));
+    const QString serializedOrder = persistentIds.join(QLatin1Char(','));
+    if (DBManager::instance()->getSetting("tabOrder") != serializedOrder) {
+        DBManager::instance()->saveSetting("tabOrder", serializedOrder);
+    }
 }
 
 void HostedTabModel::restoreDesktopModes()

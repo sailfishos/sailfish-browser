@@ -23,6 +23,7 @@ private slots:
     void navigation();
     void newTabPresentation();
     void privateThumbnailCapture();
+    void thumbnailScrollDeferral();
     void selectCancellation();
     void tabSwipe();
     void sessionOwnership();
@@ -160,6 +161,26 @@ void tst_hostedqml::privateThumbnailCapture()
                                         QStringLiteral("beginHostedTabViewThumbnailCapture"))
                       << functionSource(QStringLiteral(":/Overlay.qml"),
                                         QStringLiteral("finishHostedTabViewCapture")));
+}
+
+void tst_hostedqml::thumbnailScrollDeferral()
+{
+    QStringList functions;
+    const QStringList names = QStringList()
+            << QStringLiteral("resetHostedThumbnailCapture")
+            << QStringLiteral("updateHostedThumbnailScrollState")
+            << QStringLiteral("scheduleHostedThumbnailCapture")
+            << QStringLiteral("continueHostedThumbnailCapture")
+            << QStringLiteral("requestHostedThumbnail")
+            << QStringLiteral("captureHostedThumbnail")
+            << QStringLiteral("requestPrivateCover")
+            << QStringLiteral("captureTabSwipeFrame")
+            << QStringLiteral("capturePendingHostedThumbnail")
+            << QStringLiteral("cancelHostedThumbnailCaptureForBackground");
+    for (const QString &name : names) {
+        functions.append(functionSource(QStringLiteral(":/BrowserPage.qml"), name));
+    }
+    runJavaScriptTest(QStringLiteral(":/thumbnail-scroll.js"), functions);
 }
 
 void tst_hostedqml::selectCancellation()

@@ -212,6 +212,7 @@ Page {
     }
 
     function captureTabSwipeFrame(hostView, tabId, serial) {
+        if (_hostedThumbnailCaptureBlocked) return
         var callback = function(result) {
             if (browserPage._tabSwipeBusy
                     && serial === browserPage._tabSwipeCaptureSerial
@@ -1783,6 +1784,21 @@ Page {
     property bool _hostedThumbnailCaptureScheduled
     property bool _hostedThumbnailCaptureSuspended
     property int _hostedThumbnailRequiredGeneration: 1
+    readonly property bool _hostedThumbnailCaptureBlocked: chromeHostView
+                && (chromeHostView.moving || chromeHostView.dragging
+                    || chromeHostView.pinching || hostedThumbnailScrollIdleTimer.running)
+
+    on_HostedThumbnailCaptureBlockedChanged: updateHostedThumbnailScrollState()
+
+    function updateHostedThumbnailScrollState() {
+        if (_hostedThumbnailCaptureBlocked) {
+            hostedThumbnailCaptureTimer.stop()
+            _hostedThumbnailCaptureScheduled = false
+            _hostedThumbnailCapturePending = true
+        } else {
+            continueHostedThumbnailCapture(chromeHostView)
+        }
+    }
 
     function resetHostedThumbnailCapture(hostView) {
         hostedThumbnailCaptureTimer.stop()
@@ -1794,6 +1810,7 @@ Page {
 
     function scheduleHostedThumbnailCapture(hostView) {
         if (!_hostedThumbnailCaptureSuspended
+                && !_hostedThumbnailCaptureBlocked
                 && !_hostedThumbnailCaptureScheduled) {
             _hostedThumbnailCaptureScheduled = true
             hostedThumbnailCaptureTimer.restart()
@@ -1832,6 +1849,10 @@ Page {
         if (_tabSwipeBusy
                 || !view || !view.privateMode || !view.selectedTabId.length
                 || !webView.foreground || (_privateCoverPending && !tabViewCapture)) return null
+        if (_hostedThumbnailCaptureBlocked) {
+            _hostedThumbnailCapturePending = true
+            return null
+        }
         var tabId = view.selectedTabId
         var persistentId = selectedPersistentId(view)
         if (!persistentId.length) return null
@@ -1868,10 +1889,6 @@ Page {
     }
 
     function requestHostedThumbnail() {
-        if (webView.privateMode) {
-            requestPrivateCover()
-            return
-        }
         _hostedThumbnailCapturePending = true
         continueHostedThumbnailCapture(chromeHostView)
     }
@@ -1885,6 +1902,10 @@ Page {
         if (!hostView || webView.privateMode || !browserPage.active
                 || !hostView.active || !hostView.visible) {
             return false
+        }
+        if (_hostedThumbnailCaptureBlocked) {
+            _hostedThumbnailCapturePending = true
+            return null
         }
         var persistentId = selectedPersistentId(hostView)
         if (!persistentId.length) {
@@ -1964,26 +1985,37 @@ Page {
         requestHostedThumbnailRetry()
     }
 
+    function capturePendingHostedThumbnail() {
+        _hostedThumbnailCaptureScheduled = false
+        var hostView = chromeHostView
+        var capture = webView.privateMode ? requestPrivateCover() : captureHostedThumbnail()
+        if (capture) {
+            _hostedThumbnailCapturePending = false
+            // An early first-paint capture must not make the finished
+            // load wait for another frame which may never arrive. Keep
+            // the navigation's original frame requirement until loading
+            // finishes; that accepted frame can then be captured again
+            // against the final committed tab snapshot.
+            if (!hostView || !hostView.loading) {
+                _hostedThumbnailRequiredGeneration = hostView
+                        ? hostView.platformFrameGeneration + 1 : 1
+            }
+        }
+    }
+
+    Timer {
+        id: hostedThumbnailScrollIdleTimer
+
+        // Also cover wheel/programmatic scrolling and the last offset update
+        // after the view reports that a drag or fling has ended.
+        interval: 200
+    }
+
     Timer {
         id: hostedThumbnailCaptureTimer
 
         interval: 100
-        onTriggered: {
-            browserPage._hostedThumbnailCaptureScheduled = false
-            var hostView = chromeHostView
-            if (browserPage.captureHostedThumbnail()) {
-                browserPage._hostedThumbnailCapturePending = false
-                // An early first-paint capture must not make the finished
-                // load wait for another frame which may never arrive. Keep
-                // the navigation's original frame requirement until loading
-                // finishes; that accepted frame can then be captured again
-                // against the final committed tab snapshot.
-                if (!hostView || !hostView.loading) {
-                    browserPage._hostedThumbnailRequiredGeneration = hostView
-                            ? hostView.platformFrameGeneration + 1 : 1
-                }
-            }
-        }
+        onTriggered: browserPage.capturePendingHostedThumbnail()
     }
 
     function updateHostedThumbnail(persistentId, location, locationRevision, fileName) {
@@ -2610,6 +2642,9 @@ Page {
                 }
 
                 onFirstPaint: if (chromeView === browserPage.chromeHostView) browserPage.requestHostedThumbnail()
+                onScrollableOffsetChanged: {
+                    if (chromeView === browserPage.chromeHostView) hostedThumbnailScrollIdleTimer.restart()
+                }
                 onAtYBeginningChanged: {
                     if (atYBeginning && active && domContentLoaded) {
                         chrome = true

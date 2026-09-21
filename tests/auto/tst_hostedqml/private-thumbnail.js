@@ -4,6 +4,7 @@
  */
 
 var _tabSwipeBusy = false
+var _hostedThumbnailCaptureBlocked = false
 var _tabClosePendingId = ""
 var chromeHostView
 var width
