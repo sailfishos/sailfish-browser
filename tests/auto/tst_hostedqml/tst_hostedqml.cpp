@@ -26,6 +26,7 @@ private slots:
     void thumbnailScrollDeferral();
     void selectCancellation();
     void promptCancellation();
+    void tabCloseCancellation();
     void tabSwipe();
     void sessionOwnership();
     void snapshotApplicationTriggers();
@@ -266,4 +267,12 @@ void tst_hostedqml::promptCancellation()
                       QStringList() << functionSource(
                           QStringLiteral(":/BrowserPage.qml"),
                           QStringLiteral("cancelHostedPrompt")));
+}
+
+void tst_hostedqml::tabCloseCancellation()
+{
+    runJavaScriptTest(QStringLiteral(":/tab-close-cancellation.js"),
+                      QStringList() << functionSource(
+                          QStringLiteral(":/TabItem.qml"),
+                          QStringLiteral("restoreRejectedClose")));
 }

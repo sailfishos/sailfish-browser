@@ -9,6 +9,8 @@ Item {
     id: root
 
     property string failure
+    property var rejectedNormal: []
+    property var rejectedPrivate: []
 
     MockHostedModel { id: normalModel }
     MockHostedModel { id: privateModel }
@@ -20,6 +22,7 @@ Item {
 
         model: normalModel
         view: normalView
+        onRuntimeTabCloseRejected: root.rejectedNormal.push(persistentId)
     }
 
     HostedTabSession {
@@ -28,6 +31,7 @@ Item {
         model: privateModel
         view: privateView
         privateMode: true
+        onRuntimeTabCloseRejected: root.rejectedPrivate.push(persistentId)
     }
 
     function expect(condition, message) {
@@ -67,6 +71,24 @@ Item {
         expect(privateView.calls.slice(-2).join("|") === "select:23|reload",
                "Private activation did not stay in its renderer")
         expect(normalView.calls.length === 2, "Private activation reached the normal renderer")
+
+        normalSession.dispatchRuntimeCommand({type: "close", persistentId: "17"})
+        normalSession.queueRuntimeClose("18")
+        normalSession.runtimeTabCloseResult("unrelated", false)
+        expect(rejectedNormal.length === 0, "Unrelated close result cancelled cards")
+        normalSession.runtimeTabCloseResult("23", false)
+        expect(rejectedNormal.join("|") === "17|18", "Rejected close did not restore queued cards")
+        expect(rejectedPrivate.length === 0, "Normal cancellation reached private cards")
+        expect(normalSession._runtimeCloseInFlight === null
+               && normalSession._pendingRuntimeCloseCommands.length === 0,
+               "Cancelled batch retained close commands")
+
+        privateView.closeAccepted = false
+        privateSession.dispatchRuntimeCommand({type: "close", persistentId: "17"})
+        expect(rejectedPrivate.join("|") === "17", "Synchronous close failure did not restore card")
+        normalSession.dispatchRuntimeCommand({type: "close", persistentId: "17"})
+        normalSession.runtimeTabCloseResult("23", true)
+        expect(rejectedNormal.length === 2, "Successful close restored dismissed cards")
         return failure
     }
 }

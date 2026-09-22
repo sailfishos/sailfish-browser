@@ -12,6 +12,7 @@ Item {
     property var view
     property bool privateMode
     signal runtimeTabsClearFinished
+    signal runtimeTabCloseRejected(string persistentId)
     signal snapshotApplied(var snapshot)
     signal historyChanged
     signal empty
@@ -132,6 +133,7 @@ Item {
         var persistentId = _pendingRuntimeCloseCommands.shift()
         var runtimeId = model.runtimeIdForPersistentId(persistentId)
         if (!runtimeId.length) {
+            runtimeTabCloseRejected(persistentId)
             startNextRuntimeClose(hostView)
             return
         }
@@ -143,10 +145,21 @@ Item {
             "revision": String(hostView.tabModel.revision)
         }
         if (!hostView.closeTab(runtimeId)) {
-            _runtimeCloseInFlight = null
-            _pendingRuntimeCloseCommands = []
-            finishRuntimeTabsClear()
+            rejectRuntimeCloses()
         }
+    }
+
+    function rejectRuntimeCloses() {
+        var rejected = _pendingRuntimeCloseCommands
+        if (_runtimeCloseInFlight) {
+            rejected = [_runtimeCloseInFlight.persistentId].concat(rejected)
+        }
+        _runtimeCloseInFlight = null
+        _pendingRuntimeCloseCommands = []
+        for (var index = 0; index < rejected.length; ++index) {
+            runtimeTabCloseRejected(rejected[index])
+        }
+        finishRuntimeTabsClear()
     }
 
     function resolveRuntimeCloseAfterSnapshot(runtimeHostView) {
@@ -176,9 +189,7 @@ Item {
         if (!closed) {
             // A beforeunload prompt was declined. Do not issue the next
             // close-all request until a later user action starts a new batch.
-            _runtimeCloseInFlight = null
-            _pendingRuntimeCloseCommands = []
-            finishRuntimeTabsClear()
+            rejectRuntimeCloses()
         }
         // A successful close is still committed only by the next complete
         // runtime snapshot, which retains persistence as the authority.
