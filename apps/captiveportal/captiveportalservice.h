@@ -28,6 +28,7 @@ public slots:
 
 signals:
     void openUrlRequested(const QString &url);
+    void closeBrowserRequested();
 
 private:
     bool m_registered;

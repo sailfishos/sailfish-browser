@@ -13,7 +13,7 @@
 #include <QDebug>
 #include <QFile>
 #include <QPointer>
-#include <QTextStream>
+#include <QSaveFile>
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -43,12 +43,11 @@ void BookmarkManager::save(const QList<Bookmark*> & bookmarks)
         return;
     }
     QString path = dataLocation + "/bookmarks.json";
-    QFile file(path);
+    QSaveFile file(path);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         qWarning() << "Can't create file " << path;
         return;
     }
-    QTextStream out(&file);
     QJsonArray items;
 
     for (const Bookmark* const bookmark : bookmarks) {
@@ -60,9 +59,10 @@ void BookmarkManager::save(const QList<Bookmark*> & bookmarks)
         items.append(QJsonValue(title));
     }
     QJsonDocument doc(items);
-    out.setCodec("UTF-8");
-    out << doc.toJson();
-    file.close();
+    const QByteArray data = doc.toJson();
+    if (file.write(data) != data.size() || !file.commit()) {
+        qWarning() << "Can't save bookmarks to" << path << file.errorString();
+    }
 }
 
 void BookmarkManager::clear()

@@ -1,14 +1,12 @@
-%global min_xulrunner_version 115.35.1
-%global min_qtmozembed_version 1.56.0
-%global min_embedlite_components_version 2.0.0
-%global min_sailfishwebengine_version 1.7.0
+%global min_qtmozembed_version 2.0.0
+%global min_sailfishwebengine_version 1.8.0
 
 %global captiveportal sailfish-captiveportal
 
 Name:       sailfish-browser
 
 Summary:    Sailfish Browser
-Version:    3.0.0
+Version:    3.1.0
 Release:    1
 License:    MPLv2.0
 Url:        https://github.com/sailfishos/sailfish-browser
@@ -36,8 +34,6 @@ BuildRequires:  pkgconfig(dsme_dbus_if)
 
 Requires: sailfishsilica-qt5 >= 1.2.33
 Requires: sailfish-content-graphics
-Requires: xulrunner-qt5 >= %{min_xulrunner_version}
-Requires: embedlite-components-qt5 >= %{min_embedlite_components_version}
 Requires: qtmozembed-qt5 >= %{min_qtmozembed_version}
 Requires: sailfish-components-webview-qt5 >= %{min_sailfishwebengine_version}
 Requires: sailfish-components-webview-qt5-popups >= %{min_sailfishwebengine_version}
@@ -57,7 +53,6 @@ Requires: mapplauncherd-booster-browser
 Requires: nemo-qml-plugin-connectivity
 Requires: jolla-settings >= 0.11.29
 Requires: jolla-settings-system >= 1.0.70
-Requires: sailfish-policy
 Obsoletes: sailfish-browser-settings <= 2.3.29
 Provides: sailfish-browser-settings > 2.3.29
 

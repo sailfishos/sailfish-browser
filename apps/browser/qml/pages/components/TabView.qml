@@ -116,6 +116,8 @@ SilicaControl {
                 horizontalMargin: tabView.horizontalMargin
                 portrait: tabView.portrait
                 model: TabFilterModel {
+                    id: tabFilterModel
+
                     sourceModel: tabItem.privateMode ? webView.privateTabModel : webView.persistentTabModel
                     showHidden: false
                 }
@@ -126,8 +128,8 @@ SilicaControl {
 
                 onHide: tabView.hide()
                 onEnterNewTabUrl: tabView.enterNewTabUrl()
-                onActivateTab: tabView.activateTab(index)
-                onCloseTab: tabView.closeTab(index)
+                onActivateTab: tabView.activateTab(tabFilterModel.getIndex(index))
+                onCloseTab: tabView.closeTab(tabFilterModel.getIndex(index))
                 onCloseAll: tabView.closeAll()
                 onCloseAllCanceled: tabView.closeAllCanceled()
                 onCloseAllPending: tabView.closeAllPending()

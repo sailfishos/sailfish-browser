@@ -10,6 +10,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import QtQuick 2.2
+import Sailfish.Silica 1.0
 import "pages"
 import "shared"
 
@@ -20,10 +21,37 @@ BrowserWindow {
         if (!model || model.count === 0 || !WebUtils.firstUseDone) {
             cover = Qt.resolvedUrl("cover/NoTabsCover.qml")
         } else {
-            if (cover != null && window.webView) {
-                window.webView.clearSurface()
+            cover = hostedPageCover
+        }
+    }
+
+    Component {
+        id: hostedPageCover
+
+        CoverBackground {
+            Image {
+                anchors.fill: parent
+                visible: window.webView && window.webView.privateMode
+                source: visible && window.rootPage && window.rootPage.privateCoverGrab
+                        ? window.rootPage.privateCoverGrab.url : ""
+                fillMode: Image.PreserveAspectCrop
+                horizontalAlignment: Image.AlignLeft
+                verticalAlignment: Image.AlignTop
             }
-            cover = null
+            Repeater {
+                model: window.webView && !window.webView.privateMode
+                        ? window.webView.persistentTabModel : null
+
+                delegate: Image {
+                    anchors.fill: parent
+                    source: activeTab ? thumbnailPath : ""
+                    cache: false
+                    asynchronous: true
+                    fillMode: Image.PreserveAspectCrop
+                    horizontalAlignment: Image.AlignLeft
+                    verticalAlignment: Image.AlignTop
+                }
+            }
         }
     }
 

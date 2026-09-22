@@ -33,16 +33,6 @@ static QString getLocation(QStandardPaths::StandardLocation locationType)
     return location;
 }
 
-QString BrowserPaths::downloadLocation()
-{
-    return getLocation(QStandardPaths::DownloadLocation);
-}
-
-QString BrowserPaths::picturesLocation()
-{
-    return getLocation(QStandardPaths::PicturesLocation);
-}
-
 QString BrowserPaths::dataLocation()
 {
     return getLocation(QStandardPaths::AppDataLocation);

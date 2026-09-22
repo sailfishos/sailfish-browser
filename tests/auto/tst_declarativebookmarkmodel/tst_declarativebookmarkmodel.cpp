@@ -194,11 +194,19 @@ void tst_declarativebookmarkmodel::setActiveUrl()
 void tst_declarativebookmarkmodel::clearBookmarks()
 {
     QSignalSpy countChangeSpy(m_model, SIGNAL(countChanged()));
+    m_model->setActiveUrl(JOLLA_URL);
+    QSignalSpy activeUrlBookmarkedChangedSpy(m_model, SIGNAL(activeUrlBookmarkedChanged()));
 
     BookmarkManager::instance()->clear();
 
     QCOMPARE(countChangeSpy.count(), 1);
+    QCOMPARE(activeUrlBookmarkedChangedSpy.count(), 1);
     QCOMPARE(m_model->rowCount(), 0);
+    QVERIFY(!m_model->activeUrlBookmarked());
+
+    BookmarkManager::instance()->clear();
+    QCOMPARE(countChangeSpy.count(), 1);
+    QCOMPARE(activeUrlBookmarkedChangedSpy.count(), 1);
 }
 
 void tst_declarativebookmarkmodel::updateFavoriteIcon()

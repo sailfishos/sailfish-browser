@@ -194,8 +194,6 @@ Page {
     Notice {
         id: notification
 
-        property bool published
-
         duration: Notice.Short
         verticalOffset: -Theme.itemSizeMedium
     }

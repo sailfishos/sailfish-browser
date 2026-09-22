@@ -17,6 +17,19 @@ int DeclarativeTabFilterModel::getIndex(int currentIndex)
     return sourceIndex.row();
 }
 
+QVariantMap DeclarativeTabFilterModel::get(int row) const
+{
+    const QModelIndex item = index(row, 0);
+    QVariantMap result;
+    if (item.isValid()) {
+        const auto roles = roleNames();
+        for (auto role = roles.constBegin(); role != roles.constEnd(); ++role) {
+            result.insert(QString::fromUtf8(role.value()), data(item, role.key()));
+        }
+    }
+    return result;
+}
+
 bool DeclarativeTabFilterModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const
 {
     QModelIndex index = sourceModel()->index(sourceRow, 0, sourceParent);
@@ -63,15 +76,13 @@ void DeclarativeTabFilterModel::setShowHidden(bool showHidden)
 
 int DeclarativeTabFilterModel::activeTabIndex() const
 {
-    int sourceTabIndex = static_cast<DeclarativeTabModel*>(sourceModel())->activeTabIndex();
-    return sourceTabIndex;
+    const int sourceTabIndex = static_cast<DeclarativeTabModel*>(sourceModel())->activeTabIndex();
     int proxyTabIndex = -1;
     if (sourceTabIndex >= 0) {
-        QModelIndex sourceIndex = index(static_cast<DeclarativeTabModel*>(sourceModel())->activeTabIndex(), 0);
-        QModelIndex proxyIndex = mapFromSource(sourceIndex);
+        const QModelIndex sourceIndex = sourceModel()->index(sourceTabIndex, 0);
+        const QModelIndex proxyIndex = mapFromSource(sourceIndex);
         proxyTabIndex = proxyIndex.row();
     }
-    qDebug() << "PRINT: activeTabIndex proxy: " << proxyTabIndex;
     return proxyTabIndex;
 }
 
@@ -79,4 +90,3 @@ int DeclarativeTabFilterModel::count() const
 {
     return rowCount();
 }
-

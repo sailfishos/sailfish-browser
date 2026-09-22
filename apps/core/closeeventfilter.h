@@ -26,7 +26,6 @@ public:
 
 public slots:
     void applicationClosingStarted();
-    void cancelCloseApplication();
     void closeApplication();
 
 private slots:

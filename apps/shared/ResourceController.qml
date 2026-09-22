@@ -34,6 +34,12 @@ Item {
     property bool _webrtcAudioActive
     property bool _webrtcVideoActive
 
+    Component.onCompleted: {
+        WebEngine.addObserver("network-enable")
+        WebEngine.addObserver("webrtc-media-info")
+        connectionHelper.notifyOfflineStatus()
+    }
+
     function calculateStatus() {
         var video = _webrtcVideoActive
         var audio = _webrtcAudioActive
@@ -85,11 +91,7 @@ Item {
     Connections {
         target: WebEngine
 
-        onInitialized: {
-          WebEngine.addObserver("network-enable")
-          WebEngine.addObserver("webrtc-media-info")
-          connectionHelper.notifyOfflineStatus()
-        }
+        onInitialized: connectionHelper.notifyOfflineStatus()
         onRecvObserve: {
             if (message === "media-decoder-info") {
                 if (data.state === "meta") {

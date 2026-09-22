@@ -24,6 +24,18 @@ Column {
     property real certOverlayHeight
     property bool certOverlayActive
     property real certOverlayAnimPos
+    property var hostedView
+    property bool urlSwipeEnabled
+    property bool tabSwipeActive
+    property real tabSwipeOffset
+    property real tabSwipePageWidth
+    property int tabSwipeDirection
+    property string tabSwipeCurrentUrl
+    property string tabSwipeTargetUrl
+    readonly property bool hosted: !!hostedView
+    readonly property bool hostedPopup: hosted && hostedView.tabModel
+                                        && !!hostedView.tabModel.selectedTabOpenerId
+    readonly property var effectiveSecurity: hosted ? hostedView.security : webView.security
     property real certOverlayPreferedHeight: 4 * toolBarRow.height
     readonly property bool showFindButtons: webView.findInPageHasResult && findInPageActive
     property var bookmarked
@@ -63,6 +75,9 @@ Column {
     signal showInfoOverlay
     signal showChrome
     signal showCertDetail
+    signal tabSwipeStarted
+    signal tabSwipeMoved(real distance)
+    signal tabSwipeEnded(real distance, bool switchTab)
 
     // Used from the PopUpMenu
     signal loadPage(string url)
@@ -74,22 +89,39 @@ Column {
     signal savePageAsPDF
 
     function resetFind() {
-        webView.sendAsyncMessage("embedui:find", { text: "", backwards: false, again: false })
-        if (webView.contentItem) {
-            webView.contentItem.forceChrome(false)
-        }
+        browserPage.resetFindInPage()
 
         findInPageActive = false
     }
 
-    width: parent.width
-
-    onFindInPageActiveChanged: {
-        // Down allow hiding of toolbar when finding text from the page.
-        if (findInPageActive && webView.contentItem) {
-            webView.contentItem.forceChrome(true)
+    function activateBack() {
+        if (toolBarRow.hosted && hostedView.canGoBack) {
+            browserPage.goBack()
+        } else if (toolBarRow.hostedPopup) {
+            browserPage.closeTabWithTransition()
+        } else if (!toolBarRow.hosted
+                   && webView.contentItem && webView.contentItem.parentId > 0) {
+            webView.tabModel.closeActiveTab()
         }
     }
+
+    function tabSwipeUrlText(address) {
+        if (address === "about:blank") {
+            //: Placeholder text for url typing and searching
+            //% "Type URL or search"
+            return qsTrId("sailfish_browser-ph-type_url_or_search")
+        } else if (address) {
+            return WebUtils.displayableUrl(address)
+        } else {
+            //: Loading text that is visible when url is not yet resolved.
+            //% "Loading"
+            return qsTrId("sailfish_browser-la-loading")
+        }
+    }
+
+    width: parent.width
+
+
 
     Item {
         id: certOverlay
@@ -111,7 +143,7 @@ Column {
 
             active: false
             sourceComponent: CertificateInfo {
-                security: webView.security
+                security: toolBarRow.effectiveSecurity
                 width: certOverlay.width
                 height: certOverlayHeight
                 opacity: Math.max((certOverlayAnimPos * 2.0) - 1.0, 0)
@@ -185,7 +217,7 @@ Column {
 
                 Connections {
                     target: webView.tabModel
-                    onNewTabRequested: {
+                    onRuntimeNewTabRequested: {
                         // New tab request triggers 360 degrees clockwise rotation
                         // for the tab icon.
                         rotationAnimator.from = 0
@@ -222,9 +254,12 @@ Column {
             expandedWidth: toolBarRow.iconWidth
             icon {
                 source: {
-                    if (webView.canGoBack) {
+                    if (toolBarRow.hosted && hostedView.canGoBack) {
                         return "image://theme/icon-m-back"
-                    } else if (webView.contentItem && webView.contentItem.parentId > 0) {
+                    } else if (toolBarRow.hostedPopup) {
+                        return "image://theme/icon-m-back-tab"
+                    } else if (!toolBarRow.hosted
+                               && webView.contentItem && webView.contentItem.parentId > 0) {
                         return "image://theme/icon-m-back-tab"
                     }
                     return ""
@@ -239,32 +274,29 @@ Column {
                 }
             }
 
-            active: (webView.canGoBack || (webView.contentItem && webView.contentItem.parentId > 0)) && !findInPageActive
-            onTapped: {
-                if (webView.canGoBack) {
-                    webView.goBack()
-                } else {
-                    webView.tabModel.closeActiveTab()
-                }
-            }
+            active: toolBarRow.hosted && (hostedView.canGoBack || toolBarRow.hostedPopup)
+                    && !findInPageActive
+            onTapped: toolBarRow.activateBack()
         }
 
         Shared.ExpandingButton {
             id: padlockIcon
 
-            property bool danger: webView.security && webView.security.validState && !webView.security.allGood
+            property bool danger: toolBarRow.effectiveSecurity
+                                  && toolBarRow.effectiveSecurity.validState
+                                  && !toolBarRow.effectiveSecurity.allGood
             property real glow
 
             height: parent.height
             expandedWidth: toolBarRow.smallIconWidth
             icon.source: danger ? "image://theme/icon-s-filled-warning" : "image://theme/icon-s-outline-secure"
-            active: webView.security && webView.security.validState && !findInPageActive
-                    && !(webView.url.indexOf("about:") === 0)
+            active: toolBarRow.effectiveSecurity && toolBarRow.effectiveSecurity.validState
+                    && !findInPageActive && !(toolBarRow.url.indexOf("about:") === 0)
             icon.color: danger ? Qt.tint(Theme.primaryColor,
                                          Qt.rgba(Theme.errorColor.r, Theme.errorColor.g,
                                                  Theme.errorColor.b, glow))
                                : Theme.primaryColor
-            enabled: webView.security
+            enabled: toolBarRow.effectiveSecurity
             onTapped: {
                 if (certOverlayActive) {
                     showChrome()
@@ -293,9 +325,10 @@ Column {
             }
 
             Connections {
-                target: webView
+                target: toolBarRow.hosted ? toolBarRow.hostedView : webView
                 onLoadingChanged: {
-                    if (!webView.loading && padlockIcon.danger) {
+                    if (!(toolBarRow.hosted ? toolBarRow.hostedView.loading
+                                             : webView.loading) && padlockIcon.danger) {
                         padlockIcon.warn()
                     }
                 }
@@ -306,14 +339,29 @@ Column {
             id: touchArea
 
             readonly property bool down: pressed && containsMouse
+            property real _pressY
+            property bool _pressAndHoldTriggered
+            property bool _dragTriggered
 
             height: parent.height
             width: toolsRow.width - (tabButton.width + stopButton.width + padlockIcon.width + backIcon.width + menuButton.width)
             enabled: !showFindButtons
+            clip: tabSwipeActive
             _showPress: false
 
+            onPressed: {
+                _pressY = mouse.y
+                _pressAndHoldTriggered = false
+                _dragTriggered = false
+                swipeTracker.x = 0
+                drag.target = toolBarRow.urlSwipeEnabled && !findInPageActive
+                        ? swipeTracker : null
+            }
+
             onClicked: {
-                if (findInPageActive) {
+                if (_dragTriggered) {
+                    _dragTriggered = false
+                } else if (findInPageActive) {
                     findInPage()
                 } else {
                     toolBarRow.showOverlay()
@@ -321,12 +369,49 @@ Column {
             }
 
             onPressAndHold: {
-                var url = webView.url
+                _pressAndHoldTriggered = true
+                var url = toolBarRow.url
                 if (url) {
                     // encode the string if it looks like it has query or fragment parts
                     // FIXME: could be improved with *proper* matching.
                     Clipboard.text = ( (url.indexOf('?') > -1) || (url.indexOf('#') > -1) ) ? encodeURI(url) : url
                     urlCopyNotice.show()
+                }
+            }
+
+            drag {
+                axis: Drag.XAxis
+                minimumX: -toolBarRow.width
+                maximumX: toolBarRow.width
+
+                onActiveChanged: {
+                    if (drag.active) {
+                        touchArea._dragTriggered = true
+                        toolBarRow.tabSwipeStarted()
+                    } else if (touchArea._dragTriggered) {
+                        var horizontalDistance = swipeTracker.x
+                        var verticalDistance = Math.abs(touchArea.mouseY
+                                                        - touchArea._pressY)
+                        var switchTab = !_pressAndHoldTriggered
+                                && Math.abs(horizontalDistance) >= Theme.itemSizeMedium
+                                && Math.abs(horizontalDistance) > verticalDistance * 2
+                        toolBarRow.tabSwipeEnded(horizontalDistance, switchTab)
+                        swipeTracker.x = 0
+                    }
+                }
+            }
+
+            Item {
+                id: swipeTracker
+
+                width: 1
+                height: 1
+                visible: false
+
+                onXChanged: {
+                    if (touchArea.drag.active) {
+                        toolBarRow.tabSwipeMoved(x)
+                    }
                 }
             }
 
@@ -341,16 +426,23 @@ Column {
             }
 
             Label {
+                x: tabSwipeActive ? tabSwipeOffset : 0
                 anchors.verticalCenter: parent.verticalCenter
                 width: parent.width + Theme.paddingMedium
                 color: touchArea.highlighted ? Theme.highlightColor : Theme.primaryColor
 
                 text: {
+                    if (tabSwipeActive) {
+                        return tabSwipeUrlText(tabSwipeCurrentUrl)
+                    }
                     if (findInPageActive) {
                         //: No text search results were found from the page.
                         //% "No results"
                         return qsTrId("sailfish_browser-la-no_results")
-                    } else if (url == "about:blank" || (webView.completed && webView.tabModel.count === 0)) {
+                    } else if (url == "about:blank"
+                               || (toolBarRow.hosted
+                                   ? hostedView.tabModel.count === 0
+                                   : webView.completed && webView.tabModel.count === 0)) {
                         //: Placeholder text for url typing and searching
                         //% "Type URL or search"
                         return qsTrId("sailfish_browser-ph-type_url_or_search")
@@ -369,6 +461,17 @@ Column {
                 Behavior on opacity { FadeAnimation {} }
             }
 
+            Label {
+                x: tabSwipeOffset + tabSwipeDirection * tabSwipePageWidth
+                anchors.verticalCenter: parent.verticalCenter
+                width: parent.width + Theme.paddingMedium
+                color: touchArea.highlighted ? Theme.highlightColor : Theme.primaryColor
+                text: tabSwipeUrlText(tabSwipeTargetUrl)
+                truncationMode: TruncationMode.Fade
+                visible: tabSwipeActive && tabSwipeDirection !== 0
+                opacity: showFindButtons ? 0.0 : 1.0
+            }
+
             Shared.ExpandingButton {
                 id: previousFindResult
 
@@ -381,7 +484,7 @@ Column {
                 }
 
                 onTapped: {
-                    webView.sendAsyncMessage("embedui:find", { text: findText, backwards: true, again: true })
+                    browserPage.findInPage(findText, true, true)
                 }
             }
 
@@ -396,7 +499,7 @@ Column {
                 }
 
                 onTapped: {
-                    webView.sendAsyncMessage("embedui:find", { text: findText, backwards: false, again: true })
+                    browserPage.findInPage(findText, false, true)
                 }
             }
         }
@@ -407,13 +510,17 @@ Column {
             height: parent.height
             expandedWidth: toolBarRow.iconWidth
             icon.source: "image://theme/icon-m-reset"
-            active: webView.contentItem && !findInPageActive
-            opacity: webView.loading ? 1.0 : 0.0
+            active: (toolBarRow.hosted || webView.contentItem) && !findInPageActive
+            opacity: (toolBarRow.hosted ? hostedView.loading : webView.loading) ? 1.0 : 0.0
 
             Behavior on opacity { FadeAnimation {} }
 
             onTapped: {
-                webView.stop()
+                if (toolBarRow.hosted) {
+                    hostedView.stop()
+                } else {
+                    webView.stop()
+                }
                 toolBarRow.showChrome()
             }
         }
