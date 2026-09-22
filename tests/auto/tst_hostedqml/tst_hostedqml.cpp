@@ -25,6 +25,7 @@ private slots:
     void privateThumbnailCapture();
     void thumbnailScrollDeferral();
     void selectCancellation();
+    void promptCancellation();
     void tabSwipe();
     void sessionOwnership();
     void snapshotApplicationTriggers();
@@ -258,3 +259,11 @@ void tst_hostedqml::snapshotApplicationTriggers()
 
 QTEST_MAIN(tst_hostedqml)
 #include "tst_hostedqml.moc"
+
+void tst_hostedqml::promptCancellation()
+{
+    runJavaScriptTest(QStringLiteral(":/prompt-cancellation.js"),
+                      QStringList() << functionSource(
+                          QStringLiteral(":/BrowserPage.qml"),
+                          QStringLiteral("cancelHostedPrompt")));
+}

@@ -776,6 +776,7 @@ Page {
         }
 
         if (chromeHostView.selectedTabId.length) {
+            webView.tabModel.cancelRuntimeTraversal(selectedPersistentId())
             chromeHostView.load(url, !!fromExternal)
         } else {
             newTab(url, !!fromExternal)
@@ -825,12 +826,14 @@ Page {
 
     function stop() {
         if (chromeHostView) {
+            webView.tabModel.cancelRuntimeTraversal(selectedPersistentId())
             chromeHostView.stop()
         }
     }
 
     function reload() {
         if (chromeHostView) {
+            webView.tabModel.cancelRuntimeTraversal(selectedPersistentId())
             chromeHostView.reload()
         }
     }
@@ -1112,6 +1115,8 @@ Page {
             return
         }
 
+        if (data.promptId !== undefined) response.promptId = data.promptId
+
         sendHostedMessageToTab(request.hostView, request.tabId,
                                request.persistentId, responseMessage, response,
                                request.message === "embed:confirm"
@@ -1333,6 +1338,29 @@ Page {
         }
     }
 
+    function cancelHostedPrompt(hostView, tabId, persistentId, data) {
+        function matches(request) {
+            return request && ["embed:alert", "embed:confirm", "embed:prompt", "embed:select"].indexOf(request.message) !== -1
+                    && request.hostView === hostView
+                    && request.tabId === String(tabId)
+                    && (!persistentId || request.persistentId === String(persistentId))
+                    && request.data.promptId !== undefined
+                    && request.data.promptId === data.promptId
+        }
+
+        var pending = []
+        for (var index = 0; index < _pendingHostedModalRequests.length; ++index) {
+            var request = _pendingHostedModalRequests[index]
+            if (!matches(request)) pending.push(request)
+        }
+        _pendingHostedModalRequests = pending
+
+        var target = _activeHostedModalTarget
+        if (target && matches(target.modalRequest) && target.opener) {
+            target.opener.message("embed:promptabort", data)
+        }
+    }
+
     function openHostedPicker(hostView, tabId, persistentId, message, data) {
         if (message === "embed:selectabort") {
             cancelHostedSelect(hostView, tabId, persistentId, data)
@@ -1398,8 +1426,12 @@ Page {
     }
 
     function openHostedPopup(hostView, tabId, persistentId, message, data) {
+        if (message === "embed:promptabort") {
+            cancelHostedPrompt(hostView, tabId, persistentId, data)
+            return true
+        }
         var popupTopics = [ "Content:ContextMenu", "embed:alert",
-                            "embed:confirm", "embed:prompt", "embed:login",
+                            "embed:confirm", "embed:prompt", "embed:promptabort", "embed:login",
                             "embed:auth", "embed:permissions",
                             "embed:webrtcrequest", "embed:popupblocked",
                             "embed:select" ]
@@ -1746,7 +1778,7 @@ Page {
                           "Link:AddSearch", "embed:find",
                           "embed:contentOrientationChanged", "embed:viewportfit",
                           "Content:ContextMenu", "embed:alert", "embed:confirm",
-                          "embed:prompt", "embed:login", "embed:auth",
+                          "embed:prompt", "embed:promptabort", "embed:login", "embed:auth",
                           "embed:permissions", "embed:webrtcrequest",
                           "embed:popupblocked", "embed:select",
                           "embed:colorpicker", "embed:filepicker",
@@ -2332,6 +2364,9 @@ Page {
                 // QmlMozView currently has a selected-tab-only cancel API.
                 // Never cancel the wrong tab while a delayed prompt is open.
                 if (hostView && String(hostView.selectedTabId) === tabId) {
+                    if (owner && hostView === owner.chromeHostView) {
+                        webView.tabModel.cancelRuntimeTraversal(persistentId)
+                    }
                     hostView.cancelPendingNavigation()
                 }
             }

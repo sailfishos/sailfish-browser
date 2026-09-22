@@ -681,16 +681,28 @@ void tst_persistenttabmodel::runtimeHistoryTraversalTimeout()
     tabModel->expireRuntimeTraversals();
     QVERIFY(!tabModel->m_runtimeTraversalTimer.isActive());
 
-    // The DB cursor was never moved, and a subsequent traversal is accepted.
+    // The DB cursor remains unchanged while Gecko is still deciding.
     QSignalSpy restoreSpy(DBManager::instance(),
-                          SIGNAL(persistentTabRestoreBatchAvailable(PersistentTabRestoreBatch)));
+                          &DBManager::persistentTabRestoreBatchAvailable);
     DBManager::instance()->getPersistentTabRestoreBatch();
     QVERIFY(restoreSpy.wait(5000));
     const PersistentTabRestoreData restored = restoreSpy.at(0).at(0)
             .value<PersistentTabRestoreBatch>().tabs().first();
     QCOMPARE(restored.history().count(), 2);
     QCOMPARE(restored.selectedHistoryIndex(), 1);
-    QVERIFY(tabModel->runtimeGoBack(QStringLiteral("1")));
+    // A late accepted Back must move the existing cursor, not append a visit.
+    tab.insert(QStringLiteral("location"), QStringLiteral("https://example.com/one"));
+    tab.insert(QStringLiteral("title"), QStringLiteral("One"));
+    tab.insert(QStringLiteral("locationRevision"), QStringLiteral("3"));
+    tabModel->applyRuntimeSnapshot(QVariantList() << tab, QStringLiteral("100"));
+    restoreSpy.clear();
+    DBManager::instance()->getPersistentTabRestoreBatch();
+    QVERIFY(restoreSpy.wait(5000));
+    const PersistentTabRestoreData delayed = restoreSpy.at(0).at(0)
+            .value<PersistentTabRestoreBatch>().tabs().first();
+    QCOMPARE(delayed.history().count(), 2);
+    QCOMPARE(delayed.selectedHistoryIndex(), 0);
+    QVERIFY(tabModel->runtimeGoForward(QStringLiteral("1")));
 }
 
 void tst_persistenttabmodel::runtimeReservationReconciliation()
