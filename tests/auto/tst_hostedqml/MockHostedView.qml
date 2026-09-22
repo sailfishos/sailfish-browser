@@ -11,6 +11,7 @@ QtObject {
     property string name
     property string selectedTabId: "23"
     property var calls: []
+    property bool closeAccepted: true
     property QtObject tabModel: QtObject {
         property string revision: "1"
 
@@ -51,7 +52,7 @@ QtObject {
 
     function closeTab(runtimeId) {
         calls.push("close:" + runtimeId)
-        return true
+        return closeAccepted
     }
 
     function associateTab(runtimeId, persistentId) {

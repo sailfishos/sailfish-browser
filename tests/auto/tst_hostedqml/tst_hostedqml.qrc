@@ -4,6 +4,8 @@
         <file alias="CaptivePortalView.qml">../../../apps/shared/CaptivePortalView.qml</file>
         <file alias="HostedTabSession.qml">../../../apps/shared/HostedTabSession.qml</file>
         <file alias="Overlay.qml">../../../apps/browser/qml/pages/components/Overlay.qml</file>
+        <file alias="TabItem.qml">../../../apps/browser/qml/pages/components/TabItem.qml</file>
+        <file>tab-close-cancellation.js</file>
         <file>context-menu.js</file>
         <file>date-picker-routing.js</file>
         <file>MockHostedModel.qml</file>

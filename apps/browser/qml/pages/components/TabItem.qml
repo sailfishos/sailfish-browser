@@ -47,6 +47,25 @@ Private.SwipeItem {
         removeTimer.running = true
     }
 
+    function restoreRejectedClose(persistentId, tabModel) {
+        if (!destroying || String(tabId) !== String(persistentId)
+                || view.model.sourceModel !== tabModel) {
+            return
+        }
+        // Both the close button and swipe dismiss the card before Gecko asks
+        // whether the page can leave. Restore it when that close is declined.
+        root.contentItem.x = 0
+        root.implicitHeight = Qt.binding(function() { return root.height })
+        root.implicitWidth = Qt.binding(function() { return root.width })
+        destroying = false
+    }
+
+    Connections {
+        target: browserPage
+
+        onRuntimeTabCloseRejected: root.restoreRejectedClose(persistentId, tabModel)
+    }
+
     layer.enabled: true
     layer.effect: OpacityMask {
         maskSource: Rectangle {

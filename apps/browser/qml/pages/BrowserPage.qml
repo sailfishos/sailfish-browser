@@ -32,6 +32,7 @@ Page {
     signal hostedThumbnailGrabbed(string persistentId, string location,
                                   string locationRevision, real generation)
     signal runtimeTabsClearFinished
+    signal runtimeTabCloseRejected(string persistentId, var tabModel)
 
     readonly property bool active: status == PageStatus.Active
     property bool tabPageActive
@@ -2547,6 +2548,7 @@ Page {
 
                     model: chromeView.browserTabModel
                     view: chromeView
+                    onRuntimeTabCloseRejected: browserPage.runtimeTabCloseRejected(persistentId, chromeView.browserTabModel)
                     onSnapshotApplied: {
                         if (chromeView.privateMode) browserPage.prunePrivateTabGrabs(snapshot)
                         if (chromeView === browserPage.chromeHostView) browserPage.pruneHostedTabCrashStates(snapshot)
