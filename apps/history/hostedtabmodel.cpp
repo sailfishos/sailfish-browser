@@ -273,7 +273,7 @@ bool HostedTabModel::runtimeGoBack(const QString &persistentId)
 {
     bool ok = false;
     const int id = persistentId.toInt(&ok);
-    if (!ok || !contains(id) || m_pendingRuntimeTraversals.contains(id)) {
+    if (!ok || !contains(id) || m_pendingRuntimeTraversals.value(id).deadline > 0) {
         return false;
     }
 
@@ -301,7 +301,7 @@ bool HostedTabModel::runtimeGoForward(const QString &persistentId)
 {
     bool ok = false;
     const int id = persistentId.toInt(&ok);
-    if (!ok || !contains(id) || m_pendingRuntimeTraversals.contains(id)) {
+    if (!ok || !contains(id) || m_pendingRuntimeTraversals.value(id).deadline > 0) {
         return false;
     }
 
@@ -323,6 +323,16 @@ bool HostedTabModel::runtimeGoForward(const QString &persistentId)
     m_pendingRuntimeTraversals.insert(id, traversal);
     scheduleRuntimeTraversalExpiry();
     return true;
+}
+
+void HostedTabModel::cancelRuntimeTraversal(const QString &persistentId)
+{
+    bool ok = false;
+    const int id = persistentId.toInt(&ok);
+    if (ok) {
+        m_pendingRuntimeTraversals.remove(id);
+        scheduleRuntimeTraversalExpiry();
+    }
 }
 
 void HostedTabModel::rememberReservedRuntimeTab(const QString &url,
@@ -416,9 +426,15 @@ void HostedTabModel::scheduleRuntimeTraversalExpiry()
 
     qint64 nextDeadline = -1;
     for (const PendingRuntimeTraversal &traversal : m_pendingRuntimeTraversals) {
-        if (nextDeadline < 0 || traversal.deadline < nextDeadline) {
+        if (traversal.deadline > 0
+                && (nextDeadline < 0 || traversal.deadline < nextDeadline)) {
             nextDeadline = traversal.deadline;
         }
+    }
+
+    if (nextDeadline < 0) {
+        m_runtimeTraversalTimer.stop();
+        return;
     }
 
     const qint64 remaining = nextDeadline - QDateTime::currentMSecsSinceEpoch();
@@ -437,7 +453,9 @@ void HostedTabModel::expireRuntimeTraversals()
     }
 
     for (int persistentId : expiredTraversals) {
-        m_pendingRuntimeTraversals.remove(persistentId);
+        // Expiry allows another command, but does not cancel Gecko navigation.
+        // Retain its identity until a commit, a new traversal, or tab removal.
+        m_pendingRuntimeTraversals[persistentId].deadline = 0;
     }
     scheduleRuntimeTraversalExpiry();
 }

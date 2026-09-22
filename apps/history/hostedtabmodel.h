@@ -80,6 +80,7 @@ public:
                                            bool desktopMode);
     Q_INVOKABLE bool runtimeGoBack(const QString &persistentId);
     Q_INVOKABLE bool runtimeGoForward(const QString &persistentId);
+    Q_INVOKABLE void cancelRuntimeTraversal(const QString &persistentId);
     Q_INVOKABLE QVariantList takePendingRuntimeNewTabs();
     Q_INVOKABLE QVariantMap runtimeRestoreBatch() const;
     Q_INVOKABLE void applyRuntimeSnapshot(const QVariantList &tabs,
@@ -104,7 +105,7 @@ private:
         QString sourceLocation;
         QString targetLocation;
         quint64 baseRevision;
-        qint64 deadline;
+        qint64 deadline = 0;
     };
 
     struct PendingRuntimeNewTab {
