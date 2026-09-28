@@ -2910,6 +2910,18 @@ Page {
         color: browserPage.contentFullscreen ? "black" : webView._defaultThemeColor
     }
 
+    Rectangle {
+        width: browserPage.width
+        height: Math.ceil(overlay.y)
+        color: Theme.highlightDimmerColor
+        opacity: overlay.animator.atBottom ? 0.0
+                 : 0.3 * Math.max(0.0, Math.min(1.0,
+                     (webView.fullscreenHeight - overlay.toolBar.rowHeight - overlay.y)
+                     / Math.max(1.0, webView.fullscreenHeight - overlay.toolBar.rowHeight
+                                    - overlay.animator.fullscreenGap)))
+        visible: opacity > 0.0
+    }
+
     MouseArea {
         width: browserPage.width
         height: Math.ceil(overlay.y)
