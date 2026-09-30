@@ -101,6 +101,8 @@ HostedTabModel::HostedTabModel(int nextTabId, bool persistent, DeclarativeWebCon
             this, &HostedTabModel::expireRuntimeTraversals);
 
     if (m_persistent) {
+        connect(DBManager::instance(), &DBManager::traversalTargetAvailable,
+                this, &HostedTabModel::traversalTargetAvailable);
         DBManager::instance()->getPersistentTabRestoreBatch();
     } else {
         m_loaded = true;
@@ -271,58 +273,65 @@ bool HostedTabModel::cancelRuntimeTabReservation(const QString &persistentId)
 
 bool HostedTabModel::runtimeGoBack(const QString &persistentId)
 {
-    bool ok = false;
-    const int id = persistentId.toInt(&ok);
-    if (!ok || !contains(id) || m_pendingRuntimeTraversals.value(id).deadline > 0) {
-        return false;
-    }
-
-    if (!m_persistent) {
-        return true;
-    }
-
-    const QString targetLocation = DBManager::instance()->peekBackTarget(id);
-    if (targetLocation.isEmpty()) {
-        return false;
-    }
-
-    PendingRuntimeTraversal traversal;
-    traversal.direction = -1;
-    traversal.sourceLocation = url(id);
-    traversal.targetLocation = targetLocation;
-    traversal.baseRevision = m_runtimeLocationRevisions.value(id);
-    traversal.deadline = QDateTime::currentMSecsSinceEpoch() + RuntimeTraversalTimeout;
-    m_pendingRuntimeTraversals.insert(id, traversal);
-    scheduleRuntimeTraversalExpiry();
-    return true;
+    return requestRuntimeTraversal(persistentId, -1);
 }
 
 bool HostedTabModel::runtimeGoForward(const QString &persistentId)
+{
+    return requestRuntimeTraversal(persistentId, 1);
+}
+
+bool HostedTabModel::requestRuntimeTraversal(const QString &persistentId, int direction)
 {
     bool ok = false;
     const int id = persistentId.toInt(&ok);
     if (!ok || !contains(id) || m_pendingRuntimeTraversals.value(id).deadline > 0) {
         return false;
     }
-
     if (!m_persistent) {
+        emit runtimeTraversalReady(persistentId, direction);
         return true;
     }
 
-    const QString targetLocation = DBManager::instance()->peekForwardTarget(id);
-    if (targetLocation.isEmpty()) {
-        return false;
-    }
-
     PendingRuntimeTraversal traversal;
-    traversal.direction = 1;
+    traversal.direction = direction;
     traversal.sourceLocation = url(id);
-    traversal.targetLocation = targetLocation;
     traversal.baseRevision = m_runtimeLocationRevisions.value(id);
     traversal.deadline = QDateTime::currentMSecsSinceEpoch() + RuntimeTraversalTimeout;
+    traversal.requestId = ++m_nextTraversalRequestId;
+    traversal.preparing = true;
     m_pendingRuntimeTraversals.insert(id, traversal);
     scheduleRuntimeTraversalExpiry();
+    DBManager::instance()->requestTraversalTarget(id, direction, traversal.requestId);
     return true;
+}
+
+void HostedTabModel::traversalTargetAvailable(int tabId, quint64 requestId,
+                                             const QString &location)
+{
+    auto it = m_pendingRuntimeTraversals.find(tabId);
+    if (it == m_pendingRuntimeTraversals.end() || !it->preparing
+            || it->requestId != requestId) {
+        return;
+    }
+    if (!contains(tabId) || it->deadline <= QDateTime::currentMSecsSinceEpoch()
+            || it->sourceLocation != url(tabId)
+            || it->baseRevision != m_runtimeLocationRevisions.value(tabId)) {
+        m_pendingRuntimeTraversals.erase(it);
+        scheduleRuntimeTraversalExpiry();
+        return;
+    }
+    const int direction = it->direction;
+    if (location.isEmpty()) {
+        // Page-driven traversals can leave the DB behind Gecko. Still allow
+        // Gecko's command when the durable cursor has no adjacent entry.
+        m_pendingRuntimeTraversals.erase(it);
+        scheduleRuntimeTraversalExpiry();
+    } else {
+        it->targetLocation = location;
+        it->preparing = false;
+    }
+    emit runtimeTraversalReady(QString::number(tabId), direction);
 }
 
 void HostedTabModel::cancelRuntimeTraversal(const QString &persistentId)
@@ -455,7 +464,11 @@ void HostedTabModel::expireRuntimeTraversals()
     for (int persistentId : expiredTraversals) {
         // Expiry allows another command, but does not cancel Gecko navigation.
         // Retain its identity until a commit, a new traversal, or tab removal.
-        m_pendingRuntimeTraversals[persistentId].deadline = 0;
+        if (m_pendingRuntimeTraversals.value(persistentId).preparing) {
+            m_pendingRuntimeTraversals.remove(persistentId);
+        } else {
+            m_pendingRuntimeTraversals[persistentId].deadline = 0;
+        }
     }
     scheduleRuntimeTraversalExpiry();
 }
@@ -591,7 +604,12 @@ void HostedTabModel::applyRuntimeSnapshot(
         bool awaitingTraversal = false;
         bool awaitingDifferentLocation = false;
         auto traversalIt = m_pendingRuntimeTraversals.find(persistentId);
-        if (traversalIt != m_pendingRuntimeTraversals.end()) {
+        if (traversalIt != m_pendingRuntimeTraversals.end() && traversalIt->preparing
+                && runtimeTab.locationRevision() > traversalIt->baseRevision) {
+            m_pendingRuntimeTraversals.erase(traversalIt);
+            traversalIt = m_pendingRuntimeTraversals.end();
+        }
+        if (traversalIt != m_pendingRuntimeTraversals.end() && !traversalIt->preparing) {
             const bool committedLocation =
                     runtimeTab.locationRevision() > traversalIt->baseRevision;
             const bool reachedTarget = committedLocation
@@ -602,14 +620,10 @@ void HostedTabModel::applyRuntimeSnapshot(
                 const PendingRuntimeTraversal traversal = traversalIt.value();
                 m_pendingRuntimeTraversals.erase(traversalIt);
                 if (reachedTarget) {
-                    const QString movedTarget = traversal.direction < 0
-                            ? DBManager::instance()->goBackTarget(persistentId)
-                            : DBManager::instance()->goForwardTarget(persistentId);
-                    if (movedTarget == traversal.targetLocation) {
-                        confirmedTraversal = true;
-                    } else {
-                        persistCommittedNavigation = true;
-                    }
+                    DBManager::instance()->commitTraversal(
+                                persistentId, traversal.direction, runtimeTab.url(),
+                                runtimeTab.title(), thumbnail);
+                    confirmedTraversal = true;
                 } else {
                     persistCommittedNavigation = true;
                 }

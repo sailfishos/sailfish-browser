@@ -49,6 +49,9 @@ public slots:
 
     void goForward(int tabId);
     void goBack(int tabId);
+    void requestTraversalTarget(int tabId, int direction, quint64 requestId);
+    void commitTraversal(int tabId, int direction, const QString &location,
+                         const QString &title, const QString &thumbnail);
     QString peekForwardTarget(int tabId);
     QString peekBackTarget(int tabId);
     QString goForwardTarget(int tabId);
@@ -67,6 +70,7 @@ public slots:
     void deleteSetting(const QString &name);
 
 signals:
+    void traversalTargetAvailable(int tabId, quint64 requestId, const QString &location);
     void tabsAvailable(QList<Tab> tabs);
     void persistentTabRestoreBatchAvailable(PersistentTabRestoreBatch batch);
     void thumbPathChanged(int tabId, const QString &path);

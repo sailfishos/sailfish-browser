@@ -812,7 +812,6 @@ Page {
             if (persistentId.length) {
                 webView.tabModel.runtimeGoBack(persistentId)
             }
-            chromeHostView.goBack()
         }
     }
 
@@ -822,7 +821,6 @@ Page {
             if (persistentId.length) {
                 webView.tabModel.runtimeGoForward(persistentId)
             }
-            chromeHostView.goForward()
         }
     }
 
@@ -1172,17 +1170,8 @@ Page {
         }
 
         _pendingHostedModalRequests.push(request)
-        if (!hostView.selectTab(request.tabId)) {
-            var pending = []
-            for (var index = 0; index < _pendingHostedModalRequests.length; ++index) {
-                if (_pendingHostedModalRequests[index] !== request) {
-                    pending.push(_pendingHostedModalRequests[index])
-                }
-            }
-            _pendingHostedModalRequests = pending
-            rejectHostedModalRequest(request)
-            return true
-        }
+        // A background page must not take focus to display a modal. Keep it
+        // pending until the user selects its tab, or reject it on expiry.
         hostedModalRequestTimer.restart()
         return true
     }
@@ -1211,21 +1200,6 @@ Page {
                 break
             } else {
                 remaining.push(request)
-                for (++index; index < pending.length; ++index) {
-                    remaining.push(pending[index])
-                }
-                if (!hostView.selectTab(request.tabId)) {
-                    var kept = []
-                    for (var remainingIndex = 0;
-                         remainingIndex < remaining.length; ++remainingIndex) {
-                        if (remaining[remainingIndex] !== request) {
-                            kept.push(remaining[remainingIndex])
-                        }
-                    }
-                    remaining = kept
-                    rejectHostedModalRequest(request)
-                }
-                break
             }
         }
         _pendingHostedModalRequests = remaining
@@ -2180,6 +2154,16 @@ Page {
 
     Connections {
         target: webView.tabModel
+
+        onRuntimeTraversalReady: {
+            var hostView = browserPage.chromeHostView
+            if (!hostView || browserPage.selectedPersistentId() !== persistentId) {
+                webView.tabModel.cancelRuntimeTraversal(persistentId)
+                return
+            }
+            if (direction < 0) hostView.goBack()
+            else hostView.goForward()
+        }
         onRuntimeTabReservationRejected: browserPage.rejectForegroundNewTab(persistentId)
     }
 

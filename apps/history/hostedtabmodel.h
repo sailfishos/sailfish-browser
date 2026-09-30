@@ -64,6 +64,7 @@ private slots:
                                     bool fromExternal);
     void expireRuntimeTabReservations();
     void expireRuntimeTraversals();
+    void traversalTargetAvailable(int tabId, quint64 requestId, const QString &location);
 
 public:
     HostedTabModel(int nextTabId, bool persistent, DeclarativeWebContainer *webContainer = nullptr);
@@ -87,12 +88,14 @@ public:
                                           const QString &selectedTabId);
 
 signals:
+    void runtimeTraversalReady(const QString &persistentId, int direction);
     void runtimeTabAdopted(const QString &runtimeId, const QString &persistentId);
     void authoritativeActiveTabChanged(const QString &persistentId);
     void authoritativeSnapshotApplied();
     void runtimeTabReservationRejected(const QString &persistentId);
 
 private:
+    bool requestRuntimeTraversal(const QString &persistentId, int direction);
     void setRestoredTabs(const QList<Tab> &tabs, int activePersistentId);
     void scheduleRuntimeTabReservationExpiry();
     void scheduleRuntimeTraversalExpiry();
@@ -102,6 +105,8 @@ private:
 
     struct PendingRuntimeTraversal {
         int direction;
+        quint64 requestId = 0;
+        bool preparing = false;
         QString sourceLocation;
         QString targetLocation;
         quint64 baseRevision;
@@ -125,6 +130,7 @@ private:
     QHash<int, quint64> m_runtimeLocationRevisions;
     QHash<int, PendingRuntimeTraversal> m_pendingRuntimeTraversals;
     QTimer m_runtimeTraversalTimer;
+    quint64 m_nextTraversalRequestId = 0;
 
     friend class tst_persistenttabmodel;
 };

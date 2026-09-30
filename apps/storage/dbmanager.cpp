@@ -45,6 +45,8 @@ DBManager::DBManager(QObject *parent)
     connect(worker, &DBWorker::tabHistoryAvailable, this, &DBManager::tabHistoryAvailable);
     connect(worker, &DBWorker::titleChanged, this, &DBManager::titleChanged);
     connect(worker, &DBWorker::thumbPathChanged, this, &DBManager::thumbPathChanged);
+    connect(worker, &DBWorker::traversalTargetAvailable,
+            this, &DBManager::traversalTargetAvailable);
     workerThread.start();
 
     QMetaObject::invokeMethod(worker, "init", Qt::BlockingQueuedConnection);
@@ -95,6 +97,22 @@ void DBManager::goBack(int tabId)
 {
     QMetaObject::invokeMethod(worker, "goBack", Qt::BlockingQueuedConnection,
                               Q_ARG(int, tabId));
+}
+
+void DBManager::requestTraversalTarget(int tabId, int direction, quint64 requestId)
+{
+    QMetaObject::invokeMethod(worker, "requestTraversalTarget", Qt::QueuedConnection,
+                              Q_ARG(int, tabId), Q_ARG(int, direction),
+                              Q_ARG(quint64, requestId));
+}
+
+void DBManager::commitTraversal(int tabId, int direction, const QString &location,
+                                const QString &title, const QString &thumbnail)
+{
+    QMetaObject::invokeMethod(worker, "commitTraversal", Qt::QueuedConnection,
+                              Q_ARG(int, tabId), Q_ARG(int, direction),
+                              Q_ARG(QString, location), Q_ARG(QString, title),
+                              Q_ARG(QString, thumbnail));
 }
 
 QString DBManager::peekForwardTarget(int tabId)

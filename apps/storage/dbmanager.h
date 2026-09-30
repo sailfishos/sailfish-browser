@@ -36,6 +36,9 @@ public:
     void navigateTo(int tabId, const QString &url, const QString &title = QString(), const QString &path = QString());
     void goForward(int tabId);
     void goBack(int tabId);
+    void requestTraversalTarget(int tabId, int direction, quint64 requestId);
+    void commitTraversal(int tabId, int direction, const QString &location,
+                         const QString &title, const QString &thumbnail);
     QString peekForwardTarget(int tabId);
     QString peekBackTarget(int tabId);
     QString goForwardTarget(int tabId);
@@ -60,6 +63,7 @@ public:
     int getMaxTabId();
 
 signals:
+    void traversalTargetAvailable(int tabId, quint64 requestId, const QString &location);
     void tabsAvailable(QList<Tab> tab);
     void persistentTabRestoreBatchAvailable(PersistentTabRestoreBatch batch);
     void historyAvailable(QList<Link> links);

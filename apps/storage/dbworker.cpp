@@ -510,6 +510,28 @@ QString DBWorker::goForwardTarget(int tabId)
     return QString();
 }
 
+void DBWorker::requestTraversalTarget(int tabId, int direction, quint64 requestId)
+{
+    emit traversalTargetAvailable(tabId, requestId, direction < 0
+                                 ? peekBackTarget(tabId) : peekForwardTarget(tabId));
+}
+
+void DBWorker::commitTraversal(int tabId, int direction, const QString &location,
+                               const QString &title, const QString &thumbnail)
+{
+    const QString target = direction < 0 ? peekBackTarget(tabId) : peekForwardTarget(tabId);
+    if (target == location) {
+        const QString moved = direction < 0 ? goBackTarget(tabId) : goForwardTarget(tabId);
+        if (moved == location) {
+            updateTitle(tabId, location, title);
+            return;
+        }
+    }
+    // The durable history may have changed since the request was prepared.
+    // Reconcile on the worker before later queued navigation writes run.
+    navigateTo(tabId, location, title, thumbnail);
+}
+
 QString DBWorker::peekForwardTarget(int tabId)
 {
     QSqlQuery query = prepare("SELECT link.url FROM tab_history "

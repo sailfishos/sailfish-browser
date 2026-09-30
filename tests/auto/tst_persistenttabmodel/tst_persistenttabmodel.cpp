@@ -48,6 +48,7 @@ private slots:
     void runtimeCommandBoundaries();
     void runtimeRestorePayload();
     void runtimeHistoryTraversal();
+    void runtimeTraversalAsyncCancellation();
     void runtimeHistoryTraversalCancellation();
     void runtimeHistoryTraversalTimeout();
     void runtimeReservationReconciliation();
@@ -531,6 +532,7 @@ void tst_persistenttabmodel::runtimeHistoryTraversal()
     tabModel->applyRuntimeSnapshot(QVariantList() << tab, QStringLiteral("100"));
 
     QVERIFY(tabModel->runtimeGoBack(QStringLiteral("1")));
+    QTRY_VERIFY(!tabModel->m_pendingRuntimeTraversals.value(1).preparing);
     QVERIFY(!tabModel->runtimeGoBack(QStringLiteral("1")));
 
     // Requesting a runtime traversal only peeks; Gecko remains authoritative
@@ -564,6 +566,7 @@ void tst_persistenttabmodel::runtimeHistoryTraversal()
     QCOMPARE(restored.selectedHistoryIndex(), 0);
 
     QVERIFY(tabModel->runtimeGoForward(QStringLiteral("1")));
+    QTRY_VERIFY(!tabModel->m_pendingRuntimeTraversals.value(1).preparing);
     QVERIFY(!tabModel->runtimeGoForward(QStringLiteral("1")));
     tab.insert(QStringLiteral("location"), QStringLiteral("https://example.com/two"));
     tab.insert(QStringLiteral("title"), QStringLiteral("Two"));
@@ -581,7 +584,8 @@ void tst_persistenttabmodel::runtimeHistoryTraversal()
 
     // Forward at the boundary cannot leave a marker that suppresses the next
     // real navigation.
-    QVERIFY(!tabModel->runtimeGoForward(QStringLiteral("1")));
+    QVERIFY(tabModel->runtimeGoForward(QStringLiteral("1")));
+    QTRY_VERIFY(!tabModel->m_pendingRuntimeTraversals.contains(1));
     tab.insert(QStringLiteral("location"), QStringLiteral("https://example.com/three"));
     tab.insert(QStringLiteral("title"), QStringLiteral("Three"));
     tab.insert(QStringLiteral("locationRevision"), QStringLiteral("5"));
@@ -594,6 +598,26 @@ void tst_persistenttabmodel::runtimeHistoryTraversal()
             .value<PersistentTabRestoreBatch>().tabs().first();
     QCOMPARE(navigated.history().count(), 3);
     QCOMPARE(navigated.selectedHistoryIndex(), 2);
+}
+
+void tst_persistenttabmodel::runtimeTraversalAsyncCancellation()
+{
+    addThreeTabs();
+    QSignalSpy ready(tabModel, &HostedTabModel::runtimeTraversalReady);
+    QVERIFY(tabModel->runtimeGoBack(QStringLiteral("1")));
+    QVERIFY(tabModel->m_pendingRuntimeTraversals.value(1).preparing);
+    const quint64 firstRequest = tabModel->m_pendingRuntimeTraversals.value(1).requestId;
+    QCOMPARE(ready.count(), 0); // No blocking read or reentrant Gecko dispatch.
+    tabModel->cancelRuntimeTraversal(QStringLiteral("1"));
+    QVERIFY(tabModel->runtimeGoForward(QStringLiteral("1")));
+    tabModel->traversalTargetAvailable(1, firstRequest, QStringLiteral("https://stale.example/"));
+    QCOMPARE(ready.count(), 0);
+    QVERIFY(tabModel->m_pendingRuntimeTraversals.value(1).preparing);
+    tabModel->cancelRuntimeTraversal(QStringLiteral("1"));
+    QSignalSpy drained(DBManager::instance(), &DBManager::persistentTabRestoreBatchAvailable);
+    DBManager::instance()->getPersistentTabRestoreBatch();
+    QVERIFY(drained.wait(5000));
+    QCOMPARE(ready.count(), 0); // Both delayed replies were cancelled.
 }
 
 void tst_persistenttabmodel::runtimeHistoryTraversalCancellation()
@@ -613,6 +637,7 @@ void tst_persistenttabmodel::runtimeHistoryTraversalCancellation()
     tabModel->applyRuntimeSnapshot(QVariantList() << tab, QStringLiteral("100"));
 
     QVERIFY(tabModel->runtimeGoBack(QStringLiteral("1")));
+    QTRY_VERIFY(!tabModel->m_pendingRuntimeTraversals.value(1).preparing);
     QVERIFY(!tabModel->runtimeGoForward(QStringLiteral("1")));
 
     // Unchanged snapshots and a same-location commit (for example, reload)
@@ -674,6 +699,7 @@ void tst_persistenttabmodel::runtimeHistoryTraversalTimeout()
     tabModel->applyRuntimeSnapshot(QVariantList() << tab, QStringLiteral("100"));
 
     QVERIFY(tabModel->runtimeGoBack(QStringLiteral("1")));
+    QTRY_VERIFY(!tabModel->m_pendingRuntimeTraversals.value(1).preparing);
     QVERIFY(tabModel->m_runtimeTraversalTimer.isActive());
     QVERIFY(!tabModel->runtimeGoBack(QStringLiteral("1")));
 
@@ -704,6 +730,7 @@ void tst_persistenttabmodel::runtimeHistoryTraversalTimeout()
     QCOMPARE(delayed.history().count(), 2);
     QCOMPARE(delayed.selectedHistoryIndex(), 0);
     QVERIFY(tabModel->runtimeGoForward(QStringLiteral("1")));
+    QTRY_VERIFY(!tabModel->m_pendingRuntimeTraversals.value(1).preparing);
 }
 
 void tst_persistenttabmodel::runtimeReservationReconciliation()
