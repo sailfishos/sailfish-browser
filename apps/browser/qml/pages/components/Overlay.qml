@@ -331,7 +331,6 @@ Shared.Background {
                 onActiveChanged: {
                     if (active) {
                         overlayAnimator.showChrome(false)
-
                     }
                 }
 

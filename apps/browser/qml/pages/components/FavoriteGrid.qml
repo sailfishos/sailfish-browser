@@ -139,8 +139,6 @@ IconGridViewBase {
         }
     }
 
-
-
     Component {
         id: hostedIconFetcher
 

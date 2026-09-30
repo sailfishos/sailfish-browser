@@ -122,8 +122,6 @@ Column {
 
     width: parent.width
 
-
-
     Item {
         id: certOverlay
 
