@@ -108,7 +108,7 @@ fi
 /sbin/ldconfig || :
 
 %files
-%license LICENSE.txt
+%license LICENSES/MPL-2.0.txt
 %{_bindir}/%{name}
 %{_bindir}/%{captiveportal}
 %{_datadir}/applications/%{name}.desktop
