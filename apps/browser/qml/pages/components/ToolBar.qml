@@ -516,7 +516,7 @@ Column {
 
             onTapped: {
                 if (toolBarRow.hosted) {
-                    hostedView.stop()
+                    browserPage.stop()
                 } else {
                     webView.stop()
                 }

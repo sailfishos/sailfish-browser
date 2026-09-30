@@ -87,9 +87,9 @@ Rectangle {
             onTapped: {
                 if (root.hosted) {
                     if (hostedView.loading) {
-                        hostedView.stop()
+                        browserPage.stop()
                     } else {
-                        hostedView.reload()
+                        browserPage.reload()
                     }
                 } else if (webView.loading) {
                     webView.stop()
