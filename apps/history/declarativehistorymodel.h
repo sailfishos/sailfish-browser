@@ -1,6 +1,7 @@
 /****************************************************************************
 **
 ** Copyright (c) 2013 - 2021 Jolla Ltd.
+** Copyright (c) 2026 Jolla Mobile Ltd
 **
 ****************************************************************************/
 
@@ -38,6 +39,7 @@ public:
     Q_INVOKABLE void remove(const QString &url);
     Q_INVOKABLE void search(const QString &filter);
     Q_INVOKABLE void add(const QString &url, const QString &title);
+    Q_INVOKABLE void setTitle(const QString &url, const QString &title);
 
     // From QAbstractListModel
     int rowCount(const QModelIndex & parent = QModelIndex()) const override;

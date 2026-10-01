@@ -1,3 +1,5 @@
+/* Copyright (c) 2026 Jolla Mobile Ltd */
+
 #include "logging.h"
 #include <vault/unit.h>
 #include <QProcess>
@@ -75,8 +77,9 @@ const QString cache_dir = ".cache/org.sailfishos/browser";
 // files
 const QString bookmarks = "/bookmarks.json";
 const QString database = "/sailfish-browser.sqlite";
-const QString keys = "/key3.db";
-const QString signons = "/signons.sqlite";
+const QString legacySignons = "/signons.sqlite";
+const QString keys = "/key4.db";
+const QString logins = "/logins.json";
 
 const QVariantMap info = {
     {"home", QVariantMap({
@@ -84,10 +87,11 @@ const QVariantMap info = {
                                   browser_dir + bookmarks
                                 })}
                 , {"bin", QVariantList({
-                                  moz_dir + keys
-                                , browser_dir + database
+                                  browser_dir + database
                                 , cache_dir
-                                , moz_dir + signons
+                                , moz_dir + legacySignons
+                                , moz_dir + keys
+                                , moz_dir + logins
                                 })
                         }})}
     , {"options", QVariantMap({{"overwrite", true}})}
@@ -130,8 +134,7 @@ void fix_import()
     fix(vault::unit::optValue("dir"), bookmarks, old_browser_dir, browser_dir);
     auto blobDir = vault::unit::optValue("bin-dir");
     fix(blobDir, database, old_browser_dir, browser_dir);
-    fix(blobDir, keys, old_moz_dir, moz_dir);
-    fix(blobDir, signons, old_moz_dir, moz_dir);
+    fix(blobDir, legacySignons, old_moz_dir, moz_dir);
     fix_dir(blobDir, old_cache_dir, cache_dir);
 }
 

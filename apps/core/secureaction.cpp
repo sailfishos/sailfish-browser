@@ -2,6 +2,7 @@
 **
 ** Copyright (c) 2018 - 2021 Jolla Ltd.
 ** Copyright (c) 2021 Open Mobile Platform LLC.
+** Copyright (c) 2026 Jolla Mobile Ltd
 **
 ****************************************************************************/
 
@@ -67,6 +68,7 @@ public:
     {
         connect(this, &QDBusServiceWatcher::serviceOwnerChanged,
                 this, [this](const QString &, const QString &oldOwner, const QString &newOwner) {
+            m_owner = newOwner;
             if (newOwner.isEmpty() && m_available) {
                 m_available = false;
                 emit availableChanged(false);
@@ -77,22 +79,21 @@ public:
         });
 
         QDBusMessage method = QDBusMessage::createMethodCall(
-                    dbusService, dbusPath, dbusInterface, QStringLiteral("NameHasOwner"));
+                    dbusService, dbusPath, dbusInterface, QStringLiteral("GetNameOwner"));
         method.setArguments({ deviceLockService });
         QDBusPendingCallWatcher *watcher = new QDBusPendingCallWatcher(
                     QDBusConnection::systemBus().asyncCall(method));
         connect(watcher, &QDBusPendingCallWatcher::finished, this, [this](QDBusPendingCallWatcher *watcher) {
             watcher->deleteLater();
 
-            QDBusReply<bool> reply = *watcher;
+            QDBusReply<QString> reply = *watcher;
 
             if (!reply.isValid()) {
                 qWarning() << "Error querying" << deviceLockService << "on the system bus";
-            } else if (reply.value()) {
+            } else {
+                m_owner = reply.value();
                 m_available = true;
                 emit availableChanged(true);
-            } else {
-                qWarning() << deviceLockService << "is not available on the system bus";
             }
         });
     }
@@ -113,12 +114,14 @@ public:
     }
 
     bool isAvailable() const { return m_available; }
+    QString owner() const { return m_owner; }
 
 signals:
     void availableChanged(bool available);
 
 private:
     bool m_available = false;
+    QString m_owner;
 };
 
 SecureActionAuthenticatorAdaptor::SecureActionAuthenticatorAdaptor(SecureAction *action)
@@ -129,6 +132,11 @@ SecureActionAuthenticatorAdaptor::SecureActionAuthenticatorAdaptor(SecureAction 
 
 void SecureActionAuthenticatorAdaptor::PermissionGranted(uint)
 {
+    if (!calledFromDBus() || message().service() != m_secureAction->m_serviceWatcher->owner()) {
+        qWarning() << "Ignoring device-lock permission from unexpected D-Bus caller";
+        return;
+    }
+
     if (m_secureAction->m_authenticating) {
         QJSValue resolve = m_secureAction->m_resolve;
 
@@ -142,6 +150,11 @@ void SecureActionAuthenticatorAdaptor::PermissionGranted(uint)
 
 void SecureActionAuthenticatorAdaptor::Aborted()
 {
+    if (!calledFromDBus() || message().service() != m_secureAction->m_serviceWatcher->owner()) {
+        qWarning() << "Ignoring device-lock abort from unexpected D-Bus caller";
+        return;
+    }
+
     m_secureAction->m_authenticating = false;
     m_secureAction->m_resolve = QJSValue();
 }

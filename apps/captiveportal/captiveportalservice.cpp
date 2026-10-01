@@ -12,7 +12,6 @@
 #include "captiveportaladaptor.h"
 
 #include <QDBusConnection>
-#include <QCoreApplication>
 #include <QDBusMessage>
 
 static const auto CaptivePortalServiceName = QStringLiteral("org.sailfishos.captiveportal");
@@ -42,8 +41,7 @@ QString CaptivePortalService::serviceName() const
 
 void CaptivePortalService::closeBrowser()
 {
-    QEvent closeEvent(QEvent::Close);
-    QCoreApplication::sendEvent(QCoreApplication::instance(), &closeEvent);
+    emit closeBrowserRequested();
     const QDBusMessage &msg = message();
     QDBusMessage reply = msg.createReply();
     connection().send(reply);
@@ -57,5 +55,4 @@ void CaptivePortalService::openUrl(const QStringList &args)
         emit openUrlRequested(QString());
     }
 }
-
 

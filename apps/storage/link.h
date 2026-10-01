@@ -23,13 +23,11 @@ public:
     explicit Link();
 
     int linkId() const;
-    void setLinkId(int linkId);
 
     QString url() const;
     void setUrl(const QString &url);
 
     QString thumbPath() const;
-    void setThumbPath(const QString &thumbPath);
 
     QString title() const;
     void setTitle(const QString &title);
@@ -40,7 +38,6 @@ public:
     bool operator!=(const Link &other) const;
 
     QDate date() const;
-    void setDate(const QDate &date);
 
 private:
     int m_linkId;

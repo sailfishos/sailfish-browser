@@ -2,6 +2,7 @@
 **
 ** Copyright (c) 2014 - 2019 Jolla Ltd.
 ** Copyright (c) 2019 - 2021 Open Mobile Platform LLC.
+** Copyright (c) 2026 Jolla Mobile Ltd
 **
 ****************************************************************************/
 
@@ -17,6 +18,8 @@ SilicaGridView {
 
     property bool portrait
     property bool closingAllTabs
+    property bool _restoreContentYAfterClose
+    property real _contentYBeforeClose
 
     property var remorsePopup
     property int horizontalMargin: Theme.horizontalPageMargin
@@ -39,6 +42,12 @@ SilicaGridView {
     signal closeAllCanceled
     signal closeAllPending
 
+    function closeTabAtIndex(index) {
+        _contentYBeforeClose = contentY
+        _restoreContentYAfterClose = true
+        closeTab(index)
+    }
+
     function closeAllTabs() {
         remorsePopup = Remorse.popupAction(
                     tabGridView,
@@ -47,7 +56,6 @@ SilicaGridView {
                     function() {
                         tabGridView.closeAll()
                         remorsePopup = null
-                        closingAllTabs = false
                     })
         closingAllTabs = true
         remorsePopup.canceled.connect(
@@ -58,7 +66,14 @@ SilicaGridView {
                     })
     }
 
-    onCountChanged: if (count > 0) closingAllTabs = false
+    onCountChanged: {
+        if (closingAllTabs && count === 0) {
+            closingAllTabs = false
+        }
+        if (_restoreContentYAfterClose) {
+            restoreContentYTimer.restart()
+        }
+    }
     onClosingAllTabsChanged: if (closingAllTabs) closeAllPending()
 
     width: parent.width - x
@@ -71,7 +86,7 @@ SilicaGridView {
     delegate: TabItem {
         id: tabItem
 
-        enabled: !closingAllTabs
+        enabled: !closingAllTabs && !destroying
         opacity: enabled ? 1.0 : 0.0
         Behavior on opacity { FadeAnimator {}}
 
@@ -120,6 +135,33 @@ SilicaGridView {
         interval: 100
         running: true
         onTriggered: positionViewAtIndex(model.activeTabIndex, GridView.Center)
+    }
+
+    Timer {
+        id: restoreContentYTimer
+
+        interval: 0
+        onTriggered: {
+            tabGridView._restoreContentYAfterClose = false
+            if (tabGridView.count > 0) {
+                tabGridView.contentY = Math.max(0, Math.min(
+                            tabGridView._contentYBeforeClose,
+                            tabGridView.contentHeight - tabGridView.height))
+            }
+        }
+    }
+
+    Connections {
+        target: browserPage
+
+        onRuntimeTabsClearFinished: {
+            if (tabGridView.closingAllTabs) {
+                if (tabGridView.count > 0) {
+                    tabGridView.closeAllCanceled()
+                }
+                tabGridView.closingAllTabs = false
+            }
+        }
     }
 
     Connections {

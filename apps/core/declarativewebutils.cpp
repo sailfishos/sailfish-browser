@@ -39,7 +39,7 @@
 #include "declarativewebutils.h"
 #include "browserpaths.h"
 
-static const auto defaultUserAgentUpdateUrl = QStringLiteral("https://browser.sailfishos.org/gecko/115.0/ua-update.json");
+static const auto defaultUserAgentUpdateUrl = QStringLiteral("https://browser.sailfishos.org/gecko/153.0/ua-update.json");
 
 static DeclarativeWebUtils *gSingleton = 0;
 
@@ -136,10 +136,6 @@ void DeclarativeWebUtils::updateWebEngineSettings()
 
     // Enable internet search
     webEngineSettings->setPreference(QString("keyword.enabled"), QVariant(true));
-
-    // Remove this override after rebasing the bundled Gecko to esr140 or
-    // newer, where HTTPS-First is the default for normal browsing.
-    webEngineSettings->setPreference(QStringLiteral("dom.security.https_first"), QVariant(true));
 
     setRenderingPreferences();
 }

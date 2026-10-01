@@ -1,6 +1,7 @@
 /****************************************************************************
 **
 ** Copyright (c) 2013 - 2021 Jolla Ltd.
+** Copyright (c) 2026 Jolla Mobile Ltd
 **
 ****************************************************************************/
 
@@ -31,16 +32,21 @@ DBManager::DBManager(QObject *parent)
     qRegisterMetaType<QList<Tab> >("QList<Tab>");
     qRegisterMetaType<QList<Link> >("QList<Link>");
     qRegisterMetaType<Tab>("Tab");
+    qRegisterMetaType<PersistentTabRestoreBatch>("PersistentTabRestoreBatch");
 
     worker = new DBWorker();
     worker->moveToThread(&workerThread);
 
     connect(&workerThread, &QThread::finished, worker, &DBWorker::deleteLater);
     connect(worker, &DBWorker::tabsAvailable, this, &DBManager::tabsAvailable);
+    connect(worker, &DBWorker::persistentTabRestoreBatchAvailable,
+            this, &DBManager::persistentTabRestoreBatchAvailable);
     connect(worker, &DBWorker::historyAvailable, this, &DBManager::historyAvailable);
     connect(worker, &DBWorker::tabHistoryAvailable, this, &DBManager::tabHistoryAvailable);
     connect(worker, &DBWorker::titleChanged, this, &DBManager::titleChanged);
     connect(worker, &DBWorker::thumbPathChanged, this, &DBManager::thumbPathChanged);
+    connect(worker, &DBWorker::traversalTargetAvailable,
+            this, &DBManager::traversalTargetAvailable);
     workerThread.start();
 
     QMetaObject::invokeMethod(worker, "init", Qt::BlockingQueuedConnection);
@@ -93,9 +99,66 @@ void DBManager::goBack(int tabId)
                               Q_ARG(int, tabId));
 }
 
+void DBManager::requestTraversalTarget(int tabId, int direction, quint64 requestId)
+{
+    QMetaObject::invokeMethod(worker, "requestTraversalTarget", Qt::QueuedConnection,
+                              Q_ARG(int, tabId), Q_ARG(int, direction),
+                              Q_ARG(quint64, requestId));
+}
+
+void DBManager::commitTraversal(int tabId, int direction, const QString &location,
+                                const QString &title, const QString &thumbnail)
+{
+    QMetaObject::invokeMethod(worker, "commitTraversal", Qt::QueuedConnection,
+                              Q_ARG(int, tabId), Q_ARG(int, direction),
+                              Q_ARG(QString, location), Q_ARG(QString, title),
+                              Q_ARG(QString, thumbnail));
+}
+
+QString DBManager::peekForwardTarget(int tabId)
+{
+    QString location;
+    QMetaObject::invokeMethod(worker, "peekForwardTarget", Qt::BlockingQueuedConnection,
+                              Q_RETURN_ARG(QString, location),
+                              Q_ARG(int, tabId));
+    return location;
+}
+
+QString DBManager::peekBackTarget(int tabId)
+{
+    QString location;
+    QMetaObject::invokeMethod(worker, "peekBackTarget", Qt::BlockingQueuedConnection,
+                              Q_RETURN_ARG(QString, location),
+                              Q_ARG(int, tabId));
+    return location;
+}
+
+QString DBManager::goForwardTarget(int tabId)
+{
+    QString location;
+    QMetaObject::invokeMethod(worker, "goForwardTarget", Qt::BlockingQueuedConnection,
+                              Q_RETURN_ARG(QString, location),
+                              Q_ARG(int, tabId));
+    return location;
+}
+
+QString DBManager::goBackTarget(int tabId)
+{
+    QString location;
+    QMetaObject::invokeMethod(worker, "goBackTarget", Qt::BlockingQueuedConnection,
+                              Q_RETURN_ARG(QString, location),
+                              Q_ARG(int, tabId));
+    return location;
+}
+
 void DBManager::getAllTabs()
 {
     QMetaObject::invokeMethod(worker, "getAllTabs", Qt::QueuedConnection);
+}
+
+void DBManager::getPersistentTabRestoreBatch()
+{
+    QMetaObject::invokeMethod(worker, "getPersistentTabRestoreBatch", Qt::QueuedConnection);
 }
 
 void DBManager::removeTab(int tabId)
@@ -143,6 +206,12 @@ void DBManager::removeHistoryEntry(const QString &url)
 void DBManager::addHistoryEntry(const QString &url, const QString &title)
 {
     QMetaObject::invokeMethod(worker, "addHistoryEntry", Qt::QueuedConnection,
+                              Q_ARG(QString, url), Q_ARG(QString, title));
+}
+
+void DBManager::updateHistoryTitle(const QString &url, const QString &title)
+{
+    QMetaObject::invokeMethod(worker, "updateHistoryTitle", Qt::QueuedConnection,
                               Q_ARG(QString, url), Q_ARG(QString, title));
 }
 

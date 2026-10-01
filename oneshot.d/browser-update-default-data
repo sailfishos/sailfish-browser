@@ -1,26 +1,26 @@
 #!/bin/sh
-BROWSER_PROFILE_DIR=~/.local/share/org.sailfishos/browser/.mozilla
-CAPTIVE_PORTAL_PROFILE_DIR=~/.local/share/org.sailfishos/captiveportal/.mozilla
+BROWSER_PROFILE_DIR=${HOME}/.local/share/org.sailfishos/browser/.mozilla
+CAPTIVE_PORTAL_PROFILE_DIR=${HOME}/.local/share/org.sailfishos/captiveportal/.mozilla
 BROWSER_DATA_DIR=/usr/share/sailfish-browser/data
 
-for PROFILE_DIR in $BROWSER_PROFILE_DIR $CAPTIVE_PORTAL_PROFILE_DIR; do
+for PROFILE_DIR in "$BROWSER_PROFILE_DIR" "$CAPTIVE_PORTAL_PROFILE_DIR"; do
     if [ ! -d "$PROFILE_DIR" ]; then
-        mkdir -p $PROFILE_DIR
+        mkdir -p "$PROFILE_DIR"
     fi
 
-    if [ ! -f "$PROFILE_DIR/ua-update.json" -o ! -s "$PROFILE_DIR/ua-update.json" ]; then
+    if [ ! -f "$PROFILE_DIR/ua-update.json" ] || [ ! -s "$PROFILE_DIR/ua-update.json" ]; then
         # Remove lines starting with a comment.
-        sed  '\|^\s*//|d' $BROWSER_DATA_DIR/ua-update.json.in > "$PROFILE_DIR/ua-update.json"
+        sed '\|^[[:space:]]*//|d' "$BROWSER_DATA_DIR/ua-update.json.in" \
+            > "$PROFILE_DIR/ua-update.json"
     fi
 
     if [ ! -f "$PROFILE_DIR/prefs.js" ]; then
-        cp $BROWSER_DATA_DIR/prefs.js $PROFILE_DIR
+        cp "$BROWSER_DATA_DIR/prefs.js" "$PROFILE_DIR"
     else
-        while IFS='' read -r line || [[ -n "$line" ]]; do
-            prefKey=$(echo "$line" | cut -d "," -f1)
-            foundKey=$(grep "$prefKey" $PROFILE_DIR/prefs.js | wc -l)
-            if [ $foundKey -eq 0 ]; then
-                echo "$line" >> $PROFILE_DIR/prefs.js
+        while IFS= read -r line || [ -n "$line" ]; do
+            prefKey=${line%%,*}
+            if ! grep -Fq "$prefKey" "$PROFILE_DIR/prefs.js"; then
+                printf '%s\n' "$line" >> "$PROFILE_DIR/prefs.js"
             fi
         done < "$BROWSER_DATA_DIR/prefs.js"
     fi

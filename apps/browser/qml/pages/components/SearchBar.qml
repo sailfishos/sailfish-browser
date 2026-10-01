@@ -35,7 +35,7 @@ Item {
             icon.source: "image://theme/icon-m-left"
 
             onTapped: {
-                webView.sendAsyncMessage("embedui:find", { text: search, backwards: true, again: true })
+                browserPage.findInPage(search, true, true)
             }
         }
 
@@ -62,7 +62,7 @@ Item {
             icon.source: "image://theme/icon-m-right"
 
             onTapped: {
-                webView.sendAsyncMessage("embedui:find", { text: search, backwards: false, again: true })
+                browserPage.findInPage(search, false, true)
             }
         }
     }

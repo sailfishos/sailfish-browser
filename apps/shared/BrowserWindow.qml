@@ -2,6 +2,7 @@
 **
 ** Copyright (c) 2013 - 2019 Jolla Ltd.
 ** Copyright (c) 2020 Open Mobile Platform LLC.
+** Copyright (c) 2026 Jolla Mobile Ltd
 **
 ****************************************************************************/
 
@@ -31,9 +32,13 @@ ApplicationWindow {
     _defaultLabelFormat: Text.PlainText
     _clippingItem.opacity: 1.0
     _resizeContent: !window.rootPage.active
-    _mainWindow: webView
     _backgroundVisible: false
-    _opaque: false
+    _opaque: !webView || !webView.nativeWindow
+    Binding {
+        target: webView && webView.nativeWindow ? window : null
+        property: "_mainWindow"
+        value: webView ? webView.nativeWindow : null
+    }
 
     cover: null
 

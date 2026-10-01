@@ -1,6 +1,7 @@
 /****************************************************************************
 **
 ** Copyright (c) 2013 - 2021 Jolla Ltd.
+** Copyright (c) 2026 Jolla Mobile Ltd
 **
 ****************************************************************************/
 
@@ -37,6 +38,7 @@ public slots:
     void createTab(const Tab &tab);
     void removeTab(int tabId);
     void getAllTabs();
+    void getPersistentTabRestoreBatch();
     void removeAllTabs(bool noFeedback = false);
     void navigateTo(int tabId, const QString &url, const QString &title, const QString &path);
     int getMaxTabId();
@@ -47,12 +49,20 @@ public slots:
 
     void goForward(int tabId);
     void goBack(int tabId);
+    void requestTraversalTarget(int tabId, int direction, quint64 requestId);
+    void commitTraversal(int tabId, int direction, const QString &location,
+                         const QString &title, const QString &thumbnail);
+    QString peekForwardTarget(int tabId);
+    QString peekBackTarget(int tabId);
+    QString goForwardTarget(int tabId);
+    QString goBackTarget(int tabId);
     void getHistory(const QString &filter);
     void getTabHistory(int tabId);
 
     void removeHistoryEntry(int linkId);
     void removeHistoryEntry(const QString &url);
     void addHistoryEntry(const QString &url, const QString &title);
+    void updateHistoryTitle(const QString &url, const QString &title);
     void clearHistory(int period);
 
     void saveSetting(const QString &name, const QString &value);
@@ -60,7 +70,9 @@ public slots:
     void deleteSetting(const QString &name);
 
 signals:
+    void traversalTargetAvailable(int tabId, quint64 requestId, const QString &location);
     void tabsAvailable(QList<Tab> tabs);
+    void persistentTabRestoreBatchAvailable(PersistentTabRestoreBatch batch);
     void thumbPathChanged(int tabId, const QString &path);
     void titleChanged(const QString &url, const QString &title);
     void tabHistoryAvailable(int tabId, QList<Link>, int currentLinkId);

@@ -1,6 +1,7 @@
 /****************************************************************************
 **
 ** Copyright (c) 2014 Jolla Ltd.
+** Copyright (c) 2026 Jolla Mobile Ltd
 ** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **
 ****************************************************************************/
@@ -50,6 +51,7 @@ private slots:
 
     void emptyTitles_data();
     void emptyTitles();
+    void setTitleRefreshesFilteredResults();
 
     void removeHistoryEntries_data();
     void removeHistoryEntries();
@@ -233,6 +235,24 @@ void tst_declarativehistorymodel::emptyTitles()
     QString title = historyModel->data(modelIndex, DeclarativeHistoryModel::TitleRole).toString();
 
     QCOMPARE(title, expectedTitle);
+}
+
+void tst_declarativehistorymodel::setTitleRefreshesFilteredResults()
+{
+    const QString url(QStringLiteral("http://www.foobar.com/post/"));
+    const QString title(QStringLiteral("Forum post title"));
+
+    historyModel->add(url, QString());
+    verifySearchResult(QStringLiteral("Forum post"), 0);
+
+    QSignalSpy historyAvailable(DBManager::instance(), SIGNAL(historyAvailable(QList<Link>)));
+    historyModel->setTitle(url, title);
+    waitSignals(historyAvailable, 1);
+
+    QCOMPARE(historyModel->rowCount(), 1);
+    QModelIndex modelIndex = historyModel->createIndex(0, 0);
+    QCOMPARE(historyModel->data(modelIndex, DeclarativeHistoryModel::UrlRole).toString(), url);
+    QCOMPARE(historyModel->data(modelIndex, DeclarativeHistoryModel::TitleRole).toString(), title);
 }
 
 void tst_declarativehistorymodel::removeHistoryEntries_data()

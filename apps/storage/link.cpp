@@ -27,11 +27,6 @@ int Link::linkId() const
     return m_linkId;
 }
 
-void Link::setLinkId(int linkId)
-{
-    m_linkId = linkId;
-}
-
 QString Link::url() const
 {
     return m_url;
@@ -45,11 +40,6 @@ void Link::setUrl(const QString &url)
 QString Link::thumbPath() const
 {
     return m_thumbPath;
-}
-
-void Link::setThumbPath(const QString &thumbPath)
-{
-    m_thumbPath = thumbPath;
 }
 
 QString Link::title() const
@@ -84,11 +74,6 @@ bool Link::operator!=(const Link &other) const
 QDate Link::date() const
 {
     return m_date;
-}
-
-void Link::setDate(const QDate &date)
-{
-    m_date = date;
 }
 
 QDebug operator<<(QDebug dbg, const Link *link) {
