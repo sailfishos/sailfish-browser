@@ -24,6 +24,9 @@ import "../../shared" as Shared
 Shared.Background {
     id: overlay
 
+    // Composite the translucent background over the animated tab snapshots.
+    blending: browserPage.tabSwipeInProgress
+
     property bool active
     property QtObject webView
     property Item browserPage
