@@ -702,7 +702,9 @@ Page {
             return
         }
 
-        if (browserPage.active && view === chromeHostView
+        // A back-swipe preview makes the page visible while its status is still
+        // Inactive. Keep rendering until Silica actually hides the page.
+        if (browserPage.visible && view === chromeHostView
                 && view.visible && webView.foreground) {
             view.resumeView()
         } else {
@@ -2173,7 +2175,7 @@ Page {
         id: webView
 
         enabled: overlay.animator.allowContentUse
-        nativeContentVisible: browserPage.active
+        nativeContentVisible: browserPage.visible
         fullscreenHeight: browserPage.isPortrait ? Screen.height : Screen.width
         contentItem: browserPage.chromeHostView
         toolbarHeight: overlay.animator.opened ? overlay.toolBar.rowHeight : 0
@@ -2569,7 +2571,8 @@ Page {
                     leftMargin: browserPage.hostedDisplayCutoutAllowed
                                 ? 0 : browserPage._hostedCutoutLeft
                 }
-                active: browserPage.active && privateMode === webView.privateMode
+                active: browserPage.visible
+                        && privateMode === webView.privateMode
                 orientation: webView._screenOrientation
                 clip: true
                 focus: true

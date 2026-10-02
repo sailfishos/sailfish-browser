@@ -1,6 +1,7 @@
 /****************************************************************************
 **
 ** Copyright (c) 2015 Jolla Ltd.
+** Copyright (c) 2026 Jolla Mobile Ltd
 ** Contact: Raine Makelainen <raine.makelainen@jolla.com>
 **
 ****************************************************************************/
@@ -15,6 +16,8 @@ import "." as Browser
 
 Item {
     id: wallpaper
+
+    property alias blending: wallpaperEffect.blending
 
     Item {
         id: glassTextureItem
