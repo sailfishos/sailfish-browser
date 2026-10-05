@@ -14,18 +14,34 @@ import QtQuick 2.2
 import Sailfish.Silica 1.0
 import Sailfish.WebView.Popups 1.0
 
-ConfirmDialog {
+Dialog {
     property Item browserPage
 
-    //: Warning of changing browser configurations.
-    //% "Changing these advanced settings can cause issues with stability, "
-    //% "security and performance of Sailfish Browser. Continue ?"
-    text: qsTrId("sailfish_browser-la-config-warning")
     acceptDestination: Component {
         ConfigDialog {
             // On accept pop back to browserPage
             acceptDestination: browserPage
             acceptDestinationAction: PageStackAction.Pop
+        }
+    }
+
+    Column {
+        width: parent.width
+
+        DialogHeader {}
+
+        Label {
+            x: Theme.horizontalPageMargin
+            y: Theme.itemSizeSmall
+            width: parent.width - 2 * x
+            font.pixelSize: Theme.fontSizeMedium
+            color: Theme.highlightColor
+            wrapMode: Text.Wrap
+
+            //: Warning of changing browser configurations.
+            //% "Changing these advanced settings can cause issues with stability, "
+            //% "security and performance of Sailfish Browser. Continue ?"
+            text: qsTrId("sailfish_browser-la-config-warning")
         }
     }
 }
