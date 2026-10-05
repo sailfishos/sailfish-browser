@@ -25,3 +25,13 @@ void CaptivePortalAdaptor::closeBrowser()
 {
     m_captivePortalService->closeBrowser();
 }
+
+void CaptivePortalAdaptor::cancelTransfer(int transferId)
+{
+    m_captivePortalService->cancelTransfer(transferId);
+}
+
+void CaptivePortalAdaptor::restartTransfer(int transferId)
+{
+    m_captivePortalService->restartTransfer(transferId);
+}

@@ -1,0 +1,10 @@
+TARGET = tst_externalurl
+QT += core dbus testlib
+CONFIG += testcase console c++11
+CONFIG -= app_bundle
+isEmpty(LIPSTICK_INCLUDE_DIR): LIPSTICK_INCLUDE_DIR = /usr/include/lipstick-qt5
+INCLUDEPATH += $$LIPSTICK_INCLUDE_DIR ../../../apps/core
+SOURCES += tst_externalurl.cpp ../../../apps/core/externalurlhandler.cpp
+HEADERS += ../../../apps/core/externalurlhandler.h
+target.path = /opt/tests/sailfish-browser/auto
+INSTALLS += target

@@ -10,7 +10,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 
-import QtQuick 2.2
+import QtQuick 2.6
 import QtQuick.Window 2.2 as QuickWindow
 import Sailfish.Silica 1.0
 import Sailfish.Silica.private 1.0 as Private
@@ -98,7 +98,7 @@ Page {
         toolbarHeight: overlay.animator.opened ? overlay.toolBar.rowHeight : 0
         rotationHandler: browserPage
         imOpened: virtualKeyboardObserver.opened
-        canShowSelectionMarkers: false
+        canShowSelectionMarkers: WebUtils.sparse
 
         onForegroundChanged: {
             if (foreground && webView.chromeWindow) {
@@ -202,16 +202,29 @@ Page {
                 return
             }
 
-            if (!webView.tabModel.activateTab(url)) {
+            if (WebUtils.sparse) webView.reopen()
+            if (WebUtils.sparse || !webView.tabModel.activateTab(url)) {
                 webView.clearSelection()
                 webView.tabModel.newTab(url, false)
                 overlay.dismiss(!Qt.application.active /* immadiate */)
+            }
+            if (WebUtils.sparse) {
+                if (webView.nativeWindow) webView.nativeWindow.showFullScreen()
+                webView.chromeWindow.showFullScreen()
             }
             bringToForeground(webView.chromeWindow)
             window.activate()
         }
         onShowChrome: {
+            if (WebUtils.sparse) {
+                if (!webView.tabModel.count) return
+                webView.reopen()
+            }
             overlay.dismiss(!Qt.application.active /* immadiate */)
+            if (WebUtils.sparse) {
+                if (webView.nativeWindow) webView.nativeWindow.showFullScreen()
+                webView.chromeWindow.showFullScreen()
+            }
             bringToForeground(webView.chromeWindow)
             window.activate()
         }

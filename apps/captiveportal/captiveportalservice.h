@@ -25,12 +25,17 @@ public:
 public slots:
     void openUrl(const QStringList &args);
     void closeBrowser();
+    void cancelTransfer(int transferId);
+    void restartTransfer(int transferId);
 
 signals:
     void openUrlRequested(const QString &url);
     void closeBrowserRequested();
+    void cancelTransferRequested(int transferId);
+    void restartTransferRequested(int transferId);
 
 private:
+    bool transferCaller() const;
     bool m_registered;
 };
 

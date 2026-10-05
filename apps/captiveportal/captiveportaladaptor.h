@@ -25,6 +25,8 @@ public:
 public slots:
     void openUrl(const QStringList &args);
     void closeBrowser();
+    void cancelTransfer(int transferId);
+    void restartTransfer(int transferId);
 private:
     CaptivePortalService *m_captivePortalService;
 };

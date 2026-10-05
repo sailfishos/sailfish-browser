@@ -27,6 +27,7 @@ public:
 public slots:
     void applicationClosingStarted();
     void closeApplication();
+    void applicationOpened();
 
 private slots:
     void onContextDestroyed();

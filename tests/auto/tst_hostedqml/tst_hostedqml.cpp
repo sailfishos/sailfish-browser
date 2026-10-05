@@ -34,6 +34,7 @@ private slots:
     void tabSwipe();
     void sessionOwnership();
     void snapshotApplicationTriggers();
+    void externalFlows();
 
 private:
     static QString readResource(const QString &path);
@@ -41,6 +42,15 @@ private:
     static void runJavaScriptTest(const QString &scriptPath,
                                   const QStringList &functions);
 };
+
+void tst_hostedqml::externalFlows()
+{
+    runJavaScriptTest(QStringLiteral(":/external-flows.js"), QStringList()
+                      << functionSource(QStringLiteral(":/ExternalUrlFlow.qml"), QStringLiteral("current"))
+                      << functionSource(QStringLiteral(":/ExternalUrlFlow.qml"), QStringLiteral("closeFlow"))
+                      << functionSource(QStringLiteral(":/ExternalUrlFlow.qml"), QStringLiteral("respond"))
+                      << functionSource(QStringLiteral(":/ExternalUrlFlow.qml"), QStringLiteral("reject")));
+}
 
 QString tst_hostedqml::readResource(const QString &path)
 {

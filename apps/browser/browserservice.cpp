@@ -14,6 +14,8 @@
 #include "browserservice_p.h"
 #include "declarativewebcontainer.h"
 #include "logging.h"
+#include "browserappinfo.h"
+#include <QUrl>
 
 #include "dbusadaptor.h"
 #include <QDBusConnection>
@@ -117,11 +119,14 @@ bool BrowserService::isPrivileged() const
 
 bool BrowserService::callerMatchesService(const QString &serviceName) const
 {
-    uint callerServicePid = GET_PID().value();
+    const QDBusReply<uint> caller = GET_PID();
+    const QDBusReply<uint> owner = connection().interface()->servicePid(serviceName);
+    uint callerServicePid = caller.value();
 
     // Test this against pid of serviceName which works also inside
     // sandbox. If that matches, then the caller is serviceName.
-    if (callerServicePid == connection().interface()->servicePid(serviceName).value()) {
+    if (caller.isValid() && owner.isValid() && callerServicePid != 0
+            && callerServicePid == owner.value()) {
         return true;
     }
 
@@ -183,6 +188,15 @@ void BrowserUIService::activateNewTabView()
 
 void BrowserUIService::requestTab(int tabId, const QString &url)
 {
+    if (BrowserAppInfo::sparse()) {
+        const QUrl target(url, QUrl::StrictMode);
+        if (!target.isValid() || target.host().isEmpty()
+                || (target.scheme() != QLatin1String("http")
+                    && target.scheme() != QLatin1String("https"))) {
+            sendErrorReply(QDBusError::InvalidArgs, QStringLiteral("An HTTP(S) URL is required"));
+            return;
+        }
+    }
     DBusContext *context = new DBusContext(message(), connection());
     setDelayedReply(true);
     connect(DeclarativeWebContainer::instance(),

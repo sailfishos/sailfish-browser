@@ -54,16 +54,31 @@ Column {
         height: Theme.paddingMedium
     }
 
-    Label {
+    Item {
         width: parent.width
         height: toolsRow.height
-        verticalAlignment: Text.AlignVCenter
-        //: Shown when sign in to captive portal
-        //% "Sign in"
-        text: qsTrId("sailfish_captiveportal-la-sign_in")
-        maximumLineCount: 1
-        truncationMode: TruncationMode.Fade
-        color: Theme.highlightColor
+
+        Label {
+            width: parent.width - clearDataButton.width
+            height: parent.height
+            verticalAlignment: Text.AlignVCenter
+            //: Shown when sign in to captive portal
+            //% "Sign in"
+            text: qsTrId("sailfish_captiveportal-la-sign_in")
+            maximumLineCount: 1
+            truncationMode: TruncationMode.Fade
+            color: Theme.highlightColor
+        }
+        IconButton {
+            id: clearDataButton
+
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            visible: WebUtils.sparse
+            width: visible ? toolBarRow.iconWidth : 0
+            icon.source: "image://theme/icon-m-delete"
+            onClicked: pageStack.push(Qt.resolvedUrl("ClearSignInDataDialog.qml"))
+        }
     }
 
     Row {
@@ -84,7 +99,7 @@ Column {
 
         Label {
             anchors.verticalCenter: parent.verticalCenter
-            width: toolBarRow.width - (reloadButton.width + backIcon.width + toolsRow.leftPadding) + Theme.paddingMedium
+            width: toolBarRow.width - (reloadButton.width + backIcon.width + closeButton.width) + Theme.paddingMedium
             color: Theme.highlightColor
 
             text: {
@@ -99,6 +114,18 @@ Column {
             }
 
             truncationMode: TruncationMode.Fade
+        }
+
+        Shared.ExpandingButton {
+            id: closeButton
+
+            visible: WebUtils.sparse
+            width: visible ? toolBarRow.iconWidth : 0
+            height: parent.height
+            expandedWidth: toolBarRow.iconWidth
+            icon.source: "image://theme/icon-m-close"
+            active: true
+            onTapped: webView.contentItem.flowController.closeFlow({"tabId": webView.contentItem.selectedTabId})
         }
 
         Shared.ExpandingButton {

@@ -7,6 +7,7 @@ SUBDIRS += tst_dbmanager \
     tst_hostedqml \
     tst_logins \
     tst_persistenttabmodel \
+    tst_externalurl \
     tst_webutils
 
 OTHER_FILES += \

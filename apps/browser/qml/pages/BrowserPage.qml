@@ -2768,6 +2768,12 @@ Page {
                     }
                 }
 
+                Shared.ExternalUrlFlow {
+                    contentItem: chromeView
+                    webView: browserPage.webView
+                    pageStack: window.pageStack
+                }
+
                 onRecvAsyncMessageFromTab: {
                     browserPage.noteHostedAsyncMessage(tabId, persistentId, message)
                     browserPage.handleHostedAsyncMessage(chromeView, tabId, persistentId,

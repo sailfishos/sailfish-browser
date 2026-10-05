@@ -9,7 +9,6 @@ import Sailfish.Browser 1.0
 import Sailfish.WebView.Controls 1.0
 import Sailfish.WebView.Pickers 1.0 as Pickers
 import Sailfish.WebView.Popups 1.0 as Popups
-import Sailfish.WebView 1.0 as SailfishWebView
 
 BrowserContentView {
     id: webPage
@@ -20,7 +19,7 @@ BrowserContentView {
         value: webView ? webView.nativeWindow : null
     }
     property var webView
-    privateMode: true
+    privateMode: !WebUtils.sparse
     active: browserPage.active
     orientation: webView._screenOrientation
     clip: true
@@ -37,8 +36,11 @@ BrowserContentView {
         id: viewSession
 
         model: webView.privateTabModel
+        property bool hadFlows
+        onSnapshotApplied: if (snapshot.length > 0) hadFlows = true
+        onEmpty: if (WebUtils.sparse && hadFlows) webView.chromeWindow.close()
         view: webPage
-        privateMode: true
+        privateMode: !WebUtils.sparse
     }
     Connections {
         target: webPage.tabModel
@@ -46,6 +48,12 @@ BrowserContentView {
     }
     Connections {
         target: webView
+        onApplicationClosing: {
+            if (WebUtils.sparse) {
+                externalFlow.cancelAll()
+                webView.tabModel.clear()
+            }
+        }
         onHostedLoadRequested: {
             if (webPage.selectedTabId.length) webPage.load(url, fromExternal)
             else webView.tabModel.newTab(url, fromExternal)
@@ -63,11 +71,22 @@ BrowserContentView {
     onCanGoForwardChanged: syncState()
     onSecurityChanged: syncState()
 
+    property alias flowController: externalFlow
+
+    ExternalUrlFlow {
+        id: externalFlow
+
+        contentItem: webPage
+        webView: webPage.webView
+        pageStack: window.pageStack
+        automatic: WebUtils.sparse
+    }
+
     property Item textSelectionController: null
     readonly property bool activeWebPage: viewSession.selectedPersistentId(webPage) === String(webView.tabId)
     property string metadataTitle
     property var pendingClipboardPasteData
-    property QtObject _textZoomController: SailfishWebView.TextZoomController {
+    property QtObject _textZoomController: TextZoomController {
         webPage: webPage
     }
 
@@ -83,7 +102,12 @@ BrowserContentView {
         // ContextMenu needs a reference to correct TabModel so that
         // private and public tabs are created to correct model. While context
         // menu is open, tab model cannot change (at least at the moment).
-        tabModel: webView.tabModel
+        tabModel: WebUtils.sparse ? null : webView.tabModel
+        popupProvider: Popups.PopupProvider {
+            contextMenu: WebUtils.sparse
+                         ? ({"type": "item", "component": Qt.resolvedUrl("SparseContextMenu.qml")})
+                         : ({"type": "item", "component": "ContextMenu.qml"})
+        }
 
         onAboutToOpenContextMenu: {
             if (Qt.inputMethod.visible) {
@@ -265,7 +289,7 @@ BrowserContentView {
             break
         }
         case "Link:AddSearch": {
-            if (!webView.privateMode) {
+            if (!WebUtils.sparse && !webView.privateMode) {
                 // This adds this search as available if not already there
                 SearchEngineModel.add(data.engine.title, data.engine.href)
             }
@@ -287,16 +311,19 @@ BrowserContentView {
     }
 
     onContextMenuRequested: {
-        if (data.types.indexOf("content-text") !== -1) {
+        if (data.types.indexOf("content-text") !== -1 || data.types.indexOf("input-text") !== -1) {
             // we want to select some content text
-            webPage.sendAsyncMessage("Browser:SelectionStart", {"xPos": data.xPos, "yPos": data.yPos})
+            webPage.sendAsyncMessage("Browser:SelectionStart", {"xPos": data.xPos, "yPos": data.yPos,
+                             "setFocus": data.types.indexOf("input-text") !== -1})
         }
     }
 
     Component.onCompleted: {
         loadFrameScript(Qt.resolvedUrl("ViewportFit.js"))
         loadFrameScript(Qt.resolvedUrl("PageMetadata.js"))
-        loadFrameScript("file:///usr/share/sailfish-captiveportal/pages/captiveportal.js")
+        if (!WebUtils.sparse) {
+            loadFrameScript("file:///usr/share/sailfish-captiveportal/pages/captiveportal.js")
+        }
         var listeners = ["embed:OpenLink", "embed:viewportfit", "embed:pageMetadata",
                          "embed:fullscreenchanged", "embed:alert", "embed:confirm",
                          "embed:prompt", "embed:auth", "embed:login", "embed:permissions",

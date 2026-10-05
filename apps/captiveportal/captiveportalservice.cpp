@@ -13,6 +13,8 @@
 
 #include <QDBusConnection>
 #include <QDBusMessage>
+#include <QDBusConnectionInterface>
+#include <QDBusReply>
 
 static const auto CaptivePortalServiceName = QStringLiteral("org.sailfishos.captiveportal");
 
@@ -56,3 +58,22 @@ void CaptivePortalService::openUrl(const QStringList &args)
     }
 }
 
+
+bool CaptivePortalService::transferCaller() const
+{
+    const QDBusReply<uint> caller = connection().interface()->servicePid(message().service());
+    const QDBusReply<uint> owner = connection().interface()->servicePid(QStringLiteral("org.nemo.transferengine"));
+    if (caller.isValid() && owner.isValid() && caller.value() != 0 && caller.value() == owner.value()) return true;
+    sendErrorReply(QDBusError::AccessDenied, QStringLiteral("Only Transfer Engine may control downloads"));
+    return false;
+}
+
+void CaptivePortalService::cancelTransfer(int transferId)
+{
+    if (transferCaller()) emit cancelTransferRequested(transferId);
+}
+
+void CaptivePortalService::restartTransfer(int transferId)
+{
+    if (transferCaller()) emit restartTransferRequested(transferId);
+}

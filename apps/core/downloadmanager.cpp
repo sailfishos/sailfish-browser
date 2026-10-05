@@ -11,6 +11,7 @@
 
 #include "downloadmanager.h"
 #include "browserpaths.h"
+#include "browserappinfo.h"
 #include "logging.h"
 
 #include <transferengineinterface.h>
@@ -91,7 +92,9 @@ void DownloadManager::recvObserve(const QString message, const QVariant data)
         emit downloadStarted();
         m_pendingTransferCreations.insert(downloadId);
 
-        QLatin1Literal browserInterface("org.sailfishos.browser");
+        const QString browserInterface = BrowserAppInfo::captivePortal()
+                ? QStringLiteral("org.sailfishos.captiveportal")
+                : QStringLiteral("org.sailfishos.browser");
         QStringList callback;
         callback << browserInterface << QLatin1Literal("/") << browserInterface;
         QDBusPendingReply<int> reply = m_transferClient->createDownload(dataMap.value("displayName").toString(),

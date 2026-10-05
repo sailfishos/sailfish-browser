@@ -1,0 +1,18 @@
+[Desktop Entry]
+Type=Application
+NoDisplay=true
+Name=Web Browser
+X-MeeGo-Logical-Id=sailfish-browser-ap-name
+X-MeeGo-Translation-Catalog=sailfish-browser
+Icon=icon-launcher-browser
+Exec=/usr/bin/invoker -s --type=generic /usr/bin/sailjail -p sailfish-browser.desktop /usr/bin/sailfish-captiveportal -sparse %U
+Comment=Sailfish UI application
+MimeType=text/html;application/xhtml+xml;application/xml;text/xml;x-scheme-handler/http;x-scheme-handler/https;
+X-Maemo-Service=org.sailfishos.browser.ui
+X-Maemo-Object-Path=/ui
+X-Maemo-Method=org.sailfishos.browser.ui.openUrl
+
+[X-Sailjail]
+Permissions=WebView;Audio;Camera;Location;Internet;Downloads
+OrganizationName=org.sailfishos
+ApplicationName=browser-sparse

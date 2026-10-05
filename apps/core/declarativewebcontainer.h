@@ -82,6 +82,7 @@ public:
     Q_INVOKABLE void goBack();
     Q_INVOKABLE int activateTab(int tabId, const QString &url);
     Q_INVOKABLE void closeTab(int tabId);
+    Q_INVOKABLE void reopen();
     Q_INVOKABLE void updateHostedState(const QString &url, const QString &title,
                                        bool loading, int loadProgress,
                                        bool canGoBack, bool canGoForward,

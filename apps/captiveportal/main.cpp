@@ -18,9 +18,13 @@
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDBusPendingCall>
+#include <QDBusPendingCallWatcher>
 
 #include "browser.h"
+#include "externalurlhandler.h"
 #include "captiveportalservice.h"
+#include "browserservice.h"
+#include "browserappinfo.h"
 // Registered QML types
 #include "downloadstatus.h"
 #include "persistenttabmodel.h"
@@ -56,24 +60,32 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     app->setQuitOnLastWindowClosed(false);
     app->setAttribute(Qt::AA_SynthesizeTouchForUnhandledMouseEvents, true);
 
-    CaptivePortalService *service = new CaptivePortalService(app.data());
-    QObject::connect(service, &CaptivePortalService::closeBrowserRequested,
-                     view.data(), &QWindow::close);
+    const bool sparse = BrowserAppInfo::sparse();
+    app->setApplicationName(sparse ? QStringLiteral("browser-sparse") : QStringLiteral("captiveportal"));
+    app->setOrganizationName(QStringLiteral("org.sailfishos"));
+
+    CaptivePortalService *portalService = sparse ? nullptr : new CaptivePortalService(app.data());
+    BrowserService *browserService = sparse ? new BrowserService(app.data()) : nullptr;
+    const QString serviceName = sparse ? browserService->serviceName() : portalService->serviceName();
+    const bool registered = sparse ? browserService->registered() : portalService->registered();
+    if (portalService) {
+        QObject::connect(portalService, &CaptivePortalService::closeBrowserRequested,
+                         view.data(), &QWindow::close);
+    }
     // Handle command line launch
-    if (!service->registered()) {
-        QDBusMessage message = QDBusMessage::createMethodCall(service->serviceName(), "/",
-                                                              service->serviceName(), "openUrl");
+    if (!registered) {
+        QDBusMessage message = QDBusMessage::createMethodCall(serviceName, "/",
+                                                              serviceName, "openUrl");
         QStringList args;
         // Pass url argument if given
-        if (app->arguments().count() > 1) {
-            args << app->arguments().at(1);
+        for (const QString &argument : app->arguments().mid(1)) {
+            if (!argument.startsWith(QLatin1Char('-'))) args << argument;
         }
         message.setArguments(QVariantList() << args);
 
-        QDBusConnection::sessionBus().asyncCall(message);
-        if (QCoreApplication::hasPendingEvents()) {
-            QCoreApplication::processEvents();
-        }
+        auto *watcher = new QDBusPendingCallWatcher(QDBusConnection::sessionBus().asyncCall(message), app.data());
+        QObject::connect(watcher, &QDBusPendingCallWatcher::finished, app.data(), &QCoreApplication::quit);
+        app->exec();
 
         return 0;
     }
@@ -90,8 +102,12 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     //% "Network login portal"
     view->setTitle(qtTrId("sailfish-captiveportal-ap-name"));
 
-    app->setApplicationName(QStringLiteral("captiveportal"));
-    app->setOrganizationName(QStringLiteral("org.sailfishos"));
+    QTranslator sharedEnglish;
+    sharedEnglish.load("sailfish-browser_eng_en", translationPath);
+    app->installTranslator(&sharedEnglish);
+    QTranslator sharedTranslator;
+    sharedTranslator.load(QLocale(), "sailfish-browser", "-", translationPath);
+    app->installTranslator(&sharedTranslator);
 
     const char *uri = "Sailfish.Browser";
 
@@ -109,11 +125,22 @@ Q_DECL_EXPORT int main(int argc, char *argv[])
     } else {
         qmlRegisterType<QuickMozView>(uri, 1, 0, "BrowserContentView");
     }
+    qmlRegisterType<ExternalUrlHandler>(uri, 1, 0, "ExternalUrlHandler");
     qmlRegisterType<InputRegion>(uri, 1, 0, "InputRegion");
 
     Browser *browser = new Browser(view.data(), DEPLOYMENT_PATH, app.data());
-    browser->connect(service, &CaptivePortalService::openUrlRequested,
-                     browser, &Browser::openUrl);
+    if (portalService) {
+        QObject::connect(portalService, &CaptivePortalService::openUrlRequested, browser, &Browser::openUrl);
+        QObject::connect(portalService, &CaptivePortalService::cancelTransferRequested, browser, &Browser::cancelDownload);
+        QObject::connect(portalService, &CaptivePortalService::restartTransferRequested, browser, &Browser::restartDownload);
+    } else {
+        auto *uiService = new BrowserUIService(app.data());
+        QObject::connect(browserService, &BrowserService::openUrlRequested, browser, &Browser::openUrl);
+        QObject::connect(uiService, &BrowserUIService::openUrlRequested, browser, &Browser::openUrl);
+        QObject::connect(uiService, &BrowserUIService::showChrome, browser, &Browser::showChrome);
+        QObject::connect(browserService, &BrowserService::cancelTransferRequested, browser, &Browser::cancelDownload);
+        QObject::connect(browserService, &BrowserService::restartTransferRequested, browser, &Browser::restartDownload);
+    }
     browser->load();
     return app->exec();
 }

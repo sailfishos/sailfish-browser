@@ -4,10 +4,12 @@ CONFIG += link_pkgconfig
 PKGCONFIG += sailfishwebengine sailfishpolicy nemotransferengine-qt5 dsme_dbus_if mlite5
 
 QT += quick
+INCLUDEPATH += /usr/include/lipstick-qt5
 
 # C++ sources
 SOURCES += \
     $$PWD/browser.cpp \
+    $$PWD/externalurlhandler.cpp \
     $$PWD/closeeventfilter.cpp \
     $$PWD/datafetcher.cpp \
     $$PWD/downloadmanager.cpp \
@@ -23,6 +25,7 @@ SOURCES += \
 # C++ headers
 HEADERS += \
     $$PWD/browser.h \
+    $$PWD/externalurlhandler.h \
     $$PWD/browser_p.h \
     $$PWD/closeeventfilter.h \
     $$PWD/datafetcher.h \
