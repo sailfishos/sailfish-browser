@@ -380,7 +380,8 @@ Page {
                 iconSource: "image://theme/icon-m-display"
                 currentIndex: cutoutGuardIndex(cutoutGuardConfig.value)
 
-                //% "Keeps website content away from the screen notch. Automatic lets adapted websites use the notch area while keeping content clear."
+                //% "Keeps website content away from the screen notch. "
+                //% "Automatic lets adapted websites use the notch area while keeping content clear."
                 description: qsTrId("sailfish_browser-me-notch_guard_description")
 
                 menu: ContextMenu {
