@@ -85,7 +85,7 @@ Item {
                 continue
             }
             promptRequest = request
-            prompt = pageStack.animatorPush(promptComponent, {"site": request.host || "", "target": request.url, "canRemember": !request.privateBrowsing})
+            prompt = pageStack.animatorPush(promptComponent, {"site": request.host || "", "target": request.url, "canRemember": request.canRemember === true})
             prompt.pageCompleted.connect(function(dialog) {
                 prompt = dialog
                 dialog.accepted.connect(function() {

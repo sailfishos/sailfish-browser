@@ -49,7 +49,8 @@ void tst_hostedqml::externalFlows()
                       << functionSource(QStringLiteral(":/ExternalUrlFlow.qml"), QStringLiteral("current"))
                       << functionSource(QStringLiteral(":/ExternalUrlFlow.qml"), QStringLiteral("closeFlow"))
                       << functionSource(QStringLiteral(":/ExternalUrlFlow.qml"), QStringLiteral("respond"))
-                      << functionSource(QStringLiteral(":/ExternalUrlFlow.qml"), QStringLiteral("reject")));
+                      << functionSource(QStringLiteral(":/ExternalUrlFlow.qml"), QStringLiteral("reject"))
+                      << functionSource(QStringLiteral(":/ExternalUrlFlow.qml"), QStringLiteral("nextPrompt")));
 }
 
 QString tst_hostedqml::readResource(const QString &path)

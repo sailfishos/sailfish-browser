@@ -71,7 +71,8 @@ process's service, and active transfers keep it alive after its window closes.
 
 Non-web URLs are queried asynchronously through Lipstick with the complete URL.
 Full Browser prompts before dispatch unless its existing site permission allows
-it. Sparse dispatches supported links automatically, then closes the originating
+it. Intent links always prompt and do not offer Remember, since their outer
+scheme does not identify a single target application. Sparse dispatches supported links automatically, then closes the originating
 root and its popup descendants while retaining independent flows. Dispatch means
 Lipstick accepted the D-Bus call; it does not prove app launch or OAuth success.
 Failed queries and unsupported links keep the flow open. HTTP/HTTPS navigation
@@ -86,7 +87,8 @@ is part of this round. Package-constrained intents cannot select native handlers
 Full Browser prompt rejection or an unavailable handler follows a valid fallback
 in the original security context. Navigation, closure or expiry cancels a stale
 request without fallback. Identical fallback intents are suppressed within the
-same flow to prevent redirect loops.
+same fallback navigation chain to prevent redirect loops. A valid user gesture
+or an independent document navigation allows a new attempt.
 
 ## Validation
 
