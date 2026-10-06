@@ -45,6 +45,15 @@ Page {
     readonly property bool hostedMediaPlaying: hostedViewHasPlayingMedia(chromeHostLoader.item)
                                                || hostedViewHasPlayingMedia(privateChromeHostLoader.item)
 
+    function updateHostedTextZoom(view) {
+        if (!view || !view.tabModel) return
+        var tabs = view.tabModel.snapshot()
+        for (var index = 0; index < tabs.length; ++index) {
+            view.sendAsyncMessageToTab(String(tabs[index].tabId),
+                                      "embedui:textZoom", { "zoom": view.systemTextZoom })
+        }
+    }
+
     function hostedViewHasPlayingMedia(view) {
         if (!view || !view.tabModel) return false
         // Depend on the native snapshot revision as well as model identity.
@@ -2548,6 +2557,11 @@ Page {
             BrowserContentView {
                 id: chromeView
 
+                readonly property real systemTextZoom: Math.pow(
+                        Theme.fontSizeMedium / Theme.fontSizeMediumBase, 1.25)
+                onSystemTextZoomChanged: browserPage.updateHostedTextZoom(chromeView)
+                onViewInitialized: browserPage.updateHostedTextZoom(chromeView)
+
                 Binding {
                     target: webView.nativeWindow ? chromeView : null
                     property: "presentationWindow"
@@ -2635,6 +2649,7 @@ Page {
 
                 Component.onCompleted: {
                     browserPage.initializeHostedContentBridge(chromeView)
+                    browserPage.updateHostedTextZoom(chromeView)
                     pickerOpener = hostedPickerOpenerComponent.createObject(chromeView, {
                                                                                  "pageStack": window.pageStack,
                                                                                  "contentItem": chromeView
@@ -2783,6 +2798,7 @@ Page {
                     ignoreUnknownSignals: true
                     onRevisionChanged: {
                         tabSession.applyRuntimeSnapshot(false, chromeView)
+                        browserPage.updateHostedTextZoom(chromeView)
                         if (chromeView !== browserPage.chromeHostView) return
                         browserPage.applyHostedViewportFitState(chromeView)
                         browserPage.syncHostedDesktopMode(chromeView)
