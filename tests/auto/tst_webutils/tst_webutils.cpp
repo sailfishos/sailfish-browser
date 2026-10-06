@@ -24,6 +24,8 @@ public:
     tst_webutils(QObject *parent = 0);
 
 private slots:
+    void initTestCase();
+
     void displayableUrl_data();
     void displayableUrl();
 };
@@ -31,6 +33,11 @@ private slots:
 tst_webutils::tst_webutils(QObject *parent)
     : QObject(parent)
 {
+}
+
+void tst_webutils::initTestCase()
+{
+    QStandardPaths::setTestModeEnabled(true);
 }
 
 void tst_webutils::displayableUrl_data()

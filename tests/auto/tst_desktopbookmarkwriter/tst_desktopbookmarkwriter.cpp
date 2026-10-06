@@ -15,6 +15,7 @@
 
 #include <MDesktopEntry>
 #include <QtTest>
+#include <QStandardPaths>
 #include <QStringList>
 
 class tst_desktopbookmarkwriter : public QObject
@@ -43,6 +44,7 @@ private:
 tst_desktopbookmarkwriter::tst_desktopbookmarkwriter(QObject *parent)
     : QObject(parent)
 {
+    QStandardPaths::setTestModeEnabled(true);
     DesktopBookmarkWriter::setTestModeEnabled(true);
 }
 
