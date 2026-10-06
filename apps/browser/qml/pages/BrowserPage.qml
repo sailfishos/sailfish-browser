@@ -42,6 +42,38 @@ Page {
     property alias overlay: overlay
     property alias tabs: webView.tabModel
     property alias history: historyModel
+    readonly property bool hostedMediaPlaying: hostedViewHasPlayingMedia(chromeHostLoader.item)
+                                               || hostedViewHasPlayingMedia(privateChromeHostLoader.item)
+
+    function hostedViewHasPlayingMedia(view) {
+        if (!view || !view.tabModel) return false
+        // Depend on the native snapshot revision as well as model identity.
+        var revision = view.tabModel.revision
+        var tabs = view.tabModel.snapshot()
+        for (var index = 0; index < tabs.length; ++index) {
+            if (tabs[index].mediaPlaying) return true
+        }
+        return false
+    }
+
+    Binding {
+        target: webView.resourceController
+        property: "mediaPlaybackActive"
+        value: browserPage.hostedMediaPlaying
+    }
+
+    function raiseMediaController(controller) {
+        var host = chromeHostLoader.item
+        if (!controller.available || controller.privateBrowsing
+                || !host || controller.ownerView !== host
+                || !hostedRuntimeTabByRuntimeId(host, controller.ownerTabId)) return
+        webView.privateMode = false
+        host.selectTab(controller.ownerTabId)
+        pageStack.pop(browserPage, PageStackAction.Immediate)
+        bringToForeground(webView.chromeWindow)
+        window.activate()
+    }
+
     readonly property var chromeHostView: _runtimeChromeView
     readonly property var _runtimeChromeView: webView.privateMode
                                                ? privateChromeHostLoader.item : chromeHostLoader.item
@@ -705,7 +737,8 @@ Page {
         // A back-swipe preview makes the page visible while its status is still
         // Inactive. Keep rendering until Silica actually hides the page.
         if (browserPage.visible && view === chromeHostView
-                && view.visible && webView.foreground) {
+                && view.visible
+                && webView.foreground) {
             view.resumeView()
         } else {
             view.suspendView()
@@ -2596,8 +2629,9 @@ Page {
                                      ? browserPage._hostedCutoutBottom : 0
                 safeAreaInsetLeft: browserPage.hostedDisplayCutoutAllowed
                                    ? browserPage._hostedCutoutLeft : 0
-                throttlePainting: !webView.foreground && !webView.resourceController.videoActive
-                                  && webView.applicationVisible || !webView.applicationVisible
+                backgroundMediaEnabled: true
+                throttlePainting: !webView.foreground || !browserPage.visible
+                                  || privateMode !== webView.privateMode
 
                 Component.onCompleted: {
                     browserPage.initializeHostedContentBridge(chromeView)
@@ -2757,6 +2791,11 @@ Page {
                         // without waiting for an unrelated later frame.
                         browserPage.continueHostedThumbnailCapture(chromeView)
                     }
+                }
+
+                Connections {
+                    target: webView.resourceController
+                    onAudioActiveChanged: browserPage.updateHostedViewSuspension(chromeView)
                 }
 
                 Connections {

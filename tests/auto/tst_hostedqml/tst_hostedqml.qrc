@@ -1,5 +1,7 @@
 <RCC>
     <qresource prefix="/">
+        <file alias="BrowserMediaPlayer.qml">../../../apps/browser/qml/BrowserMediaPlayer.qml</file>
+        <file>MockMediaController.qml</file>
         <file alias="BrowserPage.qml">../../../apps/browser/qml/pages/BrowserPage.qml</file>
         <file alias="CaptivePortalView.qml">../../../apps/shared/CaptivePortalView.qml</file>
         <file alias="HostedTabSession.qml">../../../apps/shared/HostedTabSession.qml</file>

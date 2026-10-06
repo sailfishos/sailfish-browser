@@ -6,9 +6,12 @@
 #include <QtTest>
 
 #include <QFile>
+#include <QDBusConnection>
+#include <QDBusConnectionInterface>
 #include <QJSValue>
 #include <QQmlComponent>
 #include <QQmlEngine>
+#include <QQmlContext>
 #include <QRegularExpression>
 #include <QScopedPointer>
 
@@ -20,6 +23,7 @@ private slots:
     void contextMenuRouting();
     void datePickerRouting();
     void hostedViewSuspension();
+    void mediaPlayerRegistration();
     void navigation();
     void newTabPresentation();
     void privateThumbnailCapture();
@@ -113,6 +117,46 @@ void tst_hostedqml::hostedViewSuspension()
                       QStringList() << functionSource(
                           QStringLiteral(":/BrowserPage.qml"),
                           QStringLiteral("updateHostedViewSuspension")));
+}
+
+void tst_hostedqml::mediaPlayerRegistration()
+{
+    QDBusConnectionInterface *bus = QDBusConnection::sessionBus().interface();
+    if (!bus) QSKIP("A session bus is required for MPRIS registration");
+
+    QQmlEngine engine;
+    QQmlComponent mockComponent(&engine, QUrl(QStringLiteral("qrc:/MockMediaController.qml")));
+    QScopedPointer<QObject> controller(mockComponent.create());
+    QVERIFY2(controller, qPrintable(mockComponent.errorString()));
+    engine.rootContext()->setContextProperty(QStringLiteral("testController"), controller.data());
+    QString source = readResource(QStringLiteral(":/BrowserMediaPlayer.qml"));
+    source.remove(QStringLiteral("import Sailfish.WebEngine 1.0"));
+    source.replace(QStringLiteral("WebEngine.mediaController"), QStringLiteral("testController"));
+    QQmlComponent component(&engine);
+    component.setData(source.toUtf8(), QUrl(QStringLiteral("qrc:/BrowserMediaPlayer.qml")));
+    if (component.errorString().contains(QStringLiteral("module \"Amber.Mpris\" is not installed"))) {
+        QSKIP("Amber MPRIS QML plugin is required for this integration test");
+    }
+    QScopedPointer<QObject> player(component.create());
+    QVERIFY2(player, qPrintable(component.errorString()));
+    const QString service = QStringLiteral("org.mpris.MediaPlayer2.sailfish_browser.instance%1")
+            .arg(QCoreApplication::applicationPid());
+    QTRY_VERIFY(bus->isServiceRegistered(service).value());
+
+    QVERIFY(controller->setProperty("available", false));
+    QVERIFY(!bus->isServiceRegistered(service).value());
+    QVERIFY(controller->setProperty("available", true));
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    QTRY_VERIFY(bus->isServiceRegistered(service).value());
+
+    QVERIFY(controller->setProperty("privateBrowsing", true));
+    QVERIFY(!bus->isServiceRegistered(service).value());
+    QVERIFY(controller->setProperty("privateBrowsing", false));
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    QTRY_VERIFY(bus->isServiceRegistered(service).value());
+    player.reset();
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    QVERIFY(!bus->isServiceRegistered(service).value());
 }
 
 void tst_hostedqml::navigation()

@@ -127,6 +127,7 @@ WebContainer {
     property var resourceController: ResourceController {
         webPage: contentItem
         background: !webView.applicationVisible
+        foreground: webView.foreground
     }
 
     property Component textSelectionControllerComponent: Component {
