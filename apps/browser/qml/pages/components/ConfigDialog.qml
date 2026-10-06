@@ -257,6 +257,9 @@ Dialog {
                 width: prefsList.width
                 sourceComponent: model.type == WebEngineSettings.BoolPref ? textSwitch : textField
 
+                // enable the components to react to model changes:
+                readonly property bool hasBeenModified: model.modified
+
                 Component {
                     id: textField
 
@@ -277,7 +280,7 @@ Dialog {
                                 width: parent.width
                                 color: Theme.primaryColor
                                 font.pixelSize: preferenceNameFontSize
-                                font.bold: model.modified
+                                font.bold: hasBeenModified
                                 wrapMode: Text.Wrap
                                 text: model.name
                             }
@@ -351,7 +354,7 @@ Dialog {
                                 width: parent.width
                                 color: boolItem.highlighted ? Theme.highlightColor : Theme.primaryColor
                                 font.pixelSize: preferenceNameFontSize
-                                font.bold: model.modified
+                                font.bold: hasBeenModified
                                 wrapMode: Text.Wrap
                                 text: model.name
                             }
