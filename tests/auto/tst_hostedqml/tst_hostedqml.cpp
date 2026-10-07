@@ -161,12 +161,20 @@ void tst_hostedqml::mediaPlayerRegistration()
 
 void tst_hostedqml::navigation()
 {
+    const QString page = readResource(QStringLiteral(":/BrowserPage.qml"));
+    const QRegularExpression handlerExpression(
+                QStringLiteral("^        onRuntimeTraversalReady: (\\{[\\s\\S]*?^        \\})"),
+                QRegularExpression::MultilineOption);
+    const QString handler = handlerExpression.match(page).captured(1);
+    QVERIFY(!handler.isEmpty());
     runJavaScriptTest(QStringLiteral(":/navigation.js"),
                       QStringList()
                       << functionSource(QStringLiteral(":/BrowserPage.qml"),
                                         QStringLiteral("goBack"))
                       << functionSource(QStringLiteral(":/BrowserPage.qml"),
-                                        QStringLiteral("goForward")));
+                                        QStringLiteral("goForward"))
+                      << QStringLiteral("function runtimeTraversalReady(persistentId, direction) ")
+                         + handler);
 }
 
 void tst_hostedqml::newTabPresentation()
