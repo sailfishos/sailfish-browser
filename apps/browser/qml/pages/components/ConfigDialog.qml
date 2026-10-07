@@ -153,6 +153,9 @@ Dialog {
 
         var modelValue = value.toString()
         prefsListModel.setProperty(modelIndex, "value", modelValue)
+        if(sourcePrefs[prefsListIndex].value != modelValue) {
+            prefsListModel.setProperty(modelIndex, "modified", true)
+        }
         sourcePrefs[prefsListIndex].value = modelValue
     }
 
