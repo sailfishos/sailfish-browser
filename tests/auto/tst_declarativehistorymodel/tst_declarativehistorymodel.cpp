@@ -21,8 +21,11 @@
 #include "browserpaths.h"
 
 struct HistoryEntry {
-    HistoryEntry(QString url, QString title) : url(url), title(title) {}
-    HistoryEntry() {}
+    HistoryEntry(QString url, QString title)
+        : url(url), title(title)
+    {}
+    HistoryEntry()
+    {}
 
     QString url;
     QString title;
@@ -162,29 +165,31 @@ void tst_declarativehistorymodel::sortedHistoryEntries_data()
     QTest::addColumn<QStringList>("order");
     QTest::addColumn<int>("expectedCount");
 
-
-    QList<HistoryEntry> list {
-        HistoryEntry(QStringLiteral("http://www.testurl.blah/thelongesturl/"), QStringLiteral("The longest url")),
-    };
-
-
     // Insert in reversed order
-    QTest::newRow("longestUrl") << (QList<HistoryEntry>() <<
-                                   HistoryEntry(QStringLiteral("http://www.testurl.blah/thelongesturl/"), QStringLiteral("The longest url"))) << "test"
-                              << (QStringList() << "http://www.testurl.blah/thelongesturl/") << 1;
-    QTest::newRow("longerUrl") << (QList<HistoryEntry>() <<
-                                   HistoryEntry(QStringLiteral("http://www.testurl.blah/thelongesturl/"), QStringLiteral("The longest url")) <<
-                                   HistoryEntry(QStringLiteral("http://www.testurl.blah/alongerurl/"), QStringLiteral("A longer url")))
-                               << "test" << (QStringList() << "http://www.testurl.blah/alongerurl/"
-                                   << "http://www.testurl.blah/thelongesturl/") << 2;
+    QTest::newRow("longestUrl")
+        << (QList<HistoryEntry>()
+            << HistoryEntry(QStringLiteral("http://www.testurl.blah/thelongesturl/"), QStringLiteral("The longest url")))
+        << "test"
+        << (QStringList() << "http://www.testurl.blah/thelongesturl/")
+        << 1;
 
-    QTest::newRow("rootPage") << (QList<HistoryEntry>() <<
-                                  HistoryEntry(QStringLiteral("http://www.testurl.blah/thelongesturl/"), QStringLiteral("The longest url")) <<
-                                  HistoryEntry(QStringLiteral("http://www.testurl.blah/alongerurl/"), QStringLiteral("A longer url")) <<
-                                  HistoryEntry(QStringLiteral("http://www.testurl.blah/"), QStringLiteral("A root page")))
-                              << "test"
-                              << (QStringList() << "http://www.testurl.blah/" << "http://www.testurl.blah/alongerurl/"
-                                  << "http://www.testurl.blah/thelongesturl/") << 3;
+    QTest::newRow("longerUrl")
+        << (QList<HistoryEntry>()
+            << HistoryEntry(QStringLiteral("http://www.testurl.blah/thelongesturl/"), QStringLiteral("The longest url"))
+            << HistoryEntry(QStringLiteral("http://www.testurl.blah/alongerurl/"), QStringLiteral("A longer url")))
+        << "test"
+        << (QStringList() << "http://www.testurl.blah/alongerurl/"
+                          << "http://www.testurl.blah/thelongesturl/")
+        << 2;
+
+    QTest::newRow("rootPage")
+        << (QList<HistoryEntry>()
+            << HistoryEntry(QStringLiteral("http://www.testurl.blah/thelongesturl/"), QStringLiteral("The longest url"))
+            << HistoryEntry(QStringLiteral("http://www.testurl.blah/alongerurl/"), QStringLiteral("A longer url"))
+            << HistoryEntry(QStringLiteral("http://www.testurl.blah/"), QStringLiteral("A root page")))
+        << "test"
+        << (QStringList() << "http://www.testurl.blah/" << "http://www.testurl.blah/alongerurl/"
+                          << "http://www.testurl.blah/thelongesturl/") << 3;
 }
 
 void tst_declarativehistorymodel::sortedHistoryEntries()
@@ -262,7 +267,6 @@ void tst_declarativehistorymodel::removeHistoryEntries_data()
     QStringList titles;
     titles << "test1" << "test2" << "test3";
 
-
     QList<HistoryEntry> list {
         HistoryEntry(QStringLiteral("http://removeTestUrl1"), QStringLiteral("test1")),
         HistoryEntry(QStringLiteral("http://removeTestUrl2"), QStringLiteral("test2")),
@@ -289,8 +293,8 @@ void tst_declarativehistorymodel::removeHistoryEntries()
     QFETCH(int, countWithSearchTermIndexRemoved);
     QFETCH(int, countWithEmptySearchIndexRemoved);
     QFETCH(int, countWithSearchTerm);
-
     QFETCH(QString, searchTerm);
+
     addEntries(entries);
     verifySearchResult(searchTerm, countWithSearchTerm);
     // Reset search results.
@@ -314,12 +318,25 @@ void tst_declarativehistorymodel::searchWithSpecialChars_data()
     QTest::addColumn<QList<HistoryEntry> >("entries");
     QTest::addColumn<QString>("searchTerm");
     QTest::addColumn<int>("expectedCount");
-    QTest::newRow("special_site") << (QList<HistoryEntry>() << HistoryEntry(QStringLiteral("http://www.pöö.com/"), QStringLiteral("wierd site"))) << "pöö" << 1;
-    QTest::newRow("special_title") << (QList<HistoryEntry>() << HistoryEntry(QStringLiteral("http://www.pöö.com/"), QStringLiteral("wierd site"))
-                                      << HistoryEntry(QStringLiteral("http://www.foobar.com/"), QStringLiteral("pöö wierd title"))) << "pöö" << 2;
 
-    QTest::newRow("special_escaped_chars") << (QList<HistoryEntry>() << HistoryEntry(QStringLiteral("http://www.foobar.com/"), QStringLiteral("special title: ';\";ö"))) << "';\";" << 1;
-    QTest::newRow("special_escaped_chars") << (QList<HistoryEntry>() << HistoryEntry(QStringLiteral("http://www.foobar.com/"), QStringLiteral("Ö is wierd char"))) << "Ö" << 1;
+    QTest::newRow("special_site")
+        << (QList<HistoryEntry>()
+            << HistoryEntry(QStringLiteral("http://www.pöö.com/"), QStringLiteral("weird site")))
+        << "pöö" << 1;
+    QTest::newRow("special_title")
+        << (QList<HistoryEntry>()
+            << HistoryEntry(QStringLiteral("http://www.pöö.com/"), QStringLiteral("weird site"))
+            << HistoryEntry(QStringLiteral("http://www.foobar.com/"), QStringLiteral("pöö weird title")))
+        << "pöö" << 2;
+
+    QTest::newRow("special_escaped_chars")
+        << (QList<HistoryEntry>()
+            << HistoryEntry(QStringLiteral("http://www.foobar.com/"), QStringLiteral("special title: ';\";ö")))
+        << "';\";" << 1;
+    QTest::newRow("special_escaped_chars_2")
+        << (QList<HistoryEntry>()
+            << HistoryEntry(QStringLiteral("http://www.foobar.com/"), QStringLiteral("Ö is weird char")))
+        << "Ö" << 1;
 }
 
 void tst_declarativehistorymodel::searchWithSpecialChars()
@@ -332,14 +349,14 @@ void tst_declarativehistorymodel::searchWithSpecialChars()
 
     verifySearchResult(searchTerm, expectedCount);
 
-    // Wierdly this works in unit test, but in production code doesn't, perhaps linking to different sqlite version
+    // Weirdly this works in unit test, but in production code doesn't, perhaps linking to different sqlite version
     // QEXPECT_FAIL("special_upper_case_special_char", "due to sqlite bug accented char is case sensitive with LIKE op", Continue);
 }
 
 void tst_declarativehistorymodel::cleanup()
 {
     delete historyModel;
-    historyModel = 0;
+    historyModel = nullptr;
     delete DBManager::instance();
     QFile dbFile(dbFileName);
     QVERIFY(dbFile.remove());
@@ -370,4 +387,5 @@ int main(int argc, char *argv[])
     tst_declarativehistorymodel testcase;
     return QTest::qExec(&testcase, argc, argv); \
 }
+
 #include "tst_declarativehistorymodel.moc"

@@ -609,6 +609,8 @@ void tst_logins::testFiltering()
 
 int main(int argc, char *argv[])
 {
+    QStandardPaths::setTestModeEnabled(true);
+
     QScopedPointer<QGuiApplication> app(new QGuiApplication(argc, argv));
     QString path = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
     qDebug() << "Profile path: " << path;

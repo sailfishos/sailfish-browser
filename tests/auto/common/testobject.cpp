@@ -17,6 +17,7 @@
 #include <QQuickView>
 #include <QQuickItem>
 #include <QSignalSpy>
+#include <QStandardPaths>
 #include <QTime>
 #include <QtTest>
 
@@ -27,6 +28,8 @@ TestObject::TestObject()
 {
     QTime time = QTime::currentTime();
     qsrand((uint)time.msec());
+
+    QStandardPaths::setTestModeEnabled(true);
 }
 
 TestObject::TestObject(QByteArray qmlData)

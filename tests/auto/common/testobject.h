@@ -21,8 +21,11 @@ static const QByteArray EMPTY_QML = \
         "import QtQuick 2.0\n" \
         "Item { width: 100; height: 100 }\n";
 
-struct TestTab {
-    TestTab(const QString &url, const QString &title) : url(url), title(title) {}
+struct TestTab
+{
+    TestTab(const QString &url, const QString &title)
+        : url(url), title(title)
+    {}
 
     QString url;
     QString title;
@@ -45,7 +48,9 @@ public:
     QObject *rootObject() const;
     QQuickView *quickView();
 
-    template <typename T> T *qmlObject(const char *propertyName) {
+    template <typename T>
+    T *qmlObject(const char *propertyName)
+    {
         QVariant var = mRootObject->property(propertyName);
         return qobject_cast<T *>(qvariant_cast<QObject*>(var));
     }

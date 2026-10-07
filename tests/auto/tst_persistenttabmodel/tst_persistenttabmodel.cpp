@@ -14,6 +14,7 @@
 #include <QtTest/QtTest>
 #include <QFile>
 #include <QTemporaryDir>
+#include <QStandardPaths>
 
 #include "persistenttabmodel.h"
 #include "privatetabmodel.h"
@@ -129,6 +130,8 @@ void tst_persistenttabmodel::activeTabIndexFiltersHiddenRows()
 
 void tst_persistenttabmodel::initTestCase()
 {
+    QStandardPaths::setTestModeEnabled(true);
+
     int argc(0);
     char* argv[0] = {};
     ::testing::InitGoogleMock(&argc, argv);
@@ -881,7 +884,6 @@ void tst_persistenttabmodel::runtimeSnapshotRemovalSignalsTabClosed()
 
 void tst_persistenttabmodel::pendingRuntimeNewTabs()
 {
-
     const int firstId = tabModel->newTab(
                 QStringLiteral("https://first.example/"), true);
     const int secondId = tabModel->newTab(

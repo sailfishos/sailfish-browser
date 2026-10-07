@@ -13,11 +13,8 @@
 #include <QString>
 #include <QDir>
 #include <QStandardPaths>
-#include "browserpaths.h"
 
-#include <pwd.h>
-#include <grp.h>
-#include <unistd.h>
+#include "browserpaths.h"
 
 static QString getLocation(QStandardPaths::StandardLocation locationType)
 {
@@ -59,27 +56,4 @@ QString BrowserPaths::databasePath()
     QDir dir(databaseDir);
     const QString dbFileName(QLatin1String("sailfish-browser.sqlite"));
     return dir.absoluteFilePath(dbFileName);
-}
-
-bool BrowserPaths::createDirectory(const QString &dirStr)
-{
-    QDir dir(dirStr);
-    if (!dir.exists()) {
-        if (!dir.mkpath(dirStr)) {
-            return false;
-        }
-        uid_t uid = getuid();
-        // assumes that correct groupname is same as username
-        int gid = getgrnam(getpwuid(uid)->pw_name)->gr_gid;
-        int success = chown(dirStr.toLatin1().data(), uid, gid);
-        Q_UNUSED(success);
-        QFile::Permissions permissions(QFile::ExeOwner
-                                       | QFile::ExeGroup
-                                       | QFile::ReadOwner
-                                       | QFile::WriteOwner
-                                       | QFile::ReadGroup
-                                       | QFile::WriteGroup);
-        QFile::setPermissions(dirStr, permissions);
-    }
-    return true;
 }

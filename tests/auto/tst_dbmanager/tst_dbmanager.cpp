@@ -10,8 +10,10 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include <QtTest>
+#include <QStandardPaths>
 #include <QSqlDatabase>
 #include <QSqlQuery>
+
 #include "dbmanager.h"
 #include "browserpaths.h"
 
@@ -79,6 +81,8 @@ int tst_dbmanager::linkCount() const
 
 void tst_dbmanager::initTestCase()
 {
+    QStandardPaths::setTestModeEnabled(true);
+
     mDbFile = BrowserPaths::databasePath();
     QFile dbFile(mDbFile);
     dbFile.remove();

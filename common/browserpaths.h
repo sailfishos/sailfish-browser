@@ -20,8 +20,6 @@ struct BrowserPaths
     static QString applicationsLocation();
     static QString cacheLocation();
     static QString databasePath();
-
-    static bool createDirectory(const QString &dirStr);
 };
 
 #endif // BROWSERPATHS_H

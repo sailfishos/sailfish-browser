@@ -11,6 +11,7 @@
 
 #include <QtTest>
 #include <QFile>
+#include <QStandardPaths>
 #include <QTextStream>
 
 #include "declarativebookmarkmodel.h"
@@ -54,7 +55,9 @@ private:
 
 void tst_declarativebookmarkmodel::initTestCase()
 {
+    QStandardPaths::setTestModeEnabled(true);
     QString settingsLocation = BrowserPaths::dataLocation();
+
     if (settingsLocation.isNull()) {
         return;
     }
