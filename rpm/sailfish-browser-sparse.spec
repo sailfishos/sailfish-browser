@@ -4,7 +4,7 @@ Version: 3.1.0
 Release: 1
 License: MPLv2.0
 Url: https://github.com/sailfishos/sailfish-browser
-Source0: sailfish-browser-%{version}.tar.bz2
+Source0: %{name}-%{version}.tar.bz2
 BuildArch: noarch
 Requires: sailfish-captiveportal = %{version}
 Requires: desktop-file-utils
@@ -16,7 +16,7 @@ Portal-style HTTP(S) URL handling with persistent sign-in data and transient
 flows. Uses the Browser desktop identifier without an application-grid launcher.
 
 %prep
-%setup -q -n sailfish-browser-%{version}
+%setup -q
 
 %build
 

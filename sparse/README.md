@@ -7,7 +7,7 @@ Its network sign-in service and private browsing behavior remain available.
 Common owns shared QML at both existing application data paths, preserving their
 directory layout during upgrades; each application keeps its own top-level QML.
 
-Build the separate `rpm/sparse/sailfish-browser-sparse.spec` from the same source
+Build the separate `rpm/sailfish-browser-sparse.spec` from the same source
 revision and version. This small package installs URL-handler desktop and D-Bus
 service entries that run `sailfish-captiveportal -sparse`. It reuses the Browser
 desktop identifier with `NoDisplay=true`, without providing the full Browser
@@ -28,12 +28,17 @@ Use the project SDK snapshot `browser-esr153` for every participating package.
 Install coherent WebView runtime and development packages in that snapshot
 before compiling Browser. QtMozEmbed needs no Sparse source changes.
 
+The two specs live at the `rpm` root so the OBS `tar_git` service can select
+them by source package name. Pin `sailfish-browser` and
+`sailfish-browser-sparse` to the same Git revision. Each service creates its
+own named source archive with the same generated version.
+
 In an SDK build shell prepared for the managed project snapshot, select the
 Sparse metadata spec explicitly after the normal Browser build:
 
 ```sh
 mb2 -t aarch64-browser-esr153 --no-snapshot=force --no-vcs-apply \
-    --no-fix-version -s rpm/sparse/sailfish-browser-sparse.spec build --prepare
+    --no-fix-version -s rpm/sailfish-browser-sparse.spec build --prepare
 ```
 
 For full Browser, install full Browser, common runtime and portal, plus the
