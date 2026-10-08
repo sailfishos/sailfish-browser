@@ -5,6 +5,7 @@
 
 var selectedPersistentId
 var chromeHostView
+var browserPage
 var webView
 
 (function() {
@@ -28,10 +29,25 @@ var webView
                     return accepted
                 }
                 method()
-                deepEqual(calls, persistentId
-                          ? ["bookkeeping", "native"] : ["native"])
+                deepEqual(calls, persistentId ? ["bookkeeping"] : [],
+                          "Native traversal must wait for readiness")
+                if (persistentId && accepted) {
+                    browserPage = { chromeHostView: chromeHostView,
+                                    selectedPersistentId: selectedPersistentId }
+                    runtimeTraversalReady(persistentId, direction === "Back" ? -1 : 1)
+                    deepEqual(calls, ["bookkeeping", "native"])
+                }
             }
         }
+
+
+        var cancelled = []
+        webView = { tabModel: { cancelRuntimeTraversal: function(id) { cancelled.push(id) } } }
+        browserPage = { chromeHostView: {}, selectedPersistentId: function() { return "other" } }
+        runtimeTraversalReady("17", direction === "Back" ? -1 : 1)
+        browserPage.chromeHostView = null
+        runtimeTraversalReady("18", direction === "Back" ? -1 : 1)
+        deepEqual(cancelled, ["17", "18"])
 
         var legacyCalls = 0
         chromeHostView = null

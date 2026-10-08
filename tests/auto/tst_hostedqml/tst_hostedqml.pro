@@ -1,6 +1,6 @@
 TARGET = tst_hostedqml
 
-QT += qml quick
+QT += qml quick dbus
 
 include(../test_common.pri)
 

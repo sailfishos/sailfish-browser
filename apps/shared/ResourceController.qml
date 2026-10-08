@@ -24,8 +24,10 @@ Item {
     property QtObject webPage
     property bool videoActive
     property bool audioActive
+    property bool mediaPlaybackActive
     readonly property alias displayOff: screenBlanked.blanked
     property bool background
+    property bool foreground: !background
 
     property string _mediaState: "pause"
     property string _lastStateOwner
@@ -43,7 +45,7 @@ Item {
 
     function calculateStatus() {
         var video = _webrtcVideoActive
-        var audio = _webrtcAudioActive
+        var audio = _webrtcAudioActive || mediaPlaybackActive
 
         if (_mediaState === "play" && _lastStateOwner === _lastMetaOwner) {
             if (_isVideoStream) {
@@ -73,6 +75,8 @@ Item {
             webPage.suspendView()
         }
     }
+
+    onMediaPlaybackActiveChanged: calculateStatus()
 
     onAudioActiveChanged: {
         if (!audioActive && screenBlanked.blanked) {
@@ -160,7 +164,7 @@ Item {
 
     DisplayBlanking {
         // This is stopping screen blank timer.
-        preventBlanking: videoActive
+        preventBlanking: videoActive && foreground
     }
 
     Timer {

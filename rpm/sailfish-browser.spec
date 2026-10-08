@@ -50,6 +50,7 @@ Requires: libkeepalive >= 1.7.0
 Requires: sailfish-components-pickers-qt5 >= 0.1.7
 Requires: nemo-qml-plugin-notifications-qt5 >= 1.0.12
 Requires: mapplauncherd-booster-browser
+Requires: amber-qml-plugin-mpris >= 1.2.10
 Requires: nemo-qml-plugin-connectivity
 Requires: jolla-settings >= 0.11.29
 Requires: jolla-settings-system >= 1.0.70

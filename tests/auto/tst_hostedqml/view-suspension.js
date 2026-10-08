@@ -20,7 +20,8 @@ var PageStatus = { "Inactive": 0, "Activating": 1, "Active": 2, "Deactivating": 
 
     browserPage = { "status": PageStatus.Inactive, "visible": false }
     chromeHostView = view
-    webView = { "foreground": true, "privateMode": false }
+    webView = { "foreground": true, "privateMode": false,
+                "resourceController": { "audioActive": false } }
 
     updateHostedViewSuspension(view)
     equal(resumeCount, 0)
@@ -90,6 +91,25 @@ var PageStatus = { "Inactive": 0, "Activating": 1, "Active": 2, "Deactivating": 
     updateHostedViewSuspension(view)
     equal(suspendCount, 5,
           "Completing the transition must suspend the now-hidden session")
+
+    browserPage.visible = true
+    webView.foreground = false
+    webView.resourceController.audioActive = true
+    updateHostedViewSuspension(view)
+    equal(resumeCount, 5, "Background media must not reactivate presentation")
+    equal(suspendCount, 6)
+
+    updateHostedViewSuspension(otherView)
+    equal(otherViewSuspendCount, 2)
+
+    browserPage.visible = false
+    updateHostedViewSuspension(view)
+    equal(suspendCount, 7, "Overview must suspend presentation even during audio")
+
+    browserPage.visible = true
+    webView.resourceController.audioActive = false
+    updateHostedViewSuspension(view)
+    equal(suspendCount, 8)
 
     return true
 })()
