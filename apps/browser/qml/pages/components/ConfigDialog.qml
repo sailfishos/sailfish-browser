@@ -153,109 +153,112 @@ Dialog {
 
         var modelValue = value.toString()
         prefsListModel.setProperty(modelIndex, "value", modelValue)
+        if(sourcePrefs[prefsListIndex].value != modelValue) {
+                prefsListModel.setProperty(modelIndex, "modified", true)
+        }
         sourcePrefs[prefsListIndex].value = modelValue
-    }
+}
 
-    Connections {
+Connections {
         target: WebEngine
         onInitialized: requestAllPrefs()
         onRecvObserve: {
-            if (message === "embed:allprefs") {
-                var allprefs = data
-                var preferences = []
-                for (var i=0; i < allprefs.length; i++) {
-                    preferences.push(createPreferenceItem(allprefs[i], i))
+                if (message === "embed:allprefs") {
+                        var allprefs = data
+                        var preferences = []
+                        for (var i=0; i < allprefs.length; i++) {
+                                preferences.push(createPreferenceItem(allprefs[i], i))
+                        }
+                        sourcePrefs = preferences
+                        searchFilterDelay.stop()
+                        updateSearchFilter(searchText, true)
+                        if (allprefs.length > 0) {
+                                prefsLoaded = true
+                                allPrefsRetry.stop()
+                        }
                 }
-                sourcePrefs = preferences
-                searchFilterDelay.stop()
-                updateSearchFilter(searchText, true)
-                if (allprefs.length > 0) {
-                    prefsLoaded = true
-                    allPrefsRetry.stop()
-                }
-            }
         }
-    }
+}
 
-    Timer {
+Timer {
         id: allPrefsRetry
 
         interval: 500
         repeat: true
         onTriggered: {
-            if (prefsLoaded || allPrefsRequests >= 6) {
-                stop()
-            } else {
-                requestAllPrefs()
-            }
+                if (prefsLoaded || allPrefsRequests >= 6) {
+                        stop()
+                } else {
+                        requestAllPrefs()
+                }
         }
-    }
+}
 
-    Timer {
+Timer {
         id: searchFilterDelay
 
         interval: 250
         onTriggered: updateSearchFilter(configDialog.searchText)
-    }
+}
 
-    Timer {
+Timer {
         id: pendingPrefsAppend
 
         interval: 0
         onTriggered: appendPendingPrefs()
-    }
+}
 
-    ListModel {
+ListModel {
         id: prefsListModel
-    }
+}
 
-    Column {
+Column {
         anchors.fill: parent
 
         DialogHeader {
-            id: dialogHeader
+                id: dialogHeader
 
-            width: parent.width
-            dialog: configDialog
-            title: "about:config"
-            _glassOnly: true
+                width: parent.width
+                dialog: configDialog
+                title: "about:config"
+                _glassOnly: true
         }
 
         SearchField {
-            id: searchField
+                id: searchField
 
-            width: parent.width
-            //: Placeholder text for search (used in about:config page).
-            //% "Search"
-            placeholderText: qsTrId("sailfish_browser-ph-search")
-            font.pixelSize: preferenceValueFontSize
-            inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase
+                width: parent.width
+                //: Placeholder text for search (used in about:config page).
+                //% "Search"
+                placeholderText: qsTrId("sailfish_browser-ph-search")
+                font.pixelSize: preferenceValueFontSize
+                inputMethodHints: Qt.ImhNoPredictiveText | Qt.ImhNoAutoUppercase
 
-            onTextChanged: {
-                configDialog.searchText = text
-                searchFilterDelay.restart()
-            }
-            EnterKey.onClicked: {
-                focus = false
-            }
+                onTextChanged: {
+                        configDialog.searchText = text
+                        searchFilterDelay.restart()
+                }
+                EnterKey.onClicked: {
+                        focus = false
+                }
         }
 
         SilicaListView {
-            id: prefsList
+                id: prefsList
 
-            model: prefsListModel
-            width: parent.width
-            height: Math.max(0, parent.height - dialogHeader.height - searchField.height)
-            clip: true
+                model: prefsListModel
+                width: parent.width
+                height: Math.max(0, parent.height - dialogHeader.height - searchField.height)
+                clip: true
 
-            VerticalScrollDecorator { flickable: prefsList }
+                VerticalScrollDecorator { flickable: prefsList }
 
-            delegate: Loader {
-                active: true
-                visible: true
-                height: item ? item.height : preferenceMinimumHeight
-                width: prefsList.width
-                sourceComponent: model.type == WebEngineSettings.BoolPref ? textSwitch : textField
+                delegate: Loader {
+                        active: true
+                        visible: true
+                        height: item ? item.height : preferenceMinimumHeight
+                        width: prefsList.width
+                        sourceComponent: model.type == WebEngineSettings.BoolPref ? textSwitch : textField
 
                 Component {
                     id: textField
@@ -264,6 +267,9 @@ Dialog {
                         width: prefsList.width
                         height: Math.max(preferenceMinimumHeight,
                                          textColumn.height + 2 * Theme.paddingMedium)
+
+                        // enable the components to react to model changes:
+                        readonly property bool hasBeenModified: model.modified
 
                         Column {
                             id: textColumn
@@ -277,6 +283,7 @@ Dialog {
                                 width: parent.width
                                 color: Theme.primaryColor
                                 font.pixelSize: preferenceNameFontSize
+                                font.bold: hasBeenModified
                                 wrapMode: Text.Wrap
                                 text: model.name
                             }
@@ -323,6 +330,8 @@ Dialog {
                     BackgroundItem {
                         id: boolItem
 
+                        // enable the components to react to model changes:
+                        readonly property bool hasBeenModified: model.modified
                         readonly property bool prefChecked: model.value === "true"
 
                         width: prefsList.width
@@ -350,6 +359,7 @@ Dialog {
                                 width: parent.width
                                 color: boolItem.highlighted ? Theme.highlightColor : Theme.primaryColor
                                 font.pixelSize: preferenceNameFontSize
+                                font.bold: hasBeenModified
                                 wrapMode: Text.Wrap
                                 text: model.name
                             }
