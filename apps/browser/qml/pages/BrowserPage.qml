@@ -3067,7 +3067,7 @@ Page {
                  || !webView.tabModel
                  || webView.tabModel.count === 0
         iconBackground: true
-        window: webView.chromeWindow
+        window: webView.nativeWindow || webView.chromeWindow
 
         CoverAction {
             iconSource: "image://theme/icon-cover-new"
