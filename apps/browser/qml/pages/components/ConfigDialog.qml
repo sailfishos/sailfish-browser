@@ -253,17 +253,23 @@ Dialog {
             delegate: Loader {
                 active: true
                 visible: true
-                height: item ? item.height : preferenceMinimumHeight
-                width: prefsList.width
                 sourceComponent: model.type == WebEngineSettings.BoolPref ? textSwitch : textField
 
                 Component {
                     id: textField
 
-                    Item {
+                    ListItem {
                         width: prefsList.width
-                        height: Math.max(preferenceMinimumHeight,
+                        contentHeight: Math.max(preferenceMinimumHeight,
                                          textColumn.height + 2 * Theme.paddingMedium)
+
+                        menu: ContextMenu {
+                            MenuItem {
+                                //% "Copy to clipboard"
+                                text: qsTrId("sailfish_browser-me-copy-to-clipboard")
+                                onClicked: Clipboard.text = model.searchName
+                            }
+                        }
 
                         Column {
                             id: textColumn
@@ -320,18 +326,26 @@ Dialog {
                 Component {
                     id: textSwitch
 
-                    BackgroundItem {
+                    ListItem {
                         id: boolItem
 
                         readonly property bool prefChecked: model.value === "true"
 
                         width: prefsList.width
-                        height: Math.max(preferenceMinimumHeight,
+                        contentHeight: Math.max(preferenceMinimumHeight,
                                          boolColumn.height + 2 * Theme.paddingMedium)
 
                         onClicked: {
                             configDialog.updatePreferenceValue(model.index, model.prefsListIndex,
                                                                model.name, !prefChecked, model.type)
+                        }
+
+                        menu: ContextMenu {
+                            MenuItem {
+                                //% "Copy to clipboard"
+                                text: qsTrId("sailfish_browser-me-copy-to-clipboard")
+                                onClicked: Clipboard.text = model.searchName
+                            }
                         }
 
                         Column {
