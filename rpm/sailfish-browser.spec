@@ -127,6 +127,7 @@ fi
 %{_bindir}/%{name}
 %{_datadir}/applications/%{name}.desktop
 %{_datadir}/%{name}/browser.qml
+%{_datadir}/%{name}/BrowserMediaPlayer.qml
 %{_datadir}/%{name}/pages
 %{_datadir}/%{name}/cover
 %{_datadir}/translations/settings-%{name}_eng_en.qm
