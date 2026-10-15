@@ -22,12 +22,14 @@ class MDConfItem;
 class DeclarativeWebUtils : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(bool sparse READ sparse CONSTANT)
     Q_PROPERTY(QString homePage READ homePage NOTIFY homePageChanged FINAL)
     Q_PROPERTY(bool firstUseDone READ firstUseDone WRITE setFirstUseDone NOTIFY firstUseDoneChanged)
     Q_PROPERTY(qreal cssPixelRatio READ cssPixelRatio NOTIFY cssPixelRatioChanged)
 
 public:
     static DeclarativeWebUtils *instance();
+    bool sparse() const;
 
     bool firstUseDone() const;
     void setFirstUseDone(bool firstUseDone);

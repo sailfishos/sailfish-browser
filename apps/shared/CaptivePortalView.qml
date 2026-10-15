@@ -6,10 +6,10 @@ import QtQuick 2.6
 import Qt5Mozilla 1.0
 import Sailfish.Silica 1.0
 import Sailfish.Browser 1.0
+import Sailfish.Policy 1.0
 import Sailfish.WebView.Controls 1.0
 import Sailfish.WebView.Pickers 1.0 as Pickers
 import Sailfish.WebView.Popups 1.0 as Popups
-import Sailfish.WebView 1.0 as SailfishWebView
 
 BrowserContentView {
     id: webPage
@@ -19,14 +19,29 @@ BrowserContentView {
         property: "presentationWindow"
         value: webView ? webView.nativeWindow : null
     }
+    Binding {
+        target: webView && webView.nativeWindow ? webPage : null
+        property: "surfaceColor"
+        value: fullscreen ? "black"
+                          : (!webView.displayCutoutAllowed && hasThemeColor
+                             ? themeColor : webView._defaultThemeColor)
+    }
     property var webView
-    privateMode: true
+    property var portalService
+    property alias portalFlows: portalFlows
+    privateMode: !WebUtils.sparse
     active: browserPage.active
     orientation: webView._screenOrientation
     clip: true
     property string _qmozChromeInitialUrl: ""
     dynamicToolbarHeight: forcedChrome ? 0 : webView.toolbarHeight
     marginBottom: webView.imOpened ? virtualKeyboardHeight : (forcedChrome ? webView.toolbarHeight : 0)
+
+    Binding {
+        target: webPage.webView
+        property: "pendingFlowResults"
+        value: webPage.portalService ? webPage.portalService.pendingResults : false
+    }
 
     function syncState() {
         webView.updateHostedState(String(url), title, loading, loadProgress,
@@ -37,8 +52,14 @@ BrowserContentView {
         id: viewSession
 
         model: webView.privateTabModel
+        property bool hadFlows
+        onSnapshotApplied: {
+            if (snapshot.length > 0) hadFlows = true
+        }
+        onPairedSnapshotApplied: if (webPage.portalService) portalFlows.applySnapshot(snapshot)
+        onEmpty: if (WebUtils.sparse && hadFlows) webView.chromeWindow.close()
         view: webPage
-        privateMode: true
+        privateMode: !WebUtils.sparse
     }
     Connections {
         target: webPage.tabModel
@@ -46,6 +67,13 @@ BrowserContentView {
     }
     Connections {
         target: webView
+        onApplicationClosing: {
+            if (webPage.portalService) portalFlows.cancelAll(DownloadManager.existActiveTransfers())
+            if (WebUtils.sparse) {
+                externalFlow.cancelAll()
+                webView.tabModel.clear()
+            }
+        }
         onHostedLoadRequested: {
             if (webPage.selectedTabId.length) webPage.load(url, fromExternal)
             else webView.tabModel.newTab(url, fromExternal)
@@ -62,12 +90,39 @@ BrowserContentView {
     onCanGoBackChanged: syncState()
     onCanGoForwardChanged: syncState()
     onSecurityChanged: syncState()
+    onLoadedChanged: if (portalService) portalFlows.loadFinished()
+
+    PortalFlowController {
+        id: portalFlows
+
+        browserEnabled: AccessPolicy.browserEnabled
+        service: webPage.portalService
+        webView: webPage.webView
+        contentItem: webPage
+        onPresent: {
+            WebUtils.showChrome()
+            window.activate()
+        }
+        onEmpty: webView.chromeWindow.close()
+    }
+
+    property alias flowController: externalFlow
+
+    ExternalUrlFlow {
+        id: externalFlow
+
+        contentItem: webPage
+        webView: webPage.webView
+        pageStack: window.pageStack
+        automatic: WebUtils.sparse
+        callbackInterceptor: webPage.portalService ? portalFlows.interceptCallback : null
+    }
 
     property Item textSelectionController: null
     readonly property bool activeWebPage: viewSession.selectedPersistentId(webPage) === String(webView.tabId)
     property string metadataTitle
     property var pendingClipboardPasteData
-    property QtObject _textZoomController: SailfishWebView.TextZoomController {
+    property QtObject _textZoomController: TextZoomController {
         webPage: webPage
     }
 
@@ -83,7 +138,13 @@ BrowserContentView {
         // ContextMenu needs a reference to correct TabModel so that
         // private and public tabs are created to correct model. While context
         // menu is open, tab model cannot change (at least at the moment).
-        tabModel: webView.tabModel
+        tabModel: WebUtils.sparse ? null : webView.tabModel
+        popupProvider: Popups.PopupProvider {
+            passwordManagerPopup: portalFlows.activeFlow ? null : ({"type": "dialog", "component": "PasswordManagerDialog.qml"})
+            contextMenu: WebUtils.sparse
+                         ? ({"type": "item", "component": Qt.resolvedUrl("SparseContextMenu.qml")})
+                         : ({"type": "item", "component": "ContextMenu.qml"})
+        }
 
         onAboutToOpenContextMenu: {
             if (Qt.inputMethod.visible) {
@@ -165,7 +226,7 @@ BrowserContentView {
     property int safeAreaInsetUsage
     property bool hasThemeColor
     property color themeColor: "white"
-    safeAreaInsetTop: webView.displayCutoutAllowed ? webView._contentCutoutTop : 0
+    safeAreaInsetTop: webView.displayCutoutAllowed && !webView.headerHeight ? webView._contentCutoutTop : 0
     safeAreaInsetRight: webView.displayCutoutAllowed ? webView._contentCutoutRight : 0
     safeAreaInsetBottom: webView.displayCutoutAllowed ? webView._contentCutoutBottom : 0
     safeAreaInsetLeft: webView.displayCutoutAllowed ? webView._contentCutoutLeft : 0
@@ -205,7 +266,29 @@ BrowserContentView {
         }
     }
 
+    function openPortalLink(url) {
+        if (WebUtils.sparse) {
+            // Outside-site links must not reopen through Sparse's default URL
+            // handler. Only an owned login callback may complete its flow.
+            if (portalService) portalFlows.interceptCallback(selectedTabId, url)
+            return
+        }
+        if (portalService && portalFlows.link(url)) return
+        webView.linkHandler.handleLink(url)
+    }
+
     onRecvAsyncMessage: {
+        if (portalService && portalFlows.activeFlow) {
+            if (message === "embed:confirm" && data.inPermitUnload
+                    && portalFlows.closingTab(selectedTabId)) {
+                sendAsyncMessage("confirmresponse", {
+                    "winId": data.winId, "promptId": data.promptId,
+                    "requestId": data.requestId, "tabId": data.tabId,
+                    "accepted": true, "buttonNumClicked": 0, "checkvalue": false
+                })
+                return
+            }
+        }
         if (pickerOpener.message(message, data) || popupOpener.message(message, data)) {
             return
         }
@@ -261,16 +344,26 @@ BrowserContentView {
         }
         // embed:OpenLink listener is registered only in the captive portal mode
         case "embed:OpenLink": {
-            webView.linkHandler.handleLink(data.uri)
+            openPortalLink(data.uri)
             break
         }
         case "Link:AddSearch": {
-            if (!webView.privateMode) {
+            if (!WebUtils.sparse && !webView.privateMode) {
                 // This adds this search as available if not already there
                 SearchEngineModel.add(data.engine.title, data.engine.href)
             }
             break
         }
+        }
+    }
+    onRecvAsyncMessageFromTab: {
+        if (portalService && message === "embed:confirm" && data.inPermitUnload
+                && portalFlows.closingTab(tabId) && String(tabId) !== selectedTabId) {
+            sendAsyncMessageToTab(String(tabId), "confirmresponse", {
+                "winId": data.winId, "promptId": data.promptId,
+                "requestId": data.requestId, "tabId": data.tabId,
+                "accepted": true, "buttonNumClicked": 0, "checkvalue": false
+            })
         }
     }
     onRecvSyncMessage: {
@@ -287,16 +380,21 @@ BrowserContentView {
     }
 
     onContextMenuRequested: {
-        if (data.types.indexOf("content-text") !== -1) {
+        if (data.types.indexOf("content-text") !== -1 || data.types.indexOf("input-text") !== -1) {
             // we want to select some content text
-            webPage.sendAsyncMessage("Browser:SelectionStart", {"xPos": data.xPos, "yPos": data.yPos})
+            webPage.sendAsyncMessage("Browser:SelectionStart", {"xPos": data.xPos, "yPos": data.yPos,
+                             "setFocus": data.types.indexOf("input-text") !== -1})
         }
     }
 
     Component.onCompleted: {
         loadFrameScript(Qt.resolvedUrl("ViewportFit.js"))
         loadFrameScript(Qt.resolvedUrl("PageMetadata.js"))
-        loadFrameScript("file:///usr/share/sailfish-captiveportal/pages/captiveportal.js")
+        if (WebUtils.sparse) {
+            loadFrameScript(Qt.resolvedUrl("SparseNavigation.js"))
+        } else {
+            loadFrameScript("file:///usr/share/sailfish-captiveportal/pages/captiveportal.js")
+        }
         var listeners = ["embed:OpenLink", "embed:viewportfit", "embed:pageMetadata",
                          "embed:fullscreenchanged", "embed:alert", "embed:confirm",
                          "embed:prompt", "embed:auth", "embed:login", "embed:permissions",

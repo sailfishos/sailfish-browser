@@ -18,6 +18,10 @@ BrowserWindow {
 
     //% "Captive portal"
     activityDisabledByMdm: qsTrId("sailfish_captiveportal-la-captive_portal")
+    function closeNetwork() {
+        if (rootPage && rootPage.flowController) rootPage.flowController.closeNetwork()
+        else close()
+    }
     initialPage: Component {
         CaptivePortalPage {
             id: browserPage

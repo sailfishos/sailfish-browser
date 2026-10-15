@@ -32,6 +32,7 @@ include(../../translations/translations.pri)
 
 include(../../defaults.pri)
 include(../shared/shared.pri)
+include(../browser/browser.pri)
 
 # QML files and folders of captiveportal
 qml.path = $$DEPLOYMENT_PATH
@@ -41,9 +42,15 @@ INSTALLS += qml
 # Captive portal sources
 SOURCES += captiveportaladaptor.cpp \
     captiveportalservice.cpp \
+    portalflowservice.cpp \
     main.cpp
 
 HEADERS += captiveportaladaptor.h \
-    captiveportalservice.h
+    captiveportalservice.h \
+    portalflowservice.h
+
+flowmodule.path = $$[QT_INSTALL_QML]/Sailfish/CaptivePortal
+flowmodule.files = flows/qmldir flows/Flow.qml flows/Flows.qml
+INSTALLS += flowmodule
 
 OTHER_FILES = qml/*.qml qml/pages/*.qml qml/pages/*.js qml/pages/components/*.qml

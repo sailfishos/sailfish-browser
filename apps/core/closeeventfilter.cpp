@@ -13,6 +13,7 @@
 #include "closeeventfilter.h"
 #include "declarativewebutils.h"
 #include "dbmanager.h"
+#include "browserappinfo.h"
 
 #include <QCoreApplication>
 #include <MDConfItem>
@@ -43,13 +44,14 @@ void CloseEventFilter::applicationClosingStarted()
 
 void CloseEventFilter::closeApplication()
 {
-    if (m_downloadManager->existActiveTransfers()) {
+    if (m_downloadManager->existActiveTransfers() || m_pendingFlowResults) {
         m_closing = true;
         return;
     }
 
     MDConfItem closeAllTabsConf("/apps/sailfish-browser/settings/close_all_tabs");
-    if (closeAllTabsConf.value(false).toBool()) {
+    if (!BrowserAppInfo::captivePortal() && !BrowserAppInfo::sparse()
+            && closeAllTabsConf.value(false).toBool()) {
         DBManager::instance()->removeAllTabs();
     }
 
@@ -57,6 +59,18 @@ void CloseEventFilter::closeApplication()
     // Give the engine 5 seconds to shut down. If it fails terminate
     // with a fatal error.
     m_shutdownWatchdog.start(5000);
+}
+
+void CloseEventFilter::setPendingFlowResults(bool pending)
+{
+    m_pendingFlowResults = pending;
+    if (!pending && m_closing) closeApplication();
+}
+
+void CloseEventFilter::applicationOpened()
+{
+    m_closing = false;
+    m_shutdownWatchdog.stop();
 }
 
 void CloseEventFilter::onContextDestroyed()

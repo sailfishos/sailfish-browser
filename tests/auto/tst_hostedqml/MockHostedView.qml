@@ -15,14 +15,16 @@ QtObject {
     property QtObject tabModel: QtObject {
         property string revision: "1"
 
+        property var tabs: [{
+            "tabId": "23",
+            "persistentId": "17",
+            "location": "https://example.com/",
+            "locationRevision": "1",
+            "title": "Example"
+        }]
+
         function snapshot() {
-            return [{
-                "tabId": "23",
-                "persistentId": "17",
-                "location": "https://example.com/",
-                "locationRevision": "1",
-                "title": "Example"
-            }]
+            return tabs
         }
     }
 
