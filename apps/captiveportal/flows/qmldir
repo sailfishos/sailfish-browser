@@ -1,0 +1,3 @@
+module Sailfish.CaptivePortal
+Flow 1.0 Flow.qml
+singleton Flows 1.0 Flows.qml

@@ -10,7 +10,7 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 
-import QtQuick 2.2
+import QtQuick 2.6
 import QtQuick.Window 2.2 as QuickWindow
 import Sailfish.Silica 1.0
 import Sailfish.Silica.private 1.0 as Private
@@ -24,11 +24,16 @@ Page {
 
     readonly property bool active: status == PageStatus.Active
 
+    readonly property string invocationHeading: NetworkPortal ? NetworkPortal.heading : ""
+    readonly property string signInHeading: flowController && flowController.activeFlow
+                                            ? flowController.heading : invocationHeading
+
     property alias overlay: overlay
     property alias url: webView.url
     property alias title: webView.title
     property alias webView: webView
     property alias inputRegion: inputRegion
+    readonly property var flowController: PortalFlows ? portalView.portalFlows : null
 
     function load(url, title) {
         webView.load(url, title)
@@ -65,9 +70,7 @@ Page {
         visible: webView.contentItem
         page: browserPage
         fadeTarget: overlay
-        color: webView.contentItem ? (webView.resourceController.videoActive &&
-                                      webView.contentItem.fullscreen ? "black" : webView.contentItem.backgroundColor)
-                                   : "white"
+        color: portalView.surfaceColor
     }
 
     Private.VirtualKeyboardObserver {
@@ -96,9 +99,10 @@ Page {
         enabled: overlay.animator.allowContentUse
         fullscreenHeight: browserPage.isPortrait ? Screen.height : Screen.width
         toolbarHeight: overlay.animator.opened ? overlay.toolBar.rowHeight : 0
+        headerHeight: signInHeader.height
         rotationHandler: browserPage
         imOpened: virtualKeyboardObserver.opened
-        canShowSelectionMarkers: false
+        canShowSelectionMarkers: WebUtils.sparse
 
         onForegroundChanged: {
             if (foreground && webView.chromeWindow) {
@@ -120,12 +124,35 @@ Page {
         webView: webView
         anchors {
             fill: parent
-            topMargin: webView.displayCutoutAllowed ? 0 : webView._contentCutoutTop
+            topMargin: Math.max(webView.headerHeight,
+                                webView.displayCutoutAllowed ? 0 : webView._contentCutoutTop)
             rightMargin: webView.displayCutoutAllowed ? 0 : webView._contentCutoutRight
             bottomMargin: webView.displayCutoutAllowed ? 0 : webView._contentCutoutBottom
             leftMargin: webView.displayCutoutAllowed ? 0 : webView._contentCutoutLeft
         }
         onTouched: if (fullscreen) fullscreenCloseVisibleTimer.restart()
+        portalService: PortalFlows
+    }
+
+    Shared.Background {
+        id: signInHeader
+
+        width: parent.width
+        height: visible ? webView._contentCutoutTop + Theme.itemSizeSmall : 0
+        visible: browserPage.signInHeading.length > 0 && !webView.contentFullscreen
+
+        Label {
+            x: webView._contentCutoutLeft + Theme.horizontalPageMargin
+            y: webView._contentCutoutTop
+            width: parent.width - x - webView._contentCutoutRight - Theme.horizontalPageMargin
+            height: Theme.itemSizeSmall
+            verticalAlignment: Text.AlignVCenter
+            text: browserPage.signInHeading
+            textFormat: Text.PlainText
+            maximumLineCount: 1
+            truncationMode: TruncationMode.Fade
+            color: Theme.highlightColor
+        }
     }
 
     IconButton {
@@ -202,16 +229,23 @@ Page {
                 return
             }
 
-            if (!webView.tabModel.activateTab(url)) {
+            webView.reopen()
+            if (WebUtils.sparse || !webView.tabModel.activateTab(url)) {
                 webView.clearSelection()
                 webView.tabModel.newTab(url, false)
                 overlay.dismiss(!Qt.application.active /* immadiate */)
             }
+            if (webView.nativeWindow) webView.nativeWindow.showFullScreen()
+            webView.chromeWindow.showFullScreen()
             bringToForeground(webView.chromeWindow)
             window.activate()
         }
         onShowChrome: {
+            if (WebUtils.sparse && !webView.tabModel.count) return
+            webView.reopen()
             overlay.dismiss(!Qt.application.active /* immadiate */)
+            if (webView.nativeWindow) webView.nativeWindow.showFullScreen()
+            webView.chromeWindow.showFullScreen()
             bringToForeground(webView.chromeWindow)
             window.activate()
         }

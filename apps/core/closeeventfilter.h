@@ -27,6 +27,8 @@ public:
 public slots:
     void applicationClosingStarted();
     void closeApplication();
+    void setPendingFlowResults(bool pending);
+    void applicationOpened();
 
 private slots:
     void onContextDestroyed();
@@ -37,6 +39,7 @@ private:
     DownloadManager *m_downloadManager;
     QTimer m_shutdownWatchdog;
     bool m_closing;
+    bool m_pendingFlowResults = false;
 };
 
 #endif

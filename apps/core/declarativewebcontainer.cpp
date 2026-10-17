@@ -59,7 +59,7 @@ DeclarativeWebContainer::DeclarativeWebContainer(QQuickItem *parent)
         m_nativeWindow->setObjectName(QStringLiteral("WebView"));
     }
     MDConfItem privateAutostart(QStringLiteral("/apps/sailfish-browser/settings/browser_privatebrowsing_autostart"));
-    m_privateMode = BrowserAppInfo::captivePortal() || !browserEnabled()
+    m_privateMode = BrowserAppInfo::captivePortal() || BrowserAppInfo::sparse() || !browserEnabled()
             || privateAutostart.value(false).toBool();
     const int maxTabId = DBManager::instance()->getMaxTabId();
     m_persistentTabModel = new PersistentTabModel(maxTabId + 1, this);
@@ -130,6 +130,7 @@ bool DeclarativeWebContainer::privateMode() const
 
 void DeclarativeWebContainer::setPrivateMode(bool privateMode)
 {
+    if (BrowserAppInfo::captivePortal() || BrowserAppInfo::sparse()) privateMode = true;
     if (m_privateMode != privateMode) {
         m_privateMode = privateMode;
         updateMode();
@@ -146,6 +147,15 @@ int DeclarativeWebContainer::tabId() const
 {
     Q_ASSERT(!!m_model);
     return m_model->activeTabId();
+}
+
+void DeclarativeWebContainer::reopen()
+{
+    if ((BrowserAppInfo::sparse() || BrowserAppInfo::captivePortal())
+            && m_closing && (DownloadManager::instance()->existActiveTransfers() || m_pendingFlowResults)) {
+        m_closing = false;
+        m_closeEventFilter->applicationOpened();
+    }
 }
 
 void DeclarativeWebContainer::closeTab(int tabId)
@@ -377,9 +387,9 @@ void DeclarativeWebContainer::setChromeWindow(QObject *window)
         m_chromeWindow = view;
         if (m_nativeWindow) {
             m_chromeWindow->setTransientParent(m_nativeWindow);
-            m_nativeWindow->showFullScreen();
+            if (!BrowserAppInfo::sparse()) m_nativeWindow->showFullScreen();
         }
-        m_chromeWindow->showFullScreen();
+        if (!BrowserAppInfo::sparse()) m_chromeWindow->showFullScreen();
         emit chromeWindowChanged();
         initialize();
     }
@@ -465,6 +475,10 @@ bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
     }
     if ((obj == m_chromeWindow || obj == m_nativeWindow) && event->type() == QEvent::Close && !m_closing) {
         m_closing = true;
+        if (BrowserAppInfo::sparse() || BrowserAppInfo::captivePortal()) {
+            if (m_nativeWindow) m_nativeWindow->hide();
+            if (m_chromeWindow) m_chromeWindow->hide();
+        }
         m_closeEventFilter->applicationClosingStarted();
         emit applicationClosing();
         m_closeEventFilter->closeApplication();
@@ -475,4 +489,12 @@ bool DeclarativeWebContainer::eventFilter(QObject *obj, QEvent *event)
 void DeclarativeWebContainer::reportWindowOrientation(Qt::ScreenOrientation orientation)
 {
     if (m_chromeWindow) m_chromeWindow->reportContentOrientationChange(orientation);
+}
+
+void DeclarativeWebContainer::setPendingFlowResults(bool pending)
+{
+    if (m_pendingFlowResults == pending) return;
+    m_pendingFlowResults = pending;
+    m_closeEventFilter->setPendingFlowResults(pending);
+    emit pendingFlowResultsChanged();
 }

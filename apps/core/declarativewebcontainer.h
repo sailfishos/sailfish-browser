@@ -30,6 +30,7 @@ class DeclarativeWebContainer : public QQuickItem
     Q_PROPERTY(DeclarativeTabModel *tabModel READ tabModel NOTIFY tabModelChanged FINAL)
     Q_PROPERTY(DeclarativeTabModel *persistentTabModel READ persistentTabModel CONSTANT)
     Q_PROPERTY(DeclarativeTabModel *privateTabModel READ privateTabModel CONSTANT)
+    Q_PROPERTY(bool pendingFlowResults READ pendingFlowResults WRITE setPendingFlowResults NOTIFY pendingFlowResultsChanged)
     Q_PROPERTY(bool completed READ completed NOTIFY completedChanged FINAL)
     Q_PROPERTY(bool foreground READ foreground WRITE setForeground NOTIFY foregroundChanged FINAL)
     Q_PROPERTY(bool nativeContentVisible MEMBER m_nativeContentVisible
@@ -58,6 +59,8 @@ public:
     DeclarativeTabModel *persistentTabModel() const;
     DeclarativeTabModel *privateTabModel() const;
     bool completed() const;
+    bool pendingFlowResults() const { return m_pendingFlowResults; }
+    void setPendingFlowResults(bool pending);
     bool foreground() const;
     void setForeground(bool active);
     bool privateMode() const;
@@ -82,6 +85,7 @@ public:
     Q_INVOKABLE void goBack();
     Q_INVOKABLE int activateTab(int tabId, const QString &url);
     Q_INVOKABLE void closeTab(int tabId);
+    Q_INVOKABLE void reopen();
     Q_INVOKABLE void updateHostedState(const QString &url, const QString &title,
                                        bool loading, int loadProgress,
                                        bool canGoBack, bool canGoForward,
@@ -113,6 +117,7 @@ signals:
     void historyModelChanged();
     void hasInitialUrlChanged();
     void applicationClosing();
+    void pendingFlowResultsChanged();
     void requestTabWithOwnerAsyncResult(int tabId, void *context);
     void hostedLoadRequested(const QString &url, bool fromExternal);
     void hostedReloadRequested();
@@ -160,6 +165,7 @@ private:
     QHash<int, uint> m_tabOwners;
     DeclarativeHistoryModel *m_historyModel = nullptr;
     CloseEventFilter *m_closeEventFilter = nullptr;
+    bool m_pendingFlowResults = false;
 };
 
 QML_DECLARE_TYPE(DeclarativeWebContainer)
