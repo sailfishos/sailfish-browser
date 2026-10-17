@@ -68,12 +68,25 @@ an explicitly empty second argument hides it. Cold command-line invocation uses
 the same positional URL/heading convention as forwarding to a running instance.
 Ordinary Sparse URL launches have no heading.
 
-Sparse retains captive portal's same-origin link policy. Outside-site HTTP(S)
-links leave the current page open instead of dispatching to the default browser,
-which may itself be Sparse. Login forms may submit across origins, and native-app
-links retain the external-URL handoff. This is a click policy, not a restriction
-on redirects or script-driven navigation. Owned authentication callbacks are
-still returned to their caller.
+Sparse allows cross-site HTTP(S) links by default. To restore same-origin link
+blocking, set this dconf key as the device session user, then fully quit and
+restart Sparse:
+
+```sh
+dconf write /apps/sailfish-browser/settings/sparse_block_cross_site_links true
+```
+
+Set it to `false`, or use `dconf reset` on the same key, to allow cross-site links
+again. The setting applies only to Sparse; ordinary captive portal mode retains
+its existing same-origin policy and external-browser handoff.
+
+With blocking enabled, outside-origin HTTP(S) links leave the current page open
+and show a short notice instead of dispatching to the default browser, which
+may itself be Sparse. Recognized authentication callbacks complete without a notice.
+Different schemes, ports and subdomains count as different origins. Login forms
+may submit across origins, and native-app links retain the external-URL handoff.
+This is a click policy, not a restriction on redirects or script-driven
+navigation. Owned authentication callbacks are still returned to their caller.
 
 Sparse's bin icon opens a confirmation dialog to clear shared cookies, site data
 and saved passwords. Clearing is explicit; there is no clear-on-exit preference

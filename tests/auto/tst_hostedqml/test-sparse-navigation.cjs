@@ -63,6 +63,37 @@ assert.equal(click('/next', 'https://login.example/start', 'a', 'https://other.e
     'a cross-origin base element cannot redefine the original site');
 
 const source = fs.readFileSync(path.join(shared, 'CaptivePortalView.qml'), 'utf8');
+const navigationStartup = source.match(/Component\.onCompleted: \{([\s\S]*?)        var listeners =/)[1];
+const navigationConfig = source.match(/property ConfigurationValue sparseBlockCrossSiteLinks: ConfigurationValue \{([\s\S]*?)\n    \}/)[1];
+const defaultBlocking = JSON.parse(navigationConfig.match(/defaultValue: (true|false)/)[1]);
+assert.equal(defaultBlocking, false, 'Sparse permits cross-site links by default');
+function startNavigation(sparse, blocking = defaultBlocking) {
+    const loaded = [];
+    listener = undefined;
+    vm.runInNewContext(navigationStartup, {
+        WebUtils: { sparse },
+        sparseBlockCrossSiteLinks: { value: blocking },
+        Qt: { resolvedUrl: value => value },
+        loadFrameScript(value) {
+            loaded.push(value);
+            if (value === 'SparseNavigation.js') vm.runInContext(script, scope);
+        },
+    });
+    return loaded.filter(value => value !== 'ViewportFit.js' && value !== 'PageMetadata.js');
+}
+assert.deepEqual(startNavigation(true), [], 'default Sparse installs no navigation blocker');
+assert.equal(listener, undefined, 'default Sparse does not intercept web clicks');
+assert.deepEqual(startNavigation(true, true), ['SparseNavigation.js']);
+assert.equal(click('https://other.example/'), true, 'opt-in Sparse blocks cross-origin links');
+assert.equal(click('/next'), false, 'opt-in Sparse allows same-origin links');
+assert.equal(click('mailto:user@example.com'), false, 'opt-in preserves native handoff');
+assert.deepEqual(startNavigation(true, false), [], 'restart with false removes blocking');
+assert.equal(listener, undefined, 'disabled Sparse installs no click interceptor');
+for (const blocking of [false, true]) {
+    assert.deepEqual(startNavigation(false, blocking),
+        ['file:///usr/share/sailfish-captiveportal/pages/captiveportal.js'],
+        'captive portal always retains its own navigation policy');
+}
 const openLink = source.match(/^    function openPortalLink\([^\n]*\) \{[\s\S]*?^    \}/m)[0];
 const events = [];
 const host = vm.createContext({
@@ -72,17 +103,18 @@ const host = vm.createContext({
         link: url => { events.push(['owned-link', url]); return true; },
     },
     webView: { linkHandler: { handleLink: url => events.push(['external', url]) } },
+    blockedLinkNotice: { show: () => events.push(['blocked-notice']) },
 });
 vm.runInContext(openLink, host);
 host.openPortalLink('https://other.example/');
-assert.deepEqual(events.splice(0), [['callback', '10', 'https://other.example/']],
-    'owned Sparse flow cannot reload an outside link or dispatch it back to Sparse');
+assert.deepEqual(events.splice(0), [['callback', '10', 'https://other.example/'], ['blocked-notice']],
+    'owned Sparse flow explains the block without reloading or dispatching the link');
 host.openPortalLink('https://provider.example/callback');
 assert.deepEqual(events.splice(0), [['callback', '10', 'https://provider.example/callback']],
-    'owned authentication callback still reaches the caller');
+    'owned authentication callback reaches the caller without a blocked-link notice');
 host.portalService = null;
 host.openPortalLink('https://other.example/');
-assert.equal(events.length, 0, 'ordinary Sparse link remains blocked');
+assert.deepEqual(events.splice(0), [['blocked-notice']], 'ordinary Sparse link explains why it was blocked');
 host.WebUtils.sparse = false;
 host.portalService = {};
 host.openPortalLink('https://other.example/');
@@ -90,4 +122,4 @@ assert.deepEqual(events.splice(0), [['owned-link', 'https://other.example/']], '
 host.portalService = null;
 host.openPortalLink('https://other.example/');
 assert.deepEqual(events.splice(0), [['external', 'https://other.example/']], 'ordinary network portal retains external browser dispatch');
-console.log('Sparse same-origin clicks, form exceptions, native handoff and caller routing passed');
+console.log('Sparse optional blocking, captive portal policy, same-origin clicks, form exceptions, native handoff and caller routing passed');

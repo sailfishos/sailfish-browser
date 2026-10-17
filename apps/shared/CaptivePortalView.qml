@@ -4,6 +4,7 @@
  */
 import QtQuick 2.6
 import Qt5Mozilla 1.0
+import Nemo.Configuration 1.0
 import Sailfish.Silica 1.0
 import Sailfish.Browser 1.0
 import Sailfish.Policy 1.0
@@ -29,6 +30,23 @@ BrowserContentView {
     property var webView
     property var portalService
     property alias portalFlows: portalFlows
+
+    // Navigation scripts are selected at startup; restart Sparse after changing this.
+    property ConfigurationValue sparseBlockCrossSiteLinks: ConfigurationValue {
+        key: "/apps/sailfish-browser/settings/sparse_block_cross_site_links"
+        defaultValue: false
+    }
+
+    Notice {
+        id: blockedLinkNotice
+
+        duration: Notice.Short
+        verticalOffset: -Theme.itemSizeMedium
+        //: Shown when Sparse prevents navigation to another website
+        //% "Navigation to other websites is disabled"
+        text: qsTrId("sailfish_browser-la-cross_site_link_blocked")
+    }
+
     privateMode: !WebUtils.sparse
     active: browserPage.active
     orientation: webView._screenOrientation
@@ -270,7 +288,8 @@ BrowserContentView {
         if (WebUtils.sparse) {
             // Outside-site links must not reopen through Sparse's default URL
             // handler. Only an owned login callback may complete its flow.
-            if (portalService) portalFlows.interceptCallback(selectedTabId, url)
+            if (portalService && portalFlows.interceptCallback(selectedTabId, url)) return
+            blockedLinkNotice.show()
             return
         }
         if (portalService && portalFlows.link(url)) return
@@ -391,7 +410,9 @@ BrowserContentView {
         loadFrameScript(Qt.resolvedUrl("ViewportFit.js"))
         loadFrameScript(Qt.resolvedUrl("PageMetadata.js"))
         if (WebUtils.sparse) {
-            loadFrameScript(Qt.resolvedUrl("SparseNavigation.js"))
+            if (sparseBlockCrossSiteLinks.value) {
+                loadFrameScript(Qt.resolvedUrl("SparseNavigation.js"))
+            }
         } else {
             loadFrameScript("file:///usr/share/sailfish-captiveportal/pages/captiveportal.js")
         }
