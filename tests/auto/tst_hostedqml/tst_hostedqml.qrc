@@ -23,6 +23,8 @@
         <file>tab-swipe.js</file>
         <file alias="TabTransition.js">../../../apps/browser/qml/pages/TabTransition.js</file>
         <file>SessionHarness.qml</file>
+        <file>PortalFlowHarness.qml</file>
+        <file alias="PortalFlowController.qml">../../../apps/shared/PortalFlowController.qml</file>
         <file alias="PortalFlow.qml">../../../apps/captiveportal/flows/PortalFlow.qml</file>
         <file alias="Flows.qml">../../../apps/captiveportal/flows/Flows.qml</file>
         <file>view-suspension.js</file>

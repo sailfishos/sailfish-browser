@@ -37,6 +37,7 @@ private slots:
     void sessionOwnership();
     void snapshotApplicationTriggers();
     void externalFlows();
+    void portalFlows();
     void portalClient();
     void portalClientReplies();
     void portalClientTeardown();
@@ -57,6 +58,18 @@ void tst_hostedqml::externalFlows()
                       << functionSource(QStringLiteral(":/ExternalUrlFlow.qml"), QStringLiteral("respond"))
                       << functionSource(QStringLiteral(":/ExternalUrlFlow.qml"), QStringLiteral("reject"))
                       << functionSource(QStringLiteral(":/ExternalUrlFlow.qml"), QStringLiteral("nextPrompt")));
+}
+
+void tst_hostedqml::portalFlows()
+{
+    QQmlEngine engine;
+    QQmlComponent component(&engine, QUrl(QStringLiteral("qrc:/PortalFlowHarness.qml")));
+    QVERIFY2(component.isReady(), qPrintable(component.errorString()));
+    QScopedPointer<QObject> harness(component.create());
+    QVERIFY2(harness, qPrintable(component.errorString()));
+    QVariant failure;
+    QVERIFY(QMetaObject::invokeMethod(harness.data(), "runTest", Q_RETURN_ARG(QVariant, failure)));
+    QCOMPARE(failure.toString(), QString());
 }
 
 void tst_hostedqml::portalClient()
