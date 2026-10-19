@@ -34,6 +34,11 @@ an already running captive portal separately. It applies to normal and private
 Browser tabs and captive portals, including their thumbnail capture paths.
 Embedded Sailfish WebView continues to use Qt Quick independently of this key.
 
+Sparse and standalone portal
+----------------------------
+See [Sparse integration](sparse/README.md) for the runtime package split,
+build order, URL services, profile isolation and acceptance checks.
+
 License
 -------
 The browser is open source and licensed under Mozilla Public License v2.0 (http://www.mozilla.org/MPL/2.0/).
