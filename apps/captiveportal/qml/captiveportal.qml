@@ -9,7 +9,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-import QtQuick 2.2
+import QtQuick 2.6
+import Sailfish.Silica 1.0
+import Sailfish.Browser 1.0
 import "pages"
 import "shared"
 
@@ -18,6 +20,10 @@ BrowserWindow {
 
     //% "Captive portal"
     activityDisabledByMdm: qsTrId("sailfish_captiveportal-la-captive_portal")
+    function closeNetwork() {
+        if (rootPage && rootPage.flowController) rootPage.flowController.closeNetwork()
+        else close()
+    }
     initialPage: Component {
         CaptivePortalPage {
             id: browserPage

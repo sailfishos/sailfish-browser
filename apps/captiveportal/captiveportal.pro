@@ -32,6 +32,7 @@ include(../../translations/translations.pri)
 
 include(../../defaults.pri)
 include(../shared/shared.pri)
+include(../browser/browser.pri)
 
 # QML files and folders of captiveportal
 qml.path = $$DEPLOYMENT_PATH
