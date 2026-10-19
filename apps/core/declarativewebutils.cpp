@@ -37,6 +37,7 @@
 
 #include <math.h>
 #include "declarativewebutils.h"
+#include "browserappinfo.h"
 #include "browserpaths.h"
 
 static const auto defaultUserAgentUpdateUrl = QStringLiteral("https://browser.sailfishos.org/gecko/153.0/ua-update.json");
@@ -98,6 +99,11 @@ void DeclarativeWebUtils::openUrl(const QString &url)
 
     QString tmpUrl = targetUrl.toEncoded();
     emit openUrlRequested(tmpUrl);
+}
+
+bool DeclarativeWebUtils::sparse() const
+{
+    return BrowserAppInfo::sparse();
 }
 
 void DeclarativeWebUtils::openSettings()

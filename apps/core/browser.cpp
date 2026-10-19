@@ -88,7 +88,7 @@ Browser::Browser(QQuickView *view, const QString &dataPath, QObject *parent)
     d->view->rootContext()->setContextProperty("Settings", SettingManager::instance());
     d->view->rootContext()->setContextProperty("DownloadManager", downloadManager);
 
-    QString mainQml = BrowserAppInfo::captivePortal() ? "captiveportal.qml" : "browser.qml";
+    QString mainQml = (BrowserAppInfo::captivePortal() || BrowserAppInfo::sparse()) ? "captiveportal.qml" : "browser.qml";
 
 #ifdef USE_RESOURCES
     d->view->setSource(QUrl(QString("qrc:///") + mainQml));
@@ -101,6 +101,15 @@ void Browser::load()
 {
     Q_ASSERT_X(qGuiApp, Q_FUNC_INFO, "There should always be a QGuiApplication running.");
     const QStringList arguments = qGuiApp->arguments();
+    if (BrowserAppInfo::sparse()) {
+        for (const QString &argument : arguments.mid(1)) {
+            const QUrl url(argument, QUrl::StrictMode);
+            if (url.isValid() && (url.scheme() == QLatin1String("http")
+                                  || url.scheme() == QLatin1String("https"))
+                    && !url.host().isEmpty()) openUrl(argument);
+        }
+        return;
+    }
     if (!arguments.contains(QStringLiteral("-prestart"))) {
         if (arguments.count() > 1 && (arguments.last() != QStringLiteral("-debugMode"))) {
             DeclarativeWebUtils::instance()->openUrl(arguments.last());
@@ -124,6 +133,12 @@ QString Browser::applicationFilePath()
 void Browser::openUrl(const QString &url)
 {
     Q_D(Browser);
+    if (BrowserAppInfo::sparse()) {
+        const QUrl target(url, QUrl::StrictMode);
+        if (!target.isValid() || target.host().isEmpty()
+                || (target.scheme() != QLatin1String("http")
+                    && target.scheme() != QLatin1String("https"))) return;
+    }
     DeclarativeWebUtils::instance()->openUrl(url);
 }
 

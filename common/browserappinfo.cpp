@@ -18,7 +18,8 @@ bool BrowserAppInfo::captivePortal()
     static bool argsChecked = false;
 
     if (!argsChecked) {
-        if (QCoreApplication::arguments().contains(QLatin1String("-captiveportal")))
+        if (!sparse() && (QCoreApplication::arguments().contains(QLatin1String("-captiveportal"))
+                         || QCoreApplication::applicationFilePath().endsWith(QLatin1String("/sailfish-captiveportal"))))
             captivePortalMode = true;
         argsChecked = true;
     }
@@ -26,8 +27,14 @@ bool BrowserAppInfo::captivePortal()
     return captivePortalMode;
 }
 
+bool BrowserAppInfo::sparse()
+{
+    return QCoreApplication::arguments().contains(QLatin1String("-sparse"));
+}
+
 QString BrowserAppInfo::profileName()
 {
+    if (sparse()) return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     const QStringList &arguments = QCoreApplication::arguments();
     int index = arguments.indexOf(QLatin1String("-profile"));
     if (index >= 0 && index + 1 < arguments.size()) {
