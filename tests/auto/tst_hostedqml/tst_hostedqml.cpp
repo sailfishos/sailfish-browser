@@ -14,6 +14,8 @@
 #include <QQmlContext>
 #include <QRegularExpression>
 #include <QScopedPointer>
+#include <QPointer>
+#include "mockportalbus.h"
 
 class tst_hostedqml : public QObject
 {
@@ -35,6 +37,9 @@ private slots:
     void sessionOwnership();
     void snapshotApplicationTriggers();
     void externalFlows();
+    void portalClient();
+    void portalClientReplies();
+    void portalClientTeardown();
 
 private:
     static QString readResource(const QString &path);
@@ -52,6 +57,183 @@ void tst_hostedqml::externalFlows()
                       << functionSource(QStringLiteral(":/ExternalUrlFlow.qml"), QStringLiteral("respond"))
                       << functionSource(QStringLiteral(":/ExternalUrlFlow.qml"), QStringLiteral("reject"))
                       << functionSource(QStringLiteral(":/ExternalUrlFlow.qml"), QStringLiteral("nextPrompt")));
+}
+
+void tst_hostedqml::portalClient()
+{
+    qmlRegisterType<MockPortalBus>("Test.PortalBus", 1, 0, "DBusInterface");
+    QQmlEngine engine;
+    QQmlComponent windowComponent(&engine);
+    windowComponent.setData("import QtQuick 2.6; QtObject { property int activations: 0; function activate() { activations += 1 } }", QUrl());
+    QScopedPointer<QObject> window(windowComponent.create());
+    QVERIFY2(window, qPrintable(windowComponent.errorString()));
+    QString source = readResource(QStringLiteral(":/PortalFlow.qml"));
+    source.replace(QStringLiteral("import Nemo.DBus 2.0"), QStringLiteral("import Test.PortalBus 1.0"));
+    source.replace(QStringLiteral("id: flow"), QStringLiteral(
+                       "id: flow\n    property int activationAtClose\n"
+                       "    property int closedCount\n    property int updatedCount\n"
+                       "    property int failedCount\n    onUpdated: updatedCount += 1\n"
+                       "    onFailed: failedCount += 1\n    onClosed: {\n"
+                       "        closedCount += 1\n        activationAtClose = returnWindow.activations\n    }"));
+    QQmlComponent component(&engine);
+    component.setData(source.toUtf8(), QUrl(QStringLiteral("qrc:/PortalFlow.qml")));
+    QScopedPointer<QObject> flow(component.create());
+    QVERIFY2(flow, qPrintable(component.errorString()));
+    QVERIFY(flow->setProperty("returnWindow", QVariant::fromValue(window.data())));
+    auto *bus = flow->findChild<MockPortalBus *>();
+    QVERIFY(bus);
+    QVariant opened;
+    const auto open = [&]() {
+        return QMetaObject::invokeMethod(flow.data(), "open", Q_RETURN_ARG(QVariant, opened),
+                    Q_ARG(QVariant, "https://provider.example"), Q_ARG(QVariant, "authentication"),
+                    Q_ARG(QVariant, "account:/done"));
+    };
+    QVERIFY(open());
+    QVERIFY(opened.toBool());
+    const QVariant id = flow->property("_requestId");
+    QCOMPARE(bus->calls.count(), 1);
+    QVERIFY(open());
+    QVERIFY(!opened.toBool());
+    QCOMPARE(bus->calls.count(), 1);
+    auto openReply = bus->calls[0].success;
+    openReply.call();
+    QCOMPARE(bus->calls[1].method, QStringLiteral("waitForEvent"));
+    QVERIFY(QMetaObject::invokeMethod(flow.data(), "close", Q_ARG(QVariant, "completed")));
+    QVERIFY(QMetaObject::invokeMethod(flow.data(), "close", Q_ARG(QVariant, "cancelled")));
+    QCOMPARE(bus->calls.count(), 3);
+    auto updateReply = bus->calls[1].success;
+    updateReply.call({engine.toScriptValue(QVariantMap{{"event", "updated"}, {"url", "account:/done?code=late"}, {"title", ""}})});
+    QCOMPARE(flow->property("updatedCount").toInt(), 0);
+    QCOMPARE(bus->calls[3].method, QStringLiteral("waitForEvent"));
+    auto closedReply = bus->calls[3].success;
+    closedReply.call({engine.toScriptValue(QVariantMap{{"event", "closed"}, {"reason", "completed"}})});
+    QCOMPARE(flow->property("closedCount").toInt(), 1);
+    QCOMPARE(window->property("activations").toInt(), 1);
+    QCOMPARE(flow->property("activationAtClose").toInt(), 1);
+    closedReply.call({engine.toScriptValue(QVariantMap{{"event", "closed"}, {"reason", "cancelled"}})});
+    QCOMPARE(flow->property("closedCount").toInt(), 1);
+    QCOMPARE(window->property("activations").toInt(), 1);
+    // Owner loss can arrive before the delayed open reply. The late reply
+    // must not revive a failed flow or activate the caller twice.
+    QVERIFY(open());
+    bus->setStatus(MockPortalBus::Unavailable);
+    QCOMPARE(flow->property("failedCount").toInt(), 1);
+    QCOMPARE(flow->property("closedCount").toInt(), 2);
+    QVERIFY(!flow->property("active").toBool());
+    auto lateOpenReply = bus->calls[4].success;
+    lateOpenReply.call();
+    QCOMPARE(flow->property("closedCount").toInt(), 2);
+    QCOMPARE(window->property("activations").toInt(), 2);
+    QVERIFY(open());
+    auto failedOpenReply = bus->calls[5].failure;
+    failedOpenReply.call();
+    QCOMPARE(flow->property("failedCount").toInt(), 2);
+    QCOMPARE(flow->property("closedCount").toInt(), 3);
+    QCOMPARE(window->property("activations").toInt(), 3);
+}
+
+void tst_hostedqml::portalClientReplies()
+{
+    qmlRegisterType<MockPortalBus>("Test.PortalBus", 1, 0, "DBusInterface");
+    QQmlEngine engine;
+    QString source = readResource(QStringLiteral(":/PortalFlow.qml"));
+    source.replace("import Nemo.DBus 2.0", "import Test.PortalBus 1.0");
+    source.replace("id: flow", "id: flow\n    property string callbackUrl\n"
+                   "    onUpdated: { callbackUrl = url; close(\"completed\") }");
+    QQmlComponent component(&engine);
+    component.setData(source.toUtf8(), QUrl(QStringLiteral("qrc:/PortalFlow.qml")));
+    QScopedPointer<QObject> flow(component.create());
+    QVERIFY2(flow, qPrintable(component.errorString()));
+    auto *bus = flow->findChild<MockPortalBus *>();
+    QVERIFY(bus);
+    const auto open = [&]() {
+        return QMetaObject::invokeMethod(flow.data(), "open", Q_ARG(QVariant, "https://provider.example"),
+                    Q_ARG(QVariant, "authentication"), Q_ARG(QVariant, "account:/done"));
+    };
+    QVERIFY(open());
+    auto opened = bus->calls[0].success;
+    opened.call();
+    // An idle response re-arms without completing or failing the flow.
+    auto idle = bus->calls[1].success;
+    idle.call({engine.toScriptValue(QVariantMap())});
+    QCOMPARE(bus->calls[2].method, QStringLiteral("waitForEvent"));
+    QVERIFY(flow->property("active").toBool());
+    auto update = bus->calls[2].success;
+    update.call({engine.toScriptValue(QVariantMap{{"event", "updated"}, {"url", "account:/done?code=fixture"}, {"title", ""}})});
+    QCOMPARE(flow->property("callbackUrl").toString(), QStringLiteral("account:/done?code=fixture"));
+    // The callback handler closes the flow, with its final wait already queued.
+    QCOMPARE(bus->calls[3].method, QStringLiteral("waitForEvent"));
+    QCOMPARE(bus->calls[4].method, QStringLiteral("closeFlow"));
+    auto stale = bus->calls[3].failure;
+    auto closed = bus->calls[3].success;
+    closed.call({engine.toScriptValue(QVariantMap{{"event", "closed"}, {"reason", "completed"}})});
+    QVERIFY(!flow->property("active").toBool());
+    QVERIFY(open());
+    const QString id = flow->property("_requestId").toString();
+    stale.call();
+    QCOMPARE(flow->property("_requestId").toString(), id);
+    auto reopened = bus->calls[5].success;
+    reopened.call();
+    auto error = bus->calls[6].failure;
+    error.call();
+    QVERIFY(!flow->property("active").toBool());
+    QCOMPARE(bus->calls[7].method, QStringLiteral("closeFlow"));
+}
+
+void tst_hostedqml::portalClientTeardown()
+{
+    qmlRegisterType<MockPortalBus>("Nemo.DBus", 2, 0, "DBusInterface");
+    QQmlEngine engine;
+    engine.addImportPath(QStringLiteral("qrc:/"));
+    QQmlComponent component(&engine);
+    component.setData(R"(
+        import QtQuick 2.6
+        import Sailfish.CaptivePortal 1.0 as Portal
+        Item {
+            id: caller
+
+            property int activations
+            property var client
+            property var ownedFlow
+            function activate() { activations += 1 }
+            function complete() {
+                ownedFlow.close("completed")
+                client.destroy()
+                client = null
+            }
+            Component {
+                id: clientComponent
+
+                Item {
+                    id: client
+
+                    Component.onCompleted: {
+                        caller.ownedFlow = Portal.Flows.create(caller, caller)
+                        caller.ownedFlow.open("https://provider.example", "authentication", "account:/done")
+                    }
+                }
+            }
+            Component.onCompleted: client = clientComponent.createObject(caller)
+        }
+    )", QUrl(QStringLiteral("qrc:/ClientTeardown.qml")));
+    QScopedPointer<QObject> caller(component.create());
+    QVERIFY2(caller, qPrintable(component.errorString()));
+    QPointer<QObject> flow = caller->property("ownedFlow").value<QObject *>();
+    QVERIFY(flow);
+    auto *bus = flow->findChild<MockPortalBus *>();
+    QVERIFY(bus);
+    const QVariant id = flow->property("_requestId");
+    auto openReply = bus->calls[0].success;
+    openReply.call();
+    QCOMPARE(bus->calls[1].method, QStringLiteral("waitForEvent"));
+    QVERIFY(QMetaObject::invokeMethod(caller.data(), "complete"));
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    QCOMPARE(bus->calls.count(), 3);
+    auto closeReply = bus->calls[1].success;
+    closeReply.call({engine.toScriptValue(QVariantMap{{"event", "closed"}, {"reason", "completed"}})});
+    QCOMPARE(caller->property("activations").toInt(), 1);
+    QCoreApplication::sendPostedEvents(nullptr, QEvent::DeferredDelete);
+    QVERIFY(flow.isNull());
 }
 
 QString tst_hostedqml::readResource(const QString &path)

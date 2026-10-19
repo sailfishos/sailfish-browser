@@ -23,6 +23,16 @@
         <file>tab-swipe.js</file>
         <file alias="TabTransition.js">../../../apps/browser/qml/pages/TabTransition.js</file>
         <file>SessionHarness.qml</file>
+        <file alias="PortalFlow.qml">../../../apps/captiveportal/flows/PortalFlow.qml</file>
+        <file alias="Flows.qml">../../../apps/captiveportal/flows/Flows.qml</file>
         <file>view-suspension.js</file>
+    </qresource>
+    <qresource prefix="/Sailfish/CaptivePortal">
+        <file alias="qmldir">../../../apps/captiveportal/flows/qmldir</file>
+        <file alias="PortalFlow.qml">../../../apps/captiveportal/flows/PortalFlow.qml</file>
+        <file alias="Flows.qml">../../../apps/captiveportal/flows/Flows.qml</file>
+    </qresource>
+    <qresource prefix="/Nemo/DBus">
+        <file alias="qmldir">NemoDBus/qmldir</file>
     </qresource>
 </RCC>

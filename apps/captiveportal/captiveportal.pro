@@ -48,4 +48,8 @@ HEADERS += captiveportaladaptor.h \
     captiveportalservice.h \
     portalflowservice.h
 
+flowmodule.path = $$[QT_INSTALL_QML]/Sailfish/CaptivePortal
+flowmodule.files = flows/qmldir flows/PortalFlow.qml flows/Flows.qml
+INSTALLS += flowmodule
+
 OTHER_FILES = qml/*.qml qml/pages/*.qml qml/pages/*.js qml/pages/components/*.qml

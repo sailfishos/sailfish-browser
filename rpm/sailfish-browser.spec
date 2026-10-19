@@ -43,6 +43,8 @@ Requires: qt5-plugin-imageformat-ico
 Requires: qt5-plugin-imageformat-gif
 Requires: qt5-plugin-position-geoclue
 Requires: sailjail-launch-approval
+Requires: nemo-qml-plugin-dbus-qt5
+Provides: sailfish-captiveportal-flow-api = 2
 Requires: desktop-file-utils
 Requires: qt5-qtgraphicaleffects
 Requires: nemo-qml-plugin-policy-qt5 >= 0.0.4
@@ -122,6 +124,7 @@ fi
 %{_datadir}/translations/%{captiveportal}*.qm
 %{_datadir}/translations/settings-%{name}_eng_en.qm
 %{_datadir}/dbus-1/services/*.service
+%{_libdir}/qt5/qml/Sailfish/CaptivePortal
 %{_oneshotdir}/*
 %{_userunitdir}/user-session.target.d/50-sailfish-browser.conf
 # Let main package own import root level
