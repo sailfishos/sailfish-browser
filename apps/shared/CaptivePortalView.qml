@@ -30,6 +30,45 @@ BrowserContentView {
     property var webView
     property var portalService
     property alias portalFlows: portalFlows
+    property var _sparseNavigationOrigins: ({})
+
+    function sparseNavigationOrigin(tabId, uri) {
+        var id = String(tabId)
+        if (!_sparseNavigationOrigins[id] && /^https?:\/\//.test(uri)) {
+            _sparseNavigationOrigins[id] = uri
+        }
+        if (_sparseNavigationOrigins[id]) {
+            sendAsyncMessageToTab(id, "Sparse:NavigationOrigin", {
+                "uri": _sparseNavigationOrigins[id]
+            })
+        }
+    }
+
+    function retainSparseNavigationOrigins(snapshot) {
+        var origins = {}
+        for (var i = 0; i < snapshot.length; ++i) {
+            var id = String(snapshot[i].tabId)
+            if (_sparseNavigationOrigins[id]) origins[id] = _sparseNavigationOrigins[id]
+        }
+        _sparseNavigationOrigins = origins
+    }
+
+    // Navigation scripts are selected at startup; restart Sparse after changing this.
+    property ConfigurationValue sparseBlockCrossSiteLinks: ConfigurationValue {
+        key: "/apps/sailfish-browser/settings/sparse_block_cross_site_links"
+        defaultValue: false
+    }
+
+    Notice {
+        id: blockedLinkNotice
+
+        duration: Notice.Short
+        verticalOffset: -Theme.itemSizeMedium
+        //: Shown when Sparse prevents navigation to another website
+        //% "Navigation to other websites is disabled"
+        text: qsTrId("sailfish_browser-la-cross_site_link_blocked")
+    }
+
     privateMode: !WebUtils.sparse
     active: browserPage.active
     orientation: webView._screenOrientation
@@ -55,6 +94,7 @@ BrowserContentView {
         model: webView.privateTabModel
         property bool hadFlows
         onSnapshotApplied: {
+            webPage.retainSparseNavigationOrigins(snapshot)
             if (snapshot.length > 0) hadFlows = true
         }
         onPairedSnapshotApplied: if (webPage.portalService) portalFlows.applySnapshot(snapshot)
@@ -271,6 +311,7 @@ BrowserContentView {
         if (WebUtils.sparse) {
             // Outside-site links must not reopen through Sparse's default URL
             // handler.
+            blockedLinkNotice.show()
             return
         }
         if (portalService && portalFlows.link(url)) return
@@ -357,6 +398,10 @@ BrowserContentView {
         }
     }
     onRecvAsyncMessageFromTab: {
+        if (WebUtils.sparse && sparseBlockCrossSiteLinks.value
+                && message === "Sparse:NavigationOrigin") {
+            sparseNavigationOrigin(tabId, data.uri)
+        }
         if (portalService && message === "embed:confirm" && data.inPermitUnload
                 && portalFlows.closingTab(tabId) && String(tabId) !== selectedTabId) {
             sendAsyncMessageToTab(String(tabId), "confirmresponse", {
@@ -390,7 +435,12 @@ BrowserContentView {
     Component.onCompleted: {
         loadFrameScript(Qt.resolvedUrl("ViewportFit.js"))
         loadFrameScript(Qt.resolvedUrl("PageMetadata.js"))
-        if (!WebUtils.sparse) {
+        if (WebUtils.sparse) {
+            if (sparseBlockCrossSiteLinks.value) {
+                addMessageListener("Sparse:NavigationOrigin")
+                loadFrameScript(Qt.resolvedUrl("SparseNavigation.js"))
+            }
+        } else {
             loadFrameScript("file:///usr/share/sailfish-captiveportal/pages/captiveportal.js")
         }
         var listeners = ["embed:OpenLink", "embed:viewportfit", "embed:pageMetadata",
