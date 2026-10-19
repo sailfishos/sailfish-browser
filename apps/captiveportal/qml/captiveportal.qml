@@ -18,6 +18,46 @@ import "shared"
 BrowserWindow {
     id: window
 
+    cover: Component {
+        CoverBackground {
+            id: portalCover
+
+            Column {
+                anchors.centerIn: parent
+                width: parent.width - 2 * Theme.paddingLarge
+                spacing: Theme.paddingLarge
+
+                Image {
+                    id: coverIcon
+
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    source: "image://theme/icon-launcher-browser"
+                    width: parent.width / 2
+                    height: width
+                    fillMode: Image.PreserveAspectFit
+                }
+
+                Label {
+                    width: parent.width
+                    text: window.rootPage && window.rootPage.signInHeading.length
+                          ? window.rootPage.signInHeading
+                          : WebUtils.sparse
+                            ? (window.webView ? WebUtils.displayableUrl(String(window.webView.url)) : "")
+                            //% "Sign in"
+                            : qsTrId("sailfish_captiveportal-la-sign_in")
+                    height: Math.min(implicitHeight, Math.max(0, portalCover.height
+                                     - coverIcon.height - 3 * Theme.paddingLarge))
+                    wrapMode: Text.Wrap
+                    textFormat: Text.PlainText
+                    horizontalAlignment: Text.AlignHCenter
+                    color: palette.secondaryColor
+                    font.pixelSize: Theme.fontSizeMedium
+                    truncationMode: TruncationMode.Elide
+                }
+            }
+        }
+    }
+
     //% "Captive portal"
     activityDisabledByMdm: qsTrId("sailfish_captiveportal-la-captive_portal")
     function closeNetwork() {
