@@ -41,9 +41,11 @@ INSTALLS += qml
 # Captive portal sources
 SOURCES += captiveportaladaptor.cpp \
     captiveportalservice.cpp \
+    portalflowservice.cpp \
     main.cpp
 
 HEADERS += captiveportaladaptor.h \
-    captiveportalservice.h
+    captiveportalservice.h \
+    portalflowservice.h
 
 OTHER_FILES = qml/*.qml qml/pages/*.qml qml/pages/*.js qml/pages/components/*.qml
