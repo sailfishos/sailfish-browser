@@ -89,6 +89,19 @@ Item {
         normalSession.dispatchRuntimeCommand({type: "close", persistentId: "17"})
         normalSession.runtimeTabCloseResult("23", true)
         expect(rejectedNormal.length === 2, "Successful close restored dismissed cards")
+        try {
+            normalView.tabModel.revision = "2"
+            normalSession.applyRuntimeSnapshot(false, normalView)
+            expect(normalSession._runtimeCloseInFlight !== null,
+                   "Snapshot retaining the tab completed its pending close")
+            normalView.tabModel.tabs = []
+            normalView.tabModel.revision = "3"
+            normalSession.applyRuntimeSnapshot(false, normalView)
+            expect(normalSession._runtimeCloseInFlight === null,
+                   "Snapshot removing the tab did not complete its close")
+        } catch (error) {
+            expect(false, "Close snapshot failed: " + error)
+        }
         return failure
     }
 }
