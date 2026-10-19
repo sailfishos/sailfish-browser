@@ -8,9 +8,10 @@ Name:       sailfish-browser
 Summary:    Sailfish Browser
 Version:    3.1.0
 Release:    1
-License:    MPLv2.0
+License:    MPLv2.0 and LGPLv2.1
 Url:        https://github.com/sailfishos/sailfish-browser
 Source0:    %{name}-%{version}.tar.bz2
+BuildRequires:  lipstick-qt5-devel
 BuildRequires:  pkgconfig(Qt5Core)
 BuildRequires:  pkgconfig(Qt5Qml)
 BuildRequires:  pkgconfig(Qt5Gui)
@@ -78,6 +79,7 @@ Requires:   %{name} = %{version}-%{release}
 Requires:   qt5-qtdeclarative-devel-tools
 Requires:   qt5-qtdeclarative-import-qttest
 Requires:   mce-tools
+Requires:   /usr/bin/dbus-run-session
 
 %description tests
 Unit tests and additional data needed for functional tests
@@ -109,7 +111,7 @@ fi
 /sbin/ldconfig || :
 
 %files
-%license LICENSES/MPL-2.0.txt
+%license LICENSES/MPL-2.0.txt LICENSES/LGPL-2.1.txt
 %{_bindir}/%{name}
 %{_bindir}/%{captiveportal}
 %{_datadir}/applications/%{name}.desktop

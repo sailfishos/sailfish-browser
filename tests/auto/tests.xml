@@ -19,6 +19,9 @@
            <case manual="false" name="desktopbookmarkwriter">
                <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_desktopbookmarkwriter</step>
            </case>
+           <case manual="false" name="externalurl">
+               <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; dbus-run-session -- ./tst_externalurl</step>
+           </case>
            <case manual="false" name="hostedqml">
                <step>cd /opt/tests/sailfish-browser/auto/ &amp;&amp; ./tst_hostedqml -platform wayland-egl</step>
            </case>
