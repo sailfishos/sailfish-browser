@@ -17,21 +17,30 @@
 class CaptivePortalService : public QObject, protected QDBusContext
 {
     Q_OBJECT
+    Q_PROPERTY(QString heading READ heading NOTIFY headingChanged)
 public:
     CaptivePortalService(QObject *parent = nullptr);
     bool registered() const;
+    QString heading() const;
     QString serviceName() const;
 
 public slots:
     void openUrl(const QStringList &args);
     void closeBrowser();
+    void cancelTransfer(int transferId);
+    void restartTransfer(int transferId);
 
 signals:
+    void headingChanged();
     void openUrlRequested(const QString &url);
     void closeBrowserRequested();
+    void cancelTransferRequested(int transferId);
+    void restartTransferRequested(int transferId);
 
 private:
+    bool transferCaller() const;
     bool m_registered;
+    QString m_heading;
 };
 
 #endif

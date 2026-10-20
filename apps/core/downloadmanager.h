@@ -33,7 +33,7 @@ class DownloadManager : public QObject
 public:
     static DownloadManager *instance();
 
-    bool existActiveTransfers();
+    Q_INVOKABLE bool existActiveTransfers();
 
     bool pdfPrinting() const;
 

@@ -13,6 +13,8 @@
 
 #include <QDBusConnection>
 #include <QDBusMessage>
+#include <QDBusConnectionInterface>
+#include <QDBusReply>
 
 static const auto CaptivePortalServiceName = QStringLiteral("org.sailfishos.captiveportal");
 
@@ -47,8 +49,18 @@ void CaptivePortalService::closeBrowser()
     connection().send(reply);
 }
 
+QString CaptivePortalService::heading() const
+{
+    return m_heading;
+}
+
 void CaptivePortalService::openUrl(const QStringList &args)
 {
+    // The legacy network portal has a sign-in heading unless the caller
+    // supplies its own second argument (including an explicitly empty one).
+    //% "Sign in"
+    m_heading = args.size() > 1 ? args.at(1) : qtTrId("sailfish_captiveportal-la-sign_in");
+    emit headingChanged();
     if (args.count() > 0) {
         emit openUrlRequested(args.first());
     } else {
@@ -56,3 +68,22 @@ void CaptivePortalService::openUrl(const QStringList &args)
     }
 }
 
+
+bool CaptivePortalService::transferCaller() const
+{
+    const QDBusReply<uint> caller = connection().interface()->servicePid(message().service());
+    const QDBusReply<uint> owner = connection().interface()->servicePid(QStringLiteral("org.nemo.transferengine"));
+    if (caller.isValid() && owner.isValid() && caller.value() != 0 && caller.value() == owner.value()) return true;
+    sendErrorReply(QDBusError::AccessDenied, QStringLiteral("Only Transfer Engine may control downloads"));
+    return false;
+}
+
+void CaptivePortalService::cancelTransfer(int transferId)
+{
+    if (transferCaller()) emit cancelTransferRequested(transferId);
+}
+
+void CaptivePortalService::restartTransfer(int transferId)
+{
+    if (transferCaller()) emit restartTransferRequested(transferId);
+}

@@ -34,6 +34,7 @@ WebContainer {
     property real fullscreenHeight
     property bool imOpened
     property real toolbarHeight
+    property real headerHeight
     readonly property color _defaultThemeColor: WebEngineSettings.colorScheme === WebEngineSettings.PrefersLightMode
             || (WebEngineSettings.colorScheme === WebEngineSettings.FollowsAmbience
                 && Theme.colorScheme !== Theme.LightOnDark) ? "white" : "black"
@@ -134,11 +135,12 @@ WebContainer {
         TextSelectionController {
             opacity: canShowSelectionMarkers ? 1.0 : 0.0
             contentWidth: webView.rotationHandler ? webView.rotationHandler.width : 0
-            contentHeight: Math.max(0, webView.fullscreenHeight - webView.toolbarHeight)
+            contentHeight: Math.max(0, webView.fullscreenHeight - webView.headerHeight - webView.toolbarHeight)
             // Push below the overlay
             z: -1
             anchors {
                 fill: parent
+                topMargin: webView.headerHeight
                 bottomMargin: webView.toolbarHeight
             }
 

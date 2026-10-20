@@ -14,6 +14,7 @@ Item {
     signal runtimeTabsClearFinished
     signal runtimeTabCloseRejected(string persistentId)
     signal snapshotApplied(var snapshot)
+    signal pairedSnapshotApplied(var snapshot)
     signal historyChanged
     signal empty
     signal locationInvalidated(string persistentId)
@@ -169,12 +170,14 @@ Item {
             return
         }
 
-        var close = _runtimeCloseInFlight
-        var runtimeTab = hostedRuntimeTabByRuntimeId(hostView, close.runtimeId)
-        if (runtimeTab) {
-            // Snapshots can precede close processing or report the pending
-            // PermitUnload state. A rejected close has its own result signal.
-            return
+        var closeId = String(_runtimeCloseInFlight.runtimeId)
+        var snapshot = hostView.tabModel.snapshot()
+        for (var index = 0; index < snapshot.length; ++index) {
+            if (String(snapshot[index].tabId) === closeId) {
+                // Snapshots can precede close processing or report the pending
+                // PermitUnload state. A rejected close has its own result signal.
+                return
+            }
         }
         _runtimeCloseInFlight = null
         startNextRuntimeClose(hostView)
@@ -375,6 +378,7 @@ Item {
             return
         }
 
+        var revision = hostView.tabModel.revision
         var runtimeSnapshot = hostView.tabModel.snapshot()
         var historyChanged = runtimeSnapshotChanged(runtimeSnapshot)
         var snapshot = pairedRuntimeSnapshot(runtimeSnapshot,
@@ -397,8 +401,13 @@ Item {
         flushRuntimeCommands(hostView)
         flushSelectedRuntimeNavigation(hostView)
 
+        // Flushing a queued new tab can synchronously apply a newer snapshot.
+        // Do not publish the old empty snapshot and close the new flow.
+        if (hostView.tabModel.revision !== revision) return
         snapshotApplied(runtimeSnapshot)
-        if (snapshot.length === 0) empty()
+        if (hostView.tabModel.revision !== revision) return
+        pairedSnapshotApplied(snapshot)
+        if (hostView.tabModel.revision === revision && snapshot.length === 0) empty()
     }
 
     Timer {

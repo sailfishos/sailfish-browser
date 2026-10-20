@@ -1,0 +1,3 @@
+# Sparse keeps separate application storage while providing the Browser service.
+dbus-user.own org.sailfishos.browser
+whitelist /usr/share/sailfish-captiveportal
