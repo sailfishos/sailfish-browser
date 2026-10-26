@@ -147,6 +147,7 @@ fi
 %{_datadir}/jolla-vault/units/Browser.json
 %{_libdir}/qt5/qml/org/sailfishos/browser/settings
 %{_datadir}/jolla-settings/entries/browser.json
+%{_datadir}/jolla-settings/entries/org.sailfishos.browser.json
 %{_datadir}/jolla-settings/pages/browser
 
 %files common
