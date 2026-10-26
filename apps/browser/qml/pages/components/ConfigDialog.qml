@@ -22,6 +22,7 @@ Dialog {
     property bool allPrefsObserverAdded
     property int allPrefsRequests
     property string searchText
+    property bool modifiedOnly: false
     property var sourcePrefs: []
     property var pendingPrefs: []
     property int pendingPrefsIndex
@@ -87,8 +88,10 @@ Dialog {
 
         var filteredPrefs = []
         for (var i=0; i<sourcePrefs.length; i++) {
-            if (sourcePrefs[i].searchName.indexOf(filter) != -1) {
-                filteredPrefs.push(sourcePrefs[i])
+            const pref = sourcePrefs[i]
+            if (modifiedOnly && !pref.modified) continue
+            if (pref.searchName.indexOf(filter) != -1) {
+                filteredPrefs.push(pref)
             }
         }
         resetDisplayedPrefs(filteredPrefs)
@@ -237,6 +240,16 @@ Dialog {
             }
             EnterKey.onClicked: {
                 focus = false
+            }
+        }
+
+        TextSwitch {
+            checked: configDialog.modifiedOnly
+            // % "Show only modified Preferences"
+            text: qsTrId("sailfish_browser-ph-search_only_modified")
+            onClicked: {
+                configDialog.modifiedOnly = !configDialog.modifiedOnly
+                searchFilterDelay.restart()
             }
         }
 
