@@ -18,7 +18,7 @@ qmlpages.path = /usr/share/jolla-settings/pages/browser
 qmlpages.files = browser.qml
 
 plugin_entry.path = /usr/share/jolla-settings/entries
-plugin_entry.files = browser.json
+plugin_entry.files = browser.json org.sailfishos.browser.json
 
 INSTALLS += target import plugin_entry qmlpages
 

@@ -1,0 +1,22 @@
+{
+    "translation_catalog": "lipstick-jolla-home",
+    "entries": [
+        {
+            "path": "system_settings/look_and_feel/topmenu/actions/search_the_web",
+            "title": "Search the web",
+            "translation_id": "settings_quickaction-la-search_the_web",
+            "title_short": "Search",
+            "translation_id_short": "settings_quickaction-la-search_the_web_short",
+            "type": "action",
+            "icon": "image://theme/icon-m-search",
+            "order": 52,
+            "params": {
+                "type": "grid",
+                "remote-service": "org.sailfishos.browser.ui",
+                "remote-path": "/ui",
+                "remote-interface": "org.sailfishos.browser.ui",
+                "remote-method": "activateNewTabView"
+            }
+        }
+    ]
+}
