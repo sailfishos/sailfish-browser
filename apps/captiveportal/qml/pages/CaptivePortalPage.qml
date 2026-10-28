@@ -97,7 +97,7 @@ Page {
 
         contentItem: portalView
         enabled: overlay.animator.allowContentUse
-        fullscreenHeight: browserPage.isPortrait ? Screen.height : Screen.width
+        fullscreenHeight: browserPage.height
         toolbarHeight: overlay.animator.opened ? overlay.toolBar.rowHeight : 0
         headerHeight: signInHeader.height
         rotationHandler: browserPage
