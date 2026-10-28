@@ -201,7 +201,7 @@ Item {
             changes: [
                 PropertyChanges {
                     target: overlay
-                    y: webView.fullscreenHeight - overlay.toolBar.rowHeight
+                    y: webView.fullscreenHeight - webView.keyboardInset - overlay.toolBar.rowHeight
                 }
             ]
         },
@@ -249,7 +249,7 @@ Item {
             changes: [
                 PropertyChanges {
                     target: overlay
-                    y: webView.fullscreenHeight - overlay.toolBar.rowHeight
+                    y: webView.fullscreenHeight - webView.keyboardInset - overlay.toolBar.rowHeight
                     enabled: false
                 }
             ]

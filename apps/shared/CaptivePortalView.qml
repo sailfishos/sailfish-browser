@@ -78,7 +78,9 @@ BrowserContentView {
     clip: true
     property string _qmozChromeInitialUrl: ""
     dynamicToolbarHeight: forcedChrome ? 0 : webView.toolbarHeight
-    marginBottom: webView.imOpened ? virtualKeyboardHeight : (forcedChrome ? webView.toolbarHeight : 0)
+    marginBottom: webView.imOpened
+                  ? virtualKeyboardHeight + (webView.keyboardInset > 0 ? webView.toolbarHeight : 0)
+                  : (forcedChrome ? webView.toolbarHeight : 0)
 
     Binding {
         target: webPage.webView

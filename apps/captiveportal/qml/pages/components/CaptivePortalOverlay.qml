@@ -43,7 +43,7 @@ Shared.Background {
         overlay.animator.showChrome(immediate)
     }
 
-    y: webView.fullscreenHeight - toolBar.height
+    y: webView.fullscreenHeight - webView.keyboardInset - toolBar.height
     width: parent.width
     height: toolBar.height + virtualKeyboardObserver.panelSize
     // `visible` is controlled by Browser.OverlayAnimator
