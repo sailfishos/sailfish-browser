@@ -62,6 +62,21 @@ BrowserContentView {
         defaultValue: false
     }
 
+    property ConfigurationValue keypadEnabled: ConfigurationValue {
+        key: "/sailfish/text_input/keypad_enabled"
+        defaultValue: true
+    }
+
+    // The keypad deletes with the left key and hands the press back once the field is
+    // empty. A web field's content is not visible here, so Clear swallows that press.
+    readonly property bool keypadClears: webView.keyboardInset > 0 && keypadEnabled.value
+
+    // The web content takes every key it gets, so Back is claimed here to leave the application.
+    SoftKeys.left: SoftKeyAction {
+        actionType: keypadClears ? SoftKeyAction.ClearAction : SoftKeyAction.BackAction
+        onTriggered: if (!keypadClears) window.deactivate()
+    }
+
     Notice {
         id: blockedLinkNotice
 
