@@ -6,6 +6,7 @@ import QtQuick 2.6
 import Qt5Mozilla 1.0
 import Nemo.Configuration 1.0
 import Sailfish.Silica 1.0
+import Sailfish.Silica.private 1.0 as SilicaPrivate
 import Sailfish.Browser 1.0
 import Sailfish.Policy 1.0
 import Sailfish.WebView.Controls 1.0
@@ -28,6 +29,8 @@ BrowserContentView {
                              ? themeColor : webView._defaultThemeColor)
     }
     property var webView
+    // Lets the input method keep the soft key bar visible below its own panel.
+    property var __inputMethodExtensions: ({ "softKeyBar": SilicaPrivate.KeyNavigationConfig.softKeys })
     property var portalService
     property alias portalFlows: portalFlows
     property var _sparseNavigationOrigins: ({})
