@@ -32,6 +32,8 @@ WebContainer {
     property bool needChrome: !chromeContentItem
                               || (chromeContentItem.chrome && !chromeContentItem.fullscreen)
     property real fullscreenHeight
+    // The input method height the toolbar stays above; zero where the input method covers it.
+    property real keyboardInset
     property bool imOpened
     property real toolbarHeight
     property real headerHeight

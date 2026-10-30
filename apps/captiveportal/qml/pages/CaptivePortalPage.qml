@@ -97,7 +97,10 @@ Page {
 
         contentItem: portalView
         enabled: overlay.animator.allowContentUse
-        fullscreenHeight: browserPage.isPortrait ? Screen.height : Screen.width
+        fullscreenHeight: browserPage.height
+        // The keypad leaves most of the page visible, so the toolbar stays usable above it.
+        keyboardInset: Private.KeyNavigationConfig.softKeys && virtualKeyboardObserver.opened
+                       ? virtualKeyboardObserver.imSize : 0
         toolbarHeight: overlay.animator.opened ? overlay.toolBar.rowHeight : 0
         headerHeight: signInHeader.height
         rotationHandler: browserPage

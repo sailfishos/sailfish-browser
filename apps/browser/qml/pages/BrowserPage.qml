@@ -2218,7 +2218,7 @@ Page {
 
         enabled: overlay.animator.allowContentUse
         nativeContentVisible: browserPage.visible
-        fullscreenHeight: browserPage.isPortrait ? Screen.height : Screen.width
+        fullscreenHeight: browserPage.height
         contentItem: browserPage.chromeHostView
         toolbarHeight: overlay.animator.opened ? overlay.toolBar.rowHeight : 0
         rotationHandler: browserPage

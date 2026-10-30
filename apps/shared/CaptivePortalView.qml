@@ -6,6 +6,7 @@ import QtQuick 2.6
 import Qt5Mozilla 1.0
 import Nemo.Configuration 1.0
 import Sailfish.Silica 1.0
+import Sailfish.Silica.private 1.0 as SilicaPrivate
 import Sailfish.Browser 1.0
 import Sailfish.Policy 1.0
 import Sailfish.WebView.Controls 1.0
@@ -28,6 +29,8 @@ BrowserContentView {
                              ? themeColor : webView._defaultThemeColor)
     }
     property var webView
+    // Lets the input method keep the soft key bar visible below its own panel.
+    property var __inputMethodExtensions: ({ "softKeyBar": SilicaPrivate.KeyNavigationConfig.softKeys })
     property var portalService
     property alias portalFlows: portalFlows
     property var _sparseNavigationOrigins: ({})
@@ -59,6 +62,21 @@ BrowserContentView {
         defaultValue: false
     }
 
+    property ConfigurationValue keypadEnabled: ConfigurationValue {
+        key: "/sailfish/text_input/keypad_enabled"
+        defaultValue: true
+    }
+
+    // The keypad deletes with the left key and hands the press back once the field is
+    // empty. A web field's content is not visible here, so Clear swallows that press.
+    readonly property bool keypadClears: webView.keyboardInset > 0 && keypadEnabled.value
+
+    // The web content takes every key it gets, so Back is claimed here to leave the application.
+    SoftKeys.left: SoftKeyAction {
+        actionType: keypadClears ? SoftKeyAction.ClearAction : SoftKeyAction.BackAction
+        onTriggered: if (!keypadClears) window.deactivate()
+    }
+
     Notice {
         id: blockedLinkNotice
 
@@ -75,7 +93,9 @@ BrowserContentView {
     clip: true
     property string _qmozChromeInitialUrl: ""
     dynamicToolbarHeight: forcedChrome ? 0 : webView.toolbarHeight
-    marginBottom: webView.imOpened ? virtualKeyboardHeight : (forcedChrome ? webView.toolbarHeight : 0)
+    marginBottom: webView.imOpened
+                  ? virtualKeyboardHeight + (webView.keyboardInset > 0 ? webView.toolbarHeight : 0)
+                  : (forcedChrome ? webView.toolbarHeight : 0)
 
     Binding {
         target: webPage.webView
