@@ -992,25 +992,23 @@ Page {
     }
 
     function applyHostedViewportFitState(hostView) {
-        _hostedViewportFit = ""
-        _hostedSafeAreaInsetUsage = 0
-        _hostedThemeColor = ""
-        if (!hostView || !String(hostView.selectedTabId).length) {
-            return
+        var state = null
+        if (hostView && String(hostView.selectedTabId).length) {
+            var runtimeId = String(hostView.selectedTabId)
+            var tab = hostedRuntimeTabByRuntimeId(hostView, runtimeId)
+            state = _hostedViewportFitStates[runtimeId]
+            if (!tab || !state
+                    || state.persistentId !== String(tab.persistentId)
+                    || state.locationRevision !== String(tab.locationRevision)) {
+                state = null
+            }
         }
 
-        var runtimeId = String(hostView.selectedTabId)
-        var tab = hostedRuntimeTabByRuntimeId(hostView, runtimeId)
-        var state = _hostedViewportFitStates[runtimeId]
-        if (!tab || !state
-                || state.persistentId !== String(tab.persistentId)
-                || state.locationRevision !== String(tab.locationRevision)) {
-            return
-        }
-
-        _hostedViewportFit = state.viewportFit
-        _hostedSafeAreaInsetUsage = state.safeAreaInsetUsage
-        _hostedThemeColor = state.themeColor || ""
+        // Clearing valid state first would briefly resize the view around the
+        // display cutout and invalidate its frame on every metadata refresh.
+        _hostedViewportFit = state ? state.viewportFit : ""
+        _hostedSafeAreaInsetUsage = state ? state.safeAreaInsetUsage : 0
+        _hostedThemeColor = state ? state.themeColor || "" : ""
     }
 
     function updateHostedViewportFitState(hostView, tabId, persistentId, data) {
