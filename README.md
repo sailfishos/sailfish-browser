@@ -39,6 +39,14 @@ Sparse and standalone portal
 See [Sparse integration](sparse/README.md) for the runtime package split,
 build order, URL services, profile isolation and acceptance checks.
 
+PDF documents
+-------------
+Browser and Sparse handle `application/pdf` files from other applications and
+display PDF links in tabs using Gecko's PDF.js viewer. Browser's Find action
+searches the document, and Save as PDF saves the PDF itself. Sparse provides
+Find and Download in its native toolbar. Both require the matching Gecko
+PDF.js integration.
+
 License
 -------
 The browser is open source and licensed under Mozilla Public License v2.0 (http://www.mozilla.org/MPL/2.0/).

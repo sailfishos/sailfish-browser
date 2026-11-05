@@ -18,7 +18,9 @@
 #include "browserappinfo.h"
 
 #include <QDir>
+#include <QFileInfo>
 #include <QGuiApplication>
+#include <QMimeDatabase>
 #include <QQmlContext>
 #include <QQuickView>
 #include <QTimer>
@@ -80,6 +82,9 @@ Browser::Browser(QQuickView *view, const QString &dataPath, QObject *parent)
 
     SailfishOS::WebEngine::initialize(BrowserAppInfo::profileName());
     SailfishOS::WebEngineSettings::initialize();
+    SailfishOS::WebEngineSettings::instance()->setPreference(
+            QStringLiteral("embedlite.pdfjs.integratedFind"),
+            !BrowserAppInfo::captivePortal());
 
     DeclarativeWebUtils *utils = DeclarativeWebUtils::instance();
     DownloadManager *downloadManager = DownloadManager::instance();
@@ -103,10 +108,7 @@ void Browser::load()
     const QStringList arguments = qGuiApp->arguments();
     if (BrowserAppInfo::sparse()) {
         for (const QString &argument : arguments.mid(1)) {
-            const QUrl url(argument, QUrl::StrictMode);
-            if (url.isValid() && (url.scheme() == QLatin1String("http")
-                                  || url.scheme() == QLatin1String("https"))
-                    && !url.host().isEmpty()) openUrl(argument);
+            openUrl(argument);
         }
         return;
     }
@@ -134,10 +136,22 @@ void Browser::openUrl(const QString &url)
 {
     Q_D(Browser);
     if (BrowserAppInfo::sparse()) {
-        const QUrl target(url, QUrl::StrictMode);
-        if (!target.isValid() || target.host().isEmpty()
-                || (target.scheme() != QLatin1String("http")
-                    && target.scheme() != QLatin1String("https"))) return;
+        QUrl target(url, QUrl::StrictMode);
+        if (target.scheme().isEmpty() && !url.startsWith(QLatin1Char('-'))) {
+            target = QUrl::fromLocalFile(QFileInfo(url).absoluteFilePath());
+        }
+        const bool webUrl = !target.host().isEmpty()
+                && (target.scheme() == QLatin1String("http")
+                    || target.scheme() == QLatin1String("https"));
+        const QFileInfo file(target.toLocalFile());
+        const bool localPdf = target.isLocalFile()
+                && (target.host().isEmpty() || target.host() == QLatin1String("localhost"))
+                && file.isFile() && file.isReadable()
+                && QMimeDatabase().mimeTypeForFile(file, QMimeDatabase::MatchContent).name()
+                    == QLatin1String("application/pdf");
+        if (!target.isValid() || (!webUrl && !localPdf)) return;
+        DeclarativeWebUtils::instance()->openUrl(target.toString(QUrl::FullyEncoded));
+        return;
     }
     DeclarativeWebUtils::instance()->openUrl(url);
 }
