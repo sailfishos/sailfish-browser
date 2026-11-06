@@ -10,6 +10,7 @@
 import QtQuick 2.6
 import Sailfish.Silica 1.0
 import Sailfish.Browser 1.0
+import Sailfish.WebEngine 1.0
 import "." as Browser
 import "../../shared" as Shared
 
@@ -17,6 +18,10 @@ Column {
     id: toolBarRow
 
     property string url
+    property bool isPdf
+    property bool finding
+    property int pdfRequest
+    readonly property var contentItem: webView.contentItem
     readonly property real rowHeight: height
     readonly property int maxRowCount: 1
 
@@ -47,11 +52,103 @@ Column {
 
     signal showChrome
 
+    function updatePdfState() {
+        ++pdfRequest
+        isPdf = false
+        finding = false
+        webView.findInPageHasResult = false
+        pdfStateTimer.restart()
+    }
+
+    function find(backwards, again) {
+        if (isPdf && contentItem) {
+            contentItem.sendAsyncMessage("embedui:find", {
+                "text": finding ? searchField.text : "",
+                "backwards": backwards, "again": again
+            })
+        }
+    }
+
+    onContentItemChanged: updatePdfState()
+    onFindingChanged: {
+        if (finding) {
+            searchField.forceActiveFocus()
+            find(false, false)
+        } else {
+            searchField.focus = false
+            find(false, false)
+        }
+        showChrome()
+    }
+
+    Timer {
+        id: pdfStateTimer
+
+        interval: 0
+        onTriggered: {
+            if (WebUtils.sparse && contentItem) {
+                contentItem.addMessageListener("embed:pdfState")
+                contentItem.addMessageListener("embed:find")
+                contentItem.sendAsyncMessage("embedui:pdfState", {"request": pdfRequest})
+            }
+        }
+    }
+
+    Connections {
+        target: contentItem
+        onSelectedTabChanged: updatePdfState()
+        onUrlChanged: updatePdfState()
+        onLoadedChanged: updatePdfState()
+        onRecvAsyncMessage: {
+            if (message === "embed:pdfState" && data.request === pdfRequest) {
+                isPdf = data.isPdf
+            }
+        }
+    }
+
     width: parent.width
 
     Item {
         width: 1
         height: Theme.paddingMedium
+    }
+
+    Row {
+        visible: finding
+        width: parent.width
+        height: visible ? searchField.height : 0
+
+        TextField {
+            id: searchField
+
+            width: parent.width - 3 * toolBarRow.iconWidth
+            //% "Find from page"
+            placeholderText: qsTrId("sailfish_browser-ph-type_find_from_page")
+            inputMethodHints: Qt.ImhNoAutoUppercase | Qt.ImhNoPredictiveText
+            onTextChanged: find(false, false)
+            EnterKey.iconSource: "image://theme/icon-m-enter-next"
+            EnterKey.onClicked: {
+                find(false, true)
+                focus = false
+            }
+        }
+        IconButton {
+            width: toolBarRow.iconWidth
+            enabled: searchField.text.length > 0 && webView.findInPageHasResult
+            icon.source: "image://theme/icon-m-left"
+            onClicked: find(true, true)
+        }
+        IconButton {
+            width: toolBarRow.iconWidth
+            enabled: searchField.text.length > 0 && webView.findInPageHasResult
+            icon.source: "image://theme/icon-m-right"
+            onClicked: find(false, true)
+        }
+        IconButton {
+            width: toolBarRow.iconWidth
+            icon.source: "image://theme/icon-m-close"
+            onClicked: finding = false
+        }
     }
 
     Row {
@@ -73,7 +170,8 @@ Column {
         Label {
             anchors.verticalCenter: parent.verticalCenter
             width: toolBarRow.width - (reloadButton.width + backIcon.width
-                                      + closeButton.width + clearDataButton.width) + Theme.paddingMedium
+                                      + closeButton.width + clearDataButton.width
+                                      + findButton.width + saveButton.width) + Theme.paddingMedium
             color: Theme.highlightColor
 
             text: {
@@ -112,10 +210,33 @@ Column {
             id: clearDataButton
 
             anchors.verticalCenter: parent.verticalCenter
-            visible: WebUtils.sparse
+            visible: WebUtils.sparse && !isPdf
             width: visible ? toolBarRow.iconWidth : 0
             icon.source: "image://theme/icon-m-delete"
             onClicked: pageStack.push(Qt.resolvedUrl("ClearSignInDataDialog.qml"))
+        }
+
+        IconButton {
+            id: findButton
+
+            anchors.verticalCenter: parent.verticalCenter
+            visible: isPdf
+            width: visible ? toolBarRow.iconWidth : 0
+            icon.source: "image://theme/icon-m-search"
+            onClicked: finding = !finding
+        }
+
+        IconButton {
+            id: saveButton
+
+            anchors.verticalCenter: parent.verticalCenter
+            visible: isPdf
+            width: visible ? toolBarRow.iconWidth : 0
+            icon.source: "image://theme/icon-m-file-download-as-pdf"
+            onClicked: WebEngine.notifyObservers("embedui:download", {
+                "msg": "saveAsPdf", "windowId": contentItem.uniqueId,
+                "tabId": contentItem.selectedTabId
+            })
         }
 
         Shared.ExpandingButton {

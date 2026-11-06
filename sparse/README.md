@@ -2,8 +2,13 @@
 
 Sparse provides a small browser window for links and sign-in pages, using the
 captive portal application. It has no launcher icon, homepage or tab picker.
-It handles HTTP(S) URLs through the Browser desktop entry and the
+It handles HTTP(S) URLs and local PDF documents through the Browser desktop entry and the
 `org.sailfishos.browser` and `org.sailfishos.browser.ui` D-Bus services.
+
+Local launches accept readable PDF files, including file URLs and filesystem
+paths. Other local document types are not accepted. PDFs use native Find and
+Download controls in the bottom toolbar. The sandbox permits user
+directories and removable media so documents can be opened from Files.
 
 The `sailfish-browser-sparse` package replaces full Browser and the public
 WebView package. It uses Browser common, the captive portal, WebView core,
@@ -17,7 +22,8 @@ restarts, but open pages do not. Network sign-in uses a separate private session
 
 The toolbar provides Back, Reload/Stop, the site address, Close and Clear sign-in
 data. Clearing requires confirmation and affects only Sparse's cookies, site
-data and saved passwords. Active downloads can continue after the window closes.
+data and saved passwords. PDF pages replace Clear sign-in data with Find and
+Download. Active downloads can continue after the window closes.
 
 Web links open inside Sparse. Supported external links open in their registered
 application, then close the originating page and its popups. Other open pages
