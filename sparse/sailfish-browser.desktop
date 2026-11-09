@@ -7,12 +7,12 @@ X-MeeGo-Translation-Catalog=sailfish-browser
 Icon=icon-launcher-browser
 Exec=/usr/bin/invoker -s --type=generic /usr/bin/sailjail -p sailfish-browser.desktop /usr/bin/sailfish-captiveportal -sparse %U
 Comment=Sailfish UI application
-MimeType=text/html;application/xhtml+xml;application/xml;text/xml;x-scheme-handler/http;x-scheme-handler/https;
+MimeType=text/html;application/xhtml+xml;application/xml;text/xml;application/pdf;x-scheme-handler/http;x-scheme-handler/https;
 X-Maemo-Service=org.sailfishos.browser.ui
 X-Maemo-Object-Path=/ui
 X-Maemo-Method=org.sailfishos.browser.ui.openUrl
 
 [X-Sailjail]
-Permissions=WebView;Audio;Camera;Location;Internet;Downloads;SparseBrowser
+Permissions=WebView;Audio;Camera;Location;Internet;UserDirs;RemovableMedia;SparseBrowser
 OrganizationName=org.sailfishos
 ApplicationName=browser-sparse

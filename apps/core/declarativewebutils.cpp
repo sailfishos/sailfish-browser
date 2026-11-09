@@ -191,6 +191,9 @@ DeclarativeWebUtils *DeclarativeWebUtils::instance()
 QString DeclarativeWebUtils::displayableUrl(const QString &fullUrl) const
 {
     QUrl url(fullUrl);
+    if (url.isLocalFile() && url.host().isEmpty() && !url.fileName().isEmpty()) {
+        return url.fileName();
+    }
     // Leaving only the scheme, host address, and port (if present).
     QString returnUrl = url.toDisplayString(QUrl::RemoveUserInfo
                                             | QUrl::RemovePath
