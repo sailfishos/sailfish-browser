@@ -20,10 +20,13 @@ Popups and Pickers. Ordinary network sign-in and
 Sparse keeps its own persistent profile. Cookies and saved passwords survive
 restarts, but open pages do not. Network sign-in uses a separate private session.
 
-The toolbar provides Back, Reload/Stop, the site address, Close and Clear sign-in
-data. Clearing requires confirmation and affects only Sparse's cookies, site
-data and saved passwords. PDF pages replace Clear sign-in data with Find and
-Download. Active downloads can continue after the window closes.
+The toolbar provides Back, Reload/Stop, the site address and Close. On devices
+with softkeys, the left key provides Back when history is available and Close
+otherwise; the right key provides Stop while loading and Refresh otherwise.
+The duplicate Back and Reload/Stop icons are hidden. Text input retains its
+editing actions, and the middle key remains available for page interaction.
+PDF pages also provide Find and Download. Active downloads can continue after
+the window closes.
 
 Web links open inside Sparse. Supported external links open in their registered
 application, then close the originating page and its popups. Other open pages

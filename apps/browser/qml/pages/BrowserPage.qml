@@ -36,8 +36,51 @@ Page {
     signal runtimeTabCloseRejected(string persistentId, var tabModel)
 
     readonly property bool active: status == PageStatus.Active
+    property ConfigurationValue keypadEnabled: ConfigurationValue {
+        key: "/sailfish/text_input/keypad_enabled"
+        defaultValue: true
+    }
+    // Keep Clear claimed even when an empty web field returns the key to the app.
+    readonly property bool keypadClears: (virtualKeyboardObserver.opened
+                                          || virtualKeyboardObserver.panelSize > 0)
+                                         && keypadEnabled.value
     property bool tabPageActive
     property Item debug
+
+    // Disabled actions still claim their keys; release the slots for text editing.
+    SoftKeys.left: webView.imOpened && !browserPage.keypadClears ? null : leftAction
+
+    SoftKeyAction {
+        id: leftAction
+
+        actionType: browserPage.keypadClears ? SoftKeyAction.ClearAction : SoftKeyAction.BackAction
+        text: !webView.imOpened && chromeHostView && !chromeHostView.canGoBack
+              //% "Close"
+              ? qsTrId("sailfish_browser-la-softkey_close") : ""
+        onTriggered: {
+            if (!browserPage.keypadClears && !webView.imOpened && chromeHostView) {
+                if (chromeHostView.canGoBack) browserPage.goBack()
+                else browserPage.closeTabWithTransition()
+            }
+        }
+    }
+
+    SoftKeys.right: !webView.imOpened ? navigationAction : null
+
+    SoftKeyAction {
+        id: navigationAction
+
+        enabled: !!chromeHostView
+        text: browserPage.viewLoading
+              //% "Stop"
+              ? qsTrId("sailfish_browser-la-softkey_stop")
+              //% "Refresh"
+              : qsTrId("sailfish_browser-la-softkey_refresh")
+        onTriggered: {
+            if (browserPage.viewLoading) browserPage.stop()
+            else browserPage.reload()
+        }
+    }
 
     property alias overlay: overlay
     property alias tabs: webView.tabModel
@@ -2554,6 +2597,9 @@ Page {
 
             BrowserContentView {
                 id: chromeView
+
+                SoftKeys.left: browserPage.SoftKeys.left
+                SoftKeys.right: browserPage.SoftKeys.right
 
                 readonly property real systemTextZoom: Math.pow(
                         Theme.fontSizeMedium / Theme.fontSizeMediumBase, 1.25)

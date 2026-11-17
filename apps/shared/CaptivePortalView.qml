@@ -6,7 +6,6 @@ import QtQuick 2.6
 import Qt5Mozilla 1.0
 import Nemo.Configuration 1.0
 import Sailfish.Silica 1.0
-import Sailfish.Silica.private 1.0 as SilicaPrivate
 import Sailfish.Browser 1.0
 import Sailfish.Policy 1.0
 import Sailfish.WebView.Controls 1.0
@@ -30,7 +29,7 @@ BrowserContentView {
     }
     property var webView
     // Lets the input method keep the soft key bar visible below its own panel.
-    property var __inputMethodExtensions: ({ "softKeyBar": SilicaPrivate.KeyNavigationConfig.softKeys })
+    property var __inputMethodExtensions: ({ "softKeyBar": SoftKeys.active })
     property var portalService
     property alias portalFlows: portalFlows
     property var _sparseNavigationOrigins: ({})
@@ -71,10 +70,38 @@ BrowserContentView {
     // empty. A web field's content is not visible here, so Clear swallows that press.
     readonly property bool keypadClears: webView.keyboardInset > 0 && keypadEnabled.value
 
-    // The web content takes every key it gets, so Back is claimed here to leave the application.
-    SoftKeys.left: SoftKeyAction {
+    // Disabled actions still claim their keys; release the slots for text editing.
+    SoftKeys.left: webView.imOpened && !keypadClears ? null : leftAction
+
+    SoftKeyAction {
+        id: leftAction
+
         actionType: keypadClears ? SoftKeyAction.ClearAction : SoftKeyAction.BackAction
-        onTriggered: if (!keypadClears) window.deactivate()
+        text: !webView.imOpened && !webView.canGoBack
+              //% "Close"
+              ? qsTrId("sailfish_browser-la-softkey_close") : ""
+        onTriggered: {
+            if (!keypadClears && !webView.imOpened) {
+                if (webView.canGoBack) webView.goBack()
+                else browserPage.closePage()
+            }
+        }
+    }
+
+    SoftKeys.right: !webView.imOpened ? navigationAction : null
+
+    SoftKeyAction {
+        id: navigationAction
+
+        text: webView.loading
+              //% "Stop"
+              ? qsTrId("sailfish_browser-la-softkey_stop")
+              //% "Refresh"
+              : qsTrId("sailfish_browser-la-softkey_refresh")
+        onTriggered: {
+            if (webView.loading) webView.stop()
+            else webView.reload()
+        }
     }
 
     Notice {
