@@ -35,8 +35,21 @@ Page {
     property alias inputRegion: inputRegion
     readonly property var flowController: PortalFlows ? portalView.portalFlows : null
 
+    SoftKeys.left: portalView.SoftKeys.left
+    SoftKeys.right: portalView.SoftKeys.right
+
     function load(url, title) {
         webView.load(url, title)
+    }
+
+    function closePage() {
+        if (flowController && flowController.activeFlow) {
+            flowController.close(flowController.activeFlowId, "cancelled")
+        } else if (WebUtils.sparse) {
+            webView.contentItem.flowController.closeFlow({"tabId": webView.contentItem.selectedTabId})
+        } else {
+            window.closeNetwork()
+        }
     }
 
     function bringToForeground(window) {
@@ -134,7 +147,10 @@ Page {
             bottomMargin: webView.displayCutoutAllowed ? 0 : webView._contentCutoutBottom
             leftMargin: webView.displayCutoutAllowed ? 0 : webView._contentCutoutLeft
         }
-        onTouched: if (fullscreen) fullscreenCloseVisibleTimer.restart()
+        onTouched: {
+            if (fullscreen) fullscreenCloseVisibleTimer.restart()
+            if (textSelectionController) clearSelection()
+        }
         portalService: PortalFlows
     }
 

@@ -160,8 +160,9 @@ Column {
         Shared.ExpandingButton {
             id: backIcon
 
+            visible: !SoftKeys.active
             height: parent.height
-            expandedWidth: toolBarRow.iconWidth
+            expandedWidth: visible ? toolBarRow.iconWidth : 0
             icon.source: "image://theme/icon-m-back"
             active: webView.canGoBack
             onTapped: webView.goBack()
@@ -170,7 +171,7 @@ Column {
         Label {
             anchors.verticalCenter: parent.verticalCenter
             width: toolBarRow.width - (reloadButton.width + backIcon.width
-                                      + closeButton.width + clearDataButton.width
+                                      + closeButton.width
                                       + findButton.width + saveButton.width) + Theme.paddingMedium
             color: Theme.highlightColor
 
@@ -191,29 +192,14 @@ Column {
         Shared.ExpandingButton {
             id: closeButton
 
-            visible: WebUtils.sparse || (browserPage.flowController && browserPage.flowController.activeFlow)
+            visible: (WebUtils.sparse || (browserPage.flowController && browserPage.flowController.activeFlow))
+                     && !(toolBarRow.contentItem && toolBarRow.contentItem.leftSoftKeyCloses)
             width: visible ? toolBarRow.iconWidth : 0
             height: parent.height
             expandedWidth: toolBarRow.iconWidth
             icon.source: "image://theme/icon-m-close"
             active: true
-            onTapped: {
-                if (browserPage.flowController && browserPage.flowController.activeFlow) {
-                    browserPage.flowController.close(browserPage.flowController.activeFlowId, "cancelled")
-                } else {
-                    webView.contentItem.flowController.closeFlow({"tabId": webView.contentItem.selectedTabId})
-                }
-            }
-        }
-
-        IconButton {
-            id: clearDataButton
-
-            anchors.verticalCenter: parent.verticalCenter
-            visible: WebUtils.sparse && !isPdf
-            width: visible ? toolBarRow.iconWidth : 0
-            icon.source: "image://theme/icon-m-delete"
-            onClicked: pageStack.push(Qt.resolvedUrl("ClearSignInDataDialog.qml"))
+            onTapped: browserPage.closePage()
         }
 
         IconButton {
@@ -242,8 +228,9 @@ Column {
         Shared.ExpandingButton {
             id: reloadButton
 
+            visible: !SoftKeys.active
             height: parent.height
-            expandedWidth: toolBarRow.iconWidth
+            expandedWidth: visible ? toolBarRow.iconWidth : 0
             icon.source: webView.loading ? "image://theme/icon-m-reset" : "image://theme/icon-m-refresh"
             active: webView.contentItem
             onTapped: {

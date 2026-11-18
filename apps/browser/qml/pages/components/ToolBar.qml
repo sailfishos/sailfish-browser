@@ -249,8 +249,9 @@ Column {
         Shared.ExpandingButton {
             id: backIcon
 
+            visible: !SoftKeys.active
             height: parent.height
-            expandedWidth: toolBarRow.iconWidth
+            expandedWidth: visible ? toolBarRow.iconWidth : 0
             icon {
                 source: {
                     if (toolBarRow.hosted && hostedView.canGoBack) {
@@ -506,8 +507,9 @@ Column {
         Shared.ExpandingButton {
             id: stopButton
 
+            visible: !SoftKeys.active
             height: parent.height
-            expandedWidth: toolBarRow.iconWidth
+            expandedWidth: visible ? toolBarRow.iconWidth : 0
             icon.source: "image://theme/icon-m-reset"
             active: (toolBarRow.hosted || webView.contentItem) && !findInPageActive
             opacity: (toolBarRow.hosted ? hostedView.loading : webView.loading) ? 1.0 : 0.0
