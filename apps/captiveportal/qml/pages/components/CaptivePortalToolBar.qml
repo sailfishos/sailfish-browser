@@ -192,7 +192,8 @@ Column {
         Shared.ExpandingButton {
             id: closeButton
 
-            visible: WebUtils.sparse || (browserPage.flowController && browserPage.flowController.activeFlow)
+            visible: (WebUtils.sparse || (browserPage.flowController && browserPage.flowController.activeFlow))
+                     && !(toolBarRow.contentItem && toolBarRow.contentItem.leftSoftKeyCloses)
             width: visible ? toolBarRow.iconWidth : 0
             height: parent.height
             expandedWidth: toolBarRow.iconWidth

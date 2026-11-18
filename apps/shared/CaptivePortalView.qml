@@ -70,6 +70,9 @@ BrowserContentView {
     // empty. A web field's content is not visible here, so Clear swallows that press.
     readonly property bool keypadClears: webView.keyboardInset > 0 && keypadEnabled.value
 
+    readonly property bool leftSoftKeyCloses: SoftKeys.active && !keypadClears
+                                              && !webView.imOpened && !webView.canGoBack
+
     // Disabled actions still claim their keys; release the slots for text editing.
     SoftKeys.left: webView.imOpened && !keypadClears ? null : leftAction
 
@@ -77,7 +80,7 @@ BrowserContentView {
         id: leftAction
 
         actionType: keypadClears ? SoftKeyAction.ClearAction : SoftKeyAction.BackAction
-        text: !webView.imOpened && !webView.canGoBack
+        text: webPage.leftSoftKeyCloses
               //% "Close"
               ? qsTrId("sailfish_browser-la-softkey_close") : ""
         onTriggered: {
