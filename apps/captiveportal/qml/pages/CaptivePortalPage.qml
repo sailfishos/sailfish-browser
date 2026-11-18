@@ -147,7 +147,10 @@ Page {
             bottomMargin: webView.displayCutoutAllowed ? 0 : webView._contentCutoutBottom
             leftMargin: webView.displayCutoutAllowed ? 0 : webView._contentCutoutLeft
         }
-        onTouched: if (fullscreen) fullscreenCloseVisibleTimer.restart()
+        onTouched: {
+            if (fullscreen) fullscreenCloseVisibleTimer.restart()
+            if (textSelectionController) clearSelection()
+        }
         portalService: PortalFlows
     }
 

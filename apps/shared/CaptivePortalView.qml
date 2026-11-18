@@ -412,7 +412,7 @@ BrowserContentView {
         case "Content:SelectionRange": {
             if (textSelectionController === null) {
                 textSelectionController = webView.textSelectionControllerComponent.createObject(browserPage,
-                                                                                        {"contentItem": webPage})
+                                                                                        {"contentItem": webPage, "z": 1})
             }
             textSelectionController.selectionRangeUpdated(data)
             break
