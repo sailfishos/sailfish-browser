@@ -2952,6 +2952,22 @@ Page {
         }
     }
 
+    Loader {
+        anchors.right: parent.right
+        width: parent.width
+        height: Math.max(0, overlay.y)
+        active: browserPage.active && webView.foreground && webView.enabled
+                && browserPage.chromeHostView && !browserPage.contentFullscreen
+                && !browserPage.hostedTabCrashed && !virtualKeyboardObserver.opened
+                && !browserPage._tabSwipeActive && !overlay.enteringNewTabUrl
+                && height >= Screen.width / 2
+                && browserPage.chromeHostView.scrollableSize.height > 3.5 * height
+        sourceComponent: Browser.WebQuickScroll {
+            surfaceColor: browserPage._hostedSurfaceColor
+            view: browserPage.chromeHostView
+        }
+    }
+
     IconButton {
         id: fullscreenClose
 
