@@ -35,22 +35,10 @@ can use an HTTP(S) fallback when their target application is unavailable.
 
 ## Cross-site links
 
-Sparse allows cross-site HTTP(S) links by default. To block links to a different
-origin, run this as the device session user, then fully quit and restart Sparse:
+The first top-level HTTP(S) page in each Sparse tab establishes its allowed
+origin. Clicking a web link to a different scheme, host or port leaves the
+current page open and shows a notice. Frames cannot change the allowed origin.
 
-```sh
-dconf write /apps/sailfish-browser/settings/sparse_block_cross_site_links true
-```
-
-To restore the default:
-
-```sh
-dconf reset /apps/sailfish-browser/settings/sparse_block_cross_site_links
-```
-
-The first top-level HTTP(S) page establishes the allowed origin; frames cannot
-change it. When blocking is enabled, a link to a different scheme, host or port
-leaves the current page open and shows a notice. Forms, redirects, script-driven
-navigation and external-app links are unaffected. This setting applies only to Sparse;
-ordinary network sign-in and caller-owned authentication flows keep their own
-navigation behavior.
+Forms, redirects, script-driven navigation and external-app links keep their
+existing behaviour. The full browser, ordinary network sign-in and caller-owned
+authentication flows retain their own navigation policies.
