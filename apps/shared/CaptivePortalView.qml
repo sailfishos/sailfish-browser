@@ -55,12 +55,6 @@ BrowserContentView {
         _sparseNavigationOrigins = origins
     }
 
-    // Navigation scripts are selected at startup; restart Sparse after changing this.
-    property ConfigurationValue sparseBlockCrossSiteLinks: ConfigurationValue {
-        key: "/apps/sailfish-browser/settings/sparse_block_cross_site_links"
-        defaultValue: false
-    }
-
     property ConfigurationValue keypadEnabled: ConfigurationValue {
         key: "/sailfish/text_input/keypad_enabled"
         defaultValue: true
@@ -448,8 +442,7 @@ BrowserContentView {
         }
     }
     onRecvAsyncMessageFromTab: {
-        if (WebUtils.sparse && sparseBlockCrossSiteLinks.value
-                && message === "Sparse:NavigationOrigin") {
+        if (WebUtils.sparse && message === "Sparse:NavigationOrigin") {
             sparseNavigationOrigin(tabId, data.uri)
         }
         if (portalService && message === "embed:confirm" && data.inPermitUnload
@@ -486,10 +479,8 @@ BrowserContentView {
         loadFrameScript(Qt.resolvedUrl("ViewportFit.js"))
         loadFrameScript(Qt.resolvedUrl("PageMetadata.js"))
         if (WebUtils.sparse) {
-            if (sparseBlockCrossSiteLinks.value) {
-                addMessageListener("Sparse:NavigationOrigin")
-                loadFrameScript(Qt.resolvedUrl("SparseNavigation.js"))
-            }
+            addMessageListener("Sparse:NavigationOrigin")
+            loadFrameScript(Qt.resolvedUrl("SparseNavigation.js"))
         } else {
             loadFrameScript("file:///usr/share/sailfish-captiveportal/pages/captiveportal.js")
         }

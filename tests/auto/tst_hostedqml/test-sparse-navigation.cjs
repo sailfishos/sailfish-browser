@@ -151,15 +151,11 @@ documentCreated({target: scope.content.document});
 assert.equal(click('/next'), false);
 
 const navigationStartup = source.match(/Component\.onCompleted: \{([\s\S]*?)        var listeners =/)[1];
-const navigationConfig = source.match(/property ConfigurationValue sparseBlockCrossSiteLinks: ConfigurationValue \{([\s\S]*?)\n    \}/)[1];
-const defaultBlocking = JSON.parse(navigationConfig.match(/defaultValue: (true|false)/)[1]);
-assert.equal(defaultBlocking, false, 'Sparse permits cross-site links by default');
-function startNavigation(sparse, blocking = defaultBlocking) {
+function startNavigation(sparse) {
     const loaded = [];
     listener = undefined;
     vm.runInNewContext(navigationStartup, {
         WebUtils: { sparse },
-        sparseBlockCrossSiteLinks: { value: blocking },
         Qt: { resolvedUrl: value => value },
         addMessageListener(name) { assert.equal(name, 'Sparse:NavigationOrigin'); },
         loadFrameScript(value) {
@@ -169,19 +165,13 @@ function startNavigation(sparse, blocking = defaultBlocking) {
     });
     return loaded.filter(value => value !== 'ViewportFit.js' && value !== 'PageMetadata.js');
 }
-assert.deepEqual(startNavigation(true), [], 'default Sparse installs no navigation blocker');
-assert.equal(listener, undefined, 'default Sparse does not intercept web clicks');
-assert.deepEqual(startNavigation(true, true), ['SparseNavigation.js']);
-assert.equal(click('https://other.example/'), true, 'opt-in Sparse blocks cross-origin links');
-assert.equal(click('/next'), false, 'opt-in Sparse allows same-origin links');
-assert.equal(click('mailto:user@example.com'), false, 'opt-in preserves native handoff');
-assert.deepEqual(startNavigation(true, false), [], 'restart with false removes blocking');
-assert.equal(listener, undefined, 'disabled Sparse installs no click interceptor');
-for (const blocking of [false, true]) {
-    assert.deepEqual(startNavigation(false, blocking),
-        ['file:///usr/share/sailfish-captiveportal/pages/captiveportal.js'],
-        'captive portal always retains its own navigation policy');
-}
+assert.deepEqual(startNavigation(true), ['SparseNavigation.js']);
+assert.equal(click('https://other.example/'), true, 'Sparse blocks cross-origin links');
+assert.equal(click('/next'), false, 'Sparse allows same-origin links');
+assert.equal(click('mailto:user@example.com'), false, 'Sparse preserves native handoff');
+assert.deepEqual(startNavigation(false),
+    ['file:///usr/share/sailfish-captiveportal/pages/captiveportal.js'],
+    'captive portal retains its own navigation policy');
 const openLink = source.match(/^    function openPortalLink\([^\n]*\) \{[\s\S]*?^    \}/m)[0];
 const events = [];
 const host = vm.createContext({
@@ -202,4 +192,4 @@ assert.deepEqual(events.splice(0), [['owned-link', 'https://other.example/']], '
 host.portalService = null;
 host.openPortalLink('https://other.example/');
 assert.deepEqual(events.splice(0), [['external', 'https://other.example/']], 'ordinary network portal retains external browser dispatch');
-console.log('Sparse optional blocking, captive portal policy, same-origin clicks, form exceptions, native handoff and caller routing passed');
+console.log('Sparse cross-origin link blocking, captive portal policy, same-origin clicks, form exceptions, native handoff and caller routing passed');
